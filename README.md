@@ -1,8 +1,6 @@
-# [WAVS](https://docs.wavs.xyz) EAS Template
+# [WAVS](https://docs.wavs.xyz) Symbient
 
-**Template for getting started with developing WAVS applications**
-
-A Ethereum Attestation Service template for developing Web Assembly Verifiable Services using Rust and Solidity, configured for Windows _WSL_, Linux, and MacOS.
+TOP SECRET: a collection of fundraising, governance, and incentive mechanisms for cybernetic organisms.
 
 <!-- **Languages**
  * [Rust (this example)](./components/evm-price-oracle/)
