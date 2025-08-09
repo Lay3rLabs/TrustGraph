@@ -33,6 +33,12 @@ contract IndexerResolver is SchemaResolver {
         // Index the attestation
         indexer.indexAttestation(attestation.uid);
 
+        emit IEAS.Attested(
+            attestation.recipient,
+            attestation.attester,
+            attestation.uid,
+            attestation.schema
+        );
         emit AttestationIndexed(attestation.uid);
 
         return true;

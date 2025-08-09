@@ -4,6 +4,8 @@
 //! data and computing voting power based on attestation data.
 //!
 
+mod analytics;
+mod examples;
 mod query;
 mod solidity;
 mod trigger;
@@ -37,6 +39,9 @@ impl Guest for Component {
     /// 4. Return the encoded payload
     fn run(action: TriggerAction) -> std::result::Result<Option<WasmResponse>, String> {
         let (attestation, dest) = decode_trigger_event(action.data).map_err(|e| e.to_string())?;
+
+        // TODO load schema from config. If attestation is not for the schema id do nothing.
+        // TODO maybe make this a cron workflow.
 
         // Parse the input to get recipient address
         let recipient_address = attestation.recipient;

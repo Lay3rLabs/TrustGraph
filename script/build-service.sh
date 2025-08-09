@@ -27,6 +27,7 @@ SUBMIT_CHAIN=${SUBMIT_CHAIN:-"local"}
 AGGREGATOR_URL=${AGGREGATOR_URL:-""}
 DEPLOY_ENV=${DEPLOY_ENV:-""}
 REGISTRY=${REGISTRY:-"wa.dev"}
+CONFIG_VALUES=${CONFIG_VALUES:-"key=value,key2=value2"}
 
 BASE_CMD="docker run --rm --network host -w /data -v $(pwd):/data ghcr.io/lay3rlabs/wavs:35c96a4 wavs-cli service --json true --home /data --file /data/${FILE_LOCATION}"
 
@@ -72,7 +73,7 @@ eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} set-source-registry --dom
 eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} permissions --http-hosts '*' --file-system true" > /dev/null
 eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} time-limit --seconds 30" > /dev/null
 eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} env --values WAVS_ENV_SOME_SECRET" > /dev/null
-eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} config --values 'key=value,key2=value2'" > /dev/null
+eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} config --values ${CONFIG_VALUES}" > /dev/null
 eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} fuel-limit --fuel ${FUEL_LIMIT}" > /dev/null
 
 eval "$BASE_CMD manager set-evm --chain-name ${SUBMIT_CHAIN} --address `cast --to-checksum ${WAVS_SERVICE_MANAGER_ADDRESS}`" > /dev/null

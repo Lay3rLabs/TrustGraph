@@ -10,7 +10,7 @@ import {Attester} from "../src/contracts/Attester.sol";
 import {SchemaRegistrar} from "../src/contracts/SchemaRegistrar.sol";
 
 import {IndexerResolver} from "../src/contracts/IndexerResolver.sol";
-import {Indexer} from "@ethereum-attestation-service/eas-contracts/contracts/Indexer.sol";
+import {Indexer} from "../src/contracts/Indexer.sol";
 import {EASAttestTrigger} from "../src/contracts/Trigger.sol";
 import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
 import {Common} from "./Common.s.sol";

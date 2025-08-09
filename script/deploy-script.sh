@@ -31,7 +31,7 @@ sleep 1
 
 ### === Deploy Service === ###
 
-# Forge deploy SimpleSubmit & SimpleTrigger
+# Deploy Contracts
 source script/deploy-contracts.sh
 sleep 1
 
@@ -60,6 +60,7 @@ if [ "$(sh ./script/get-deploy-status.sh)" = "TESTNET" ]; then
     fi
 fi
 
+# TODO need to do this for multiple components...
 # ** Testnet Setup: https://wa.dev/account/credentials/new -> warg login
 source script/upload-to-wasi-registry.sh || true
 sleep 1
