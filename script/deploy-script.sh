@@ -35,7 +35,7 @@ sleep 1
 source script/deploy-contracts.sh
 sleep 1
 
-### === Deploy Service ===
+### === Deploy Services ===
 export COMPONENT_FILENAME=wavs_eas_attest.wasm
 if [ "$(sh ./script/get-deploy-status.sh)" = "TESTNET" ]; then
     read -p "Enter the component filename (default: ${COMPONENT_FILENAME}): " input_filename

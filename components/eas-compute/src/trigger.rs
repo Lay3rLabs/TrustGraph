@@ -33,7 +33,6 @@ pub enum Destination {
 /// 2. Raw - Used for direct CLI testing with no encoding
 pub fn decode_trigger_event(trigger_data: TriggerData) -> Result<(Attested, Destination)> {
     match trigger_data {
-        // TODO figure out trigger,
         TriggerData::EvmContractEvent(TriggerDataEvmContractEvent { log, .. }) => {
             let event: Attested = decode_event_log_data!(log)?;
             Ok((event, Destination::Ethereum))

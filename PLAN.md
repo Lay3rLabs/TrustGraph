@@ -11,16 +11,17 @@ Fix eas-attest component and Attester.sol contract:
 - [x] Make sure attestations are being indexed
 - [x] Add Governor contract example with custom votes extension?
 - [x] Update VotingPower.sol to be updatable via the AVS.
-- [ ] New eas-compute-voting-power component: loads attestations for a recipient and does compute over them to calculate voting power (trigger on an epcoh basis? per vote?)
-- [ ] Realistic vouching schema
-- [ ] Script to query voting power
-- [ ] Rename to Voting Power to points?
+- [x] Script to query voting power
 - [x] What triggers the EAS compute component: IndexerResolver events
-- [ ] Make indexer resolver trigger compute
+- [x] Make indexer resolver trigger compute
+- [ ] eas-compute -> eas-compute-voting-power
+- [ ] Realistic vouching schema
+- [ ] Rename to Voting Power to points?
 - [ ] Add configuration to EAS compute component?
 - [ ] Fix up deployment so two or more services are deployed (eas-attest and eas-compute)
 
-## Service Improvements
+
+## Future Service Improvements
 - [] Break out Indexer contract, could be modified to be multichain? EAS indexer component (indexes certain attestations without a resolver?)
 - [] Add eas-indexer sidecar to docker compose?
 - [] Add WAVS workflows?
@@ -29,5 +30,5 @@ Fix eas-attest component and Attester.sol contract:
 - [] Add rewards and eas-compute-rewards component
 - [] More resolvers
 - [] UI for demo
-- [] Docs
+- [] Docs and writeup
 - [] Symbient exploration

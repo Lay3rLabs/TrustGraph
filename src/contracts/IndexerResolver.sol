@@ -33,6 +33,7 @@ contract IndexerResolver is SchemaResolver {
         // Index the attestation
         indexer.indexAttestation(attestation.uid);
 
+        // Emitted so the WAVS eas-compute component can be more generic.
         emit IEAS.Attested(
             attestation.recipient,
             attestation.attester,
