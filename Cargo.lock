@@ -3602,6 +3602,7 @@ name = "wavs-eas-compute"
 version = "0.4.0"
 dependencies = [
  "alloy-network",
+ "alloy-primitives",
  "alloy-provider",
  "alloy-rpc-types",
  "alloy-sol-macro",

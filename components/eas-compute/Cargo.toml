@@ -17,6 +17,7 @@ alloy-sol-types = { workspace = true }
 anyhow = { workspace = true }
 alloy-network = { workspace = true }
 alloy-provider = { workspace = true }
+alloy-primitives = { workspace = true }
 alloy-rpc-types = { workspace = true }
 hex = "0.4.3"
 

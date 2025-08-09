@@ -1,7 +1,7 @@
 use crate::bindings::wavs::worker::layer_types::{
     TriggerData, TriggerDataEvmContractEvent, WasmResponse,
 };
-use alloy_sol_types::SolValue;
+use crate::solidity::Attested;
 use anyhow::Result;
 use wavs_wasi_utils::decode_event_log_data;
 
@@ -31,56 +31,31 @@ pub enum Destination {
 /// Handles two types of triggers:
 /// 1. EvmContractEvent - Decodes Ethereum event logs using the NewTrigger ABI
 /// 2. Raw - Used for direct CLI testing with no encoding
-pub fn decode_trigger_event(trigger_data: TriggerData) -> Result<(u64, Vec<u8>, Destination)> {
+pub fn decode_trigger_event(trigger_data: TriggerData) -> Result<(Attested, Destination)> {
     match trigger_data {
+        // TODO figure out trigger,
         TriggerData::EvmContractEvent(TriggerDataEvmContractEvent { log, .. }) => {
-            let event: solidity::NewTrigger = decode_event_log_data!(log)?;
-            let trigger_info = solidity::TriggerInfo::abi_decode(&event._triggerInfo)?;
-            Ok((trigger_info.triggerId, trigger_info.data.to_vec(), Destination::Ethereum))
+            let event: Attested = decode_event_log_data!(log)?;
+            Ok((event, Destination::Ethereum))
         }
-        TriggerData::Raw(data) => Ok((0, data.clone(), Destination::CliOutput)),
+        // TODO fixme
+        // TriggerData::Raw(data) => Ok((Attested::abi_decode(&data)?, Destination::CliOutput)),
         _ => Err(anyhow::anyhow!("Unsupported trigger data type")),
     }
 }
 
 /// Encodes the output data for submission back to Ethereum
 ///
+/// For VotingPower contracts that implement IWavsServiceHandler, the payload
+/// should be the VotingPowerPayload directly, not wrapped in DataWithId.
+/// The envelope.payload will contain the ABI-encoded VotingPowerPayload.
+///
 /// # Arguments
-/// * `trigger_id` - The ID of the original trigger request
-/// * `output` - The data to be encoded, must implement AsRef<[u8]>
+/// * `trigger_id` - The ID of the original trigger request (unused for VotingPower payloads)
+/// * `output` - The ABI-encoded VotingPowerPayload data
 ///
 /// # Returns
-/// ABI encoded bytes ready for submission to Ethereum
-pub fn encode_trigger_output(trigger_id: u64, output: impl AsRef<[u8]>) -> WasmResponse {
-    WasmResponse {
-        payload: solidity::DataWithId {
-            triggerId: trigger_id,
-            data: output.as_ref().to_vec().into(),
-        }
-        .abi_encode(),
-        ordering: None,
-    }
-}
-
-/// Private module containing Solidity type definitions
-///
-/// The `sol!` macro from alloy_sol_macro reads a Solidity interface file
-/// and generates corresponding Rust types and encoding/decoding functions.
-///
-/// In this case, it reads "../../src/interfaces/ITypes.sol" which defines:
-/// - NewTrigger event
-/// - TriggerInfo struct
-/// - DataWithId struct
-///
-/// Documentation:
-/// - <https://docs.rs/alloy-sol-macro/latest/alloy_sol_macro/macro.sol.html>
-/// (You can also just sol! arbitrary solidity types like `event` or `struct` too)
-mod solidity {
-    use alloy_sol_macro::sol;
-    pub use ITypes::*;
-
-    // The objects here will be generated automatically into Rust types.
-    // If you update the .sol file, you must re-run `cargo build` to see the changes.
-    // or restart your editor / language server.
-    sol!("../../src/interfaces/ITypes.sol");
+/// WasmResponse with the VotingPowerPayload as the direct payload
+pub fn encode_trigger_output(output: impl AsRef<[u8]>) -> WasmResponse {
+    WasmResponse { payload: output.as_ref().to_vec(), ordering: None }
 }
