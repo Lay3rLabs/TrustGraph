@@ -26,7 +26,7 @@ contract SchemaRegistrar {
     }
 
     /// @notice Submits and reserves a new schema
-    /// @param schema The schema data schema.s
+    /// @param schema The schema data schema.
     /// @param resolver An optional schema resolver.
     /// @param revocable Whether the schema allows revocations explicitly.
     /// @return The UID of the new schema.

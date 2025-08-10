@@ -351,7 +351,7 @@ contract Governance is Common {
         uint256 proposalId,
         uint8 support
     ) public {
-        vote(governorAddr, proposalId, support, "");
+        this.vote(governorAddr, proposalId, support, "");
     }
 
     // ============================================================
@@ -404,7 +404,7 @@ contract Governance is Common {
     /// @param votingPowerAddr Address of the VotingPower contract
     function selfDelegate(string calldata votingPowerAddr) public {
         address self = vm.addr(_privateKey);
-        delegate(votingPowerAddr, vm.toString(self));
+        this.delegate(votingPowerAddr, vm.toString(self));
     }
 
     // ============================================================
@@ -472,7 +472,7 @@ contract Governance is Common {
     function showMyGovernanceStatus(
         string calldata votingPowerAddr,
         string calldata governorAddr
-    ) public view {
+    ) public {
         address myAddress = vm.addr(_privateKey);
         string memory myAddressStr = vm.toString(myAddress);
 
@@ -480,7 +480,7 @@ contract Governance is Common {
         console.log("Address:", myAddressStr);
         console.log("");
 
-        queryVotingPower(votingPowerAddr, myAddressStr);
+        this.queryVotingPower(votingPowerAddr, myAddressStr);
         console.log("");
         queryGovernanceState(governorAddr);
     }

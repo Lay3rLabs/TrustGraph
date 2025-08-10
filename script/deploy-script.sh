@@ -29,7 +29,7 @@ sleep 1
 COMMAND=deploy make wavs-middleware
 sleep 1
 
-### === Deploy Service === ###
+### === Deploy Contracts === ###
 
 # Deploy Contracts
 source script/deploy-contracts.sh

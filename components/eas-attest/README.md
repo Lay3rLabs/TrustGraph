@@ -1,4 +1,4 @@
-# EAS Attestation Component
+# EAS Attestation Component Example
 
 A generic WAVS component that receives attestation input data and creates EAS (Ethereum Attestation Service) attestations. This component provides a simple interface for creating attestations from various input formats.
 
@@ -28,7 +28,7 @@ This component serves as a generic attestation creator that can:
 ### 2. ABI-Encoded Format
 The component can decode ABI-encoded attestation data with the structure:
 - `bytes32 schema`
-- `address recipient` 
+- `address recipient`
 - `bytes data`
 - `uint64 expiration_time`
 - `bool revocable`

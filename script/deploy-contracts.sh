@@ -47,6 +47,9 @@ export EAS_SCHEMA_REGISTRAR_ADDR=$(jq -r '.logs[] | select(type == "string" and 
 export EAS_INDEXER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("Indexer deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 export EAS_INDEXER_RESOLVER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("IndexerResolver deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 export EAS_ATTEST_TRIGGER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("EASAttestTrigger deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
+export VOTING_POWER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("VotingPower deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
+export TIMELOCK_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("TimelockController deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
+export GOVERNOR_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("AttestationGovernor deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 
 # Use EAS Attest Trigger as the main service trigger
 export SERVICE_TRIGGER_ADDR="${EAS_ATTEST_TRIGGER_ADDR}"
@@ -66,6 +69,11 @@ cat > .docker/deployment_summary.json << EOF
   },
   "service_contracts": {
     "trigger": "${SERVICE_TRIGGER_ADDR}"
+  },
+  "governance_contracts": {
+    "voting_power": "${VOTING_POWER_ADDR}",
+    "timelock": "${TIMELOCK_ADDR}",
+    "governor": "${GOVERNOR_ADDR}"
   }
 }
 EOF
@@ -84,6 +92,11 @@ echo "   EAS_SCHEMA_REGISTRAR_ADDR: ${EAS_SCHEMA_REGISTRAR_ADDR}"
 echo "   EAS_INDEXER_ADDR: ${EAS_INDEXER_ADDR}"
 echo "   EAS_INDEXER_RESOLVER_ADDR: ${EAS_INDEXER_RESOLVER_ADDR}"
 echo "   EAS_ATTEST_TRIGGER_ADDR: ${EAS_ATTEST_TRIGGER_ADDR}"
+echo ""
+echo "🏛️  Governance Contracts:"
+echo "   VOTING_POWER_ADDR: ${VOTING_POWER_ADDR}"
+echo "   TIMELOCK_ADDR: ${TIMELOCK_ADDR}"
+echo "   GOVERNOR_ADDR: ${GOVERNOR_ADDR}"
 echo ""
 echo "🎯 Service Contracts:"
 echo "   SERVICE_TRIGGER_ADDR: ${SERVICE_TRIGGER_ADDR}"

@@ -1,0 +1,44 @@
+[package]
+name = "rewards"
+edition.workspace = true
+version.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[dependencies]
+wit-bindgen-rt = { workspace = true }
+wavs-wasi-utils = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+alloy-sol-macro = { workspace = true }
+wstd = { workspace = true }
+alloy-sol-types = { workspace = true }
+anyhow = { workspace = true }
+alloy-network = { workspace = true }
+alloy-provider = { workspace = true }
+alloy-rpc-types = { workspace = true }
+
+## IPFS
+cid = { workspace = true }
+multibase = { workspace = true }
+multihash = { workspace = true }
+bs58 = { workspace = true }
+
+## Other
+async-trait = { workspace = true }
+merkle-tree-rs = "0.1.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+codegen-units = 1
+opt-level = "s"
+debug = false
+strip = true
+lto = true
+
+[package.metadata.component]
+package = "component:rewards"
+target = "wavs:worker/layer-trigger-world@0.4.0-beta.4"

@@ -39,12 +39,11 @@ if [ -z "$WAVS_SERVICE_MANAGER_ADDRESS" ]; then
     fi
 fi
 
-
 if [ -z "$TRIGGER_ADDRESS" ]; then
-    TRIGGER_ADDRESS=`make get-trigger-from-deploy`
+    TRIGGER_ADDRESS=`jq -r '.service_contracts.trigger' .docker/deployment_summary.json`
 fi
 if [ -z "$SUBMIT_ADDRESS" ]; then
-    SUBMIT_ADDRESS=`make get-submit-from-deploy`
+    SUBMIT_ADDRESS=`jq -r '.eas_contracts.attester' .docker/deployment_summary.json`
 fi
 if [ -z "$DEPLOY_ENV" ]; then
     DEPLOY_ENV=$(sh ./script/get-deploy-status.sh)
