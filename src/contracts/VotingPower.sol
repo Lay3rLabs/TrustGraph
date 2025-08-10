@@ -122,6 +122,11 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
         // Transfer voting units to update delegation checkpoints
         _transferVotingUnits(address(0), to, amount);
 
+        // Auto-delegate to self if not already delegated
+        if (delegates(to) == address(0)) {
+            _delegate(to, to);
+        }
+
         emit TokensMinted(to, amount);
     }
 
@@ -155,29 +160,29 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
         emit TokensBurned(from, amount);
     }
 
-    // /**
-    //  * @dev Transfer voting tokens between accounts
-    //  * @param from The account to transfer from
-    //  * @param to The account to transfer to
-    //  * @param amount The amount to transfer
-    //  */
-    // function transfer(address from, address to, uint256 amount) external {
-    //     require(from != address(0), "VotingPower: transfer from zero address");
-    //     require(to != address(0), "VotingPower: transfer to zero address");
-    //     require(
-    //         _balances[from] >= amount,
-    //         "VotingPower: transfer amount exceeds balance"
-    //     );
+    /**
+     * @dev Transfer voting tokens between accounts
+     * @param from The account to transfer from
+     * @param to The account to transfer to
+     * @param amount The amount to transfer
+     */
+    function transfer(address from, address to, uint256 amount) external {
+        require(from != address(0), "VotingPower: transfer from zero address");
+        require(to != address(0), "VotingPower: transfer to zero address");
+        require(
+            _balances[from] >= amount,
+            "VotingPower: transfer amount exceeds balance"
+        );
 
-    //     // TODO: Add proper authorization check (msg.sender == from or approved)
-    //     // For now, allowing any transfer for simplicity
+        // TODO: Add proper authorization check (msg.sender == from or approved)
+        // For now, allowing any transfer for simplicity
 
-    //     _balances[from] -= amount;
-    //     _balances[to] += amount;
+        _balances[from] -= amount;
+        _balances[to] += amount;
 
-    //     // Transfer voting units to update delegation checkpoints
-    //     _transferVotingUnits(from, to, amount);
-    // }
+        // Transfer voting units to update delegation checkpoints
+        _transferVotingUnits(from, to, amount);
+    }
 
     /**
      * @dev Returns the current voting units for an account (implements abstract function from Votes)

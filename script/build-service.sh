@@ -29,6 +29,13 @@ DEPLOY_ENV=${DEPLOY_ENV:-""}
 REGISTRY=${REGISTRY:-"wa.dev"}
 CONFIG_VALUES=${CONFIG_VALUES:-"key=value,key2=value2"}
 
+# Display configuration being applied
+if [[ "$CONFIG_VALUES" == *"eas_address"* ]]; then
+    echo "📋 Applying EAS configuration: ${CONFIG_VALUES}"
+else
+    echo "⚠️  Using default configuration values (EAS addresses not configured): ${CONFIG_VALUES}"
+fi
+
 BASE_CMD="docker run --rm --network host -w /data -v $(pwd):/data ghcr.io/lay3rlabs/wavs:35c96a4 wavs-cli service --json true --home /data --file /data/${FILE_LOCATION}"
 
 if [ -z "$WAVS_SERVICE_MANAGER_ADDRESS" ]; then
@@ -107,6 +114,8 @@ jq -r '.components[] | @json' "${COMPONENT_CONFIGS_FILE}" | while read -r compon
     eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} permissions --http-hosts '*' --file-system true" > /dev/null
     eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} time-limit --seconds 30" > /dev/null
     eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} env --values WAVS_ENV_SOME_SECRET" > /dev/null
+
+    echo "  📋 Configuring component with: ${CONFIG_VALUES}"
     eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} config --values ${CONFIG_VALUES}" > /dev/null
     eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} fuel-limit --fuel ${FUEL_LIMIT}" > /dev/null
 

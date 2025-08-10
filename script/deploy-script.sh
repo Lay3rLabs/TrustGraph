@@ -62,6 +62,37 @@ if [ "$(sh ./script/get-deploy-status.sh)" = "TESTNET" ]; then
     export SUBMIT_CHAIN=holesky
 fi
 
+# Configure EAS addresses from deployment summary
+echo "Configuring EAS addresses from deployment summary..."
+EAS_ADDRESS=$(jq -r '.eas_contracts.eas' .docker/deployment_summary.json)
+INDEXER_ADDRESS=$(jq -r '.eas_contracts.indexer' .docker/deployment_summary.json)
+
+# Determine chain name based on deployment environment
+if [ "$(sh ./script/get-deploy-status.sh)" = "TESTNET" ]; then
+    CHAIN_NAME="holesky"
+else
+    CHAIN_NAME="local"
+fi
+
+# Validate EAS addresses were extracted successfully
+if [ "$EAS_ADDRESS" = "null" ] || [ -z "$EAS_ADDRESS" ]; then
+    echo "❌ Failed to extract EAS address from deployment summary"
+    exit 1
+fi
+
+if [ "$INDEXER_ADDRESS" = "null" ] || [ -z "$INDEXER_ADDRESS" ]; then
+    echo "❌ Failed to extract indexer address from deployment summary"
+    exit 1
+fi
+
+echo "✅ EAS Address: ${EAS_ADDRESS}"
+echo "✅ Indexer Address: ${INDEXER_ADDRESS}"
+echo "✅ Chain Name: ${CHAIN_NAME}"
+
+# Set CONFIG_VALUES with EAS configuration
+export CONFIG_VALUES="eas_address=${EAS_ADDRESS},indexer_address=${INDEXER_ADDRESS},chain_name=${CHAIN_NAME}"
+echo "📋 EAS Configuration: ${CONFIG_VALUES}"
+
 # Upload components to WASI registry
 echo "Uploading components to WASI registry..."
 jq -r '.components[] | @json' "$COMPONENT_CONFIGS_FILE" | while read -r component; do

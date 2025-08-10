@@ -1,4 +1,4 @@
-use crate::bindings::host::get_evm_chain_config;
+use crate::bindings::host::{config_var, get_evm_chain_config};
 use alloy_network::Ethereum;
 use alloy_provider::{Provider, RootProvider};
 use alloy_rpc_types::{TransactionInput, TransactionRequest};
@@ -77,18 +77,40 @@ sol! {
 }
 
 /// Configuration for EAS query operations
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct QueryConfig {
     pub eas_address: Address,
     pub indexer_address: Address,
     pub chain_name: String,
 }
 
+impl QueryConfig {
+    /// Creates a QueryConfig from WAVS component configuration
+    pub fn from_wavs_config() -> Result<Self, String> {
+        let eas_address_str =
+            config_var("eas_address").ok_or("Missing 'eas_address' in component config")?;
+        let indexer_address_str =
+            config_var("indexer_address").ok_or("Missing 'indexer_address' in component config")?;
+        let chain_name =
+            config_var("chain_name").ok_or("Missing 'chain_name' in component config")?;
+
+        let eas_address = eas_address_str
+            .parse::<Address>()
+            .map_err(|e| format!("Invalid EAS address format: {}", e))?;
+        let indexer_address = indexer_address_str
+            .parse::<Address>()
+            .map_err(|e| format!("Invalid indexer address format: {}", e))?;
+
+        Ok(Self { eas_address, indexer_address, chain_name })
+    }
+}
+
 impl Default for QueryConfig {
     fn default() -> Self {
+        // Fallback to local development values if config reading fails
         Self {
-            eas_address: Address::from([0u8; 20]), // Replace with actual EAS address
-            indexer_address: Address::from([0u8; 20]), // Replace with actual Indexer address
+            eas_address: Address::from([0u8; 20]),
+            indexer_address: Address::from([0u8; 20]),
             chain_name: "local".to_string(),
         }
     }
@@ -135,7 +157,8 @@ pub async fn query_received_attestation_count(
     schema_uid: FixedBytes<32>,
     config: Option<QueryConfig>,
 ) -> Result<U256, String> {
-    let config = config.unwrap_or_default();
+    let config = config.unwrap_or_else(|| QueryConfig::from_wavs_config().unwrap_or_default());
+    println!("Querying with config {:?}", config);
     let provider = create_provider(&config.chain_name).await?;
 
     let count_call =
@@ -161,7 +184,7 @@ pub async fn query_received_attestation_uids(
     reverse_order: bool,
     config: Option<QueryConfig>,
 ) -> Result<Vec<FixedBytes<32>>, String> {
-    let config = config.unwrap_or_default();
+    let config = config.unwrap_or_else(|| QueryConfig::from_wavs_config().unwrap_or_default());
     let provider = create_provider(&config.chain_name).await?;
 
     let uids_call = IIndexer::getReceivedAttestationUIDsCall {
@@ -191,7 +214,7 @@ pub async fn query_sent_attestation_count(
     schema_uid: FixedBytes<32>,
     config: Option<QueryConfig>,
 ) -> Result<U256, String> {
-    let config = config.unwrap_or_default();
+    let config = config.unwrap_or_else(|| QueryConfig::from_wavs_config().unwrap_or_default());
     let provider = create_provider(&config.chain_name).await?;
 
     let count_call = IIndexer::getSentAttestationUIDCountCall { attester, schemaUID: schema_uid };
@@ -216,7 +239,7 @@ pub async fn query_sent_attestation_uids(
     reverse_order: bool,
     config: Option<QueryConfig>,
 ) -> Result<Vec<FixedBytes<32>>, String> {
-    let config = config.unwrap_or_default();
+    let config = config.unwrap_or_else(|| QueryConfig::from_wavs_config().unwrap_or_default());
     let provider = create_provider(&config.chain_name).await?;
 
     let uids_call = IIndexer::getSentAttestationUIDsCall {
@@ -245,7 +268,7 @@ pub async fn query_schema_attestation_count(
     schema_uid: FixedBytes<32>,
     config: Option<QueryConfig>,
 ) -> Result<U256, String> {
-    let config = config.unwrap_or_default();
+    let config = config.unwrap_or_else(|| QueryConfig::from_wavs_config().unwrap_or_default());
     let provider = create_provider(&config.chain_name).await?;
 
     let count_call = IIndexer::getSchemaAttestationUIDCountCall { schemaUID: schema_uid };
@@ -266,7 +289,7 @@ pub async fn query_schema_attestation_uids(
     reverse_order: bool,
     config: Option<QueryConfig>,
 ) -> Result<Vec<FixedBytes<32>>, String> {
-    let config = config.unwrap_or_default();
+    let config = config.unwrap_or_else(|| QueryConfig::from_wavs_config().unwrap_or_default());
     let provider = create_provider(&config.chain_name).await?;
 
     let uids_call = IIndexer::getSchemaAttestationUIDsCall {
@@ -296,7 +319,7 @@ pub async fn query_schema_attester_recipient_count(
     recipient: Address,
     config: Option<QueryConfig>,
 ) -> Result<U256, String> {
-    let config = config.unwrap_or_default();
+    let config = config.unwrap_or_else(|| QueryConfig::from_wavs_config().unwrap_or_default());
     let provider = create_provider(&config.chain_name).await?;
 
     let count_call = IIndexer::getSchemaAttesterRecipientAttestationUIDCountCall {
@@ -326,7 +349,7 @@ pub async fn query_schema_attester_recipient_uids(
     reverse_order: bool,
     config: Option<QueryConfig>,
 ) -> Result<Vec<FixedBytes<32>>, String> {
-    let config = config.unwrap_or_default();
+    let config = config.unwrap_or_else(|| QueryConfig::from_wavs_config().unwrap_or_default());
     let provider = create_provider(&config.chain_name).await?;
 
     let uids_call = IIndexer::getSchemaAttesterRecipientAttestationUIDsCall {
@@ -363,7 +386,7 @@ pub async fn is_attestation_indexed(
     attestation_uid: FixedBytes<32>,
     config: Option<QueryConfig>,
 ) -> Result<bool, String> {
-    let config = config.unwrap_or_default();
+    let config = config.unwrap_or_else(|| QueryConfig::from_wavs_config().unwrap_or_default());
     let provider = create_provider(&config.chain_name).await?;
 
     let indexed_call = IIndexer::isAttestationIndexedCall { attestationUID: attestation_uid };
@@ -381,7 +404,7 @@ pub async fn query_attestation(
     attestation_uid: FixedBytes<32>,
     config: Option<QueryConfig>,
 ) -> Result<IEAS::Attestation, String> {
-    let config = config.unwrap_or_default();
+    let config = config.unwrap_or_else(|| QueryConfig::from_wavs_config().unwrap_or_default());
     let provider = create_provider(&config.chain_name).await?;
 
     let attestation_call = IEAS::getAttestationCall { uid: attestation_uid };
@@ -401,13 +424,6 @@ pub async fn query_attestation(
 // =============================================================================
 // Convenience Functions
 // =============================================================================
-
-/// Convenience function to query attestations for a recipient (backwards compatibility)
-pub async fn query_attestations_for_recipient(recipient: Address) -> Result<U256, String> {
-    // TODO it doesn't work like this lol
-    let schema_uid = FixedBytes([0u8; 32]); // Query all schemas
-    query_received_attestation_count(recipient, schema_uid, None).await
-}
 
 /// Retrieves all attestation data for a list of UIDs
 pub async fn query_attestations_batch(

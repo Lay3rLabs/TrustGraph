@@ -9,7 +9,7 @@ mod examples;
 mod query;
 mod solidity;
 mod trigger;
-use query::query_attestations_for_recipient;
+use query::query_received_attestation_count;
 use trigger::{decode_trigger_event, encode_trigger_output, Destination};
 pub mod bindings;
 use crate::bindings::{export, Guest, TriggerAction, WasmResponse};
@@ -40,26 +40,24 @@ impl Guest for Component {
     fn run(action: TriggerAction) -> std::result::Result<Option<WasmResponse>, String> {
         let (attestation, dest) = decode_trigger_event(action.data).map_err(|e| e.to_string())?;
 
-        // TODO load schema from config. If attestation is not for the schema id do nothing.
-        // TODO maybe make this a cron workflow.
-
         // Parse the input to get recipient address
         let recipient_address = attestation.recipient;
 
-        println!("Querying EAS attestations for recipient: {}", recipient_address);
+        println!(
+            "Querying EAS attestations for recipient / schema: {} / {}",
+            recipient_address, attestation.schemaUID
+        );
 
-        // Query the indexer for attestation count
-        let attestation_count =
-            block_on(async move { query_attestations_for_recipient(recipient_address).await })?;
+        // Query the indexer for attestation count using the schema from the attestation event
+        let attestation_count = block_on(async move {
+            query_received_attestation_count(recipient_address, attestation.schemaUID, None).await
+        })?;
+
+        println!("Attestation count: {:?}", attestation_count);
 
         // Create voting power payload based on attestation count
         let voting_power_payload =
             create_voting_power_payload(recipient_address, attestation_count);
-
-        println!(
-            "Created voting power payload with {} operations",
-            voting_power_payload.operations.len()
-        );
 
         // Encode the response
         let encoded_response = voting_power_payload.abi_encode();
@@ -89,6 +87,8 @@ fn create_voting_power_payload(recipient: Address, attestation_count: U256) -> V
         amount: voting_power,
     };
 
+    let operations = vec![mint_operation];
+
     // Create the payload with the mint operation
-    VotingPowerPayload { operations: vec![mint_operation] }
+    VotingPowerPayload { operations }
 }
