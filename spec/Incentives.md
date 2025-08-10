@@ -13,6 +13,7 @@ Types of things we might attest to:
 - Building something cool with WAVS
 - Running a WAVS node
 - Running a WAVS node with good uptime and performance
+- Finding security vulnerabilities
 
 
 

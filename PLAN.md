@@ -23,6 +23,17 @@ Fix eas-attest component and Attester.sol contract:
 - [ ] Set operation to Voting power
 - [ ] Add operations to Attester.sol (revoke, multi-attest, etc.)
 
+## NEXT FEATURE: Rewards
+
+Attestations are great for creating custom rewards payouts.
+
+The pipeline is simple:
+```
+ATTESTATION -> REWARDS CALCULATION SERVICE -> RewardsDistributor.sol
+```
+
+
+
 ## Future Service Improvements
 - [] Break out Indexer contract, could be modified to be multichain? EAS indexer component (indexes certain attestations without a resolver?)
 - [] Add eas-indexer sidecar to docker compose?
