@@ -3,6 +3,7 @@
   "version": "0.4.0",
   "license": "MIT",
   "scripts": {
+    "postinstall": "mkdir -p node_modules/@morpho-org/universal-rewards-distributor/lib/ && ln -s ../../../@openzeppelin node_modules/@morpho-org/universal-rewards-distributor/lib/openzeppelin-contracts",
     "build": "forge build",
     "coverage": "forge coverage --report summary --report lcov --match-path 'test/unit/*'",
     "deploy:local": "forge script Deploy ${SERVICE_MANAGER} --sig 'run(string)' --rpc-url http://localhost:8545 --broadcast -vvvvv",
@@ -26,6 +27,7 @@
     "@commitlint/config-conventional": "19.2.2",
     "@defi-wonderland/natspec-smells": "1.1.6",
     "@ethereum-attestation-service/eas-contracts": "^1.8.0",
+    "@morpho-org/universal-rewards-distributor": "github:lay3rlabs/universal-rewards-distributor#0de86bde8f949b35fdc61e533cc240fa541e27fe",
     "@openzeppelin/contracts": "^5.2.0",
     "@wavs/solidity": "0.4.0-rc",
     "forge-std": "github:foundry-rs/forge-std#v1.9.6",

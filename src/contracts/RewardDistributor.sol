@@ -5,12 +5,17 @@ pragma solidity ^0.8.19;
  Note: having stupid version issues with this contract's dependencies so it's disabled for now.
 */
 
+import {IWavsTrigger} from "interfaces/IWavsTrigger.sol";
 import {ITypes} from "interfaces/ITypes.sol";
 import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
 import {IWavsServiceHandler} from "@wavs/interfaces/IWavsServiceHandler.sol";
 import {UniversalRewardsDistributor} from "@morpho-org/universal-rewards-distributor/UniversalRewardsDistributor.sol";
 
-contract RewardDistributor is IWavsServiceHandler, UniversalRewardsDistributor {
+contract RewardDistributor is
+    IWavsTrigger,
+    IWavsServiceHandler,
+    UniversalRewardsDistributor
+{
     /// @inheritdoc IWavsTrigger
     TriggerId public nextTriggerId;
 
@@ -44,7 +49,6 @@ contract RewardDistributor is IWavsServiceHandler, UniversalRewardsDistributor {
         _serviceManager = serviceManager;
     }
 
-    /// @inheritdoc IWavsTrigger
     function addTrigger() external {
         // Get the next trigger id
         nextTriggerId = TriggerId.wrap(TriggerId.unwrap(nextTriggerId) + 1);
