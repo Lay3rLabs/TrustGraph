@@ -404,6 +404,7 @@ pub async fn query_attestation(
 
 /// Convenience function to query attestations for a recipient (backwards compatibility)
 pub async fn query_attestations_for_recipient(recipient: Address) -> Result<U256, String> {
+    // TODO it doesn't work like this lol
     let schema_uid = FixedBytes([0u8; 32]); // Query all schemas
     query_received_attestation_count(recipient, schema_uid, None).await
 }

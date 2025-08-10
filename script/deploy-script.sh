@@ -36,21 +36,17 @@ source script/deploy-contracts.sh
 sleep 1
 
 ### === Deploy Services ===
-export COMPONENT_FILENAME=wavs_eas_attest.wasm
-if [ "$(sh ./script/get-deploy-status.sh)" = "TESTNET" ]; then
-    read -p "Enter the component filename (default: ${COMPONENT_FILENAME}): " input_filename
-    if [ -n "$input_filename" ]; then
-        export COMPONENT_FILENAME="$input_filename"
-    fi
+
+# Require component configuration file
+COMPONENT_CONFIGS_FILE=".docker/components-config.json"
+
+if [ ! -f "$COMPONENT_CONFIGS_FILE" ]; then
+    echo "❌ Component configuration file not found: $COMPONENT_CONFIGS_FILE"
+    echo "Please run 'script/configure-components.sh init' to create the configuration."
+    exit 1
 fi
 
-export PKG_NAME="wasm-eas-attest"
-if [ "$(sh ./script/get-deploy-status.sh)" = "TESTNET" ]; then
-    read -p "Enter the package name (default: ${PKG_NAME}): " input_pkg_name
-    if [ -n "$input_pkg_name" ]; then
-        export PKG_NAME="$input_pkg_name"
-    fi
-fi
+echo "Using component configuration from: $COMPONENT_CONFIGS_FILE"
 
 export PKG_VERSION="0.1.0"
 if [ "$(sh ./script/get-deploy-status.sh)" = "TESTNET" ]; then
@@ -60,20 +56,39 @@ if [ "$(sh ./script/get-deploy-status.sh)" = "TESTNET" ]; then
     fi
 fi
 
-# TODO need to do this for multiple components...
-# ** Testnet Setup: https://wa.dev/account/credentials/new -> warg login
-source script/upload-to-wasi-registry.sh || true
-sleep 1
-
 # Testnet: set values (default: local if not set)
 if [ "$(sh ./script/get-deploy-status.sh)" = "TESTNET" ]; then
     export TRIGGER_CHAIN=holesky
     export SUBMIT_CHAIN=holesky
 fi
 
-# Package not found with wa.dev? -- make sure it is public
-REGISTRY=${REGISTRY} source ./script/build-service.sh
+# Upload components to WASI registry
+echo "Uploading components to WASI registry..."
+jq -r '.components[] | @json' "$COMPONENT_CONFIGS_FILE" | while read -r component; do
+    export COMPONENT_FILENAME=$(echo "$component" | jq -r '.filename')
+    export PKG_NAME=$(echo "$component" | jq -r '.package_name')
+    export PKG_VERSION=$(echo "$component" | jq -r '.package_version')
+
+    if [ "$(sh ./script/get-deploy-status.sh)" = "TESTNET" ]; then
+        read -p "Upload component ${COMPONENT_FILENAME} with package name (default: ${PKG_NAME}): " input_pkg_name
+        if [ -n "$input_pkg_name" ]; then
+            export PKG_NAME="$input_pkg_name"
+        fi
+    fi
+
+    echo "Uploading ${COMPONENT_FILENAME} as ${PKG_NAME}..."
+    # ** Testnet Setup: https://wa.dev/account/credentials/new -> warg login
+    source script/upload-to-wasi-registry.sh || true
+    sleep 1
+done
+
+# Create service with multiple workflows
+echo "Creating service with multiple component workflows..."
+export COMPONENT_CONFIGS_FILE="$COMPONENT_CONFIGS_FILE"
+REGISTRY=`bash ./script/get-registry.sh` source ./script/build-service.sh
 sleep 1
+
+
 
 # === Upload service.json to IPFS ===
 # local: 127.0.0.1:5001 | testnet: https://app.pinata.cloud/. set PINATA_API_KEY to JWT token in .env
@@ -140,5 +155,16 @@ COMMAND="register ${OPERATOR_PRIVATE_KEY} ${AVS_SIGNING_ADDRESS} 0.001ether" mak
 
 # Verify registration
 COMMAND="list_operators" PAST_BLOCKS=500 make wavs-middleware
+
+# Reset registry after deployment is complete
+echo "Cleaning up registry data..."
+REGISTRY=`bash ./script/get-registry.sh`
+if [ -n "$REGISTRY" ]; then
+    PROTOCOL="https"
+    if [[ "$REGISTRY" == *"localhost"* ]] || [[ "$REGISTRY" == *"127.0.0.1"* ]]; then
+        PROTOCOL="http"
+    fi
+    warg reset --registry ${PROTOCOL}://${REGISTRY} || echo "Registry reset failed (non-critical)"
+fi
 
 echo "✅ Deployment complete!"

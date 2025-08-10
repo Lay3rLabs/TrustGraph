@@ -50,30 +50,68 @@ if [ -z "$DEPLOY_ENV" ]; then
 fi
 # === Core ===
 
+# Get PKG_NAMESPACE
+if [ -z "$PKG_NAMESPACE" ]; then
+    export PKG_NAMESPACE=`bash ./script/get-wasi-namespace.sh`
+    if [ -z "$PKG_NAMESPACE" ]; then
+        echo "PKG_NAMESPACE is not set. Please set the PKG_NAMESPACE environment variable."
+        exit 1
+    fi
+fi
+
 TRIGGER_EVENT_HASH=`cast keccak ${TRIGGER_EVENT}`
 
 export SERVICE_ID=`eval "${BASE_CMD} init --name demo" | jq -r .service.id`
 echo "Service ID: ${SERVICE_ID}"
 
-WORKFLOW_ID=`eval "$BASE_CMD workflow add" | jq -r .workflow_id`
-echo "Workflow ID: ${WORKFLOW_ID}"
-
-eval "$BASE_CMD workflow trigger --id ${WORKFLOW_ID} set-evm --address ${TRIGGER_ADDRESS} --chain-name ${TRIGGER_CHAIN} --event-hash ${TRIGGER_EVENT_HASH}" > /dev/null
-
-# If no aggregator is set, use the default
-SUB_CMD="set-evm"
-if [ -n "$AGGREGATOR_URL" ]; then
-    SUB_CMD="set-aggregator --url ${AGGREGATOR_URL}"
+# Process component configurations from JSON file
+if [ -z "${COMPONENT_CONFIGS_FILE}" ] || [ ! -f "${COMPONENT_CONFIGS_FILE}" ]; then
+    echo "❌ Component configuration file not found: ${COMPONENT_CONFIGS_FILE}"
+    echo "Please run 'script/configure-components.sh init' to create the configuration."
+    exit 1
 fi
-eval "$BASE_CMD workflow submit --id ${WORKFLOW_ID} ${SUB_CMD} --address ${SUBMIT_ADDRESS} --chain-name ${SUBMIT_CHAIN} --max-gas ${MAX_GAS}" > /dev/null
 
-eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} set-source-registry --domain ${REGISTRY} --package ${PKG_NAMESPACE}:${PKG_NAME} --version ${PKG_VERSION}"
+echo "Reading component configurations from JSON file..."
+jq -r '.components[] | @json' "${COMPONENT_CONFIGS_FILE}" | while read -r component; do
+    COMP_FILENAME=$(echo "$component" | jq -r '.filename')
+    COMP_PKG_NAME=$(echo "$component" | jq -r '.package_name')
+    COMP_PKG_VERSION=$(echo "$component" | jq -r '.package_version')
+    COMP_TRIGGER_EVENT=$(echo "$component" | jq -r '.trigger_event')
+    COMP_TRIGGER_JSON_PATH=$(echo "$component" | jq -r '.trigger_json_path')
+    COMP_SUBMIT_JSON_PATH=$(echo "$component" | jq -r '.submit_json_path')
 
-eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} permissions --http-hosts '*' --file-system true" > /dev/null
-eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} time-limit --seconds 30" > /dev/null
-eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} env --values WAVS_ENV_SOME_SECRET" > /dev/null
-eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} config --values ${CONFIG_VALUES}" > /dev/null
-eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} fuel-limit --fuel ${FUEL_LIMIT}" > /dev/null
+    # Extract addresses from JSON paths
+    COMP_TRIGGER_ADDRESS=`jq -r ".${COMP_TRIGGER_JSON_PATH}" .docker/deployment_summary.json`
+    COMP_SUBMIT_ADDRESS=`jq -r ".${COMP_SUBMIT_JSON_PATH}" .docker/deployment_summary.json`
+
+    COMP_TRIGGER_EVENT_HASH=`cast keccak ${COMP_TRIGGER_EVENT}`
+
+    echo "Creating workflow for component: ${COMP_FILENAME}"
+    echo "  Package: ${PKG_NAMESPACE}:${COMP_PKG_NAME}@${COMP_PKG_VERSION}"
+    echo "  Trigger: ${COMP_TRIGGER_ADDRESS} (${COMP_TRIGGER_EVENT})"
+    echo "  Submit: ${COMP_SUBMIT_ADDRESS}"
+
+    WORKFLOW_ID=`eval "$BASE_CMD workflow add" | jq -r .workflow_id`
+    echo "  Workflow ID: ${WORKFLOW_ID}"
+
+    eval "$BASE_CMD workflow trigger --id ${WORKFLOW_ID} set-evm --address ${COMP_TRIGGER_ADDRESS} --chain-name ${TRIGGER_CHAIN} --event-hash ${COMP_TRIGGER_EVENT_HASH}" > /dev/null
+
+    # If no aggregator is set, use the default
+    SUB_CMD="set-evm"
+    if [ -n "$AGGREGATOR_URL" ]; then
+        SUB_CMD="set-aggregator --url ${AGGREGATOR_URL}"
+    fi
+    eval "$BASE_CMD workflow submit --id ${WORKFLOW_ID} ${SUB_CMD} --address ${COMP_SUBMIT_ADDRESS} --chain-name ${SUBMIT_CHAIN} --max-gas ${MAX_GAS}" > /dev/null
+    eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} set-source-registry --domain ${REGISTRY} --package ${PKG_NAMESPACE}:${COMP_PKG_NAME} --version ${COMP_PKG_VERSION}"
+
+    eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} permissions --http-hosts '*' --file-system true" > /dev/null
+    eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} time-limit --seconds 30" > /dev/null
+    eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} env --values WAVS_ENV_SOME_SECRET" > /dev/null
+    eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} config --values ${CONFIG_VALUES}" > /dev/null
+    eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} fuel-limit --fuel ${FUEL_LIMIT}" > /dev/null
+
+    echo "  ✅ Workflow configured for ${COMP_FILENAME}"
+done
 
 eval "$BASE_CMD manager set-evm --chain-name ${SUBMIT_CHAIN} --address `cast --to-checksum ${WAVS_SERVICE_MANAGER_ADDRESS}`" > /dev/null
 eval "$BASE_CMD validate" > /dev/null

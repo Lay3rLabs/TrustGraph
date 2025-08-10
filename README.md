@@ -283,6 +283,7 @@ export EAS_ADDR=$(jq -r '.eas_contracts.eas' .docker/deployment_summary.json)
 export SCHEMA_REGISTRAR_ADDR=$(jq -r '.eas_contracts.schema_registrar' .docker/deployment_summary.json)
 export EAS_INDEXER_ADDR=$(jq -r '.eas_contracts.indexer' .docker/deployment_summary.json)
 export INDEXER_RESOLVER_ADDR=$(jq -r '.eas_contracts.indexer_resolver' .docker/deployment_summary.json)
+export VOTING_POWER_ADDR=$(jq -r '.governance_contracts.voting_power' .docker/deployment_summary.json)
 ```
 
 ### 1. Create and Register a Schema
@@ -339,6 +340,15 @@ forge script script/Trigger.s.sol:EasTrigger --sig "queryAttestations(string,str
   "0x742d35Cc6634C0532925a3b8D4f3e9dC9BfD16BB" \
   10 \
   --rpc-url $RPC_URL
+```
+
+Check voting power for recipient (should have gone up by number of attestations):
+```bash
+forge script script/Governance.s.sol:Governance \
+    --sig "queryVotingPower(string,string)" \
+    $VOTING_POWER_ADDR \
+    "0x742d35Cc6634C0532925a3b8D4f3e9dC9BfD16BB" \
+    --rpc-url $RPC_URL
 ```
 
 ## AI Coding Agents

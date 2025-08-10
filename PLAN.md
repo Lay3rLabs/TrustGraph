@@ -14,7 +14,8 @@ Fix eas-attest component and Attester.sol contract:
 - [x] Script to query voting power
 - [x] What triggers the EAS compute component: IndexerResolver events
 - [x] Make indexer resolver trigger compute
-- [ ] Fix up deployment so two or more services are deployed (eas-attest and eas-compute)
+- [x] Fix up deployment so two or more services are deployed (eas-attest and eas-compute)
+- [ ] Fix up schema id being 0x00000 in eas-compute
 - [ ] eas-compute -> eas-compute-voting-power
 - [ ] Realistic vouching schema
 - [ ] Rename to Voting Power to points?
@@ -43,8 +44,8 @@ For `wavs_eas_attest.wasm`, the configuration will be:
 
 For `wavs_eas_compute.wasm`, the configuration will be:
 - TRIGGER_EVENT: "Attested(address,address,bytes32,bytes32)"
-- SUBMIT_ADDRESS: `jq -r '.eas_contracts.attester' .docker/deployment_summary.json`
-- TRIGGER_ADDRESS: `jq -r '.eas_contracts.attester' .docker/deployment_summary.json`
+- SUBMIT_ADDRESS: `jq -r '.governance_contracts.voting_power' .docker/deployment_summary.json`
+- TRIGGER_ADDRESS: `jq -r '.eas_contracts.indexer_resolver' .docker/deployment_summary.json`
 
 Each component will have a new WORKFLOW_ID. SERVICE_ID is the same for both components.
 

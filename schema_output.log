@@ -1,0 +1,36 @@
+No files changed, compilation skipped
+Script ran successfully.
+
+== Logs ==
+  Registering new EAS schema:
+  Schema: string message
+  Resolver: 0xD85Ac2785bF1361B407CBF1f757eFD2218b705A5
+  Revocable: true
+  Schema registered successfully!
+  Schema UID: 0xa3af3a97907c9b91db7e79b17e96debda1f3f928790aca717258c594c10757dc
+  SCHEMA_REGISTRATION_RESULT:
+  {"schema_uid":"0xa3af3a97907c9b91db7e79b17e96debda1f3f928790aca717258c594c10757dc","schema":"string message","resolver":"0xD85Ac2785bF1361B407CBF1f757eFD2218b705A5","revocable":true}
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 17000
+
+Estimated gas price: 1.000000007 gwei
+
+Estimated total gas used for script: 134951
+
+Estimated amount required: 0.000134951000944657 ETH
+
+==========================
+
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+
+Transactions saved to: /Users/jacobhartnell/Dev/Demos/symbient/broadcast/Schema.s.sol/17000/registerSchema-latest.json
+
+Sensitive values saved to: /Users/jacobhartnell/Dev/Demos/symbient/cache/Schema.s.sol/17000/registerSchema-latest.json
+

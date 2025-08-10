@@ -45,6 +45,15 @@ make wasi-build             # Build WASI components only
 WASI_BUILD_DIR=components/eas-attest make wasi-build  # Build specific component
 ```
 
+### Multi-Component Management
+```bash
+script/configure-components.sh init        # Initialize component configuration
+script/configure-components.sh list        # List configured components
+script/configure-components.sh add         # Add component interactively
+script/configure-components.sh validate    # Validate configurations
+script/configure-components.sh help        # Show all available commands
+```
+
 ### Testing
 ```bash
 forge test                   # Run all Solidity tests
@@ -100,13 +109,42 @@ Located in `components/*/index.ts`. Similar patterns to Rust but using:
 - Use Foundry's testing framework
 - Mock external dependencies where appropriate
 
+## Multi-Component Deployment
+
+The system supports deploying multiple WASM components as separate workflows within a single WAVS service. Each component can have its own trigger events, submit addresses, and configurations.
+
+**📖 See [Component Configuration Guide](docs/COMPONENT_CONFIGURATION.md) for detailed documentation.**
+
+### Quick Setup
+
+```bash
+# Initialize component configuration
+script/configure-components.sh init
+
+# View configured components  
+script/configure-components.sh list
+
+# Deploy all components
+script/deploy-script.sh
+```
+
+### Default Components
+- **wavs_eas_attest.wasm** - EAS attestation processing
+- **wavs_eas_compute.wasm** - EAS computation workflows
+
+Components are configured in `.docker/components-config.json` using JSON format.
+
 ## Deployment
 
 The deployment process involves multiple steps coordinated through shell scripts:
 1. Deploy EigenLayer contracts (`make wavs-middleware`)
 2. Deploy service contracts (`script/deploy-contracts.sh`)
-3. Build and upload WASI components (`script/upload-to-wasi-registry.sh`)
-4. Configure aggregator and WAVS operator instances
+3. **Configure components** (`script/configure-components.sh init`) - **Required**
+4. Build and upload multiple WASI components (`script/upload-to-wasi-registry.sh`)
+5. Create service with multiple component workflows (`script/build-service.sh`)
+6. Configure aggregator and WAVS operator instances
+
+**Note**: Component configuration is required - deployment will fail without `.docker/components-config.json`
 
 ## Environment Variables
 
