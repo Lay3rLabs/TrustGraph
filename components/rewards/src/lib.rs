@@ -25,6 +25,13 @@ impl Guest for Component {
             config_var("reward_token").ok_or_else(|| "Failed to get reward token address")?;
         let reward_source_nft_address =
             config_var("reward_source_nft").ok_or_else(|| "Failed to get NFT address")?;
+
+        // EAS-related configuration
+        let eas_address = config_var("eas_address").ok_or_else(|| "Failed to get EAS address")?;
+        let eas_indexer_address =
+            config_var("eas_indexer_address").ok_or_else(|| "Failed to get EAS indexer address")?;
+        let chain_name = config_var("chain_name").unwrap_or_else(|| "local".to_string());
+
         let ipfs_url = std::env::var("WAVS_ENV_PINATA_API_URL")
             .unwrap_or_else(|_| "https://uploads.pinata.cloud/v3/files".to_string());
         let ipfs_api_key = std::env::var("WAVS_ENV_PINATA_API_KEY")
@@ -33,11 +40,43 @@ impl Guest for Component {
         let trigger_id = decode_trigger_event(action.data).map_err(|e| e.to_string())?;
 
         let mut registry = SourceRegistry::new();
-        // Provide 1e18 rewards per NFT held.
+
+        // Add NFT source - 1e18 rewards per NFT held
         registry.add_source(sources::erc721::Erc721Source::new(
             &reward_source_nft_address,
             U256::from(1e18),
         ));
+
+        // Add EAS sources
+        // Reward users for received attestations - 5e17 rewards per attestation
+        registry.add_source(sources::eas::EasSource::new(
+            &eas_address,
+            &eas_indexer_address,
+            &chain_name,
+            sources::eas::EasRewardType::ReceivedAttestations,
+            U256::from(5e17),
+        ));
+
+        // Reward users for sent attestations - 3e17 rewards per attestation
+        registry.add_source(sources::eas::EasSource::new(
+            &eas_address,
+            &eas_indexer_address,
+            &chain_name,
+            sources::eas::EasRewardType::SentAttestations,
+            U256::from(3e17),
+        ));
+
+        // Example: Reward for specific schema attestations
+        // Uncomment and configure to reward attestations to a specific schema
+        // if let Ok(schema_uid) = config_var("reward_schema_uid") {
+        //     registry.add_source(sources::eas::EasSource::new(
+        //         &eas_address,
+        //         &eas_indexer_address,
+        //         &chain_name,
+        //         sources::eas::EasRewardType::SchemaAttestations(schema_uid),
+        //         U256::from(1e18), // 1e18 rewards per schema attestation
+        //     ));
+        // }
 
         block_on(async move {
             let accounts = registry.get_accounts().await.map_err(|e| e.to_string())?;

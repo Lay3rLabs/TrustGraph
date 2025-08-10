@@ -15,6 +15,4 @@ Types of things we might attest to:
 - Running a WAVS node with good uptime and performance
 - Finding security vulnerabilities
 
-
-
 An llm reviewer could review attestations (and make attestations about attestations that might relate to points or incentives payout).

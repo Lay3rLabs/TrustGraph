@@ -17,7 +17,7 @@ Fix eas-attest component and Attester.sol contract:
 - [x] Fix up deployment so two or more services are deployed (eas-attest and eas-compute)
 - [x] Fix up schema id being 0x00000 in eas-compute
 - [ ] Realistic vouching schema
-- [ ] Better computation of attestations
+- [ ] Better computation of attestations (actually use attestation data)
 - [ ] eas-compute -> eas-compute-voting-power
 - [ ] Rename to Voting Power to Membrane? Should a membrane be a resolver?
 - [ ] Set operation to Voting power
@@ -32,7 +32,10 @@ The pipeline is simple:
 ATTESTATION -> REWARDS CALCULATION SERVICE -> RewardsDistributor.sol
 ```
 
-
+TODO:
+- [ ] Finish rewards deployment (deploy script for contracts / service)
+- [ ] Clean up rewards contract
+- [ ] Tests
 
 ## Future Service Improvements
 - [] Break out Indexer contract, could be modified to be multichain? EAS indexer component (indexes certain attestations without a resolver?)
@@ -41,12 +44,14 @@ ATTESTATION -> REWARDS CALCULATION SERVICE -> RewardsDistributor.sol
 - [] EAS Verify component? An EAS flow that verifies attestations
 - [] Add rewards and eas-compute-rewards component
 - [] Add llm component.
+- [] Vesting
 - [] More resolvers
 - [] UI for demo
 - [] Docs and writeup
 - [] Symbient exploration
+- [] Futarchy
 - [] review and fixup tests
-- [] ERC20 contract
+- [] ERC20 bridging
 
 
 # Idea space
