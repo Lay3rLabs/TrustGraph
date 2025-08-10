@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.27;
+pragma solidity ^0.8.22;
 
 interface ITypes {
     /**
@@ -11,6 +11,23 @@ interface ITypes {
         TriggerId triggerId;
         bytes data;
     }
+
+    /**
+     * @notice Struct to store AVS output data
+     * @param root Root of the merkle tree
+     * @param ipfsHash IPFS hash of the merkle tree
+     */
+    struct AvsOutput {
+        bytes32 root;
+        bytes32 ipfsHashData;
+        string ipfsHash;
+    }
+
+    /**
+     * @notice Event emitted when a new trigger is created
+     * @param triggerId Unique identifier for the trigger
+     */
+    event WavsRewardsTrigger(uint64 triggerId);
 
     /**
      * @notice Struct to store trigger information
