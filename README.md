@@ -323,7 +323,7 @@ Create an attestation request using your schema.
 forge script script/Trigger.s.sol:EasTrigger --sig "triggerRawAttestation(string,string,string,string)" \
   "${SERVICE_TRIGGER_ADDR}" \
   ${COMPUTE_SCHEMA_UID} \
-  "0x742d35Cc6634C0532925a3b8D4f3e9dC9BfD16BB" \
+  "0xfE26EB9eD1B24abcfCd023417655ff06344EC470" \
   "Advanced Solidity Development Skills Verified" \
   --rpc-url $RPC_URL --broadcast
 ```
@@ -340,7 +340,7 @@ forge script script/Trigger.s.sol:EasTrigger --sig "queryAttestations(string,str
   "${EAS_INDEXER_ADDR}" \
   "${EAS_ADDR}" \
   "${COMPUTE_SCHEMA_UID}" \
-  "0x742d35Cc6634C0532925a3b8D4f3e9dC9BfD16BB" \
+  "0xfE26EB9eD1B24abcfCd023417655ff06344EC470" \
   10 \
   --rpc-url $RPC_URL
 ```
@@ -350,7 +350,7 @@ Check voting power for recipient (should have gone up by number of attestations)
 forge script script/Governance.s.sol:Governance \
     --sig "queryVotingPower(string,string)" \
     $VOTING_POWER_ADDR \
-    "0x742d35Cc6634C0532925a3b8D4f3e9dC9BfD16BB" \
+    "0xfE26EB9eD1B24abcfCd023417655ff06344EC470" \
     --rpc-url $RPC_URL
 ```
 
