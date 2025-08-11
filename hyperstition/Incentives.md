@@ -1,10 +1,39 @@
-# Attestation Based Incentives
+# Metric Based incentives
 
-Attestations are used to dirive metrics that payout incentives.
+tl;dr:
+- Smart contracts have limited the design of incentive systems
+- Verifiable computation (i.e. WAVS) opens up the design space
+- Metric based incentives better align with the goals of the protocol
 
-Attestations can be used to account for contributions and keep track of activity.
+For more info see [draft whitepaper](https://github.com/Lay3rLabs/whitepapers/blob/main/papers/incentives/draft.md).
 
-Types of things we might attest to:
+### Example User Stories
+If you launch an app on our launchpad, you can earn incentives based on your app's performance across our key metrics:
+- Price
+- TVL
+- Protocol Revenue
+- Protocol Revenue Growth Rate
+
+If you are a contributor, you can earn incentives based on your activity:
+- Contributing to Open Source
+- Completing bounties
+- Building something cool with WAVS
+- Finding security vulnerabilities
+
+If you are an operator, you can earn incentives based on your activity:
+- Running a WAVS node
+- Running a WAVS node with good uptime and performance
+
+If you are a community member, you can earn incentives based on your activity:
+- Attending our events or webinars
+- Writing blog posts or articles about WAVS
+- Providing feedback or suggestions for improvement
+
+### Attestation Based Incentives
+
+A subset of metric based incentives, where attestations are used to derive metrics that payout incentives.
+
+Attestations can be used to account for contributions and keep track of activity. Types of things we might attest to inlcude:
 - Following our Twitter account
 - Contributing to Open Source
 - Attending our events or webinars

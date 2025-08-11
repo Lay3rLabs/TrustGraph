@@ -1,4 +1,0 @@
-- product scopes for the launchpad -> needed for wireframe discussion with Noah, Lea
-- product scope for core features on launchpad using WAVS -> needed for deploying Ethan on architecture
-- product scope for the ICO Option Drop -> needed for writing a scope and pricing with Adrien next week
-- defined metric based incentives types in writing
