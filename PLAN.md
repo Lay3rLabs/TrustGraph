@@ -35,7 +35,9 @@ ATTESTATION -> REWARDS CALCULATION SERVICE -> RewardsDistributor.sol
 TODO:
 - [ ] Finish rewards deployment (deploy script for contracts / service)
 - [ ] Clean up rewards contract
-- [ ] Tests
+- [ ] Tests for rewards
+- [ ] Add LLM component + safe
+- [ ] Organize project better
 
 ## Future Service Improvements
 - [] Break out Indexer contract, could be modified to be multichain? EAS indexer component (indexes certain attestations without a resolver?)

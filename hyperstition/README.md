@@ -1,6 +1,6 @@
 # Welcome to the EN0VA Hyperstition
 
-STATIS: HIP (Hyperstition in Progress)
+STATUS: HIP (Hyperstition in Progress)
 
 - [Audits](Audits.md)
 - [DAICO](DAOICO.md)

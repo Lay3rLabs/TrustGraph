@@ -31,7 +31,7 @@ contract ENOVA is
         address tokenBridge,
         address pauser,
         address minter
-    ) ERC20("MyToken", "MTK") ERC20Permit("MyToken") {
+    ) ERC20("EN0VA", "ENO") ERC20Permit("MyToken") {
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
         _grantRole(TOKEN_BRIDGE_ROLE, tokenBridge);
         _grantRole(PAUSER_ROLE, pauser);
