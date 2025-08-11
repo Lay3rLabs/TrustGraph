@@ -23,8 +23,8 @@ impl Guest for Component {
     fn run(action: TriggerAction) -> std::result::Result<Option<WasmResponse>, String> {
         let reward_token_address =
             config_var("reward_token").ok_or_else(|| "Failed to get reward token address")?;
-        let reward_source_nft_address =
-            config_var("reward_source_nft").ok_or_else(|| "Failed to get NFT address")?;
+        // let reward_source_nft_address =
+        //     config_var("reward_source_nft").ok_or_else(|| "Failed to get NFT address")?;
 
         // EAS-related configuration
         let eas_address = config_var("eas_address").ok_or_else(|| "Failed to get EAS address")?;
@@ -41,11 +41,11 @@ impl Guest for Component {
 
         let mut registry = SourceRegistry::new();
 
-        // Add NFT source - 1e18 rewards per NFT held
-        registry.add_source(sources::erc721::Erc721Source::new(
-            &reward_source_nft_address,
-            U256::from(1e18),
-        ));
+        // // Add NFT source - 1e18 rewards per NFT held
+        // registry.add_source(sources::erc721::Erc721Source::new(
+        //     &reward_source_nft_address,
+        //     U256::from(1e18),
+        // ));
 
         // Add EAS sources
         // Reward users for received attestations - 5e17 rewards per attestation
@@ -57,14 +57,14 @@ impl Guest for Component {
             U256::from(5e17),
         ));
 
-        // Reward users for sent attestations - 3e17 rewards per attestation
-        registry.add_source(sources::eas::EasSource::new(
-            &eas_address,
-            &eas_indexer_address,
-            &chain_name,
-            sources::eas::EasRewardType::SentAttestations,
-            U256::from(3e17),
-        ));
+        // // Reward users for sent attestations - 3e17 rewards per attestation
+        // registry.add_source(sources::eas::EasSource::new(
+        //     &eas_address,
+        //     &eas_indexer_address,
+        //     &chain_name,
+        //     sources::eas::EasRewardType::SentAttestations,
+        //     U256::from(3e17),
+        // ));
 
         // Example: Reward for specific schema attestations
         // Uncomment and configure to reward attestations to a specific schema

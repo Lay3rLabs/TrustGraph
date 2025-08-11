@@ -39,7 +39,26 @@ forge script script/DeployEAS.s.sol:DeployEAS \
     --broadcast \
     --json > .docker/eas_deploy.json
 
-# Extract deployed addresses
+echo "🏛️  Deploying Governance contracts..."
+
+# Deploy Governance contracts using Foundry script
+forge script script/DeployGovernance.s.sol:DeployGovernance \
+    --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
+    --rpc-url "${RPC_URL}" \
+    --private-key "${DEPLOYER_PK}" \
+    --broadcast \
+    --json > .docker/governance_deploy.json
+
+echo "💰 Deploying Rewards contracts..."
+
+# Deploy Rewards contracts using Foundry script
+forge script script/DeployRewards.s.sol:DeployScript \
+    --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
+    --rpc-url "${RPC_URL}" \
+    --private-key "${DEPLOYER_PK}" \
+    --broadcast
+
+# Extract deployed addresses from EAS deployment
 export EAS_REGISTRY_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("SchemaRegistry deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 export EAS_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("EAS deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 export EAS_ATTESTER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("Attester deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
@@ -47,9 +66,15 @@ export EAS_SCHEMA_REGISTRAR_ADDR=$(jq -r '.logs[] | select(type == "string" and 
 export EAS_INDEXER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("Indexer deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 export EAS_INDEXER_RESOLVER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("IndexerResolver deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 export EAS_ATTEST_TRIGGER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("EASAttestTrigger deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
-export VOTING_POWER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("VotingPower deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
-export TIMELOCK_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("TimelockController deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
-export GOVERNOR_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("AttestationGovernor deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
+
+# Extract deployed addresses from Governance deployment
+export VOTING_POWER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("VotingPower deployed at:")) | split(": ")[1]' .docker/governance_deploy.json 2>/dev/null || echo "")
+export TIMELOCK_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("TimelockController deployed at:")) | split(": ")[1]' .docker/governance_deploy.json 2>/dev/null || echo "")
+export GOVERNOR_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("AttestationGovernor deployed at:")) | split(": ")[1]' .docker/governance_deploy.json 2>/dev/null || echo "")
+
+# Extract deployed addresses from Rewards deployment
+export REWARD_DISTRIBUTOR_ADDR=$(jq -r '.reward_distributor' .docker/rewards_deploy.json 2>/dev/null || echo "")
+export REWARD_TOKEN_ADDR=$(jq -r '.reward_token' .docker/rewards_deploy.json 2>/dev/null || echo "")
 
 # Use EAS Attest Trigger as the main service trigger
 export SERVICE_TRIGGER_ADDR="${EAS_ATTEST_TRIGGER_ADDR}"
@@ -74,11 +99,15 @@ cat > .docker/deployment_summary.json << EOF
     "voting_power": "${VOTING_POWER_ADDR}",
     "timelock": "${TIMELOCK_ADDR}",
     "governor": "${GOVERNOR_ADDR}"
+  },
+  "reward_contracts": {
+    "reward_distributor": "${REWARD_DISTRIBUTOR_ADDR}",
+    "reward_token": "${REWARD_TOKEN_ADDR}"
   }
 }
 EOF
 
-echo "✅ EAS Deployment Complete!"
+echo "✅ EAS, Governance, and Rewards Deployment Complete!"
 echo ""
 echo "📋 Deployment Summary:"
 echo "   RPC_URL: ${RPC_URL}"
@@ -101,8 +130,14 @@ echo ""
 echo "🎯 Service Contracts:"
 echo "   SERVICE_TRIGGER_ADDR: ${SERVICE_TRIGGER_ADDR}"
 echo ""
+echo "💰 Reward Contracts:"
+echo "   REWARD_DISTRIBUTOR_ADDR: ${REWARD_DISTRIBUTOR_ADDR}"
+echo "   REWARD_TOKEN_ADDR: ${REWARD_TOKEN_ADDR}"
+echo ""
 echo "📄 Deployment details saved to .docker/deployment_summary.json"
-echo "📄 Full deployment logs saved to .docker/eas_deploy.json"
+echo "📄 EAS deployment logs saved to .docker/eas_deploy.json"
+echo "📄 Governance deployment logs saved to .docker/governance_deploy.json"
+echo "📄 Rewards deployment details saved to .docker/rewards_deploy.json"
 
 # Update environment variables for other scripts
 export SERVICE_SUBMISSION_ADDR="${EAS_ATTESTER_ADDR}"  # For backwards compatibility
