@@ -10,8 +10,13 @@ use wstd::io::AsyncRead;
 use cid::Cid;
 use std::str::FromStr;
 
-/// Uploads a file using multipart request to IPFS
-async fn upload_to_ipfs(file_path: &str, name: &str, ipfs_url: &str, api_key: &str) -> Result<Cid> {
+/// Uploads a file using multipart request to IPFS (supports both Pinata and local IPFS)
+async fn upload_to_ipfs(
+    file_path: &str,
+    name: &str,
+    ipfs_url: &str,
+    api_key: Option<&str>,
+) -> Result<Cid> {
     eprintln!("Uploading file to IPFS: {}", file_path);
 
     let mut file = File::open(file_path)?;
@@ -20,31 +25,52 @@ async fn upload_to_ipfs(file_path: &str, name: &str, ipfs_url: &str, api_key: &s
 
     // define multipart request boundary
     let boundary = "----RustBoundary";
-    // construct the body
-    let body = format!(
-        "--{}\r\n\
-        Content-Disposition: form-data; name=\"file\"; filename=\"{}\"\r\n\
-        Content-Type: application/octet-stream\r\n\r\n",
-        boundary, name
-    );
 
-    let mut request_body = body.into_bytes();
-    request_body.extend_from_slice(&file_bytes);
-    request_body.extend_from_slice(format!("\r\n--{}\r\n", boundary).as_bytes());
+    let (request_body, content_type) = if let Some(api_key) = api_key {
+        // Pinata format with network parameter
+        let body = format!(
+            "--{}\r\n\
+            Content-Disposition: form-data; name=\"file\"; filename=\"{}\"\r\n\
+            Content-Type: application/octet-stream\r\n\r\n",
+            boundary, name
+        );
 
-    // Add network parameter
-    let network_part = format!(
-        "Content-Disposition: form-data; name=\"network\"\r\n\r\n\
-        public\r\n\
-        --{}--\r\n",
-        boundary
-    );
-    request_body.extend_from_slice(network_part.as_bytes());
+        let mut request_body = body.into_bytes();
+        request_body.extend_from_slice(&file_bytes);
+        request_body.extend_from_slice(format!("\r\n--{}\r\n", boundary).as_bytes());
 
-    let request = Request::post(ipfs_url)
-        .header("Authorization", &format!("Bearer {}", api_key))
-        .header("Content-Type", &format!("multipart/form-data; boundary={}", boundary))
-        .body(request_body.into_body())?;
+        // Add network parameter for Pinata
+        let network_part = format!(
+            "Content-Disposition: form-data; name=\"network\"\r\n\r\n\
+            public\r\n\
+            --{}--\r\n",
+            boundary
+        );
+        request_body.extend_from_slice(network_part.as_bytes());
+        (request_body, format!("multipart/form-data; boundary={}", boundary))
+    } else {
+        // Local IPFS format - simpler multipart form
+        let body = format!(
+            "--{}\r\n\
+            Content-Disposition: form-data; name=\"file\"; filename=\"{}\"\r\n\
+            Content-Type: application/octet-stream\r\n\r\n",
+            boundary, name
+        );
+
+        let mut request_body = body.into_bytes();
+        request_body.extend_from_slice(&file_bytes);
+        request_body.extend_from_slice(format!("\r\n--{}--\r\n", boundary).as_bytes());
+        (request_body, format!("multipart/form-data; boundary={}", boundary))
+    };
+
+    let mut request_builder = Request::post(ipfs_url).header("Content-Type", &content_type);
+
+    // Add authorization header only for Pinata
+    if let Some(api_key) = api_key {
+        request_builder = request_builder.header("Authorization", &format!("Bearer {}", api_key));
+    }
+
+    let request = request_builder.body(request_body.into_body())?;
 
     let mut response = wstd::http::Client::new().send(request).await?;
 
@@ -57,24 +83,43 @@ async fn upload_to_ipfs(file_path: &str, name: &str, ipfs_url: &str, api_key: &s
             .map_err(|e| anyhow::anyhow!("Failed to convert response to string: {}", e))?;
         eprintln!("IPFS API Response: {}", response_str);
 
-        // Parse using Pinata's response format (capitalized fields)
-        #[derive(Debug, Deserialize)]
-        struct PinataResponse {
-            data: PinataData,
-        }
+        let hash = if api_key.is_some() {
+            // Parse using Pinata's response format (capitalized fields)
+            #[derive(Debug, Deserialize)]
+            struct PinataResponse {
+                data: PinataData,
+            }
 
-        #[derive(Debug, Deserialize)]
-        struct PinataData {
-            cid: String,
-        }
+            #[derive(Debug, Deserialize)]
+            struct PinataData {
+                cid: String,
+            }
 
-        let hash = match serde_json::from_slice::<PinataResponse>(&body_buf) {
-            Ok(resp) => resp.data.cid,
-            Err(_) => {
-                return Err(anyhow::anyhow!(
-                    "Could not extract hash from response: {}",
-                    response_str
-                ));
+            match serde_json::from_slice::<PinataResponse>(&body_buf) {
+                Ok(resp) => resp.data.cid,
+                Err(_) => {
+                    return Err(anyhow::anyhow!(
+                        "Could not extract hash from Pinata response: {}",
+                        response_str
+                    ));
+                }
+            }
+        } else {
+            // Parse using local IPFS response format
+            #[derive(Debug, Deserialize)]
+            struct LocalIpfsResponse {
+                #[serde(alias = "Hash")]
+                hash: String,
+            }
+
+            match serde_json::from_slice::<LocalIpfsResponse>(&body_buf) {
+                Ok(resp) => resp.hash,
+                Err(_) => {
+                    return Err(anyhow::anyhow!(
+                        "Could not extract hash from local IPFS response: {}",
+                        response_str
+                    ));
+                }
             }
         };
 
@@ -97,7 +142,7 @@ pub async fn upload_json_to_ipfs(
     json_data: &str,
     name: &str,
     ipfs_url: &str,
-    api_key: &str,
+    api_key: Option<&str>,
 ) -> Result<Cid> {
     // Create a temporary file to store the JSON data
     let temp_path = "/tmp/ipfs_data.json";

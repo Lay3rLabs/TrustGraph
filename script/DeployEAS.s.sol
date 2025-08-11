@@ -104,10 +104,7 @@ contract DeployEAS is Common {
             ISchemaResolver(deployment.indexerResolver),
             true // revocable
         );
-        console.log(
-            "Basic schema registered:",
-            vm.toString(deployment.basicSchema)
-        );
+        console.log("Basic Schema ID:", vm.toString(deployment.basicSchema));
 
         // Compute result schema for computation results (with indexing)
         deployment.computeSchema = schemaRegistrar.register(
@@ -131,11 +128,5 @@ contract DeployEAS is Common {
         console.log("Indexer:", deployment.indexer);
         console.log("IndexerResolver:", deployment.indexerResolver);
         console.log("EASAttestTrigger:", deployment.easAttestTrigger);
-
-        console.log("Basic Schema ID:", vm.toString(deployment.basicSchema));
-        console.log(
-            "Compute Schema ID:",
-            vm.toString(deployment.computeSchema)
-        );
     }
 }

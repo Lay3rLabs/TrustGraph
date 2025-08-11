@@ -17,7 +17,8 @@ Fix eas-attest component and Attester.sol contract:
 - [x] Fix up deployment so two or more services are deployed (eas-attest and eas-compute)
 - [x] Fix up schema id being 0x00000 in eas-compute
 - [x] Finish rewards deployment (deploy script for contracts)
-- [ ] Deploy rewards service
+- [x] Deploy rewards service
+- [ ] Fix ERROR Engine(ExecResult("Failed to get reward token address"))
 - [ ] Add LLM component
 - [ ] Realistic vouching schema
 - [ ] Better computation of attestations (actually use attestation data)

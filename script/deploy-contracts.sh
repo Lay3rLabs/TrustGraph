@@ -67,6 +67,10 @@ export EAS_INDEXER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswit
 export EAS_INDEXER_RESOLVER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("IndexerResolver deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 export EAS_ATTEST_TRIGGER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("EASAttestTrigger deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 
+# Extract schema IDs
+export BASIC_SCHEMA_ID=$(jq -r '.logs[] | select(type == "string" and startswith("Basic Schema ID:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
+export COMPUTE_SCHEMA_ID=$(jq -r '.logs[] | select(type == "string" and startswith("Compute Schema ID:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
+
 # Extract deployed addresses from Governance deployment
 export VOTING_POWER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("VotingPower deployed at:")) | split(": ")[1]' .docker/governance_deploy.json 2>/dev/null || echo "")
 export TIMELOCK_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("TimelockController deployed at:")) | split(": ")[1]' .docker/governance_deploy.json 2>/dev/null || echo "")
@@ -90,7 +94,9 @@ cat > .docker/deployment_summary.json << EOF
     "attester": "${EAS_ATTESTER_ADDR}",
     "schema_registrar": "${EAS_SCHEMA_REGISTRAR_ADDR}",
     "indexer": "${EAS_INDEXER_ADDR}",
-    "indexer_resolver": "${EAS_INDEXER_RESOLVER_ADDR}"
+    "indexer_resolver": "${EAS_INDEXER_RESOLVER_ADDR}",
+    "basic_schema": "${BASIC_SCHEMA_ID}",
+    "compute_schema": "${COMPUTE_SCHEMA_ID}"
   },
   "service_contracts": {
     "trigger": "${SERVICE_TRIGGER_ADDR}"
@@ -121,6 +127,10 @@ echo "   EAS_SCHEMA_REGISTRAR_ADDR: ${EAS_SCHEMA_REGISTRAR_ADDR}"
 echo "   EAS_INDEXER_ADDR: ${EAS_INDEXER_ADDR}"
 echo "   EAS_INDEXER_RESOLVER_ADDR: ${EAS_INDEXER_RESOLVER_ADDR}"
 echo "   EAS_ATTEST_TRIGGER_ADDR: ${EAS_ATTEST_TRIGGER_ADDR}"
+echo ""
+echo "📋 EAS Schemas:"
+echo "   BASIC_SCHEMA_ID: ${BASIC_SCHEMA_ID}"
+echo "   COMPUTE_SCHEMA_ID: ${COMPUTE_SCHEMA_ID}"
 echo ""
 echo "🏛️  Governance Contracts:"
 echo "   VOTING_POWER_ADDR: ${VOTING_POWER_ADDR}"
