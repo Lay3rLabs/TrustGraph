@@ -118,19 +118,36 @@ contract Rewards is Common {
             string.concat("curl -s -X POST ", url, " | jq -c .tree[0]")
         );
 
-        // Query for the merkle entry
+        // Get the claimer address first
+        address claimer = vm.addr(_privateKey);
+
+        // Query for the merkle entry for this specific claimer
+        string memory claimerStr = vm.toString(claimer);
         string memory entry = runCmd(
-            string.concat("curl -s -X POST ", url, " | jq -c .tree[0]")
+            string.concat(
+                "curl -s -X POST ",
+                url,
+                " | jq -c '.tree[] | select(.account == \"",
+                claimerStr,
+                "\")'"
+            )
         );
+
+        // Check if entry was found
+        if (bytes(entry).length == 0) {
+            console.log("No rewards found for address:", claimer);
+            vm.stopBroadcast();
+            return;
+        }
 
         // Extract the claimable amount and proof
         uint256 claimable = vm.parseJsonUint(entry, ".claimable");
         bytes32[] memory proof = vm.parseJsonBytes32Array(entry, ".proof");
 
+        console.log("Claimer:", claimer);
         console.log("Claimable:", claimable);
 
         // Claim rewards with proof
-        address claimer = vm.addr(_privateKey);
         ENOVA rewardToken = ENOVA(rewardTokenAddress);
         uint256 balanceBefore = rewardToken.balanceOf(claimer);
         uint256 claimed = rewardDistributor.claim(
