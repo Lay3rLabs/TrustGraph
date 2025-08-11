@@ -113,7 +113,12 @@ jq -r '.components[] | @json' "${COMPONENT_CONFIGS_FILE}" | while read -r compon
 
     eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} permissions --http-hosts '*' --file-system true" > /dev/null
     eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} time-limit --seconds 30" > /dev/null
-    eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} env --values WAVS_ENV_SOME_SECRET" > /dev/null
+    # Set component-specific environment variables
+    if [ "$COMP_PKG_NAME" = "rewards" ]; then
+        eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} env --values WAVS_ENV_PINATA_API_URL,WAVS_ENV_PINATA_API_KEY" > /dev/null
+    else
+        eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} env --values WAVS_ENV_SOME_SECRET" > /dev/null
+    fi
 
     echo "  📋 Configuring component with: ${CONFIG_VALUES}"
     eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} config --values ${CONFIG_VALUES}" > /dev/null
