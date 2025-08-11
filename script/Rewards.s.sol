@@ -7,15 +7,31 @@ import {console} from "forge-std/console.sol";
 import {Common} from "script/Common.s.sol";
 
 import {RewardDistributor} from "contracts/RewardDistributor.sol";
-// TODO use ERC20.sol
-import {RewardToken} from "contracts/RewardToken.sol";
+import {ENOVA} from "contracts/ERC20.sol";
 import {ITypes} from "interfaces/ITypes.sol";
 
-/// @dev Script to claim rewards
-contract ClaimRewards is Common {
+/// @dev Combined script to update and claim rewards
+contract Rewards is Common {
     using stdJson for string;
 
-    function run(
+    /// @dev Update rewards by adding a trigger
+    /// @param rewardDistributorAddr Address of the RewardDistributor contract
+    function updateRewards(string calldata rewardDistributorAddr) public {
+        vm.startBroadcast(_privateKey);
+        RewardDistributor rewardDistributor = RewardDistributor(
+            payable(vm.parseAddress(rewardDistributorAddr))
+        );
+
+        rewardDistributor.addTrigger();
+        ITypes.TriggerId triggerId = rewardDistributor.nextTriggerId();
+        console.log("TriggerId", ITypes.TriggerId.unwrap(triggerId));
+        vm.stopBroadcast();
+    }
+
+    /// @dev Claim rewards using merkle proof
+    /// @param rewardDistributorAddr Address of the RewardDistributor contract
+    /// @param rewardTokenAddr Address of the reward token (ENOVA) contract
+    function claimRewards(
         string calldata rewardDistributorAddr,
         string calldata rewardTokenAddr
     ) public {
@@ -108,7 +124,7 @@ contract ClaimRewards is Common {
 
         // Claim rewards with proof
         address claimer = vm.addr(_privateKey);
-        RewardToken rewardToken = RewardToken(rewardTokenAddress);
+        ENOVA rewardToken = ENOVA(rewardTokenAddress);
         uint256 balanceBefore = rewardToken.balanceOf(claimer);
         uint256 claimed = rewardDistributor.claim(
             claimer,
@@ -123,6 +139,17 @@ contract ClaimRewards is Common {
         console.log("Claimed:", claimed);
 
         vm.stopBroadcast();
+    }
+
+    /// @dev Combined function to update rewards and then claim them
+    /// @param rewardDistributorAddr Address of the RewardDistributor contract
+    /// @param rewardTokenAddr Address of the reward token (ENOVA) contract
+    function updateAndClaimRewards(
+        string calldata rewardDistributorAddr,
+        string calldata rewardTokenAddr
+    ) public {
+        updateRewards(rewardDistributorAddr);
+        claimRewards(rewardDistributorAddr, rewardTokenAddr);
     }
 
     // Run a command and return the output by creating a temporary script with

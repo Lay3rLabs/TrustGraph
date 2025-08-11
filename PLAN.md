@@ -37,7 +37,7 @@ TODO:
 - [ ] Clean up rewards contract
 - [ ] Tests for rewards
 - [ ] Add LLM component
-- [ ] Organize project better
+- [ ] Organize project better (put contracts in folders)
 
 ## Future Service Improvements
 - [] Break out Indexer contract, could be modified to be multichain? EAS indexer component (indexes certain attestations without a resolver?)

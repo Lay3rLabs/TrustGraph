@@ -3,15 +3,13 @@ pragma solidity ^0.8.22;
 
 import {stdJson} from "forge-std/StdJson.sol";
 
-import {Strings} from "@openzeppelin-contracts/utils/Strings.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
 
 import {Common} from "script/Common.s.sol";
 
 import {RewardDistributor} from "contracts/RewardDistributor.sol";
-// TODO we don't need reward source NFT anymore?
-import {RewardToken} from "contracts/RewardToken.sol";
-import {RewardSourceNft} from "contracts/RewardSourceNft.sol";
+import {ENOVA} from "contracts/ERC20.sol";
 
 /// @dev Deployment script for RewardDistributor contract
 contract DeployScript is Common {
@@ -35,17 +33,15 @@ contract DeployScript is Common {
             IWavsServiceManager(serviceManager)
         );
 
-        // Mint reward tokens for the distributor.
-        RewardToken rewardToken = new RewardToken();
-        rewardToken.mint{value: 1000 ether}(address(rewardDistributor));
-
-        // Deploy the NFT contract
-        RewardSourceNft nft = new RewardSourceNft();
-        // Mint 3 NFTs to the deployer.
+        // Deploy ENOVA token and mint tokens for the distributor.
         address deployer = vm.addr(_privateKey);
-        nft.mint(deployer, 1);
-        nft.mint(deployer, 2);
-        nft.mint(deployer, 3);
+        ENOVA rewardToken = new ENOVA(
+            deployer, // defaultAdmin
+            deployer, // tokenBridge
+            deployer, // pauser
+            deployer // minter
+        );
+        rewardToken.mint(address(rewardDistributor), 1000 ether);
 
         vm.stopBroadcast();
 
@@ -54,13 +50,9 @@ contract DeployScript is Common {
             "reward_distributor",
             Strings.toChecksumHexString(address(rewardDistributor))
         );
-        _json.serialize(
+        string memory finalJson = _json.serialize(
             "reward_token",
             Strings.toChecksumHexString(address(rewardToken))
-        );
-        string memory finalJson = _json.serialize(
-            "reward_source_nft",
-            Strings.toChecksumHexString(address(nft))
         );
 
         vm.writeFile(script_output_path, finalJson);
