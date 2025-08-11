@@ -90,6 +90,102 @@ forge script script/Rewards.s.sol:Rewards \
 **Output:**
 - Combined output from both update and claim operations
 
+### 4. Query Contract State
+
+Get current contract state information including root, IPFS hash, and next trigger ID:
+
+```bash
+forge script script/Rewards.s.sol:Rewards \
+    --sig "queryContractState(string)" \
+    "0x1234567890123456789012345678901234567890" \
+    --rpc-url $RPC_URL
+```
+
+**Parameters:**
+- `rewardDistributorAddr`: Address of the deployed RewardDistributor contract
+
+### 5. Get IPFS URI
+
+Get the IPFS URI for the current merkle tree:
+
+```bash
+forge script script/Rewards.s.sol:Rewards \
+    --sig "getIpfsUri(string)" \
+    "0x1234567890123456789012345678901234567890" \
+    --rpc-url $RPC_URL
+```
+
+**Parameters:**
+- `rewardDistributorAddr`: Address of the deployed RewardDistributor contract
+
+### 6. Query Trigger Information
+
+Get detailed information about a specific trigger:
+
+```bash
+forge script script/Rewards.s.sol:Rewards \
+    --sig "queryTrigger(string,uint256)" \
+    "0x1234567890123456789012345678901234567890" \
+    "1" \
+    --rpc-url $RPC_URL
+```
+
+**Parameters:**
+- `rewardDistributorAddr`: Address of the deployed RewardDistributor contract
+- `triggerId`: The trigger ID to query (e.g., 1, 2, 3...)
+
+### 7. Query Claim Status
+
+Check how much an address has already claimed:
+
+```bash
+forge script script/Rewards.s.sol:Rewards \
+    --sig "queryClaimStatus(string,string,string)" \
+    "0x1234567890123456789012345678901234567890" \
+    "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd" \
+    "0x742d35Cc6634C0532925a3b8D21Ce0C7a26F5BA5" \
+    --rpc-url $RPC_URL
+```
+
+**Parameters:**
+- `rewardDistributorAddr`: Address of the deployed RewardDistributor contract
+- `rewardTokenAddr`: Address of the ENOVA token contract
+- `account`: Address to check claim status for
+
+### 8. Query Token Balance
+
+Check current token balance for an address:
+
+```bash
+forge script script/Rewards.s.sol:Rewards \
+    --sig "queryBalance(string,string)" \
+    "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd" \
+    "0x742d35Cc6634C0532925a3b8D21Ce0C7a26F5BA5" \
+    --rpc-url $RPC_URL
+```
+
+**Parameters:**
+- `rewardTokenAddr`: Address of the ENOVA token contract
+- `account`: Address to check balance for
+
+### 9. Comprehensive Query
+
+Get all relevant information in a single call:
+
+```bash
+forge script script/Rewards.s.sol:Rewards \
+    --sig "queryAll(string,string,string)" \
+    "0x1234567890123456789012345678901234567890" \
+    "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd" \
+    "0x742d35Cc6634C0532925a3b8D21Ce0C7a26F5BA5" \
+    --rpc-url $RPC_URL
+```
+
+**Parameters:**
+- `rewardDistributorAddr`: Address of the deployed RewardDistributor contract
+- `rewardTokenAddr`: Address of the ENOVA token contract
+- `account`: Address to check information for
+
 ## Example Output
 
 ### Successful Trigger Match
@@ -136,6 +232,109 @@ avsOutput.ipfsHashData:
 0x4444444444444444444444444444444444444444444444444444444444444444
 avsOutput.ipfsHash:
 QmZzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+```
+
+### Query Contract State Output
+```
+=== Contract State ===
+Current Root:
+0x1234567890123456789012345678901234567890123456789012345678901234
+
+Current IPFS Hash:
+0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef
+
+Current IPFS Hash CID:
+QmXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+Next Trigger ID: 2
+=====================
+```
+
+### Get IPFS URI Output
+```
+IPFS URI: https://gateway.pinata.cloud/ipfs/QmXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+### Query Trigger Information Output
+```
+=== Trigger Information ===
+Trigger ID: 1
+Is Valid: true
+Creator: 0x742d35Cc6634C0532925a3b8D21Ce0C7a26F5BA5
+Data: 0x0000000000000000000000000000000000000000000000000000000000000001
+AVS Output Root:
+0x1234567890123456789012345678901234567890123456789012345678901234
+AVS Output IPFS Hash Data:
+0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef
+AVS Output IPFS Hash CID:
+QmXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+==========================
+```
+
+### Query Claim Status Output
+```
+=== Claim Status ===
+Account: 0x742d35Cc6634C0532925a3b8D21Ce0C7a26F5BA5
+Reward Token: 0xabcdefabcdefabcdefabcdefabcdefabcdefabcd
+Already Claimed: 500000000000000000
+===================
+```
+
+### Query Token Balance Output
+```
+=== Token Balance ===
+Account: 0x742d35Cc6634C0532925a3b8D21Ce0C7a26F5BA5
+Token: 0xabcdefabcdefabcdefabcdefabcdefabcdefabcd
+Balance: 1000000000000000000
+====================
+```
+
+### Comprehensive Query Output
+```
+=== COMPREHENSIVE QUERY ===
+
+=== Contract State ===
+Current Root:
+0x1234567890123456789012345678901234567890123456789012345678901234
+
+Current IPFS Hash:
+0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef
+
+Current IPFS Hash CID:
+QmXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+Next Trigger ID: 2
+=====================
+
+IPFS URI: https://gateway.pinata.cloud/ipfs/QmXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+=== Token Balance ===
+Account: 0x742d35Cc6634C0532925a3b8D21Ce0C7a26F5BA5
+Token: 0xabcdefabcdefabcdefabcdefabcdefabcdefabcd
+Balance: 1000000000000000000
+====================
+
+=== Claim Status ===
+Account: 0x742d35Cc6634C0532925a3b8D21Ce0C7a26F5BA5
+Reward Token: 0xabcdefabcdefabcdefabcdefabcdefabcdefabcd
+Already Claimed: 500000000000000000
+===================
+
+Latest Trigger Information:
+=== Trigger Information ===
+Trigger ID: 1
+Is Valid: true
+Creator: 0x742d35Cc6634C0532925a3b8D21Ce0C7a26F5BA5
+Data: 0x0000000000000000000000000000000000000000000000000000000000000001
+AVS Output Root:
+0x1234567890123456789012345678901234567890123456789012345678901234
+AVS Output IPFS Hash Data:
+0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef
+AVS Output IPFS Hash CID:
+QmXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+==========================
+
+=== END COMPREHENSIVE QUERY ===
 ```
 
 ## Common Issues and Troubleshooting

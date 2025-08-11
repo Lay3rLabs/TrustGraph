@@ -66,6 +66,7 @@ fi
 echo "Configuring EAS addresses from deployment summary..."
 EAS_ADDRESS=$(jq -r '.eas_contracts.eas' .docker/deployment_summary.json)
 INDEXER_ADDRESS=$(jq -r '.eas_contracts.indexer' .docker/deployment_summary.json)
+COMPUTE_SCHEMA_ID=$(jq -r '.eas_contracts.compute_schema' .docker/deployment_summary.json)
 
 # Determine chain name based on deployment environment
 if [ "$(sh ./script/get-deploy-status.sh)" = "TESTNET" ]; then
@@ -85,12 +86,20 @@ if [ "$INDEXER_ADDRESS" = "null" ] || [ -z "$INDEXER_ADDRESS" ]; then
     exit 1
 fi
 
+if [ "$COMPUTE_SCHEMA_ID" = "null" ] || [ -z "$COMPUTE_SCHEMA_ID" ]; then
+    echo "❌ Failed to extract compute schema ID from deployment summary"
+    exit 1
+fi
+
 echo "✅ EAS Address: ${EAS_ADDRESS}"
 echo "✅ Indexer Address: ${INDEXER_ADDRESS}"
+echo "✅ Compute Schema ID: ${COMPUTE_SCHEMA_ID}"
 echo "✅ Chain Name: ${CHAIN_NAME}"
 
-# Set CONFIG_VALUES with EAS configuration
-export CONFIG_VALUES="eas_address=${EAS_ADDRESS},indexer_address=${INDEXER_ADDRESS},chain_name=${CHAIN_NAME}"
+REWARDS_TOKEN_ADDRESS=$(jq -r '.reward_contracts.reward_token' .docker/deployment_summary.json)
+
+# Set CONFIG_VALUES with EAS configuration and rewards token address
+export CONFIG_VALUES="eas_address=${EAS_ADDRESS},indexer_address=${INDEXER_ADDRESS},chain_name=${CHAIN_NAME},reward_token=${REWARDS_TOKEN_ADDRESS},reward_schema_uid=${COMPUTE_SCHEMA_ID}"
 echo "📋 EAS Configuration: ${CONFIG_VALUES}"
 
 # Upload components to WASI registry

@@ -2,12 +2,13 @@ use crate::bindings::host::get_evm_chain_config;
 use alloy_network::Ethereum;
 use alloy_provider::{Provider, RootProvider};
 use alloy_rpc_types::TransactionInput;
-use alloy_sol_types::{sol, SolCall, SolType};
+use alloy_sol_types::{sol, SolCall};
 use anyhow::Result;
 use async_trait::async_trait;
+use std::collections::HashSet;
 use std::str::FromStr;
 use wavs_wasi_utils::evm::{
-    alloy_primitives::{hex, Address, TxKind, U256},
+    alloy_primitives::{hex, Address, FixedBytes, TxKind, U256},
     new_evm_provider,
 };
 
@@ -16,11 +17,11 @@ use super::Source;
 /// Types of EAS-based rewards.
 #[derive(Clone, Debug)]
 pub enum EasRewardType {
-    /// Rewards based on received attestations count.
-    ReceivedAttestations,
-    /// Rewards based on sent attestations count.
-    SentAttestations,
-    /// Rewards based on attestations to a specific schema.
+    /// Rewards based on received attestations count for a specific schema.
+    ReceivedAttestations(String),
+    /// Rewards based on sent attestations count for a specific schema.
+    SentAttestations(String),
+    /// Rewards based on attestations to a specific schema (same as ReceivedAttestations).
     SchemaAttestations(String),
 }
 
@@ -67,12 +68,14 @@ impl Source for EasSource {
 
     async fn get_accounts(&self) -> Result<Vec<String>> {
         match &self.reward_type {
-            EasRewardType::ReceivedAttestations => {
-                self.get_accounts_with_received_attestations().await
+            EasRewardType::ReceivedAttestations(schema_uid) => {
+                self.get_accounts_with_received_attestations(schema_uid).await
             }
-            EasRewardType::SentAttestations => self.get_accounts_with_sent_attestations().await,
-            EasRewardType::SchemaAttestations(schema) => {
-                self.get_accounts_with_schema_attestations(schema).await
+            EasRewardType::SentAttestations(schema_uid) => {
+                self.get_accounts_with_sent_attestations(schema_uid).await
+            }
+            EasRewardType::SchemaAttestations(schema_uid) => {
+                self.get_accounts_with_schema_attestations(schema_uid).await
             }
         }
     }
@@ -80,12 +83,14 @@ impl Source for EasSource {
     async fn get_rewards(&self, account: &str) -> Result<U256> {
         let address = Address::from_str(account)?;
         let attestation_count = match &self.reward_type {
-            EasRewardType::ReceivedAttestations => {
-                self.query_received_attestation_count(address).await?
+            EasRewardType::ReceivedAttestations(schema_uid) => {
+                self.query_received_attestation_count(address, schema_uid).await?
             }
-            EasRewardType::SentAttestations => self.query_sent_attestation_count(address).await?,
-            EasRewardType::SchemaAttestations(schema) => {
-                self.query_schema_attestation_count(schema, address).await?
+            EasRewardType::SentAttestations(schema_uid) => {
+                self.query_sent_attestation_count(address, schema_uid).await?
+            }
+            EasRewardType::SchemaAttestations(schema_uid) => {
+                self.query_received_attestation_count(address, schema_uid).await?
             }
         };
 
@@ -93,10 +98,16 @@ impl Source for EasSource {
     }
 
     async fn get_metadata(&self) -> Result<serde_json::Value> {
-        let reward_type_str = match &self.reward_type {
-            EasRewardType::ReceivedAttestations => "received_attestations".to_string(),
-            EasRewardType::SentAttestations => "sent_attestations".to_string(),
-            EasRewardType::SchemaAttestations(schema) => format!("schema_attestations:{}", schema),
+        let (reward_type_str, schema_uid) = match &self.reward_type {
+            EasRewardType::ReceivedAttestations(schema) => {
+                ("received_attestations".to_string(), schema.clone())
+            }
+            EasRewardType::SentAttestations(schema) => {
+                ("sent_attestations".to_string(), schema.clone())
+            }
+            EasRewardType::SchemaAttestations(schema) => {
+                ("schema_attestations".to_string(), schema.clone())
+            }
         };
 
         Ok(serde_json::json!({
@@ -104,6 +115,7 @@ impl Source for EasSource {
             "indexer_address": self.indexer_address.to_string(),
             "chain_name": self.chain_name,
             "reward_type": reward_type_str,
+            "schema_uid": schema_uid,
             "rewards_per_attestation": self.rewards_per_attestation.to_string(),
         }))
     }
@@ -134,71 +146,201 @@ impl EasSource {
         Ok(result.to_vec())
     }
 
-    async fn query_received_attestation_count(&self, recipient: Address) -> Result<u64> {
-        let call = IEASIndexer::receivedAttestationCountCall { recipient };
-        let result = self.execute_call(call.abi_encode()).await?;
-        let count: U256 = U256::from_be_slice(&result);
-        Ok(count.to::<u64>())
+    fn parse_schema_uid(&self, schema_uid: &str) -> Result<FixedBytes<32>> {
+        let schema_bytes = hex::decode(schema_uid.strip_prefix("0x").unwrap_or(schema_uid))?;
+        if schema_bytes.len() != 32 {
+            return Err(anyhow::anyhow!("Schema UID must be 32 bytes"));
+        }
+        let mut schema_array = [0u8; 32];
+        schema_array.copy_from_slice(&schema_bytes);
+        Ok(schema_array.into())
     }
 
-    async fn query_sent_attestation_count(&self, attester: Address) -> Result<u64> {
-        let call = IEASIndexer::sentAttestationCountCall { attester };
+    async fn query_received_attestation_count(
+        &self,
+        recipient: Address,
+        schema_uid: &str,
+    ) -> Result<u64> {
+        let schema = self.parse_schema_uid(schema_uid)?;
+        let call = IEASIndexer::getReceivedAttestationUIDCountCall { recipient, schemaUID: schema };
         let result = self.execute_call(call.abi_encode()).await?;
-        let count: U256 = U256::from_be_slice(&result);
-        Ok(count.to::<u64>())
+        let decoded = IEASIndexer::getReceivedAttestationUIDCountCall::abi_decode_returns(&result)
+            .map_err(|e| anyhow::anyhow!("Failed to decode received attestation count: {}", e))?;
+        Ok(decoded.to::<u64>())
     }
 
-    async fn query_schema_attestation_count(
+    async fn query_sent_attestation_count(
+        &self,
+        attester: Address,
+        schema_uid: &str,
+    ) -> Result<u64> {
+        let schema = self.parse_schema_uid(schema_uid)?;
+        let call = IEASIndexer::getSentAttestationUIDCountCall { attester, schemaUID: schema };
+        let result = self.execute_call(call.abi_encode()).await?;
+        let decoded = IEASIndexer::getSentAttestationUIDCountCall::abi_decode_returns(&result)
+            .map_err(|e| anyhow::anyhow!("Failed to decode sent attestation count: {}", e))?;
+        Ok(decoded.to::<u64>())
+    }
+
+    async fn get_attestation_uids(
         &self,
         schema_uid: &str,
-        account: Address,
-    ) -> Result<u64> {
-        let schema_bytes = hex::decode(schema_uid.strip_prefix("0x").unwrap_or(schema_uid))?;
-        let mut schema_array = [0u8; 32];
-        schema_array.copy_from_slice(&schema_bytes[..32]);
-
-        let call = IEASIndexer::schemaAttestationCountCall { schema: schema_array.into(), account };
+        start: u64,
+        length: u64,
+    ) -> Result<Vec<FixedBytes<32>>> {
+        let schema = self.parse_schema_uid(schema_uid)?;
+        let call = IEASIndexer::getSchemaAttestationUIDsCall {
+            schemaUID: schema,
+            start: U256::from(start),
+            length: U256::from(length),
+            reverseOrder: false,
+        };
         let result = self.execute_call(call.abi_encode()).await?;
-        let count: U256 = U256::from_be_slice(&result);
-        Ok(count.to::<u64>())
+        let decoded = IEASIndexer::getSchemaAttestationUIDsCall::abi_decode_returns(&result)
+            .map_err(|e| anyhow::anyhow!("Failed to decode schema attestation UIDs: {}", e))?;
+        Ok(decoded)
     }
 
-    async fn get_accounts_with_received_attestations(&self) -> Result<Vec<String>> {
-        // This is a simplified implementation - in practice, you might want to query
-        // for accounts that have received attestations in a specific time period
-        // or use indexed events to get this information
-        let call = IEASIndexer::getAllRecipientsCall {};
+    async fn get_total_schema_attestations(&self, schema_uid: &str) -> Result<u64> {
+        let schema = self.parse_schema_uid(schema_uid)?;
+        let call = IEASIndexer::getSchemaAttestationUIDCountCall { schemaUID: schema };
         let result = self.execute_call(call.abi_encode()).await?;
-        let recipients: Vec<Address> = <sol! { address[] }>::abi_decode(&result)?;
-        Ok(recipients.into_iter().map(|addr| addr.to_string()).collect())
+        let decoded = IEASIndexer::getSchemaAttestationUIDCountCall::abi_decode_returns(&result)
+            .map_err(|e| anyhow::anyhow!("Failed to decode schema attestation count: {}", e))?;
+        Ok(decoded.to::<u64>())
     }
 
-    async fn get_accounts_with_sent_attestations(&self) -> Result<Vec<String>> {
-        let call = IEASIndexer::getAllAttestersCall {};
-        let result = self.execute_call(call.abi_encode()).await?;
-        let attesters: Vec<Address> = <sol! { address[] }>::abi_decode(&result)?;
-        Ok(attesters.into_iter().map(|addr| addr.to_string()).collect())
+    async fn get_attestation_details(&self, uid: FixedBytes<32>) -> Result<(Address, Address)> {
+        // Query the EAS contract directly to get attestation details
+        let provider = self.create_provider().await?;
+
+        let call = IEAS::getAttestationCall { uid };
+        let tx = alloy_rpc_types::eth::TransactionRequest {
+            to: Some(TxKind::Call(self.eas_address)),
+            input: TransactionInput { input: Some(call.abi_encode().into()), data: None },
+            ..Default::default()
+        };
+
+        let result = provider.call(tx).await?;
+
+        // The attestation struct is returned, we need the attester and recipient
+        // For now, let's decode the basic fields we need
+        let decoded = IEAS::getAttestationCall::abi_decode_returns(&result)
+            .map_err(|e| anyhow::anyhow!("Failed to decode attestation: {}", e))?;
+        Ok((decoded.attester, decoded.recipient))
+    }
+
+    async fn get_accounts_with_received_attestations(
+        &self,
+        schema_uid: &str,
+    ) -> Result<Vec<String>> {
+        println!("🔍 Querying accounts with received attestations for schema: {}", schema_uid);
+
+        let total_attestations = self.get_total_schema_attestations(schema_uid).await?;
+        println!("📊 Total attestations for schema: {}", total_attestations);
+
+        if total_attestations == 0 {
+            return Ok(vec![]);
+        }
+
+        let mut recipients = HashSet::new();
+        let batch_size = 100u64;
+        let mut start = 0u64;
+
+        while start < total_attestations {
+            let length = std::cmp::min(batch_size, total_attestations - start);
+            println!("🔄 Fetching attestation UIDs batch: {} to {}", start, start + length - 1);
+
+            let uids = self.get_attestation_uids(schema_uid, start, length).await?;
+
+            for uid in uids {
+                match self.get_attestation_details(uid).await {
+                    Ok((_attester, recipient)) => {
+                        recipients.insert(recipient.to_string());
+                    }
+                    Err(e) => {
+                        println!("⚠️  Failed to get attestation details for UID {:?}: {}", uid, e);
+                    }
+                }
+            }
+
+            start += length;
+        }
+
+        let result: Vec<String> = recipients.into_iter().collect();
+        println!("✅ Found {} unique recipients", result.len());
+        Ok(result)
+    }
+
+    async fn get_accounts_with_sent_attestations(&self, schema_uid: &str) -> Result<Vec<String>> {
+        println!("🔍 Querying accounts with sent attestations for schema: {}", schema_uid);
+
+        let total_attestations = self.get_total_schema_attestations(schema_uid).await?;
+        println!("📊 Total attestations for schema: {}", total_attestations);
+
+        if total_attestations == 0 {
+            return Ok(vec![]);
+        }
+
+        let mut attesters = HashSet::new();
+        let batch_size = 100u64;
+        let mut start = 0u64;
+
+        while start < total_attestations {
+            let length = std::cmp::min(batch_size, total_attestations - start);
+            println!("🔄 Fetching attestation UIDs batch: {} to {}", start, start + length - 1);
+
+            let uids = self.get_attestation_uids(schema_uid, start, length).await?;
+
+            for uid in uids {
+                match self.get_attestation_details(uid).await {
+                    Ok((attester, _recipient)) => {
+                        attesters.insert(attester.to_string());
+                    }
+                    Err(e) => {
+                        println!("⚠️  Failed to get attestation details for UID {:?}: {}", uid, e);
+                    }
+                }
+            }
+
+            start += length;
+        }
+
+        let result: Vec<String> = attesters.into_iter().collect();
+        println!("✅ Found {} unique attesters", result.len());
+        Ok(result)
     }
 
     async fn get_accounts_with_schema_attestations(&self, schema_uid: &str) -> Result<Vec<String>> {
-        let schema_bytes = hex::decode(schema_uid.strip_prefix("0x").unwrap_or(schema_uid))?;
-        let mut schema_array = [0u8; 32];
-        schema_array.copy_from_slice(&schema_bytes[..32]);
-
-        let call = IEASIndexer::getSchemaAccountsCall { schema: schema_array.into() };
-        let result = self.execute_call(call.abi_encode()).await?;
-        let accounts: Vec<Address> = <sol! { address[] }>::abi_decode(&result)?;
-        Ok(accounts.into_iter().map(|addr| addr.to_string()).collect())
+        // For schema attestations, we return recipients (same as received attestations)
+        self.get_accounts_with_received_attestations(schema_uid).await
     }
 }
 
 sol! {
+    struct AttestationStruct {
+        bytes32 uid;
+        bytes32 schema;
+        uint64 time;
+        uint64 expirationTime;
+        uint64 revocationTime;
+        bytes32 refUID;
+        address recipient;
+        address attester;
+        bool revocable;
+        bytes data;
+    }
+
     interface IEASIndexer {
-        function receivedAttestationCount(address recipient) external view returns (uint256);
-        function sentAttestationCount(address attester) external view returns (uint256);
-        function schemaAttestationCount(bytes32 schema, address account) external view returns (uint256);
-        function getAllRecipients() external view returns (address[] memory);
-        function getAllAttesters() external view returns (address[] memory);
-        function getSchemaAccounts(bytes32 schema) external view returns (address[] memory);
+        function getReceivedAttestationUIDs(address recipient, bytes32 schemaUID, uint256 start, uint256 length, bool reverseOrder) external view returns (bytes32[] memory);
+        function getReceivedAttestationUIDCount(address recipient, bytes32 schemaUID) external view returns (uint256);
+        function getSentAttestationUIDs(address attester, bytes32 schemaUID, uint256 start, uint256 length, bool reverseOrder) external view returns (bytes32[] memory);
+        function getSentAttestationUIDCount(address attester, bytes32 schemaUID) external view returns (uint256);
+        function getSchemaAttestationUIDs(bytes32 schemaUID, uint256 start, uint256 length, bool reverseOrder) external view returns (bytes32[] memory);
+        function getSchemaAttestationUIDCount(bytes32 schemaUID) external view returns (uint256);
+    }
+
+    interface IEAS {
+        function getAttestation(bytes32 uid) external view returns (AttestationStruct memory);
     }
 }

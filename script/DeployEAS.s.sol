@@ -15,9 +15,7 @@ import {EASAttestTrigger} from "../src/contracts/Trigger.sol";
 import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
 import {IWavsServiceHandler} from "@wavs/interfaces/IWavsServiceHandler.sol";
 import {ITypes} from "../src/interfaces/ITypes.sol";
-import {VotingPower} from "../src/contracts/VotingPower.sol";
-import {AttestationGovernor} from "../src/contracts/Governor.sol";
-import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
+
 import {Common} from "./Common.s.sol";
 
 /// @title DeployEAS
@@ -31,9 +29,6 @@ contract DeployEAS is Common {
         address indexer;
         address indexerResolver;
         address easAttestTrigger;
-        address votingPower;
-        address timelock;
-        address governor;
         bytes32 basicSchema;
         bytes32 computeSchema;
     }
@@ -109,10 +104,7 @@ contract DeployEAS is Common {
             ISchemaResolver(deployment.indexerResolver),
             true // revocable
         );
-        console.log(
-            "Basic schema registered:",
-            vm.toString(deployment.basicSchema)
-        );
+        console.log("Basic Schema ID:", vm.toString(deployment.basicSchema));
 
         // Compute result schema for computation results (with indexing)
         deployment.computeSchema = schemaRegistrar.register(
@@ -125,49 +117,6 @@ contract DeployEAS is Common {
             vm.toString(deployment.computeSchema)
         );
 
-        // 9. Deploy VotingPower token
-        console.log("Deploying governance contracts...");
-
-        VotingPower votingPower = new VotingPower(
-            "WAVS Governance Token",
-            "WAVS",
-            msg.sender, // Initial owner
-            IWavsServiceManager(serviceManager)
-        );
-        deployment.votingPower = address(votingPower);
-        console.log("VotingPower deployed at:", deployment.votingPower);
-
-        // 10. Deploy TimelockController
-        address[] memory proposers = new address[](1);
-        address[] memory executors = new address[](1);
-        proposers[0] = address(0); // Will be set to governor after deployment
-        executors[0] = address(0); // Anyone can execute after delay
-
-        TimelockController timelock = new TimelockController(
-            2 days, // 2 day delay
-            proposers,
-            executors,
-            msg.sender // Admin (can be renounced later)
-        );
-        deployment.timelock = address(timelock);
-        console.log("TimelockController deployed at:", deployment.timelock);
-
-        // 11. Deploy AttestationGovernor
-        AttestationGovernor governor = new AttestationGovernor(
-            votingPower,
-            timelock
-        );
-        deployment.governor = address(governor);
-        console.log("AttestationGovernor deployed at:", deployment.governor);
-
-        // 12. Grant proposer role to governor
-        bytes32 proposerRole = timelock.PROPOSER_ROLE();
-        timelock.grantRole(proposerRole, deployment.governor);
-
-        // Revoke proposer role from deployer
-        timelock.revokeRole(proposerRole, msg.sender);
-        console.log("Governor granted proposer role on timelock");
-
         vm.stopBroadcast();
 
         // Log deployment summary
@@ -179,13 +128,5 @@ contract DeployEAS is Common {
         console.log("Indexer:", deployment.indexer);
         console.log("IndexerResolver:", deployment.indexerResolver);
         console.log("EASAttestTrigger:", deployment.easAttestTrigger);
-        console.log("VotingPower:", deployment.votingPower);
-        console.log("TimelockController:", deployment.timelock);
-        console.log("AttestationGovernor:", deployment.governor);
-        console.log("Basic Schema ID:", vm.toString(deployment.basicSchema));
-        console.log(
-            "Compute Schema ID:",
-            vm.toString(deployment.computeSchema)
-        );
     }
 }

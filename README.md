@@ -284,9 +284,12 @@ export SCHEMA_REGISTRAR_ADDR=$(jq -r '.eas_contracts.schema_registrar' .docker/d
 export EAS_INDEXER_ADDR=$(jq -r '.eas_contracts.indexer' .docker/deployment_summary.json)
 export INDEXER_RESOLVER_ADDR=$(jq -r '.eas_contracts.indexer_resolver' .docker/deployment_summary.json)
 export VOTING_POWER_ADDR=$(jq -r '.governance_contracts.voting_power' .docker/deployment_summary.json)
+export REWARDS_TOKEN_ADDRESS=$(jq -r '.reward_contracts.reward_token' .docker/deployment_summary.json)
+export REWARD_DISTRIBUTOR_ADDRESS=$(jq -r '.reward_contracts.reward_distributor' .docker/deployment_summary.json)
+export COMPUTE_SCHEMA_UID=$(jq -r '.eas_contracts.compute_schema' .docker/deployment_summary.json)
 ```
 
-### 1. Create and Register a Schema
+<!--### 1. Create and Register a Schema
 
 Register a custom schema for skill attestations.
 
@@ -307,7 +310,7 @@ forge script script/Schema.s.sol:EasSchema \
 # Extract schema UID using helper script
 export SCHEMA_UID=$(bash script/extract-schema-uid.sh schema_output.log)
 echo "Schema UID: $SCHEMA_UID"
-```
+```-->
 
 ### 2. Trigger Attestation Request
 
@@ -319,8 +322,8 @@ Create an attestation request using your schema.
 # Trigger attestation creation via WAVS
 forge script script/Trigger.s.sol:EasTrigger --sig "triggerRawAttestation(string,string,string,string)" \
   "${SERVICE_TRIGGER_ADDR}" \
-  ${SCHEMA_UID} \
-  "0x742d35Cc6634C0532925a3b8D4f3e9dC9BfD16BB" \
+  ${COMPUTE_SCHEMA_UID} \
+  "0xfE26EB9eD1B24abcfCd023417655ff06344EC470" \
   "Advanced Solidity Development Skills Verified" \
   --rpc-url $RPC_URL --broadcast
 ```
@@ -336,8 +339,8 @@ Check the attestation was created.
 forge script script/Trigger.s.sol:EasTrigger --sig "queryAttestations(string,string,string,string,uint256)" \
   "${EAS_INDEXER_ADDR}" \
   "${EAS_ADDR}" \
-  "${SCHEMA_UID}" \
-  "0x742d35Cc6634C0532925a3b8D4f3e9dC9BfD16BB" \
+  "${COMPUTE_SCHEMA_UID}" \
+  "0xfE26EB9eD1B24abcfCd023417655ff06344EC470" \
   10 \
   --rpc-url $RPC_URL
 ```
@@ -347,8 +350,36 @@ Check voting power for recipient (should have gone up by number of attestations)
 forge script script/Governance.s.sol:Governance \
     --sig "queryVotingPower(string,string)" \
     $VOTING_POWER_ADDR \
-    "0x742d35Cc6634C0532925a3b8D4f3e9dC9BfD16BB" \
+    "0xfE26EB9eD1B24abcfCd023417655ff06344EC470" \
     --rpc-url $RPC_URL
+```
+
+### Distribute Rewards
+Trigger the service to run:
+```bash
+forge script script/Rewards.s.sol:Rewards \
+    --sig "updateRewards(string)" \
+    $REWARD_DISTRIBUTOR_ADDRESS \
+    --rpc-url $RPC_URL \
+    --broadcast
+```
+
+Query rewards state:
+```bash
+forge script script/Rewards.s.sol:Rewards \
+    --sig "queryContractState(string)" \
+    $REWARD_DISTRIBUTOR_ADDRESS \
+    --rpc-url $RPC_URL
+```
+
+Claim:
+```bash
+forge script script/Rewards.s.sol:Rewards \
+    --sig "claimRewards(string,string)" \
+    $REWARD_DISTRIBUTOR_ADDRESS \
+    $REWARDS_TOKEN_ADDRESS \
+    --rpc-url $RPC_URL \
+    --broadcast
 ```
 
 ## AI Coding Agents

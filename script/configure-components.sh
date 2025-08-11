@@ -26,6 +26,14 @@ DEFAULT_COMPONENTS_JSON='{
       "trigger_event": "Attested(address,address,bytes32,bytes32)",
       "trigger_json_path": "eas_contracts.indexer_resolver",
       "submit_json_path": "governance_contracts.voting_power"
+    },
+    {
+      "filename": "rewards.wasm",
+      "package_name": "rewards",
+      "package_version": "0.1.0",
+      "trigger_event": "WavsRewardsTrigger(uint64)",
+      "trigger_json_path": "reward_contracts.reward_distributor",
+      "submit_json_path": "rewards_contracts.reward_distributor"
     }
   ]
 }'
