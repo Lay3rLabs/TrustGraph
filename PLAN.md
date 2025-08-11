@@ -36,7 +36,7 @@ TODO:
 - [ ] Finish rewards deployment (deploy script for contracts / service)
 - [ ] Clean up rewards contract
 - [ ] Tests for rewards
-- [ ] Add LLM component + safe
+- [ ] Add LLM component
 - [ ] Organize project better
 
 ## Future Service Improvements
@@ -46,6 +46,7 @@ TODO:
 - [] EAS Verify component? An EAS flow that verifies attestations
 - [] Add rewards and eas-compute-rewards component
 - [] Add llm component.
+- [ ] Add safe module
 - [] Vesting
 - [] More resolvers
 - [] UI for demo
