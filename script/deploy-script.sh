@@ -66,7 +66,7 @@ fi
 echo "Configuring EAS addresses from deployment summary..."
 EAS_ADDRESS=$(jq -r '.eas_contracts.eas' .docker/deployment_summary.json)
 INDEXER_ADDRESS=$(jq -r '.eas_contracts.indexer' .docker/deployment_summary.json)
-COMPUTE_SCHEMA_ID=$(jq -r '.eas_contracts.compute_schema' .docker/deployment_summary.json)
+COMPUTE_SCHEMA_ID=$(jq -r '.eas_schemas.compute_schema' .docker/deployment_summary.json)
 
 # Determine chain name based on deployment environment
 if [ "$(sh ./script/get-deploy-status.sh)" = "TESTNET" ]; then

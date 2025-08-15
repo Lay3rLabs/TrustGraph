@@ -20,9 +20,9 @@ Fix eas-attest component and Attester.sol contract:
 - [x] Deploy rewards service
 - [x] Fix ERROR Engine(ExecResult("Failed to get reward token address"))
 - [x] Add EN0VA frontend
+- [x] Set operation to Voting power
 - [ ] Realistic vouching schema
 - [ ] Better computation of attestations (actually use attestation data)
-- [ ] Set operation to Voting power
 - [ ] Add operations to Attester.sol (revoke, multi-attest, etc.)
 - [ ] Vibe code working attestation UI
 
