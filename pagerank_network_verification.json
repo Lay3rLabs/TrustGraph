@@ -1,0 +1,86 @@
+{
+  "verification_timestamp": "2025-08-15T17:53:58Z",
+  "network_config": {
+    "rpc_url": "http://localhost:8545",
+    "chain_id": "31337",
+    "eas_address": "0x690c6C816c391A832b9433678c244686B690bDBc",
+    "attester_address": "0xf4BBfbEefc7b360E037182D2A6A030044249E3Ca"
+  },
+  "schemas": {
+    "basic": "0x1aef7347c5e96802e5724a4489681b37ae7972efb40c7ff909f0f8e403ccba22",
+    "like": "0xf4d3fca46ef24b7fa63e32019b78a98edea278ad960529c6b3c5c41c51848d2d",
+    "vouching": "0x66ac02873f7f1f80daadb1ce9294fd86a95ad88dd01bce4de0f4120372817f9d",
+    "statement": "0xa88766997941da5774c3e6952266e4898b2feac233d2715c5f4c087058a5fd8d"
+  },
+  "accounts": {
+    "Alice": {
+      "address": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "outgoing_count": 4,
+      "incoming_count": 11,
+      "total_weight": 0
+    },
+    "Bob": {
+      "address": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+      "outgoing_count": 3,
+      "incoming_count": 3,
+      "total_weight": 80
+    },
+    "Charlie": {
+      "address": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+      "outgoing_count": 7,
+      "incoming_count": 3,
+      "total_weight": 75
+    },
+    "Diana": {
+      "address": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+      "outgoing_count": 7,
+      "incoming_count": 2,
+      "total_weight": 565
+    },
+    "Eve": {
+      "address": "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc",
+      "outgoing_count": 4,
+      "incoming_count": 3,
+      "total_weight": 65
+    },
+    "Frank": {
+      "address": "0x976EA74026E726554dB657fA54763abd0C3a0aa9",
+      "outgoing_count": 2,
+      "incoming_count": 3,
+      "total_weight": 60
+    },
+    "Grace": {
+      "address": "0x14dC79964da2C08b23698B3D3cc7Ca32193d9955",
+      "outgoing_count": 3,
+      "incoming_count": 4,
+      "total_weight": 75
+    },
+    "Henry": {
+      "address": "0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f",
+      "outgoing_count": 4,
+      "incoming_count": 3,
+      "total_weight": 145
+    },
+    "Ivy": {
+      "address": "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720",
+      "outgoing_count": 3,
+      "incoming_count": 2,
+      "total_weight": 70
+    }
+
+  },
+  "patterns_verified": {
+    "hub_pattern": "Alice with 11 incoming connections",
+    "authority_pattern": "Diana with 565 total weight",
+    "chain_pattern": "Bob→Charlie→Diana→Eve→Frank trust chain",
+    "mutual_connections": "Grace↔Henry, Ivy↔Jack bidirectional",
+    "bridge_pattern": "Charlie connecting 8+ groups",
+    "random_connections": "8 diverse network links"
+  },
+  "pagerank_expectations": {
+    "top_5_expected": ["Alice", "Diana", "Charlie", "Bob", "Grace/Henry"],
+    "total_attestations": "40+",
+    "network_density": "medium",
+    "clustering_coefficient": "high"
+  }
+}
