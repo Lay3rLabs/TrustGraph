@@ -60,7 +60,8 @@ sol! {
         MINT,     // 0
         BURN,     // 1
         TRANSFER, // 2
-        DELEGATE  // 3
+        DELEGATE, // 3
+        SET       // 4
     }
 
     struct Operation {
