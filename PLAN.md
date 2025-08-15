@@ -18,12 +18,14 @@ Fix eas-attest component and Attester.sol contract:
 - [x] Fix up schema id being 0x00000 in eas-compute
 - [x] Finish rewards deployment (deploy script for contracts)
 - [x] Deploy rewards service
-- [ ] Fix ERROR Engine(ExecResult("Failed to get reward token address"))
+- [x] Fix ERROR Engine(ExecResult("Failed to get reward token address"))
 - [ ] Add LLM component
 - [ ] Realistic vouching schema
 - [ ] Better computation of attestations (actually use attestation data)
 - [ ] Set operation to Voting power
 - [ ] Add operations to Attester.sol (revoke, multi-attest, etc.)
+- [ ] Add EN0VA frontend
+- [ ] Vibe code working attestation UI
 
 Project organization (low priority):
 - [ ] eas-compute -> eas-compute-voting-power
@@ -38,6 +40,8 @@ The pipeline is simple:
 ```
 ATTESTATION -> REWARDS CALCULATION SERVICE -> RewardsDistributor.sol
 ```
+
+Can we make these reputation based?
 
 ## Future Service Improvements
 - [] Break out Indexer contract, could be modified to be multichain? EAS indexer component (indexes certain attestations without a resolver?)

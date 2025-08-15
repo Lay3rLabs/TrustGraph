@@ -287,6 +287,7 @@ export VOTING_POWER_ADDR=$(jq -r '.governance_contracts.voting_power' .docker/de
 export REWARDS_TOKEN_ADDRESS=$(jq -r '.reward_contracts.reward_token' .docker/deployment_summary.json)
 export REWARD_DISTRIBUTOR_ADDRESS=$(jq -r '.reward_contracts.reward_distributor' .docker/deployment_summary.json)
 export COMPUTE_SCHEMA_UID=$(jq -r '.eas_contracts.compute_schema' .docker/deployment_summary.json)
+export WALLET_ADDRESS=0x715416D37502B25F9dB8072b5a29d84Fa2b90fef
 ```
 
 <!--### 1. Create and Register a Schema
@@ -322,8 +323,8 @@ Create an attestation request using your schema.
 # Trigger attestation creation via WAVS
 forge script script/Trigger.s.sol:EasTrigger --sig "triggerRawAttestation(string,string,string,string)" \
   "${SERVICE_TRIGGER_ADDR}" \
-  ${COMPUTE_SCHEMA_UID} \
-  "0xfE26EB9eD1B24abcfCd023417655ff06344EC470" \
+  $COMPUTE_SCHEMA_UID \
+  $WALLET_ADDRESS \
   "Advanced Solidity Development Skills Verified" \
   --rpc-url $RPC_URL --broadcast
 ```
@@ -340,7 +341,7 @@ forge script script/Trigger.s.sol:EasTrigger --sig "queryAttestations(string,str
   "${EAS_INDEXER_ADDR}" \
   "${EAS_ADDR}" \
   "${COMPUTE_SCHEMA_UID}" \
-  "0xfE26EB9eD1B24abcfCd023417655ff06344EC470" \
+  $WALLET_ADDRESS \
   10 \
   --rpc-url $RPC_URL
 ```
@@ -350,7 +351,7 @@ Check voting power for recipient (should have gone up by number of attestations)
 forge script script/Governance.s.sol:Governance \
     --sig "queryVotingPower(string,string)" \
     $VOTING_POWER_ADDR \
-    "0xfE26EB9eD1B24abcfCd023417655ff06344EC470" \
+    $WALLET_ADDRESS \
     --rpc-url $RPC_URL
 ```
 
@@ -379,7 +380,7 @@ forge script script/Rewards.s.sol:Rewards \
     $REWARD_DISTRIBUTOR_ADDRESS \
     $REWARDS_TOKEN_ADDRESS \
     --rpc-url $RPC_URL \
-    --broadcast
+    --broadcast --ffi
 ```
 
 ## AI Coding Agents
