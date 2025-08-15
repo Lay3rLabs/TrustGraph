@@ -5,6 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { Modal } from "../../components/ui/modal";
 
 interface MenuItem {
   id: string;
@@ -74,7 +75,7 @@ export default function BackroomLayout({
   children: React.ReactNode;
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isWalletMenuOpen, setIsWalletMenuOpen] = useState(false);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
   const pathname = usePathname();
 
@@ -212,85 +213,26 @@ export default function BackroomLayout({
 
               <div className="flex items-center space-x-4">
                 {/* Connect Wallet Button */}
-                <div className="relative">
+                <div>
                   {isConnected && address ? (
                     <button
-                      onClick={() => setIsWalletMenuOpen(!isWalletMenuOpen)}
+                      onClick={() => setIsWalletModalOpen(true)}
                       className="flex items-center space-x-2 mobile-terminal-btn px-3 py-2"
                     >
                       <span className="terminal-bright text-xs">◉</span>
                       <span className="terminal-command text-xs">
                         {formatAddress(address)}
                       </span>
-                      <span className="terminal-dim text-xs">
-                        {isWalletMenuOpen ? "▲" : "▼"}
-                      </span>
                     </button>
                   ) : (
                     <button
-                      onClick={() => setIsWalletMenuOpen(!isWalletMenuOpen)}
+                      onClick={() => setIsWalletModalOpen(true)}
                       className="mobile-terminal-btn px-4 py-2"
                     >
                       <span className="terminal-command text-xs">
                         CONNECT WALLET
                       </span>
                     </button>
-                  )}
-
-                  {/* Wallet dropdown */}
-                  {isWalletMenuOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-64 border border-gray-700 bg-black/90 backdrop-blur-sm rounded-sm z-50">
-                      {isConnected && address ? (
-                        <div className="p-4 space-y-3">
-                          <div className="space-y-2">
-                            <div className="terminal-dim text-xs">
-                              CONNECTED WALLET
-                            </div>
-                            <div className="terminal-text text-xs break-all">
-                              {address}
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => {
-                              disconnect();
-                              setIsWalletMenuOpen(false);
-                            }}
-                            className="w-full mobile-terminal-btn px-4 py-2"
-                          >
-                            <span className="terminal-command text-xs">
-                              DISCONNECT
-                            </span>
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="p-4 space-y-3">
-                          <div className="terminal-dim text-xs">
-                            SELECT WALLET
-                          </div>
-                          {connectors && connectors.length > 0 ? (
-                            connectors.map((connector) => (
-                              <button
-                                key={connector.id}
-                                onClick={() => {
-                                  connect({ connector });
-                                  setIsWalletMenuOpen(false);
-                                }}
-                                disabled={isPending}
-                                className="w-full mobile-terminal-btn px-4 py-2 text-left"
-                              >
-                                <span className="terminal-text text-xs">
-                                  {connector.name}
-                                </span>
-                              </button>
-                            ))
-                          ) : (
-                            <div className="terminal-dim text-xs">
-                              No wallets detected
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
                   )}
                 </div>
 
@@ -390,13 +332,65 @@ export default function BackroomLayout({
         </div>
       </div>
 
-      {/* Overlay for mobile wallet menu */}
-      {isWalletMenuOpen && (
-        <div
-          className="fixed inset-0 z-40 lg:hidden"
-          onClick={() => setIsWalletMenuOpen(false)}
-        />
-      )}
+      {/* Wallet Modal */}
+      <Modal
+        isOpen={isWalletModalOpen}
+        onClose={() => setIsWalletModalOpen(false)}
+        title={isConnected ? "WALLET" : "CONNECT WALLET"}
+      >
+        {isConnected && address ? (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="terminal-dim text-xs">
+                CONNECTED WALLET
+              </div>
+              <div className="terminal-text text-xs break-all bg-black/30 p-3 rounded border border-gray-700">
+                {address}
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                disconnect();
+                setIsWalletModalOpen(false);
+              }}
+              className="w-full mobile-terminal-btn px-4 py-2"
+            >
+              <span className="terminal-command text-xs">
+                DISCONNECT
+              </span>
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="terminal-dim text-xs">
+              SELECT WALLET
+            </div>
+            {connectors && connectors.length > 0 ? (
+              <div className="space-y-2">
+                {connectors.map((connector) => (
+                  <button
+                    key={connector.id}
+                    onClick={() => {
+                      connect({ connector });
+                      setIsWalletModalOpen(false);
+                    }}
+                    disabled={isPending}
+                    className="w-full mobile-terminal-btn px-4 py-2 text-left"
+                  >
+                    <span className="terminal-text text-xs">
+                      {connector.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="terminal-dim text-xs">
+                No wallets detected
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
