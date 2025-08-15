@@ -273,21 +273,35 @@ This demo walks you through the complete attestation workflow:
 
 ## Demo
 
-Set these variables from deployment output:
+Set up environment variables automatically:
 
 ```bash
-# Parse deployment addresses from .docker/deployment_summary.json
-export RPC_URL=`bash ./script/get-rpc.sh`
-export SERVICE_TRIGGER_ADDR=$(jq -r '.service_contracts.trigger' .docker/deployment_summary.json)
-export EAS_ADDR=$(jq -r '.eas_contracts.eas' .docker/deployment_summary.json)
-export SCHEMA_REGISTRAR_ADDR=$(jq -r '.eas_contracts.schema_registrar' .docker/deployment_summary.json)
-export EAS_INDEXER_ADDR=$(jq -r '.eas_contracts.indexer' .docker/deployment_summary.json)
-export INDEXER_RESOLVER_ADDR=$(jq -r '.eas_contracts.indexer_resolver' .docker/deployment_summary.json)
-export VOTING_POWER_ADDR=$(jq -r '.governance_contracts.voting_power' .docker/deployment_summary.json)
-export REWARDS_TOKEN_ADDRESS=$(jq -r '.reward_contracts.reward_token' .docker/deployment_summary.json)
-export REWARD_DISTRIBUTOR_ADDRESS=$(jq -r '.reward_contracts.reward_distributor' .docker/deployment_summary.json)
-export COMPUTE_SCHEMA_UID=$(jq -r '.eas_contracts.compute_schema' .docker/deployment_summary.json)
+# Auto-generate ALL environment variables from deployment_summary.json
+./script/setup-pagerank-env.sh --source
+
+# Set demo wallet address
+export WALLET_ADDRESS=0x715416D37502B25F9dB8072b5a29d84Fa2b90fef
 ```
+
+### PageRank Testing (Optional)
+
+Create a comprehensive PageRank test network with real attestations:
+
+```bash
+# Create 40+ real attestations across different network patterns
+./script/create-pagerank-attestations.sh
+
+# Verify the network and get PageRank recommendations  
+./script/verify-pagerank-network.sh
+```
+
+This creates a realistic attestation network with:
+- **Alice** (Central Hub) - 11 incoming connections
+- **Diana** (Authority) - 565 total vouching weight  
+- **Charlie** (Bridge) - 7+ cross-group connections
+- Multiple patterns: chains, clusters, mutual relationships
+
+Perfect for testing PageRank-based reward algorithms!
 
 <!--### 1. Create and Register a Schema
 
@@ -321,11 +335,11 @@ Create an attestation request using your schema.
 ```bash
 # Trigger attestation creation via WAVS
 forge script script/Trigger.s.sol:EasTrigger --sig "triggerRawAttestation(string,string,string,string)" \
-  "${SERVICE_TRIGGER_ADDR}" \
-  ${COMPUTE_SCHEMA_UID} \
-  "0xfE26EB9eD1B24abcfCd023417655ff06344EC470" \
+  "${WAVS_ENV_TRIGGER_ADDRESS}" \
+  $WAVS_ENV_COMPUTE_SCHEMA_ID \
+  $WALLET_ADDRESS \
   "Advanced Solidity Development Skills Verified" \
-  --rpc-url $RPC_URL --broadcast
+  --rpc-url $WAVS_ENV_RPC_URL --broadcast
 ```
 
 ### 3. View Results
@@ -337,21 +351,21 @@ Check the attestation was created.
 ```bash
 # Query attestations for the schema and recipient
 forge script script/Trigger.s.sol:EasTrigger --sig "queryAttestations(string,string,string,string,uint256)" \
-  "${EAS_INDEXER_ADDR}" \
-  "${EAS_ADDR}" \
-  "${COMPUTE_SCHEMA_UID}" \
-  "0xfE26EB9eD1B24abcfCd023417655ff06344EC470" \
+  "${WAVS_ENV_INDEXER_ADDRESS}" \
+  "${WAVS_ENV_EAS_ADDRESS}" \
+  "${WAVS_ENV_COMPUTE_SCHEMA_ID}" \
+  $WALLET_ADDRESS \
   10 \
-  --rpc-url $RPC_URL
+  --rpc-url $WAVS_ENV_RPC_URL
 ```
 
 Check voting power for recipient (should have gone up by number of attestations):
 ```bash
 forge script script/Governance.s.sol:Governance \
     --sig "queryVotingPower(string,string)" \
-    $VOTING_POWER_ADDR \
-    "0xfE26EB9eD1B24abcfCd023417655ff06344EC470" \
-    --rpc-url $RPC_URL
+    $WAVS_ENV_VOTING_POWER_ADDRESS \
+    $WALLET_ADDRESS \
+    --rpc-url $WAVS_ENV_RPC_URL
 ```
 
 ### Distribute Rewards
@@ -359,8 +373,8 @@ Trigger the service to run:
 ```bash
 forge script script/Rewards.s.sol:Rewards \
     --sig "updateRewards(string)" \
-    $REWARD_DISTRIBUTOR_ADDRESS \
-    --rpc-url $RPC_URL \
+    $WAVS_ENV_REWARD_DISTRIBUTOR_ADDRESS \
+    --rpc-url $WAVS_ENV_RPC_URL \
     --broadcast
 ```
 
@@ -368,18 +382,18 @@ Query rewards state:
 ```bash
 forge script script/Rewards.s.sol:Rewards \
     --sig "queryContractState(string)" \
-    $REWARD_DISTRIBUTOR_ADDRESS \
-    --rpc-url $RPC_URL
+    $WAVS_ENV_REWARD_DISTRIBUTOR_ADDRESS \
+    --rpc-url $WAVS_ENV_RPC_URL
 ```
 
 Claim:
 ```bash
 forge script script/Rewards.s.sol:Rewards \
     --sig "claimRewards(string,string)" \
-    $REWARD_DISTRIBUTOR_ADDRESS \
-    $REWARDS_TOKEN_ADDRESS \
-    --rpc-url $RPC_URL \
-    --broadcast
+    $WAVS_ENV_REWARD_DISTRIBUTOR_ADDRESS \
+    $WAVS_ENV_REWARD_TOKEN_ADDRESS \
+    --rpc-url $WAVS_ENV_RPC_URL \
+    --broadcast --ffi
 ```
 
 ## AI Coding Agents

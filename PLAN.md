@@ -18,12 +18,30 @@ Fix eas-attest component and Attester.sol contract:
 - [x] Fix up schema id being 0x00000 in eas-compute
 - [x] Finish rewards deployment (deploy script for contracts)
 - [x] Deploy rewards service
-- [ ] Fix ERROR Engine(ExecResult("Failed to get reward token address"))
-- [ ] Add LLM component
-- [ ] Realistic vouching schema
+- [x] Fix ERROR Engine(ExecResult("Failed to get reward token address"))
+- [x] Add EN0VA frontend
+- [x] Set operation to Voting power
+- [x] Realistic vouching schema
+- [ ] Deploy voting power contract with initial set
 - [ ] Better computation of attestations (actually use attestation data)
-- [ ] Set operation to Voting power
 - [ ] Add operations to Attester.sol (revoke, multi-attest, etc.)
+- [ ] Revoking an attestation should lower voting power
+- [ ] Vibe code working attestation UI
+- [ ] Implement page rank for rewards
+- [ ] Make a points page.
+
+Flow:
+- Load attestations for a recipient
+- Compute page rank algorithm
+
+Enhancement:
+- Resolver that only let's people who have voting power attest.
+
+Limitations:
+- First version, will only work with a limited group size (depending on how much gas the chain allows).
+- Updates increase in cost with their size
+- This is easily solved with a Merkle Based solution, but the tradeoff is it doesn't work out of the box with Compound Governor, etc.
+
 
 Project organization (low priority):
 - [ ] eas-compute -> eas-compute-voting-power
@@ -39,13 +57,15 @@ The pipeline is simple:
 ATTESTATION -> REWARDS CALCULATION SERVICE -> RewardsDistributor.sol
 ```
 
+Can we make these reputation based?
+
 ## Future Service Improvements
+- [] Add llm component.
 - [] Break out Indexer contract, could be modified to be multichain? EAS indexer component (indexes certain attestations without a resolver?)
 - [] Add eas-indexer sidecar to docker compose?
 - [] JS example using EAS SDK
 - [] EAS Verify component? An EAS flow that verifies attestations
 - [] Add rewards and eas-compute-rewards component
-- [] Add llm component.
 - [ ] Add safe module
 - [] Vesting
 - [] More resolvers

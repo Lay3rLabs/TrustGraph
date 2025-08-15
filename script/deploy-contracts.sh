@@ -70,6 +70,10 @@ export EAS_ATTEST_TRIGGER_ADDR=$(jq -r '.logs[] | select(type == "string" and st
 # Extract schema IDs
 export BASIC_SCHEMA_ID=$(jq -r '.logs[] | select(type == "string" and startswith("Basic Schema ID:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 export COMPUTE_SCHEMA_ID=$(jq -r '.logs[] | select(type == "string" and startswith("Compute Schema ID:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
+export STATEMENT_SCHEMA_ID=$(jq -r '.logs[] | select(type == "string" and startswith("Statement Schema ID:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
+export IS_TRUE_SCHEMA_ID=$(jq -r '.logs[] | select(type == "string" and startswith("IsTrue Schema ID:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
+export LIKE_SCHEMA_ID=$(jq -r '.logs[] | select(type == "string" and startswith("Like Schema ID:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
+export VOUCHING_SCHEMA_ID=$(jq -r '.logs[] | select(type == "string" and startswith("Vouching Schema ID:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 
 # Extract deployed addresses from Governance deployment
 export VOTING_POWER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("VotingPower deployed at:")) | split(": ")[1]' .docker/governance_deploy.json 2>/dev/null || echo "")
@@ -94,9 +98,15 @@ cat > .docker/deployment_summary.json << EOF
     "attester": "${EAS_ATTESTER_ADDR}",
     "schema_registrar": "${EAS_SCHEMA_REGISTRAR_ADDR}",
     "indexer": "${EAS_INDEXER_ADDR}",
-    "indexer_resolver": "${EAS_INDEXER_RESOLVER_ADDR}",
+    "indexer_resolver": "${EAS_INDEXER_RESOLVER_ADDR}"
+  },
+  "eas_schemas": {
     "basic_schema": "${BASIC_SCHEMA_ID}",
-    "compute_schema": "${COMPUTE_SCHEMA_ID}"
+    "compute_schema": "${COMPUTE_SCHEMA_ID}",
+    "statement_schema": "${STATEMENT_SCHEMA_ID}",
+    "is_true_schema": "${IS_TRUE_SCHEMA_ID}",
+    "like_schema": "${LIKE_SCHEMA_ID}",
+    "vouching_schema": "${VOUCHING_SCHEMA_ID}"
   },
   "service_contracts": {
     "trigger": "${SERVICE_TRIGGER_ADDR}"
@@ -131,6 +141,10 @@ echo ""
 echo "📋 EAS Schemas:"
 echo "   BASIC_SCHEMA_ID: ${BASIC_SCHEMA_ID}"
 echo "   COMPUTE_SCHEMA_ID: ${COMPUTE_SCHEMA_ID}"
+echo "   STATEMENT_SCHEMA_ID: ${STATEMENT_SCHEMA_ID}"
+echo "   IS_TRUE_SCHEMA_ID: ${IS_TRUE_SCHEMA_ID}"
+echo "   LIKE_SCHEMA_ID: ${LIKE_SCHEMA_ID}"
+echo "   VOUCHING_SCHEMA_ID: ${VOUCHING_SCHEMA_ID}"
 echo ""
 echo "🏛️  Governance Contracts:"
 echo "   VOTING_POWER_ADDR: ${VOTING_POWER_ADDR}"

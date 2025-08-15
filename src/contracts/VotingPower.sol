@@ -19,7 +19,8 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
         MINT, // 0 - Mint tokens to accounts
         BURN, // 1 - Burn tokens from accounts
         TRANSFER, // 2 - Transfer tokens between accounts
-        DELEGATE // 3 - Delegate voting power
+        DELEGATE, // 3 - Delegate voting power
+        SET // 4 - Set voting power to a specific amount
     }
 
     /// @dev Single voting power operation
@@ -325,6 +326,9 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
                     totalAmount += op.amount;
                 } else if (op.operationType == OperationType.DELEGATE) {
                     _delegate(op.account, op.target);
+                } else if (op.operationType == OperationType.SET) {
+                    _set(op.account, op.amount);
+                    totalAmount += op.amount;
                 }
             }
         }
@@ -374,5 +378,34 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
 
         // Transfer voting units to update delegation checkpoints
         _transferVotingUnits(from, to, amount);
+    }
+
+    /// @dev Internal set function (used by WAVS operations)
+    /// @param account The account to set voting power for
+    /// @param amount The amount to set as the new voting power
+    function _set(address account, uint256 amount) internal {
+        require(account != address(0), "VotingPower: set for zero address");
+
+        uint256 currentBalance = _balances[account];
+
+        if (amount > currentBalance) {
+            // Need to mint the difference
+            uint256 difference = amount - currentBalance;
+            _balances[account] = amount;
+            _totalSupply += difference;
+            _transferVotingUnits(address(0), account, difference);
+
+            // Auto-delegate to self if not already delegated
+            if (delegates(account) == address(0)) {
+                _delegate(account, account);
+            }
+        } else if (amount < currentBalance) {
+            // Need to burn the difference
+            uint256 difference = currentBalance - amount;
+            _balances[account] = amount;
+            _totalSupply -= difference;
+            _transferVotingUnits(account, address(0), difference);
+        }
+        // If amount == currentBalance, no change needed
     }
 }

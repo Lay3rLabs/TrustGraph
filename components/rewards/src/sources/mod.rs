@@ -5,6 +5,7 @@ use async_trait::async_trait;
 use wavs_wasi_utils::evm::alloy_primitives::U256;
 
 pub mod eas;
+pub mod eas_pagerank;
 pub mod erc721;
 
 /// A source of rewards.
@@ -51,12 +52,38 @@ impl SourceRegistry {
     /// Get rewards for an account across all sources.
     pub async fn get_rewards(&self, account: &str) -> Result<U256> {
         let mut total = U256::ZERO;
+        let max_single_source_reward = U256::from(1000000000000000000000000u128); // 1M tokens max per source
 
         for source in &self.sources {
             let source_rewards = source.get_rewards(account).await?;
-            total = total
-                .checked_add(source_rewards)
-                .ok_or(anyhow::anyhow!("Total rewards overflow"))?;
+
+            // Safety check: prevent any single source from returning unreasonably large rewards
+            if source_rewards > max_single_source_reward {
+                return Err(anyhow::anyhow!(
+                    "Source '{}' returned excessive rewards: {} (max allowed: {})",
+                    source.get_name(),
+                    source_rewards,
+                    max_single_source_reward
+                ));
+            }
+
+            // Use checked addition to prevent overflow
+            total = total.checked_add(source_rewards).ok_or_else(|| {
+                anyhow::anyhow!(
+                    "Total rewards overflow when adding {} from source '{}' to existing total {}",
+                    source_rewards,
+                    source.get_name(),
+                    total
+                )
+            })?;
+
+            if !source_rewards.is_zero() {
+                println!("💰 {} rewards from '{}': {}", account, source.get_name(), source_rewards);
+            }
+        }
+
+        if !total.is_zero() {
+            println!("💎 Total rewards for {}: {}", account, total);
         }
 
         Ok(total)

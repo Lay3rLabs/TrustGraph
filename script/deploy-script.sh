@@ -66,7 +66,7 @@ fi
 echo "Configuring EAS addresses from deployment summary..."
 EAS_ADDRESS=$(jq -r '.eas_contracts.eas' .docker/deployment_summary.json)
 INDEXER_ADDRESS=$(jq -r '.eas_contracts.indexer' .docker/deployment_summary.json)
-COMPUTE_SCHEMA_ID=$(jq -r '.eas_contracts.compute_schema' .docker/deployment_summary.json)
+VOUCHING_SCHEMA_ID=$(jq -r '.eas_schemas.vouching_schema' .docker/deployment_summary.json)
 
 # Determine chain name based on deployment environment
 if [ "$(sh ./script/get-deploy-status.sh)" = "TESTNET" ]; then
@@ -86,20 +86,21 @@ if [ "$INDEXER_ADDRESS" = "null" ] || [ -z "$INDEXER_ADDRESS" ]; then
     exit 1
 fi
 
-if [ "$COMPUTE_SCHEMA_ID" = "null" ] || [ -z "$COMPUTE_SCHEMA_ID" ]; then
-    echo "❌ Failed to extract compute schema ID from deployment summary"
+if [ "$VOUCHING_SCHEMA_ID" = "null" ] || [ -z "$VOUCHING_SCHEMA_ID" ]; then
+    echo "❌ Failed to extract vouching schema ID from deployment summary"
     exit 1
 fi
 
 echo "✅ EAS Address: ${EAS_ADDRESS}"
 echo "✅ Indexer Address: ${INDEXER_ADDRESS}"
-echo "✅ Compute Schema ID: ${COMPUTE_SCHEMA_ID}"
+echo "✅ Vouching Schema ID: ${VOUCHING_SCHEMA_ID}"
 echo "✅ Chain Name: ${CHAIN_NAME}"
 
 REWARDS_TOKEN_ADDRESS=$(jq -r '.reward_contracts.reward_token' .docker/deployment_summary.json)
 
+# TODO pass in vouching schema id
 # Set CONFIG_VALUES with EAS configuration and rewards token address
-export CONFIG_VALUES="eas_address=${EAS_ADDRESS},indexer_address=${INDEXER_ADDRESS},chain_name=${CHAIN_NAME},reward_token=${REWARDS_TOKEN_ADDRESS},reward_schema_uid=${COMPUTE_SCHEMA_ID}"
+export CONFIG_VALUES="eas_address=${EAS_ADDRESS},indexer_address=${INDEXER_ADDRESS},chain_name=${CHAIN_NAME},reward_token=${REWARDS_TOKEN_ADDRESS},reward_schema_uid=${VOUCHING_SCHEMA_ID},pagerank_reward_pool=1000000000000000000000"
 echo "📋 EAS Configuration: ${CONFIG_VALUES}"
 
 # Upload components to WASI registry
@@ -158,13 +159,13 @@ sleep 1
 
 bash ./script/create-aggregator.sh 1
 IPFS_GATEWAY=${IPFS_GATEWAY} bash ./infra/aggregator-1/start.sh
-sleep 1
+sleep 5
 wget -q --header="Content-Type: application/json" --post-data="{\"uri\": \"${IPFS_URI}\"}" ${AGGREGATOR_URL}/register-service -O -
 
 ### === Start WAVS ===
 bash ./script/create-operator.sh 1
 IPFS_GATEWAY=${IPFS_GATEWAY} bash ./infra/wavs-1/start.sh
-sleep 5
+sleep 10
 
 # Deploy the service JSON to WAVS so it now watches and submits.
 # 'opt in' for WAVS to watch (this is before we register to Eigenlayer)

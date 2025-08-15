@@ -28,6 +28,7 @@ If you are a community member, you can earn incentives based on your activity:
 - Attending our events or webinars
 - Writing blog posts or articles about WAVS
 - Providing feedback or suggestions for improvement
+- Getting vouched for by other community members
 
 ### Attestation Based Incentives
 

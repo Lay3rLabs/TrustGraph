@@ -73,22 +73,22 @@ impl Guest for Component {
     }
 }
 
-/// Creates a VotingPowerPayload with mint operation based on attestation count
+/// Creates a VotingPowerPayload with set operation based on attestation count
 fn create_voting_power_payload(recipient: Address, attestation_count: U256) -> VotingPowerPayload {
     // Create voting power based on attestation count
     // For this example: 1 attestation = 1 voting token
     let voting_power = attestation_count;
 
-    // Create a mint operation for the recipient
-    let mint_operation = Operation {
-        operationType: OperationType::MINT,
+    // Create a set operation for the recipient
+    let set_operation = Operation {
+        operationType: OperationType::SET,
         account: recipient,
-        target: Address::ZERO, // Not used for mint operations
+        target: Address::ZERO, // Not used for set operations
         amount: voting_power,
     };
 
-    let operations = vec![mint_operation];
+    let operations = vec![set_operation];
 
-    // Create the payload with the mint operation
+    // Create the payload with the set operation
     VotingPowerPayload { operations }
 }
