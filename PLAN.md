@@ -21,10 +21,26 @@ Fix eas-attest component and Attester.sol contract:
 - [x] Fix ERROR Engine(ExecResult("Failed to get reward token address"))
 - [x] Add EN0VA frontend
 - [x] Set operation to Voting power
-- [ ] Realistic vouching schema
+- [x] Realistic vouching schema
+- [ ] Deploy voting power contract with initial set
 - [ ] Better computation of attestations (actually use attestation data)
 - [ ] Add operations to Attester.sol (revoke, multi-attest, etc.)
+- [ ] Revoking an attestation should lower voting power
 - [ ] Vibe code working attestation UI
+- [ ] Implement page rank for rewards
+
+Flow:
+- Load attestations for a recipient
+- Compute page rank algorithm
+
+Enhancement:
+- Resolver that only let's people who have voting power attest.
+
+Limitations:
+- First version, will only work with a limited group size (depending on how much gas the chain allows).
+- Updates increase in cost with their size
+- This is easily solved with a Merkle Based solution, but the tradeoff is it doesn't work out of the box with Compound Governor, etc.
+
 
 Project organization (low priority):
 - [ ] eas-compute -> eas-compute-voting-power
