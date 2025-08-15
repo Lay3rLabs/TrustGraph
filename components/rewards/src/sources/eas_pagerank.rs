@@ -202,8 +202,8 @@ impl EasPageRankSource {
         // Print top rewards for debugging
         let mut sorted_rewards: Vec<_> = rewards.iter().collect();
         sorted_rewards.sort_by(|a, b| b.1.cmp(a.1));
-        println!("🏆 Top 5 rewards:");
-        for (i, (addr, reward)) in sorted_rewards.iter().take(5).enumerate() {
+        println!("🏆 Top 10 rewards:");
+        for (i, (addr, reward)) in sorted_rewards.iter().take(10).enumerate() {
             println!("  {}. {}: {} tokens", i + 1, addr, reward);
         }
 

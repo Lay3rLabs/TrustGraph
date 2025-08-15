@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Create PageRank Attestations on Existing Local Network
-# Uses deployed contracts and default anvil accounts to create real attestation network
+# Create PageRank Vouching Attestations on Existing Local Network
+# Simple version - only vouching attestations with different weights
 
 set -e
 
@@ -24,10 +24,7 @@ CHAIN_ID="31337"
 # Contract addresses from deployment summary
 EAS_ADDRESS=""
 ATTESTER_ADDRESS=""
-BASIC_SCHEMA_ID=""
-LIKE_SCHEMA_ID=""
 VOUCHING_SCHEMA_ID=""
-STATEMENT_SCHEMA_ID=""
 
 # Function to get private key by account name
 get_private_key() {
@@ -61,7 +58,6 @@ get_address() {
     esac
 }
 
-# We'll use first 9 anvil accounts, then generate addresses for the remaining 6
 # Function to print colored output
 print_step() {
     echo -e "${BLUE}=== $1 ===${NC}"
@@ -121,10 +117,7 @@ load_deployment_config() {
 
         EAS_ADDRESS="$WAVS_ENV_EAS_ADDRESS"
         ATTESTER_ADDRESS="$WAVS_ENV_ATTESTER_ADDRESS"
-        BASIC_SCHEMA_ID="$WAVS_ENV_BASIC_SCHEMA_ID"
-        LIKE_SCHEMA_ID="$WAVS_ENV_LIKE_SCHEMA_ID"
         VOUCHING_SCHEMA_ID="$WAVS_ENV_VOUCHING_SCHEMA_ID"
-        STATEMENT_SCHEMA_ID="$WAVS_ENV_STATEMENT_SCHEMA_ID"
 
         print_success "Configuration loaded from environment variables"
     else
@@ -138,18 +131,13 @@ load_deployment_config() {
 
         EAS_ADDRESS=$(jq -r '.eas_contracts.eas' "$DEPLOYMENT_FILE")
         ATTESTER_ADDRESS=$(jq -r '.eas_contracts.attester' "$DEPLOYMENT_FILE")
-        BASIC_SCHEMA_ID=$(jq -r '.eas_schemas.basic_schema' "$DEPLOYMENT_FILE")
-        LIKE_SCHEMA_ID=$(jq -r '.eas_schemas.like_schema' "$DEPLOYMENT_FILE")
         VOUCHING_SCHEMA_ID=$(jq -r '.eas_schemas.vouching_schema' "$DEPLOYMENT_FILE")
-        STATEMENT_SCHEMA_ID=$(jq -r '.eas_schemas.statement_schema' "$DEPLOYMENT_FILE")
 
         print_success "Configuration loaded from deployment file"
     fi
 
     print_info "EAS: $EAS_ADDRESS"
     print_info "Attester: $ATTESTER_ADDRESS"
-    print_info "Basic Schema: $BASIC_SCHEMA_ID"
-    print_info "Like Schema: $LIKE_SCHEMA_ID"
     print_info "Vouching Schema: $VOUCHING_SCHEMA_ID"
 }
 
@@ -177,35 +165,17 @@ verify_network() {
     print_success "Network connectivity verified"
 }
 
-# Function to get recipient address by name
-get_recipient_address() {
-    local name="$1"
-    local addr=$(get_address "$name")
-    if [[ -n "$addr" ]]; then
-        echo "$addr"
-    else
-        # For accounts not in our list, generate from private key
-        local key=$(get_private_key "$name")
-        if [[ -n "$key" ]]; then
-            cast wallet address "$key"
-        else
-            echo ""
-        fi
-    fi
-}
-
-# Function to create attestation
-create_attestation() {
+# Function to create vouching attestation
+create_vouching_attestation() {
     local attester_name="$1"
     local recipient_name="$2"
-    local schema_id="$3"
-    local data="$4"
-    local description="$5"
+    local weight="$3"
 
     local attester_key=$(get_private_key "$attester_name")
-    local recipient_addr=$(get_recipient_address "$recipient_name")
+    local recipient_addr=$(get_address "$recipient_name")
+    local data=$(cast abi-encode "f(uint256)" $weight)
 
-    print_info "Creating: $description"
+    print_info "Creating vouching: $attester_name → $recipient_name (weight: $weight)"
 
     # Create the attestation with error handling
     local tx_hash
@@ -214,7 +184,7 @@ create_attestation() {
         --rpc-url $RPC_URL \
         --gas-limit 500000 \
         "attest(bytes32,address,bytes)" \
-        "$schema_id" \
+        "$VOUCHING_SCHEMA_ID" \
         "$recipient_addr" \
         "$data" 2>/dev/null); then
         print_success "  ✓ TX: $tx_hash"
@@ -225,96 +195,30 @@ create_attestation() {
     fi
 }
 
-# Function to create all attestations
+# Function to create all vouching attestations
 create_attestations() {
-    print_step "Creating PageRank test attestations"
+    print_step "Creating PageRank vouching attestations"
 
     local total_attestations=0
     local failed_attestations=0
 
-    print_info "🎯 Creating comprehensive attestation network..."
-    print_info "   This will generate diverse patterns for PageRank testing"
+    print_info "🎯 Creating vouching network for PageRank testing..."
 
-    # Hub pattern - Alice as central hub
-    print_info "📍 Creating hub pattern with Alice as center..."
-    for name in Bob Charlie Diana Eve Frank Grace Henry Ivy; do
-        if create_attestation "$name" "Alice" "$LIKE_SCHEMA_ID" "0x0000000000000000000000000000000000000000000000000000000000000001" "$name endorses hub Alice"; then
-            ((total_attestations++))
-        else
-            ((failed_attestations++))
-        fi
-        sleep 0.1  # Brief pause between transactions
-    done
+    # High-value vouchers (authority figures)
+    print_info "👑 Creating authority vouchers..."
 
-    # Alice responds to first 4
-    print_info "🔄 Alice acknowledging key supporters..."
-    for name in Bob Charlie Diana Eve; do
-        local timestamp=$(date +%s)
-        local data=$(cast abi-encode "f(bytes32,string,uint256)" "0x6875625f726573706f6e7365000000000000000000000000000000000000000" "Hub acknowledgment" $timestamp)
-        if create_attestation "Alice" "$name" "$BASIC_SCHEMA_ID" "$data" "Hub Alice acknowledges $name"; then
-            ((total_attestations++))
-        else
-            ((failed_attestations++))
-        fi
-        sleep 0.1
-    done
-
-    # Authority pattern - Diana gives high-weight endorsements
-    print_info "👑 Creating authority pattern with Diana..."
-    local weights=(95 90 85 80 75 70)
-    local recipients=(Alice Bob Charlie Frank Grace Henry)
-    for i in {0..5}; do
-        local weight=${weights[$i]}
-        local recipient=${recipients[$i]}
-        local data=$(cast abi-encode "f(uint256)" $weight)
-        if create_attestation "Diana" "$recipient" "$VOUCHING_SCHEMA_ID" "$data" "Authority Diana vouches for $recipient (weight: $weight)"; then
-            ((total_attestations++))
-        else
-            ((failed_attestations++))
-        fi
-        sleep 0.1
-    done
-
-    # Chain pattern - trust chain
-    print_info "🔗 Creating chain of trust pattern..."
-    local chain_names=(Bob Charlie Diana Eve Frank)
-    local chain_weights=(80 75 70 65)
-    for i in {0..3}; do
-        local from=${chain_names[$i]}
-        local to=${chain_names[$((i+1))]}
-        local weight=${chain_weights[$i]}
-        local data=$(cast abi-encode "f(uint256)" $weight)
-        if create_attestation "$from" "$to" "$VOUCHING_SCHEMA_ID" "$data" "Chain: $from -> $to (weight: $weight)"; then
-            ((total_attestations++))
-        else
-            ((failed_attestations++))
-        fi
-        sleep 0.1
-    done
-
-    # Mutual connections
-    print_info "🤝 Creating mutual connections..."
-    local data75=$(cast abi-encode "f(uint256)" 75)
-    local data80=$(cast abi-encode "f(uint256)" 80)
-    local like_true=$(cast abi-encode "f(bool)" true)
-
-    local mutual_attestations=(
-        "Grace:Henry:vouching:$data75:Grace vouches for Henry"
-        "Henry:Grace:vouching:$data80:Henry vouches for Grace"
-        "Ivy:Jack:like:$like_true:Ivy likes Jack"
-        "Jack:Ivy:like:$like_true:Jack likes Ivy"
+    # Diana vouches for key players with high weights
+    local diana_vouches=(
+        "Alice:95"
+        "Bob:90"
+        "Charlie:85"
+        "Frank:80"
+        "Grace:75"
     )
 
-    for attestation in "${mutual_attestations[@]}"; do
-        IFS=':' read -r from to schema_type data_val desc <<< "$attestation"
-        local schema_id=""
-        if [[ "$schema_type" == "vouching" ]]; then
-            schema_id="$VOUCHING_SCHEMA_ID"
-        else
-            schema_id="$LIKE_SCHEMA_ID"
-        fi
-
-        if create_attestation "$from" "$to" "$schema_id" "$data_val" "$desc"; then
+    for vouch in "${diana_vouches[@]}"; do
+        IFS=':' read -r recipient weight <<< "$vouch"
+        if create_vouching_attestation "Diana" "$recipient" "$weight"; then
             ((total_attestations++))
         else
             ((failed_attestations++))
@@ -322,79 +226,19 @@ create_attestations() {
         sleep 0.1
     done
 
-    # Community clusters
-    print_info "🏘️ Creating community clusters..."
+    # Alice vouches for her network (hub pattern)
+    print_info "🌟 Creating hub vouchers..."
 
-    # Only use first 9 accounts for clusters to avoid missing addresses
-    # Cluster 1: Kate, Liam, Mia (but only if we have them)
-    local available_cluster=(Grace Henry Frank)  # Use available accounts
-    for i in {0..2}; do
-        for j in {0..2}; do
-            if [[ $i -ne $j ]]; then
-                if create_attestation "${available_cluster[$i]}" "${available_cluster[$j]}" "$LIKE_SCHEMA_ID" "$like_true" "Cluster: ${available_cluster[$i]} <-> ${available_cluster[$j]}"; then
-                    ((total_attestations++))
-                else
-                    ((failed_attestations++))
-                fi
-                sleep 0.1
-            fi
-        done
-    done
-
-    # Partnership between two available accounts
-    local data85=$(cast abi-encode "f(uint256)" 85)
-    if create_attestation "Henry" "Ivy" "$VOUCHING_SCHEMA_ID" "$data85" "Henry partners with Ivy"; then
-        ((total_attestations++))
-    else
-        ((failed_attestations++))
-    fi
-    if create_attestation "Ivy" "Henry" "$VOUCHING_SCHEMA_ID" "$data85" "Ivy partners with Henry"; then
-        ((total_attestations++))
-    else
-        ((failed_attestations++))
-    fi
-
-    # Bridge connections - Charlie connecting groups
-    print_info "🌉 Creating bridge connections through Charlie..."
-    local timestamp=$(date +%s)
-    local bridge_data=$(cast abi-encode "f(bytes32,string,uint256)" "0x627269646765000000000000000000000000000000000000000000000000000" "Inter-group connection" $timestamp)
-
-    for name in Alice Frank Ivy Grace Henry Eve; do
-        if create_attestation "Charlie" "$name" "$BASIC_SCHEMA_ID" "$bridge_data" "Bridge Charlie connects to $name"; then
-            ((total_attestations++))
-        else
-            ((failed_attestations++))
-        fi
-        sleep 0.1
-    done
-
-    # Random connections for network diversity
-    print_info "🎲 Adding random connections for network diversity..."
-    local random_connections=(
-        "Eve:Grace:like:$like_true:Eve likes Grace"
-        "Frank:Henry:60:vouching:Frank vouches for Henry (60)"
-        "Henry:Bob:65:vouching:Henry vouches for Bob (65)"
-        "Ivy:Alice:70:vouching:Ivy vouches for Alice (70)"
-        "Bob:Grace:like:$like_true:Bob likes Grace"
-        "Grace:Charlie:55:vouching:Grace vouches for Charlie (55)"
-        "Eve:Frank:like:$like_true:Eve likes Frank"
-        "Alice:Ivy:like:$like_true:Alice likes Ivy"
+    local alice_vouches=(
+        "Bob:85"
+        "Charlie:80"
+        "Diana:75"
+        "Eve:70"
     )
 
-    for connection in "${random_connections[@]}"; do
-        IFS=':' read -r from to type_or_weight schema_type desc <<< "$connection"
-        local schema_id=""
-        local data_val=""
-
-        if [[ "$schema_type" == "vouching" ]]; then
-            schema_id="$VOUCHING_SCHEMA_ID"
-            data_val=$(cast abi-encode "f(uint256)" $type_or_weight)
-        else
-            schema_id="$LIKE_SCHEMA_ID"
-            data_val="$type_or_weight"  # Already encoded like_true
-        fi
-
-        if create_attestation "$from" "$to" "$schema_id" "$data_val" "$desc"; then
+    for vouch in "${alice_vouches[@]}"; do
+        IFS=':' read -r recipient weight <<< "$vouch"
+        if create_vouching_attestation "Alice" "$recipient" "$weight"; then
             ((total_attestations++))
         else
             ((failed_attestations++))
@@ -402,8 +246,56 @@ create_attestations() {
         sleep 0.1
     done
 
-    print_success "Attestation creation complete!"
-    print_info "✅ Created: $total_attestations attestations"
+    # Medium-weight vouchers (community members)
+    print_info "🤝 Creating community vouchers..."
+
+    local community_vouches=(
+        "Bob:Charlie:70"
+        "Charlie:Eve:65"
+        "Eve:Frank:60"
+        "Frank:Grace:55"
+        "Grace:Henry:70"
+        "Henry:Ivy:65"
+        "Ivy:Alice:60"
+        "Bob:Grace:50"
+        "Charlie:Henry:55"
+        "Frank:Ivy:50"
+    )
+
+    for vouch in "${community_vouches[@]}"; do
+        IFS=':' read -r attester recipient weight <<< "$vouch"
+        if create_vouching_attestation "$attester" "$recipient" "$weight"; then
+            ((total_attestations++))
+        else
+            ((failed_attestations++))
+        fi
+        sleep 0.1
+    done
+
+    # Mutual vouchers (trust pairs)
+    print_info "🔄 Creating mutual vouchers..."
+
+    local mutual_vouches=(
+        "Grace:Henry:75"
+        "Henry:Grace:75"
+        "Bob:Frank:60"
+        "Frank:Bob:60"
+        "Eve:Ivy:55"
+        "Ivy:Eve:55"
+    )
+
+    for vouch in "${mutual_vouches[@]}"; do
+        IFS=':' read -r attester recipient weight <<< "$vouch"
+        if create_vouching_attestation "$attester" "$recipient" "$weight"; then
+            ((total_attestations++))
+        else
+            ((failed_attestations++))
+        fi
+        sleep 0.1
+    done
+
+    print_success "Vouching attestation creation complete!"
+    print_info "✅ Created: $total_attestations vouching attestations"
     if [[ $failed_attestations -gt 0 ]]; then
         print_warning "❌ Failed: $failed_attestations attestations"
     fi
@@ -411,13 +303,13 @@ create_attestations() {
 
 # Function to analyze network
 analyze_network() {
-    print_step "Analyzing created network"
+    print_step "Analyzing created vouching network"
 
     echo -e "${CYAN}"
-    echo "📊 Network Analysis Summary"
-    echo "=========================="
+    echo "📊 Vouching Network Analysis"
+    echo "==========================="
     echo ""
-    echo "👥 Test Accounts (using first 9 anvil accounts):"
+    echo "👥 Test Accounts (using anvil accounts):"
 
     for name in Alice Bob Charlie Diana Eve Frank Grace Henry Ivy; do
         local addr=$(get_address "$name")
@@ -427,24 +319,23 @@ analyze_network() {
 
     echo ""
     echo "📈 Expected PageRank Leaders:"
-    echo "   1. Alice (Hub) - Central node with most incoming connections"
-    echo "   2. Diana (Authority) - High-weight outgoing endorsements"
-    echo "   3. Charlie (Bridge) - Connects different network groups"
-    echo "   4. Bob (Influencer) - Chain member + bidirectional hub"
-    echo "   5. Grace/Henry - Mutual high-weight vouching pair"
+    echo "   1. Alice - High incoming vouches + authority status"
+    echo "   2. Diana - Authority figure with high outgoing weights"
+    echo "   3. Charlie - Bridge connector in the network"
+    echo "   4. Bob - Well-connected community member"
+    echo "   5. Grace/Henry - Mutual trust pair"
     echo ""
     echo "🔍 Network Patterns Created:"
-    echo "   • Hub & Spoke: Alice as central hub (8 incoming + 4 bidirectional)"
-    echo "   • Authority: Diana gives weighted endorsements (95-70 weights)"
-    echo "   • Chain: Trust chain Bob→Charlie→Diana→Eve→Frank"
-    echo "   • Mutual: Grace↔Henry, Ivy↔Jack bidirectional vouching"
-    echo "   • Clusters: Grace-Henry-Frank triangle cluster"
-    echo "   • Bridge: Charlie connects 6 different groups"
-    echo "   • Random: 8 diverse connections for realism"
+    echo "   • Authority: Diana gives high-weight vouches (95-75)"
+    echo "   • Hub: Alice receives and gives quality vouches"
+    echo "   • Community: Medium-weight vouching web (50-70)"
+    echo "   • Mutual: Grace↔Henry, Bob↔Frank, Eve↔Ivy pairs"
+    echo "   • Total: ~25 vouching attestations with varied weights"
     echo ""
     echo "⚙️ Contract Addresses:"
     echo "   • EAS: $EAS_ADDRESS"
     echo "   • Attester: $ATTESTER_ADDRESS"
+    echo "   • Vouching Schema: $VOUCHING_SCHEMA_ID"
     echo "   • RPC: $RPC_URL"
     echo -e "${NC}"
 }
@@ -454,16 +345,12 @@ show_next_steps() {
     print_step "Next Steps for PageRank Testing"
 
     echo -e "${YELLOW}"
-    echo "🎯 Your PageRank test network is ready!"
+    echo "🎯 Your simple vouching network is ready!"
     echo ""
     echo "🔄 Next Steps:"
-    echo "   1. Environment variables (auto-setup available):"
-    echo "      ./script/setup-pagerank-env.sh --source  # Auto-generates from deployment"
-    echo "      # Or manually set:"
+    echo "   1. Environment setup:"
     echo "      export WAVS_ENV_EAS_ADDRESS=\"$EAS_ADDRESS\""
     echo "      export WAVS_ENV_ATTESTER_ADDRESS=\"$ATTESTER_ADDRESS\""
-    echo "      export WAVS_ENV_BASIC_SCHEMA_ID=\"$BASIC_SCHEMA_ID\""
-    echo "      export WAVS_ENV_LIKE_SCHEMA_ID=\"$LIKE_SCHEMA_ID\""
     echo "      export WAVS_ENV_VOUCHING_SCHEMA_ID=\"$VOUCHING_SCHEMA_ID\""
     echo "      export WAVS_ENV_RPC_URL=\"$RPC_URL\""
     echo "      export WAVS_ENV_CHAIN_ID=\"$CHAIN_ID\""
@@ -475,75 +362,22 @@ show_next_steps() {
     echo "   3. Query specific attestations:"
     echo "      cast call $EAS_ADDRESS \"getAttestation(bytes32)\" <uid> --rpc-url $RPC_URL"
     echo ""
-    echo "   4. Test with different PageRank parameters:"
-    echo "      export WAVS_ENV_PAGERANK_DAMPING_FACTOR=\"0.85\""
-    echo "      export WAVS_ENV_PAGERANK_MAX_ITERATIONS=\"100\""
-    echo "      export WAVS_ENV_PAGERANK_MIN_THRESHOLD=\"0.0001\""
-    echo ""
     echo "📊 Expected Results:"
-    echo "   • Alice should have highest PageRank (central hub)"
-    echo "   • Diana should rank high (authority figure)"
-    echo "   • Charlie should rank high (bridge connector)"
-    echo "   • Network should show realistic influence distribution"
+    echo "   • Alice should have highest PageRank (central + incoming vouches)"
+    echo "   • Diana should rank high (authority with high outgoing weights)"
+    echo "   • Network shows realistic influence distribution"
+    echo "   • Vouching weights properly influence PageRank calculation"
     echo -e "${NC}"
-}
-
-# Function to save environment
-save_environment() {
-    local env_file="$PROJECT_ROOT/.env.pagerank-local"
-
-    cat > "$env_file" << EOF
-# PageRank Local Network Environment
-# Generated on $(date)
-# Using existing deployed contracts and real attestations
-
-# Network Configuration
-WAVS_ENV_RPC_URL=$RPC_URL
-WAVS_ENV_CHAIN_ID=$CHAIN_ID
-
-# Contract Addresses
-WAVS_ENV_EAS_ADDRESS=$EAS_ADDRESS
-WAVS_ENV_ATTESTER_ADDRESS=$ATTESTER_ADDRESS
-
-# Schema IDs
-WAVS_ENV_BASIC_SCHEMA_ID=$BASIC_SCHEMA_ID
-WAVS_ENV_LIKE_SCHEMA_ID=$LIKE_SCHEMA_ID
-WAVS_ENV_VOUCHING_SCHEMA_ID=$VOUCHING_SCHEMA_ID
-WAVS_ENV_STATEMENT_SCHEMA_ID=$STATEMENT_SCHEMA_ID
-
-# PageRank Parameters
-WAVS_ENV_PAGERANK_REWARD_POOL=1000000000000000000000
-WAVS_ENV_PAGERANK_DAMPING_FACTOR=0.85
-WAVS_ENV_PAGERANK_MAX_ITERATIONS=100
-WAVS_ENV_PAGERANK_MIN_THRESHOLD=0.0001
-
-# Test Account Info (first 9 anvil accounts)
-TEST_ALICE_ADDRESS=\$(get_address Alice)
-TEST_BOB_ADDRESS=\$(get_address Bob)
-TEST_CHARLIE_ADDRESS=\$(get_address Charlie)
-TEST_DIANA_ADDRESS=\$(get_address Diana)
-TEST_EVE_ADDRESS=\$(get_address Eve)
-TEST_FRANK_ADDRESS=\$(get_address Frank)
-TEST_GRACE_ADDRESS=\$(get_address Grace)
-TEST_HENRY_ADDRESS=\$(get_address Henry)
-TEST_IVY_ADDRESS=\$(get_address Ivy)
-
-# Note: For full environment setup, use:
-# ./script/setup-pagerank-env.sh --source
-EOF
-
-    print_success "Environment saved to .env.pagerank-local"
-    print_info "Source with: source .env.pagerank-local"
 }
 
 # Main function
 main() {
     echo -e "${PURPLE}"
     echo "╔══════════════════════════════════════════════════════════════╗"
-    echo "║           PageRank Attestations on Local Network             ║"
+    echo "║        Simple PageRank Vouching Network Creator              ║"
     echo "║                                                              ║"
-    echo "║  Creates real attestations using existing deployed contracts ║"
-    echo "║  Perfect for testing PageRank algorithms with real data     ║"
+    echo "║         Creates only vouching attestations with weights     ║"
+    echo "║               Perfect for testing PageRank algorithms       ║"
     echo "╚══════════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
 
@@ -552,21 +386,20 @@ main() {
     verify_network
     create_attestations
     analyze_network
-    save_environment
     show_next_steps
 
-    print_success "PageRank attestation network created successfully! 🎉"
+    print_success "Simple vouching network created successfully! 🎉"
 }
 
 # Handle command line arguments
 case "${1:-}" in
     "help"|"-h"|"--help")
-        echo "PageRank Attestations Creator"
+        echo "Simple PageRank Vouching Network Creator"
         echo ""
         echo "Usage: $0 [command]"
         echo ""
         echo "Commands:"
-        echo "  (no args)  Create complete PageRank attestation network"
+        echo "  (no args)  Create simple vouching attestation network"
         echo "  help       Show this help message"
         echo ""
         echo "Prerequisites:"
@@ -574,17 +407,11 @@ case "${1:-}" in
         echo "  • Anvil must be running on localhost:8545"
         echo "  • Default anvil accounts will be used as test personas"
         echo ""
-        echo "This script will create ~40+ real attestations with patterns:"
-        echo "  • Hub and spoke (Alice central)"
-        echo "  • Authority endorsements (Diana high weights)"
-        echo "  • Chain of trust patterns"
-        echo "  • Community clusters"
-        echo "  • Bridge connections"
-        echo "  • Random network diversity"
-        echo ""
-        echo "Environment Setup:"
-        echo "  • Auto-setup: ./script/setup-pagerank-env.sh --source"
-        echo "  • Manual setup: Set WAVS_ENV_* variables"
+        echo "This script creates ~25 vouching attestations with patterns:"
+        echo "  • Authority vouchers (Diana with high weights 95-75)"
+        echo "  • Hub vouchers (Alice as central connector)"
+        echo "  • Community vouchers (medium weights 50-70)"
+        echo "  • Mutual vouchers (trust pairs with equal weights)"
         echo ""
         exit 0
         ;;
