@@ -188,26 +188,36 @@ impl EasPageRankSource {
             return Ok(rewards);
         }
 
-        // Calculate rewards using integer arithmetic to avoid floating-point precision errors
-        let total_filtered_score: f64 = filtered_scores.values().sum();
+        // Use exact U256 integer arithmetic to avoid floating-point precision errors
+        // Scale factor for converting f64 scores to U256 integers with high precision
+        let scale_factor = U256::from(10_u128.pow(18)); // 10^18 for maximum precision
+
+        // Convert f64 scores to scaled U256 integers
+        let scaled_scores: Vec<(Address, U256)> = filtered_scores
+            .iter()
+            .map(|(addr, score)| {
+                // Convert f64 to scaled U256 - multiply by scale factor
+                let scaled_score = U256::from((*score * scale_factor.to::<f64>()) as u128);
+                (*addr, scaled_score)
+            })
+            .collect();
+
+        let total_scaled_score: U256 = scaled_scores.iter().map(|(_, score)| *score).sum();
 
         // Sort addresses by score (descending) for deterministic remainder distribution
-        let mut sorted_scores: Vec<_> = filtered_scores.into_iter().collect();
-        sorted_scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        let mut sorted_scores = scaled_scores;
+        sorted_scores.sort_by(|a, b| b.1.cmp(&a.1));
 
         let mut total_distributed = U256::ZERO;
 
-        // Calculate rewards for all but the last address
-        for (i, (address, score)) in sorted_scores.iter().enumerate() {
+        // Calculate rewards using pure U256 integer arithmetic
+        for (i, (address, scaled_score)) in sorted_scores.iter().enumerate() {
             let reward = if i == sorted_scores.len() - 1 {
                 // For the last address, give remaining pool to ensure exact total
                 total_pool - total_distributed
             } else {
-                // Use precise integer arithmetic: (score / total_score) * total_pool
-                // This avoids floating-point precision issues
-                let score_scaled = U256::from((score * 1_000_000_000.0) as u64); // Scale up for precision
-                let total_scaled = U256::from((total_filtered_score * 1_000_000_000.0) as u64);
-                (score_scaled * total_pool) / total_scaled
+                // Pure U256 integer arithmetic: (scaled_score * total_pool) / total_scaled_score
+                (*scaled_score * total_pool) / total_scaled_score
             };
 
             total_distributed += reward;

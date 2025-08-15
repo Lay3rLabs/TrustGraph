@@ -246,6 +246,7 @@ display_summary() {
     echo "🚀 Next Steps:"
     echo "  1. Load the environment:"
     echo "     source .env.pagerank"
+    echo "     # OR: eval \$(./script/setup-pagerank-env.sh --eval)"
     echo ""
     echo "  2. Verify environment is loaded:"
     echo "     echo \$WAVS_ENV_EAS_ADDRESS"
@@ -268,22 +269,12 @@ display_summary() {
     echo -e "${NC}"
 }
 
-# Function to auto-source environment
-auto_source_env() {
-    if [[ "${1:-}" == "--source" ]]; then
-        print_step "Auto-sourcing environment"
-
-        # Source the file in the current shell
-        source "$OUTPUT_FILE"
-
-        print_success "Environment variables loaded!"
-        print_info "EAS Address: $WAVS_ENV_EAS_ADDRESS"
-        print_info "Attester Address: $WAVS_ENV_ATTESTER_ADDRESS"
-    else
-        print_info "To load environment variables, run:"
-        print_info "  source .env.pagerank"
-        print_info "Or re-run this script with --source flag"
-    fi
+# Function to show environment loading instructions
+show_env_instructions() {
+    print_info "To load environment variables, run:"
+    print_info "  source .env.pagerank"
+    print_info "Or generate and load in one step:"
+    print_info "  eval \$(./script/setup-pagerank-env.sh --eval)"
 }
 
 # Main function
@@ -302,15 +293,21 @@ main() {
     validate_config
     generate_env_file
     display_summary
-    auto_source_env "$@"
+    show_env_instructions
 
     print_success "PageRank environment setup completed! 🎉"
 }
 
+
+
 # Handle command line arguments
 case "${1:-}" in
-    "--source"|"-s")
-        main --source
+    "--eval"|"-e")
+        check_dependencies
+        extract_deployment_config
+        validate_config
+        generate_env_file
+        echo "source '$OUTPUT_FILE'"
         ;;
     "--output"|"-o")
         OUTPUT_FILE="${2:-$OUTPUT_FILE}"
@@ -322,13 +319,21 @@ case "${1:-}" in
         echo "Usage: $0 [options]"
         echo ""
         echo "Options:"
-        echo "  --source, -s     Generate and auto-source environment variables"
+        echo "  --eval, -e       Generate and output source command for evaluation"
         echo "  --output, -o     Specify output file (default: .env.pagerank)"
         echo "  help            Show this help message"
         echo ""
         echo "This script automatically extracts contract addresses and configuration"
         echo "from deployment_summary.json and generates environment variables"
         echo "ready for PageRank component testing."
+        echo ""
+        echo "Usage to load environment variables:"
+        echo "  # Generate file then load manually:"
+        echo "  ./script/setup-pagerank-env.sh"
+        echo "  source .env.pagerank"
+        echo ""
+        echo "  # Or generate and load in one step:"
+        echo "  eval \$(./script/setup-pagerank-env.sh --eval)"
         echo ""
         echo "Generated variables include:"
         echo "  • Network configuration (RPC, Chain ID)"

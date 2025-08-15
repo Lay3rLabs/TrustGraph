@@ -1,16 +1,16 @@
 {
-  "verification_timestamp": "2025-08-15T17:53:58Z",
+  "verification_timestamp": "2025-08-15T21:18:11Z",
   "network_config": {
     "rpc_url": "http://localhost:8545",
     "chain_id": "31337",
-    "eas_address": "0x690c6C816c391A832b9433678c244686B690bDBc",
-    "attester_address": "0xf4BBfbEefc7b360E037182D2A6A030044249E3Ca"
+    "eas_address": "0x49c031A9f4E3143FB24818BB73FFBabF4fDc96A6",
+    "attester_address": "0x646e7E02Ae1328a6F7E0324CCa508b4b349031bb"
   },
   "schemas": {
-    "basic": "0x1aef7347c5e96802e5724a4489681b37ae7972efb40c7ff909f0f8e403ccba22",
-    "like": "0xf4d3fca46ef24b7fa63e32019b78a98edea278ad960529c6b3c5c41c51848d2d",
-    "vouching": "0x66ac02873f7f1f80daadb1ce9294fd86a95ad88dd01bce4de0f4120372817f9d",
-    "statement": "0xa88766997941da5774c3e6952266e4898b2feac233d2715c5f4c087058a5fd8d"
+    "basic": "0x093b88ead59273f2fa7872256a4fd2113c9e1d282ac0f7f7e9e0eb84a8c7ed43",
+    "like": "0x74653befd1a7f2afe8a7e7b6cdc07a3f4ffeb7dc8bb2b6079b85dcdd8478409e",
+    "vouching": "0x521affbc0ad2357776f200aad51f6bac761efd08b1e79c5c61e09763a0489e7b",
+    "statement": "0x2752e60ad28dbc4779f12a745a076aa4a85c4fd79b9345c7d85872cd75e0519b"
   },
   "accounts": {
     "Alice": {
