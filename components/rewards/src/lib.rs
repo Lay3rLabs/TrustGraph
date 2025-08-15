@@ -14,7 +14,7 @@ use serde::Serialize;
 use serde_json::json;
 use std::str::FromStr;
 use trigger::{decode_trigger_event, encode_trigger_output};
-use wavs_wasi_utils::evm::alloy_primitives::{hex, U256, U512};
+use wavs_wasi_utils::evm::alloy_primitives::{hex, U256};
 use wit_bindgen_rt::async_support::futures;
 use wstd::runtime::block_on;
 
@@ -97,6 +97,15 @@ impl Guest for Component {
             let pool_amount = U256::from_str(&pagerank_pool_str)
                 .unwrap_or_else(|_| U256::from(1000000000000000000000u128)); // Default 1000 tokens in wei
 
+            // Safety check: prevent excessive reward pools
+            let max_pool_size = U256::from(10000000000000000000000000u128); // 10M tokens max
+            if pool_amount > max_pool_size {
+                return Err(format!(
+                    "PageRank reward pool too large: {} (max allowed: {})",
+                    pool_amount, max_pool_size
+                ));
+            }
+
             let pagerank_config = pagerank::PageRankConfig {
                 damping_factor: config_var("pagerank_damping_factor")
                     .and_then(|s| s.parse().ok())
@@ -177,8 +186,27 @@ impl Guest for Component {
                 .into_iter()
                 .collect::<Result<Vec<_>, _>>()?;
 
-            let total_rewards =
-                results.iter().map(|v| v[2].parse::<U512>().unwrap()).sum::<U512>().to_string();
+            // Calculate total rewards with safety checks
+            let mut total_rewards_sum = U256::ZERO;
+            let max_reasonable_total = U256::from(100000000000000000000000000u128); // 100M tokens max
+
+            for result in &results {
+                let amount = U256::from_str(&result[2])
+                    .map_err(|e| format!("Invalid reward amount '{}': {}", result[2], e))?;
+                total_rewards_sum = total_rewards_sum
+                    .checked_add(amount)
+                    .ok_or_else(|| "Total rewards calculation overflow".to_string())?;
+            }
+
+            // Safety check: prevent unreasonably large total distributions
+            if total_rewards_sum > max_reasonable_total {
+                return Err(format!(
+                    "Total rewards exceed reasonable limit: {} (max: {})",
+                    total_rewards_sum, max_reasonable_total
+                ));
+            }
+
+            let total_rewards = total_rewards_sum.to_string();
 
             println!("💰 Calculated rewards for {} accounts", results.len());
             println!("💎 Total rewards to distribute: {}", total_rewards);
@@ -186,6 +214,18 @@ impl Guest for Component {
             if results.len() == 0 {
                 println!("⚠️  No accounts to distribute rewards to");
                 return Ok(None);
+            }
+
+            // Additional safety check: verify no individual reward is excessive
+            for result in &results {
+                let amount = U256::from_str(&result[2]).unwrap();
+                let max_individual_reward = U256::from(10000000000000000000000u128); // 10K tokens max per account
+                if amount > max_individual_reward {
+                    return Err(format!(
+                        "Individual reward for account {} exceeds limit: {} (max: {})",
+                        result[0], amount, max_individual_reward
+                    ));
+                }
             }
 
             let tree = get_merkle_tree(results.clone())?;

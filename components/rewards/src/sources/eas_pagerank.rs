@@ -39,6 +39,20 @@ impl EasPageRankSource {
         let indexer_addr = Address::from_str(indexer_address)
             .map_err(|e| anyhow::anyhow!("Invalid indexer address: {}", e))?;
 
+        // Validate reward pool size to prevent excessive distributions
+        let max_pool_size = U256::from(10000000000000000000000000u128); // 10M tokens max
+        if pagerank_config.total_reward_pool > max_pool_size {
+            return Err(anyhow::anyhow!(
+                "PageRank reward pool too large: {} (max allowed: {})",
+                pagerank_config.total_reward_pool,
+                max_pool_size
+            ));
+        }
+
+        if pagerank_config.total_reward_pool.is_zero() {
+            return Err(anyhow::anyhow!("PageRank reward pool cannot be zero"));
+        }
+
         Ok(Self {
             eas_address: eas_addr,
             indexer_address: indexer_addr,
@@ -188,66 +202,85 @@ impl EasPageRankSource {
             return Ok(rewards);
         }
 
-        // Use exact U256 integer arithmetic to avoid floating-point precision errors
-        // Scale factor for converting f64 scores to U256 integers with high precision
-        let scale_factor = U256::from(10_u128.pow(18)); // 10^18 for maximum precision
+        // Use high precision scale factor to convert f64 scores to U256
+        let precision_scale = 1_000_000_u64; // Scale factor for f64 -> u64 conversion
 
-        // Convert f64 scores to scaled U256 integers
+        // Convert f64 scores to scaled u64 integers, then to U256
         let scaled_scores: Vec<(Address, U256)> = filtered_scores
             .iter()
             .map(|(addr, score)| {
-                // Convert f64 to scaled U256 - multiply by scale factor
-                let scaled_score = U256::from((*score * scale_factor.to::<f64>()) as u128);
+                // Convert f64 to scaled u64, avoiding floating-point in U256 operations
+                let scaled_score_u64 = (*score * precision_scale as f64) as u64;
+                let scaled_score = U256::from(scaled_score_u64);
                 (*addr, scaled_score)
             })
             .collect();
 
         let total_scaled_score: U256 = scaled_scores.iter().map(|(_, score)| *score).sum();
 
-        // Sort addresses by score (descending) for deterministic remainder distribution
+        // Avoid division by zero
+        if total_scaled_score.is_zero() {
+            println!("⚠️  Total scaled score is zero, no rewards to distribute");
+            return Ok(rewards);
+        }
+
+        // Sort addresses by score (descending) for deterministic processing
         let mut sorted_scores = scaled_scores;
         sorted_scores.sort_by(|a, b| b.1.cmp(&a.1));
 
         let mut total_distributed = U256::ZERO;
+        let mut remaining_pool = total_pool;
 
-        // Calculate rewards using pure U256 integer arithmetic
+        // Calculate rewards using pure U256 integer arithmetic with strict pool enforcement
         for (i, (address, scaled_score)) in sorted_scores.iter().enumerate() {
             let reward = if i == sorted_scores.len() - 1 {
-                // For the last address, give remaining pool to ensure exact total
-                total_pool - total_distributed
+                // For the last address, give all remaining pool (ensures no over-distribution)
+                remaining_pool
             } else {
-                // Pure U256 integer arithmetic: (scaled_score * total_pool) / total_scaled_score
-                (*scaled_score * total_pool) / total_scaled_score
+                // Calculate proportional reward: (scaled_score * total_pool) / total_scaled_score
+                let proportional_reward = (*scaled_score * total_pool) / total_scaled_score;
+                // Ensure we don't exceed remaining pool
+                if proportional_reward > remaining_pool {
+                    remaining_pool
+                } else {
+                    proportional_reward
+                }
             };
 
-            total_distributed += reward;
-            rewards.insert(*address, reward);
+            // Double-check we don't distribute more than available
+            let actual_reward = if reward > remaining_pool { remaining_pool } else { reward };
+
+            if !actual_reward.is_zero() {
+                total_distributed += actual_reward;
+                remaining_pool -= actual_reward;
+                rewards.insert(*address, actual_reward);
+            }
+
+            // Break early if pool is exhausted
+            if remaining_pool.is_zero() {
+                break;
+            }
         }
 
         println!("💰 Calculated rewards for {} addresses", rewards.len());
 
-        // Verify total distributed equals pool
+        // Verify total distributed does not exceed pool
         let actual_total_distributed: U256 = rewards.values().sum();
         println!("🔍 Reward pool verification:");
-        println!("  Expected total pool: {}", total_pool);
+        println!("  Total pool: {}", total_pool);
         println!("  Actually distributed: {}", actual_total_distributed);
-        println!(
-            "  Difference: {}",
-            if actual_total_distributed >= total_pool {
-                actual_total_distributed - total_pool
-            } else {
-                total_pool - actual_total_distributed
-            }
-        );
+        println!("  Remaining in pool: {}", total_pool - actual_total_distributed);
 
-        if actual_total_distributed != total_pool {
-            println!(
-                "⚠️  WARNING: Total distributed ({}) does not equal pool ({})",
-                actual_total_distributed, total_pool
-            );
-        } else {
-            println!("✅ Total distributed rewards exactly matches pool");
+        // Critical check: ensure we never over-distribute
+        if actual_total_distributed > total_pool {
+            return Err(anyhow::anyhow!(
+                "CRITICAL ERROR: Over-distributed rewards! Distributed: {}, Pool: {}",
+                actual_total_distributed,
+                total_pool
+            ));
         }
+
+        println!("✅ Reward distribution completed without over-spending");
 
         // Print top rewards for debugging
         let mut sorted_rewards: Vec<_> = rewards.iter().collect();
