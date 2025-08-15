@@ -5,6 +5,7 @@ use async_trait::async_trait;
 use wavs_wasi_utils::evm::alloy_primitives::U256;
 
 pub mod eas;
+pub mod eas_pagerank;
 pub mod erc721;
 
 /// A source of rewards.

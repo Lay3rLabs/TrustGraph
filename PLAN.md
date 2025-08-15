@@ -28,6 +28,7 @@ Fix eas-attest component and Attester.sol contract:
 - [ ] Revoking an attestation should lower voting power
 - [ ] Vibe code working attestation UI
 - [ ] Implement page rank for rewards
+- [ ] Make a points page.
 
 Flow:
 - Load attestations for a recipient

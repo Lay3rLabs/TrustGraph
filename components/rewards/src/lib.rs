@@ -1,6 +1,7 @@
 pub mod bindings;
 mod ipfs;
 mod merkle;
+mod pagerank;
 mod sources;
 mod trigger;
 
@@ -11,6 +12,7 @@ use merkle::get_merkle_tree;
 use merkle_tree_rs::standard::LeafType;
 use serde::Serialize;
 use serde_json::json;
+use std::str::FromStr;
 use trigger::{decode_trigger_event, encode_trigger_output};
 use wavs_wasi_utils::evm::alloy_primitives::{hex, U256, U512};
 use wit_bindgen_rt::async_support::futures;
@@ -76,7 +78,7 @@ impl Guest for Component {
             &eas_address,
             &eas_indexer_address,
             &chain_name,
-            sources::eas::EasRewardType::ReceivedAttestations(schema_uid),
+            sources::eas::EasRewardType::ReceivedAttestations(schema_uid.clone()),
             U256::from(5e17),
         ));
         println!("✅ Added EAS source for received attestations (5e17 rewards each)");
@@ -89,6 +91,51 @@ impl Guest for Component {
         //     sources::eas::EasRewardType::SentAttestations,
         //     U256::from(3e17),
         // ));
+
+        // Add PageRank-based EAS rewards if configured
+        if let Some(pagerank_pool_str) = config_var("pagerank_reward_pool") {
+            let pool_amount = U256::from_str(&pagerank_pool_str)
+                .unwrap_or_else(|_| U256::from(1000000000000000000000u128)); // Default 1000 tokens in wei
+
+            let pagerank_config = pagerank::PageRankConfig {
+                damping_factor: config_var("pagerank_damping_factor")
+                    .and_then(|s| s.parse().ok())
+                    .unwrap_or(0.85),
+                max_iterations: config_var("pagerank_max_iterations")
+                    .and_then(|s| s.parse().ok())
+                    .unwrap_or(100),
+                tolerance: config_var("pagerank_tolerance")
+                    .and_then(|s| s.parse().ok())
+                    .unwrap_or(1e-6),
+            };
+
+            let min_threshold =
+                config_var("pagerank_min_threshold").and_then(|s| s.parse().ok()).unwrap_or(0.0001);
+
+            let pagerank_source_config = pagerank::PageRankRewardSource::new(
+                schema_uid.clone(),
+                pool_amount,
+                pagerank_config,
+            )
+            .with_min_threshold(min_threshold);
+
+            match sources::eas_pagerank::EasPageRankSource::new(
+                &eas_address,
+                &eas_indexer_address,
+                &chain_name,
+                pagerank_source_config,
+            ) {
+                Ok(pagerank_source) => {
+                    registry.add_source(pagerank_source);
+                    println!("✅ Added EAS PageRank source with {} reward pool", pool_amount);
+                }
+                Err(e) => {
+                    println!("⚠️  Failed to create PageRank source: {}", e);
+                }
+            }
+        } else {
+            println!("ℹ️  PageRank rewards disabled (no pagerank_reward_pool configured)");
+        }
 
         // Example: Reward for specific schema attestations
         // Uncomment and configure to reward attestations to a specific schema
