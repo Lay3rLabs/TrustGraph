@@ -158,13 +158,13 @@ sleep 1
 
 bash ./script/create-aggregator.sh 1
 IPFS_GATEWAY=${IPFS_GATEWAY} bash ./infra/aggregator-1/start.sh
-sleep 1
+sleep 5
 wget -q --header="Content-Type: application/json" --post-data="{\"uri\": \"${IPFS_URI}\"}" ${AGGREGATOR_URL}/register-service -O -
 
 ### === Start WAVS ===
 bash ./script/create-operator.sh 1
 IPFS_GATEWAY=${IPFS_GATEWAY} bash ./infra/wavs-1/start.sh
-sleep 5
+sleep 10
 
 # Deploy the service JSON to WAVS so it now watches and submits.
 # 'opt in' for WAVS to watch (this is before we register to Eigenlayer)

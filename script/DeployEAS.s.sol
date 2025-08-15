@@ -31,6 +31,10 @@ contract DeployEAS is Common {
         address easAttestTrigger;
         bytes32 basicSchema;
         bytes32 computeSchema;
+        bytes32 statementSchema;
+        bytes32 isTrueSchema;
+        bytes32 likeSchema;
+        bytes32 vouchingSchema;
     }
 
     /// @notice Deploy EAS contracts and WAVS integration
@@ -115,6 +119,44 @@ contract DeployEAS is Common {
         console.log(
             "Compute Schema ID:",
             vm.toString(deployment.computeSchema)
+        );
+
+        // Statement schema for simple text statements
+        deployment.statementSchema = schemaRegistrar.register(
+            "string statement",
+            ISchemaResolver(deployment.indexerResolver),
+            true // revocable
+        );
+        console.log(
+            "Statement Schema ID:",
+            vm.toString(deployment.statementSchema)
+        );
+
+        // IsTrue schema for boolean truth assertions
+        deployment.isTrueSchema = schemaRegistrar.register(
+            "bool isTrue",
+            ISchemaResolver(deployment.indexerResolver),
+            true // revocable
+        );
+        console.log("IsTrue Schema ID:", vm.toString(deployment.isTrueSchema));
+
+        // Like schema for simple like/dislike attestations
+        deployment.likeSchema = schemaRegistrar.register(
+            "bool like",
+            ISchemaResolver(deployment.indexerResolver),
+            true // revocable
+        );
+        console.log("Like Schema ID:", vm.toString(deployment.likeSchema));
+
+        // Vouching schema for weighted endorsements
+        deployment.vouchingSchema = schemaRegistrar.register(
+            "uint256 weight",
+            ISchemaResolver(deployment.indexerResolver),
+            true // revocable
+        );
+        console.log(
+            "Vouching Schema ID:",
+            vm.toString(deployment.vouchingSchema)
         );
 
         vm.stopBroadcast();
