@@ -14,7 +14,8 @@ import { VouchingModal } from "@/components/VouchingModal";
 export default function VouchingPage() {
   const { address, isConnected } = useAccount();
   const { connect } = useConnect();
-  const { totalCount, attestationUIDs, isLoadingUIDs, countError, uidsError } = useVouchingAttestations(10);
+  const { totalCount, attestationUIDs, isLoadingUIDs, countError, uidsError } =
+    useVouchingAttestations(10);
   const [isVouchingModalOpen, setIsVouchingModalOpen] = useState(false);
 
   const handleConnect = () => {
@@ -72,7 +73,8 @@ export default function VouchingPage() {
             <div className="space-y-2">
               <div className="terminal-command text-sm">Schema Information</div>
               <div className="terminal-dim text-xs">
-                Used for creating trust relationships and vouching for other users
+                Used for creating trust relationships and vouching for other
+                users
               </div>
               <div className="space-y-1">
                 <div className="terminal-dim text-xs">Fields:</div>
@@ -125,7 +127,8 @@ export default function VouchingPage() {
           ) : countError || uidsError ? (
             <div className="border border-red-700 bg-red-900/10 p-4 rounded-sm">
               <div className="terminal-text text-red-400 text-xs text-center">
-                Error loading attestations: {countError?.message || uidsError?.message}
+                Error loading attestations:{" "}
+                {countError?.message || uidsError?.message}
               </div>
             </div>
           ) : attestationUIDs.length === 0 ? (

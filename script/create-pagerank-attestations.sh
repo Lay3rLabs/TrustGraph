@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Create PageRank Vouching Attestations on Existing Local Network
-# Simple version - only vouching attestations with different weights
+# Direct EAS version - creates attestations directly on EAS contract
+# This ensures user addresses are properly recorded as attesters for PageRank
 
 set -e
 
@@ -177,16 +178,16 @@ create_vouching_attestation() {
 
     print_info "Creating vouching: $attester_name → $recipient_name (weight: $weight)"
 
-    # Create the attestation with error handling
+    # Create the attestation directly on EAS contract
+    # AttestationRequest struct: (bytes32 schema, AttestationRequestData data)
+    # AttestationRequestData: (recipient, expirationTime, revocable, refUID, data, value)
     local tx_hash
-    if tx_hash=$(cast send $ATTESTER_ADDRESS \
+    if tx_hash=$(cast send $EAS_ADDRESS \
         --private-key "$attester_key" \
         --rpc-url $RPC_URL \
         --gas-limit 500000 \
-        "attest(bytes32,address,bytes)" \
-        "$VOUCHING_SCHEMA_ID" \
-        "$recipient_addr" \
-        "$data" 2>/dev/null); then
+        "attest((bytes32,(address,uint64,bool,bytes32,bytes,uint256)))" \
+        "($VOUCHING_SCHEMA_ID,($recipient_addr,0,true,0x0000000000000000000000000000000000000000000000000000000000000000,$data,0))" 2>/dev/null); then
         print_success "  ✓ TX: $tx_hash"
         return 0
     else
@@ -296,10 +297,14 @@ analyze_network() {
     echo "   • Total: ~11 vouching attestations (1 authority + 3 spam + 7 community)"
     echo ""
     echo "⚙️ Contract Addresses:"
-    echo "   • EAS: $EAS_ADDRESS"
-    echo "   • Attester: $ATTESTER_ADDRESS"
+    echo "   • EAS: $EAS_ADDRESS (direct attestations)"
     echo "   • Vouching Schema: $VOUCHING_SCHEMA_ID"
     echo "   • RPC: $RPC_URL"
+    echo ""
+    echo "✨ Direct EAS Attestations:"
+    echo "   • Attestations created directly on EAS contract"
+    echo "   • Each user's address is recorded as the actual attester"
+    echo "   • Creates proper graph connections for PageRank algorithm"
     echo -e "${NC}"
 }
 
@@ -313,7 +318,6 @@ show_next_steps() {
     echo "🔄 Next Steps:"
     echo "   1. Environment setup:"
     echo "      export WAVS_ENV_EAS_ADDRESS=\"$EAS_ADDRESS\""
-    echo "      export WAVS_ENV_ATTESTER_ADDRESS=\"$ATTESTER_ADDRESS\""
     echo "      export WAVS_ENV_VOUCHING_SCHEMA_ID=\"$VOUCHING_SCHEMA_ID\""
     echo "      export WAVS_ENV_RPC_URL=\"$RPC_URL\""
     echo "      export WAVS_ENV_CHAIN_ID=\"$CHAIN_ID\""
@@ -330,6 +334,11 @@ show_next_steps() {
     echo "   • Bob should rank high (receives high-weight vouch from Alice)"
     echo "   • Grace/Henry/Ivy should rank low (spammers isolated from network)"
     echo "   • PageRank algorithm should resist self-vouching spam attacks"
+    echo ""
+    echo "🎯 Key Improvement:"
+    echo "   • Attestations now created directly on EAS contract"
+    echo "   • User addresses properly recorded as attesters"
+    echo "   • Graph connections between users now visible to PageRank"
     echo -e "${NC}"
 }
 
@@ -337,10 +346,10 @@ show_next_steps() {
 main() {
     echo -e "${PURPLE}"
     echo "╔══════════════════════════════════════════════════════════════╗"
-    echo "║        Simple PageRank Vouching Network Creator              ║"
+    echo "║         Direct EAS PageRank Vouching Network Creator         ║"
     echo "║                                                              ║"
-    echo "║         Creates only vouching attestations with weights     ║"
-    echo "║               Perfect for testing PageRank algorithms       ║"
+    echo "║    Creates attestations directly on EAS contract to ensure   ║"
+    echo "║    proper attester addresses for PageRank algorithm         ║"
     echo "╚══════════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
 
@@ -351,18 +360,18 @@ main() {
     analyze_network
     show_next_steps
 
-    print_success "Simple vouching network created successfully! 🎉"
+    print_success "Direct EAS vouching network created successfully! 🎉"
 }
 
 # Handle command line arguments
 case "${1:-}" in
     "help"|"-h"|"--help")
-        echo "Simple PageRank Vouching Network Creator"
+        echo "Direct EAS PageRank Vouching Network Creator"
         echo ""
         echo "Usage: $0 [command]"
         echo ""
         echo "Commands:"
-        echo "  (no args)  Create simple vouching attestation network"
+        echo "  (no args)  Create direct EAS vouching attestation network"
         echo "  help       Show this help message"
         echo ""
         echo "Prerequisites:"
@@ -370,7 +379,8 @@ case "${1:-}" in
         echo "  • Anvil must be running on localhost:8545"
         echo "  • Default anvil accounts will be used as test personas"
         echo ""
-        echo "This script creates ~11 vouching attestations with patterns:"
+        echo "This script creates ~11 vouching attestations directly on EAS:"
+        echo "  • Direct EAS calls (not through Attester.sol)"
         echo "  • Authority voucher (Alice vouches for Bob with weight 95)"
         echo "  • Spam vouchers (Grace/Henry/Ivy self-vouch with weight 100)"
         echo "  • Community vouchers (legitimate users, weights 40-70)"

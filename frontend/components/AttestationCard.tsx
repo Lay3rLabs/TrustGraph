@@ -8,8 +8,13 @@ interface AttestationCardProps {
 }
 
 export function AttestationCard({ uid, index }: AttestationCardProps) {
-  const { data: attestationData, isLoading, error } = useIndividualAttestation(uid);
+  const {
+    data: attestationData,
+    isLoading,
+    error,
+  } = useIndividualAttestation(uid);
 
+  console.log(attestationData);
   const formatTimeAgo = (timestamp: number) => {
     const now = Math.floor(Date.now() / 1000);
     const diff = now - timestamp;
@@ -41,7 +46,7 @@ export function AttestationCard({ uid, index }: AttestationCardProps) {
           // Fall through to default
         }
       }
-      
+
       return { weight: "1" }; // Default weight
     } catch (err) {
       return { weight: "Unknown" };

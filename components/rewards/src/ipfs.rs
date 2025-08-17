@@ -26,7 +26,7 @@ async fn upload_to_ipfs(
     // define multipart request boundary
     let boundary = "----RustBoundary";
 
-    let (request_body, content_type) = if let Some(api_key) = api_key {
+    let (request_body, content_type) = if let Some(_api_key) = api_key {
         // Pinata format with network parameter
         let body = format!(
             "--{}\r\n\

@@ -19,7 +19,6 @@ const menuItems: MenuItem[] = [
   { id: "dashboard", label: "Welcome", path: "/backroom", icon: "◉" },
   { id: "en0va", label: "EN0VA", path: "/backroom/en0va", icon: "∞" },
   { id: "symbient", label: "Symbient", path: "/backroom/symbient", icon: "◈◉" },
-  { id: "vault", label: "Vault", path: "/backroom/vault", icon: "◢◤" },
   {
     id: "explorer",
     label: "Explorer",
@@ -68,6 +67,7 @@ const menuItems: MenuItem[] = [
   { id: "points", label: "Points", path: "/backroom/points", icon: "★" },
   { id: "profile", label: "Profile", path: "/backroom/profile", icon: "◉" },
   { id: "systems", label: "Systems", path: "/backroom/systems", icon: "░█" },
+  { id: "vault", label: "Vault", path: "/backroom/vault", icon: "◢◤" },
   { id: "vouching", label: "Vouching", path: "/backroom/vouching", icon: "◇◉" },
 ];
 
