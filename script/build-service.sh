@@ -121,7 +121,7 @@ jq -r '.components[] | @json' "${COMPONENT_CONFIGS_FILE}" | while read -r compon
     fi
 
     echo "  📋 Configuring component with: ${CONFIG_VALUES}"
-    eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} config --values ${CONFIG_VALUES}" > /dev/null
+    eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} config --values \"${CONFIG_VALUES}\"" > /dev/null
     eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} fuel-limit --fuel ${FUEL_LIMIT}" > /dev/null
 
     echo "  ✅ Workflow configured for ${COMP_FILENAME}"

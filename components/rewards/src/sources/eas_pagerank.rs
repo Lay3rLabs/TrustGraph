@@ -53,6 +53,21 @@ impl EasPageRankSource {
             return Err(anyhow::anyhow!("PageRank reward pool cannot be zero"));
         }
 
+        // Validate trust configuration if enabled
+        if pagerank_config.config.has_trust_enabled() {
+            println!(
+                "🔒 Trust Aware PageRank enabled with {} trusted seeds",
+                pagerank_config.config.trust_config.trusted_seeds.len()
+            );
+
+            // Log trusted seeds for transparency
+            for (i, seed) in pagerank_config.config.trust_config.trusted_seeds.iter().enumerate() {
+                println!("   {}. {}", i + 1, seed);
+            }
+        } else {
+            println!("📊 Standard PageRank (no trust seeds configured)");
+        }
+
         Ok(Self {
             eas_address: eas_addr,
             indexer_address: indexer_addr,
@@ -297,7 +312,11 @@ impl EasPageRankSource {
 #[async_trait(?Send)]
 impl Source for EasPageRankSource {
     fn get_name(&self) -> &str {
-        "EAS-PageRank"
+        if self.pagerank_config.config.has_trust_enabled() {
+            "Trust-Aware-EAS-PageRank"
+        } else {
+            "EAS-PageRank"
+        }
     }
 
     async fn get_accounts(&self) -> Result<Vec<String>> {
@@ -312,11 +331,30 @@ impl Source for EasPageRankSource {
     }
 
     async fn get_metadata(&self) -> Result<serde_json::Value> {
+        let trust_info = if self.pagerank_config.config.has_trust_enabled() {
+            serde_json::json!({
+                "enabled": true,
+                "trusted_seeds": self.pagerank_config.config.trust_config.trusted_seeds.iter()
+                    .map(|addr| addr.to_string())
+                    .collect::<Vec<_>>(),
+                "trust_multiplier": self.pagerank_config.config.trust_config.trust_multiplier,
+                "trust_boost": self.pagerank_config.config.trust_config.trust_boost,
+            })
+        } else {
+            serde_json::json!({
+                "enabled": false
+            })
+        };
+
         Ok(serde_json::json!({
             "eas_address": self.eas_address.to_string(),
             "indexer_address": self.indexer_address.to_string(),
             "chain_name": self.chain_name,
-            "reward_type": "pagerank_attestations",
+            "reward_type": if self.pagerank_config.config.has_trust_enabled() {
+                "trust_aware_pagerank_attestations"
+            } else {
+                "pagerank_attestations"
+            },
             "schema_uid": self.pagerank_config.schema_uid,
             "total_reward_pool": self.pagerank_config.total_reward_pool.to_string(),
             "pagerank_config": {
@@ -324,7 +362,8 @@ impl Source for EasPageRankSource {
                 "max_iterations": self.pagerank_config.config.max_iterations,
                 "tolerance": self.pagerank_config.config.tolerance,
                 "min_score_threshold": self.pagerank_config.min_score_threshold,
-            }
+            },
+            "trust_config": trust_info
         }))
     }
 }

@@ -29,6 +29,7 @@ Fix eas-attest component and Attester.sol contract:
 - [ ] Vibe code working attestation UI
 - [ ] Implement page rank for rewards
 - [ ] Make a points page.
+- [ ] New voting power contract to consume merkle tree
 
 Flow:
 - Load attestations for a recipient

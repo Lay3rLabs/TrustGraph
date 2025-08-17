@@ -98,10 +98,9 @@ echo "✅ Chain Name: ${CHAIN_NAME}"
 
 REWARDS_TOKEN_ADDRESS=$(jq -r '.reward_contracts.reward_token' .docker/deployment_summary.json)
 
-# TODO pass in vouching schema id
-# Set CONFIG_VALUES with EAS configuration and rewards token address
-export CONFIG_VALUES="eas_address=${EAS_ADDRESS},indexer_address=${INDEXER_ADDRESS},chain_name=${CHAIN_NAME},reward_token=${REWARDS_TOKEN_ADDRESS},reward_schema_uid=${VOUCHING_SCHEMA_ID},pagerank_reward_pool=1000000000000000000000"
-echo "📋 EAS Configuration: ${CONFIG_VALUES}"
+# Set CONFIG_VALUES with EAS configuration, rewards token address, and Trust Aware PageRank settings
+export CONFIG_VALUES="eas_address=${EAS_ADDRESS},indexer_address=${INDEXER_ADDRESS},chain_name=${CHAIN_NAME},reward_token=${REWARDS_TOKEN_ADDRESS},reward_schema_uid=${VOUCHING_SCHEMA_ID},pagerank_reward_pool=1000000000000000000000,pagerank_trusted_seeds=0x70997970C51812dc3A010C7d01b50e0d17dc79C8,pagerank_trust_multiplier=10.5,pagerank_trust_boost=0.99"
+echo "📋 EAS Configuration with Trust Aware PageRank: ${CONFIG_VALUES}"
 
 # Upload components to WASI registry
 echo "Uploading components to WASI registry..."
