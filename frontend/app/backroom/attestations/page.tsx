@@ -45,43 +45,17 @@ export default function AttestationsPage() {
     message: string;
   }>({ status: "idle", message: "" });
 
-  // Log component mount and initialization
+  // Component initialization
   useEffect(() => {
-    console.log("🏁 [AttestationsPage] Component mounted and initialized:", {
-      timestamp: new Date().toISOString(),
-      walletConnected: isConnected,
-      walletAddress: address,
-      currentChain: chain
-        ? { id: chain.id, name: chain.name }
-        : "Not connected",
-      contractAddress: attesterAddress || "Not available",
-      availableSchemas: SCHEMA_OPTIONS.map((s) => ({
-        name: s.name,
-        uid: s.uid,
-      })),
-    });
+    // Component mounted
   }, []);
 
-  // Log state changes for debugging
+  // Monitor transaction state
   useEffect(() => {
-    console.log("🔄 [AttestationsPage] Hook state updated:", {
-      isLoading,
-      isSuccess,
-      hasError: !!error,
-      hasHash: !!hash,
-      isConnected,
-      address,
-      currentChain: chain
-        ? { id: chain.id, name: chain.name }
-        : "Not connected",
-      errorType: error
-        ? error.message.toLowerCase().includes("nonce")
-          ? "NONCE_ERROR"
-          : "OTHER_ERROR"
-        : "NONE",
-      timestamp: new Date().toISOString(),
-    });
-  }, [isLoading, isSuccess, error, hash, isConnected, address, chain]);
+    if (hash && isSuccess) {
+      console.log(`✅ Transaction successful: ${hash}`);
+    }
+  }, [hash, isSuccess]);
 
   const form = useForm<AttestationFormData>({
     defaultValues: {
@@ -92,22 +66,14 @@ export default function AttestationsPage() {
   });
 
   const handleConnect = () => {
-    console.log("🔌 [AttestationsPage] Attempting to connect wallet...");
     try {
       connect({ connector: injected() });
-      console.log("📡 [AttestationsPage] Wallet connection initiated");
     } catch (err) {
-      console.error(
-        "❌ [AttestationsPage] Failed to initiate wallet connection:",
-        err,
-      );
+      console.error("Failed to connect wallet:", err);
     }
   };
 
   const addLocalNetwork = async () => {
-    console.log(
-      "🔗 [AttestationsPage] Adding local Anvil network to MetaMask...",
-    );
     try {
       await window.ethereum?.request({
         method: "wallet_addEthereumChain",
@@ -125,80 +91,35 @@ export default function AttestationsPage() {
           },
         ],
       });
-      console.log("✅ [AttestationsPage] Local network added successfully");
     } catch (err) {
-      console.error("❌ [AttestationsPage] Failed to add local network:", err);
+      console.error("Failed to add local network:", err);
       throw err;
     }
   };
 
   const handleSwitchToLocal = async () => {
-    console.log("🔄 [AttestationsPage] Switching to local Anvil network...");
     try {
       // First try to switch
       switchChain({ chainId: 17000 });
-      console.log("📡 [AttestationsPage] Network switch initiated");
     } catch (err) {
-      console.error(
-        "❌ [AttestationsPage] Failed to switch network, trying to add it first:",
-        err,
-      );
+      console.error("Failed to switch network:", err);
       // If switching fails, try adding the network first
       try {
         await addLocalNetwork();
         // Then try switching again
         switchChain({ chainId: 17000 });
       } catch (addErr) {
-        console.error(
-          "❌ [AttestationsPage] Failed to add and switch network:",
-          addErr,
-        );
+        console.error("Failed to add and switch network:", addErr);
       }
     }
   };
 
   const onSubmit = async (data: AttestationFormData) => {
-    console.log("📋 [AttestationsPage] Form submitted with data:", {
-      schema: data.schema,
-      recipient: data.recipient,
-      dataLength: data.data.length,
-      timestamp: new Date().toISOString(),
-    });
-
-    console.log("🔍 [AttestationsPage] Wallet status:", {
-      isConnected,
-      address,
-      chainId: window?.ethereum?.chainId || "unknown",
-    });
-
-    // Log pre-transaction nonce information for local network debugging
-    if (chain?.id === 17000) {
-      console.log(
-        "🔢 [AttestationsPage] Local network detected - monitoring for nonce issues",
-      );
-      console.log(
-        "🔢 [AttestationsPage] About to submit transaction, any nonce conflicts will be handled by useAttestation hook",
-      );
-    }
-
     try {
-      console.log("🎯 [AttestationsPage] Calling createAttestation...");
       await createAttestation(data);
-
-      console.log(
-        "✅ [AttestationsPage] Attestation creation completed, resetting form",
-      );
       form.reset();
-
-      console.log("🧹 [AttestationsPage] Form reset successfully");
     } catch (err) {
-      console.error("❌ [AttestationsPage] Failed to create attestation:", err);
-      console.error("❌ [AttestationsPage] Error context:", {
-        errorType: typeof err,
-        errorMessage: err instanceof Error ? err.message : "Unknown error",
-        errorStack: err instanceof Error ? err.stack : undefined,
-        formData: data,
-      });
+      console.error("Failed to create attestation:", err);
     }
   };
 
@@ -209,7 +130,7 @@ export default function AttestationsPage() {
     });
 
     try {
-      console.log("🔍 [Diagnostics] Starting Anvil health check...");
+      // Starting Anvil health check...
 
       // Test 1: Basic RPC connectivity
       const response = await fetch("http://localhost:8545", {
@@ -260,18 +181,12 @@ export default function AttestationsPage() {
       const codeData = await codeResponse.json();
       const hasContract = codeData.result && codeData.result !== "0x";
 
-      console.log("✅ [Diagnostics] All tests passed:", {
-        blockNumber,
-        balance: balance.toFixed(4),
-        contractDeployed: hasContract,
-      });
-
       setDiagnosticResults({
         status: "success",
         message: `✅ Anvil healthy! Block: ${blockNumber}, Balance: ${balance.toFixed(4)} ETH, Contract: ${hasContract ? "Deployed" : "Not found"}`,
       });
     } catch (error) {
-      console.error("❌ [Diagnostics] Anvil health check failed:", error);
+      console.error("Anvil health check failed:", error);
       setDiagnosticResults({
         status: "error",
         message: `❌ Anvil error: ${error instanceof Error ? error.message : "Unknown error"}`,

@@ -19,52 +19,52 @@ export default defineConfig({
     {
       abi: ABI.Attester.abi,
       name: "Attester",
-      address: "0xde154D4b3d20D3aD4542c9Db0fD5a08ccD42c922",
+      address: "0xdCF55560F86F8F07091E9FE1f0695C7782dd917C",
     },
     {
       abi: ABI.EAS.abi,
       name: "EAS",
-      address: "0x5D65F742c6291A97445Cf9D7fCE6b97476a74e67",
+      address: "0x01E4927F0CDC83d2DD5AD6fb14b7417497E41E35",
     },
     {
       abi: ABI.SchemaRegistry.abi,
       name: "SchemaRegistry",
-      address: "0x3569D28CA21Bf410850d96C0B9E1f239BdD34567",
+      address: "0x3E6cd56CeAD5210920f487fF852301391C699356",
     },
     {
       abi: ABI.SchemaRegistrar.abi,
       name: "SchemaRegistrar",
-      address: "0xd22647de20323282c35e9B6Ab75ef85a73bb874A",
+      address: "0x820987bC7e3896Ae864a6DdD665Bc4a09e4F9414",
     },
     {
       abi: ABI.Indexer.abi,
       name: "Indexer",
-      address: "0x7eb54ee2c335bc3Cfe755Ba2E6868FD1c9C5B284",
+      address: "0xC18470bF37A2e1Eb229059D1Fb7f3874919b970c",
     },
     {
       abi: ABI.IndexerResolver.abi,
       name: "IndexerResolver",
-      address: "0xA1904245bA63fD8B297d68c7575ba41efeAD3F60",
+      address: "0x03e851d7f0D526a1B4afC5D4013630eee316ee9c",
     },
     {
       abi: ABI.VotingPower.abi,
       name: "VotingPower",
-      address: "0xCb970716D72Af50654b016d3672eDa496b675942",
+      address: "0x5F7301Ca65FfD777922145F1BEAb8bb2FA07c2C5",
     },
     {
       abi: ABI.AttestationGovernor.abi,
       name: "AttestationGovernor",
-      address: "0xAf6bAd0982548EE8b56667067283F1f7b83a8Fa0",
+      address: "0x2366EccC50a2EDc2559bf3287d8699e46F5772d7",
     },
     {
       abi: ABI.RewardDistributor.abi,
       name: "RewardDistributor",
-      address: "0xE7423679D5Fdf596a46928DCaae69022a54F912D",
+      address: "0x71D4c2df7620EAD4Ee3900B761f950f21D81ED8d",
     },
     {
       abi: ABI.EASAttestTrigger.abi,
       name: "EASAttestTrigger",
-      address: "0x6aa097292aF22dfDA1897D16c69BBeFA63760C84",
+      address: "0x1e03095fe6B269d99b44DA3F5F7f50d0fbdF4C6E",
     },
   ],
 });
