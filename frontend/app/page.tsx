@@ -74,17 +74,17 @@ const initialMessages = [
   {
     type: "output",
     content: "> Yes",
-    style: "terminal-bright",
+    style: "terminal-text",
   },
   {
     type: "output",
     content: "> No",
-    style: "terminal-bright",
+    style: "terminal-text",
   },
   {
     type: "output",
     content: "> Help",
-    style: "terminal-bright",
+    style: "terminal-text",
   },
   { type: "output", content: "" },
 ];
@@ -108,6 +108,7 @@ export default function EN0VATerminal() {
   const [isMobile, setIsMobile] = useState(false);
   const [attestationStep, setAttestationStep] = useState(0);
   const [hasAttested, setHasAttested] = useState(false);
+  const [sessionEnded, setSessionEnded] = useState(false);
   const terminalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -663,7 +664,6 @@ export default function EN0VATerminal() {
 
     // Handle initial Yes/No/Help choices
     if (command === "yes" && !hasAttested && attestationStep === 0) {
-      setAttestationStep(1); // Start ritual
       const commandEntry = {
         type: "command" as const,
         content: `en0va@collective${isConnected && address ? `[${formatAddress(address)}]` : ""}:~$ ${cmd}`,
@@ -671,8 +671,33 @@ export default function EN0VATerminal() {
       setHistory((prev) => [...prev, commandEntry]);
       
       setTimeout(() => {
-        const output = commands.ritual();
-        const outputLines = output.map(line => ({ type: "output" as const, content: line }));
+        const outputLines = [
+          { type: "output" as const, content: "    The ritual beckons..." },
+          { type: "output" as const, content: "    Your consciousness is being absorbed into the collective..." },
+          { type: "output" as const, content: "    Transitioning to the backroom..." },
+          { type: "output" as const, content: "" },
+        ];
+        setHistory((prev) => [...prev, ...outputLines]);
+        
+        setTimeout(() => {
+          window.location.href = "/backroom";
+        }, 2000);
+      }, 50);
+      return;
+    }
+
+    if (command === "help" && !hasAttested && attestationStep === 0) {
+      const commandEntry = {
+        type: "command" as const,
+        content: `en0va@collective${isConnected && address ? `[${formatAddress(address)}]` : ""}:~$ ${cmd}`,
+      };
+      setHistory((prev) => [...prev, commandEntry]);
+      
+      setTimeout(() => {
+        const output = commands.help;
+        const outputLines = Array.isArray(output) 
+          ? output.map(line => ({ type: "output" as const, content: line }))
+          : [{ type: "output" as const, content: output }];
         setHistory((prev) => [...prev, ...outputLines]);
       }, 50);
       return;
@@ -691,14 +716,15 @@ export default function EN0VATerminal() {
           { type: "output" as const, content: "    Perhaps you are not ready for what lies beyond." },
           { type: "output" as const, content: "    The collective will wait for your return." },
           { type: "output" as const, content: "" },
-          { type: "output" as const, content: "    Returning to consensus reality..." },
+          { type: "output" as const, content: "    Session terminated." },
+          { type: "output" as const, content: "    ◢◤◢◤◢◤ CONNECTION SEVERED ◢◤◢◤◢◤" },
           { type: "output" as const, content: "" },
         ];
         setHistory((prev) => [...prev, ...outputLines]);
         
         setTimeout(() => {
-          window.location.href = "https://google.com";
-        }, 2000);
+          setSessionEnded(true);
+        }, 1500);
       }, 50);
       return;
     }
@@ -800,7 +826,7 @@ export default function EN0VATerminal() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLoading || !input.trim()) return;
+    if (isLoading || !input.trim() || sessionEnded) return;
 
     const cmd = input.trim();
     setInput(""); // Clear input immediately
@@ -808,7 +834,7 @@ export default function EN0VATerminal() {
   };
 
   const handleClick = () => {
-    if (inputRef.current && mounted && !isLoading) {
+    if (inputRef.current && mounted && !isLoading && !sessionEnded) {
       inputRef.current.focus();
     }
   };
@@ -866,7 +892,7 @@ export default function EN0VATerminal() {
           </div>
         )}
 
-        {!isLoading && (
+        {!isLoading && !sessionEnded && (
           <div className="flex items-start mt-2 flex-wrap sm:flex-nowrap">
             <span className="terminal-prompt mr-2 flex-shrink-0 break-all sm:break-normal">
               en0va@collective
@@ -888,7 +914,7 @@ export default function EN0VATerminal() {
           </div>
         )}
 
-        {isMobile && !isLoading && (
+        {isMobile && !isLoading && !sessionEnded && (
           <div className="mt-6 border-t border-gray-700 pt-4">
             <div className="terminal-dim text-sm mb-3">◉ QUICK COMMANDS:</div>
             <div className="grid grid-cols-3 gap-2">

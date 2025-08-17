@@ -1008,7 +1008,7 @@ export const attesterAbi = [
 ] as const
 
 export const attesterAddress =
-  '0xD9ccE8A45c142f23A8266B3a52835288a9F67Db2' as const
+  '0xC455c5ea57eCF88c1Bd9a810d2275693249592F1' as const
 
 export const attesterConfig = {
   address: attesterAddress,
@@ -1606,7 +1606,7 @@ export const easAbi = [
   { type: 'error', inputs: [], name: 'WrongSchema' },
 ] as const
 
-export const easAddress = '0x136F845F7A9CeBE70ace9841F986ebD5B49E5de1' as const
+export const easAddress = '0xb0c4AE69d0fA81151e21408f0B0d188b0e2e888E' as const
 
 export const easConfig = { address: easAddress, abi: easAbi } as const
 
@@ -1692,7 +1692,7 @@ export const easAttestTriggerAbi = [
 ] as const
 
 export const easAttestTriggerAddress =
-  '0x399B01Ca86bBb49F597F6129a1fD4b48C6f03c90' as const
+  '0xfDe0D1A4F0fdBB59570Cc8597E1B5BDC0CF11bC8' as const
 
 export const easAttestTriggerConfig = {
   address: easAttestTriggerAddress,
@@ -1854,7 +1854,7 @@ export const indexerAbi = [
 ] as const
 
 export const indexerAddress =
-  '0x8Af971c9a116E8D77e1aa5552Cf0963cd92FB18F' as const
+  '0xf98d373Ee845d0e2c8A875Ba8CD9BF566db30032' as const
 
 export const indexerConfig = {
   address: indexerAddress,
@@ -2040,7 +2040,7 @@ export const indexerResolverAbi = [
 ] as const
 
 export const indexerResolverAddress =
-  '0x0d516B0624659a53C6734119Fba34311C02d9335' as const
+  '0xd116EaB6303A846b4Ecc645cf8E3Fd07F7D8077B' as const
 
 export const indexerResolverConfig = {
   address: indexerResolverAddress,
@@ -2517,7 +2517,7 @@ export const schemaRegistrarAbi = [
 ] as const
 
 export const schemaRegistrarAddress =
-  '0x88A24eC6F8235deD92377fA787c95B636C97aA5A' as const
+  '0x75e06388114c52EbFFb28eF90Ca35251235E05A6' as const
 
 export const schemaRegistrarConfig = {
   address: schemaRegistrarAddress,
@@ -2609,7 +2609,7 @@ export const schemaRegistryAbi = [
 ] as const
 
 export const schemaRegistryAddress =
-  '0x5BcE9F9675C18fd27CDf51fFe1bae0439D4C5601' as const
+  '0x6A422C7D0b489B8c0Fe3584Fe0C06dBdc47C876f' as const
 
 export const schemaRegistryConfig = {
   address: schemaRegistryAddress,
