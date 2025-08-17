@@ -6,6 +6,7 @@ import { useReadContract, useWriteContract } from "wagmi";
 import {
   rewardDistributorAbi,
   rewardDistributorAddress,
+  enovaAbi,
 } from "@/lib/contracts";
 
 interface MerkleTreeData {
@@ -66,6 +67,7 @@ export function useRewards() {
     null,
   );
   const [claimHistory, setClaimHistory] = useState<RewardClaim[]>([]);
+  const [tokenSymbol, setTokenSymbol] = useState<string>("TOKEN");
 
   // Read merkle root from contract
   const { data: merkleRoot, isLoading: isLoadingRoot } = useReadContract({
@@ -137,6 +139,28 @@ export function useRewards() {
 
     loadMerkleData();
   }, [ipfsHashCid, address]);
+
+  // Fetch token symbol when we have reward token address
+  useEffect(() => {
+    const fetchTokenSymbol = async () => {
+      if (!merkleData?.metadata?.reward_token_address) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/token-symbol/${merkleData.metadata.reward_token_address}`);
+        if (response.ok) {
+          const data = await response.json();
+          setTokenSymbol(data.symbol || "TOKEN");
+        }
+      } catch (err) {
+        console.error("Error fetching token symbol:", err);
+        setTokenSymbol("TOKEN");
+      }
+    };
+
+    fetchTokenSymbol();
+  }, [merkleData?.metadata?.reward_token_address]);
 
   // Trigger reward update
   const triggerUpdate = useCallback(async () => {
@@ -235,6 +259,7 @@ export function useRewards() {
     pendingReward,
     claimedAmount: claimedAmount?.toString() || "0",
     claimHistory,
+    tokenSymbol,
 
     // Actions
     claim,

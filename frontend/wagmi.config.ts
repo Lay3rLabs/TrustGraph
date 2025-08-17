@@ -11,6 +11,7 @@ const ABI = {
   AttestationGovernor: require("../out/Governor.sol/AttestationGovernor.json"),
   RewardDistributor: require("../out/RewardDistributor.sol/RewardDistributor.json"),
   EASAttestTrigger: require("../out/Trigger.sol/EASAttestTrigger.json"),
+  ENOVA: require("../out/ERC20.sol/ENOVA.json"),
 };
 
 export default defineConfig({
@@ -65,6 +66,11 @@ export default defineConfig({
       abi: ABI.EASAttestTrigger.abi,
       name: "EASAttestTrigger",
       address: "0x70555EF2dE3438bC0b1a61f4e4f2F7054d653b51",
+    },
+    {
+      abi: ABI.ENOVA.abi,
+      name: "ENOVA",
+      address: "0xe4448b59D3195E93954FF3c65652a6b19b57dc53",
     },
   ],
 });

@@ -19,6 +19,8 @@ interface RewardsCardProps {
       total_rewards: string;
     };
   } | null;
+  tokenSymbol?: string;
+  contractAddress?: string;
   onClaim?: () => void;
   onTriggerUpdate?: () => void;
   isLoading?: boolean;
@@ -27,16 +29,17 @@ interface RewardsCardProps {
 
 export function RewardsCard({
   merkleRoot,
-  currentIpfsHash, 
+  currentIpfsHash,
   pendingReward,
   claimedAmount = "0",
   merkleData,
+  tokenSymbol = "TOKEN",
+  contractAddress,
   onClaim,
   onTriggerUpdate,
   isLoading = false,
-  error
+  error,
 }: RewardsCardProps) {
-  
   const formatAmount = (amount: string | undefined) => {
     if (!amount || amount === "0") return "0";
     // Convert from wei to ether (assuming 18 decimals)
@@ -49,7 +52,8 @@ export function RewardsCard({
     return address; // Show full address without truncation
   };
 
-  const hasClaimableRewards = pendingReward && Number(pendingReward.claimable) > Number(claimedAmount);
+  const hasClaimableRewards =
+    pendingReward && Number(pendingReward.claimable) > Number(claimedAmount);
 
   return (
     <div className="border border-gray-700 bg-black/10 p-6 rounded-sm space-y-4">
@@ -78,13 +82,22 @@ export function RewardsCard({
       {/* Contract Info */}
       {!isLoading && (
         <div className="space-y-4">
+          {contractAddress && (
+            <div className="space-y-2">
+              <div className="terminal-dim text-xs">CONTRACT ADDRESS</div>
+              <div className="terminal-text text-sm font-mono break-all">
+                {contractAddress}
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
             <div className="terminal-dim text-xs">MERKLE ROOT</div>
             <div className="terminal-text text-sm font-mono break-all">
               {merkleRoot || "Not set"}
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <div className="terminal-dim text-xs">IPFS DATA HASH</div>
             <div className="terminal-text text-sm font-mono break-all">
@@ -102,7 +115,7 @@ export function RewardsCard({
             <div className="space-y-2">
               <div className="terminal-dim text-xs">TOTAL REWARDS</div>
               <div className="terminal-text text-sm">
-                {formatAmount(merkleData.metadata.total_rewards)} ETH
+                {formatAmount(merkleData.metadata.total_rewards)} {tokenSymbol}
               </div>
             </div>
             <div className="space-y-2">
@@ -118,26 +131,28 @@ export function RewardsCard({
       {/* User Rewards */}
       <div className="border-t border-gray-700 pt-4 space-y-3">
         <div className="terminal-bright text-sm">YOUR REWARDS</div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <div className="terminal-dim text-xs">TOTAL EARNED</div>
             <div className="terminal-text text-lg">
-              {pendingReward ? formatAmount(pendingReward.reward) : "0"} ETH
+              {pendingReward ? formatAmount(pendingReward.reward) : "0"}{" "}
+              {tokenSymbol}
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <div className="terminal-dim text-xs">CLAIMABLE</div>
             <div className="terminal-text text-lg">
-              {pendingReward ? formatAmount(pendingReward.claimable) : "0"} ETH
+              {pendingReward ? formatAmount(pendingReward.claimable) : "0"}{" "}
+              {tokenSymbol}
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <div className="terminal-dim text-xs">ALREADY CLAIMED</div>
             <div className="terminal-text text-lg">
-              {formatAmount(claimedAmount)} ETH
+              {formatAmount(claimedAmount)} {tokenSymbol}
             </div>
           </div>
         </div>
@@ -146,8 +161,12 @@ export function RewardsCard({
         {pendingReward && (
           <div className="space-y-2">
             <div className="terminal-dim text-xs">CLAIM STATUS</div>
-            <div className={`text-sm ${hasClaimableRewards ? 'text-green-400' : 'text-yellow-400'}`}>
-              {hasClaimableRewards ? '✓ Rewards available for claim' : '◯ No pending rewards'}
+            <div
+              className={`text-sm ${hasClaimableRewards ? "text-green-400" : "text-yellow-400"}`}
+            >
+              {hasClaimableRewards
+                ? "✓ Rewards available for claim"
+                : "◯ No pending rewards"}
             </div>
           </div>
         )}
@@ -162,11 +181,11 @@ export function RewardsCard({
             className="mobile-terminal-btn flex-1"
           >
             <span className="terminal-command text-xs">
-              CLAIM {formatAmount(pendingReward?.claimable)} ETH
+              CLAIM {formatAmount(pendingReward?.claimable)} {tokenSymbol}
             </span>
           </Button>
         )}
-        
+
         {onTriggerUpdate && (
           <Button
             onClick={onTriggerUpdate}

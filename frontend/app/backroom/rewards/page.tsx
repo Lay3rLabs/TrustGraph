@@ -22,6 +22,7 @@ export default function RewardsPage() {
     pendingReward,
     claimedAmount,
     claimHistory,
+    tokenSymbol,
     claim,
     triggerUpdate,
     refresh,
@@ -84,22 +85,6 @@ export default function RewardsPage() {
         </div>
       )}
 
-      {/* Contract Info */}
-      {isConnected && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
-            <div className="terminal-bright text-lg">ACTIVE</div>
-            <div className="terminal-dim text-xs">STATUS</div>
-          </div>
-          <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
-            <div className="terminal-bright text-xs font-mono break-all">
-              {contractAddress}
-            </div>
-            <div className="terminal-dim text-xs">CONTRACT ADDRESS</div>
-          </div>
-        </div>
-      )}
-
       {/* Rewards Card */}
       {isConnected && (
         <RewardsCard
@@ -108,6 +93,8 @@ export default function RewardsPage() {
           pendingReward={pendingReward}
           claimedAmount={claimedAmount}
           merkleData={merkleData}
+          tokenSymbol={tokenSymbol}
+          contractAddress={contractAddress}
           onClaim={handleClaim}
           onTriggerUpdate={handleTriggerUpdate}
           isLoading={isLoading}
@@ -138,7 +125,7 @@ export default function RewardsPage() {
                   <div className="space-y-1">
                     <div className="terminal-dim text-xs">AMOUNT CLAIMED</div>
                     <div className="terminal-text text-sm">
-                      {(Number(claim.claimed) / Math.pow(10, 18)).toFixed(6)} ETH
+                      {(Number(claim.claimed) / Math.pow(10, 18)).toFixed(6)} {tokenSymbol}
                     </div>
                   </div>
                   <div className="space-y-1">
