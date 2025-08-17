@@ -7,7 +7,7 @@
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start",
-    "contracts:update": "node scripts/update-wagmi-config.js",
+    "contracts:update": "node scripts/update-config.js",
     "claude-code": "docker compose -f .claude/docker-compose.claude.yml run --rm --remove-orphans -it claude-code-sandbox bash -c 'claude; exec'",
     "claude-code:unrestricted": "docker compose -f .claude/docker-compose.claude.yml run --rm --remove-orphans -it claude-code-sandbox bash -c 'claude --dangerously-skip-permissions; exec'",
     "wagmi:generate": "wagmi generate"

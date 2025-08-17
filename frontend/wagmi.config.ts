@@ -1,70 +1,70 @@
-import { defineConfig } from '@wagmi/cli';
+import { defineConfig } from "@wagmi/cli";
 
 const ABI = {
-  Attester: require('../out/Attester.sol/Attester.json'),
-  EAS: require('../out/EAS.sol/EAS.json'),
-  SchemaRegistry: require('../out/SchemaRegistry.sol/SchemaRegistry.json'),
-  SchemaRegistrar: require('../out/SchemaRegistrar.sol/SchemaRegistrar.json'),
-  Indexer: require('../out/Indexer.sol/Indexer.json'),
-  IndexerResolver: require('../out/IndexerResolver.sol/IndexerResolver.json'),
-  VotingPower: require('../out/VotingPower.sol/VotingPower.json'),
-  AttestationGovernor: require('../out/Governor.sol/AttestationGovernor.json'),
-  RewardDistributor: require('../out/RewardDistributor.sol/RewardDistributor.json'),
-  EASAttestTrigger: require('../out/Trigger.sol/EASAttestTrigger.json'),
+  Attester: require("../out/Attester.sol/Attester.json"),
+  EAS: require("../out/EAS.sol/EAS.json"),
+  SchemaRegistry: require("../out/SchemaRegistry.sol/SchemaRegistry.json"),
+  SchemaRegistrar: require("../out/SchemaRegistrar.sol/SchemaRegistrar.json"),
+  Indexer: require("../out/Indexer.sol/Indexer.json"),
+  IndexerResolver: require("../out/IndexerResolver.sol/IndexerResolver.json"),
+  VotingPower: require("../out/VotingPower.sol/VotingPower.json"),
+  AttestationGovernor: require("../out/Governor.sol/AttestationGovernor.json"),
+  RewardDistributor: require("../out/RewardDistributor.sol/RewardDistributor.json"),
+  EASAttestTrigger: require("../out/Trigger.sol/EASAttestTrigger.json"),
 };
 
 export default defineConfig({
-  out: 'lib/contracts.ts',
+  out: "lib/contracts.ts",
   contracts: [
     {
       abi: ABI.Attester.abi,
-      name: 'Attester',
-      address: '0x6b5bbefe4d78ecda1c29d5978a1aef6ba4393879',
+      name: "Attester",
+      address: "0xde154D4b3d20D3aD4542c9Db0fD5a08ccD42c922",
     },
     {
       abi: ABI.EAS.abi,
-      name: 'EAS',
-      address: '0x3cbe968adcd5033e5704cebb807f262492e264bb',
+      name: "EAS",
+      address: "0x5D65F742c6291A97445Cf9D7fCE6b97476a74e67",
     },
     {
       abi: ABI.SchemaRegistry.abi,
-      name: 'SchemaRegistry',
-      address: '0xdcd1173e9d1e6fc6006fad7bed80c8c9607c9b9e',
+      name: "SchemaRegistry",
+      address: "0x3569D28CA21Bf410850d96C0B9E1f239BdD34567",
     },
     {
       abi: ABI.SchemaRegistrar.abi,
-      name: 'SchemaRegistrar',
-      address: '0xe7f26edb3b9ab77ce52954b066086b1a7d385c3b',
+      name: "SchemaRegistrar",
+      address: "0xd22647de20323282c35e9B6Ab75ef85a73bb874A",
     },
     {
       abi: ABI.Indexer.abi,
-      name: 'Indexer',
-      address: '0x80a8bf845022927b11137065034afaa96dc61937',
+      name: "Indexer",
+      address: "0x7eb54ee2c335bc3Cfe755Ba2E6868FD1c9C5B284",
     },
     {
       abi: ABI.IndexerResolver.abi,
-      name: 'IndexerResolver',
-      address: '0x3d591d974df59eb4976624ca9efdf9834e4f044a',
+      name: "IndexerResolver",
+      address: "0xA1904245bA63fD8B297d68c7575ba41efeAD3F60",
     },
     {
       abi: ABI.VotingPower.abi,
-      name: 'VotingPower',
-      // Address will be added when contract is deployed
+      name: "VotingPower",
+      address: "0xCb970716D72Af50654b016d3672eDa496b675942",
     },
     {
       abi: ABI.AttestationGovernor.abi,
-      name: 'AttestationGovernor',
-      // Address will be added when contract is deployed
+      name: "AttestationGovernor",
+      address: "0xAf6bAd0982548EE8b56667067283F1f7b83a8Fa0",
     },
     {
       abi: ABI.RewardDistributor.abi,
-      name: 'RewardDistributor',
-      // Address will be added when contract is deployed
+      name: "RewardDistributor",
+      address: "0xE7423679D5Fdf596a46928DCaae69022a54F912D",
     },
     {
       abi: ABI.EASAttestTrigger.abi,
-      name: 'EASAttestTrigger',
-      address: '0x17fd747b6dfd3688d7b442c3bde045b85d56bb85',
+      name: "EASAttestTrigger",
+      address: "0x6aa097292aF22dfDA1897D16c69BBeFA63760C84",
     },
   ],
 });

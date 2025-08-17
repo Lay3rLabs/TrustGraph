@@ -915,6 +915,14 @@ export const attestationGovernorAbi = [
   },
 ] as const
 
+export const attestationGovernorAddress =
+  '0xAf6bAd0982548EE8b56667067283F1f7b83a8Fa0' as const
+
+export const attestationGovernorConfig = {
+  address: attestationGovernorAddress,
+  abi: attestationGovernorAbi,
+} as const
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Attester
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1008,7 +1016,7 @@ export const attesterAbi = [
 ] as const
 
 export const attesterAddress =
-  '0x6B5bBEFE4d78eCDA1c29D5978A1AEf6BA4393879' as const
+  '0xde154D4b3d20D3aD4542c9Db0fD5a08ccD42c922' as const
 
 export const attesterConfig = {
   address: attesterAddress,
@@ -1606,7 +1614,7 @@ export const easAbi = [
   { type: 'error', inputs: [], name: 'WrongSchema' },
 ] as const
 
-export const easAddress = '0x3Cbe968aDcD5033e5704CEbB807F262492E264Bb' as const
+export const easAddress = '0x5D65F742c6291A97445Cf9D7fCE6b97476a74e67' as const
 
 export const easConfig = { address: easAddress, abi: easAbi } as const
 
@@ -1692,7 +1700,7 @@ export const easAttestTriggerAbi = [
 ] as const
 
 export const easAttestTriggerAddress =
-  '0x17fd747B6dFd3688d7b442C3Bde045B85d56Bb85' as const
+  '0x6aa097292aF22dfDA1897D16c69BBeFA63760C84' as const
 
 export const easAttestTriggerConfig = {
   address: easAttestTriggerAddress,
@@ -1854,7 +1862,7 @@ export const indexerAbi = [
 ] as const
 
 export const indexerAddress =
-  '0x80a8Bf845022927b11137065034AFAa96Dc61937' as const
+  '0x7eb54ee2c335bc3Cfe755Ba2E6868FD1c9C5B284' as const
 
 export const indexerConfig = {
   address: indexerAddress,
@@ -2040,7 +2048,7 @@ export const indexerResolverAbi = [
 ] as const
 
 export const indexerResolverAddress =
-  '0x3D591d974df59eB4976624Ca9efDf9834e4f044a' as const
+  '0xA1904245bA63fD8B297d68c7575ba41efeAD3F60' as const
 
 export const indexerResolverConfig = {
   address: indexerResolverAddress,
@@ -2480,6 +2488,14 @@ export const rewardDistributorAbi = [
   },
 ] as const
 
+export const rewardDistributorAddress =
+  '0xE7423679D5Fdf596a46928DCaae69022a54F912D' as const
+
+export const rewardDistributorConfig = {
+  address: rewardDistributorAddress,
+  abi: rewardDistributorAbi,
+} as const
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SchemaRegistrar
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2517,7 +2533,7 @@ export const schemaRegistrarAbi = [
 ] as const
 
 export const schemaRegistrarAddress =
-  '0xE7F26EDB3b9Ab77Ce52954b066086B1a7D385c3B' as const
+  '0xd22647de20323282c35e9B6Ab75ef85a73bb874A' as const
 
 export const schemaRegistrarConfig = {
   address: schemaRegistrarAddress,
@@ -2609,7 +2625,7 @@ export const schemaRegistryAbi = [
 ] as const
 
 export const schemaRegistryAddress =
-  '0xdcD1173e9D1e6Fc6006Fad7bed80C8C9607C9b9e' as const
+  '0x3569D28CA21Bf410850d96C0B9E1f239BdD34567' as const
 
 export const schemaRegistryConfig = {
   address: schemaRegistryAddress,
@@ -3058,3 +3074,11 @@ export const votingPowerAbi = [
     name: 'VotesExpiredSignature',
   },
 ] as const
+
+export const votingPowerAddress =
+  '0xCb970716D72Af50654b016d3672eDa496b675942' as const
+
+export const votingPowerConfig = {
+  address: votingPowerAddress,
+  abi: votingPowerAbi,
+} as const
