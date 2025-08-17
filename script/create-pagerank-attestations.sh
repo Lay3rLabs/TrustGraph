@@ -204,65 +204,27 @@ create_attestations() {
 
     print_info "🎯 Creating vouching network for PageRank testing..."
 
-    # High-value vouchers (authority figures)
-    print_info "👑 Creating authority vouchers..."
+    # Authority figure - Alice vouches for Bob
+    print_info "👑 Creating authority voucher..."
 
-    # Diana vouches for key players with high weights
-    local diana_vouches=(
-        "Alice:95"
-        "Bob:90"
-        "Charlie:85"
-        "Frank:80"
-        "Grace:75"
+    # Alice is the authority and vouches for Bob with high weight
+    if create_vouching_attestation "Alice" "Bob" "95"; then
+        ((total_attestations++))
+    else
+        ((failed_attestations++))
+    fi
+    sleep 0.1
+
+    # Spammer self-vouching
+    print_info "🚫 Creating spammer self-vouchers..."
+
+    local spammer_vouches=(
+        "Grace:Grace:100"
+        "Henry:Henry:100"
+        "Ivy:Ivy:100"
     )
 
-    for vouch in "${diana_vouches[@]}"; do
-        IFS=':' read -r recipient weight <<< "$vouch"
-        if create_vouching_attestation "Diana" "$recipient" "$weight"; then
-            ((total_attestations++))
-        else
-            ((failed_attestations++))
-        fi
-        sleep 0.1
-    done
-
-    # Alice vouches for her network (hub pattern)
-    print_info "🌟 Creating hub vouchers..."
-
-    local alice_vouches=(
-        "Bob:85"
-        "Charlie:80"
-        "Diana:75"
-        "Eve:70"
-    )
-
-    for vouch in "${alice_vouches[@]}"; do
-        IFS=':' read -r recipient weight <<< "$vouch"
-        if create_vouching_attestation "Alice" "$recipient" "$weight"; then
-            ((total_attestations++))
-        else
-            ((failed_attestations++))
-        fi
-        sleep 0.1
-    done
-
-    # Medium-weight vouchers (community members)
-    print_info "🤝 Creating community vouchers..."
-
-    local community_vouches=(
-        "Bob:Charlie:70"
-        "Charlie:Eve:65"
-        "Eve:Frank:60"
-        "Frank:Grace:55"
-        "Grace:Henry:70"
-        "Henry:Ivy:65"
-        "Ivy:Alice:60"
-        "Bob:Grace:50"
-        "Charlie:Henry:55"
-        "Frank:Ivy:50"
-    )
-
-    for vouch in "${community_vouches[@]}"; do
+    for vouch in "${spammer_vouches[@]}"; do
         IFS=':' read -r attester recipient weight <<< "$vouch"
         if create_vouching_attestation "$attester" "$recipient" "$weight"; then
             ((total_attestations++))
@@ -272,19 +234,20 @@ create_attestations() {
         sleep 0.1
     done
 
-    # Mutual vouchers (trust pairs)
-    print_info "🔄 Creating mutual vouchers..."
+    # Legitimate community vouchers (non-spammers only)
+    print_info "🤝 Creating community vouchers..."
 
-    local mutual_vouches=(
-        "Grace:Henry:75"
-        "Henry:Grace:75"
-        "Bob:Frank:60"
-        "Frank:Bob:60"
-        "Eve:Ivy:55"
-        "Ivy:Eve:55"
+    local community_vouches=(
+        "Bob:Charlie:70"
+        "Charlie:Diana:65"
+        "Diana:Eve:60"
+        "Eve:Frank:55"
+        "Frank:Bob:50"
+        "Charlie:Frank:45"
+        "Diana:Bob:40"
     )
 
-    for vouch in "${mutual_vouches[@]}"; do
+    for vouch in "${community_vouches[@]}"; do
         IFS=':' read -r attester recipient weight <<< "$vouch"
         if create_vouching_attestation "$attester" "$recipient" "$weight"; then
             ((total_attestations++))
@@ -319,18 +282,18 @@ analyze_network() {
 
     echo ""
     echo "📈 Expected PageRank Leaders:"
-    echo "   1. Alice - High incoming vouches + authority status"
-    echo "   2. Diana - Authority figure with high outgoing weights"
-    echo "   3. Charlie - Bridge connector in the network"
-    echo "   4. Bob - Well-connected community member"
-    echo "   5. Grace/Henry - Mutual trust pair"
+    echo "   1. Alice - Authority figure with high outgoing weight"
+    echo "   2. Bob - Receives high-weight vouch from Alice"
+    echo "   3. Charlie - Well-connected in community network"
+    echo "   4. Diana - Active in community vouching"
+    echo "   5. Eve/Frank - Moderate community participation"
     echo ""
     echo "🔍 Network Patterns Created:"
-    echo "   • Authority: Diana gives high-weight vouches (95-75)"
-    echo "   • Hub: Alice receives and gives quality vouches"
-    echo "   • Community: Medium-weight vouching web (50-70)"
-    echo "   • Mutual: Grace↔Henry, Bob↔Frank, Eve↔Ivy pairs"
-    echo "   • Total: ~25 vouching attestations with varied weights"
+    echo "   • Authority: Alice vouches for Bob with high weight (95)"
+    echo "   • Spammers: Grace, Henry, Ivy only vouch for themselves (100 each)"
+    echo "   • Community: Legitimate vouching web between non-spammers (40-70)"
+    echo "   • Anti-spam: Spammers isolated from legitimate network"
+    echo "   • Total: ~11 vouching attestations (1 authority + 3 spam + 7 community)"
     echo ""
     echo "⚙️ Contract Addresses:"
     echo "   • EAS: $EAS_ADDRESS"
@@ -363,10 +326,10 @@ show_next_steps() {
     echo "      cast call $EAS_ADDRESS \"getAttestation(bytes32)\" <uid> --rpc-url $RPC_URL"
     echo ""
     echo "📊 Expected Results:"
-    echo "   • Alice should have highest PageRank (central + incoming vouches)"
-    echo "   • Diana should rank high (authority with high outgoing weights)"
-    echo "   • Network shows realistic influence distribution"
-    echo "   • Vouching weights properly influence PageRank calculation"
+    echo "   • Alice should have highest PageRank (authority giving high-weight vouch)"
+    echo "   • Bob should rank high (receives high-weight vouch from Alice)"
+    echo "   • Grace/Henry/Ivy should rank low (spammers isolated from network)"
+    echo "   • PageRank algorithm should resist self-vouching spam attacks"
     echo -e "${NC}"
 }
 
@@ -407,11 +370,11 @@ case "${1:-}" in
         echo "  • Anvil must be running on localhost:8545"
         echo "  • Default anvil accounts will be used as test personas"
         echo ""
-        echo "This script creates ~25 vouching attestations with patterns:"
-        echo "  • Authority vouchers (Diana with high weights 95-75)"
-        echo "  • Hub vouchers (Alice as central connector)"
-        echo "  • Community vouchers (medium weights 50-70)"
-        echo "  • Mutual vouchers (trust pairs with equal weights)"
+        echo "This script creates ~11 vouching attestations with patterns:"
+        echo "  • Authority voucher (Alice vouches for Bob with weight 95)"
+        echo "  • Spam vouchers (Grace/Henry/Ivy self-vouch with weight 100)"
+        echo "  • Community vouchers (legitimate users, weights 40-70)"
+        echo "  • Anti-spam testing (spammers isolated from legitimate network)"
         echo ""
         exit 0
         ;;
