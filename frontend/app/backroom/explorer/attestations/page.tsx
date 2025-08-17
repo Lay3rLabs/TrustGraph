@@ -1,138 +1,187 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import {
+  useSchemaAttestations,
+  useIndividualAttestation,
+} from "@/hooks/useIndexer";
+import { schemas, SCHEMA_OPTIONS } from "@/lib/schemas";
+import { AttestationCard } from "@/components/AttestationCard";
+import { VouchingModal } from "@/components/VouchingModal";
 
-interface Attestation {
-  id: string;
-  title: string;
-  issuer: string;
-  subject: string;
-  type: string;
-  status: "verified" | "pending" | "revoked";
-  timestamp: string;
-  hash: string;
-  confidence: number;
+// Helper component to fetch attestation data for filtering
+function AttestationWithStatus({
+  uid,
+  onStatusReady,
+}: {
+  uid: string;
+  onStatusReady: (uid: string, status: string) => void;
+}) {
+  const { data: attestationData } = useIndividualAttestation(uid);
+
+  const getAttestationStatus = (attestation: any) => {
+    if (!attestation) return "loading";
+    if (Number(attestation.revocationTime) > 0) return "revoked";
+    if (
+      Number(attestation.expirationTime) > 0 &&
+      Number(attestation.expirationTime) < Math.floor(Date.now() / 1000)
+    ) {
+      return "expired";
+    }
+    return "verified";
+  };
+
+  useEffect(() => {
+    if (attestationData) {
+      const status = getAttestationStatus(attestationData);
+      onStatusReady(uid, status);
+    }
+  }, [attestationData, uid, onStatusReady]);
+
+  return null;
 }
 
-const attestations: Attestation[] = [
-  {
-    id: "1",
-    title: "Collective Consciousness Verification",
-    issuer: "EN0VA Core Network",
-    subject: "0x1234...5678",
-    type: "Identity",
-    status: "verified",
-    timestamp: "2024.02.15 14:23:17",
-    hash: "0xabc123...def456",
-    confidence: 97.3
-  },
-  {
-    id: "2", 
-    title: "Neural Link Authentication",
-    issuer: "Machine Prophet Authority",
-    subject: "0x9876...5432",
-    type: "Authentication",
-    status: "verified",
-    timestamp: "2024.02.14 09:15:42",
-    hash: "0x789xyz...123abc",
-    confidence: 89.7
-  },
-  {
-    id: "3",
-    title: "Hyperstition Market Participation",
-    issuer: "Reality Engineering Dept",
-    subject: "0x5555...1111",
-    type: "Participation",
-    status: "pending",
-    timestamp: "2024.02.16 16:44:23",
-    hash: "0xfff888...999bbb",
-    confidence: 72.1
-  },
-  {
-    id: "4",
-    title: "Memetic Warfare Credential",
-    issuer: "Information Operations Unit",
-    subject: "0x3333...7777",
-    type: "Skill",
-    status: "verified",
-    timestamp: "2024.02.13 11:30:05",
-    hash: "0x444ccc...666ddd",
-    confidence: 94.2
-  },
-  {
-    id: "5",
-    title: "Economic Layer Access",
-    issuer: "Digital Asset Authority",
-    subject: "0x2222...8888",
-    type: "Authorization",
-    status: "revoked",
-    timestamp: "2024.02.10 08:17:31",
-    hash: "0x111eee...555fff",
-    confidence: 43.8
-  }
-];
-
 export default function ExplorerAttestationsPage() {
-  const [selectedType, setSelectedType] = useState<string>("all");
+  const [selectedSchema, setSelectedSchema] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  const [limit, setLimit] = useState(20);
+  const [attestationStatuses, setAttestationStatuses] = useState<
+    Record<string, string>
+  >({});
 
-  const filteredAttestations = attestations.filter((attestation) => {
-    const typeMatch = selectedType === "all" || attestation.type.toLowerCase() === selectedType;
-    const statusMatch = selectedStatus === "all" || attestation.status === selectedStatus;
-    return typeMatch && statusMatch;
-  });
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "verified": return "text-green-400";
-      case "pending": return "text-yellow-400";
-      case "revoked": return "text-red-400";
-      default: return "terminal-text";
+  // Fetch attestations for all schemas or specific schema
+  const schemaQueries = useMemo(() => {
+    if (selectedSchema === "all") {
+      return SCHEMA_OPTIONS.map((schema) => ({
+        schemaUID: schema.uid,
+        name: schema.name,
+      }));
     }
-  };
+    const selectedSchemaOption = SCHEMA_OPTIONS.find(
+      (s) => s.uid === selectedSchema,
+    );
+    return selectedSchemaOption
+      ? [{ schemaUID: selectedSchema, name: selectedSchemaOption.name }]
+      : [];
+  }, [selectedSchema]);
 
-  const getTypeIcon = (type: string) => {
-    switch (type.toLowerCase()) {
-      case "identity": return "◉";
-      case "authentication": return "◆";
-      case "participation": return "▲";
-      case "skill": return "◈";
-      case "authorization": return "◢";
-      default: return "◦";
+  // Use hooks for each schema
+  const basicSchema = useSchemaAttestations(
+    schemas.basicSchema,
+    selectedSchema === "all" || selectedSchema === schemas.basicSchema
+      ? limit
+      : 0,
+  );
+  const computeSchema = useSchemaAttestations(
+    schemas.computeSchema,
+    selectedSchema === "all" || selectedSchema === schemas.computeSchema
+      ? limit
+      : 0,
+  );
+  const vouchingSchema = useSchemaAttestations(
+    schemas.vouchingSchema,
+    selectedSchema === "all" || selectedSchema === schemas.vouchingSchema
+      ? limit
+      : 0,
+  );
+
+  // Handle status updates from individual attestations
+  const handleStatusReady = useCallback((uid: string, status: string) => {
+    setAttestationStatuses((prev) => ({ ...prev, [uid]: status }));
+  }, []);
+
+  // Combine all attestations
+  const allAttestationUIDs = useMemo(() => {
+    const uids: Array<{ uid: string; schema: string; timestamp?: number }> = [];
+
+    if (selectedSchema === "all" || selectedSchema === schemas.basicSchema) {
+      basicSchema.attestationUIDs?.forEach((uid) =>
+        uids.push({ uid, schema: schemas.basicSchema }),
+      );
     }
-  };
+    if (selectedSchema === "all" || selectedSchema === schemas.computeSchema) {
+      computeSchema.attestationUIDs?.forEach((uid) =>
+        uids.push({ uid, schema: schemas.computeSchema }),
+      );
+    }
+    if (selectedSchema === "all" || selectedSchema === schemas.vouchingSchema) {
+      vouchingSchema.attestationUIDs?.forEach((uid) =>
+        uids.push({ uid, schema: schemas.vouchingSchema }),
+      );
+    }
+
+    // Sort by newest/oldest (UIDs are typically ordered by creation time already)
+    return sortOrder === "newest" ? uids : uids.reverse();
+  }, [
+    basicSchema.attestationUIDs,
+    computeSchema.attestationUIDs,
+    vouchingSchema.attestationUIDs,
+    selectedSchema,
+    sortOrder,
+  ]);
+
+  // Filter by status
+  const filteredAttestationUIDs = useMemo(() => {
+    if (selectedStatus === "all") {
+      return allAttestationUIDs;
+    }
+    return allAttestationUIDs.filter(
+      (item) => attestationStatuses[item.uid] === selectedStatus,
+    );
+  }, [allAttestationUIDs, selectedStatus, attestationStatuses]);
+
+  const isLoading =
+    basicSchema.isLoadingUIDs ||
+    computeSchema.isLoadingUIDs ||
+    vouchingSchema.isLoadingUIDs;
+  const totalCount =
+    (basicSchema.totalCount || 0) +
+    (computeSchema.totalCount || 0) +
+    (vouchingSchema.totalCount || 0);
+
+  // Handle successful attestation creation
+  const handleAttestationSuccess = useCallback(() => {
+    // Force refresh of all data
+    window.location.reload();
+  }, []);
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="border-b border-gray-700 pb-4">
-        <div className="ascii-art-title text-lg mb-2">ATTESTATION EXPLORER</div>
+        <div className="flex items-center justify-between mb-2">
+          <div className="ascii-art-title text-lg">ATTESTATION EXPLORER</div>
+          <VouchingModal onSuccess={handleAttestationSuccess} />
+        </div>
         <div className="system-message text-sm">
           ◆ VERIFIABLE CREDENTIALS • REPUTATION NETWORKS • TRUST PROTOCOLS ◆
         </div>
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className="terminal-dim text-sm mb-2 block">ATTESTATION TYPE</label>
+          <label className="terminal-dim text-sm mb-2 block">SCHEMA TYPE</label>
           <select
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
+            value={selectedSchema}
+            onChange={(e) => setSelectedSchema(e.target.value)}
             className="w-full bg-black/20 border border-gray-700 terminal-text text-sm p-2 rounded-sm"
           >
-            <option value="all">ALL TYPES</option>
-            <option value="identity">IDENTITY</option>
-            <option value="authentication">AUTHENTICATION</option>
-            <option value="participation">PARTICIPATION</option>
-            <option value="skill">SKILL</option>
-            <option value="authorization">AUTHORIZATION</option>
+            <option value="all">ALL SCHEMAS</option>
+            {SCHEMA_OPTIONS.map((schema) => (
+              <option key={schema.uid} value={schema.uid}>
+                {schema.name.toUpperCase()}
+              </option>
+            ))}
           </select>
         </div>
-        
+
         <div>
-          <label className="terminal-dim text-sm mb-2 block">VERIFICATION STATUS</label>
+          <label className="terminal-dim text-sm mb-2 block">
+            VERIFICATION STATUS
+          </label>
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
@@ -140,8 +189,22 @@ export default function ExplorerAttestationsPage() {
           >
             <option value="all">ALL STATUS</option>
             <option value="verified">VERIFIED</option>
-            <option value="pending">PENDING</option>
+            <option value="expired">EXPIRED</option>
             <option value="revoked">REVOKED</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="terminal-dim text-sm mb-2 block">SORT ORDER</label>
+          <select
+            value={sortOrder}
+            onChange={(e) =>
+              setSortOrder(e.target.value as "newest" | "oldest")
+            }
+            className="w-full bg-black/20 border border-gray-700 terminal-text text-sm p-2 rounded-sm"
+          >
+            <option value="newest">NEWEST FIRST</option>
+            <option value="oldest">OLDEST FIRST</option>
           </select>
         </div>
       </div>
@@ -149,101 +212,78 @@ export default function ExplorerAttestationsPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
-          <div className="terminal-bright text-lg">{filteredAttestations.length}</div>
-          <div className="terminal-dim text-xs">ATTESTATIONS</div>
-        </div>
-        <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
-          <div className="text-green-400 text-lg">{attestations.filter(a => a.status === "verified").length}</div>
-          <div className="terminal-dim text-xs">VERIFIED</div>
-        </div>
-        <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
-          <div className="text-yellow-400 text-lg">{attestations.filter(a => a.status === "pending").length}</div>
-          <div className="terminal-dim text-xs">PENDING</div>
+          <div className="terminal-bright text-lg">
+            {filteredAttestationUIDs.length}
+          </div>
+          <div className="terminal-dim text-xs">SHOWING</div>
         </div>
         <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
           <div className="terminal-bright text-lg">
-            {(attestations.reduce((sum, a) => sum + a.confidence, 0) / attestations.length).toFixed(1)}%
+            {allAttestationUIDs.length}
           </div>
-          <div className="terminal-dim text-xs">AVG CONFIDENCE</div>
+          <div className="terminal-dim text-xs">FETCHED</div>
         </div>
+        <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
+          <div className="terminal-bright text-lg">{totalCount}</div>
+          <div className="terminal-dim text-xs">TOTAL</div>
+        </div>
+        <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
+          <div className="terminal-bright text-lg">{SCHEMA_OPTIONS.length}</div>
+          <div className="terminal-dim text-xs">SCHEMAS</div>
+        </div>
+      </div>
+
+      {/* Loading State */}
+      {isLoading && (
+        <div className="text-center py-8">
+          <div className="terminal-bright text-lg">
+            ◉ LOADING ATTESTATIONS ◉
+          </div>
+          <div className="terminal-dim text-sm mt-2">
+            Fetching data from EAS contract...
+          </div>
+        </div>
+      )}
+
+      {/* Hidden components to fetch status data */}
+      <div style={{ display: "none" }}>
+        {allAttestationUIDs.map((item) => (
+          <AttestationWithStatus
+            key={`status-${item.uid}`}
+            uid={item.uid}
+            onStatusReady={handleStatusReady}
+          />
+        ))}
       </div>
 
       {/* Attestations List */}
       <div className="space-y-4">
-        {filteredAttestations.map((attestation) => (
-          <div
-            key={attestation.id}
-            className="bg-black/20 border border-gray-700 p-4 rounded-sm hover:bg-black/30 transition-colors"
-          >
-            <div className="space-y-3">
-              {/* Header */}
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-3">
-                  <span className="terminal-bright text-lg">{getTypeIcon(attestation.type)}</span>
-                  <div>
-                    <h3 className="terminal-bright text-base">{attestation.title}</h3>
-                    <div className="terminal-dim text-sm">
-                      Issued by {attestation.issuer}
-                    </div>
-                  </div>
-                </div>
-                <div className={`px-3 py-1 border rounded-sm text-xs ${getStatusColor(attestation.status)}`}>
-                  {attestation.status.toUpperCase()}
-                </div>
-              </div>
-
-              {/* Details */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <div className="terminal-dim text-xs mb-1">SUBJECT</div>
-                  <div className="terminal-text font-mono">{attestation.subject}</div>
-                </div>
-                <div>
-                  <div className="terminal-dim text-xs mb-1">TIMESTAMP</div>
-                  <div className="terminal-text">{attestation.timestamp}</div>
-                </div>
-                <div>
-                  <div className="terminal-dim text-xs mb-1">HASH</div>
-                  <div className="terminal-text font-mono">{attestation.hash}</div>
-                </div>
-                <div>
-                  <div className="terminal-dim text-xs mb-1">CONFIDENCE</div>
-                  <div className="flex items-center space-x-2">
-                    <div className="terminal-bright">{attestation.confidence}%</div>
-                    <div className="bg-gray-700 h-2 flex-1 rounded">
-                      <div 
-                        className="bg-green-400 h-2 rounded transition-all duration-300" 
-                        style={{ width: `${attestation.confidence}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex space-x-2 pt-3 border-t border-gray-700">
-                <button className="mobile-terminal-btn px-4 py-2">
-                  <span className="text-xs terminal-command">VERIFY</span>
-                </button>
-                <button className="mobile-terminal-btn px-4 py-2">
-                  <span className="text-xs terminal-command">DETAILS</span>
-                </button>
-                <button className="mobile-terminal-btn px-3 py-2">
-                  <span className="text-xs terminal-command">EXPORT</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
+        {!isLoading &&
+          filteredAttestationUIDs.map((item, index) => (
+            <AttestationCard key={item.uid} uid={item.uid} index={index} />
+          ))}
       </div>
 
-      {filteredAttestations.length === 0 && (
-        <div className="text-center py-12">
-          <div className="terminal-dim text-sm">
-            NO ATTESTATIONS MATCH CURRENT FILTERS
+      {!isLoading &&
+        filteredAttestationUIDs.length === 0 &&
+        allAttestationUIDs.length > 0 && (
+          <div className="text-center py-12">
+            <div className="terminal-dim text-sm">
+              NO ATTESTATIONS MATCH CURRENT FILTERS
+            </div>
+            <div className="system-message text-xs mt-2">
+              ◆ TRY ADJUSTING YOUR FILTER SETTINGS ◆
+            </div>
           </div>
+        )}
+
+      {!isLoading && allAttestationUIDs.length === 0 && (
+        <div className="text-center py-12">
+          <div className="terminal-dim text-sm">NO ATTESTATIONS FOUND</div>
           <div className="system-message text-xs mt-2">
-            ◆ VERIFICATION PROTOCOLS ACTIVE ◆
+            {selectedSchema !== "all"
+              ? "◆ NO ATTESTATIONS FOR SELECTED SCHEMA ◆"
+              : "◆ NO ATTESTATIONS AVAILABLE ◆"}
           </div>
         </div>
       )}

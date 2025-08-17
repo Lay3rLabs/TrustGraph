@@ -15,6 +15,12 @@ export function AttestationCard({ uid, index }: AttestationCardProps) {
   } = useIndividualAttestation(uid);
 
   console.log(attestationData);
+  
+  const formatTimestamp = (timestamp: number) => {
+    const date = new Date(timestamp * 1000);
+    return date.toISOString().replace('T', ' ').split('.')[0];
+  };
+
   const formatTimeAgo = (timestamp: number) => {
     const now = Math.floor(Date.now() / 1000);
     const diff = now - timestamp;
@@ -23,6 +29,16 @@ export function AttestationCard({ uid, index }: AttestationCardProps) {
     if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
     if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
     return `${Math.floor(diff / 86400)} days ago`;
+  };
+
+  const getAttestationStatus = (attestation: any) => {
+    if (Number(attestation.revocationTime) > 0) {
+      return { status: "revoked", color: "text-red-400" };
+    }
+    if (Number(attestation.expirationTime) > 0 && Number(attestation.expirationTime) < Math.floor(Date.now() / 1000)) {
+      return { status: "expired", color: "text-yellow-400" };
+    }
+    return { status: "verified", color: "text-green-400" };
   };
 
   const parseVouchingData = (data: string) => {
@@ -56,17 +72,21 @@ export function AttestationCard({ uid, index }: AttestationCardProps) {
   if (isLoading) {
     return (
       <div className="border border-gray-700 bg-black/5 p-4 rounded-sm">
-        <div className="space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
-            <div className="space-y-1">
-              <div className="terminal-command text-sm">
-                VOUCHING ATTESTATION #{index + 1}
-              </div>
-              <div className="terminal-dim text-xs">
-                UID: {uid.slice(0, 16)}...{uid.slice(-8)}
+        <div className="space-y-4">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center space-x-3">
+              <span className="terminal-bright text-lg">◆</span>
+              <div>
+                <h3 className="terminal-bright text-base">
+                  VOUCHING ATTESTATION #{index + 1}
+                </h3>
+                <div className="terminal-dim text-sm">Loading...</div>
               </div>
             </div>
-            <div className="terminal-dim text-xs">Loading...</div>
+            <div className="terminal-dim text-xs">LOADING</div>
+          </div>
+          <div className="terminal-dim text-xs">
+            UID: {uid}
           </div>
           <div className="terminal-dim text-xs">
             Fetching attestation details from EAS contract...
@@ -79,17 +99,21 @@ export function AttestationCard({ uid, index }: AttestationCardProps) {
   if (error) {
     return (
       <div className="border border-red-700 bg-red-900/10 p-4 rounded-sm">
-        <div className="space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
-            <div className="space-y-1">
-              <div className="terminal-command text-sm">
-                VOUCHING ATTESTATION #{index + 1}
-              </div>
-              <div className="terminal-dim text-xs">
-                UID: {uid.slice(0, 16)}...{uid.slice(-8)}
+        <div className="space-y-4">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center space-x-3">
+              <span className="text-red-400 text-lg">◆</span>
+              <div>
+                <h3 className="terminal-bright text-base">
+                  VOUCHING ATTESTATION #{index + 1}
+                </h3>
+                <div className="terminal-dim text-sm">Failed to load</div>
               </div>
             </div>
-            <div className="terminal-text text-red-400 text-xs">Error</div>
+            <div className="text-red-400 text-xs">ERROR</div>
+          </div>
+          <div className="terminal-dim text-xs">
+            UID: {uid}
           </div>
           <div className="terminal-text text-red-400 text-xs">
             Failed to load attestation: {error.message}
@@ -102,17 +126,21 @@ export function AttestationCard({ uid, index }: AttestationCardProps) {
   if (!attestationData) {
     return (
       <div className="border border-yellow-700 bg-yellow-900/10 p-4 rounded-sm">
-        <div className="space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
-            <div className="space-y-1">
-              <div className="terminal-command text-sm">
-                VOUCHING ATTESTATION #{index + 1}
-              </div>
-              <div className="terminal-dim text-xs">
-                UID: {uid.slice(0, 16)}...{uid.slice(-8)}
+        <div className="space-y-4">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center space-x-3">
+              <span className="text-yellow-400 text-lg">◆</span>
+              <div>
+                <h3 className="terminal-bright text-base">
+                  VOUCHING ATTESTATION #{index + 1}
+                </h3>
+                <div className="terminal-dim text-sm">No data found</div>
               </div>
             </div>
-            <div className="terminal-dim text-xs">No data</div>
+            <div className="text-yellow-400 text-xs">NOT FOUND</div>
+          </div>
+          <div className="terminal-dim text-xs">
+            UID: {uid}
           </div>
           <div className="terminal-dim text-xs">
             Attestation not found or invalid UID
@@ -124,49 +152,87 @@ export function AttestationCard({ uid, index }: AttestationCardProps) {
 
   const attestation = attestationData as any;
   const vouchData = parseVouchingData(attestation.data);
+  const statusInfo = getAttestationStatus(attestation);
 
   return (
-    <div className="border border-gray-700 bg-black/5 p-4 rounded-sm">
-      <div className="space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
-          <div className="space-y-1">
-            <div className="terminal-command text-sm">
-              VOUCHING ATTESTATION #{index + 1}
-            </div>
-            <div className="terminal-dim text-xs">
-              UID: {uid.slice(0, 16)}...{uid.slice(-8)}
-            </div>
-          </div>
-          <div className="terminal-dim text-xs">
-            {formatTimeAgo(Number(attestation.time))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <div className="terminal-dim text-xs">ATTESTER:</div>
-            <div className="terminal-text text-xs font-mono">
-              {attestation.attester.slice(0, 8)}...
-              {attestation.attester.slice(-6)}
+    <div className="border border-gray-700 bg-black/5 p-4 rounded-sm hover:bg-black/10 transition-colors">
+      <div className="space-y-4">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div className="flex items-center space-x-3">
+            <span className="terminal-bright text-lg">◆</span>
+            <div>
+              <h3 className="terminal-bright text-base">
+                VOUCHING ATTESTATION #{index + 1}
+              </h3>
+              <div className="terminal-dim text-sm">
+                Vouch Weight: {vouchData.weight}
+              </div>
             </div>
           </div>
-          <div className="space-y-2">
-            <div className="terminal-dim text-xs">RECIPIENT:</div>
-            <div className="terminal-text text-xs font-mono">
-              {attestation.recipient.slice(0, 8)}...
-              {attestation.recipient.slice(-6)}
-            </div>
+          <div className={`px-3 py-1 border border-gray-700 rounded-sm text-xs ${statusInfo.color}`}>
+            {statusInfo.status.toUpperCase()}
           </div>
         </div>
 
-        <div className="space-y-2">
-          <div className="terminal-dim text-xs">VOUCH WEIGHT:</div>
-          <div className="terminal-text text-sm">{vouchData.weight}</div>
+        {/* Attestation Details Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div>
+            <div className="terminal-dim text-xs mb-1">ATTESTATION UID</div>
+            <div className="terminal-text font-mono text-xs break-all">{uid}</div>
+          </div>
+          <div>
+            <div className="terminal-dim text-xs mb-1">TIMESTAMP</div>
+            <div className="terminal-text text-xs">
+              {formatTimestamp(Number(attestation.time))}
+            </div>
+          </div>
+          <div>
+            <div className="terminal-dim text-xs mb-1">ATTESTER</div>
+            <div className="terminal-text font-mono text-xs break-all">{attestation.attester}</div>
+          </div>
+          <div>
+            <div className="terminal-dim text-xs mb-1">RECIPIENT</div>
+            <div className="terminal-text font-mono text-xs break-all">{attestation.recipient}</div>
+          </div>
+          <div>
+            <div className="terminal-dim text-xs mb-1">SCHEMA UID</div>
+            <div className="terminal-text font-mono text-xs break-all">{attestation.schema}</div>
+          </div>
+          {attestation.refUID && attestation.refUID !== "0x0000000000000000000000000000000000000000000000000000000000000000" && (
+            <div>
+              <div className="terminal-dim text-xs mb-1">REFERENCE UID</div>
+              <div className="terminal-text font-mono text-xs break-all">{attestation.refUID}</div>
+            </div>
+          )}
+          <div>
+            <div className="terminal-dim text-xs mb-1">TIME AGO</div>
+            <div className="terminal-text text-xs">{formatTimeAgo(Number(attestation.time))}</div>
+          </div>
+          {Number(attestation.expirationTime) > 0 && (
+            <div>
+              <div className="terminal-dim text-xs mb-1">EXPIRATION</div>
+              <div className="terminal-text text-xs">
+                {formatTimestamp(Number(attestation.expirationTime))}
+              </div>
+            </div>
+          )}
         </div>
 
+        {/* Additional Status Messages */}
         {Number(attestation.revocationTime) > 0 && (
-          <div className="border border-red-700 bg-red-900/10 p-2 rounded-sm">
-            <div className="terminal-text text-red-400 text-xs">⚠️ REVOKED</div>
+          <div className="border border-red-700 bg-red-900/10 p-3 rounded-sm">
+            <div className="terminal-text text-red-400 text-xs">
+              ⚠️ REVOKED: {formatTimestamp(Number(attestation.revocationTime))}
+            </div>
+          </div>
+        )}
+
+        {Number(attestation.expirationTime) > 0 && Number(attestation.expirationTime) < Math.floor(Date.now() / 1000) && (
+          <div className="border border-yellow-700 bg-yellow-900/10 p-3 rounded-sm">
+            <div className="terminal-text text-yellow-400 text-xs">
+              ⚠️ EXPIRED: {formatTimestamp(Number(attestation.expirationTime))}
+            </div>
           </div>
         )}
       </div>

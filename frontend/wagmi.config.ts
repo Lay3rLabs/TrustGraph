@@ -19,52 +19,52 @@ export default defineConfig({
     {
       abi: ABI.Attester.abi,
       name: "Attester",
-      address: "0xdCF55560F86F8F07091E9FE1f0695C7782dd917C",
+      address: "0x69eDEE6683583058252AeA92D3713a03CF45fBE1",
     },
     {
       abi: ABI.EAS.abi,
       name: "EAS",
-      address: "0x01E4927F0CDC83d2DD5AD6fb14b7417497E41E35",
+      address: "0x2B385B9586C8C3197A7aeE6bFF5e54d50820D052",
     },
     {
       abi: ABI.SchemaRegistry.abi,
       name: "SchemaRegistry",
-      address: "0x3E6cd56CeAD5210920f487fF852301391C699356",
+      address: "0x3e6d666732fB3b118491D9437A0dfE18c0bAAa58",
     },
     {
       abi: ABI.SchemaRegistrar.abi,
       name: "SchemaRegistrar",
-      address: "0x820987bC7e3896Ae864a6DdD665Bc4a09e4F9414",
+      address: "0x12A1636F80fe7264C994049Ab837d0FF91992341",
     },
     {
       abi: ABI.Indexer.abi,
       name: "Indexer",
-      address: "0xC18470bF37A2e1Eb229059D1Fb7f3874919b970c",
+      address: "0xDf225e4896dDD6A4de7136dB624Bf4421f7Dc38E",
     },
     {
       abi: ABI.IndexerResolver.abi,
       name: "IndexerResolver",
-      address: "0x03e851d7f0D526a1B4afC5D4013630eee316ee9c",
+      address: "0x45Dd4b55C72554bc45538607ee0643260F4D8AE6",
     },
     {
       abi: ABI.VotingPower.abi,
       name: "VotingPower",
-      address: "0x5F7301Ca65FfD777922145F1BEAb8bb2FA07c2C5",
+      address: "0x0e22d2f5e13fCdD9A399dA75D3e4100faF474Efb",
     },
     {
       abi: ABI.AttestationGovernor.abi,
       name: "AttestationGovernor",
-      address: "0x2366EccC50a2EDc2559bf3287d8699e46F5772d7",
+      address: "0x2950f3e3af4563FdEF495e40ef4A10A25Bd01BFb",
     },
     {
       abi: ABI.RewardDistributor.abi,
       name: "RewardDistributor",
-      address: "0x71D4c2df7620EAD4Ee3900B761f950f21D81ED8d",
+      address: "0x4729B1774a001694bf4C8A0ce5a4B31A9491abC9",
     },
     {
       abi: ABI.EASAttestTrigger.abi,
       name: "EASAttestTrigger",
-      address: "0x1e03095fe6B269d99b44DA3F5F7f50d0fbdF4C6E",
+      address: "0x70555EF2dE3438bC0b1a61f4e4f2F7054d653b51",
     },
   ],
 });
