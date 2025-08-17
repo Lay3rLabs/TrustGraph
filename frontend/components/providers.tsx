@@ -3,13 +3,25 @@
 import React from "react"
 import { WagmiProvider } from "wagmi"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 import { config } from "@/lib/wagmi"
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60 * 1000,
-      retry: false,
+      // Stale time for blockchain data - keep fresh for 30 seconds
+      staleTime: 30 * 1000,
+      // Cache blockchain data for 5 minutes
+      gcTime: 5 * 60 * 1000,
+      // Retry on failure (network issues common in blockchain apps)
+      retry: 3,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      // Refetch on window focus for real-time blockchain data
+      refetchOnWindowFocus: true,
+    },
+    mutations: {
+      // Retry mutations once on failure
+      retry: 1,
     },
   },
 })
@@ -27,7 +39,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        {children}
+        {process.env.NODE_ENV === "development" && (
+          <ReactQueryDevtools initialIsOpen={false} />
+        )}
+      </QueryClientProvider>
     </WagmiProvider>
   )
 }

@@ -40,15 +40,6 @@ export default function AttestationsPage() {
   const { createAttestation, isLoading, isSuccess, error, hash } =
     useAttestation();
   const [selectedSchema, setSelectedSchema] = useState<string>("");
-  const [diagnosticResults, setDiagnosticResults] = useState<{
-    status: "idle" | "running" | "success" | "error";
-    message: string;
-  }>({ status: "idle", message: "" });
-
-  // Component initialization
-  useEffect(() => {
-    // Component mounted
-  }, []);
 
   // Monitor transaction state
   useEffect(() => {
@@ -123,77 +114,6 @@ export default function AttestationsPage() {
     }
   };
 
-  const runAnvilDiagnostics = async () => {
-    setDiagnosticResults({
-      status: "running",
-      message: "Testing Anvil node...",
-    });
-
-    try {
-      // Starting Anvil health check...
-
-      // Test 1: Basic RPC connectivity
-      const response = await fetch("http://localhost:8545", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          method: "eth_blockNumber",
-          params: [],
-          id: 1,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      const blockNumber = parseInt(data.result, 16);
-
-      // Test 2: Get account balance
-      const balanceResponse = await fetch("http://localhost:8545", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          method: "eth_getBalance",
-          params: [address, "latest"],
-          id: 2,
-        }),
-      });
-
-      const balanceData = await balanceResponse.json();
-      const balance = parseInt(balanceData.result, 16) / 1e18;
-
-      // Test 3: Check contract deployment
-      const codeResponse = await fetch("http://localhost:8545", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          method: "eth_getCode",
-          params: [attesterAddress, "latest"],
-          id: 3,
-        }),
-      });
-
-      const codeData = await codeResponse.json();
-      const hasContract = codeData.result && codeData.result !== "0x";
-
-      setDiagnosticResults({
-        status: "success",
-        message: `✅ Anvil healthy! Block: ${blockNumber}, Balance: ${balance.toFixed(4)} ETH, Contract: ${hasContract ? "Deployed" : "Not found"}`,
-      });
-    } catch (error) {
-      console.error("Anvil health check failed:", error);
-      setDiagnosticResults({
-        status: "error",
-        message: `❌ Anvil error: ${error instanceof Error ? error.message : "Unknown error"}`,
-      });
-    }
-  };
-
   const selectedSchemaInfo = SCHEMA_OPTIONS.find(
     (s) => s.uid === selectedSchema,
   );
@@ -216,39 +136,6 @@ export default function AttestationsPage() {
               <span className="terminal-command text-xs">CONNECT WALLET</span>
             </Button>
           </div>
-        </div>
-      )}
-
-      {/* Anvil Diagnostics Results */}
-      {diagnosticResults.status !== "idle" && chain?.id === 17000 && (
-        <div
-          className={`border p-4 rounded-sm ${
-            diagnosticResults.status === "success"
-              ? "border-green-800 bg-green-900/10"
-              : diagnosticResults.status === "error"
-                ? "border-red-800 bg-red-900/10"
-                : "border-yellow-800 bg-yellow-900/10"
-          }`}
-        >
-          <div
-            className={`text-xs ${
-              diagnosticResults.status === "success"
-                ? "text-green-400"
-                : diagnosticResults.status === "error"
-                  ? "text-red-400"
-                  : "text-yellow-400"
-            }`}
-          >
-            {diagnosticResults.message}
-          </div>
-          {diagnosticResults.status === "error" && (
-            <div className="text-xs opacity-75 mt-1">
-              Try restarting anvil:{" "}
-              <code className="bg-gray-800 px-1 rounded">
-                make start-all-local
-              </code>
-            </div>
-          )}
         </div>
       )}
 
@@ -289,17 +176,6 @@ export default function AttestationsPage() {
                     <div className="terminal-text text-green-400 text-xs">
                       ✓ LOCAL ANVIL
                     </div>
-                    <Button
-                      onClick={runAnvilDiagnostics}
-                      disabled={diagnosticResults.status === "running"}
-                      variant="outline"
-                      size="sm"
-                      className="border-green-600 text-green-400 hover:bg-green-900/20 text-xs h-6 px-2"
-                    >
-                      {diagnosticResults.status === "running"
-                        ? "TESTING..."
-                        : "TEST NODE"}
-                    </Button>
                   </div>
                 )}
               </div>
