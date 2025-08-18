@@ -58,12 +58,12 @@ export default function RewardsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="border-b border-gray-700 pb-4">
+      {/*<div className="border-b border-gray-700 pb-4">
         <div className="ascii-art-title text-lg mb-2">REWARD DISTRIBUTION SYSTEM</div>
         <div className="system-message text-sm">
           ◆ EARN REWARDS • CLAIM TOKENS • TRACK PARTICIPATION ◆
         </div>
-      </div>
+      </div>*/}
 
       {/* Success Message */}
       {successMessage && (
@@ -75,11 +75,16 @@ export default function RewardsPage() {
       {/* Wallet Connection */}
       {!isConnected && (
         <div className="border border-gray-700 bg-black/10 p-6 rounded-sm text-center space-y-4">
-          <div className="terminal-text text-lg">WALLET CONNECTION REQUIRED</div>
+          <div className="terminal-text text-lg">
+            WALLET CONNECTION REQUIRED
+          </div>
           <div className="terminal-dim text-sm">
             Connect your wallet to view and claim rewards
           </div>
-          <Button onClick={handleConnect} className="mobile-terminal-btn px-6 py-2">
+          <Button
+            onClick={handleConnect}
+            className="mobile-terminal-btn px-6 py-2"
+          >
             <span className="terminal-command text-xs">CONNECT WALLET</span>
           </Button>
         </div>
@@ -114,10 +119,15 @@ export default function RewardsPage() {
 
           <div className="space-y-3">
             {claimHistory.map((claim, index) => (
-              <div key={claim.transactionHash} className="border border-gray-700 p-4 rounded-sm">
+              <div
+                key={claim.transactionHash}
+                className="border border-gray-700 p-4 rounded-sm"
+              >
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="space-y-1">
-                    <div className="terminal-dim text-xs">CLAIM #{index + 1}</div>
+                    <div className="terminal-dim text-xs">
+                      CLAIM #{index + 1}
+                    </div>
                     <div className="terminal-text text-sm">
                       {new Date(claim.timestamp).toLocaleDateString()}
                     </div>
@@ -125,7 +135,8 @@ export default function RewardsPage() {
                   <div className="space-y-1">
                     <div className="terminal-dim text-xs">AMOUNT CLAIMED</div>
                     <div className="terminal-text text-sm">
-                      {(Number(claim.claimed) / Math.pow(10, 18)).toFixed(6)} {tokenSymbol}
+                      {(Number(claim.claimed) / Math.pow(10, 18)).toFixed(6)}{" "}
+                      {tokenSymbol}
                     </div>
                   </div>
                   <div className="space-y-1">
@@ -150,11 +161,20 @@ export default function RewardsPage() {
         <div className="border border-gray-700 bg-black/10 p-6 rounded-sm">
           <div className="terminal-bright text-sm mb-3">HOW REWARDS WORK</div>
           <div className="space-y-2 text-sm terminal-dim">
-            <div>• Rewards are calculated based on your attestation activity</div>
-            <div>• Merkle tree data is stored on IPFS and updated periodically</div>
+            <div>
+              • Rewards are calculated based on your attestation activity
+            </div>
+            <div>
+              • Merkle tree data is stored on IPFS and updated periodically
+            </div>
             <div>• Trigger updates to refresh the reward calculations</div>
-            <div>• Claims are processed on-chain through the RewardDistributor contract</div>
-            <div>• You can only claim rewards that haven't been claimed yet</div>
+            <div>
+              • Claims are processed on-chain through the RewardDistributor
+              contract
+            </div>
+            <div>
+              • You can only claim rewards that haven't been claimed yet
+            </div>
           </div>
         </div>
       )}
@@ -162,7 +182,8 @@ export default function RewardsPage() {
       {/* Footer */}
       <div className="border-t border-gray-700 pt-4 mt-8">
         <div className="system-message text-center text-sm">
-          ∞ PARTICIPATION REWARDED • CONTRIBUTION RECOGNIZED • VALUE DISTRIBUTED ∞
+          ∞ PARTICIPATION REWARDED • CONTRIBUTION RECOGNIZED • VALUE DISTRIBUTED
+          ∞
         </div>
       </div>
     </div>

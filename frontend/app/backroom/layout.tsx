@@ -16,9 +16,6 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { id: "dashboard", label: "Welcome", path: "/backroom", icon: "◉" },
-  { id: "en0va", label: "EN0VA", path: "/backroom/en0va", icon: "∞" },
-  { id: "symbient", label: "Symbient", path: "/backroom/symbient", icon: "◈◉" },
   {
     id: "explorer",
     label: "Explorer",
@@ -56,20 +53,39 @@ const menuItems: MenuItem[] = [
     path: "/backroom/hyperstition",
     icon: "▲▼",
   },
-  { id: "ico", label: "ICO", path: "/backroom/ico", icon: "◊" },
-  {
-    id: "incentives",
-    label: "Incentives",
-    path: "/backroom/incentives",
-    icon: "◇◆",
-  },
   { id: "memetics", label: "Memetics", path: "/backroom/memetics", icon: "◈" },
-  { id: "points", label: "Points", path: "/backroom/points", icon: "★" },
   { id: "profile", label: "Profile", path: "/backroom/profile", icon: "◉" },
   { id: "rewards", label: "Rewards", path: "/backroom/rewards", icon: "$" },
-  { id: "systems", label: "Systems", path: "/backroom/systems", icon: "░█" },
-  { id: "vault", label: "Vault", path: "/backroom/vault", icon: "◢◤" },
-  { id: "vouching", label: "Vouching", path: "/backroom/vouching", icon: "◇◉" },
+  { id: "vouching", label: "Vouching", path: "/backroom/vouching", icon: "♥" },
+  {
+    id: "mocks",
+    label: "WIP",
+    icon: "?",
+    submenu: [
+      { id: "en0va", label: "EN0VA", path: "/backroom/en0va", icon: "∞" },
+      {
+        id: "symbient",
+        label: "Symbient",
+        path: "/backroom/symbient",
+        icon: "◈◉",
+      },
+      { id: "ico", label: "ICO", path: "/backroom/ico", icon: "◊" },
+      {
+        id: "incentives",
+        label: "Incentives",
+        path: "/backroom/incentives",
+        icon: "◇◆",
+      },
+      { id: "points", label: "Points", path: "/backroom/points", icon: "★" },
+      {
+        id: "systems",
+        label: "Systems",
+        path: "/backroom/systems",
+        icon: "░█",
+      },
+      { id: "vault", label: "Vault", path: "/backroom/vault", icon: "◢◤" },
+    ],
+  },
 ];
 
 export default function BackroomLayout({

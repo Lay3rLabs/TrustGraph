@@ -33,6 +33,7 @@ Fix eas-attest component and Attester.sol contract:
 - [ ] New voting power contract to consume merkle tree
 - [ ] Resolver that only let's people who have voting power attest.
 - [ ] Add symbient
+- [ ] Vibe code Service UI from service.json (get IPFS hash)
 
 Project organization (low priority):
 - [ ] eas-compute -> eas-compute-voting-power
