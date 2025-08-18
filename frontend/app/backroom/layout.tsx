@@ -55,6 +55,12 @@ const menuItems: MenuItem[] = [
   },
   { id: "memetics", label: "Memetics", path: "/backroom/memetics", icon: "◈" },
   { id: "profile", label: "Profile", path: "/backroom/profile", icon: "◉" },
+  {
+    id: "leaderboard",
+    label: "Leaderboard",
+    path: "/backroom/leaderboard",
+    icon: "☆",
+  },
   { id: "rewards", label: "Rewards", path: "/backroom/rewards", icon: "$" },
   { id: "vouching", label: "Vouching", path: "/backroom/vouching", icon: "♥" },
   {
