@@ -25,7 +25,6 @@ Fix eas-attest component and Attester.sol contract:
 - [x] Vibe code working attestation UI
 - [x] Implement page rank for rewards
 - [x] Make a points page.
-- [ ] Deploy voting power contract with initial set
 - [ ] Better computation of attestations (actually use attestation data?)
 - [ ] Add operations to Attester.sol (revoke, multi-attest, etc.)
 - [ ] attest method on Attester.sol doesn't really make sense as users should attest to EAS directly.
@@ -34,6 +33,7 @@ Fix eas-attest component and Attester.sol contract:
 - [ ] Resolver that only let's people who have voting power attest.
 - [ ] Add symbient
 - [ ] Vibe code Service UI from service.json (get IPFS hash)
+- [ ] Deploy voting power contract with initial set?
 
 Project organization (low priority):
 - [ ] eas-compute -> eas-compute-voting-power
