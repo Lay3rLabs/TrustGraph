@@ -21,10 +21,10 @@ contract MockWavsServiceManager is IWavsServiceManager {
         return 100;
     }
 
-    function validate(
-        IWavsServiceHandler.Envelope calldata,
-        IWavsServiceHandler.SignatureData calldata
-    ) external pure {
+    function validate(IWavsServiceHandler.Envelope calldata, IWavsServiceHandler.SignatureData calldata)
+        external
+        pure
+    {
         return;
     }
 
@@ -34,9 +34,7 @@ contract MockWavsServiceManager is IWavsServiceManager {
 
     function setServiceURI(string calldata) external pure {}
 
-    function getLatestOperatorForSigningKey(
-        address
-    ) external pure returns (address) {
+    function getLatestOperatorForSigningKey(address) external pure returns (address) {
         return address(0x1);
     }
 }
@@ -91,39 +89,20 @@ contract PageRankNetworkTest is Test {
         eas = new EAS(ISchemaRegistry(address(schemaRegistry)));
         indexer = new Indexer(IEAS(address(eas)));
         resolver = new IndexerResolver(IEAS(address(eas)), indexer);
-        schemaRegistrar = new SchemaRegistrar(
-            ISchemaRegistry(address(schemaRegistry))
-        );
+        schemaRegistrar = new SchemaRegistrar(ISchemaRegistry(address(schemaRegistry)));
         serviceManager = new MockWavsServiceManager();
-        attester = new Attester(
-            IEAS(address(eas)),
-            IWavsServiceManager(address(serviceManager))
-        );
+        attester = new Attester(IEAS(address(eas)), IWavsServiceManager(address(serviceManager)));
 
         // Register schemas for different types of attestations
         basicSchemaId = schemaRegistrar.register(
-            "bytes32 triggerId,string data,uint256 timestamp",
-            ISchemaResolver(address(resolver)),
-            true
+            "bytes32 triggerId,string data,uint256 timestamp", ISchemaResolver(address(resolver)), true
         );
 
-        likeSchemaId = schemaRegistrar.register(
-            "bool like",
-            ISchemaResolver(address(resolver)),
-            true
-        );
+        likeSchemaId = schemaRegistrar.register("bool like", ISchemaResolver(address(resolver)), true);
 
-        vouchingSchemaId = schemaRegistrar.register(
-            "uint256 weight",
-            ISchemaResolver(address(resolver)),
-            true
-        );
+        vouchingSchemaId = schemaRegistrar.register("uint256 weight", ISchemaResolver(address(resolver)), true);
 
-        statementSchemaId = schemaRegistrar.register(
-            "string statement",
-            ISchemaResolver(address(resolver)),
-            true
-        );
+        statementSchemaId = schemaRegistrar.register("string statement", ISchemaResolver(address(resolver)), true);
 
         // Create test accounts
         _createTestAccounts();
@@ -152,18 +131,10 @@ contract PageRankNetworkTest is Test {
         ];
 
         for (uint256 i = 0; i < names.length; i++) {
-            uint256 privateKey = uint256(
-                keccak256(abi.encodePacked("test_account", i))
-            );
+            uint256 privateKey = uint256(keccak256(abi.encodePacked("test_account", i)));
             address addr = vm.addr(privateKey);
 
-            accounts.push(
-                TestAccount({
-                    addr: addr,
-                    name: names[i],
-                    privateKey: privateKey
-                })
-            );
+            accounts.push(TestAccount({addr: addr, name: names[i], privateKey: privateKey}));
 
             // Fund accounts for transactions
             vm.deal(addr, 10 ether);
@@ -220,17 +191,8 @@ contract PageRankNetworkTest is Test {
                 alice,
                 accounts[i].addr,
                 basicSchemaId,
-                abi.encode(
-                    bytes32("hub_response"),
-                    "Hub acknowledgment",
-                    block.timestamp
-                ),
-                string.concat(
-                    "Hub ",
-                    alice.name,
-                    " acknowledges ",
-                    accounts[i].name
-                )
+                abi.encode(bytes32("hub_response"), "Hub acknowledgment", block.timestamp),
+                string.concat("Hub ", alice.name, " acknowledges ", accounts[i].name)
             );
         }
     }
@@ -251,12 +213,7 @@ contract PageRankNetworkTest is Test {
                 accounts[recipients[i]].addr,
                 vouchingSchemaId,
                 abi.encode(weights[i]),
-                string.concat(
-                    "Authority ",
-                    diana.name,
-                    " vouches for ",
-                    accounts[recipients[i]].name
-                )
+                string.concat("Authority ", diana.name, " vouches for ", accounts[recipients[i]].name)
             );
         }
     }
@@ -275,12 +232,7 @@ contract PageRankNetworkTest is Test {
                 accounts[chain[i + 1]].addr,
                 vouchingSchemaId,
                 abi.encode(weights[i]),
-                string.concat(
-                    "Chain: ",
-                    accounts[chain[i]].name,
-                    " -> ",
-                    accounts[chain[i + 1]].name
-                )
+                string.concat("Chain: ", accounts[chain[i]].name, " -> ", accounts[chain[i + 1]].name)
             );
         }
     }
@@ -290,36 +242,12 @@ contract PageRankNetworkTest is Test {
         console.log("Creating mutual connections...");
 
         // Grace <-> Henry mutual vouching
-        _createAttestation(
-            accounts[6],
-            accounts[7].addr,
-            vouchingSchemaId,
-            abi.encode(75),
-            "Grace vouches for Henry"
-        );
-        _createAttestation(
-            accounts[7],
-            accounts[6].addr,
-            vouchingSchemaId,
-            abi.encode(80),
-            "Henry vouches for Grace"
-        );
+        _createAttestation(accounts[6], accounts[7].addr, vouchingSchemaId, abi.encode(75), "Grace vouches for Henry");
+        _createAttestation(accounts[7], accounts[6].addr, vouchingSchemaId, abi.encode(80), "Henry vouches for Grace");
 
         // Ivy <-> Jack mutual likes
-        _createAttestation(
-            accounts[8],
-            accounts[9].addr,
-            likeSchemaId,
-            abi.encode(true),
-            "Ivy likes Jack"
-        );
-        _createAttestation(
-            accounts[9],
-            accounts[8].addr,
-            likeSchemaId,
-            abi.encode(true),
-            "Jack likes Ivy"
-        );
+        _createAttestation(accounts[8], accounts[9].addr, likeSchemaId, abi.encode(true), "Ivy likes Jack");
+        _createAttestation(accounts[9], accounts[8].addr, likeSchemaId, abi.encode(true), "Jack likes Ivy");
     }
 
     /// @notice Create community clusters
@@ -335,42 +263,24 @@ contract PageRankNetworkTest is Test {
                     accounts[cluster1[j]].addr,
                     likeSchemaId,
                     abi.encode(true),
-                    string.concat(
-                        "Cluster1: ",
-                        accounts[cluster1[i]].name,
-                        " <-> ",
-                        accounts[cluster1[j]].name
-                    )
+                    string.concat("Cluster1: ", accounts[cluster1[i]].name, " <-> ", accounts[cluster1[j]].name)
                 );
                 _createAttestation(
                     accounts[cluster1[j]],
                     accounts[cluster1[i]].addr,
                     likeSchemaId,
                     abi.encode(true),
-                    string.concat(
-                        "Cluster1: ",
-                        accounts[cluster1[j]].name,
-                        " <-> ",
-                        accounts[cluster1[i]].name
-                    )
+                    string.concat("Cluster1: ", accounts[cluster1[j]].name, " <-> ", accounts[cluster1[i]].name)
                 );
             }
         }
 
         // Cluster 2: Noah <-> Olivia partnership
         _createAttestation(
-            accounts[13],
-            accounts[14].addr,
-            vouchingSchemaId,
-            abi.encode(85),
-            "Noah partners with Olivia"
+            accounts[13], accounts[14].addr, vouchingSchemaId, abi.encode(85), "Noah partners with Olivia"
         );
         _createAttestation(
-            accounts[14],
-            accounts[13].addr,
-            vouchingSchemaId,
-            abi.encode(85),
-            "Olivia partners with Noah"
+            accounts[14], accounts[13].addr, vouchingSchemaId, abi.encode(85), "Olivia partners with Noah"
         );
     }
 
@@ -388,17 +298,8 @@ contract PageRankNetworkTest is Test {
                 charlie,
                 accounts[bridges[i]].addr,
                 basicSchemaId,
-                abi.encode(
-                    bytes32("bridge"),
-                    "Inter-group connection",
-                    block.timestamp
-                ),
-                string.concat(
-                    "Bridge ",
-                    charlie.name,
-                    " connects to ",
-                    accounts[bridges[i]].name
-                )
+                abi.encode(bytes32("bridge"), "Inter-group connection", block.timestamp),
+                string.concat("Bridge ", charlie.name, " connects to ", accounts[bridges[i]].name)
             );
         }
     }
@@ -426,12 +327,7 @@ contract PageRankNetworkTest is Test {
                 accounts[conn.to].addr,
                 conn.schema,
                 conn.data,
-                string.concat(
-                    "Random: ",
-                    accounts[conn.from].name,
-                    " -> ",
-                    accounts[conn.to].name
-                )
+                string.concat("Random: ", accounts[conn.from].name, " -> ", accounts[conn.to].name)
             );
         }
     }
@@ -493,51 +389,28 @@ contract PageRankNetworkTest is Test {
         console.log("\n=== Network Verification ===");
 
         // Verify Alice (hub) has highest incoming connections
-        assertTrue(
-            incomingCount[accounts[0].addr] >= 8,
-            "Alice should have many incoming"
-        );
+        assertTrue(incomingCount[accounts[0].addr] >= 8, "Alice should have many incoming");
 
         // Verify Diana (authority) has high outgoing weight
-        assertTrue(
-            totalWeight[accounts[3].addr] >= 400,
-            "Diana should have high total weight"
-        );
+        assertTrue(totalWeight[accounts[3].addr] >= 400, "Diana should have high total weight");
 
         // Verify Charlie (bridge) has diverse connections
-        assertTrue(
-            outgoingCount[accounts[2].addr] >= 6,
-            "Charlie should have many outgoing"
-        );
+        assertTrue(outgoingCount[accounts[2].addr] >= 6, "Charlie should have many outgoing");
 
         // Verify cluster members have mutual connections
-        assertTrue(
-            incomingCount[accounts[10].addr] >= 2,
-            "Kate should have cluster connections"
-        );
-        assertTrue(
-            incomingCount[accounts[11].addr] >= 2,
-            "Liam should have cluster connections"
-        );
+        assertTrue(incomingCount[accounts[10].addr] >= 2, "Kate should have cluster connections");
+        assertTrue(incomingCount[accounts[11].addr] >= 2, "Liam should have cluster connections");
 
         // Verify total network size
-        assertTrue(
-            totalAttestations >= 40,
-            "Network should have substantial attestations"
-        );
+        assertTrue(totalAttestations >= 40, "Network should have substantial attestations");
 
         console.log("[OK] All network properties verified");
     }
 
     /// @notice Test helper to get account by name (for debugging)
-    function getAccountByName(
-        string memory name
-    ) public view returns (TestAccount memory) {
+    function getAccountByName(string memory name) public view returns (TestAccount memory) {
         for (uint256 i = 0; i < accounts.length; i++) {
-            if (
-                keccak256(abi.encodePacked(accounts[i].name)) ==
-                keccak256(abi.encodePacked(name))
-            ) {
+            if (keccak256(abi.encodePacked(accounts[i].name)) == keccak256(abi.encodePacked(name))) {
                 return accounts[i];
             }
         }
@@ -556,17 +429,11 @@ contract PageRankNetworkTest is Test {
 
         // Test authority pattern
         TestAccount memory diana = accounts[3];
-        assertTrue(
-            totalWeight[diana.addr] >= 400,
-            "Diana should have authority weight"
-        );
+        assertTrue(totalWeight[diana.addr] >= 400, "Diana should have authority weight");
 
         // Test bridge pattern
         TestAccount memory charlie = accounts[2];
-        assertTrue(
-            outgoingCount[charlie.addr] >= 6,
-            "Charlie should be a bridge"
-        );
+        assertTrue(outgoingCount[charlie.addr] >= 6, "Charlie should be a bridge");
 
         console.log("[OK] All network patterns verified");
     }

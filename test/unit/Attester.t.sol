@@ -7,7 +7,11 @@ import {IndexerResolver} from "../../src/contracts/IndexerResolver.sol";
 import {Indexer} from "../../src/contracts/Indexer.sol";
 import {EAS} from "@ethereum-attestation-service/eas-contracts/contracts/EAS.sol";
 import {SchemaRegistry} from "@ethereum-attestation-service/eas-contracts/contracts/SchemaRegistry.sol";
-import {IEAS, AttestationRequest, AttestationRequestData} from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
+import {
+    IEAS,
+    AttestationRequest,
+    AttestationRequestData
+} from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
 import {ISchemaRegistry} from "@ethereum-attestation-service/eas-contracts/contracts/ISchemaRegistry.sol";
 import {NO_EXPIRATION_TIME, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/contracts/Common.sol";
 import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
@@ -19,10 +23,10 @@ contract MockWavsServiceManager is IWavsServiceManager {
         return 100;
     }
 
-    function validate(
-        IWavsServiceHandler.Envelope calldata,
-        IWavsServiceHandler.SignatureData calldata
-    ) external pure {
+    function validate(IWavsServiceHandler.Envelope calldata, IWavsServiceHandler.SignatureData calldata)
+        external
+        pure
+    {
         // Always pass validation in tests
         return;
     }
@@ -35,9 +39,7 @@ contract MockWavsServiceManager is IWavsServiceManager {
         // Mock implementation
     }
 
-    function getLatestOperatorForSigningKey(
-        address
-    ) external pure returns (address) {
+    function getLatestOperatorForSigningKey(address) external pure returns (address) {
         return address(0x1);
     }
 }
@@ -64,10 +66,7 @@ contract AttesterTest is Test {
         indexer = new Indexer(IEAS(address(eas)));
         resolver = new IndexerResolver(IEAS(address(eas)), indexer);
         serviceManager = new MockWavsServiceManager();
-        attester = new Attester(
-            IEAS(address(eas)),
-            IWavsServiceManager(address(serviceManager))
-        );
+        attester = new Attester(IEAS(address(eas)), IWavsServiceManager(address(serviceManager)));
 
         // Register schemas
         schemaId = schemaRegistry.register(SCHEMA, resolver, true);
@@ -76,10 +75,7 @@ contract AttesterTest is Test {
 
     function testConstruction_ShouldRevertWithInvalidEAS() public {
         vm.expectRevert(Attester.InvalidEAS.selector);
-        new Attester(
-            IEAS(ZERO_ADDRESS),
-            IWavsServiceManager(address(serviceManager))
-        );
+        new Attester(IEAS(ZERO_ADDRESS), IWavsServiceManager(address(serviceManager)));
     }
 
     function testConstruction_ShouldRevertWithInvalidServiceManager() public {
@@ -129,11 +125,7 @@ contract AttesterTest is Test {
         schemaData[1][0] = abi.encode(uint256(5));
         schemaData[1][1] = abi.encode(uint256(23423234));
 
-        bytes32[] memory uids = attester.multiAttest(
-            schemas,
-            recipients,
-            schemaData
-        );
+        bytes32[] memory uids = attester.multiAttest(schemas, recipients, schemaData);
 
         // Verify attestations were created
         assertEq(uids.length, 5); // 3 + 2 attestations
@@ -161,11 +153,7 @@ contract AttesterTest is Test {
         schemaData[1] = new bytes[](1);
         schemaData[1][0] = abi.encode("third", uint256(300));
 
-        bytes32[] memory uids = attester.multiAttest(
-            schemas,
-            recipients,
-            schemaData
-        );
+        bytes32[] memory uids = attester.multiAttest(schemas, recipients, schemaData);
 
         // Verify attestations were created
         assertEq(uids.length, 3); // 2 + 1 attestations
@@ -255,11 +243,7 @@ contract AttesterTest is Test {
         schemaData[1][0] = abi.encode(uint256(5));
         schemaData[1][1] = abi.encode(uint256(23423234));
 
-        bytes32[] memory uids = attester.multiAttest(
-            schemas,
-            recipients,
-            schemaData
-        );
+        bytes32[] memory uids = attester.multiAttest(schemas, recipients, schemaData);
 
         // Prepare revocation data
         bytes32[][] memory schemaUids = new bytes32[][](2);
@@ -319,12 +303,11 @@ contract AttesterTest is Test {
         bytes memory payload = abi.encode(request);
 
         // Create envelope
-        IWavsServiceHandler.Envelope memory envelope = IWavsServiceHandler
-            .Envelope({
-                eventId: bytes20(uint160(0x1)),
-                ordering: bytes12(uint96(0)),
-                payload: payload
-            });
+        IWavsServiceHandler.Envelope memory envelope = IWavsServiceHandler.Envelope({
+            eventId: bytes20(uint160(0x1)),
+            ordering: bytes12(uint96(0)),
+            payload: payload
+        });
 
         // Create signature data
         address[] memory signers = new address[](1);
@@ -332,12 +315,8 @@ contract AttesterTest is Test {
         bytes[] memory signatures = new bytes[](1);
         signatures[0] = abi.encodePacked("mock_signature");
 
-        IWavsServiceHandler.SignatureData
-            memory signatureData = IWavsServiceHandler.SignatureData({
-                signers: signers,
-                signatures: signatures,
-                referenceBlock: 1000
-            });
+        IWavsServiceHandler.SignatureData memory signatureData =
+            IWavsServiceHandler.SignatureData({signers: signers, signatures: signatures, referenceBlock: 1000});
 
         // Call handleSignedEnvelope
         attester.handleSignedEnvelope(envelope, signatureData);

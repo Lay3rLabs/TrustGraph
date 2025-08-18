@@ -21,16 +21,11 @@ contract DeployGovernance is Common {
     /// @notice Deploy governance contracts
     /// @param wavsServiceManagerAddr The WAVS service manager address
     /// @return deployment The deployed contract addresses
-    function run(
-        string calldata wavsServiceManagerAddr
-    ) public returns (GovernanceDeployment memory deployment) {
+    function run(string calldata wavsServiceManagerAddr) public returns (GovernanceDeployment memory deployment) {
         vm.startBroadcast(_privateKey);
 
         address serviceManager = vm.parseAddress(wavsServiceManagerAddr);
-        require(
-            serviceManager != address(0),
-            "Invalid service manager address"
-        );
+        require(serviceManager != address(0), "Invalid service manager address");
 
         console.log("Deploying governance contracts...");
 
@@ -60,10 +55,7 @@ contract DeployGovernance is Common {
         console.log("TimelockController deployed at:", deployment.timelock);
 
         // 3. Deploy AttestationGovernor
-        AttestationGovernor governor = new AttestationGovernor(
-            votingPower,
-            timelock
-        );
+        AttestationGovernor governor = new AttestationGovernor(votingPower, timelock);
         deployment.governor = address(governor);
         console.log("AttestationGovernor deployed at:", deployment.governor);
 

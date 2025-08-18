@@ -20,16 +20,14 @@ contract Indexer is Semver {
     event Indexed(bytes32 indexed uid);
 
     /// A mapping between an account and its received attestations.
-    mapping(address account => mapping(bytes32 => bytes32[] uids) receivedAttestations)
-        private _receivedAttestations;
+    mapping(address account => mapping(bytes32 => bytes32[] uids) receivedAttestations) private _receivedAttestations;
 
     // A mapping between an account and its sent attestations.
-    mapping(address account => mapping(bytes32 => bytes32[] uids) sentAttestations)
-        private _sentAttestations;
+    mapping(address account => mapping(bytes32 => bytes32[] uids) sentAttestations) private _sentAttestations;
 
     // A mapping between a schema, attester, and recipient.
-    mapping(bytes32 schemaUID => mapping(address attester => mapping(address recipient => bytes32[] uids)))
-        private _schemaAttesterRecipientAttestations;
+    mapping(bytes32 schemaUID => mapping(address attester => mapping(address recipient => bytes32[] uids))) private
+        _schemaAttesterRecipientAttestations;
 
     // A mapping between a schema and its attestations.
     mapping(bytes32 schemaUID => bytes32[] uids) private _schemaAttestations;
@@ -73,9 +71,7 @@ contract Indexer is Semver {
     /// @notice Returns whether an existing attestation has been already indexed.
     /// @param attestationUID The UID of the attestation to check.
     /// @return Whether an attestation has been already indexed.
-    function isAttestationIndexed(
-        bytes32 attestationUID
-    ) external view returns (bool) {
+    function isAttestationIndexed(bytes32 attestationUID) external view returns (bool) {
         return _indexedAttestations[attestationUID];
     }
 
@@ -94,13 +90,7 @@ contract Indexer is Semver {
         uint256 length,
         bool reverseOrder
     ) external view returns (bytes32[] memory) {
-        return
-            _sliceUIDs(
-                _receivedAttestations[recipient][schemaUID],
-                start,
-                length,
-                reverseOrder
-            );
+        return _sliceUIDs(_receivedAttestations[recipient][schemaUID], start, length, reverseOrder);
     }
 
     /// @notice Returns the total number of attestations to a specific schema which were attested to/received by a
@@ -108,10 +98,7 @@ contract Indexer is Semver {
     /// @param recipient The recipient of the attestation.
     /// @param schemaUID The UID of the schema.
     /// @return The total number of attestations.
-    function getReceivedAttestationUIDCount(
-        address recipient,
-        bytes32 schemaUID
-    ) external view returns (uint256) {
+    function getReceivedAttestationUIDCount(address recipient, bytes32 schemaUID) external view returns (uint256) {
         return _receivedAttestations[recipient][schemaUID].length;
     }
 
@@ -129,13 +116,7 @@ contract Indexer is Semver {
         uint256 length,
         bool reverseOrder
     ) external view returns (bytes32[] memory) {
-        return
-            _sliceUIDs(
-                _sentAttestations[attester][schemaUID],
-                start,
-                length,
-                reverseOrder
-            );
+        return _sliceUIDs(_sentAttestations[attester][schemaUID], start, length, reverseOrder);
     }
 
     /// @notice Returns the total number of attestations to a specific schema which were attested by a specific
@@ -143,10 +124,7 @@ contract Indexer is Semver {
     /// @param attester The attester of the attestation.
     /// @param schemaUID The UID of the schema.
     /// @return The total number of attestations.
-    function getSentAttestationUIDCount(
-        address attester,
-        bytes32 schemaUID
-    ) external view returns (uint256) {
+    function getSentAttestationUIDCount(address attester, bytes32 schemaUID) external view returns (uint256) {
         return _sentAttestations[attester][schemaUID].length;
     }
 
@@ -167,15 +145,9 @@ contract Indexer is Semver {
         uint256 length,
         bool reverseOrder
     ) external view returns (bytes32[] memory) {
-        return
-            _sliceUIDs(
-                _schemaAttesterRecipientAttestations[schemaUID][attester][
-                    recipient
-                ],
-                start,
-                length,
-                reverseOrder
-            );
+        return _sliceUIDs(
+            _schemaAttesterRecipientAttestations[schemaUID][attester][recipient], start, length, reverseOrder
+        );
     }
 
     /// @notice Returns the total number of UIDs of attestations to a specific schema which were attested by a specific
@@ -184,14 +156,12 @@ contract Indexer is Semver {
     /// @param attester The attester of the attestation.
     /// @param recipient The recipient of the attestation.
     /// @return An array of attestation UIDs.
-    function getSchemaAttesterRecipientAttestationUIDCount(
-        bytes32 schemaUID,
-        address attester,
-        address recipient
-    ) external view returns (uint256) {
-        return
-            _schemaAttesterRecipientAttestations[schemaUID][attester][recipient]
-                .length;
+    function getSchemaAttesterRecipientAttestationUIDCount(bytes32 schemaUID, address attester, address recipient)
+        external
+        view
+        returns (uint256)
+    {
+        return _schemaAttesterRecipientAttestations[schemaUID][attester][recipient].length;
     }
 
     /// @notice Returns the UIDs of attestations to a specific schema.
@@ -200,27 +170,18 @@ contract Indexer is Semver {
     /// @param length The number of total members to retrieve.
     /// @param reverseOrder Whether the offset starts from the end and the data is returned in reverse.
     /// @return An array of attestation UIDs.
-    function getSchemaAttestationUIDs(
-        bytes32 schemaUID,
-        uint256 start,
-        uint256 length,
-        bool reverseOrder
-    ) external view returns (bytes32[] memory) {
-        return
-            _sliceUIDs(
-                _schemaAttestations[schemaUID],
-                start,
-                length,
-                reverseOrder
-            );
+    function getSchemaAttestationUIDs(bytes32 schemaUID, uint256 start, uint256 length, bool reverseOrder)
+        external
+        view
+        returns (bytes32[] memory)
+    {
+        return _sliceUIDs(_schemaAttestations[schemaUID], start, length, reverseOrder);
     }
 
     /// @notice Returns the total number of attestations to a specific schema.
     /// @param schemaUID The UID of the schema.
     /// @return An array of attestation UIDs.
-    function getSchemaAttestationUIDCount(
-        bytes32 schemaUID
-    ) external view returns (uint256) {
+    function getSchemaAttestationUIDCount(bytes32 schemaUID) external view returns (uint256) {
         return _schemaAttestations[schemaUID].length;
     }
 
@@ -249,8 +210,7 @@ contract Indexer is Semver {
         _schemaAttestations[schemaUID].push(attestationUID);
         _receivedAttestations[recipient][schemaUID].push(attestationUID);
         _sentAttestations[attester][schemaUID].push(attestationUID);
-        _schemaAttesterRecipientAttestations[schemaUID][attester][recipient]
-            .push(attestationUID);
+        _schemaAttesterRecipientAttestations[schemaUID][attester][recipient].push(attestationUID);
 
         emit Indexed({uid: uid});
     }
@@ -261,12 +221,11 @@ contract Indexer is Semver {
     /// @param length The number of total members to retrieve.
     /// @param reverseOrder Whether the offset starts from the end and the data is returned in reverse.
     /// @return An array of attestation UIDs.
-    function _sliceUIDs(
-        bytes32[] memory uids,
-        uint256 start,
-        uint256 length,
-        bool reverseOrder
-    ) private pure returns (bytes32[] memory) {
+    function _sliceUIDs(bytes32[] memory uids, uint256 start, uint256 length, bool reverseOrder)
+        private
+        pure
+        returns (bytes32[] memory)
+    {
         uint256 attestationsLength = uids.length;
         if (attestationsLength == 0) {
             return new bytes32[](0);
@@ -285,11 +244,7 @@ contract Indexer is Semver {
             bytes32[] memory res = new bytes32[](len);
 
             for (uint256 i = 0; i < len; ++i) {
-                res[i] = uids[
-                    reverseOrder
-                        ? attestationsLength - (start + i + 1)
-                        : start + i
-                ];
+                res[i] = uids[reverseOrder ? attestationsLength - (start + i + 1) : start + i];
             }
 
             return res;

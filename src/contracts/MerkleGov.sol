@@ -15,19 +15,21 @@ contract MerkleGov {
     //////////////////////////////////////////////////////////////*/
 
     enum ProposalState {
-        Pending,    // 0 - Proposal created but voting not started
-        Active,     // 1 - Voting is active
-        Succeeded,  // 2 - Proposal passed quorum and majority
-        Defeated,   // 3 - Proposal failed quorum or majority
-        Queued,     // 4 - Proposal is queued in timelock
-        Executed,   // 5 - Proposal was executed
-        Cancelled   // 6 - Proposal was cancelled
+        Pending, // 0 - Proposal created but voting not started
+        Active, // 1 - Voting is active
+        Succeeded, // 2 - Proposal passed quorum and majority
+        Defeated, // 3 - Proposal failed quorum or majority
+        Queued, // 4 - Proposal is queued in timelock
+        Executed, // 5 - Proposal was executed
+        Cancelled // 6 - Proposal was cancelled
+
     }
 
     enum VoteType {
-        Against,    // 0
-        For,        // 1
-        Abstain     // 2
+        Against, // 0
+        For, // 1
+        Abstain // 2
+
     }
 
     struct ProposalAction {
@@ -44,15 +46,12 @@ contract MerkleGov {
         uint256 startTime;
         uint256 endTime;
         uint256 eta; // Execution time (for timelock)
-        
         uint256 forVotes;
-        uint256 againstVotes; 
+        uint256 againstVotes;
         uint256 abstainVotes;
-        
         ProposalAction[] actions;
         string description;
         ProposalState state;
-        
         // Vote tracking
         mapping(address => bool) hasVoted;
         mapping(address => VoteType) votes;
@@ -88,11 +87,7 @@ contract MerkleGov {
     );
 
     event VoteCast(
-        address indexed voter,
-        uint256 indexed proposalId,
-        uint8 support,
-        uint256 votingPower,
-        string reason
+        address indexed voter, uint256 indexed proposalId, uint8 support, uint256 votingPower, string reason
     );
 
     event ProposalQueued(uint256 indexed proposalId, uint256 eta);
@@ -197,18 +192,16 @@ contract MerkleGov {
 
         // Verify proposer has sufficient voting power
         proposalId = ++proposalCounter;
-        
+
         // Use special proposalId for proposal creation verification
         // This prevents the same proof from being used for both proposal creation and voting
         uint256 proposalCreationId = type(uint256).max - proposalId;
-        
-        require(merkleVote.verifyVotingPower(
-            msg.sender, 
-            proposalCreationId, 
-            votingPower, 
-            proof
-        ), "MerkleGov: invalid voting power proof");
-        
+
+        require(
+            merkleVote.verifyVotingPower(msg.sender, proposalCreationId, votingPower, proof),
+            "MerkleGov: invalid voting power proof"
+        );
+
         Proposal storage proposal = proposals[proposalId];
         proposal.id = proposalId;
         proposal.proposer = msg.sender;
@@ -224,13 +217,7 @@ contract MerkleGov {
         }
 
         emit ProposalCreated(
-            proposalId,
-            msg.sender,
-            snapshotId,
-            proposal.startTime,
-            proposal.endTime,
-            votingPower,
-            description
+            proposalId, msg.sender, snapshotId, proposal.startTime, proposal.endTime, votingPower, description
         );
     }
 
@@ -262,12 +249,10 @@ contract MerkleGov {
         require(!proposal.hasVoted[msg.sender], "MerkleGov: already voted");
 
         // Verify voting power with MerkleVote
-        require(merkleVote.verifyVotingPower(
-            msg.sender, 
-            proposalId, 
-            votingPower, 
-            proof
-        ), "MerkleGov: invalid voting power proof");
+        require(
+            merkleVote.verifyVotingPower(msg.sender, proposalId, votingPower, proof),
+            "MerkleGov: invalid voting power proof"
+        );
 
         // Record vote
         proposal.hasVoted[msg.sender] = true;
@@ -289,12 +274,7 @@ contract MerkleGov {
     /**
      * @notice Cast vote without reason
      */
-    function castVote(
-        uint256 proposalId,
-        uint8 support,
-        uint256 votingPower,
-        bytes32[] calldata proof
-    ) external {
+    function castVote(uint256 proposalId, uint8 support, uint256 votingPower, bytes32[] calldata proof) external {
         this.castVote(proposalId, support, votingPower, proof, "");
     }
 
@@ -308,7 +288,7 @@ contract MerkleGov {
      */
     function queue(uint256 proposalId) external {
         require(_getProposalState(proposalId) == ProposalState.Succeeded, "MerkleGov: proposal not succeeded");
-        
+
         Proposal storage proposal = proposals[proposalId];
         uint256 eta = block.timestamp + timelockDelay;
         proposal.eta = eta;
@@ -323,7 +303,7 @@ contract MerkleGov {
      */
     function execute(uint256 proposalId) external payable {
         require(_getProposalState(proposalId) == ProposalState.Queued, "MerkleGov: proposal not queued");
-        
+
         Proposal storage proposal = proposals[proposalId];
         require(block.timestamp >= proposal.eta, "MerkleGov: timelock not expired");
 
@@ -332,7 +312,7 @@ contract MerkleGov {
         // Execute all actions
         for (uint256 i = 0; i < proposal.actions.length; i++) {
             ProposalAction memory action = proposal.actions[i];
-            
+
             (bool success,) = action.target.call{value: action.value}(action.data);
             require(success, string(abi.encodePacked("MerkleGov: execution failed at action ", i)));
         }
@@ -347,9 +327,8 @@ contract MerkleGov {
     function cancel(uint256 proposalId) external onlyAdmin {
         ProposalState currentState = _getProposalState(proposalId);
         require(
-            currentState == ProposalState.Pending || 
-            currentState == ProposalState.Active || 
-            currentState == ProposalState.Queued,
+            currentState == ProposalState.Pending || currentState == ProposalState.Active
+                || currentState == ProposalState.Queued,
             "MerkleGov: cannot cancel"
         );
 
@@ -412,10 +391,11 @@ contract MerkleGov {
      * @return support The vote type (if voted)
      * @return votingPower The voting power used (if voted)
      */
-    function getVote(
-        uint256 proposalId, 
-        address account
-    ) external view returns (bool hasVoted, VoteType support, uint256 votingPower) {
+    function getVote(uint256 proposalId, address account)
+        external
+        view
+        returns (bool hasVoted, VoteType support, uint256 votingPower)
+    {
         Proposal storage proposal = proposals[proposalId];
         hasVoted = proposal.hasVoted[account];
         support = proposal.votes[account];
@@ -430,20 +410,20 @@ contract MerkleGov {
      * @return canPropose_ Whether the account can create proposals
      * @dev This function simulates the proposal creation check without actually creating a proposal
      */
-    function canPropose(
-        address account, 
-        uint256 votingPower, 
-        bytes32[] calldata proof
-    ) external view returns (bool canPropose_) {
+    function canPropose(address account, uint256 votingPower, bytes32[] calldata proof)
+        external
+        view
+        returns (bool canPropose_)
+    {
         if (votingPower < proposalThreshold) {
             return false;
         }
-        
+
         // We can't actually verify the proof in a view function since MerkleVote.verifyVotingPower
         // is not a view function (it modifies state). In a real implementation, you would either:
-        // 1. Add a view-only verification function to MerkleVote, or  
+        // 1. Add a view-only verification function to MerkleVote, or
         // 2. Accept that this function can't fully validate the proof
-        
+
         // For now, we can only check the voting power threshold
         return true;
     }
@@ -456,13 +436,12 @@ contract MerkleGov {
     function quorum(uint256 proposalId) public view returns (uint256) {
         // For MVP, use simple percentage of total verified voting power
         // In production, this would use the total power from the snapshot
-        uint256 totalVotes = proposals[proposalId].forVotes + 
-                           proposals[proposalId].againstVotes + 
-                           proposals[proposalId].abstainVotes;
-        
+        uint256 totalVotes =
+            proposals[proposalId].forVotes + proposals[proposalId].againstVotes + proposals[proposalId].abstainVotes;
+
         // If no votes yet, return a default minimum
         if (totalVotes == 0) return 1000; // Minimum 1000 voting power for quorum
-        
+
         // Otherwise require quorum percentage of total participating votes
         return (totalVotes * quorumBasisPoints) / 10000;
     }
@@ -517,8 +496,7 @@ contract MerkleGov {
         require(proposal.id != 0, "MerkleGov: proposal not found");
 
         // Check if manually set state takes precedence
-        if (proposal.state == ProposalState.Cancelled || 
-            proposal.state == ProposalState.Executed) {
+        if (proposal.state == ProposalState.Cancelled || proposal.state == ProposalState.Executed) {
             return proposal.state;
         }
 
@@ -526,7 +504,7 @@ contract MerkleGov {
         if (block.timestamp < proposal.startTime) {
             return ProposalState.Pending;
         }
-        
+
         if (block.timestamp <= proposal.endTime) {
             return ProposalState.Active;
         }
@@ -539,15 +517,15 @@ contract MerkleGov {
         // Determine success/failure based on votes
         uint256 currentQuorum = quorum(proposalId);
         uint256 totalVotes = proposal.forVotes + proposal.againstVotes + proposal.abstainVotes;
-        
+
         if (totalVotes < currentQuorum) {
             return ProposalState.Defeated;
         }
-        
+
         if (proposal.forVotes > proposal.againstVotes) {
             return ProposalState.Succeeded;
         }
-        
+
         return ProposalState.Defeated;
     }
 
