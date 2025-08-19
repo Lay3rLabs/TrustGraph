@@ -25,9 +25,9 @@ Fix eas-attest component and Attester.sol contract:
 - [x] Vibe code working attestation UI
 - [x] Implement page rank for rewards
 - [x] Make a points page.
+- [x] Add operations to Attester.sol (revoke, multi-attest, etc.)
+- [x] attest method on Attester.sol doesn't really make sense as users should attest to EAS directly.
 - [ ] Better computation of attestations (actually use attestation data?)
-- [ ] Add operations to Attester.sol (revoke, multi-attest, etc.)
-- [ ] attest method on Attester.sol doesn't really make sense as users should attest to EAS directly.
 - [ ] Revoking an attestation should lower voting power
 - [ ] New voting power contract to consume merkle tree
 - [ ] Resolver that only let's people who have voting power attest.

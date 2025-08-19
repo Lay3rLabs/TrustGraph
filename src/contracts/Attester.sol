@@ -22,6 +22,25 @@ contract Attester is IWavsServiceHandler {
     error InvalidEAS();
     error InvalidInput();
     error InvalidServiceManager();
+    error InvalidOperationType();
+    error PayloadDecodingFailed();
+    error DataDecodingFailed();
+
+    event DebuggingEnvelopeReceived(bytes payload, uint256 payloadLength);
+    event DebuggingPayloadDecoded(uint8 operationType, uint256 dataLength);
+    event DebuggingAttestCalled(bytes32 schema, address recipient, uint256 dataLength);
+
+    enum OperationType {
+        ATTEST,
+        REVOKE,
+        MULTI_ATTEST,
+        MULTI_REVOKE
+    }
+
+    struct AttestationPayload {
+        OperationType operationType;
+        bytes data;
+    }
 
     // The address of the global EAS contract.
     IEAS private immutable _eas;
@@ -45,26 +64,69 @@ contract Attester is IWavsServiceHandler {
     }
 
     /// @inheritdoc IWavsServiceHandler
-    /// @notice Handles signed envelope from WAVS and creates an attestation
-    /// @param envelope The envelope containing the attestation data
+    /// @notice Handles signed envelope from WAVS and routes to appropriate attestation operation
+    /// @param envelope The envelope containing the attestation payload
     /// @param signatureData The signature data for validation
     function handleSignedEnvelope(Envelope calldata envelope, SignatureData calldata signatureData) external {
+        emit DebuggingEnvelopeReceived(envelope.payload, envelope.payload.length);
+
         // Validate the envelope signature through the service manager
         _serviceManager.validate(envelope, signatureData);
 
-        // Decode the payload to get the attestation request
-        AttestationRequest memory request = abi.decode(envelope.payload, (AttestationRequest));
+        // Decode the payload to get the attestation payload
+        AttestationPayload memory payload;
+        try this.decodeAttestationPayload(envelope.payload) returns (AttestationPayload memory decodedPayload) {
+            payload = decodedPayload;
+        } catch {
+            revert PayloadDecodingFailed();
+        }
 
-        // Make the attestation
-        _eas.attest(request);
+        emit DebuggingPayloadDecoded(uint8(payload.operationType), payload.data.length);
+
+        // Route to appropriate operation based on operation type
+        if (payload.operationType == OperationType.ATTEST) {
+            try this.decodeAttestData(payload.data) returns (bytes32 schema, address recipient, bytes memory data) {
+                emit DebuggingAttestCalled(schema, recipient, data.length);
+                _attest(schema, recipient, data);
+            } catch {
+                revert DataDecodingFailed();
+            }
+        } else if (payload.operationType == OperationType.REVOKE) {
+            (bytes32 schema, bytes32 uid) = abi.decode(payload.data, (bytes32, bytes32));
+            _revoke(schema, uid);
+        } else if (payload.operationType == OperationType.MULTI_ATTEST) {
+            (bytes32[] memory schemas, address[][] memory recipients, bytes[][] memory schemaData) =
+                abi.decode(payload.data, (bytes32[], address[][], bytes[][]));
+            _multiAttest(schemas, recipients, schemaData);
+        } else if (payload.operationType == OperationType.MULTI_REVOKE) {
+            (bytes32[] memory schemas, bytes32[][] memory schemaUids) =
+                abi.decode(payload.data, (bytes32[], bytes32[][]));
+            _multiRevoke(schemas, schemaUids);
+        } else {
+            revert InvalidOperationType();
+        }
     }
 
-    /// @notice Attests to a schema with generic data.
+    /// @notice Helper function for decoding AttestationPayload
+    function decodeAttestationPayload(bytes calldata payload) external pure returns (AttestationPayload memory) {
+        return abi.decode(payload, (AttestationPayload));
+    }
+
+    /// @notice Helper function for decoding attest data
+    function decodeAttestData(bytes memory data)
+        external
+        pure
+        returns (bytes32 schema, address recipient, bytes memory attestationData)
+    {
+        return abi.decode(data, (bytes32, address, bytes));
+    }
+
+    /// @notice Internal function to attest to a schema with generic data.
     /// @param schema The schema UID to attest to.
     /// @param recipient The recipient of the attestation (use address(0) for no recipient).
     /// @param data The encoded data to include in the attestation.
     /// @return The UID of the new attestation.
-    function attest(bytes32 schema, address recipient, bytes calldata data) external returns (bytes32) {
+    function _attest(bytes32 schema, address recipient, bytes memory data) internal returns (bytes32) {
         return _eas.attest(
             AttestationRequest({
                 schema: schema,
@@ -80,20 +142,20 @@ contract Attester is IWavsServiceHandler {
         );
     }
 
-    /// @notice Revokes an attestation.
+    /// @notice Internal function to revoke an attestation.
     /// @param schema The schema UID of the attestation.
     /// @param uid The UID of the attestation to revoke.
-    function revoke(bytes32 schema, bytes32 uid) external {
+    function _revoke(bytes32 schema, bytes32 uid) internal {
         _eas.revoke(RevocationRequest({schema: schema, data: RevocationRequestData({uid: uid, value: 0})}));
     }
 
-    /// @notice Multi-attests to schemas with generic data.
+    /// @notice Internal function to multi-attest to schemas with generic data.
     /// @param schemas The schema UIDs to attest to.
     /// @param recipients The recipients for each schema's attestations.
     /// @param schemaData The encoded data for each schema's attestations.
     /// @return The UIDs of new attestations.
-    function multiAttest(bytes32[] calldata schemas, address[][] calldata recipients, bytes[][] calldata schemaData)
-        external
+    function _multiAttest(bytes32[] memory schemas, address[][] memory recipients, bytes[][] memory schemaData)
+        internal
         returns (bytes32[] memory)
     {
         uint256 schemaLength = schemas.length;
@@ -117,8 +179,8 @@ contract Attester is IWavsServiceHandler {
     /// @return The MultiAttestationRequest
     function _buildMultiAttestationRequest(
         bytes32 schema,
-        address[] calldata schemaRecipients,
-        bytes[] calldata schemaDataItems
+        address[] memory schemaRecipients,
+        bytes[] memory schemaDataItems
     ) internal pure returns (MultiAttestationRequest memory) {
         uint256 dataLength = schemaDataItems.length;
         if (dataLength == 0 || dataLength != schemaRecipients.length) {
@@ -141,10 +203,10 @@ contract Attester is IWavsServiceHandler {
         return MultiAttestationRequest({schema: schema, data: data});
     }
 
-    /// @notice Multi-revokes attestations.
+    /// @notice Internal function to multi-revoke attestations.
     /// @param schemas The schema UIDs of the attestations to revoke.
     /// @param schemaUids The UIDs of the attestations to revoke for each schema.
-    function multiRevoke(bytes32[] calldata schemas, bytes32[][] calldata schemaUids) external {
+    function _multiRevoke(bytes32[] memory schemas, bytes32[][] memory schemaUids) internal {
         uint256 schemaLength = schemas.length;
         if (schemaLength == 0 || schemaLength != schemaUids.length) {
             revert InvalidInput();
@@ -153,7 +215,7 @@ contract Attester is IWavsServiceHandler {
         MultiRevocationRequest[] memory multiRequests = new MultiRevocationRequest[](schemaLength);
 
         for (uint256 i = 0; i < schemaLength; ++i) {
-            bytes32[] calldata uids = schemaUids[i];
+            bytes32[] memory uids = schemaUids[i];
 
             uint256 uidLength = uids.length;
             if (uidLength == 0) {

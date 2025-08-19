@@ -110,7 +110,7 @@ impl Guest for Component {
             let mut pagerank_config = pagerank::PageRankConfig {
                 damping_factor: config_var("pagerank_damping_factor")
                     .and_then(|s| s.parse().ok())
-                    .unwrap_or(1.0),
+                    .unwrap_or(0.85),
                 max_iterations: config_var("pagerank_max_iterations")
                     .and_then(|s| s.parse().ok())
                     .unwrap_or(100),

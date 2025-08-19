@@ -1,8 +1,8 @@
 use crate::bindings::wavs::worker::layer_types::{
     TriggerData, TriggerDataEvmContractEvent, WasmResponse,
 };
-use alloy_primitives::{FixedBytes, U256};
-use alloy_sol_types::SolType;
+
+use alloy_sol_types::SolValue;
 use anyhow::Result;
 use wavs_wasi_utils::decode_event_log_data;
 
@@ -26,27 +26,46 @@ pub enum Destination {
 /// * `Destination` - Where the processed result should be sent
 pub fn decode_trigger_event(
     trigger_data: TriggerData,
-) -> Result<(AttestationRequest, Destination)> {
+) -> Result<(AttestationPayload, Destination)> {
     match trigger_data {
         TriggerData::EvmContractEvent(TriggerDataEvmContractEvent { log, .. }) => {
             // Decode the AttestationRequested event
             let event: AttestationRequested = decode_event_log_data!(log)?;
-            // Create attestation request data from the event
-            let attestation_request = AttestationRequest {
-                schema: event.schema,
-                data: AttestationRequestData {
-                    recipient: event.recipient,
-                    expirationTime: 0, // NO_EXPIRATION_TIME
-                    revocable: true,
-                    refUID: FixedBytes::<32>::ZERO, // EMPTY_UID
-                    data: event.data.into(),
-                    value: U256::ZERO,
-                },
+
+            println!(
+                "DEBUG: Event decoded - schema: {}, recipient: {}, data_len: {}",
+                event.schema,
+                event.recipient,
+                event.data.len()
+            );
+            println!("DEBUG: Event data bytes: {:?}", event.data);
+
+            // Create attestation payload for ATTEST operation
+            // Data contains (schema, recipient, data) for the _attest internal function
+            // Convert Bytes to Vec<u8> to ensure proper ABI encoding as bytes type
+            let data_bytes: Vec<u8> = event.data.to_vec();
+            let attest_data = (event.schema, event.recipient, data_bytes).abi_encode();
+            println!("DEBUG: Encoded attest_data length: {}", attest_data.len());
+            println!(
+                "DEBUG: Attest_data bytes: {:?}",
+                &attest_data[..std::cmp::min(64, attest_data.len())]
+            );
+
+            let attestation_payload = AttestationPayload {
+                operationType: OperationType::ATTEST,
+                data: attest_data.into(),
             };
-            return Ok((attestation_request, Destination::Ethereum));
+
+            println!(
+                "DEBUG: Final payload - operationType: {:?}, data_len: {}",
+                attestation_payload.operationType,
+                attestation_payload.data.len()
+            );
+
+            return Ok((attestation_payload, Destination::Ethereum));
         }
         TriggerData::Raw(data) => {
-            Ok((AttestationRequest::abi_decode(&data)?, Destination::CliOutput))
+            Ok((<AttestationPayload as SolValue>::abi_decode(&data)?, Destination::CliOutput))
         }
         _ => Err(anyhow::anyhow!("Unsupported trigger data type")),
     }
@@ -77,6 +96,21 @@ sol! {
         address indexed recipient,
         bytes data
     );
+
+    /// @notice Operation types for attestation operations
+    #[derive(Debug)]
+    enum OperationType {
+        ATTEST,
+        REVOKE,
+        MULTI_ATTEST,
+        MULTI_REVOKE
+    }
+
+    /// @notice Payload structure for attestation operations
+    struct AttestationPayload {
+        OperationType operationType;
+        bytes data;
+    }
 
     /// @notice A struct representing the arguments of the attestation request.
     struct AttestationRequestData {

@@ -290,7 +290,7 @@ export INDEXER_RESOLVER_ADDR=$(jq -r '.eas_contracts.indexer_resolver' .docker/d
 export VOTING_POWER_ADDR=$(jq -r '.governance_contracts.voting_power' .docker/deployment_summary.json)
 export REWARDS_TOKEN_ADDRESS=$(jq -r '.reward_contracts.reward_token' .docker/deployment_summary.json)
 export REWARD_DISTRIBUTOR_ADDRESS=$(jq -r '.reward_contracts.reward_distributor' .docker/deployment_summary.json)
-export COMPUTE_SCHEMA_UID=$(jq -r '.eas_schemas.compute_schema' .docker/deployment_summary.json)
+export VOUCH_SCHEMA_UID=$(jq -r '.eas_schemas.compute_schema' .docker/deployment_summary.json)
 
 # Set demo wallet address
 export WALLET_ADDRESS=0x715416D37502B25F9dB8072b5a29d84Fa2b90fef

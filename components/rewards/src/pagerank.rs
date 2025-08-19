@@ -181,6 +181,10 @@ impl AttestationGraph {
         let mut ranks = self.initialize_scores(config);
         let mut new_ranks = ranks.clone();
 
+        // Create sorted node list for deterministic iteration
+        let mut sorted_nodes = self.nodes.clone();
+        sorted_nodes.sort();
+
         // Calculate trust distances if trust is enabled
         let trust_distances = if config.has_trust_enabled() {
             println!(
@@ -195,8 +199,7 @@ impl AttestationGraph {
         };
 
         // Count self-loops for logging
-        let self_loops: usize = self
-            .nodes
+        let self_loops: usize = sorted_nodes
             .iter()
             .filter(|&&node| {
                 self.outgoing
@@ -212,7 +215,7 @@ impl AttestationGraph {
         for iteration in 0..config.max_iterations {
             let mut max_delta = 0.0;
 
-            for &node in &self.nodes {
+            for &node in &sorted_nodes {
                 let mut new_rank = self.calculate_base_rank(&node, n, config);
 
                 // Skip isolated nodes (unreachable from trusted seeds) if trust is enabled
@@ -225,10 +228,14 @@ impl AttestationGraph {
                 }
 
                 // Sum contributions from incoming edges with trust-aware weights
-                for &other_node in &self.nodes {
+                for &other_node in &sorted_nodes {
                     if let Some(outgoing_edges) = self.outgoing.get(&other_node) {
+                        // Create sorted copy of outgoing edges for deterministic iteration
+                        let mut sorted_edges = outgoing_edges.clone();
+                        sorted_edges.sort_by_key(|(addr, _)| *addr);
+
                         // Filter out self-loops when calculating outgoing weights
-                        let filtered_edges: Vec<_> = outgoing_edges
+                        let filtered_edges: Vec<_> = sorted_edges
                             .iter()
                             .filter(|(target, _)| *target != other_node) // Exclude self-loops
                             .collect();
@@ -250,7 +257,7 @@ impl AttestationGraph {
                             .sum();
 
                         // Find edges to current node and calculate contributions
-                        for &(target, base_weight) in outgoing_edges {
+                        for &(target, base_weight) in &sorted_edges {
                             if target == node && other_node != node && total_outgoing_weight > 0.0 {
                                 let effective_weight = self.calculate_edge_weight(
                                     &other_node,
@@ -411,7 +418,11 @@ impl AttestationGraph {
 
             // Check all outgoing edges from current node
             if let Some(outgoing) = self.outgoing.get(&current) {
-                for &(neighbor, _) in outgoing {
+                // Sort edges for deterministic iteration
+                let mut sorted_outgoing = outgoing.clone();
+                sorted_outgoing.sort_by_key(|(addr, _)| *addr);
+
+                for &(neighbor, _) in &sorted_outgoing {
                     // Only process if we haven't visited this neighbor yet
                     if !distances.contains_key(&neighbor) {
                         distances.insert(neighbor, current_distance + 1);
@@ -422,8 +433,15 @@ impl AttestationGraph {
 
             // Also check incoming edges (treat graph as undirected for trust propagation)
             // We need to find all nodes that have edges TO the current node
-            for (&source, edges) in &self.outgoing {
-                for &(target, _) in edges {
+            let mut sorted_sources: Vec<_> = self.outgoing.iter().collect();
+            sorted_sources.sort_by_key(|(addr, _)| **addr);
+
+            for (&source, edges) in sorted_sources {
+                // Sort edges for deterministic iteration
+                let mut sorted_edges = edges.clone();
+                sorted_edges.sort_by_key(|(addr, _)| *addr);
+
+                for &(target, _) in &sorted_edges {
                     if target == current && !distances.contains_key(&source) {
                         distances.insert(source, current_distance + 1);
                         queue.push_back(source);
@@ -432,8 +450,10 @@ impl AttestationGraph {
             }
         }
 
-        // Mark unreachable nodes with MAX distance
-        for &node in &self.nodes {
+        // Mark unreachable nodes with MAX distance (use sorted iteration)
+        let mut sorted_nodes = self.nodes.clone();
+        sorted_nodes.sort();
+        for &node in &sorted_nodes {
             distances.entry(node).or_insert(usize::MAX);
         }
 
@@ -460,8 +480,10 @@ impl AttestationGraph {
         // Calculate trust distances for isolation detection
         let trust_distances = self.calculate_trust_distances(&config.trust_config);
 
-        // Count self-vouching nodes
-        for &node in &self.nodes {
+        // Count self-vouching nodes (use sorted iteration for determinism)
+        let mut sorted_nodes = self.nodes.clone();
+        sorted_nodes.sort();
+        for &node in &sorted_nodes {
             if let Some(edges) = self.outgoing.get(&node) {
                 if edges.iter().any(|(target, _)| *target == node) {
                     self_vouching_count += 1;
@@ -469,8 +491,10 @@ impl AttestationGraph {
             }
         }
 
-        // Categorize nodes and calculate scores
-        for (addr, score) in ranks {
+        // Categorize nodes and calculate scores (sorted for deterministic iteration)
+        let mut sorted_ranks: Vec<_> = ranks.iter().collect();
+        sorted_ranks.sort_by_key(|(addr, _)| **addr);
+        for (addr, score) in sorted_ranks {
             let is_isolated = trust_distances.get(addr) == Some(&usize::MAX);
 
             if is_isolated {
@@ -998,5 +1022,62 @@ mod tests {
             seeds.contains(&alice) && seeds.contains(&bob),
             "Should contain both Alice and Bob"
         );
+    }
+
+    #[test]
+    fn test_deterministic_pagerank_results() {
+        // Create a moderately complex graph to test determinism
+        let mut graph = AttestationGraph::new();
+
+        // Add some test addresses (using different values to ensure varied iteration order)
+        let addr1 = Address::from([0x01; 20]);
+        let addr2 = Address::from([0x02; 20]);
+        let addr3 = Address::from([0x03; 20]);
+        let addr4 = Address::from([0x04; 20]);
+        let addr5 = Address::from([0x05; 20]);
+
+        // Create a complex network of attestations
+        graph.add_edge(addr1, addr2, 1.0);
+        graph.add_edge(addr1, addr3, 2.0);
+        graph.add_edge(addr2, addr3, 1.5);
+        graph.add_edge(addr2, addr4, 1.0);
+        graph.add_edge(addr3, addr4, 2.0);
+        graph.add_edge(addr4, addr5, 1.0);
+        graph.add_edge(addr5, addr1, 1.5);
+        graph.add_edge(addr3, addr1, 1.0); // Create some cycles
+
+        // Test both standard PageRank and trust-aware PageRank
+        let configs = vec![
+            PageRankConfig::default(), // Standard PageRank
+            PageRankConfig::default().with_trusted_seeds(vec![addr1, addr3]), // Trust-aware
+        ];
+
+        for config in configs {
+            // Run PageRank calculation multiple times
+            let mut results = Vec::new();
+            for _ in 0..5 {
+                let result = graph.calculate_pagerank(&config);
+                results.push(result);
+            }
+
+            // Verify all results are identical
+            for i in 1..results.len() {
+                assert_eq!(
+                    results[0].len(),
+                    results[i].len(),
+                    "Result {} has different number of nodes",
+                    i
+                );
+
+                for (addr, score0) in &results[0] {
+                    let score_i = results[i]
+                        .get(addr)
+                        .expect(&format!("Address {:?} missing in result {}", addr, i));
+                    assert!((score0 - score_i).abs() < 1e-15,
+                        "Non-deterministic result for address {:?}: {} vs {} (diff: {}) in iteration {}",
+                        addr, score0, score_i, (score0 - score_i).abs(), i);
+                }
+            }
+        }
     }
 }
