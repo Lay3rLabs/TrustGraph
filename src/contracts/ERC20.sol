@@ -12,26 +12,18 @@ import {ERC20Votes} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Vo
 import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
 
 // TODO maybe make this a bridgable token?
-contract ENOVA is
-    ERC20,
-    AccessControl,
-    ERC20Burnable,
-    ERC20Pausable,
-    ERC1363,
-    ERC20Permit,
-    ERC20Votes
-{
+contract ENOVA is ERC20, AccessControl, ERC20Burnable, ERC20Pausable, ERC1363, ERC20Permit, ERC20Votes {
     bytes32 public constant TOKEN_BRIDGE_ROLE = keccak256("TOKEN_BRIDGE_ROLE");
+
     error Unauthorized();
+
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
-    constructor(
-        address defaultAdmin,
-        address tokenBridge,
-        address pauser,
-        address minter
-    ) ERC20("EN0VA", "ENO") ERC20Permit("MyToken") {
+    constructor(address defaultAdmin, address tokenBridge, address pauser, address minter)
+        ERC20("EN0VA", "ENO")
+        ERC20Permit("MyToken")
+    {
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
         _grantRole(TOKEN_BRIDGE_ROLE, tokenBridge);
         _grantRole(PAUSER_ROLE, pauser);
@@ -52,23 +44,15 @@ contract ENOVA is
 
     // The following functions are overrides required by Solidity.
 
-    function _update(
-        address from,
-        address to,
-        uint256 value
-    ) internal override(ERC20, ERC20Pausable, ERC20Votes) {
+    function _update(address from, address to, uint256 value) internal override(ERC20, ERC20Pausable, ERC20Votes) {
         super._update(from, to, value);
     }
 
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view override(AccessControl, ERC1363) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view override(AccessControl, ERC1363) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 
-    function nonces(
-        address owner
-    ) public view override(ERC20Permit, Nonces) returns (uint256) {
+    function nonces(address owner) public view override(ERC20Permit, Nonces) returns (uint256) {
         return super.nonces(owner);
     }
 }

@@ -26,20 +26,12 @@ contract IndexerResolver is SchemaResolver {
     /// @notice Indexes the attestation upon creation.
     /// @param attestation The new attestation.
     /// @return Whether the attestation is valid and was successfully indexed.
-    function onAttest(
-        Attestation calldata attestation,
-        uint256 /*value*/
-    ) internal override returns (bool) {
+    function onAttest(Attestation calldata attestation, uint256 /*value*/ ) internal override returns (bool) {
         // Index the attestation
         indexer.indexAttestation(attestation.uid);
 
         // Emitted so the WAVS eas-compute component can be more generic.
-        emit IEAS.Attested(
-            attestation.recipient,
-            attestation.attester,
-            attestation.uid,
-            attestation.schema
-        );
+        emit IEAS.Attested(attestation.recipient, attestation.attester, attestation.uid, attestation.schema);
         emit AttestationIndexed(attestation.uid);
 
         return true;
@@ -48,7 +40,8 @@ contract IndexerResolver is SchemaResolver {
     /// @notice Handles attestation revocation (currently allows all revocations).
     /// @return Whether the attestation can be revoked.
     function onRevoke(
-        Attestation calldata /*attestation*/,
+        Attestation calldata,
+        /*attestation*/
         uint256 /*value*/
     ) internal pure override returns (bool) {
         // Allow all revocations - the indexer will still maintain the indexed data

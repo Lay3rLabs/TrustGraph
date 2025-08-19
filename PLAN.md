@@ -22,26 +22,18 @@ Fix eas-attest component and Attester.sol contract:
 - [x] Add EN0VA frontend
 - [x] Set operation to Voting power
 - [x] Realistic vouching schema
-- [ ] Deploy voting power contract with initial set
-- [ ] Better computation of attestations (actually use attestation data)
-- [ ] Add operations to Attester.sol (revoke, multi-attest, etc.)
+- [x] Vibe code working attestation UI
+- [x] Implement page rank for rewards
+- [x] Make a points page.
+- [x] Add operations to Attester.sol (revoke, multi-attest, etc.)
+- [x] attest method on Attester.sol doesn't really make sense as users should attest to EAS directly.
+- [ ] Better computation of attestations (actually use attestation data?)
 - [ ] Revoking an attestation should lower voting power
-- [ ] Vibe code working attestation UI
-- [ ] Implement page rank for rewards
-- [ ] Make a points page.
-
-Flow:
-- Load attestations for a recipient
-- Compute page rank algorithm
-
-Enhancement:
-- Resolver that only let's people who have voting power attest.
-
-Limitations:
-- First version, will only work with a limited group size (depending on how much gas the chain allows).
-- Updates increase in cost with their size
-- This is easily solved with a Merkle Based solution, but the tradeoff is it doesn't work out of the box with Compound Governor, etc.
-
+- [ ] New voting power contract to consume merkle tree
+- [ ] Resolver that only let's people who have voting power attest.
+- [ ] Add symbient
+- [ ] Vibe code Service UI from service.json (get IPFS hash)
+- [ ] Deploy voting power contract with initial set?
 
 Project organization (low priority):
 - [ ] eas-compute -> eas-compute-voting-power

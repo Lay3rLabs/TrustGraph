@@ -19,10 +19,7 @@ contract Governance is Common {
     /// @notice Query voting power statistics for an account
     /// @param votingPowerAddr Address of the VotingPower contract
     /// @param account Account to query (hex string)
-    function queryVotingPower(
-        string calldata votingPowerAddr,
-        string calldata account
-    ) public view {
+    function queryVotingPower(string calldata votingPowerAddr, string calldata account) public view {
         VotingPower votingPower = VotingPower(vm.parseAddress(votingPowerAddr));
         address accountAddr = vm.parseAddress(account);
 
@@ -31,20 +28,14 @@ contract Governance is Common {
         console.log("Account:", account);
         console.log("");
 
-        try votingPower.getVotingStats(accountAddr) returns (
-            uint256 balance,
-            uint256 votes,
-            address delegatedTo
-        ) {
+        try votingPower.getVotingStats(accountAddr) returns (uint256 balance, uint256 votes, address delegatedTo) {
             console.log("Token Balance:", balance);
             console.log("Current Voting Power:", votes);
             console.log("Delegated To:", vm.toString(delegatedTo));
 
             // Check if self-delegated
             if (delegatedTo == accountAddr) {
-                console.log(
-                    "Status: Self-delegated (can vote with full balance)"
-                );
+                console.log("Status: Self-delegated (can vote with full balance)");
             } else if (delegatedTo == address(0)) {
                 console.log("Status: No delegation (cannot vote)");
             } else {
@@ -71,10 +62,7 @@ contract Governance is Common {
     /// @notice Query voting power for multiple accounts
     /// @param votingPowerAddr Address of the VotingPower contract
     /// @param accounts Array of account addresses (hex strings)
-    function queryMultipleVotingPower(
-        string calldata votingPowerAddr,
-        string[] calldata accounts
-    ) public view {
+    function queryMultipleVotingPower(string calldata votingPowerAddr, string[] calldata accounts) public view {
         console.log("=== Multiple Accounts Voting Power Query ===");
         console.log("Contract:", votingPowerAddr);
         console.log("Number of accounts:", accounts.length);
@@ -91,11 +79,10 @@ contract Governance is Common {
     /// @param votingPowerAddr Address of the VotingPower contract
     /// @param account Account to query
     /// @param blockNumber Block number for historical query
-    function queryVotingPowerAt(
-        string calldata votingPowerAddr,
-        string calldata account,
-        uint256 blockNumber
-    ) public view {
+    function queryVotingPowerAt(string calldata votingPowerAddr, string calldata account, uint256 blockNumber)
+        public
+        view
+    {
         VotingPower votingPower = VotingPower(vm.parseAddress(votingPowerAddr));
         address accountAddr = vm.parseAddress(account);
 
@@ -106,9 +93,7 @@ contract Governance is Common {
         console.log("Current Block:", block.number);
         console.log("");
 
-        try votingPower.getPastVotes(accountAddr, blockNumber) returns (
-            uint256 pastVotes
-        ) {
+        try votingPower.getPastVotes(accountAddr, blockNumber) returns (uint256 pastVotes) {
             console.log("Voting Power at Block", blockNumber, ":", pastVotes);
         } catch {
             console.log("ERROR: Unable to retrieve historical voting power");
@@ -123,9 +108,7 @@ contract Governance is Common {
     /// @notice Query governance contract settings and state
     /// @param governorAddr Address of the AttestationGovernor contract
     function queryGovernanceState(string calldata governorAddr) public view {
-        AttestationGovernor governor = AttestationGovernor(
-            payable(vm.parseAddress(governorAddr))
-        );
+        AttestationGovernor governor = AttestationGovernor(payable(vm.parseAddress(governorAddr)));
 
         console.log("=== Governance State ===");
         console.log("Governor Address:", governorAddr);
@@ -162,13 +145,8 @@ contract Governance is Common {
     /// @notice Query specific proposal details
     /// @param governorAddr Address of the AttestationGovernor contract
     /// @param proposalId Proposal ID to query
-    function queryProposal(
-        string calldata governorAddr,
-        uint256 proposalId
-    ) public view {
-        AttestationGovernor governor = AttestationGovernor(
-            payable(vm.parseAddress(governorAddr))
-        );
+    function queryProposal(string calldata governorAddr, uint256 proposalId) public view {
+        AttestationGovernor governor = AttestationGovernor(payable(vm.parseAddress(governorAddr)));
 
         console.log("=== Proposal Query ===");
         console.log("Governor Address:", governorAddr);
@@ -190,23 +168,14 @@ contract Governance is Common {
             console.log("Deadline Block:", deadline);
         } catch {}
 
-        try governor.proposalVotes(proposalId) returns (
-            uint256 againstVotes,
-            uint256 forVotes,
-            uint256 abstainVotes
-        ) {
+        try governor.proposalVotes(proposalId) returns (uint256 againstVotes, uint256 forVotes, uint256 abstainVotes) {
             console.log("Votes Against:", againstVotes);
             console.log("Votes For:", forVotes);
             console.log("Votes Abstain:", abstainVotes);
-            console.log(
-                "Total Votes Cast:",
-                againstVotes + forVotes + abstainVotes
-            );
+            console.log("Total Votes Cast:", againstVotes + forVotes + abstainVotes);
         } catch {}
 
-        try governor.quorum(governor.proposalSnapshot(proposalId)) returns (
-            uint256 quorumNeeded
-        ) {
+        try governor.quorum(governor.proposalSnapshot(proposalId)) returns (uint256 quorumNeeded) {
             console.log("Quorum Required:", quorumNeeded);
         } catch {}
     }
@@ -215,14 +184,8 @@ contract Governance is Common {
     /// @param governorAddr Address of the AttestationGovernor contract
     /// @param proposalId Proposal ID to check
     /// @param voter Voter address to check
-    function checkVote(
-        string calldata governorAddr,
-        uint256 proposalId,
-        string calldata voter
-    ) public view {
-        AttestationGovernor governor = AttestationGovernor(
-            payable(vm.parseAddress(governorAddr))
-        );
+    function checkVote(string calldata governorAddr, uint256 proposalId, string calldata voter) public view {
+        AttestationGovernor governor = AttestationGovernor(payable(vm.parseAddress(governorAddr)));
         address voterAddr = vm.parseAddress(voter);
 
         console.log("=== Vote Check ===");
@@ -236,14 +199,10 @@ contract Governance is Common {
                 console.log("Status: HAS VOTED");
                 // Try to get vote details if available
                 try governor.proposalVotes(proposalId) returns (
-                    uint256 againstVotes,
-                    uint256 forVotes,
-                    uint256 abstainVotes
+                    uint256 againstVotes, uint256 forVotes, uint256 abstainVotes
                 ) {
                     // Note: OpenZeppelin doesn't expose individual vote details by default
-                    console.log(
-                        "Note: Cannot retrieve specific vote choice with standard interface"
-                    );
+                    console.log("Note: Cannot retrieve specific vote choice with standard interface");
                 } catch {}
             } else {
                 console.log("Status: HAS NOT VOTED");
@@ -272,9 +231,7 @@ contract Governance is Common {
     ) public {
         vm.startBroadcast(_privateKey);
 
-        AttestationGovernor governor = AttestationGovernor(
-            payable(vm.parseAddress(governorAddr))
-        );
+        AttestationGovernor governor = AttestationGovernor(payable(vm.parseAddress(governorAddr)));
 
         console.log("=== Creating Proposal ===");
         console.log("Governor Address:", governorAddr);
@@ -282,19 +239,11 @@ contract Governance is Common {
         console.log("Number of actions:", targets.length);
         console.log("");
 
-        try governor.propose(targets, values, calldatas, description) returns (
-            uint256 proposalId
-        ) {
+        try governor.propose(targets, values, calldatas, description) returns (uint256 proposalId) {
             console.log("SUCCESS: Proposal created!");
             console.log("Proposal ID:", proposalId);
-            console.log(
-                "Voting starts at block:",
-                governor.proposalSnapshot(proposalId)
-            );
-            console.log(
-                "Voting ends at block:",
-                governor.proposalDeadline(proposalId)
-            );
+            console.log("Voting starts at block:", governor.proposalSnapshot(proposalId));
+            console.log("Voting ends at block:", governor.proposalDeadline(proposalId));
         } catch Error(string memory reason) {
             console.log("ERROR: Failed to create proposal");
             console.log("Reason:", reason);
@@ -308,17 +257,10 @@ contract Governance is Common {
     /// @param proposalId Proposal ID to vote on
     /// @param support Vote choice: 0=Against, 1=For, 2=Abstain
     /// @param reason Optional reason for the vote
-    function vote(
-        string calldata governorAddr,
-        uint256 proposalId,
-        uint8 support,
-        string calldata reason
-    ) public {
+    function vote(string calldata governorAddr, uint256 proposalId, uint8 support, string calldata reason) public {
         vm.startBroadcast(_privateKey);
 
-        AttestationGovernor governor = AttestationGovernor(
-            payable(vm.parseAddress(governorAddr))
-        );
+        AttestationGovernor governor = AttestationGovernor(payable(vm.parseAddress(governorAddr)));
 
         console.log("=== Casting Vote ===");
         console.log("Governor Address:", governorAddr);
@@ -329,9 +271,7 @@ contract Governance is Common {
         }
         console.log("");
 
-        try governor.castVoteWithReason(proposalId, support, reason) returns (
-            uint256 weight
-        ) {
+        try governor.castVoteWithReason(proposalId, support, reason) returns (uint256 weight) {
             console.log("SUCCESS: Vote cast!");
             console.log("Vote weight:", weight);
         } catch Error(string memory err) {
@@ -346,11 +286,7 @@ contract Governance is Common {
     /// @param governorAddr Address of the AttestationGovernor contract
     /// @param proposalId Proposal ID to vote on
     /// @param support Vote choice: 0=Against, 1=For, 2=Abstain
-    function vote(
-        string calldata governorAddr,
-        uint256 proposalId,
-        uint8 support
-    ) public {
+    function vote(string calldata governorAddr, uint256 proposalId, uint8 support) public {
         this.vote(governorAddr, proposalId, support, "");
     }
 
@@ -361,10 +297,7 @@ contract Governance is Common {
     /// @notice Delegate voting power to another address
     /// @param votingPowerAddr Address of the VotingPower contract
     /// @param delegatee Address to delegate to (use own address for self-delegation)
-    function delegate(
-        string calldata votingPowerAddr,
-        string calldata delegatee
-    ) public {
+    function delegate(string calldata votingPowerAddr, string calldata delegatee) public {
         vm.startBroadcast(_privateKey);
 
         VotingPower votingPower = VotingPower(vm.parseAddress(votingPowerAddr));
@@ -380,18 +313,11 @@ contract Governance is Common {
 
             // Show updated stats
             address broadcaster = vm.addr(_privateKey);
-            (
-                uint256 balance,
-                uint256 votes,
-                address currentDelegate
-            ) = votingPower.getVotingStats(broadcaster);
+            (uint256 balance, uint256 votes, address currentDelegate) = votingPower.getVotingStats(broadcaster);
 
             console.log("Your token balance:", balance);
             console.log("Your current voting power:", votes);
-            console.log(
-                "Currently delegated to:",
-                vm.toString(currentDelegate)
-            );
+            console.log("Currently delegated to:", vm.toString(currentDelegate));
         } catch Error(string memory reason) {
             console.log("ERROR: Failed to delegate");
             console.log("Reason:", reason);
@@ -414,9 +340,7 @@ contract Governance is Common {
     /// @notice Convert proposal state enum to string
     /// @param state The proposal state
     /// @return String representation of the state
-    function _stateToString(
-        IGovernor.ProposalState state
-    ) internal pure returns (string memory) {
+    function _stateToString(IGovernor.ProposalState state) internal pure returns (string memory) {
         if (state == IGovernor.ProposalState.Pending) return "Pending";
         if (state == IGovernor.ProposalState.Active) return "Active";
         if (state == IGovernor.ProposalState.Canceled) return "Canceled";
@@ -431,9 +355,7 @@ contract Governance is Common {
     /// @notice Convert support value to string
     /// @param support The support value (0=Against, 1=For, 2=Abstain)
     /// @return String representation of the support
-    function _supportToString(
-        uint8 support
-    ) internal pure returns (string memory) {
+    function _supportToString(uint8 support) internal pure returns (string memory) {
         if (support == 0) return "Against";
         if (support == 1) return "For";
         if (support == 2) return "Abstain";
@@ -453,26 +375,15 @@ contract Governance is Common {
         bytes[] calldata calldatas,
         string calldata description
     ) public view returns (uint256) {
-        AttestationGovernor governor = AttestationGovernor(
-            payable(vm.parseAddress(governorAddr))
-        );
+        AttestationGovernor governor = AttestationGovernor(payable(vm.parseAddress(governorAddr)));
 
-        return
-            governor.hashProposal(
-                targets,
-                values,
-                calldatas,
-                keccak256(bytes(description))
-            );
+        return governor.hashProposal(targets, values, calldatas, keccak256(bytes(description)));
     }
 
     /// @notice Show current account's governance participation status
     /// @param votingPowerAddr Address of the VotingPower contract
     /// @param governorAddr Address of the AttestationGovernor contract
-    function showMyGovernanceStatus(
-        string calldata votingPowerAddr,
-        string calldata governorAddr
-    ) public {
+    function showMyGovernanceStatus(string calldata votingPowerAddr, string calldata governorAddr) public {
         address myAddress = vm.addr(_privateKey);
         string memory myAddressStr = vm.toString(myAddress);
 

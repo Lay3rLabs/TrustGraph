@@ -21,8 +21,6 @@ pub enum EasRewardType {
     ReceivedAttestations(String),
     /// Rewards based on sent attestations count for a specific schema.
     SentAttestations(String),
-    /// Rewards based on attestations to a specific schema (same as ReceivedAttestations).
-    SchemaAttestations(String),
 }
 
 /// Compute rewards from EAS attestations.
@@ -74,9 +72,6 @@ impl Source for EasSource {
             EasRewardType::SentAttestations(schema_uid) => {
                 self.get_accounts_with_sent_attestations(schema_uid).await
             }
-            EasRewardType::SchemaAttestations(schema_uid) => {
-                self.get_accounts_with_schema_attestations(schema_uid).await
-            }
         }
     }
 
@@ -88,9 +83,6 @@ impl Source for EasSource {
             }
             EasRewardType::SentAttestations(schema_uid) => {
                 self.query_sent_attestation_count(address, schema_uid).await?
-            }
-            EasRewardType::SchemaAttestations(schema_uid) => {
-                self.query_received_attestation_count(address, schema_uid).await?
             }
         };
 
@@ -104,9 +96,6 @@ impl Source for EasSource {
             }
             EasRewardType::SentAttestations(schema) => {
                 ("sent_attestations".to_string(), schema.clone())
-            }
-            EasRewardType::SchemaAttestations(schema) => {
-                ("schema_attestations".to_string(), schema.clone())
             }
         };
 
@@ -309,11 +298,6 @@ impl EasSource {
         let result: Vec<String> = attesters.into_iter().collect();
         println!("✅ Found {} unique attesters", result.len());
         Ok(result)
-    }
-
-    async fn get_accounts_with_schema_attestations(&self, schema_uid: &str) -> Result<Vec<String>> {
-        // For schema attestations, we return recipients (same as received attestations)
-        self.get_accounts_with_received_attestations(schema_uid).await
     }
 }
 

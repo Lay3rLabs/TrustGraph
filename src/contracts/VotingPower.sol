@@ -21,6 +21,7 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
         TRANSFER, // 2 - Transfer tokens between accounts
         DELEGATE, // 3 - Delegate voting power
         SET // 4 - Set voting power to a specific amount
+
     }
 
     /// @dev Single voting power operation
@@ -63,11 +64,7 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
     /**
      * @dev Emitted when a WAVS operation is executed
      */
-    event WAVSOperationExecuted(
-        OperationType indexed operationType,
-        uint256 totalAccounts,
-        uint256 totalAmount
-    );
+    event WAVSOperationExecuted(OperationType indexed operationType, uint256 totalAccounts, uint256 totalAmount);
 
     /**
      * @dev Constructor sets the token metadata and initializes EIP712 for delegation signatures
@@ -75,16 +72,11 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
      * @param _symbol The symbol of the voting token
      * @param _initialOwner The initial owner who can mint/burn tokens
      */
-    constructor(
-        string memory _name,
-        string memory _symbol,
-        address _initialOwner,
-        IWavsServiceManager serviceManager
-    ) EIP712(_name, "1") Ownable(_initialOwner) {
-        require(
-            address(serviceManager) != address(0),
-            "VotingPower: invalid service manager"
-        );
+    constructor(string memory _name, string memory _symbol, address _initialOwner, IWavsServiceManager serviceManager)
+        EIP712(_name, "1")
+        Ownable(_initialOwner)
+    {
+        require(address(serviceManager) != address(0), "VotingPower: invalid service manager");
         _serviceManager = serviceManager;
         name = _name;
         symbol = _symbol;
@@ -147,10 +139,7 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
      */
     function burn(address from, uint256 amount) external onlyOwner {
         require(from != address(0), "VotingPower: burn from zero address");
-        require(
-            _balances[from] >= amount,
-            "VotingPower: burn amount exceeds balance"
-        );
+        require(_balances[from] >= amount, "VotingPower: burn amount exceeds balance");
 
         _balances[from] -= amount;
         _totalSupply -= amount;
@@ -170,10 +159,7 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
     function transfer(address from, address to, uint256 amount) external {
         require(from != address(0), "VotingPower: transfer from zero address");
         require(to != address(0), "VotingPower: transfer to zero address");
-        require(
-            _balances[from] >= amount,
-            "VotingPower: transfer amount exceeds balance"
-        );
+        require(_balances[from] >= amount, "VotingPower: transfer amount exceeds balance");
 
         // TODO: Add proper authorization check (msg.sender == from or approved)
         // For now, allowing any transfer for simplicity
@@ -190,9 +176,7 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
      * @param account The account to query
      * @return The current voting units
      */
-    function _getVotingUnits(
-        address account
-    ) internal view override returns (uint256) {
+    function _getVotingUnits(address account) internal view override returns (uint256) {
         return _balances[account];
     }
 
@@ -219,14 +203,8 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
      * @param recipients Array of recipient addresses
      * @param amounts Array of amounts to mint to each recipient
      */
-    function batchMint(
-        address[] calldata recipients,
-        uint256[] calldata amounts
-    ) external onlyOwner {
-        require(
-            recipients.length == amounts.length,
-            "VotingPower: arrays length mismatch"
-        );
+    function batchMint(address[] calldata recipients, uint256[] calldata amounts) external onlyOwner {
+        require(recipients.length == amounts.length, "VotingPower: arrays length mismatch");
 
         for (uint256 i = 0; i < recipients.length; i++) {
             _mint(recipients[i], amounts[i]);
@@ -238,18 +216,12 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
      * @param initialHolders Array of initial token holders
      * @param initialAmounts Array of initial amounts for each holder
      */
-    function initialDistribution(
-        address[] calldata initialHolders,
-        uint256[] calldata initialAmounts
-    ) external onlyOwner {
-        require(
-            initialHolders.length == initialAmounts.length,
-            "VotingPower: arrays length mismatch"
-        );
-        require(
-            _totalSupply == 0,
-            "VotingPower: initial distribution already completed"
-        );
+    function initialDistribution(address[] calldata initialHolders, uint256[] calldata initialAmounts)
+        external
+        onlyOwner
+    {
+        require(initialHolders.length == initialAmounts.length, "VotingPower: arrays length mismatch");
+        require(_totalSupply == 0, "VotingPower: initial distribution already completed");
 
         for (uint256 i = 0; i < initialHolders.length; i++) {
             _mint(initialHolders[i], initialAmounts[i]);
@@ -272,9 +244,7 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
      * @return votes Current voting power (after delegation)
      * @return delegatedTo Address that votes are delegated to
      */
-    function getVotingStats(
-        address account
-    )
+    function getVotingStats(address account)
         external
         view
         returns (uint256 balance, uint256 votes, address delegatedTo)
@@ -288,18 +258,12 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
     /// @notice Handles signed envelope from WAVS for voting power operations
     /// @param envelope The envelope containing the voting power operation data
     /// @param signatureData The signature data for validation
-    function handleSignedEnvelope(
-        Envelope calldata envelope,
-        SignatureData calldata signatureData
-    ) external {
+    function handleSignedEnvelope(Envelope calldata envelope, SignatureData calldata signatureData) external {
         // Validate the envelope signature through the service manager
         _serviceManager.validate(envelope, signatureData);
 
         // Decode the payload
-        VotingPowerPayload memory payload = abi.decode(
-            envelope.payload,
-            (VotingPowerPayload)
-        );
+        VotingPowerPayload memory payload = abi.decode(envelope.payload, (VotingPowerPayload));
 
         // Execute the operation
         _executeOperation(payload);
@@ -334,9 +298,7 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
         }
 
         emit WAVSOperationExecuted(
-            payload.operations.length > 0
-                ? payload.operations[0].operationType
-                : OperationType.MINT,
+            payload.operations.length > 0 ? payload.operations[0].operationType : OperationType.MINT,
             totalOperations,
             totalAmount
         );
@@ -347,10 +309,7 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
     /// @param amount The amount of tokens to burn
     function _burn(address from, uint256 amount) internal {
         require(from != address(0), "VotingPower: burn from zero address");
-        require(
-            _balances[from] >= amount,
-            "VotingPower: burn amount exceeds balance"
-        );
+        require(_balances[from] >= amount, "VotingPower: burn amount exceeds balance");
 
         _balances[from] -= amount;
         _totalSupply -= amount;
@@ -368,10 +327,7 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
     function _transfer(address from, address to, uint256 amount) internal {
         require(from != address(0), "VotingPower: transfer from zero address");
         require(to != address(0), "VotingPower: transfer to zero address");
-        require(
-            _balances[from] >= amount,
-            "VotingPower: transfer amount exceeds balance"
-        );
+        require(_balances[from] >= amount, "VotingPower: transfer amount exceeds balance");
 
         _balances[from] -= amount;
         _balances[to] += amount;

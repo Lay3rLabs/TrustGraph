@@ -8,6 +8,7 @@ node_modules/
 # WAVS
 .env
 .env-e
+.env.pagerank
 compiled/*.wasm
 .docker/*.json
 .docker/*.log

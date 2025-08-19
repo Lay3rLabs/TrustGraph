@@ -6,7 +6,13 @@ import {IndexerResolver} from "../../src/contracts/IndexerResolver.sol";
 import {EAS} from "@ethereum-attestation-service/eas-contracts/contracts/EAS.sol";
 import {SchemaRegistry} from "@ethereum-attestation-service/eas-contracts/contracts/SchemaRegistry.sol";
 import {Indexer} from "../../src/contracts/Indexer.sol";
-import {IEAS, AttestationRequest, AttestationRequestData, RevocationRequest, RevocationRequestData} from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
+import {
+    IEAS,
+    AttestationRequest,
+    AttestationRequestData,
+    RevocationRequest,
+    RevocationRequestData
+} from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
 import {ISchemaRegistry} from "@ethereum-attestation-service/eas-contracts/contracts/ISchemaRegistry.sol";
 import {NO_EXPIRATION_TIME, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/contracts/Common.sol";
 
@@ -68,12 +74,7 @@ contract IndexerResolverTest is Test {
         // Verify it appears in the indexer's schema attestations
         assertEq(indexer.getSchemaAttestationUIDCount(schemaId), 1);
 
-        bytes32[] memory schemaUIDs = indexer.getSchemaAttestationUIDs(
-            schemaId,
-            0,
-            1,
-            false
-        );
+        bytes32[] memory schemaUIDs = indexer.getSchemaAttestationUIDs(schemaId, 0, 1, false);
         assertEq(schemaUIDs.length, 1);
         assertEq(schemaUIDs[0], uid);
     }
@@ -112,12 +113,7 @@ contract IndexerResolverTest is Test {
         // Verify all attestations are in the schema index
         assertEq(indexer.getSchemaAttestationUIDCount(schemaId), 3);
 
-        bytes32[] memory schemaUIDs = indexer.getSchemaAttestationUIDs(
-            schemaId,
-            0,
-            3,
-            false
-        );
+        bytes32[] memory schemaUIDs = indexer.getSchemaAttestationUIDs(schemaId, 0, 3, false);
         assertEq(schemaUIDs.length, 3);
 
         for (uint256 i = 0; i < values.length; i++) {
@@ -143,18 +139,9 @@ contract IndexerResolverTest is Test {
         );
 
         // Verify the attestation appears in recipient's received attestations
-        assertEq(
-            indexer.getReceivedAttestationUIDCount(recipient, schemaId),
-            1
-        );
+        assertEq(indexer.getReceivedAttestationUIDCount(recipient, schemaId), 1);
 
-        bytes32[] memory receivedUIDs = indexer.getReceivedAttestationUIDs(
-            recipient,
-            schemaId,
-            0,
-            1,
-            false
-        );
+        bytes32[] memory receivedUIDs = indexer.getReceivedAttestationUIDs(recipient, schemaId, 0, 1, false);
         assertEq(receivedUIDs.length, 1);
         assertEq(receivedUIDs[0], uid);
     }
@@ -181,13 +168,7 @@ contract IndexerResolverTest is Test {
         // Verify the attestation appears in attester's sent attestations
         assertEq(indexer.getSentAttestationUIDCount(attester, schemaId), 1);
 
-        bytes32[] memory sentUIDs = indexer.getSentAttestationUIDs(
-            attester,
-            schemaId,
-            0,
-            1,
-            false
-        );
+        bytes32[] memory sentUIDs = indexer.getSentAttestationUIDs(attester, schemaId, 0, 1, false);
         assertEq(sentUIDs.length, 1);
         assertEq(sentUIDs[0], uid);
     }
@@ -211,24 +192,10 @@ contract IndexerResolverTest is Test {
         );
 
         // Verify the attestation appears in the schema-attester-recipient index
-        assertEq(
-            indexer.getSchemaAttesterRecipientAttestationUIDCount(
-                schemaId,
-                attester,
-                recipient
-            ),
-            1
-        );
+        assertEq(indexer.getSchemaAttesterRecipientAttestationUIDCount(schemaId, attester, recipient), 1);
 
-        bytes32[] memory sarUIDs = indexer
-            .getSchemaAttesterRecipientAttestationUIDs(
-                schemaId,
-                attester,
-                recipient,
-                0,
-                1,
-                false
-            );
+        bytes32[] memory sarUIDs =
+            indexer.getSchemaAttesterRecipientAttestationUIDs(schemaId, attester, recipient, 0, 1, false);
         assertEq(sarUIDs.length, 1);
         assertEq(sarUIDs[0], uid);
     }
@@ -256,12 +223,7 @@ contract IndexerResolverTest is Test {
         assertTrue(indexer.isAttestationIndexed(uid));
 
         // Revoke the attestation - should succeed
-        eas.revoke(
-            RevocationRequest({
-                schema: schemaId,
-                data: RevocationRequestData({uid: uid, value: 0})
-            })
-        );
+        eas.revoke(RevocationRequest({schema: schemaId, data: RevocationRequestData({uid: uid, value: 0})}));
 
         // Verify the attestation remains indexed (revoked attestations stay indexed for historical purposes)
         assertTrue(indexer.isAttestationIndexed(uid)); // Should still be indexed
@@ -293,12 +255,7 @@ contract IndexerResolverTest is Test {
 
         // Revoke them and verify they remain indexed
         for (uint256 i = 0; i < values.length; i++) {
-            eas.revoke(
-                RevocationRequest({
-                    schema: schemaId,
-                    data: RevocationRequestData({uid: uids[i], value: 0})
-                })
-            );
+            eas.revoke(RevocationRequest({schema: schemaId, data: RevocationRequestData({uid: uids[i], value: 0})}));
 
             assertTrue(indexer.isAttestationIndexed(uids[i]));
         }
@@ -335,22 +292,11 @@ contract IndexerResolverTest is Test {
 
         // Verify it appears in all relevant indexes
         assertEq(indexer.getSchemaAttestationUIDCount(schemaId), 1);
-        assertEq(
-            indexer.getReceivedAttestationUIDCount(recipient, schemaId),
-            1
-        );
-        assertEq(
-            indexer.getSentAttestationUIDCount(address(this), schemaId),
-            1
-        );
+        assertEq(indexer.getReceivedAttestationUIDCount(recipient, schemaId), 1);
+        assertEq(indexer.getSentAttestationUIDCount(address(this), schemaId), 1);
 
         // Revoke attestation
-        eas.revoke(
-            RevocationRequest({
-                schema: schemaId,
-                data: RevocationRequestData({uid: uid, value: 0})
-            })
-        );
+        eas.revoke(RevocationRequest({schema: schemaId, data: RevocationRequestData({uid: uid, value: 0})}));
 
         // Verify indexed data persists (revoked attestations remain indexed)
         assertTrue(indexer.isAttestationIndexed(uid));

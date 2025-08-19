@@ -276,8 +276,21 @@ This demo walks you through the complete attestation workflow:
 Set up environment variables automatically:
 
 ```bash
+# FIX THIS SCRIPT TO ACTUALLY WORK.
 # Auto-generate ALL environment variables from deployment_summary.json
-./script/setup-pagerank-env.sh --source
+./script/setup-pagerank-env.sh
+source .env.pagerank
+
+export RPC_URL=`bash ./script/get-rpc.sh`
+export SERVICE_TRIGGER_ADDR=$(jq -r '.service_contracts.trigger' .docker/deployment_summary.json)
+export EAS_ADDR=$(jq -r '.eas_contracts.eas' .docker/deployment_summary.json)
+export SCHEMA_REGISTRAR_ADDR=$(jq -r '.eas_contracts.schema_registrar' .docker/deployment_summary.json)
+export EAS_INDEXER_ADDR=$(jq -r '.eas_contracts.indexer' .docker/deployment_summary.json)
+export INDEXER_RESOLVER_ADDR=$(jq -r '.eas_contracts.indexer_resolver' .docker/deployment_summary.json)
+export VOTING_POWER_ADDR=$(jq -r '.governance_contracts.voting_power' .docker/deployment_summary.json)
+export REWARDS_TOKEN_ADDRESS=$(jq -r '.reward_contracts.reward_token' .docker/deployment_summary.json)
+export REWARD_DISTRIBUTOR_ADDRESS=$(jq -r '.reward_contracts.reward_distributor' .docker/deployment_summary.json)
+export VOUCH_SCHEMA_UID=$(jq -r '.eas_schemas.compute_schema' .docker/deployment_summary.json)
 
 # Set demo wallet address
 export WALLET_ADDRESS=0x715416D37502B25F9dB8072b5a29d84Fa2b90fef
@@ -291,13 +304,13 @@ Create a comprehensive PageRank test network with real attestations:
 # Create 40+ real attestations across different network patterns
 ./script/create-pagerank-attestations.sh
 
-# Verify the network and get PageRank recommendations  
+# Verify the network and get PageRank recommendations
 ./script/verify-pagerank-network.sh
 ```
 
 This creates a realistic attestation network with:
 - **Alice** (Central Hub) - 11 incoming connections
-- **Diana** (Authority) - 565 total vouching weight  
+- **Diana** (Authority) - 565 total vouching weight
 - **Charlie** (Bridge) - 7+ cross-group connections
 - Multiple patterns: chains, clusters, mutual relationships
 

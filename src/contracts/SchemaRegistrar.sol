@@ -30,11 +30,7 @@ contract SchemaRegistrar {
     /// @param resolver An optional schema resolver.
     /// @param revocable Whether the schema allows revocations explicitly.
     /// @return The UID of the new schema.
-    function register(
-        string memory schema,
-        ISchemaResolver resolver,
-        bool revocable
-    ) external returns (bytes32) {
+    function register(string memory schema, ISchemaResolver resolver, bool revocable) external returns (bytes32) {
         if (bytes(schema).length == 0) {
             revert InvalidSchema();
         }

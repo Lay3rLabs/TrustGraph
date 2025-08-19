@@ -2,7 +2,7 @@
 
 ## Abstract
 
-TrustAwarePageRank is an extension of the traditional PageRank algorithm designed to create spam-resistant reputation systems in decentralized networks. By incorporating trusted seed attestors and weighted attestations, this approach prevents Sybil attacks and spam manipulation while maintaining the distributed nature of reputation computation.
+TrustAwarePageRank is an extension of the traditional PageRank algorithm designed to create spam-resistant reputation systems in decentralized networks. By incorporating trusted seed attestors, this approach prevents Sybil attacks and spam manipulation while maintaining the distributed nature of reputation computation.
 
 ## Table of Contents
 
@@ -42,7 +42,7 @@ Alice -> Bob -> Charlie -> Alice (natural attestation cycle)
 
 Spam Network:
 Spammer1 -> SpamTarget
-Spammer2 -> SpamTarget  
+Spammer2 -> SpamTarget
 Spammer3 -> SpamTarget
 Spammer1 -> Spammer2 -> Spammer3 -> Spammer1 (artificial boost cycle)
 ```
@@ -138,16 +138,16 @@ contract TrustAwarePageRank {
         uint256 trustBoost;
         uint256 dampingFactor;
     }
-    
+
     struct ComputationParams {
         uint256 maxIterations;
         uint256 convergenceTolerance;
         uint256 computationWindow;
     }
-    
+
     mapping(address => bool) public isTrustedSeed;
     mapping(bytes32 => uint256) public scoreCommitments; // merkle roots
-    
+
     event ScoreUpdate(bytes32 indexed merkleRoot, uint256 timestamp);
     event TrustSeedAdded(address indexed seed);
     event TrustSeedRemoved(address indexed seed);

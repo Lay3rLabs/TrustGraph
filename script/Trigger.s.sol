@@ -30,9 +30,7 @@ contract EasTrigger is Common {
     ) public {
         vm.startBroadcast(_privateKey);
 
-        EASAttestTrigger trigger = EASAttestTrigger(
-            vm.parseAddress(triggerAddr)
-        );
+        EASAttestTrigger trigger = EASAttestTrigger(vm.parseAddress(triggerAddr));
 
         bytes32 schemaBytes = bytes32(vm.parseBytes(schema));
         address recipientAddr = vm.parseAddress(recipient);
@@ -58,18 +56,12 @@ contract EasTrigger is Common {
     ) public {
         vm.startBroadcast(_privateKey);
 
-        EASAttestTrigger trigger = EASAttestTrigger(
-            vm.parseAddress(triggerAddr)
-        );
+        EASAttestTrigger trigger = EASAttestTrigger(vm.parseAddress(triggerAddr));
 
         console.log("Creating raw EAS attestation trigger:");
         console.log("Data:", rawData);
 
-        trigger.triggerRequestRawAttestation(
-            vm.parseBytes32(schema),
-            vm.parseAddress(recipient),
-            bytes(rawData)
-        );
+        trigger.triggerRequestRawAttestation(vm.parseBytes32(schema), vm.parseAddress(recipient), bytes(rawData));
 
         vm.stopBroadcast();
     }
@@ -123,14 +115,8 @@ contract EasTrigger is Common {
             }
         } else {
             // Get attestations received by specific recipient
-            totalCount = indexer.getReceivedAttestationUIDCount(
-                recipientAddr,
-                schemaUID
-            );
-            console.log(
-                "Total attestations received by recipient:",
-                totalCount
-            );
+            totalCount = indexer.getReceivedAttestationUIDCount(recipientAddr, schemaUID);
+            console.log("Total attestations received by recipient:", totalCount);
 
             if (totalCount > 0) {
                 attestationUIDs = indexer.getReceivedAttestationUIDs(
@@ -197,10 +183,7 @@ contract EasTrigger is Common {
         console.log("");
 
         // Get attestations sent by specific attester
-        uint256 totalCount = indexer.getSentAttestationUIDCount(
-            attesterAddr,
-            schemaUID
-        );
+        uint256 totalCount = indexer.getSentAttestationUIDCount(attesterAddr, schemaUID);
         console.log("Total attestations sent by attester:", totalCount);
 
         bytes32[] memory attestationUIDs;
@@ -238,39 +221,22 @@ contract EasTrigger is Common {
         string calldata schemaId,
         string calldata attester
     ) public view {
-        queryAttestationsByAttester(
-            indexerAddr,
-            easAddr,
-            schemaId,
-            attester,
-            10
-        );
+        queryAttestationsByAttester(indexerAddr, easAddr, schemaId, attester, 10);
     }
 
     /// @notice Helper function to display attestation details
     /// @param eas The EAS contract instance
     /// @param attestationUID The attestation UID to display
     /// @param index The display index for numbering
-    function _displayAttestation(
-        IEAS eas,
-        bytes32 attestationUID,
-        uint256 index
-    ) internal view {
-        try eas.getAttestation(attestationUID) returns (
-            Attestation memory att
-        ) {
+    function _displayAttestation(IEAS eas, bytes32 attestationUID, uint256 index) internal view {
+        try eas.getAttestation(attestationUID) returns (Attestation memory att) {
             console.log("--- Attestation", index, "---");
             console.log("UID:", vm.toString(attestationUID));
             console.log("Schema:", vm.toString(att.schema));
             console.log("Attester:", vm.toString(att.attester));
             console.log("Recipient:", vm.toString(att.recipient));
             console.log("Time:", att.time);
-            console.log(
-                "Expiration:",
-                att.expirationTime == 0
-                    ? "Never"
-                    : vm.toString(att.expirationTime)
-            );
+            console.log("Expiration:", att.expirationTime == 0 ? "Never" : vm.toString(att.expirationTime));
             console.log("Revocable:", att.revocable ? "Yes" : "No");
             console.log("Revoked:", att.revocationTime > 0 ? "Yes" : "No");
             if (att.refUID != bytes32(0)) {
@@ -315,10 +281,7 @@ contract EasTrigger is Common {
     /// @notice Show attestation details by UID
     /// @param easAddr The EAS contract address
     /// @param attestationUid The attestation UID
-    function showAttestation(
-        string calldata easAddr,
-        string calldata attestationUid
-    ) public view {
+    function showAttestation(string calldata easAddr, string calldata attestationUid) public view {
         IEAS eas = IEAS(vm.parseAddress(easAddr));
         bytes32 uid = vm.parseBytes32(attestationUid);
 
@@ -337,10 +300,7 @@ contract EasTrigger is Common {
                 console.log("  Data:", string(att.data));
             }
         } catch {
-            console.log(
-                "Attestation not found or invalid UID:",
-                attestationUid
-            );
+            console.log("Attestation not found or invalid UID:", attestationUid);
         }
     }
 }

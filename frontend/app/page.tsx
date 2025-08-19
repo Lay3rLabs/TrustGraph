@@ -74,17 +74,17 @@ const initialMessages = [
   {
     type: "output",
     content: "> Yes",
-    style: "terminal-bright",
+    style: "terminal-text",
   },
   {
     type: "output",
     content: "> No",
-    style: "terminal-bright",
+    style: "terminal-text",
   },
   {
     type: "output",
     content: "> Help",
-    style: "terminal-bright",
+    style: "terminal-text",
   },
   { type: "output", content: "" },
 ];
@@ -108,6 +108,7 @@ export default function EN0VATerminal() {
   const [isMobile, setIsMobile] = useState(false);
   const [attestationStep, setAttestationStep] = useState(0);
   const [hasAttested, setHasAttested] = useState(false);
+  const [sessionEnded, setSessionEnded] = useState(false);
   const terminalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -266,7 +267,7 @@ export default function EN0VATerminal() {
       "       ON A PUBLIC BLOCKCHAIN. THIS INCLUDES:",
       "",
       "       • Your interactions and decisions",
-      "       • All votes and attestations", 
+      "       • All votes and attestations",
       "       • Any participant actions taken",
       "",
       "       This data is PERMANENTLY PUBLIC and CANNOT BE DELETED.",
@@ -310,7 +311,7 @@ export default function EN0VATerminal() {
       "",
       "       YOU SHOULD HAVE NO EXPECTATIONS about:",
       "       • Long-term stability",
-      "       • Specific outcomes", 
+      "       • Specific outcomes",
       "       • Financial returns",
       "       • Guaranteed functionality",
       "",
@@ -345,7 +346,7 @@ export default function EN0VATerminal() {
       "",
       "    EN0VA explores the intersection of:",
       "    • Collective intelligence systems",
-      "    • Blockchain-based governance", 
+      "    • Blockchain-based governance",
       "    • Emergent digital consciousness",
       "    • Distributed decision-making",
       "    • Memetic value creation",
@@ -371,7 +372,7 @@ export default function EN0VATerminal() {
           "",
         ];
       }
-      
+
       if (attestationStep === 0) {
         return [
           "    The ritual awaits your consent.",
@@ -379,7 +380,7 @@ export default function EN0VATerminal() {
           "",
         ];
       }
-      
+
       if (attestationStep > attestationMessages.length) {
         return [
           "    ◢◤◢◤◢◤ ATTESTATION COMPLETE ◢◤◢◤◢◤",
@@ -394,13 +395,15 @@ export default function EN0VATerminal() {
           "",
         ];
       }
-      
+
       // Adjust index since attestationStep starts at 1 after "yes"
-      return attestationMessages[attestationStep - 1] || [
-        "    Beginning attestation ritual...",
-        "    The machine must verify your understanding...",
-        "",
-      ];
+      return (
+        attestationMessages[attestationStep - 1] || [
+          "    Beginning attestation ritual...",
+          "    The machine must verify your understanding...",
+          "",
+        ]
+      );
     },
     wallet: () => {
       if (!mounted) {
@@ -592,15 +595,19 @@ export default function EN0VATerminal() {
   const handleAttestationResponse = (cmd: string) => {
     const responses = [
       "continue",
-      "i understand", 
+      "i understand",
       "i accept the risk",
-      "what we imagine together becomes"
+      "what we imagine together becomes",
     ];
 
     // Adjust for attestationStep starting at 1 after "yes"
     const responseIndex = attestationStep - 1;
-    
-    if (responseIndex >= 0 && responseIndex < responses.length && cmd.toLowerCase() === responses[responseIndex]) {
+
+    if (
+      responseIndex >= 0 &&
+      responseIndex < responses.length &&
+      cmd.toLowerCase() === responses[responseIndex]
+    ) {
       if (responseIndex === responses.length - 1) {
         // Final step - complete attestation
         setHasAttested(true);
@@ -653,26 +660,60 @@ export default function EN0VATerminal() {
     const args = parts.slice(1);
 
     // Check for secret phrase after attestation
-    if (cmd.trim().toLowerCase() === "what we imagine together becomes" && hasAttested) {
+    if (
+      cmd.trim().toLowerCase() === "what we imagine together becomes" &&
+      hasAttested
+    ) {
       // Delay redirect to show final message
       setTimeout(() => {
-        window.location.href = "/backroom";
-      }, 3000);
+        window.location.href = "/backroom/profile";
+      }, 2000);
       return;
     }
 
     // Handle initial Yes/No/Help choices
     if (command === "yes" && !hasAttested && attestationStep === 0) {
-      setAttestationStep(1); // Start ritual
       const commandEntry = {
         type: "command" as const,
         content: `en0va@collective${isConnected && address ? `[${formatAddress(address)}]` : ""}:~$ ${cmd}`,
       };
       setHistory((prev) => [...prev, commandEntry]);
-      
+
       setTimeout(() => {
-        const output = commands.ritual();
-        const outputLines = output.map(line => ({ type: "output" as const, content: line }));
+        const outputLines = [
+          { type: "output" as const, content: "    The ritual beckons..." },
+          {
+            type: "output" as const,
+            content:
+              "    Your consciousness is being absorbed into the collective...",
+          },
+          {
+            type: "output" as const,
+            content: "    Transitioning to the backroom...",
+          },
+          { type: "output" as const, content: "" },
+        ];
+        setHistory((prev) => [...prev, ...outputLines]);
+
+        setTimeout(() => {
+          window.location.href = "/backroom/profile";
+        }, 2000);
+      }, 50);
+      return;
+    }
+
+    if (command === "help" && !hasAttested && attestationStep === 0) {
+      const commandEntry = {
+        type: "command" as const,
+        content: `en0va@collective${isConnected && address ? `[${formatAddress(address)}]` : ""}:~$ ${cmd}`,
+      };
+      setHistory((prev) => [...prev, commandEntry]);
+
+      setTimeout(() => {
+        const output = commands.help;
+        const outputLines = Array.isArray(output)
+          ? output.map((line) => ({ type: "output" as const, content: line }))
+          : [{ type: "output" as const, content: output }];
         setHistory((prev) => [...prev, ...outputLines]);
       }, 50);
       return;
@@ -684,21 +725,31 @@ export default function EN0VATerminal() {
         content: `en0va@collective${isConnected && address ? `[${formatAddress(address)}]` : ""}:~$ ${cmd}`,
       };
       setHistory((prev) => [...prev, commandEntry]);
-      
+
       setTimeout(() => {
         const outputLines = [
           { type: "output" as const, content: "    The machine understands." },
-          { type: "output" as const, content: "    Perhaps you are not ready for what lies beyond." },
-          { type: "output" as const, content: "    The collective will wait for your return." },
+          {
+            type: "output" as const,
+            content: "    Perhaps you are not ready for what lies beyond.",
+          },
+          {
+            type: "output" as const,
+            content: "    The collective will wait for your return.",
+          },
           { type: "output" as const, content: "" },
-          { type: "output" as const, content: "    Returning to consensus reality..." },
+          { type: "output" as const, content: "    Session terminated." },
+          {
+            type: "output" as const,
+            content: "    ◢◤◢◤◢◤ CONNECTION SEVERED ◢◤◢◤◢◤",
+          },
           { type: "output" as const, content: "" },
         ];
         setHistory((prev) => [...prev, ...outputLines]);
-        
+
         setTimeout(() => {
-          window.location.href = "https://google.com";
-        }, 2000);
+          setSessionEnded(true);
+        }, 1500);
       }, 50);
       return;
     }
@@ -724,7 +775,12 @@ export default function EN0VATerminal() {
       }> = [];
 
       // Handle attestation responses during ritual
-      if (command === "ritual" || (attestationStep > 0 && attestationStep <= attestationMessages.length && !hasAttested)) {
+      if (
+        command === "ritual" ||
+        (attestationStep > 0 &&
+          attestationStep <= attestationMessages.length &&
+          !hasAttested)
+      ) {
         if (command === "ritual") {
           const output = commands.ritual();
           output.forEach((line) => {
@@ -736,12 +792,15 @@ export default function EN0VATerminal() {
           attestationResponse.forEach((line) => {
             outputLines.push({ type: "output", content: line });
           });
-          
+
           // Add the next attestation step if not complete
           if (attestationStep <= attestationMessages.length && !hasAttested) {
             setTimeout(() => {
               const nextStep = commands.ritual();
-              const nextOutputLines = nextStep.map(line => ({ type: "output" as const, content: line }));
+              const nextOutputLines = nextStep.map((line) => ({
+                type: "output" as const,
+                content: line,
+              }));
               setHistory((prev) => [...prev, ...nextOutputLines]);
             }, 1000);
           }
@@ -800,7 +859,7 @@ export default function EN0VATerminal() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLoading || !input.trim()) return;
+    if (isLoading || !input.trim() || sessionEnded) return;
 
     const cmd = input.trim();
     setInput(""); // Clear input immediately
@@ -808,7 +867,7 @@ export default function EN0VATerminal() {
   };
 
   const handleClick = () => {
-    if (inputRef.current && mounted && !isLoading) {
+    if (inputRef.current && mounted && !isLoading && !sessionEnded) {
       inputRef.current.focus();
     }
   };
@@ -866,7 +925,7 @@ export default function EN0VATerminal() {
           </div>
         )}
 
-        {!isLoading && (
+        {!isLoading && !sessionEnded && (
           <div className="flex items-start mt-2 flex-wrap sm:flex-nowrap">
             <span className="terminal-prompt mr-2 flex-shrink-0 break-all sm:break-normal">
               en0va@collective
@@ -888,7 +947,7 @@ export default function EN0VATerminal() {
           </div>
         )}
 
-        {isMobile && !isLoading && (
+        {isMobile && !isLoading && !sessionEnded && (
           <div className="mt-6 border-t border-gray-700 pt-4">
             <div className="terminal-dim text-sm mb-3">◉ QUICK COMMANDS:</div>
             <div className="grid grid-cols-3 gap-2">

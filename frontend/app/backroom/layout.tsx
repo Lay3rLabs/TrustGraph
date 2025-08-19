@@ -16,10 +16,6 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  // { id: "dashboard", label: "Overview", path: "/backroom", icon: "◉" },
-  { id: "en0va", label: "EN0VA", path: "/backroom/en0va", icon: "∞" },
-  { id: "symbient", label: "Symbient", path: "/backroom/symbient", icon: "◈◉" },
-  { id: "vault", label: "Vault", path: "/backroom/vault", icon: "◢◤" },
   {
     id: "explorer",
     label: "Explorer",
@@ -45,28 +41,57 @@ const menuItems: MenuItem[] = [
       },
     ],
   },
-  // {
-  //   id: "governance",
-  //   label: "Governance",
-  //   path: "/backroom/governance",
-  //   icon: "◢◤",
-  // },
+  {
+    id: "governance",
+    label: "Governance",
+    path: "/backroom/governance",
+    icon: "◢◤",
+  },
   {
     id: "hyperstition",
     label: "Hyperstitions",
     path: "/backroom/hyperstition",
     icon: "▲▼",
   },
-  { id: "ico", label: "ICO", path: "/backroom/ico", icon: "◊" },
-  {
-    id: "incentives",
-    label: "Incentives",
-    path: "/backroom/incentives",
-    icon: "◇◆",
-  },
   { id: "memetics", label: "Memetics", path: "/backroom/memetics", icon: "◈" },
   { id: "profile", label: "Profile", path: "/backroom/profile", icon: "◉" },
-  { id: "systems", label: "Systems", path: "/backroom/systems", icon: "░█" },
+  {
+    id: "leaderboard",
+    label: "Leaderboard",
+    path: "/backroom/leaderboard",
+    icon: "☆",
+  },
+  { id: "rewards", label: "Rewards", path: "/backroom/rewards", icon: "$" },
+  { id: "vouching", label: "Vouching", path: "/backroom/vouching", icon: "♥" },
+  {
+    id: "mocks",
+    label: "WIP",
+    icon: "?",
+    submenu: [
+      { id: "en0va", label: "EN0VA", path: "/backroom/en0va", icon: "∞" },
+      {
+        id: "symbient",
+        label: "Symbient",
+        path: "/backroom/symbient",
+        icon: "◈◉",
+      },
+      { id: "ico", label: "ICO", path: "/backroom/ico", icon: "◊" },
+      {
+        id: "incentives",
+        label: "Incentives",
+        path: "/backroom/incentives",
+        icon: "◇◆",
+      },
+      { id: "points", label: "Points", path: "/backroom/points", icon: "★" },
+      {
+        id: "systems",
+        label: "Systems",
+        path: "/backroom/systems",
+        icon: "░█",
+      },
+      { id: "vault", label: "Vault", path: "/backroom/vault", icon: "◢◤" },
+    ],
+  },
 ];
 
 export default function BackroomLayout({
@@ -341,9 +366,7 @@ export default function BackroomLayout({
         {isConnected && address ? (
           <div className="space-y-4">
             <div className="space-y-2">
-              <div className="terminal-dim text-xs">
-                CONNECTED WALLET
-              </div>
+              <div className="terminal-dim text-xs">CONNECTED WALLET</div>
               <div className="terminal-text text-xs break-all bg-black/30 p-3 rounded border border-gray-700">
                 {address}
               </div>
@@ -355,16 +378,12 @@ export default function BackroomLayout({
               }}
               className="w-full mobile-terminal-btn px-4 py-2"
             >
-              <span className="terminal-command text-xs">
-                DISCONNECT
-              </span>
+              <span className="terminal-command text-xs">DISCONNECT</span>
             </button>
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="terminal-dim text-xs">
-              SELECT WALLET
-            </div>
+            <div className="terminal-dim text-xs">SELECT WALLET</div>
             {connectors && connectors.length > 0 ? (
               <div className="space-y-2">
                 {connectors.map((connector) => (
@@ -384,9 +403,7 @@ export default function BackroomLayout({
                 ))}
               </div>
             ) : (
-              <div className="terminal-dim text-xs">
-                No wallets detected
-              </div>
+              <div className="terminal-dim text-xs">No wallets detected</div>
             )}
           </div>
         )}

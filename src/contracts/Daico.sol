@@ -90,24 +90,11 @@ contract Daico is ERC20, Ownable, ReentrancyGuard {
 
     // ============ Events ============
 
-    event ContributionMade(
-        address indexed contributor,
-        uint256 amount,
-        uint256 tokens
-    );
+    event ContributionMade(address indexed contributor, uint256 amount, uint256 tokens);
     event TapChanged(uint256 oldTap, uint256 newTap);
     event Withdrawal(uint256 amount);
-    event ProposalCreated(
-        uint256 indexed proposalId,
-        ProposalType proposalType,
-        uint256 newTapValue
-    );
-    event VoteCast(
-        uint256 indexed proposalId,
-        address indexed voter,
-        bool choice,
-        uint256 weight
-    );
+    event ProposalCreated(uint256 indexed proposalId, ProposalType proposalType, uint256 newTapValue);
+    event VoteCast(uint256 indexed proposalId, address indexed voter, bool choice, uint256 weight);
     event ProposalExecuted(uint256 indexed proposalId, ProposalStatus result);
     event WithdrawModeActivated();
     event RefundClaimed(address indexed contributor, uint256 amount);
@@ -116,19 +103,14 @@ contract Daico is ERC20, Ownable, ReentrancyGuard {
 
     modifier onlyDuringContribution() {
         require(
-            block.timestamp >= contributionStart &&
-                block.timestamp <= contributionEnd &&
-                !isWithdrawMode,
+            block.timestamp >= contributionStart && block.timestamp <= contributionEnd && !isWithdrawMode,
             "Not in contribution period"
         );
         _;
     }
 
     modifier onlyAfterContribution() {
-        require(
-            block.timestamp > contributionEnd,
-            "Contribution period not ended"
-        );
+        require(block.timestamp > contributionEnd, "Contribution period not ended");
         _;
     }
 
@@ -180,10 +162,7 @@ contract Daico is ERC20, Ownable, ReentrancyGuard {
      */
     function contribute() external payable onlyDuringContribution nonReentrant {
         require(msg.value > 0, "Must contribute positive amount");
-        require(
-            totalRaised + msg.value <= fundingCap,
-            "Would exceed funding cap"
-        );
+        require(totalRaised + msg.value <= fundingCap, "Would exceed funding cap");
 
         uint256 tokenAmount = (msg.value * 10 ** decimals()) / tokenPrice;
 
@@ -199,10 +178,7 @@ contract Daico is ERC20, Ownable, ReentrancyGuard {
      * @notice Claim refund if funding goal not met
      */
     function claimRefund() external nonReentrant {
-        require(
-            block.timestamp > contributionEnd,
-            "Contribution period not ended"
-        );
+        require(block.timestamp > contributionEnd, "Contribution period not ended");
         require(totalRaised < fundingGoal, "Funding goal was met");
         require(contributions[msg.sender] > 0, "No contribution to refund");
 
@@ -245,17 +221,10 @@ contract Daico is ERC20, Ownable, ReentrancyGuard {
      * @param _newTap New tap rate in wei per second
      */
     function decreaseTap(uint256 _newTap) external onlyOwner {
-        require(
-            _newTap < tap || tap == 0,
-            "Can only decrease tap or set initial tap"
-        );
+        require(_newTap < tap || tap == 0, "Can only decrease tap or set initial tap");
 
         // Withdraw any pending funds first (only if tap > 0)
-        if (
-            block.timestamp > contributionEnd &&
-            totalRaised >= fundingGoal &&
-            tap > 0
-        ) {
+        if (block.timestamp > contributionEnd && totalRaised >= fundingGoal && tap > 0) {
             uint256 timeElapsed = block.timestamp - lastWithdrawn;
             uint256 withdrawAmount = timeElapsed * tap;
 
@@ -284,10 +253,11 @@ contract Daico is ERC20, Ownable, ReentrancyGuard {
      * @param _proposalType Type of proposal
      * @param _newTapValue New tap value (only for IncreaseTap proposals)
      */
-    function createProposal(
-        ProposalType _proposalType,
-        uint256 _newTapValue
-    ) external onlyTokenHolder onlyAfterContribution {
+    function createProposal(ProposalType _proposalType, uint256 _newTapValue)
+        external
+        onlyTokenHolder
+        onlyAfterContribution
+    {
         require(!isWithdrawMode, "Contract is in withdraw mode");
 
         if (_proposalType == ProposalType.IncreaseTap) {
@@ -315,10 +285,7 @@ contract Daico is ERC20, Ownable, ReentrancyGuard {
     function vote(uint256 _proposalId, bool _choice) external onlyTokenHolder {
         Proposal storage proposal = proposals[_proposalId];
 
-        require(
-            proposal.status == ProposalStatus.Active,
-            "Proposal not active"
-        );
+        require(proposal.status == ProposalStatus.Active, "Proposal not active");
         require(block.timestamp <= proposal.endTime, "Voting period ended");
         require(!proposal.hasVoted[msg.sender], "Already voted");
 
@@ -342,10 +309,7 @@ contract Daico is ERC20, Ownable, ReentrancyGuard {
     function executeProposal(uint256 _proposalId) external {
         Proposal storage proposal = proposals[_proposalId];
 
-        require(
-            proposal.status == ProposalStatus.Active,
-            "Proposal not active"
-        );
+        require(proposal.status == ProposalStatus.Active, "Proposal not active");
         require(block.timestamp > proposal.endTime, "Voting period not ended");
 
         uint256 totalVotes = proposal.yesVotes + proposal.noVotes;
@@ -354,8 +318,7 @@ contract Daico is ERC20, Ownable, ReentrancyGuard {
         if (totalVotes >= requiredQuorum) {
             // Calculate if proposal passes: (yes - no) / 6 > 0
             // This implements the formula from Vitalik's post
-            int256 netVotes = int256(proposal.yesVotes) -
-                int256(proposal.noVotes);
+            int256 netVotes = int256(proposal.yesVotes) - int256(proposal.noVotes);
             int256 absentVotes = int256(totalSupply() - totalVotes);
             int256 score = netVotes - absentVotes / 6;
 
@@ -368,10 +331,7 @@ contract Daico is ERC20, Ownable, ReentrancyGuard {
                         uint256 timeElapsed = block.timestamp - lastWithdrawn;
                         uint256 withdrawAmount = timeElapsed * tap;
 
-                        if (
-                            withdrawAmount > 0 &&
-                            withdrawAmount <= address(this).balance
-                        ) {
+                        if (withdrawAmount > 0 && withdrawAmount <= address(this).balance) {
                             lastWithdrawn = block.timestamp;
                             payable(owner()).transfer(withdrawAmount);
                             emit Withdrawal(withdrawAmount);
@@ -426,9 +386,7 @@ contract Daico is ERC20, Ownable, ReentrancyGuard {
      * @notice Get proposal details
      * @param _proposalId ID of the proposal
      */
-    function getProposal(
-        uint256 _proposalId
-    )
+    function getProposal(uint256 _proposalId)
         external
         view
         returns (
@@ -460,10 +418,7 @@ contract Daico is ERC20, Ownable, ReentrancyGuard {
      * @param _proposalId ID of the proposal
      * @param _voter Address to check
      */
-    function hasVoted(
-        uint256 _proposalId,
-        address _voter
-    ) external view returns (bool) {
+    function hasVoted(uint256 _proposalId, address _voter) external view returns (bool) {
         return proposals[_proposalId].hasVoted[_voter];
     }
 
@@ -472,14 +427,8 @@ contract Daico is ERC20, Ownable, ReentrancyGuard {
      * @param _proposalId ID of the proposal
      * @param _voter Address to check
      */
-    function getVoteChoice(
-        uint256 _proposalId,
-        address _voter
-    ) external view returns (bool) {
-        require(
-            proposals[_proposalId].hasVoted[_voter],
-            "Address has not voted"
-        );
+    function getVoteChoice(uint256 _proposalId, address _voter) external view returns (bool) {
+        require(proposals[_proposalId].hasVoted[_voter], "Address has not voted");
         return proposals[_proposalId].voteChoice[_voter];
     }
 
@@ -487,11 +436,7 @@ contract Daico is ERC20, Ownable, ReentrancyGuard {
      * @notice Calculate available withdrawal amount for owner
      */
     function getAvailableWithdrawal() external view returns (uint256) {
-        if (
-            isWithdrawMode ||
-            block.timestamp <= contributionEnd ||
-            totalRaised < fundingGoal
-        ) {
+        if (isWithdrawMode || block.timestamp <= contributionEnd || totalRaised < fundingGoal) {
             return 0;
         }
 
@@ -549,16 +494,11 @@ contract Daico is ERC20, Ownable, ReentrancyGuard {
      */
     receive() external payable {
         require(
-            block.timestamp >= contributionStart &&
-                block.timestamp <= contributionEnd &&
-                !isWithdrawMode,
+            block.timestamp >= contributionStart && block.timestamp <= contributionEnd && !isWithdrawMode,
             "Not in contribution period"
         );
         require(msg.value > 0, "Must contribute positive amount");
-        require(
-            totalRaised + msg.value <= fundingCap,
-            "Would exceed funding cap"
-        );
+        require(totalRaised + msg.value <= fundingCap, "Would exceed funding cap");
 
         uint256 tokenAmount = (msg.value * 10 ** decimals()) / tokenPrice;
 

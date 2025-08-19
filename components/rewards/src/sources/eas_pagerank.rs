@@ -14,6 +14,7 @@ use wavs_wasi_utils::evm::{
 };
 
 use super::Source;
+use std::sync::Mutex;
 
 /// EAS PageRank reward source that calculates rewards based on PageRank algorithm
 pub struct EasPageRankSource {
@@ -25,6 +26,8 @@ pub struct EasPageRankSource {
     pub chain_name: String,
     /// PageRank reward configuration
     pub pagerank_config: PageRankRewardSource,
+    /// Cached rewards to avoid recalculation
+    cached_rewards: Mutex<Option<HashMap<Address, U256>>>,
 }
 
 impl EasPageRankSource {
@@ -53,11 +56,27 @@ impl EasPageRankSource {
             return Err(anyhow::anyhow!("PageRank reward pool cannot be zero"));
         }
 
+        // Validate trust configuration if enabled
+        if pagerank_config.config.has_trust_enabled() {
+            println!(
+                "🔒 Trust Aware PageRank enabled with {} trusted seeds",
+                pagerank_config.config.trust_config.trusted_seeds.len()
+            );
+
+            // Log trusted seeds for transparency
+            for (i, seed) in pagerank_config.config.trust_config.trusted_seeds.iter().enumerate() {
+                println!("   {}. {}", i + 1, seed);
+            }
+        } else {
+            println!("📊 Standard PageRank (no trust seeds configured)");
+        }
+
         Ok(Self {
             eas_address: eas_addr,
             indexer_address: indexer_addr,
             chain_name: chain_name.to_string(),
             pagerank_config,
+            cached_rewards: Mutex::new(None),
         })
     }
 
@@ -123,7 +142,10 @@ impl EasPageRankSource {
         Ok(decoded)
     }
 
-    async fn get_attestation_details(&self, uid: FixedBytes<32>) -> Result<(Address, Address)> {
+    async fn get_attestation_details(
+        &self,
+        uid: FixedBytes<32>,
+    ) -> Result<(Address, Address, Vec<u8>)> {
         let provider = self.create_provider().await?;
 
         let call = IEAS::getAttestationCall { uid };
@@ -136,7 +158,7 @@ impl EasPageRankSource {
         let result = provider.call(tx).await?;
         let decoded = IEAS::getAttestationCall::abi_decode_returns(&result)
             .map_err(|e| anyhow::anyhow!("Failed to decode attestation: {}", e))?;
-        Ok((decoded.attester, decoded.recipient))
+        Ok((decoded.attester, decoded.recipient, decoded.data.to_vec()))
     }
 
     /// Build attestation graph from EAS data
@@ -152,6 +174,9 @@ impl EasPageRankSource {
         }
 
         let mut graph = AttestationGraph::new();
+        let mut edge_count = 0;
+        let mut unique_attesters = std::collections::HashSet::new();
+        let mut unique_recipients = std::collections::HashSet::new();
         let batch_size = 100u64;
         let mut start = 0u64;
 
@@ -163,10 +188,30 @@ impl EasPageRankSource {
 
             for uid in uids {
                 match self.get_attestation_details(uid).await {
-                    Ok((attester, recipient)) => {
-                        // Add edge from attester to recipient with weight 1.0
-                        // Could be enhanced with time decay, content analysis, etc.
-                        graph.add_edge(attester, recipient, 1.0);
+                    Ok((attester, recipient, data)) => {
+                        // Decode weight from attestation data
+                        let weight = if data.len() >= 32 {
+                            // Data is ABI encoded uint256
+                            let mut weight_bytes = [0u8; 32];
+                            weight_bytes.copy_from_slice(&data[..32]);
+                            let weight_u256 = U256::from_be_bytes(weight_bytes);
+                            // Convert to f64 (weights are typically 0-100)
+                            weight_u256.to::<u64>() as f64
+                        } else {
+                            // Default weight if data is missing or invalid
+                            1.0
+                        };
+
+                        graph.add_edge(attester, recipient, weight);
+                        edge_count += 1;
+                        unique_attesters.insert(attester);
+                        unique_recipients.insert(recipient);
+
+                        // Log all edges for debugging
+                        println!(
+                            "  Edge #{}: {} → {} (weight: {})",
+                            edge_count, attester, recipient, weight
+                        );
                     }
                     Err(e) => {
                         println!("⚠️  Failed to get attestation details for UID {:?}: {}", uid, e);
@@ -177,7 +222,19 @@ impl EasPageRankSource {
             start += length;
         }
 
-        println!("✅ Built attestation graph with {} nodes", graph.nodes().len());
+        println!("✅ Built attestation graph:");
+        println!("   - Total nodes: {}", graph.nodes().len());
+        println!("   - Total edges: {}", edge_count);
+        println!("   - Unique attesters: {}", unique_attesters.len());
+        println!("   - Unique recipients: {}", unique_recipients.len());
+
+        // Log graph structure for debugging
+        println!("\n📊 Graph structure:");
+        for node in graph.nodes() {
+            let out_edges = graph.get_outgoing(&node).map(|edges| edges.len()).unwrap_or(0);
+            println!("   Node {}: {} outgoing edges", node, out_edges);
+        }
+
         Ok(graph)
     }
 
@@ -186,16 +243,31 @@ impl EasPageRankSource {
         let graph = self.build_attestation_graph().await?;
         let scores = graph.calculate_pagerank(&self.pagerank_config.config);
 
+        println!("\n🎲 Raw PageRank scores:");
+        let mut sorted_scores: Vec<_> = scores.iter().collect();
+        sorted_scores.sort_by(|a, b| b.1.partial_cmp(a.1).unwrap_or(std::cmp::Ordering::Equal));
+        for (i, (addr, score)) in sorted_scores.iter().take(10).enumerate() {
+            println!("   {}. {}: {:.6}", i + 1, addr, score);
+        }
+
         let mut rewards = HashMap::new();
         let total_pool = self.pagerank_config.total_reward_pool;
 
-        println!("🎯 Distributing {} total rewards based on PageRank scores", total_pool);
+        println!("\n🎯 Distributing {} total rewards based on PageRank scores", total_pool);
 
         // Filter out accounts below minimum threshold and calculate rewards
+        let total_accounts = scores.len();
         let filtered_scores: HashMap<Address, f64> = scores
             .into_iter()
             .filter(|(_, score)| *score >= self.pagerank_config.min_score_threshold)
             .collect();
+
+        println!(
+            "🔍 Filtering scores above threshold: {}",
+            self.pagerank_config.min_score_threshold
+        );
+        println!("   - Before filter: {} accounts", total_accounts);
+        println!("   - After filter: {} accounts", filtered_scores.len());
 
         if filtered_scores.is_empty() {
             println!("⚠️  No accounts meet minimum PageRank threshold");
@@ -262,11 +334,17 @@ impl EasPageRankSource {
             }
         }
 
-        println!("💰 Calculated rewards for {} addresses", rewards.len());
+        println!("\n💰 Calculated rewards for {} addresses", rewards.len());
+
+        // Debug: Show if all rewards are the same
+        let reward_values: std::collections::HashSet<_> = rewards.values().collect();
+        if reward_values.len() == 1 {
+            println!("⚠️  WARNING: All addresses received the same reward amount!");
+        }
 
         // Verify total distributed does not exceed pool
         let actual_total_distributed: U256 = rewards.values().sum();
-        println!("🔍 Reward pool verification:");
+        println!("\n🔍 Reward pool verification:");
         println!("  Total pool: {}", total_pool);
         println!("  Actually distributed: {}", actual_total_distributed);
         println!("  Remaining in pool: {}", total_pool - actual_total_distributed);
@@ -285,9 +363,11 @@ impl EasPageRankSource {
         // Print top rewards for debugging
         let mut sorted_rewards: Vec<_> = rewards.iter().collect();
         sorted_rewards.sort_by(|a, b| b.1.cmp(a.1));
-        println!("🏆 Top 10 rewards:");
+        println!("\n🏆 Top 10 rewards:");
         for (i, (addr, reward)) in sorted_rewards.iter().take(10).enumerate() {
-            println!("  {}. {}: {} tokens", i + 1, addr, reward);
+            // Find corresponding PageRank score
+            let score = filtered_scores.get(*addr).unwrap_or(&0.0);
+            println!("  {}. {}: {} tokens (PageRank: {:.6})", i + 1, addr, reward, score);
         }
 
         Ok(rewards)
@@ -297,7 +377,11 @@ impl EasPageRankSource {
 #[async_trait(?Send)]
 impl Source for EasPageRankSource {
     fn get_name(&self) -> &str {
-        "EAS-PageRank"
+        if self.pagerank_config.config.has_trust_enabled() {
+            "Trust-Aware-EAS-PageRank"
+        } else {
+            "EAS-PageRank"
+        }
     }
 
     async fn get_accounts(&self) -> Result<Vec<String>> {
@@ -312,11 +396,30 @@ impl Source for EasPageRankSource {
     }
 
     async fn get_metadata(&self) -> Result<serde_json::Value> {
+        let trust_info = if self.pagerank_config.config.has_trust_enabled() {
+            serde_json::json!({
+                "enabled": true,
+                "trusted_seeds": self.pagerank_config.config.trust_config.trusted_seeds.iter()
+                    .map(|addr| addr.to_string())
+                    .collect::<Vec<_>>(),
+                "trust_multiplier": self.pagerank_config.config.trust_config.trust_multiplier,
+                "trust_boost": self.pagerank_config.config.trust_config.trust_boost,
+            })
+        } else {
+            serde_json::json!({
+                "enabled": false
+            })
+        };
+
         Ok(serde_json::json!({
             "eas_address": self.eas_address.to_string(),
             "indexer_address": self.indexer_address.to_string(),
             "chain_name": self.chain_name,
-            "reward_type": "pagerank_attestations",
+            "reward_type": if self.pagerank_config.config.has_trust_enabled() {
+                "trust_aware_pagerank_attestations"
+            } else {
+                "pagerank_attestations"
+            },
             "schema_uid": self.pagerank_config.schema_uid,
             "total_reward_pool": self.pagerank_config.total_reward_pool.to_string(),
             "pagerank_config": {
@@ -324,7 +427,8 @@ impl Source for EasPageRankSource {
                 "max_iterations": self.pagerank_config.config.max_iterations,
                 "tolerance": self.pagerank_config.config.tolerance,
                 "min_score_threshold": self.pagerank_config.min_score_threshold,
-            }
+            },
+            "trust_config": trust_info
         }))
     }
 }

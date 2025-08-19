@@ -17,41 +17,18 @@ contract DaicoTest is Test {
     uint256 public constant FUNDING_GOAL = 10 ether;
     uint256 public constant CONTRIBUTION_DURATION = 30 days;
 
-    event ContributionMade(
-        address indexed contributor,
-        uint256 amount,
-        uint256 tokens
-    );
+    event ContributionMade(address indexed contributor, uint256 amount, uint256 tokens);
     event TapChanged(uint256 oldTap, uint256 newTap);
     event Withdrawal(uint256 amount);
-    event ProposalCreated(
-        uint256 indexed proposalId,
-        Daico.ProposalType proposalType,
-        uint256 newTapValue
-    );
-    event VoteCast(
-        uint256 indexed proposalId,
-        address indexed voter,
-        bool choice,
-        uint256 weight
-    );
-    event ProposalExecuted(
-        uint256 indexed proposalId,
-        Daico.ProposalStatus result
-    );
+    event ProposalCreated(uint256 indexed proposalId, Daico.ProposalType proposalType, uint256 newTapValue);
+    event VoteCast(uint256 indexed proposalId, address indexed voter, bool choice, uint256 weight);
+    event ProposalExecuted(uint256 indexed proposalId, Daico.ProposalStatus result);
     event WithdrawModeActivated();
     event RefundClaimed(address indexed contributor, uint256 amount);
 
     function setUp() public {
         vm.prank(owner);
-        daico = new Daico(
-            "DAICO Token",
-            "DAICO",
-            TOKEN_PRICE,
-            FUNDING_CAP,
-            FUNDING_GOAL,
-            CONTRIBUTION_DURATION
-        );
+        daico = new Daico("DAICO Token", "DAICO", TOKEN_PRICE, FUNDING_CAP, FUNDING_GOAL, CONTRIBUTION_DURATION);
     }
 
     function testInitialState() public {
@@ -95,7 +72,7 @@ contract DaicoTest is Test {
         emit ContributionMade(contributor1, contributionAmount, expectedTokens);
 
         vm.prank(contributor1);
-        (bool success, ) = address(daico).call{value: contributionAmount}("");
+        (bool success,) = address(daico).call{value: contributionAmount}("");
         assertTrue(success);
 
         assertEq(daico.totalRaised(), contributionAmount);
@@ -264,10 +241,7 @@ contract DaicoTest is Test {
         ) = daico.getProposal(0);
 
         assertEq(id, 0);
-        assertEq(
-            uint256(proposalType),
-            uint256(Daico.ProposalType.IncreaseTap)
-        );
+        assertEq(uint256(proposalType), uint256(Daico.ProposalType.IncreaseTap));
         assertEq(tapValue, newTapValue);
         assertEq(startTime, block.timestamp);
         assertEq(endTime, block.timestamp + 7 days);
@@ -308,7 +282,7 @@ contract DaicoTest is Test {
         assertTrue(daico.hasVoted(0, contributor1));
         assertTrue(daico.getVoteChoice(0, contributor1));
 
-        (, , , , , uint256 yesVotes, , ) = daico.getProposal(0);
+        (,,,,, uint256 yesVotes,,) = daico.getProposal(0);
         assertEq(yesVotes, contributor1Tokens);
     }
 
@@ -355,7 +329,7 @@ contract DaicoTest is Test {
 
         assertEq(daico.tap(), newTapValue);
 
-        (, , , , , , , Daico.ProposalStatus status) = daico.getProposal(0);
+        (,,,,,,, Daico.ProposalStatus status) = daico.getProposal(0);
         assertEq(uint256(status), uint256(Daico.ProposalStatus.Executed));
     }
 
@@ -425,8 +399,7 @@ contract DaicoTest is Test {
         uint256 contributor1Tokens = daico.balanceOf(contributor1);
         uint256 totalTokens = daico.totalSupply();
         uint256 contractBalance = address(daico).balance;
-        uint256 expectedShare = (contractBalance * contributor1Tokens) /
-            totalTokens;
+        uint256 expectedShare = (contractBalance * contributor1Tokens) / totalTokens;
 
         uint256 balanceBefore = contributor1.balance;
 

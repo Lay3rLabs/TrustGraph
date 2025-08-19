@@ -7,7 +7,7 @@
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start",
-    "contracts:update": "node scripts/update-wagmi-config.js",
+    "contracts:update": "node scripts/update-config.js",
     "claude-code": "docker compose -f .claude/docker-compose.claude.yml run --rm --remove-orphans -it claude-code-sandbox bash -c 'claude; exec'",
     "claude-code:unrestricted": "docker compose -f .claude/docker-compose.claude.yml run --rm --remove-orphans -it claude-code-sandbox bash -c 'claude --dangerously-skip-permissions; exec'",
     "wagmi:generate": "wagmi generate"
@@ -41,7 +41,8 @@
     "@radix-ui/react-toggle": "1.1.1",
     "@radix-ui/react-toggle-group": "1.1.1",
     "@radix-ui/react-tooltip": "1.1.6",
-    "@tanstack/react-query": "latest",
+    "@tanstack/react-query": "^5.85.3",
+    "@tanstack/react-query-devtools": "^5.85.3",
     "@wagmi/connectors": "^5.3.6",
     "@wagmi/core": "^2.16.4",
     "autoprefixer": "^10.4.20",
@@ -66,7 +67,7 @@
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "viem": "^2.21.53",
-    "wagmi": "latest",
+    "wagmi": "^2.16.3",
     "zod": "3.25.67"
   },
   "devDependencies": {
