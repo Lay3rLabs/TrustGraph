@@ -9,7 +9,7 @@ import {
   useSimulateContract,
   usePublicClient,
 } from "wagmi";
-import { attesterAddress, attesterAbi } from "@/lib/contracts";
+import { easAddress, easAbi } from "@/lib/contracts";
 import { encodePacked } from "viem";
 import { schemas } from "@/lib/schemas";
 
@@ -145,30 +145,35 @@ export function useAttestation() {
         blockTag: "pending", // Use pending to get the most up-to-date nonce
       });
 
+      // Create the AttestationRequest struct for EAS
+      const attestationRequest = {
+        schema: attestationData.schema as `0x${string}`,
+        data: {
+          recipient: attestationData.recipient as `0x${string}`,
+          expirationTime: BigInt(0), // No expiration
+          revocable: true,
+          refUID: "0x0000000000000000000000000000000000000000000000000000000000000000" as `0x${string}`,
+          data: encodedData,
+          value: BigInt(0), // No ETH value
+        },
+      };
+
       // Estimate gas for the transaction
       try {
         gasEstimate = await publicClient!.estimateContractGas({
-          address: attesterAddress,
-          abi: attesterAbi,
+          address: easAddress,
+          abi: easAbi,
           functionName: "attest",
-          args: [
-            attestationData.schema as `0x${string}`,
-            attestationData.recipient as `0x${string}`,
-            encodedData,
-          ],
+          args: [attestationRequest],
           account: address!,
         });
 
         // Try to simulate the contract call first to catch any revert issues
         const { result } = await publicClient!.simulateContract({
-          address: attesterAddress as `0x${string}`,
-          abi: attesterAbi,
+          address: easAddress as `0x${string}`,
+          abi: easAbi,
           functionName: "attest",
-          args: [
-            attestationData.schema as `0x${string}`,
-            attestationData.recipient as `0x${string}`,
-            encodedData,
-          ],
+          args: [attestationRequest],
           account: address!,
         });
 
@@ -177,20 +182,14 @@ export function useAttestation() {
 
         try {
           writeContract({
-            address: attesterAddress as `0x${string}`,
-            abi: attesterAbi,
+            address: easAddress as `0x${string}`,
+            abi: easAbi,
             functionName: "attest",
-            args: [
-              attestationData.schema as `0x${string}`,
-              attestationData.recipient as `0x${string}`,
-              encodedData,
-            ],
-            gas: (gasEstimate * BigInt(500)) / BigInt(100), // Add 20% buffer to gas estimate
+            args: [attestationRequest],
+            gas: (gasEstimate * BigInt(120)) / BigInt(100), // Add 20% buffer to gas estimate
             gasPrice: gasPrice, // Explicitly set gas price for anvil
             nonce, // Explicitly set nonce to prevent conflicts on local networks
             type: "legacy",
-            // type: "legacy",
-            // type: "legacy", // Use legacy transaction type for anvil compatibility
           });
         } catch (writeError) {
           console.error("Transaction failed:", writeError);
@@ -259,16 +258,25 @@ export function useAttestation() {
 
           if (encodedData !== undefined && gasEstimate !== undefined) {
             const gasPrice = await publicClient!.getGasPrice();
+            
+            // Recreate the attestation request for retry
+            const retryAttestationRequest = {
+              schema: attestationData.schema as `0x${string}`,
+              data: {
+                recipient: attestationData.recipient as `0x${string}`,
+                expirationTime: BigInt(0),
+                revocable: true,
+                refUID: "0x0000000000000000000000000000000000000000000000000000000000000000" as `0x${string}`,
+                data: encodedData,
+                value: BigInt(0),
+              },
+            };
 
             writeContract({
-              address: attesterAddress as `0x${string}`,
-              abi: attesterAbi,
+              address: easAddress as `0x${string}`,
+              abi: easAbi,
               functionName: "attest",
-              args: [
-                attestationData.schema as `0x${string}`,
-                attestationData.recipient as `0x${string}`,
-                encodedData,
-              ],
+              args: [retryAttestationRequest],
               gas: (gasEstimate * BigInt(120)) / BigInt(100),
               gasPrice: gasPrice,
               nonce: recoveryNonce,
@@ -300,16 +308,25 @@ export function useAttestation() {
           });
 
           const gasPrice = await publicClient!.getGasPrice();
+          
+          // Recreate the attestation request for final retry
+          const finalRetryAttestationRequest = {
+            schema: attestationData.schema as `0x${string}`,
+            data: {
+              recipient: attestationData.recipient as `0x${string}`,
+              expirationTime: BigInt(0),
+              revocable: true,
+              refUID: "0x0000000000000000000000000000000000000000000000000000000000000000" as `0x${string}`,
+              data: encodedData,
+              value: BigInt(0),
+            },
+          };
 
           writeContract({
-            address: attesterAddress as `0x${string}`,
-            abi: attesterAbi,
+            address: easAddress as `0x${string}`,
+            abi: easAbi,
             functionName: "attest",
-            args: [
-              attestationData.schema as `0x${string}`,
-              attestationData.recipient as `0x${string}`,
-              encodedData,
-            ],
+            args: [finalRetryAttestationRequest],
             gas: (gasEstimate * BigInt(120)) / BigInt(100),
             gasPrice: gasPrice,
             nonce: freshNonce, // Use fresh nonce for retry
