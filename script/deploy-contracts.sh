@@ -22,8 +22,8 @@ fi
 export RPC_URL=$(bash ./script/get-rpc.sh)
 export DEPLOYER_PK=$(cat .nodes/deployer)
 
-# Set MerkleGov funding amount (default 10 ETH if not specified)
-MERKLE_GOV_FUNDING="${MERKLE_GOV_FUNDING:-10000000000000000000}"  # 10 ETH in wei
+# Set MerkleGov funding amount (default 0.1 ETH if not specified)
+MERKLE_GOV_FUNDING="${MERKLE_GOV_FUNDING:-100000000000000000}"  # 0.1 ETH in wei
 
 echo "🔧 Configuration:"
 echo "   RPC_URL: ${RPC_URL}"

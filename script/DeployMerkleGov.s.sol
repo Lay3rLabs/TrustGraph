@@ -2,6 +2,7 @@
 pragma solidity ^0.8.22;
 
 import {stdJson} from "forge-std/StdJson.sol";
+import {console} from "forge-std/console.sol";
 
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
