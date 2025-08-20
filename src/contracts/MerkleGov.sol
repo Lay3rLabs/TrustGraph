@@ -86,9 +86,7 @@ contract MerkleGov {
         string description
     );
 
-    event VoteCast(
-        address indexed voter, uint256 indexed proposalId, uint8 support, uint256 votingPower, string reason
-    );
+    event VoteCast(address indexed voter, uint256 indexed proposalId, uint8 support, uint256 votingPower);
 
     event ProposalQueued(uint256 indexed proposalId, uint256 eta);
     event ProposalExecuted(uint256 indexed proposalId);
@@ -175,6 +173,7 @@ contract MerkleGov {
      * @param actions Array of actions to execute if proposal passes
      * @param description Description of the proposal
      * @param snapshotId Optional snapshot ID for voting power (0 for latest)
+     * @param rewardToken The reward token address (part of merkle tree structure)
      * @param votingPower The claimed voting power for proposal creation
      * @param proof Merkle proof for voting power verification
      * @return proposalId The ID of the created proposal
@@ -183,6 +182,7 @@ contract MerkleGov {
         ProposalAction[] calldata actions,
         string calldata description,
         uint256 snapshotId,
+        address rewardToken,
         uint256 votingPower,
         bytes32[] calldata proof
     ) external returns (uint256 proposalId) {
@@ -198,7 +198,7 @@ contract MerkleGov {
         uint256 proposalCreationId = type(uint256).max - proposalId;
 
         require(
-            merkleVote.verifyVotingPower(msg.sender, proposalCreationId, votingPower, proof),
+            merkleVote.verifyVotingPower(msg.sender, proposalCreationId, rewardToken, votingPower, proof),
             "MerkleGov: invalid voting power proof"
         );
 
@@ -229,35 +229,49 @@ contract MerkleGov {
      * @notice Cast vote with Merkle proof verification
      * @param proposalId The ID of the proposal to vote on
      * @param support The vote type (0=Against, 1=For, 2=Abstain)
+     * @param rewardToken The reward token address (part of merkle tree structure)
      * @param votingPower The claimed voting power
      * @param proof Merkle proof for voting power verification
-     * @param reason Optional reason for the vote
      */
     function castVote(
         uint256 proposalId,
         uint8 support,
+        address rewardToken,
         uint256 votingPower,
-        bytes32[] calldata proof,
-        string calldata reason
+        bytes32[] calldata proof
     ) external {
+        _castVote(msg.sender, proposalId, support, rewardToken, votingPower, proof);
+    }
+
+    /**
+     * @notice Internal function to handle vote casting
+     */
+    function _castVote(
+        address voter,
+        uint256 proposalId,
+        uint8 support,
+        address rewardToken,
+        uint256 votingPower,
+        bytes32[] calldata proof
+    ) internal {
         require(support <= 2, "MerkleGov: invalid support value");
         require(votingPower > 0, "MerkleGov: zero voting power");
 
         Proposal storage proposal = proposals[proposalId];
         require(proposal.id != 0, "MerkleGov: proposal not found");
         require(_getProposalState(proposalId) == ProposalState.Active, "MerkleGov: voting not active");
-        require(!proposal.hasVoted[msg.sender], "MerkleGov: already voted");
+        require(!proposal.hasVoted[voter], "MerkleGov: already voted");
 
         // Verify voting power with MerkleVote
         require(
-            merkleVote.verifyVotingPower(msg.sender, proposalId, votingPower, proof),
+            merkleVote.verifyVotingPower(voter, proposalId, rewardToken, votingPower, proof),
             "MerkleGov: invalid voting power proof"
         );
 
         // Record vote
-        proposal.hasVoted[msg.sender] = true;
-        proposal.votes[msg.sender] = VoteType(support);
-        proposal.votePower[msg.sender] = votingPower;
+        proposal.hasVoted[voter] = true;
+        proposal.votes[voter] = VoteType(support);
+        proposal.votePower[voter] = votingPower;
 
         // Update vote tallies
         if (support == 0) {
@@ -268,14 +282,7 @@ contract MerkleGov {
             proposal.abstainVotes += votingPower;
         }
 
-        emit VoteCast(msg.sender, proposalId, support, votingPower, reason);
-    }
-
-    /**
-     * @notice Cast vote without reason
-     */
-    function castVote(uint256 proposalId, uint8 support, uint256 votingPower, bytes32[] calldata proof) external {
-        this.castVote(proposalId, support, votingPower, proof, "");
+        emit VoteCast(voter, proposalId, support, votingPower);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -405,12 +412,13 @@ contract MerkleGov {
     /**
      * @notice Check if an account has sufficient voting power to create proposals
      * @param account The account to check
+     * @param rewardToken The reward token address (part of merkle tree structure)
      * @param votingPower The claimed voting power
      * @param proof Merkle proof for voting power verification
      * @return canPropose_ Whether the account can create proposals
      * @dev This function simulates the proposal creation check without actually creating a proposal
      */
-    function canPropose(address account, uint256 votingPower, bytes32[] calldata proof)
+    function canPropose(address account, address rewardToken, uint256 votingPower, bytes32[] calldata proof)
         external
         view
         returns (bool canPropose_)
