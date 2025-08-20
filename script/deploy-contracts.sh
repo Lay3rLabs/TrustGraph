@@ -58,6 +58,18 @@ forge script script/DeployRewards.s.sol:DeployScript \
     --private-key "${DEPLOYER_PK}" \
     --broadcast
 
+# Extract reward distributor address for MerkleGov deployment
+export REWARD_DISTRIBUTOR_ADDR=$(jq -r '.reward_distributor' .docker/rewards_deploy.json 2>/dev/null || echo "")
+
+echo "🗳️  Deploying Merkle Governance contracts..."
+
+# Deploy MerkleGov contracts using Foundry script
+forge script script/DeployMerkleGov.s.sol:DeployScript \
+    --sig 'run(string,string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" "${REWARD_DISTRIBUTOR_ADDR}" \
+    --rpc-url "${RPC_URL}" \
+    --private-key "${DEPLOYER_PK}" \
+    --broadcast
+
 # Extract deployed addresses from EAS deployment
 export EAS_REGISTRY_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("SchemaRegistry deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 export EAS_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("EAS deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
@@ -83,6 +95,10 @@ export GOVERNOR_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("
 # Extract deployed addresses from Rewards deployment
 export REWARD_DISTRIBUTOR_ADDR=$(jq -r '.reward_distributor' .docker/rewards_deploy.json 2>/dev/null || echo "")
 export REWARD_TOKEN_ADDR=$(jq -r '.reward_token' .docker/rewards_deploy.json 2>/dev/null || echo "")
+
+# Extract deployed addresses from MerkleGov deployment
+export MERKLE_VOTE_ADDR=$(jq -r '.merkle_vote' .docker/merkle_gov_deploy.json 2>/dev/null || echo "")
+export MERKLE_GOV_ADDR=$(jq -r '.merkle_gov' .docker/merkle_gov_deploy.json 2>/dev/null || echo "")
 
 # Use EAS Attest Trigger as the main service trigger
 export SERVICE_TRIGGER_ADDR="${EAS_ATTEST_TRIGGER_ADDR}"
@@ -119,6 +135,10 @@ cat > .docker/deployment_summary.json << EOF
   "reward_contracts": {
     "reward_distributor": "${REWARD_DISTRIBUTOR_ADDR}",
     "reward_token": "${REWARD_TOKEN_ADDR}"
+  },
+  "merkle_governance_contracts": {
+    "merkle_vote": "${MERKLE_VOTE_ADDR}",
+    "merkle_gov": "${MERKLE_GOV_ADDR}"
   }
 }
 EOF
@@ -158,10 +178,15 @@ echo "💰 Reward Contracts:"
 echo "   REWARD_DISTRIBUTOR_ADDR: ${REWARD_DISTRIBUTOR_ADDR}"
 echo "   REWARD_TOKEN_ADDR: ${REWARD_TOKEN_ADDR}"
 echo ""
+echo "🗳️  Merkle Governance Contracts:"
+echo "   MERKLE_VOTE_ADDR: ${MERKLE_VOTE_ADDR}"
+echo "   MERKLE_GOV_ADDR: ${MERKLE_GOV_ADDR}"
+echo ""
 echo "📄 Deployment details saved to .docker/deployment_summary.json"
 echo "📄 EAS deployment logs saved to .docker/eas_deploy.json"
 echo "📄 Governance deployment logs saved to .docker/governance_deploy.json"
 echo "📄 Rewards deployment details saved to .docker/rewards_deploy.json"
+echo "📄 Merkle Governance deployment details saved to .docker/merkle_gov_deploy.json"
 
 # Update environment variables for other scripts
 export SERVICE_SUBMISSION_ADDR="${EAS_ATTESTER_ADDR}"  # For backwards compatibility

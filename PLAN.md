@@ -38,9 +38,9 @@ Fix eas-attest component and Attester.sol contract:
 # MVP Merkle Gov:
 - [x] New voting power contract to consume merkle tree
 - [x] Extend create attestations script to also have alice vouch for my wallets
-- [ ] Tests for new voting power contract to consume merkle tree (make sure it actually works in theory)
-- [ ] Deploy scripts for MerkleVote and Merkle Gov contracts
-- [ ] Wire up rewards component to MerkleVote contract
+- [x] Tests for new voting power contract to consume merkle tree (make sure it actually works in theory)
+- [x] Deploy scripts for MerkleVote and Merkle Gov contracts
+- [x] Wire up rewards component to MerkleVote contract
 - [ ] Vibe code governance UI
 
 MVP Symbient
