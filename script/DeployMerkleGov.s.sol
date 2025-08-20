@@ -22,8 +22,11 @@ contract DeployScript is Common {
      * @dev Deploys the MerkleVote and MerkleGov contracts and writes the results to a JSON file
      * @param serviceManagerAddr The address of the service manager
      * @param rewardDistributorAddr The address of the reward distributor (for owner/updater role)
+     * @param fundingAmount The amount of ETH to fund the MerkleGov contract with (in wei)
      */
-    function run(string calldata serviceManagerAddr, string calldata rewardDistributorAddr) public {
+    function run(string calldata serviceManagerAddr, string calldata rewardDistributorAddr, uint256 fundingAmount)
+        public
+    {
         address serviceManager = vm.parseAddress(serviceManagerAddr);
         address rewardDistributor = vm.parseAddress(rewardDistributorAddr);
 
@@ -61,6 +64,12 @@ contract DeployScript is Common {
             proposalThreshold
         );
 
+        // Fund the MerkleGov contract with ETH if specified
+        if (fundingAmount > 0) {
+            payable(address(merkleGov)).transfer(fundingAmount);
+            console.log("Funded MerkleGov with", fundingAmount, "wei");
+        }
+
         // For testnet/production, you might want to update these parameters
         // merkleGov.setQuorum(newQuorum);
         // merkleGov.setVotingDelay(newDelay);
@@ -79,8 +88,20 @@ contract DeployScript is Common {
         _json.serialize("proposal_threshold", vm.toString(proposalThreshold));
         _json.serialize("merkle_vote_timelock", vm.toString(initialTimelock));
         _json.serialize("gov_timelock_delay", vm.toString(timelockDelay));
+        _json.serialize("funded_amount_wei", vm.toString(fundingAmount));
         string memory finalJson = _json.serialize("admin", Strings.toChecksumHexString(deployer));
 
         vm.writeFile(script_output_path, finalJson);
+    }
+
+    /**
+     * @dev Alternative run function with default funding (0.1 ETH)
+     * @param serviceManagerAddr The address of the service manager
+     * @param rewardDistributorAddr The address of the reward distributor (for owner/updater role)
+     */
+    function run(string calldata serviceManagerAddr, string calldata rewardDistributorAddr) public {
+        // Default funding amount of 0.1 ETH
+        uint256 defaultFunding = 0.1 ether;
+        run(serviceManagerAddr, rewardDistributorAddr, defaultFunding);
     }
 }

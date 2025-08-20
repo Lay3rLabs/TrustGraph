@@ -41,8 +41,21 @@ Fix eas-attest component and Attester.sol contract:
 - [x] Tests for new voting power contract to consume merkle tree (make sure it actually works in theory)
 - [x] Deploy scripts for MerkleVote and Merkle Gov contracts
 - [x] Wire up rewards component to MerkleVote contract
-- [ ] Fix frontend rewards claiming
+- [x] Fix frontend rewards claiming
 - [ ] Vibe code governance UI
+
+Let's work on @frontend/app/backroom/governance. We're going to be building a Merkle Governance UI for the following two contracts: MerkleVote @src/contracts/MerkleVote.sol and MerkleGov @src/contracts/MerkleGov.sol.
+
+As a user, I want to be able to:
+- Create a proposal
+- Vote on a proposal
+- See a list of proposals
+- View proposal details
+- Know my voting power
+
+The Merkle Governance system is very similar to how we've implemented rewards. See @frontend/app/backroom/rewards/page.tsx. All the information needed for display is available in the merkle tree on IPFS, and you can query the IPFS CID from the MerkleVote contract. When submitting votes or creating proposals, you'll need to submit proofs as well, similar to how we've done with claiming rewards (the merkle tree is the same in both instances). It may also be helpful to you to look at @frontend/hooks/useRewards.ts and @frontend/components/RewardsCard.tsx.
+
+Try to reuse or create UI components when possible, see the @frontend/components folder. Also see @frontend/wagmi.config.ts and auto-generated @frontend/lib/contracts.ts for contract ABI information.
 
 MVP Symbient
 - [ ] Add LLM Module

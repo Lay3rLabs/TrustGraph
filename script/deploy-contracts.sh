@@ -22,9 +22,13 @@ fi
 export RPC_URL=$(bash ./script/get-rpc.sh)
 export DEPLOYER_PK=$(cat .nodes/deployer)
 
+# Set MerkleGov funding amount (default 10 ETH if not specified)
+MERKLE_GOV_FUNDING="${MERKLE_GOV_FUNDING:-10000000000000000000}"  # 10 ETH in wei
+
 echo "🔧 Configuration:"
 echo "   RPC_URL: ${RPC_URL}"
 echo "   WAVS_SERVICE_MANAGER_ADDRESS: ${WAVS_SERVICE_MANAGER_ADDRESS}"
+echo "   MERKLE_GOV_FUNDING: ${MERKLE_GOV_FUNDING} wei"
 
 # Create output directory
 mkdir -p .docker
@@ -62,10 +66,11 @@ forge script script/DeployRewards.s.sol:DeployScript \
 export REWARD_DISTRIBUTOR_ADDR=$(jq -r '.reward_distributor' .docker/rewards_deploy.json 2>/dev/null || echo "")
 
 echo "🗳️  Deploying Merkle Governance contracts..."
+echo "   Funding MerkleGov with: ${MERKLE_GOV_FUNDING} wei"
 
-# Deploy MerkleGov contracts using Foundry script
+# Deploy MerkleGov contracts using Foundry script with funding
 forge script script/DeployMerkleGov.s.sol:DeployScript \
-    --sig 'run(string,string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" "${REWARD_DISTRIBUTOR_ADDR}" \
+    --sig 'run(string,string,uint256)' "${WAVS_SERVICE_MANAGER_ADDRESS}" "${REWARD_DISTRIBUTOR_ADDR}" "${MERKLE_GOV_FUNDING}" \
     --rpc-url "${RPC_URL}" \
     --private-key "${DEPLOYER_PK}" \
     --broadcast
@@ -99,6 +104,7 @@ export REWARD_TOKEN_ADDR=$(jq -r '.reward_token' .docker/rewards_deploy.json 2>/
 # Extract deployed addresses from MerkleGov deployment
 export MERKLE_VOTE_ADDR=$(jq -r '.merkle_vote' .docker/merkle_gov_deploy.json 2>/dev/null || echo "")
 export MERKLE_GOV_ADDR=$(jq -r '.merkle_gov' .docker/merkle_gov_deploy.json 2>/dev/null || echo "")
+export MERKLE_GOV_FUNDED_AMOUNT=$(jq -r '.funded_amount_wei' .docker/merkle_gov_deploy.json 2>/dev/null || echo "0")
 
 # Use EAS Attest Trigger as the main service trigger
 export SERVICE_TRIGGER_ADDR="${EAS_ATTEST_TRIGGER_ADDR}"
@@ -138,7 +144,8 @@ cat > .docker/deployment_summary.json << EOF
   },
   "merkle_governance_contracts": {
     "merkle_vote": "${MERKLE_VOTE_ADDR}",
-    "merkle_gov": "${MERKLE_GOV_ADDR}"
+    "merkle_gov": "${MERKLE_GOV_ADDR}",
+    "funded_amount_wei": "${MERKLE_GOV_FUNDED_AMOUNT}"
   }
 }
 EOF
@@ -181,6 +188,7 @@ echo ""
 echo "🗳️  Merkle Governance Contracts:"
 echo "   MERKLE_VOTE_ADDR: ${MERKLE_VOTE_ADDR}"
 echo "   MERKLE_GOV_ADDR: ${MERKLE_GOV_ADDR}"
+echo "   MERKLE_GOV_FUNDED: ${MERKLE_GOV_FUNDED_AMOUNT} wei"
 echo ""
 echo "📄 Deployment details saved to .docker/deployment_summary.json"
 echo "📄 EAS deployment logs saved to .docker/eas_deploy.json"
