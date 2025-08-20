@@ -6,6 +6,7 @@ import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
 import {IWavsServiceHandler} from "@wavs/interfaces/IWavsServiceHandler.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
+// TODO rename to weights
 /**
  * @title MerkleVote
  * @notice Merkle-based voting power verification contract with WAVS integration

@@ -34,6 +34,18 @@ Fix eas-attest component and Attester.sol contract:
 - [ ] Add symbient
 - [ ] Vibe code Service UI from service.json (get IPFS hash)
 - [ ] Deploy voting power contract with initial set?
+- [ ] Make a generic weights contract
+- [ ] Vouching app needs to be easy to use
+
+MVP Symbient
+- [ ] Add LLM Module
+- [ ] People make an attestation (with payment, some funds go to operators)
+- [ ] Deterministic Agent evaluates suggestion ()
+- [ ] People attest to which suggestions they like the most
+- [ ] The most liked get rewards
+- [ ] Mint NFTs of responses and conversations
+- [ ] We're going to make a Network Spirituality Holy Text
+
 
 Project organization (low priority):
 - [ ] eas-compute -> eas-compute-voting-power
@@ -67,7 +79,6 @@ Can we make these reputation based?
 - [] Futarchy
 - [] review and fixup tests
 - [] ERC20 bridging
-
 
 # Idea space
 ### Attestation Components
