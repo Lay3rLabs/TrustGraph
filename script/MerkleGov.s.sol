@@ -65,29 +65,27 @@ contract MerkleGovScript is Common {
     function queryMerkleGovState(string calldata merkleGovAddr) public view {
         MerkleGov merkleGov = MerkleGov(payable(vm.parseAddress(merkleGovAddr)));
 
-        string memory name = merkleGov.name();
         uint256 votingDelay = merkleGov.votingDelay();
         uint256 votingPeriod = merkleGov.votingPeriod();
-        uint256 quorum = merkleGov.quorum();
+        uint256 quorumBasisPoints = merkleGov.quorumBasisPoints();
         uint256 proposalThreshold = merkleGov.proposalThreshold();
-        uint256 proposalCount = merkleGov.proposalCount();
+        uint256 proposalCounter = merkleGov.proposalCounter();
         address admin = merkleGov.admin();
-        address merkleVote = merkleGov.merkleVote();
+        address merkleVote = address(merkleGov.merkleVote());
         uint256 timelockDelay = merkleGov.timelockDelay();
 
         console.log("=== MerkleGov State ===");
-        console.log("Name:", name);
         console.log("Admin:", admin);
         console.log("MerkleVote Contract:", merkleVote);
         console.log("");
         console.log("--- Governance Parameters ---");
         console.log("Voting Delay:", votingDelay, "blocks");
         console.log("Voting Period:", votingPeriod, "blocks");
-        console.log("Quorum:", quorum);
+        console.log("Quorum (basis points):", quorumBasisPoints);
         console.log("Proposal Threshold:", proposalThreshold);
         console.log("Timelock Delay:", timelockDelay, "seconds");
         console.log("");
-        console.log("Total Proposals:", proposalCount);
+        console.log("Total Proposals:", proposalCounter);
         console.log("=======================");
     }
 
@@ -97,58 +95,45 @@ contract MerkleGovScript is Common {
     function queryProposal(string calldata merkleGovAddr, uint256 proposalId) public view {
         MerkleGov merkleGov = MerkleGov(payable(vm.parseAddress(merkleGovAddr)));
 
-        (
-            address proposer,
-            uint256 startBlock,
-            uint256 endBlock,
-            uint256 forVotes,
-            uint256 againstVotes,
-            uint256 abstainVotes,
-            bool cancelled,
-            bool executed,
-            uint256 eta,
-            string memory description
-        ) = merkleGov.getProposal(proposalId);
+        MerkleGov.ProposalCore memory proposal = merkleGov.getProposal(proposalId);
 
         MerkleGov.ProposalState state = merkleGov.state(proposalId);
 
         console.log("=== Proposal", proposalId, "===");
-        console.log("Proposer:", proposer);
-        console.log("Description:", description);
+        console.log("Proposer:", proposal.proposer);
+        console.log("Description:", proposal.description);
         console.log("");
         console.log("--- Voting Info ---");
-        console.log("Start Block:", startBlock);
-        console.log("End Block:", endBlock);
-        console.log("For Votes:", forVotes);
-        console.log("Against Votes:", againstVotes);
-        console.log("Abstain Votes:", abstainVotes);
+        console.log("Start Time:", proposal.startTime);
+        console.log("End Time:", proposal.endTime);
+        console.log("For Votes:", proposal.forVotes);
+        console.log("Against Votes:", proposal.againstVotes);
+        console.log("Abstain Votes:", proposal.abstainVotes);
         console.log("");
         console.log("--- Status ---");
         console.log("State:", _getProposalStateString(state));
-        console.log("Cancelled:", cancelled);
-        console.log("Executed:", executed);
-        if (eta > 0) {
-            console.log("ETA:", eta);
-            if (block.timestamp >= eta) {
+        if (proposal.eta > 0) {
+            console.log("ETA:", proposal.eta);
+            if (block.timestamp >= proposal.eta) {
                 console.log("Ready for execution");
             } else {
-                uint256 remaining = eta - block.timestamp;
+                uint256 remaining = proposal.eta - block.timestamp;
                 console.log("Time until executable:", remaining, "seconds");
             }
         }
 
         // Get proposal actions
-        (address[] memory targets, uint256[] memory values, bytes[] memory calldatas) = merkleGov.getActions(proposalId);
+        MerkleGov.ProposalAction[] memory actions = merkleGov.getActions(proposalId);
 
-        if (targets.length > 0) {
+        if (actions.length > 0) {
             console.log("");
             console.log("--- Actions ---");
-            for (uint256 i = 0; i < targets.length; i++) {
+            for (uint256 i = 0; i < actions.length; i++) {
                 console.log("Action", i, ":");
-                console.log("  Target:", targets[i]);
-                console.log("  Value:", values[i]);
+                console.log("  Target:", actions[i].target);
+                console.log("  Value:", actions[i].value);
                 console.log("  Calldata:");
-                console.logBytes(calldatas[i]);
+                console.logBytes(actions[i].data);
             }
         }
         console.log("===================");
@@ -222,15 +207,15 @@ contract MerkleGovScript is Common {
     /// @param merkleGovAddr Address of the MerkleGov contract
     function queryActiveProposals(string calldata merkleGovAddr) public view {
         MerkleGov merkleGov = MerkleGov(payable(vm.parseAddress(merkleGovAddr)));
-        uint256 proposalCount = merkleGov.proposalCount();
+        uint256 proposalCounter = merkleGov.proposalCounter();
 
         console.log("=== Active Proposals ===");
 
-        if (proposalCount == 0) {
+        if (proposalCounter == 0) {
             console.log("No proposals created yet");
         } else {
             uint256 activeCount = 0;
-            for (uint256 i = 1; i <= proposalCount; i++) {
+            for (uint256 i = 1; i <= proposalCounter; i++) {
                 MerkleGov.ProposalState state = merkleGov.state(i);
                 if (state == MerkleGov.ProposalState.Active) {
                     if (activeCount == 0) {
@@ -239,25 +224,16 @@ contract MerkleGovScript is Common {
                     }
                     activeCount++;
 
-                    (
-                        address proposer,
-                        uint256 startBlock,
-                        uint256 endBlock,
-                        uint256 forVotes,
-                        uint256 againstVotes,
-                        uint256 abstainVotes,
-                        ,
-                        ,
-                        ,
-                        string memory description
-                    ) = merkleGov.getProposal(i);
+                    MerkleGov.ProposalCore memory proposal = merkleGov.getProposal(i);
 
                     console.log("");
                     console.log("Proposal", i, ":");
-                    console.log("  Proposer:", proposer);
-                    console.log("  Description:", description);
-                    console.log("  Voting ends at block:", endBlock);
-                    console.log("  Current votes - For:", forVotes, "Against:", againstVotes, "Abstain:", abstainVotes);
+                    console.log("  Proposer:", proposal.proposer);
+                    console.log("  Description:", proposal.description);
+                    console.log("  Voting ends at:", proposal.endTime);
+                    console.log("  Current votes - For:", proposal.forVotes);
+                    console.log("  Against:", proposal.againstVotes);
+                    console.log("  Abstain:", proposal.abstainVotes);
                 }
             }
 
@@ -320,12 +296,12 @@ contract MerkleGovScript is Common {
 
         // Query recent proposals if any exist
         MerkleGov merkleGov = MerkleGov(payable(vm.parseAddress(merkleGovAddr)));
-        uint256 proposalCount = merkleGov.proposalCount();
+        uint256 proposalCounter = merkleGov.proposalCounter();
 
-        if (proposalCount > 0) {
+        if (proposalCounter > 0) {
             console.log("--- Recent Proposals ---");
-            uint256 start = proposalCount > 3 ? proposalCount - 2 : 1;
-            for (uint256 i = start; i <= proposalCount; i++) {
+            uint256 start = proposalCounter > 3 ? proposalCounter - 2 : 1;
+            for (uint256 i = start; i <= proposalCounter; i++) {
                 console.log("");
                 queryProposal(merkleGovAddr, i);
             }
@@ -351,11 +327,10 @@ contract MerkleGovScript is Common {
     function _getProposalStateString(MerkleGov.ProposalState state) internal pure returns (string memory) {
         if (state == MerkleGov.ProposalState.Pending) return "Pending";
         if (state == MerkleGov.ProposalState.Active) return "Active";
-        if (state == MerkleGov.ProposalState.Canceled) return "Canceled";
+        if (state == MerkleGov.ProposalState.Cancelled) return "Cancelled";
         if (state == MerkleGov.ProposalState.Defeated) return "Defeated";
         if (state == MerkleGov.ProposalState.Succeeded) return "Succeeded";
         if (state == MerkleGov.ProposalState.Queued) return "Queued";
-        if (state == MerkleGov.ProposalState.Expired) return "Expired";
         if (state == MerkleGov.ProposalState.Executed) return "Executed";
         return "Unknown";
     }

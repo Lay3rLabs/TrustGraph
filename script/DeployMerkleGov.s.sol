@@ -45,20 +45,20 @@ contract DeployScript is Common {
         merkleVote.setRootUpdater(rewardDistributor, true);
 
         // Deploy MerkleGov contract with reasonable defaults
-        string memory govName = "Symbient DAO";
+        uint256 quorumBasisPoints = 1000; // 10% quorum (1000 basis points = 10%)
         uint256 votingDelay = 1; // 1 block delay before voting starts
         uint256 votingPeriod = 50400; // ~7 days at 12 second blocks
-        uint256 quorum = 100e18; // 100 tokens worth of voting power for quorum
+        uint256 timelockDelay = 2 days; // 2 days timelock for execution
         uint256 proposalThreshold = 1e18; // 1 token worth of voting power to create proposal
 
         MerkleGov merkleGov = new MerkleGov(
-            govName,
+            merkleVote,
+            deployer, // admin
+            quorumBasisPoints,
             votingDelay,
             votingPeriod,
-            quorum,
-            proposalThreshold,
-            deployer, // admin
-            address(merkleVote)
+            timelockDelay,
+            proposalThreshold
         );
 
         // For testnet/production, you might want to update these parameters
@@ -75,9 +75,10 @@ contract DeployScript is Common {
         _json.serialize("merkle_gov", Strings.toChecksumHexString(address(merkleGov)));
         _json.serialize("voting_delay", vm.toString(votingDelay));
         _json.serialize("voting_period", vm.toString(votingPeriod));
-        _json.serialize("quorum", vm.toString(quorum));
+        _json.serialize("quorum_basis_points", vm.toString(quorumBasisPoints));
         _json.serialize("proposal_threshold", vm.toString(proposalThreshold));
-        _json.serialize("timelock", vm.toString(initialTimelock));
+        _json.serialize("merkle_vote_timelock", vm.toString(initialTimelock));
+        _json.serialize("gov_timelock_delay", vm.toString(timelockDelay));
         string memory finalJson = _json.serialize("admin", Strings.toChecksumHexString(deployer));
 
         vm.writeFile(script_output_path, finalJson);
