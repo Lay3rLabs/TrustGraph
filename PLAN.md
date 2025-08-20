@@ -29,13 +29,19 @@ Fix eas-attest component and Attester.sol contract:
 - [x] attest method on Attester.sol doesn't really make sense as users should attest to EAS directly.
 - [ ] Better computation of attestations (actually use attestation data?)
 - [ ] Revoking an attestation should lower voting power
-- [ ] New voting power contract to consume merkle tree
 - [ ] Resolver that only let's people who have voting power attest.
-- [ ] Add symbient
 - [ ] Vibe code Service UI from service.json (get IPFS hash)
 - [ ] Deploy voting power contract with initial set?
 - [ ] Make a generic weights contract
 - [ ] Vouching app needs to be easy to use
+
+# MVP Merkle Gov:
+- [x] New voting power contract to consume merkle tree
+- [x] Extend create attestations script to also have alice vouch for my wallets
+- [ ] Tests for new voting power contract to consume merkle tree (make sure it actually works in theory)
+- [ ] Deploy scripts for MerkleVote and Merkle Gov contracts
+- [ ] Wire up rewards component to MerkleVote contract
+- [ ] Vibe code governance UI
 
 MVP Symbient
 - [ ] Add LLM Module

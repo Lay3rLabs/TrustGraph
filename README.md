@@ -276,7 +276,7 @@ This demo walks you through the complete attestation workflow:
 Set up environment variables automatically:
 
 ```bash
-# FIX THIS SCRIPT TO ACTUALLY WORK.
+# FIX THIS SCRIPT TO ACTUALLY WORK. TOO many redundent environment variables
 # Auto-generate ALL environment variables from deployment_summary.json
 ./script/setup-pagerank-env.sh
 source .env.pagerank
@@ -293,7 +293,7 @@ export REWARD_DISTRIBUTOR_ADDRESS=$(jq -r '.reward_contracts.reward_distributor'
 export VOUCH_SCHEMA_UID=$(jq -r '.eas_schemas.compute_schema' .docker/deployment_summary.json)
 
 # Set demo wallet address
-export WALLET_ADDRESS=0x715416D37502B25F9dB8072b5a29d84Fa2b90fef
+export WALLET_ADDRESS=0xDf3679681B87fAE75CE185e4f01d98b64Ddb64a3
 ```
 
 ### PageRank Testing (Optional)
@@ -349,7 +349,7 @@ Create an attestation request using your schema.
 # Trigger attestation creation via WAVS
 forge script script/Trigger.s.sol:EasTrigger --sig "triggerRawAttestation(string,string,string,string)" \
   "${WAVS_ENV_TRIGGER_ADDRESS}" \
-  $WAVS_ENV_COMPUTE_SCHEMA_ID \
+  $VOUCH_SCHEMA_UID \
   $WALLET_ADDRESS \
   "Advanced Solidity Development Skills Verified" \
   --rpc-url $WAVS_ENV_RPC_URL --broadcast
@@ -366,7 +366,7 @@ Check the attestation was created.
 forge script script/Trigger.s.sol:EasTrigger --sig "queryAttestations(string,string,string,string,uint256)" \
   "${WAVS_ENV_INDEXER_ADDRESS}" \
   "${WAVS_ENV_EAS_ADDRESS}" \
-  "${WAVS_ENV_COMPUTE_SCHEMA_ID}" \
+  "${VOUCH_SCHEMA_UID}" \
   $WALLET_ADDRESS \
   10 \
   --rpc-url $WAVS_ENV_RPC_URL

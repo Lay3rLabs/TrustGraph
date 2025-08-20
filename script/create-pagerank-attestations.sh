@@ -27,6 +27,9 @@ EAS_ADDRESS=""
 ATTESTER_ADDRESS=""
 VOUCHING_SCHEMA_ID=""
 
+# Test address that will receive vouches from Alice and Bob
+TEST_ADDRESS="0xDf3679681B87fAE75CE185e4f01d98b64Ddb64a3"
+
 # Function to get private key by account name
 get_private_key() {
     case "$1" in
@@ -169,14 +172,22 @@ verify_network() {
 # Function to create vouching attestation
 create_vouching_attestation() {
     local attester_name="$1"
-    local recipient_name="$2"
+    local recipient="$2"  # Can be a name or an address
     local weight="$3"
 
     local attester_key=$(get_private_key "$attester_name")
-    local recipient_addr=$(get_address "$recipient_name")
+
+    # Check if recipient is an address (starts with 0x) or a name
+    local recipient_addr
+    if [[ "$recipient" == 0x* ]]; then
+        recipient_addr="$recipient"
+    else
+        recipient_addr=$(get_address "$recipient")
+    fi
+
     local data=$(cast abi-encode "f(uint256)" $weight)
 
-    print_info "Creating vouching: $attester_name → $recipient_name (weight: $weight)"
+    print_info "Creating vouching: $attester_name → $recipient (weight: $weight)"
 
     # Create the attestation directly on EAS contract
     # AttestationRequest struct: (bytes32 schema, AttestationRequestData data)
@@ -205,11 +216,27 @@ create_attestations() {
 
     print_info "🎯 Creating vouching network for PageRank testing..."
 
-    # Authority figure - Alice vouches for Bob
-    print_info "👑 Creating authority voucher..."
+    # Authority figure - Alice vouches for Bob and Test Address
+    print_info "👑 Creating authority vouchers..."
 
     # Alice is the authority and vouches for Bob with high weight
     if create_vouching_attestation "Alice" "Bob" "95"; then
+        ((total_attestations++))
+    else
+        ((failed_attestations++))
+    fi
+    sleep 0.1
+
+    # Alice vouches for test address
+    if create_vouching_attestation "Alice" "$TEST_ADDRESS" "85"; then
+        ((total_attestations++))
+    else
+        ((failed_attestations++))
+    fi
+    sleep 0.1
+
+    # Bob also vouches for test address
+    if create_vouching_attestation "Bob" "$TEST_ADDRESS" "75"; then
         ((total_attestations++))
     else
         ((failed_attestations++))
@@ -281,20 +308,24 @@ analyze_network() {
         echo "   • $name: $addr (${balance} ETH)"
     done
 
+    echo "   • TestAccount: $TEST_ADDRESS (Custom Test Address)"
+
     echo ""
     echo "📈 Expected PageRank Leaders:"
     echo "   1. Alice - Authority figure with high outgoing weight"
-    echo "   2. Bob - Receives high-weight vouch from Alice"
-    echo "   3. Charlie - Well-connected in community network"
-    echo "   4. Diana - Active in community vouching"
-    echo "   5. Eve/Frank - Moderate community participation"
+    echo "   2. TestAccount ($TEST_ADDRESS) - Receives high-weight vouches from Alice (85) and Bob (75)"
+    echo "   3. Bob - Receives high-weight vouch from Alice (95) and vouches for others"
+    echo "   4. Charlie - Well-connected in community network"
+    echo "   5. Diana - Active in community vouching"
+    echo "   6. Eve/Frank - Moderate community participation"
     echo ""
     echo "🔍 Network Patterns Created:"
-    echo "   • Authority: Alice vouches for Bob with high weight (95)"
+    echo "   • Authority: Alice vouches for Bob (95) and TestAccount (85)"
+    echo "   • TestAccount: Receives vouches from Alice (85) and Bob (75)"
     echo "   • Spammers: Grace, Henry, Ivy only vouch for themselves (100 each)"
     echo "   • Community: Legitimate vouching web between non-spammers (40-70)"
     echo "   • Anti-spam: Spammers isolated from legitimate network"
-    echo "   • Total: ~11 vouching attestations (1 authority + 3 spam + 7 community)"
+    echo "   • Total: ~13 vouching attestations (3 authority + 3 spam + 7 community)"
     echo ""
     echo "⚙️ Contract Addresses:"
     echo "   • EAS: $EAS_ADDRESS (direct attestations)"
@@ -305,6 +336,7 @@ analyze_network() {
     echo "   • Attestations created directly on EAS contract"
     echo "   • Each user's address is recorded as the actual attester"
     echo "   • Creates proper graph connections for PageRank algorithm"
+    echo "   • TestAccount ($TEST_ADDRESS) integrated into vouching network"
     echo -e "${NC}"
 }
 
@@ -330,7 +362,8 @@ show_next_steps() {
     echo "      cast call $EAS_ADDRESS \"getAttestation(bytes32)\" <uid> --rpc-url $RPC_URL"
     echo ""
     echo "📊 Expected Results:"
-    echo "   • Alice should have highest PageRank (authority giving high-weight vouch)"
+    echo "   • Alice should have highest PageRank (authority giving high-weight vouches)"
+    echo "   • TestAccount ($TEST_ADDRESS) should rank very high (receives vouches from Alice and Bob)"
     echo "   • Bob should rank high (receives high-weight vouch from Alice)"
     echo "   • Grace/Henry/Ivy should rank low (spammers isolated from network)"
     echo "   • PageRank algorithm should resist self-vouching spam attacks"
@@ -339,6 +372,7 @@ show_next_steps() {
     echo "   • Attestations now created directly on EAS contract"
     echo "   • User addresses properly recorded as attesters"
     echo "   • Graph connections between users now visible to PageRank"
+    echo "   • TestAccount integrated with high-weight vouches from key nodes"
     echo -e "${NC}"
 }
 
@@ -379,12 +413,17 @@ case "${1:-}" in
         echo "  • Anvil must be running on localhost:8545"
         echo "  • Default anvil accounts will be used as test personas"
         echo ""
-        echo "This script creates ~11 vouching attestations directly on EAS:"
+        echo "This script creates ~13 vouching attestations directly on EAS:"
         echo "  • Direct EAS calls (not through Attester.sol)"
-        echo "  • Authority voucher (Alice vouches for Bob with weight 95)"
+        echo "  • Authority voucher (Alice vouches for Bob and TestAccount)"
+        echo "  • Bob also vouches for TestAccount"
         echo "  • Spam vouchers (Grace/Henry/Ivy self-vouch with weight 100)"
         echo "  • Community vouchers (legitimate users, weights 40-70)"
         echo "  • Anti-spam testing (spammers isolated from legitimate network)"
+        echo ""
+        echo "TestAccount ($TEST_ADDRESS) receives:"
+        echo "  • Weight 85 vouch from Alice (authority)"
+        echo "  • Weight 75 vouch from Bob (trusted node)"
         echo ""
         exit 0
         ;;
