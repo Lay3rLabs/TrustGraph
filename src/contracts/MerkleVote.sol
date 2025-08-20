@@ -304,8 +304,11 @@ contract MerkleVote is IWavsServiceHandler {
     function handleSignedEnvelope(Envelope calldata envelope, SignatureData calldata signatureData) external {
         _serviceManager.validate(envelope, signatureData);
 
-        // Decode the payload to get the AVS output
-        ITypes.AvsOutput memory avsOutput = abi.decode(envelope.payload, (ITypes.AvsOutput));
+        // First decode as DataWithId
+        ITypes.DataWithId memory dataWithId = abi.decode(envelope.payload, (ITypes.DataWithId));
+
+        // Then decode the data field as AvsOutput
+        ITypes.AvsOutput memory avsOutput = abi.decode(dataWithId.data, (ITypes.AvsOutput));
 
         _setRoot(avsOutput.root, avsOutput.ipfsHashData);
         ipfsHashCid = avsOutput.ipfsHash;

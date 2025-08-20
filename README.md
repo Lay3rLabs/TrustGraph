@@ -288,6 +288,8 @@ export SCHEMA_REGISTRAR_ADDR=$(jq -r '.eas_contracts.schema_registrar' .docker/d
 export EAS_INDEXER_ADDR=$(jq -r '.eas_contracts.indexer' .docker/deployment_summary.json)
 export INDEXER_RESOLVER_ADDR=$(jq -r '.eas_contracts.indexer_resolver' .docker/deployment_summary.json)
 export VOTING_POWER_ADDR=$(jq -r '.governance_contracts.voting_power' .docker/deployment_summary.json)
+export MERKLE_GOV_ADDR=$(jq -r '.merkle_governance_contracts.merkle_gov' .docker/deployment_summary.json)
+export MERKLE_VOTE_ADDR=$(jq -r '.merkle_governance_contracts.merkle_vote' .docker/deployment_summary.json)
 export REWARDS_TOKEN_ADDRESS=$(jq -r '.reward_contracts.reward_token' .docker/deployment_summary.json)
 export REWARD_DISTRIBUTOR_ADDRESS=$(jq -r '.reward_contracts.reward_distributor' .docker/deployment_summary.json)
 export VOUCH_SCHEMA_UID=$(jq -r '.eas_schemas.compute_schema' .docker/deployment_summary.json)
@@ -360,7 +362,7 @@ forge script script/Trigger.s.sol:EasTrigger --sig "triggerRawAttestation(string
 Check the attestation was created.
 
 **What this shows:** Verifies that the WAVS operator successfully processed your request and created the attestation. You should see the attestation data stored on-chain in the EAS registry.
-
+<!--
 ```bash
 # Query attestations for the schema and recipient
 forge script script/Trigger.s.sol:EasTrigger --sig "queryAttestations(string,string,string,string,uint256)" \
@@ -370,7 +372,7 @@ forge script script/Trigger.s.sol:EasTrigger --sig "queryAttestations(string,str
   $WALLET_ADDRESS \
   10 \
   --rpc-url $WAVS_ENV_RPC_URL
-```
+```-->
 
 Check voting power for recipient (should have gone up by number of attestations):
 ```bash
@@ -407,6 +409,14 @@ forge script script/Rewards.s.sol:Rewards \
     $WAVS_ENV_REWARD_TOKEN_ADDRESS \
     --rpc-url $WAVS_ENV_RPC_URL \
     --broadcast --ffi
+```
+
+#### Merkle Gov
+```
+forge script script/MerkleGov.s.sol:MerkleGovScript \
+  --sig "queryAll(string,string)" \
+  "$MERKLE_GOV_ADDR" "$MERKLE_VOTE_ADDR" \
+  --rpc-url $RPC_URL
 ```
 
 ## AI Coding Agents

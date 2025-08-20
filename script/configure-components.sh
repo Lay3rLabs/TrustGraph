@@ -37,7 +37,7 @@ DEFAULT_COMPONENTS_JSON='{
     },
     {
       "filename": "rewards.wasm",
-      "package_name": "rewards",
+      "package_name": "rewards2",
       "package_version": "0.1.0",
       "trigger_event": "WavsRewardsTrigger(uint64)",
       "trigger_json_path": "reward_contracts.reward_distributor",

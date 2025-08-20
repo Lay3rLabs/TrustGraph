@@ -41,6 +41,7 @@ Fix eas-attest component and Attester.sol contract:
 - [x] Tests for new voting power contract to consume merkle tree (make sure it actually works in theory)
 - [x] Deploy scripts for MerkleVote and Merkle Gov contracts
 - [x] Wire up rewards component to MerkleVote contract
+- [ ] Fix frontend rewards claiming
 - [ ] Vibe code governance UI
 
 MVP Symbient
