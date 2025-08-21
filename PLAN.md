@@ -56,14 +56,18 @@ How do you have a ritual for attestation?
 # Improved Version
 Let's use a zodiac module + safe to create a system with a nice fallback while we're experimenting with novel governance mechanisms.
 
-1. Setup:
-- [ ] Create a basic Zodiac
-- [ ] Create a deploy script that deploys a Safe + the custom Zodiac module
+1. Basic Setup:
+- [ ] Create a basic Zodiac module
+- [ ] Create a basic Zodiac module that is able to update signers on a safe
+- [ ] Create a deploy script that deploys two Safes with each of the custom zodiac modules
 - [ ] Basic test scaffold
 
-2. MVP:
-- [ ] Module for direct voting with Merkle Proofs
-- [ ] Module that syncs top N accounts as signers
+2. MVP
+- [ ] Module for direct voting with Merkle Proofs (similar to MerkleGov + MerkleVote)
+- [ ] Module that syncs top N accounts as signers (similar to VotingPower.sol)
+- [ ] Add zodiac module for WAVS agent
+- [ ] Documentation of how these work
+- [ ] Wire up components and WAVS deployments
 
 3. Refinement
 - [ ] Implement and document the fallback mechanism for governance (this should be fairly straightforward with Zodiac hopefully)

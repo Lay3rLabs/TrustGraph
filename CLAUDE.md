@@ -84,8 +84,25 @@ The system operates as an AVS (Actively Validated Service) where:
 - All API response structures must derive `Clone`
 - Use proper ABI decoding patterns, never `String::from_utf8` on ABI data
 - Add new components to workspace members in root Cargo.toml
+- Always use `#[serde(default)]` and `Option<T>` for external API response fields
+- Clone data before use to avoid ownership issues: `let data_clone = data.clone();`
+- Use `ok_or_else()` for Option types, `map_err()` for Result types
+- Always verify API endpoints with curl before implementing code that depends on them
 
 ### Testing Patterns
 - Components can be tested locally using `make wasi-exec`
 - Always use string parameters for component input, even for numeric values
 - Validation script at `test_utils/validate_component.sh` checks component compliance
+- Use `make validate-component COMPONENT=component-name` to validate components
+- Always run validation and fix ALL errors before building components
+
+### Component Creation Workflow
+1. Research existing components in `/components/` for patterns
+2. Create component directory: `mkdir -p components/name/src`
+3. Copy template files: `cp components/evm-price-oracle/src/bindings.rs components/name/src/ && cp components/evm-price-oracle/config.json components/name/ && cp components/evm-price-oracle/Makefile components/name/`
+4. Implement `src/lib.rs` and `src/trigger.rs` with proper ABI decoding
+5. Create `Cargo.toml` using workspace dependencies
+6. Add component to workspace members in root `Cargo.toml`
+7. Validate: `make validate-component COMPONENT=name`
+8. Build: `WASI_BUILD_DIR=components/name make wasi-build`
+9. Test: `make wasi-exec COMPONENT_FILENAME=name.wasm INPUT_DATA="test-string"`
