@@ -34,6 +34,15 @@ Fix eas-attest component and Attester.sol contract:
 - [ ] Deploy voting power contract with initial set?
 - [ ] Make a generic weights contract
 - [ ] Vouching app needs to be easy to use
+- [ ] Make a Zodiac module
+- [ ] Add LLM module
+
+
+
+
+Distribution is an evolving merkledrop.
+
+How do you have a ritual for attestation?
 
 # MVP Merkle Gov:
 - [x] New voting power contract to consume merkle tree
@@ -42,20 +51,22 @@ Fix eas-attest component and Attester.sol contract:
 - [x] Deploy scripts for MerkleVote and Merkle Gov contracts
 - [x] Wire up rewards component to MerkleVote contract
 - [x] Fix frontend rewards claiming
-- [ ] Vibe code governance UI
+- [-] Vibe code governance UI
 
-Let's work on @frontend/app/backroom/governance. We're going to be building a Merkle Governance UI for the following two contracts: MerkleVote @src/contracts/MerkleVote.sol and MerkleGov @src/contracts/MerkleGov.sol.
+# Improved Version
+Let's use a zodiac module + safe to create a system with a nice fallback while we're experimenting with novel governance mechanisms.
 
-As a user, I want to be able to:
-- Create a proposal
-- Vote on a proposal
-- See a list of proposals
-- View proposal details
-- Know my voting power
+1. Setup:
+- [ ] Create a basic Zodiac
+- [ ] Create a deploy script that deploys a Safe + the custom Zodiac module
+- [ ] Basic test scaffold
 
-The Merkle Governance system is very similar to how we've implemented rewards. See @frontend/app/backroom/rewards/page.tsx. All the information needed for display is available in the merkle tree on IPFS, and you can query the IPFS CID from the MerkleVote contract. When submitting votes or creating proposals, you'll need to submit proofs as well, similar to how we've done with claiming rewards (the merkle tree is the same in both instances). It may also be helpful to you to look at @frontend/hooks/useRewards.ts and @frontend/components/RewardsCard.tsx.
+2. MVP:
+- [ ] Module for direct voting with Merkle Proofs
+- [ ] Module that syncs top N accounts as signers
 
-Try to reuse or create UI components when possible, see the @frontend/components folder. Also see @frontend/wagmi.config.ts and auto-generated @frontend/lib/contracts.ts for contract ABI information.
+3. Refinement
+- [ ] Implement and document the fallback mechanism for governance (this should be fairly straightforward with Zodiac hopefully)
 
 MVP Symbient
 - [ ] Add LLM Module

@@ -22,52 +22,52 @@ export default defineConfig({
     {
       abi: ABI.Attester.abi,
       name: "Attester",
-      address: "0xeAb90E430eF83dA98459D35D3EFe81fA419Af0AA",
+      address: "0x7F10AE767C7998605C02E195696e4C0dA634eE9e",
     },
     {
       abi: ABI.EAS.abi,
       name: "EAS",
-      address: "0x57a65aF842C7F78E6598053C954DdBD281896cc5",
+      address: "0x91F96f73e106bAE8Fc42775B21107b4523D387D2",
     },
     {
       abi: ABI.SchemaRegistry.abi,
       name: "SchemaRegistry",
-      address: "0x53A4ac3Ba53cf5f73bA271d1686c4923820a73FC",
+      address: "0x405C3C4F213acdA114a89CE40679F73E4C980220",
     },
     {
       abi: ABI.SchemaRegistrar.abi,
       name: "SchemaRegistrar",
-      address: "0xf57353d6d049195Bae036C1211378c706AAfBeEd",
+      address: "0xfE6aF2F3d032b92197bf77fd5F15190c34ECE740",
     },
     {
       abi: ABI.Indexer.abi,
       name: "Indexer",
-      address: "0x6D9B74cC8841DCB0b576277bd808C7325B3d215C",
+      address: "0x149Aa61F44200a00352303aD1Dc5944D4BC8eAC5",
     },
     {
       abi: ABI.IndexerResolver.abi,
       name: "IndexerResolver",
-      address: "0x5f165D19649A957F4B60A8323897B710a16017e6",
+      address: "0xD738A4CB01aE05388632b6988C24af5ff5bF4d90",
     },
     {
       abi: ABI.VotingPower.abi,
       name: "VotingPower",
-      address: "0x5Da5D64EEE871269351BEab68a81f401BB2E0b39",
+      address: "0x617Ee526b833bCC2E131a8b0B6daC3fA84Db5aEa",
     },
     {
       abi: ABI.AttestationGovernor.abi,
       name: "AttestationGovernor",
-      address: "0xcC1c22a0C4467A927f690696D03f60F563121e9D",
+      address: "0xF97fF013C86FeBEbd9802f8a990Bb08484112C2A",
     },
     {
       abi: ABI.RewardDistributor.abi,
       name: "RewardDistributor",
-      address: "0xe5d3A16E44aB6807FE7561E5daFb60EF156b81CF",
+      address: "0x888A9da95dBa793eb35b930129339a51f8d79547",
     },
     {
       abi: ABI.EASAttestTrigger.abi,
       name: "EASAttestTrigger",
-      address: "0x5f77b7bb7f6dBe64Fc6b457Cc5e67D7fc2295a44",
+      address: "0xBBc8eb28E9D1649c3B6fBfc9fdEB75E8c6eD17Ca",
     },
     {
       abi: ABI.ENOVA.abi,
@@ -77,12 +77,12 @@ export default defineConfig({
     {
       abi: ABI.MerkleGov.abi,
       name: "MerkleGov",
-      address: "0xb9635ae3AAFD965271320382226C03196c26f386",
+      address: "0x0B9a6B760fc61EB0d2038ABc491ECCF448dE7551",
     },
     {
       abi: ABI.MerkleVote.abi,
       name: "MerkleVote",
-      address: "0x1cf5b1c032eEB3dcbA0c46809A4B29cA78A04ab8",
+      address: "0xe464B2306f60b384810061fF8823De3e5F37780c",
     },
   ],
 });
