@@ -36,10 +36,20 @@ interface AttestationFormData {
 interface VouchingModalProps {
   trigger?: React.ReactNode;
   onSuccess?: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export function VouchingModal({ trigger, onSuccess }: VouchingModalProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, onClose: externalOnClose }: VouchingModalProps) {
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+  const setIsOpen = (value: boolean) => {
+    if (externalIsOpen !== undefined && externalOnClose) {
+      if (!value) externalOnClose();
+    } else {
+      setInternalIsOpen(value);
+    }
+  };
   const [selectedSchema, setSelectedSchema] = useState<string>("");
   
   const { address, isConnected, chain } = useAccount();

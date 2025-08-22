@@ -276,7 +276,7 @@ This demo walks you through the complete attestation workflow:
 Set up environment variables automatically:
 
 ```bash
-# FIX THIS SCRIPT TO ACTUALLY WORK.
+# FIX THIS SCRIPT TO ACTUALLY WORK. TOO many redundent environment variables
 # Auto-generate ALL environment variables from deployment_summary.json
 ./script/setup-pagerank-env.sh
 source .env.pagerank
@@ -288,12 +288,14 @@ export SCHEMA_REGISTRAR_ADDR=$(jq -r '.eas_contracts.schema_registrar' .docker/d
 export EAS_INDEXER_ADDR=$(jq -r '.eas_contracts.indexer' .docker/deployment_summary.json)
 export INDEXER_RESOLVER_ADDR=$(jq -r '.eas_contracts.indexer_resolver' .docker/deployment_summary.json)
 export VOTING_POWER_ADDR=$(jq -r '.governance_contracts.voting_power' .docker/deployment_summary.json)
+export MERKLE_GOV_ADDR=$(jq -r '.merkle_governance_contracts.merkle_gov' .docker/deployment_summary.json)
+export MERKLE_VOTE_ADDR=$(jq -r '.merkle_governance_contracts.merkle_vote' .docker/deployment_summary.json)
 export REWARDS_TOKEN_ADDRESS=$(jq -r '.reward_contracts.reward_token' .docker/deployment_summary.json)
 export REWARD_DISTRIBUTOR_ADDRESS=$(jq -r '.reward_contracts.reward_distributor' .docker/deployment_summary.json)
-export VOUCH_SCHEMA_UID=$(jq -r '.eas_schemas.compute_schema' .docker/deployment_summary.json)
+export VOUCH_SCHEMA_UID=$(jq -r '.eas_schemas.vouching_schema' .docker/deployment_summary.json)
 
 # Set demo wallet address
-export WALLET_ADDRESS=0x715416D37502B25F9dB8072b5a29d84Fa2b90fef
+export WALLET_ADDRESS=0xDf3679681B87fAE75CE185e4f01d98b64Ddb64a3
 ```
 
 ### PageRank Testing (Optional)
@@ -316,30 +318,7 @@ This creates a realistic attestation network with:
 
 Perfect for testing PageRank-based reward algorithms!
 
-<!--### 1. Create and Register a Schema
-
-Register a custom schema for skill attestations.
-
-**What this does:** Creates a new schema in the EAS schema that defines the structure of attestations. This schema specifies that attestations will contain a message. The indexer resolver will automatically index attestations for this schema onchain (only suitable for L2s / cheaper EVM environments).
-
-```bash
-# Capture the forge output and extract schema UID automatically
-forge script script/Schema.s.sol:EasSchema \
-  --sig "registerSchema(string,string,string,bool)" \
-  $SCHEMA_REGISTRAR_ADDR \
-  "string message" \
-  $INDEXER_RESOLVER_ADDR \
-  true \
-  --rpc-url $RPC_URL \
-  --broadcast \
-  --legacy 2>&1 | tee schema_output.log
-
-# Extract schema UID using helper script
-export SCHEMA_UID=$(bash script/extract-schema-uid.sh schema_output.log)
-echo "Schema UID: $SCHEMA_UID"
-```-->
-
-### 2. Trigger Attestation Request
+### 1. Trigger Attestation Request
 
 Create an attestation request using your schema.
 
@@ -349,13 +328,13 @@ Create an attestation request using your schema.
 # Trigger attestation creation via WAVS
 forge script script/Trigger.s.sol:EasTrigger --sig "triggerRawAttestation(string,string,string,string)" \
   "${WAVS_ENV_TRIGGER_ADDRESS}" \
-  $WAVS_ENV_COMPUTE_SCHEMA_ID \
+  $VOUCH_SCHEMA_UID \
   $WALLET_ADDRESS \
   "Advanced Solidity Development Skills Verified" \
   --rpc-url $WAVS_ENV_RPC_URL --broadcast
 ```
 
-### 3. View Results
+### 2. View Results
 
 Check the attestation was created.
 
@@ -366,13 +345,13 @@ Check the attestation was created.
 forge script script/Trigger.s.sol:EasTrigger --sig "queryAttestations(string,string,string,string,uint256)" \
   "${WAVS_ENV_INDEXER_ADDRESS}" \
   "${WAVS_ENV_EAS_ADDRESS}" \
-  "${WAVS_ENV_COMPUTE_SCHEMA_ID}" \
+  "${VOUCH_SCHEMA_UID}" \
   $WALLET_ADDRESS \
   10 \
   --rpc-url $WAVS_ENV_RPC_URL
 ```
 
-Check voting power for recipient (should have gone up by number of attestations):
+Check voting power for recipien, it should have gone up by number of attestations (note this is a separate demo from MerkleGov which we'll show later):
 ```bash
 forge script script/Governance.s.sol:Governance \
     --sig "queryVotingPower(string,string)" \
@@ -407,6 +386,16 @@ forge script script/Rewards.s.sol:Rewards \
     $WAVS_ENV_REWARD_TOKEN_ADDRESS \
     --rpc-url $WAVS_ENV_RPC_URL \
     --broadcast --ffi
+```
+
+### Merkle Gov
+
+Query contract states:
+```bash
+forge script script/MerkleGov.s.sol:MerkleGovScript \
+  --sig "queryAll(string,string)" \
+  "$MERKLE_GOV_ADDR" "$MERKLE_VOTE_ADDR" \
+  --rpc-url $RPC_URL
 ```
 
 ## AI Coding Agents

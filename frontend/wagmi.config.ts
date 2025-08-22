@@ -12,6 +12,8 @@ const ABI = {
   RewardDistributor: require("../out/RewardDistributor.sol/RewardDistributor.json"),
   EASAttestTrigger: require("../out/Trigger.sol/EASAttestTrigger.json"),
   ENOVA: require("../out/ERC20.sol/ENOVA.json"),
+  MerkleGov: require("../out/MerkleGov.sol/MerkleGov.json"),
+  MerkleVote: require("../out/MerkleVote.sol/MerkleVote.json"),
 };
 
 export default defineConfig({
@@ -20,57 +22,67 @@ export default defineConfig({
     {
       abi: ABI.Attester.abi,
       name: "Attester",
-      address: "0x69eDEE6683583058252AeA92D3713a03CF45fBE1",
+      address: "0x4161883923F2457A36f4D815fcb5F617f867dA72",
     },
     {
       abi: ABI.EAS.abi,
       name: "EAS",
-      address: "0x2B385B9586C8C3197A7aeE6bFF5e54d50820D052",
+      address: "0x2F49adaB4d48D865eA0E78d5ca7cD9Adcc13c545",
     },
     {
       abi: ABI.SchemaRegistry.abi,
       name: "SchemaRegistry",
-      address: "0x3e6d666732fB3b118491D9437A0dfE18c0bAAa58",
+      address: "0xd0bBaD879C3E00C0d2eE4F5bC55451491491A2D7",
     },
     {
       abi: ABI.SchemaRegistrar.abi,
       name: "SchemaRegistrar",
-      address: "0x12A1636F80fe7264C994049Ab837d0FF91992341",
+      address: "0xC75e7c8858537c99E58EA18909184752d85a1635",
     },
     {
       abi: ABI.Indexer.abi,
       name: "Indexer",
-      address: "0xDf225e4896dDD6A4de7136dB624Bf4421f7Dc38E",
+      address: "0xbC9A451a3fd48ccB7aE8D67583Ef7DB77b9e74d0",
     },
     {
       abi: ABI.IndexerResolver.abi,
       name: "IndexerResolver",
-      address: "0x45Dd4b55C72554bc45538607ee0643260F4D8AE6",
+      address: "0xB971f1aD5B50B259D13C0FE8c8e2fC04175B6434",
     },
     {
       abi: ABI.VotingPower.abi,
       name: "VotingPower",
-      address: "0x0e22d2f5e13fCdD9A399dA75D3e4100faF474Efb",
+      address: "0x4893592de610cD99701592E14AE88C25B50A9f94",
     },
     {
       abi: ABI.AttestationGovernor.abi,
       name: "AttestationGovernor",
-      address: "0x2950f3e3af4563FdEF495e40ef4A10A25Bd01BFb",
+      address: "0x88526a39A9B6b1ECecB3F421340D2Ad1410D0251",
     },
     {
       abi: ABI.RewardDistributor.abi,
       name: "RewardDistributor",
-      address: "0x4729B1774a001694bf4C8A0ce5a4B31A9491abC9",
+      address: "0x8956092EAd86E5aec31960a27e126BE029BA43e0",
     },
     {
       abi: ABI.EASAttestTrigger.abi,
       name: "EASAttestTrigger",
-      address: "0x70555EF2dE3438bC0b1a61f4e4f2F7054d653b51",
+      address: "0x3b58A098215DfbB019920b8ea032f907a153f2aF",
     },
     {
       abi: ABI.ENOVA.abi,
       name: "ENOVA",
       address: "0xe4448b59D3195E93954FF3c65652a6b19b57dc53",
+    },
+    {
+      abi: ABI.MerkleGov.abi,
+      name: "MerkleGov",
+      address: "0xBAE4DA60517e83ebC4F6682CDB7E745f7b9A5132",
+    },
+    {
+      abi: ABI.MerkleVote.abi,
+      name: "MerkleVote",
+      address: "0xFaE67Ab740Ce02Ac9EEA4b255e04998CBf17B52C",
     },
   ],
 });

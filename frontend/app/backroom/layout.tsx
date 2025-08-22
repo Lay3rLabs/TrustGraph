@@ -48,14 +48,6 @@ const menuItems: MenuItem[] = [
     icon: "◢◤",
   },
   {
-    id: "hyperstition",
-    label: "Hyperstitions",
-    path: "/backroom/hyperstition",
-    icon: "▲▼",
-  },
-  { id: "memetics", label: "Memetics", path: "/backroom/memetics", icon: "◈" },
-  { id: "profile", label: "Profile", path: "/backroom/profile", icon: "◉" },
-  {
     id: "leaderboard",
     label: "Leaderboard",
     path: "/backroom/leaderboard",
@@ -68,6 +60,19 @@ const menuItems: MenuItem[] = [
     label: "WIP",
     icon: "?",
     submenu: [
+      {
+        id: "hyperstition",
+        label: "Hyperstitions",
+        path: "/backroom/hyperstition",
+        icon: "▲▼",
+      },
+      {
+        id: "memetics",
+        label: "Memetics",
+        path: "/backroom/memetics",
+        icon: "◈",
+      },
+      { id: "profile", label: "Profile", path: "/backroom/profile", icon: "◉" },
       { id: "en0va", label: "EN0VA", path: "/backroom/en0va", icon: "∞" },
       {
         id: "symbient",

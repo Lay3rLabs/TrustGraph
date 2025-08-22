@@ -84,8 +84,8 @@ contract MerkleVote is IWavsServiceHandler {
     /// @notice Mapping of snapshot ID to voting snapshots
     mapping(uint256 => VotingSnapshot) public snapshots;
 
-    /// @notice Track if an account has already voted on a proposal with verified power
-    mapping(address => mapping(uint256 => bool)) public hasVotedOnProposal;
+    /// @notice Track which merkle root was used when an account voted on a proposal
+    mapping(address => mapping(uint256 => bytes32)) public votingRootUsed;
 
     /// @notice Track verified voting power for account on specific proposals
     mapping(address => mapping(uint256 => uint256)) public verifiedVotingPower;
@@ -122,24 +122,32 @@ contract MerkleVote is IWavsServiceHandler {
      * @notice Verify voting power for a specific proposal using Merkle proof
      * @param account The address to verify voting power for
      * @param proposalId The proposal ID to vote on
-     * @param votingPower The claimed voting power
+     * @param rewardToken The reward token address (part of merkle tree structure)
+     * @param votingPower The claimed voting power (claimable amount in tree)
      * @param proof The merkle proof that validates this claim
      * @return verified Whether the voting power was successfully verified
      */
-    function verifyVotingPower(address account, uint256 proposalId, uint256 votingPower, bytes32[] calldata proof)
-        external
-        returns (bool verified)
-    {
+    function verifyVotingPower(
+        address account,
+        uint256 proposalId,
+        address rewardToken,
+        uint256 votingPower,
+        bytes32[] calldata proof
+    ) external returns (bool verified) {
         require(root != bytes32(0), "ROOT_NOT_SET");
-        require(!hasVotedOnProposal[account][proposalId], "ALREADY_VOTED");
+        require(account != address(0), "INVALID_ACCOUNT");
 
-        // Verify merkle proof
-        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(account, proposalId, votingPower))));
+        // Check if already voted on this proposal with current root
+        require(votingRootUsed[account][proposalId] != root, "ALREADY_VOTED_WITH_CURRENT_ROOT");
+
+        // Verify merkle proof - matching RewardDistributor leaf structure
+        // Leaf: keccak256(abi.encode(account, reward, claimable))
+        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(account, rewardToken, votingPower))));
 
         require(MerkleProof.verifyCalldata(proof, root, leaf), "INVALID_PROOF");
 
-        // Mark as voted and store verified power
-        hasVotedOnProposal[account][proposalId] = true;
+        // Track which root was used for this vote and store verified power
+        votingRootUsed[account][proposalId] = root;
         verifiedVotingPower[account][proposalId] = votingPower;
 
         emit VotingPowerVerified(account, proposalId, votingPower);
@@ -158,13 +166,13 @@ contract MerkleVote is IWavsServiceHandler {
     }
 
     /**
-     * @notice Check if an account has voted on a proposal
+     * @notice Check if an account has voted on a proposal with the current root
      * @param account The account to check
      * @param proposalId The proposal ID
-     * @return voted Whether the account has voted
+     * @return voted Whether the account has voted with current root
      */
     function hasVoted(address account, uint256 proposalId) external view returns (bool voted) {
-        return hasVotedOnProposal[account][proposalId];
+        return votingRootUsed[account][proposalId] == root;
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -296,8 +304,11 @@ contract MerkleVote is IWavsServiceHandler {
     function handleSignedEnvelope(Envelope calldata envelope, SignatureData calldata signatureData) external {
         _serviceManager.validate(envelope, signatureData);
 
-        // Decode the payload to get the AVS output
-        ITypes.AvsOutput memory avsOutput = abi.decode(envelope.payload, (ITypes.AvsOutput));
+        // First decode as DataWithId
+        ITypes.DataWithId memory dataWithId = abi.decode(envelope.payload, (ITypes.DataWithId));
+
+        // Then decode the data field as AvsOutput
+        ITypes.AvsOutput memory avsOutput = abi.decode(dataWithId.data, (ITypes.AvsOutput));
 
         _setRoot(avsOutput.root, avsOutput.ipfsHashData);
         ipfsHashCid = avsOutput.ipfsHash;

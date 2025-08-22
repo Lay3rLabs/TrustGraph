@@ -32,6 +32,7 @@ try {
     ...deployment.service_contracts,
     ...deployment.governance_contracts,
     ...deployment.reward_contracts,
+    ...deployment.merkle_governance_contracts,
   };
 
   console.log("📋 Contract addresses:", contracts);
@@ -56,6 +57,8 @@ try {
     timelock: "Timelock",
     reward_distributor: "RewardDistributor",
     reward_token: "RewardToken",
+    merkle_vote: "MerkleVote",
+    merkle_gov: "MerkleGov",
   };
 
   // Update addresses for each contract

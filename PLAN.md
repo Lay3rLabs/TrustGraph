@@ -29,13 +29,44 @@ Fix eas-attest component and Attester.sol contract:
 - [x] attest method on Attester.sol doesn't really make sense as users should attest to EAS directly.
 - [ ] Better computation of attestations (actually use attestation data?)
 - [ ] Revoking an attestation should lower voting power
-- [ ] New voting power contract to consume merkle tree
 - [ ] Resolver that only let's people who have voting power attest.
-- [ ] Add symbient
 - [ ] Vibe code Service UI from service.json (get IPFS hash)
-- [ ] Deploy voting power contract with initial set?
-- [ ] Make a generic weights contract
-- [ ] Vouching app needs to be easy to use
+- [ ] Make a generic weights contract?
+- [ ] Make a Zodiac module
+- [ ] Add LLM module
+
+# Things to add
+- [ ] Prediction market
+- [ ] WAVS-NFT contracts (just contracts)
+- [ ] Wavs Service Manager if we want to go crazy
+
+# MVP Merkle Gov:
+- [x] New voting power contract to consume merkle tree
+- [x] Extend create attestations script to also have alice vouch for my wallets
+- [x] Tests for new voting power contract to consume merkle tree (make sure it actually works in theory)
+- [x] Deploy scripts for MerkleVote and Merkle Gov contracts
+- [x] Wire up rewards component to MerkleVote contract
+- [x] Fix frontend rewards claiming
+- [-] Vibe code governance UI
+
+# Improved Version
+Let's use a zodiac module + safe to create a system with a nice fallback while we're experimenting with novel governance mechanisms.
+
+1. Basic Setup:
+- [x] Create a basic Zodiac module
+- [x] Create a basic Zodiac module that is able to update signers on a safe
+- [x] Create a deploy script that deploys two Safes with each of the custom zodiac modules
+- [x] Basic test scaffold
+
+2. MVP
+- [ ] Module for direct voting with Merkle Proofs (similar to MerkleGov + MerkleVote)
+- [ ] Module that syncs top N accounts as signers (similar to VotingPower.sol)
+- [ ] Add zodiac module for WAVS agent
+- [ ] Documentation of how these work
+- [ ] Wire up components and WAVS deployments
+
+3. Refinement
+- [ ] Implement and document the fallback mechanism for governance (this should be fairly straightforward with Zodiac hopefully)
 
 MVP Symbient
 - [ ] Add LLM Module

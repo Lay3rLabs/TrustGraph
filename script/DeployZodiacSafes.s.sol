@@ -1,0 +1,251 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.22;
+
+import {stdJson} from "forge-std/StdJson.sol";
+import {console} from "forge-std/console.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+
+import {Common} from "script/Common.s.sol";
+
+// Safe contracts
+import {GnosisSafe} from "@gnosis.pm/safe-contracts/GnosisSafe.sol";
+import {Enum} from "@gnosis.pm/safe-contracts/common/Enum.sol";
+import {GnosisSafeProxyFactory} from "@gnosis.pm/safe-contracts/proxies/GnosisSafeProxyFactory.sol";
+
+// Our modules
+import {BasicZodiacModule} from "contracts/modules/BasicZodiacModule.sol";
+import {SignerManagerModule} from "contracts/modules/SignerManagerModule.sol";
+
+/// @dev Deployment script for Zodiac-enabled Safe setup with auto-enabled modules
+contract DeployZodiacSafes is Common {
+    using stdJson for string;
+
+    string public root = vm.projectRoot();
+    string public script_output_path = string.concat(root, "/.docker/zodiac_safes_deploy.json");
+
+    struct SafeDeployment {
+        address safe;
+        address basicModule;
+        address signerModule;
+        address[] initialSigners;
+        uint256 threshold;
+        bool modulesEnabled;
+    }
+
+    /**
+     * @dev Deploys two Safes with Zodiac modules and auto-enables them
+     * @notice Safes are deployed with single signer (deployer) for easy module enablement
+     *         Additional signers can be added later using the SignerManagerModule
+     */
+    function run() public {
+        address deployer = vm.addr(_privateKey);
+
+        vm.startBroadcast(_privateKey);
+
+        // Deploy Safe singleton and factory (if needed)
+        GnosisSafe safeSingleton = new GnosisSafe();
+        GnosisSafeProxyFactory safeFactory = new GnosisSafeProxyFactory();
+
+        // Deploy first Safe with single signer for easy module enablement
+        SafeDeployment memory safe1 = deployAndConfigureZodiacSafe(safeSingleton, safeFactory, deployer, "Safe1");
+
+        // Deploy second Safe with single signer for easy module enablement
+        SafeDeployment memory safe2 = deployAndConfigureZodiacSafe(safeSingleton, safeFactory, deployer, "Safe2");
+
+        vm.stopBroadcast();
+
+        // Write deployment results to JSON
+        writeDeploymentResults(safe1, safe2, address(safeSingleton), address(safeFactory));
+    }
+
+    function deployAndConfigureZodiacSafe(
+        GnosisSafe safeSingleton,
+        GnosisSafeProxyFactory safeFactory,
+        address deployer,
+        string memory safeName
+    ) internal returns (SafeDeployment memory deployment) {
+        // Setup with single signer (deployer) and threshold of 1 for easy module enablement
+        address[] memory initialSigners = new address[](1);
+        initialSigners[0] = deployer;
+        uint256 threshold = 1;
+
+        // Create Safe setup data
+        bytes memory setupData = abi.encodeWithSignature(
+            "setup(address[],uint256,address,bytes,address,address,uint256,address)",
+            initialSigners,
+            threshold,
+            address(0), // to (for optional delegate call)
+            "", // data (for optional delegate call)
+            address(0), // fallback handler
+            address(0), // payment token
+            0, // payment
+            address(0) // payment receiver
+        );
+
+        // Deploy Safe proxy with unique nonce
+        address safeProxy = address(
+            safeFactory.createProxyWithNonce(
+                address(safeSingleton), setupData, uint256(keccak256(abi.encodePacked(safeName, block.timestamp)))
+            )
+        );
+
+        // Deploy Basic Zodiac Module
+        BasicZodiacModule basicModule = new BasicZodiacModule(deployer, safeProxy, safeProxy);
+
+        // Deploy Signer Manager Module
+        SignerManagerModule signerModule = new SignerManagerModule(deployer, safeProxy, safeProxy);
+
+        // Enable modules on the Safe
+        // Since we have threshold of 1 and deployer is the signer, we can execute directly
+        GnosisSafe safe = GnosisSafe(payable(safeProxy));
+
+        // Prepare module enablement transactions
+        bytes memory enableBasicModuleData = abi.encodeWithSignature("enableModule(address)", address(basicModule));
+        bytes memory enableSignerModuleData = abi.encodeWithSignature("enableModule(address)", address(signerModule));
+
+        // Execute module enablement as the Safe (threshold is 1, deployer can execute)
+        bytes memory signature = generateSignature(deployer, safe, address(safe), enableBasicModuleData);
+
+        // Enable Basic Module
+        bool success1 = safe.execTransaction(
+            address(safe), // to
+            0, // value
+            enableBasicModuleData, // data
+            Enum.Operation.Call, // operation
+            0, // safeTxGas
+            0, // baseGas
+            0, // gasPrice
+            address(0), // gasToken
+            payable(0), // refundReceiver
+            signature // signatures
+        );
+
+        // Enable Signer Manager Module
+        signature = generateSignature(deployer, safe, address(safe), enableSignerModuleData);
+        bool success2 = safe.execTransaction(
+            address(safe), // to
+            0, // value
+            enableSignerModuleData, // data
+            Enum.Operation.Call, // operation
+            0, // safeTxGas
+            0, // baseGas
+            0, // gasPrice
+            address(0), // gasToken
+            payable(0), // refundReceiver
+            signature // signatures
+        );
+
+        deployment = SafeDeployment({
+            safe: safeProxy,
+            basicModule: address(basicModule),
+            signerModule: address(signerModule),
+            initialSigners: initialSigners,
+            threshold: threshold,
+            modulesEnabled: success1 && success2
+        });
+
+        // Log the deployment and enablement status
+        if (deployment.modulesEnabled) {
+            emit ModulesEnabled(safeProxy, address(basicModule), address(signerModule));
+        }
+
+        return deployment;
+    }
+
+    /// @notice Generate a signature for Safe transaction execution
+    /// @dev Creates an approved hash signature (v=1) for single signer execution
+    function generateSignature(address signer, GnosisSafe safe, address to, bytes memory data)
+        internal
+        view
+        returns (bytes memory)
+    {
+        // For single signer with threshold 1, we can use a pre-approved signature
+        // v=1 means the signature is approved by the signer (owner)
+        bytes32 dataHash = safe.getTransactionHash(
+            to, // to
+            0, // value
+            data, // data
+            Enum.Operation.Call, // operation
+            0, // safeTxGas
+            0, // baseGas
+            0, // gasPrice
+            address(0), // gasToken
+            payable(0), // refundReceiver
+            safe.nonce() // nonce
+        );
+
+        // Create approved hash signature format: r=signer, s=0, v=1
+        // This works because the signer is an owner and we're marking it as pre-approved
+        bytes memory signature = abi.encodePacked(
+            uint256(uint160(signer)), // r = signer address padded to 32 bytes
+            uint256(0), // s = 0 for approved hash
+            uint8(1) // v = 1 for approved hash
+        );
+
+        return signature;
+    }
+
+    function writeDeploymentResults(
+        SafeDeployment memory safe1,
+        SafeDeployment memory safe2,
+        address safeSingleton,
+        address safeFactory
+    ) internal {
+        string memory jsonKey = "deployment";
+
+        // Add deployment note
+        vm.serializeString(
+            jsonKey,
+            "deployment_note",
+            "Safes deployed with single signer for easy setup. Use SignerManagerModule to add more signers."
+        );
+
+        // Safe 1 data
+        vm.serializeString(jsonKey, "safe1_address", Strings.toHexString(safe1.safe));
+        vm.serializeString(jsonKey, "safe1_basic_module", Strings.toHexString(safe1.basicModule));
+        vm.serializeString(jsonKey, "safe1_signer_module", Strings.toHexString(safe1.signerModule));
+        vm.serializeUint(jsonKey, "safe1_threshold", safe1.threshold);
+        vm.serializeBool(jsonKey, "safe1_modules_enabled", safe1.modulesEnabled);
+
+        // Safe 2 data
+        vm.serializeString(jsonKey, "safe2_address", Strings.toHexString(safe2.safe));
+        vm.serializeString(jsonKey, "safe2_basic_module", Strings.toHexString(safe2.basicModule));
+        vm.serializeString(jsonKey, "safe2_signer_module", Strings.toHexString(safe2.signerModule));
+        vm.serializeUint(jsonKey, "safe2_threshold", safe2.threshold);
+        vm.serializeBool(jsonKey, "safe2_modules_enabled", safe2.modulesEnabled);
+
+        // Factory data
+        vm.serializeString(jsonKey, "safe_singleton", Strings.toHexString(safeSingleton));
+        string memory finalJson = vm.serializeString(jsonKey, "safe_factory", Strings.toHexString(safeFactory));
+
+        // Write to file
+        vm.writeFile(script_output_path, finalJson);
+
+        // Log success message
+        console.log("================================================================================");
+        console.log("ZODIAC SAFES DEPLOYED AND CONFIGURED");
+        console.log("================================================================================");
+        console.log("");
+        console.log("Safe 1:");
+        console.log("  Address:", safe1.safe);
+        console.log("  Basic Module:", safe1.basicModule, safe1.modulesEnabled ? "(ENABLED)" : "(NOT ENABLED)");
+        console.log("  Signer Module:", safe1.signerModule, safe1.modulesEnabled ? "(ENABLED)" : "(NOT ENABLED)");
+        console.log("");
+        console.log("Safe 2:");
+        console.log("  Address:", safe2.safe);
+        console.log("  Basic Module:", safe2.basicModule, safe2.modulesEnabled ? "(ENABLED)" : "(NOT ENABLED)");
+        console.log("  Signer Module:", safe2.signerModule, safe2.modulesEnabled ? "(ENABLED)" : "(NOT ENABLED)");
+        console.log("");
+        console.log("Next Steps:");
+        console.log("1. Modules are already enabled and ready to use!");
+        console.log("2. Use SignerManagerModule.addSigner() to add more signers");
+        console.log("3. Use SignerManagerModule.changeThreshold() to update threshold");
+        console.log("");
+        console.log("Example: Add a new signer with threshold 2:");
+        console.log("  signerModule.addSigner(newSignerAddress, 2);");
+        console.log("================================================================================");
+    }
+
+    // Events for logging
+    event ModulesEnabled(address indexed safe, address indexed basicModule, address indexed signerModule);
+}

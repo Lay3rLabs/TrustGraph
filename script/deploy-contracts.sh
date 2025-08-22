@@ -22,9 +22,13 @@ fi
 export RPC_URL=$(bash ./script/get-rpc.sh)
 export DEPLOYER_PK=$(cat .nodes/deployer)
 
+# Set MerkleGov funding amount (default 0.1 ETH if not specified)
+MERKLE_GOV_FUNDING="${MERKLE_GOV_FUNDING:-100000000000000000}"  # 0.1 ETH in wei
+
 echo "🔧 Configuration:"
 echo "   RPC_URL: ${RPC_URL}"
 echo "   WAVS_SERVICE_MANAGER_ADDRESS: ${WAVS_SERVICE_MANAGER_ADDRESS}"
+echo "   MERKLE_GOV_FUNDING: ${MERKLE_GOV_FUNDING} wei"
 
 # Create output directory
 mkdir -p .docker
@@ -58,6 +62,28 @@ forge script script/DeployRewards.s.sol:DeployScript \
     --private-key "${DEPLOYER_PK}" \
     --broadcast
 
+# Extract reward distributor address for MerkleGov deployment
+export REWARD_DISTRIBUTOR_ADDR=$(jq -r '.reward_distributor' .docker/rewards_deploy.json 2>/dev/null || echo "")
+
+echo "🗳️  Deploying Merkle Governance contracts..."
+echo "   Funding MerkleGov with: ${MERKLE_GOV_FUNDING} wei"
+
+# Deploy MerkleGov contracts using Foundry script with funding
+forge script script/DeployMerkleGov.s.sol:DeployScript \
+    --sig 'run(string,string,uint256)' "${WAVS_SERVICE_MANAGER_ADDRESS}" "${REWARD_DISTRIBUTOR_ADDR}" "${MERKLE_GOV_FUNDING}" \
+    --rpc-url "${RPC_URL}" \
+    --private-key "${DEPLOYER_PK}" \
+    --broadcast
+
+echo "🔐 Deploying Zodiac-enabled Safes with modules..."
+
+# Deploy Zodiac Safes using Foundry script
+forge script script/DeployZodiacSafes.s.sol:DeployZodiacSafes \
+    --sig 'run()' \
+    --rpc-url "${RPC_URL}" \
+    --private-key "${DEPLOYER_PK}" \
+    --broadcast
+
 # Extract deployed addresses from EAS deployment
 export EAS_REGISTRY_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("SchemaRegistry deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 export EAS_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("EAS deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
@@ -83,6 +109,21 @@ export GOVERNOR_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("
 # Extract deployed addresses from Rewards deployment
 export REWARD_DISTRIBUTOR_ADDR=$(jq -r '.reward_distributor' .docker/rewards_deploy.json 2>/dev/null || echo "")
 export REWARD_TOKEN_ADDR=$(jq -r '.reward_token' .docker/rewards_deploy.json 2>/dev/null || echo "")
+
+# Extract deployed addresses from MerkleGov deployment
+export MERKLE_VOTE_ADDR=$(jq -r '.merkle_vote' .docker/merkle_gov_deploy.json 2>/dev/null || echo "")
+export MERKLE_GOV_ADDR=$(jq -r '.merkle_gov' .docker/merkle_gov_deploy.json 2>/dev/null || echo "")
+export MERKLE_GOV_FUNDED_AMOUNT=$(jq -r '.funded_amount_wei' .docker/merkle_gov_deploy.json 2>/dev/null || echo "0")
+
+# Extract deployed addresses from Zodiac Safes deployment
+export SAFE1_ADDR=$(jq -r '.safe1_address' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
+export SAFE1_BASIC_MODULE=$(jq -r '.safe1_basic_module' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
+export SAFE1_SIGNER_MODULE=$(jq -r '.safe1_signer_module' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
+export SAFE2_ADDR=$(jq -r '.safe2_address' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
+export SAFE2_BASIC_MODULE=$(jq -r '.safe2_basic_module' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
+export SAFE2_SIGNER_MODULE=$(jq -r '.safe2_signer_module' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
+export SAFE_SINGLETON=$(jq -r '.safe_singleton' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
+export SAFE_FACTORY=$(jq -r '.safe_factory' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
 
 # Use EAS Attest Trigger as the main service trigger
 export SERVICE_TRIGGER_ADDR="${EAS_ATTEST_TRIGGER_ADDR}"
@@ -119,6 +160,25 @@ cat > .docker/deployment_summary.json << EOF
   "reward_contracts": {
     "reward_distributor": "${REWARD_DISTRIBUTOR_ADDR}",
     "reward_token": "${REWARD_TOKEN_ADDR}"
+  },
+  "merkle_governance_contracts": {
+    "merkle_vote": "${MERKLE_VOTE_ADDR}",
+    "merkle_gov": "${MERKLE_GOV_ADDR}",
+    "funded_amount_wei": "${MERKLE_GOV_FUNDED_AMOUNT}"
+  },
+  "zodiac_safes": {
+    "safe_singleton": "${SAFE_SINGLETON}",
+    "safe_factory": "${SAFE_FACTORY}",
+    "safe1": {
+      "address": "${SAFE1_ADDR}",
+      "basic_module": "${SAFE1_BASIC_MODULE}",
+      "signer_module": "${SAFE1_SIGNER_MODULE}"
+    },
+    "safe2": {
+      "address": "${SAFE2_ADDR}",
+      "basic_module": "${SAFE2_BASIC_MODULE}",
+      "signer_module": "${SAFE2_SIGNER_MODULE}"
+    }
   }
 }
 EOF
@@ -158,10 +218,29 @@ echo "💰 Reward Contracts:"
 echo "   REWARD_DISTRIBUTOR_ADDR: ${REWARD_DISTRIBUTOR_ADDR}"
 echo "   REWARD_TOKEN_ADDR: ${REWARD_TOKEN_ADDR}"
 echo ""
+echo "🗳️  Merkle Governance Contracts:"
+echo "   MERKLE_VOTE_ADDR: ${MERKLE_VOTE_ADDR}"
+echo "   MERKLE_GOV_ADDR: ${MERKLE_GOV_ADDR}"
+echo "   MERKLE_GOV_FUNDED: ${MERKLE_GOV_FUNDED_AMOUNT} wei"
+echo ""
+echo "🔐 Zodiac Safes:"
+echo "   SAFE_SINGLETON: ${SAFE_SINGLETON}"
+echo "   SAFE_FACTORY: ${SAFE_FACTORY}"
+echo "   Safe 1:"
+echo "     Address: ${SAFE1_ADDR}"
+echo "     Basic Module: ${SAFE1_BASIC_MODULE}"
+echo "     Signer Module: ${SAFE1_SIGNER_MODULE}"
+echo "   Safe 2:"
+echo "     Address: ${SAFE2_ADDR}"
+echo "     Basic Module: ${SAFE2_BASIC_MODULE}"
+echo "     Signer Module: ${SAFE2_SIGNER_MODULE}"
+echo ""
 echo "📄 Deployment details saved to .docker/deployment_summary.json"
 echo "📄 EAS deployment logs saved to .docker/eas_deploy.json"
 echo "📄 Governance deployment logs saved to .docker/governance_deploy.json"
 echo "📄 Rewards deployment details saved to .docker/rewards_deploy.json"
+echo "📄 Merkle Governance deployment details saved to .docker/merkle_gov_deploy.json"
+echo "📄 Zodiac Safes deployment details saved to .docker/zodiac_safes_deploy.json"
 
 # Update environment variables for other scripts
 export SERVICE_SUBMISSION_ADDR="${EAS_ATTESTER_ADDR}"  # For backwards compatibility
