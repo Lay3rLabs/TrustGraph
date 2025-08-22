@@ -13,8 +13,8 @@ import {Enum} from "@gnosis.pm/safe-contracts/common/Enum.sol";
 import {GnosisSafeProxyFactory} from "@gnosis.pm/safe-contracts/proxies/GnosisSafeProxyFactory.sol";
 
 // Our modules
-import {BasicZodiacModule} from "contracts/modules/BasicZodiacModule.sol";
-import {SignerManagerModule} from "contracts/modules/SignerManagerModule.sol";
+import {BasicZodiacModule} from "contracts/zodiac/BasicZodiacModule.sol";
+import {SignerManagerModule} from "contracts/zodiac/SignerManagerModule.sol";
 
 /// @dev Deployment script for Zodiac-enabled Safe setup with auto-enabled modules
 contract DeployZodiacSafes is Common {

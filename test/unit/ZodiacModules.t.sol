@@ -12,8 +12,8 @@ import {GnosisSafeProxyFactory} from "@gnosis.pm/safe-contracts/proxies/GnosisSa
 import {Operation} from "@gnosis-guild/zodiac-core/core/Operation.sol";
 
 // Our modules
-import {BasicZodiacModule} from "../../src/contracts/modules/BasicZodiacModule.sol";
-import {SignerManagerModule} from "../../src/contracts/modules/SignerManagerModule.sol";
+import {BasicZodiacModule} from "../../src/contracts/zodiac/BasicZodiacModule.sol";
+import {SignerManagerModule} from "../../src/contracts/zodiac/SignerManagerModule.sol";
 
 contract ZodiacModulesTest is Test {
     // Core contracts
