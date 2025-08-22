@@ -1,0 +1,55 @@
+package wavs:agent@0.0.1;
+
+interface contracts {
+  use errors.{agent-error};
+  use types.{contract, contract-call, transaction};
+
+  /// Helper methods for contracts
+  resource contract-manager {
+    /// Create a new Contract instance
+    new: func(name: string, address: string, abi: string) -> contract;
+
+    /// Create a new Contract instance with description
+    new-with-description: func(
+      name: string, 
+      address: string, 
+      abi: string, 
+      description: string
+    ) -> contract;
+
+    /// Parse the JSON ABI to JsonAbi struct
+    parse-abi: func(contract: contract) -> result<string, agent-error>;
+
+    /// Encode a function call for this contract using the ABI
+    encode-function-call: func(
+      contract: contract,
+      function-name: string,
+      args: list<string>
+    ) -> result<list<u8>, agent-error>;
+
+    /// Find a function in the ABI
+    find-function: func(
+      contract: contract,
+      function-name: string
+    ) -> result<string, agent-error>;
+
+    /// Validate function arguments against the ABI
+    validate-function-call: func(
+      contract: contract,
+      function-name: string,
+      args: list<string>
+    ) -> result<_, agent-error>;
+  }
+
+  /// Transaction management
+  resource transaction-manager {
+    /// Basic validation of transaction fields
+    is-valid: func(transaction: transaction) -> bool;
+
+    /// Validate a transaction
+    validate-transaction: func(transaction: transaction) -> result<_, agent-error>;
+  }
+  
+  /// Helper function to create a transaction payload from a Transaction
+  create-payload-from-tx: func(transaction: transaction) -> result<string, agent-error>;
+}

@@ -1,0 +1,34 @@
+package wavs:agent@0.0.1;
+
+// ----- Error Handling -----
+interface errors {  
+  /// Possible error types that can occur during agent operations
+  variant agent-error {
+    /// API error
+    api(string),
+    /// HTTP error
+    http(string),
+    /// External service error
+    external-service(string),
+    /// Configuration errors
+    config(string),
+    /// Contract error
+    contract(string),
+    /// Error related to configuration parsing or validation
+    configuration(string),
+    /// Error when loading context from URI or environment
+    context-loading(string),
+    /// Error when validating context
+    context-validation(string),
+    /// Error during LLM processing
+    llm(string),
+    /// IO errors from std::io
+    io(string),
+    /// Error related to transaction generation or validation
+    transaction(string),
+    /// UTF-8 decoding error
+    utf8(string),
+    /// Other general errors
+    other(string)
+  }
+}

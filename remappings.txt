@@ -4,6 +4,8 @@
 @morpho-org/universal-rewards-distributor=node_modules/@morpho-org/universal-rewards-distributor/src
 @gnosis-guild/zodiac-core/=node_modules/@gnosis-guild/zodiac-core/contracts/
 @gnosis.pm/safe-contracts/=node_modules/@gnosis.pm/safe-contracts/contracts/
+@lay3rlabs/conditional-tokens-contracts=node_modules/@lay3rlabs/conditional-tokens-contracts/contracts
+@lay3rlabs/conditional-tokens-market-makers=node_modules/@lay3rlabs/conditional-tokens-market-makers/contracts
 forge-std=node_modules/forge-std/src
 @wavs=node_modules/@wavs/solidity/contracts
 contracts/=src/contracts

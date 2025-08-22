@@ -1,14 +1,20 @@
 # The Plan
 
 # Epochs
-- [ ] Prediction market -> working hyperstition market
-- [ ] Add LLM package / component (attester example?)
+- [-] Prediction market -> working hyperstition market
+- [-] Add LLM package / component (attester example?)
 - [ ] WAVS zodiac modules to replace MerkleGov and MerkleVote
 - [ ] WAVS-NFT contracts (just contracts)
 - [ ] Wavs Service Manager if we want to go crazy
 
 # Project organization
 - [ ] Organize project better (put contracts in folders)
+
+# Next steps
+- [ ] Deploy Prediction market
+- [ ] Fix up Zodiac modules
+- [ ] Add ollama docker container?
+- [ ] Clean up wavs-llm package
 
 # Misc improvements
 - [ ] Better computation of attestations (actually use attestation data?)
@@ -17,10 +23,6 @@
 - [ ] Vibe code Service UI from service.json (get IPFS hash)
 - [ ] Make a generic weights contract?
 - [ ] Make a Zodiac module
-- [ ] Add LLM module
-
-# Things to add
-- [ ] Prediction market
 
 ### Zodiac Modules
 Let's use a zodiac module + safe to create a system with a nice fallback while we're experimenting with novel governance mechanisms.
@@ -49,8 +51,6 @@ Let's use a zodiac module + safe to create a system with a nice fallback while w
 - [ ] The most liked get rewards
 - [ ] Mint NFTs of responses and conversations
 - [ ] We're going to make a Network Spirituality Holy Text
-
-
 
 ## NEXT FEATURE: Rewards
 

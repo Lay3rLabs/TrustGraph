@@ -1,0 +1,36 @@
+package wavs:agent@0.0.1;
+
+interface tools {
+  use client.{llm-client};
+  use types.{message, tool, tool-call, function, custom-tool-handler, contract};
+
+  /// Tool creation and management functions
+  resource tools-builder {
+    /// Create a tool to send ETH through the DAO's Safe
+    send-eth-tool: func() -> tool;
+
+    /// Generate tools from a smart contract's ABI
+    tools-from-contract: func(contract: contract) -> list<tool>;
+
+    /// Create a custom tool with the specified name, description, and parameters
+    custom-tool: func(name: string, description: string, parameters: string) -> tool;
+
+    /// Execute a tool call and return the result
+    execute-tool-call: func(
+      tool-call: tool-call,
+      custom-handlers: option<list<custom-tool-handler>>
+    ) -> result<string, string>;
+
+    /// Parse an ETH transaction from tool call
+    parse-eth-transaction: func(tool-call: tool-call) -> result<string, string>;
+
+    /// Process tool calls and generate a response
+    process-tool-calls: func(
+      client: llm-client,
+      initial-messages: list<message>,
+      response: message,
+      tool-calls: list<tool-call>,
+      custom-handlers: option<list<custom-tool-handler>>
+    ) -> result<string, string>;
+  }
+}

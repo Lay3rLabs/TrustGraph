@@ -1,0 +1,122 @@
+package wavs:agent@0.0.1;
+
+/// Common types shared across multiple interfaces
+interface types {
+  /// Common message structure for chat completions
+  record message {
+    role: string,
+    content: option<string>,
+    tool-calls: option<list<tool-call>>,
+    tool-call-id: option<string>,
+    name: option<string>,
+  }
+  
+  /// Function parameter for tool calls
+  record function-parameter {
+    name: option<string>,
+    description: option<string>,
+    parameter-type: option<string>,
+  }
+
+  /// Function definition for tool calls
+  record function {
+    name: string,
+    description: option<string>,
+    parameters: option<string>,  // JSON schema as string
+  }
+
+  /// Tool definition for chat completions
+  record tool {
+    tool-type: string,
+    function: function,
+  }
+
+  /// Tool call for chat completions
+  record tool-call {
+    id: string,
+    tool-type: string,
+    function: tool-call-function,
+  }
+
+  /// Function call details
+  record tool-call-function {
+    name: string,
+    arguments: string,  // JSON string of arguments
+  }
+
+  /// Handler for custom tool calls
+  resource custom-tool-handler {
+    /// Returns true if this handler can handle the given tool name
+    can-handle: func(tool-name: string) -> bool;
+
+    /// Execute the tool call and return a result
+    execute: func(tool-call: tool-call) -> result<string, string>;
+  }
+  
+  /// Response from an LLM interaction
+  variant llm-response {
+    /// Transaction to be executed
+    transaction(transaction),
+    /// Text response (when no action is needed)
+    text(string),
+  }
+  
+  /// Configuration options for LLM API requests
+  record llm-options {
+    /// Temperature controls randomness (0.0-2.0)
+    temperature: f32,
+    /// Top_p controls diversity (0.0-1.0)
+    top-p: f32,
+    /// Seed for deterministic outputs
+    seed: u32,
+    /// Maximum tokens to generate
+    max-tokens: option<u32>,
+    /// Context window size (mainly for Ollama)
+    context-window: option<u32>,
+  }
+
+  /// Client configuration for LLM interactions
+  record llm-client {
+    /// The model name to use
+    model: string,
+    /// Configuration options for LLM requests
+    config: llm-options,
+    /// The API URL to send requests to
+    api-url: string,
+    /// Optional API key for authenticated services
+    api-key: option<string>,
+  }
+
+  /// Generic configuration for agent's decision making
+  record config {
+    contracts: list<contract>,
+    llm-config: llm-options,
+    model: string,
+    messages: list<message>,
+    /// Any global configuration values
+    config: list<tuple<string, string>>,
+  }
+  
+  /// Represents a smart contract that the DAO can interact with
+  record contract {
+    name: string,
+    address: string,
+    abi: string,
+    description: option<string>,
+  }
+
+  /// Represents a contract function call
+  record contract-call {
+    function: string,
+    args: list<string>,  // Using string to represent JSON values
+  }
+
+  /// Represents a transaction to be executed through a wallet
+  record transaction {
+    to: string,
+    value: string,
+    contract-call: option<contract-call>,
+    data: string,
+    description: string,
+  }
+}

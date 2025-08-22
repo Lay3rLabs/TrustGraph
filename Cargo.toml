@@ -1,9 +1,5 @@
 [workspace]
-members = [
-    "components/eas-attest",
-    "components/eas-compute",
-    "components/rewards",
-]
+members = ["components/*", "packages/*"]
 resolver = "2"
 
 [workspace.package]
@@ -21,6 +17,9 @@ wit-bindgen = "0.42.1"
 wstd = "0.5.3"
 wasi = "0.14.1"
 wavs-wasi-utils = "0.4.0"
+
+# WAVS
+wavs-llm = { path = "./packages/llm" }
 
 # Other
 serde = { version = "1.0.219", features = ["derive"] }
@@ -47,6 +46,15 @@ cid = "0.7"
 multibase = "0.9"
 multihash = "0.18"
 bs58 = "0.5"
+
+## Common dependencies
+hex = "0.4.3"
+ethabi = "18.0.0"
+primitive-types = "0.13.1"
+base64 = "0.22.1"
+mockall = "0.11"
+thiserror = "1.0.47"
+tiny-keccak = { version = "2.0", features = ["keccak"] }
 
 [profile.release]
 codegen-units = 1

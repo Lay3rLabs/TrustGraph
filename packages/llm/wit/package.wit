@@ -1,0 +1,20 @@
+package wavs:agent@0.0.1;
+
+/// Main world definition for the wavs-agent component
+world wavs-agent {
+  // Import all the interfaces
+  import client;
+  import config;
+  import contracts;
+  import errors;
+  import tools;
+  import types;
+  
+  // Export all the interfaces
+  export client;
+  export config;
+  export contracts;
+  export errors;
+  export tools;
+  export types;
+} 

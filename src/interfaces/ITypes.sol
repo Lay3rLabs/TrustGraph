@@ -24,6 +24,18 @@ interface ITypes {
     }
 
     /**
+     * @notice Struct to store AVS output data
+     * @param lmsrMarketMaker Address of the LMSR market maker
+     * @param conditionalTokens Address of the conditional tokens
+     * @param result The result of the oracle AVS
+     */
+    struct AvsOutputData {
+        address lmsrMarketMaker;
+        address conditionalTokens;
+        bool result;
+    }
+
+    /**
      * @notice Event emitted when a new trigger is created
      * @param triggerId Unique identifier for the trigger
      */
