@@ -256,9 +256,10 @@ This script automates the complete WAVS deployment process in a single command:
 **Result:** A fully operational WAVS service that monitors blockchain events, executes WebAssembly components, and submits verified results on-chain.
 
 ```bash
+sh script/configure-components.sh init
+
 export RPC_URL=`bash ./script/get-rpc.sh`
 export AGGREGATOR_URL=http://localhost:8001
-
 bash ./script/deploy-script.sh
 ```
 
@@ -351,7 +352,7 @@ forge script script/Trigger.s.sol:EasTrigger --sig "queryAttestations(string,str
   --rpc-url $WAVS_ENV_RPC_URL
 ```
 
-Check voting power for recipien, it should have gone up by number of attestations (note this is a separate demo from MerkleGov which we'll show later):
+Check voting power for recipient, it should have gone up by number of attestations (note this is a separate demo from MerkleGov which we'll show later):
 ```bash
 forge script script/Governance.s.sol:Governance \
     --sig "queryVotingPower(string,string)" \
@@ -380,6 +381,7 @@ forge script script/Rewards.s.sol:Rewards \
 
 Claim:
 ```bash
+export IPFS_GATEWAY_URL="http://127.0.0.1:5001"
 forge script script/Rewards.s.sol:Rewards \
     --sig "claimRewards(string,string)" \
     $WAVS_ENV_REWARD_DISTRIBUTOR_ADDRESS \
