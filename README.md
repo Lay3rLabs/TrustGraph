@@ -9,7 +9,7 @@ TOP SECRET: a collection of fundraising, governance, and incentive mechanisms fo
 ## System Requirements
 
 <details>
-<summary>Core (Docker, Compose, Make, JQ, Node v21+, Foundry)</summary>
+<summary>Core (Docker, Compose, Task, JQ, Node v21+, Foundry)</summary>
 
 ## Ubuntu Base
 
@@ -39,11 +39,11 @@ If prompted, remove container with `sudo apt remove containerd.io`.
 - **Linux + Windows WSL**: `sudo apt-get install docker-compose-v2`
 - [Compose Documentation](https://docs.docker.com/compose/)
 
-### Make
+### Task (Taskfile)
 
-- **MacOS**: `brew install make`
-- **Linux + Windows WSL**: `sudo apt -y install make`
-- [Make Documentation](https://www.gnu.org/software/make/manual/make.html)
+- **MacOS**: `brew install go-task`
+- **Linux + Windows WSL**: `npm install -g @go-task/cli`
+- [Task Documentation](https://taskfile.dev/)
 
 ### JQ
 
@@ -141,7 +141,7 @@ forge init --template Lay3rLabs/wavs-eas my-wavs-eas-app --branch main
 ```
 
 > \[!TIP]
-> Run `make help` to see all available commands and environment variable overrides.
+> Run `task --list-all` to see all available commands and environment variable overrides.
 
 ### Solidity
 
@@ -149,13 +149,13 @@ Install the required packages to build the Solidity contracts. This project supp
 
 ```bash
 # Install packages (npm & submodules)
-make setup
+task setup
 
 # Build the contracts
-forge build
+task build:forge
 
 # Run the solidity tests
-forge test
+task test
 ```
 
 ## Build WASI components
@@ -173,7 +173,7 @@ Now build the WASI components into the `compiled` output directory.
 > `brew uninstall rust` & install it from <https://rustup.rs>
 
 ```bash
-make wasi-build
+task build:wasi
 ```
 
 ## Testing the Price Feed Component Locally
@@ -183,13 +183,7 @@ How to test the component locally for business logic validation before on-chain 
 TODO! Update this to actually work with our components
 
 ```bash
-make wasi-exec
-```
-
-Expected output:
-
-```shell docci-ignore
-
+# task wasi:exec COMPONENT_FILENAME=component.wasm INPUT_DATA="test-string"
 ```
 
 ## WAVS
@@ -229,7 +223,7 @@ cp .env.example .env
 # update the .env for either LOCAL or TESTNET
 
 # Starts anvil + IPFS, WARG, Jaeger, and prometheus.
-make start-all-local
+task start-all-local
 ```
 
 ## WAVS Deployment Script
@@ -256,11 +250,7 @@ This script automates the complete WAVS deployment process in a single command:
 **Result:** A fully operational WAVS service that monitors blockchain events, executes WebAssembly components, and submits verified results on-chain.
 
 ```bash
-sh script/configure-components.sh init
-
-export RPC_URL=`bash ./script/get-rpc.sh`
-export AGGREGATOR_URL=http://localhost:8001
-bash ./script/deploy-script.sh
+task deploy:full
 ```
 
 # EAS Attestation Demo
@@ -274,42 +264,17 @@ This demo walks you through the complete attestation workflow:
 
 ## Demo
 
-Set up environment variables automatically:
-
-```bash
-# FIX THIS SCRIPT TO ACTUALLY WORK. TOO many redundent environment variables
-# Auto-generate ALL environment variables from deployment_summary.json
-./script/setup-pagerank-env.sh
-source .env.pagerank
-
-export RPC_URL=`bash ./script/get-rpc.sh`
-export SERVICE_TRIGGER_ADDR=$(jq -r '.service_contracts.trigger' .docker/deployment_summary.json)
-export EAS_ADDR=$(jq -r '.eas_contracts.eas' .docker/deployment_summary.json)
-export SCHEMA_REGISTRAR_ADDR=$(jq -r '.eas_contracts.schema_registrar' .docker/deployment_summary.json)
-export EAS_INDEXER_ADDR=$(jq -r '.eas_contracts.indexer' .docker/deployment_summary.json)
-export INDEXER_RESOLVER_ADDR=$(jq -r '.eas_contracts.indexer_resolver' .docker/deployment_summary.json)
-export VOTING_POWER_ADDR=$(jq -r '.governance_contracts.voting_power' .docker/deployment_summary.json)
-export MERKLE_GOV_ADDR=$(jq -r '.merkle_governance_contracts.merkle_gov' .docker/deployment_summary.json)
-export MERKLE_VOTE_ADDR=$(jq -r '.merkle_governance_contracts.merkle_vote' .docker/deployment_summary.json)
-export REWARDS_TOKEN_ADDRESS=$(jq -r '.reward_contracts.reward_token' .docker/deployment_summary.json)
-export REWARD_DISTRIBUTOR_ADDRESS=$(jq -r '.reward_contracts.reward_distributor' .docker/deployment_summary.json)
-export VOUCH_SCHEMA_UID=$(jq -r '.eas_schemas.vouching_schema' .docker/deployment_summary.json)
-
-# Set demo wallet address
-export FUNDED_KEY=`cat .env | grep FUNDED_KEY | cut -d '=' -f2`
-export WALLET_ADDRESS=`cast wallet address ${FUNDED_KEY}`
-```
-
-### PageRank Testing (Optional)
+### PageRank Testing
 
 Create a comprehensive PageRank test network with real attestations:
 
 ```bash
 # Create 40+ real attestations across different network patterns
-TEST_ADDRESS=${WALLET_ADDRESS} ./script/create-pagerank-attestations.sh
+# Set TEST_ADDRESS to your wallet address from config
+TEST_ADDRESS=$(task config:wallet-address) task pagerank:full-setup
 
 # Verify the network and get PageRank recommendations
-# ./script/verify-pagerank-network.sh
+# task eas:verify-pagerank-network
 ```
 
 This creates a realistic attestation network with:
@@ -328,12 +293,7 @@ Create an attestation request using your schema.
 
 ```bash
 # Trigger attestation creation via WAVS
-forge script script/Trigger.s.sol:EasTrigger --sig "triggerRawAttestation(string,string,string,string)" \
-  "${WAVS_ENV_TRIGGER_ADDRESS}" \
-  $VOUCH_SCHEMA_UID \
-  $WALLET_ADDRESS \
-  "Advanced Solidity Development Skills Verified" \
-  --rpc-url $WAVS_ENV_RPC_URL --broadcast
+task forge:trigger-attestation
 ```
 
 ### 2. View Results
@@ -344,61 +304,30 @@ Check the attestation was created.
 
 ```bash
 # Query attestations for the schema and recipient
-forge script script/Trigger.s.sol:EasTrigger --sig "queryAttestations(string,string,string,string,uint256)" \
-  "${WAVS_ENV_INDEXER_ADDRESS}" \
-  "${WAVS_ENV_EAS_ADDRESS}" \
-  "${VOUCH_SCHEMA_UID}" \
-  $WALLET_ADDRESS \
-  10 \
-  --rpc-url $WAVS_ENV_RPC_URL
+task forge:query-attestations
 ```
 
 Check voting power for recipient, it should have gone up by number of attestations (note this is a separate demo from MerkleGov which we'll show later):
 ```bash
-forge script script/Governance.s.sol:Governance \
-    --sig "queryVotingPower(string,string)" \
-    $WAVS_ENV_VOTING_POWER_ADDRESS \
-    $WALLET_ADDRESS \
-    --rpc-url $WAVS_ENV_RPC_URL
+task forge:query-voting-power
 ```
 
 ### Distribute Rewards
 Trigger the service to run:
 ```bash
-forge script script/Rewards.s.sol:Rewards \
-    --sig "updateRewards(string)" \
-    $WAVS_ENV_REWARD_DISTRIBUTOR_ADDRESS \
-    --rpc-url $WAVS_ENV_RPC_URL \
-    --broadcast
+task forge:update-rewards
 ```
 
 Query rewards state:
 ```bash
-forge script script/Rewards.s.sol:Rewards \
-    --sig "queryContractState(string)" \
-    $WAVS_ENV_REWARD_DISTRIBUTOR_ADDRESS \
-    --rpc-url $WAVS_ENV_RPC_URL
+task forge:query-rewards
 ```
 
 Claim:
 ```bash
-export IPFS_GATEWAY_URL="http://127.0.0.1:8080/ipfs/"
-forge script script/Rewards.s.sol:Rewards \
-    --sig "claimRewards(string,string)" \
-    $WAVS_ENV_REWARD_DISTRIBUTOR_ADDRESS \
-    $WAVS_ENV_REWARD_TOKEN_ADDRESS \
-    --rpc-url $WAVS_ENV_RPC_URL \
-    --broadcast --ffi
-```
+task forge:claim-rewards
 
-### Merkle Gov
-
-Query contract states:
-```bash
-forge script script/MerkleGov.s.sol:MerkleGovScript \
-  --sig "queryAll(string,string)" \
-  "$MERKLE_GOV_ADDR" "$MERKLE_VOTE_ADDR" \
-  --rpc-url $RPC_URL
+task forge:query-rewards-balance
 ```
 
 ## AI Coding Agents

@@ -7,7 +7,7 @@ This document describes how to deploy multiple WASM components to WAVS using the
 The WAVS deployment system now supports deploying multiple WASM components in a single service, each with their own:
 
 - Trigger events and addresses
-- Submit addresses  
+- Submit addresses
 - Package names and versions
 - Workflow configurations
 
@@ -35,9 +35,6 @@ make build
 For better control and easier maintenance, use the component configuration manager:
 
 ```bash
-# Initialize managed configuration
-./script/configure-components.sh init
-
 # List configured components
 ./script/configure-components.sh list
 
@@ -50,12 +47,6 @@ For better control and easier maintenance, use the component configuration manag
 The `script/configure-components.sh` helper script provides easy management of component configurations.
 
 ### Commands
-
-#### Initialize Configuration
-```bash
-./script/configure-components.sh init
-```
-Creates `.docker/components-config.json` with default components.
 
 #### List Components
 ```bash
@@ -99,7 +90,7 @@ Outputs the configuration in JSON format.
 
 ## Configuration Format
 
-Component configurations are stored in `.docker/components-config.json` with this JSON format:
+Component configurations are stored in `config/components.json` with this JSON format:
 
 ### Example Configuration
 
@@ -228,7 +219,7 @@ The enhanced deployment process:
 
 The system requires:
 
-- Component configuration file must exist at `.docker/components-config.json`
+- Component configuration file must exist at `config/components.json`
 - All components must be built and available in the `compiled/` directory
 - Valid deployment summary JSON for contract address resolution
 
@@ -255,13 +246,13 @@ For WASI registry issues:
 
 ```bash
 # Check registry connectivity
-./script/get-registry.sh
+task registry
 
 # For testnet, ensure you're logged in
 warg login
 
 # Check namespace
-./script/get-wasi-namespace.sh
+task get-wasi-namespace
 ```
 
 ### Invalid JSON Paths
@@ -277,7 +268,7 @@ jq '.service_contracts' .docker/deployment_summary.json
 jq '.eas_contracts' .docker/deployment_summary.json
 
 # Check component configuration structure
-jq '.components' .docker/components-config.json
+jq '.components' config/components.json
 ```
 
 ### Configuration Validation

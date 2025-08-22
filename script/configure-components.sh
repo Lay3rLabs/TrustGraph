@@ -8,58 +8,11 @@ set -e
 COMPONENTS_CONFIG_DIR=".docker"
 COMPONENTS_CONFIG_FILE="$COMPONENTS_CONFIG_DIR/components-config.json"
 
-# Default component configurations in JSON format
-DEFAULT_COMPONENTS_JSON='{
-  "components": [
-    {
-      "filename": "wavs_eas_attest.wasm",
-      "package_name": "wasm-eas-attest",
-      "package_version": "0.1.0",
-      "trigger_event": "AttestationRequested(address,bytes32,address,bytes)",
-      "trigger_json_path": "service_contracts.trigger",
-      "submit_json_path": "eas_contracts.attester"
-    },
-    {
-      "filename": "wavs_eas_compute.wasm",
-      "package_name": "wasm-eas-compute",
-      "package_version": "0.1.0",
-      "trigger_event": "Attested(address,address,bytes32,bytes32)",
-      "trigger_json_path": "eas_contracts.indexer_resolver",
-      "submit_json_path": "governance_contracts.voting_power"
-    },
-    {
-      "filename": "rewards.wasm",
-      "package_name": "rewards",
-      "package_version": "0.1.0",
-      "trigger_event": "WavsRewardsTrigger(uint64)",
-      "trigger_json_path": "reward_contracts.reward_distributor",
-      "submit_json_path": "reward_contracts.reward_distributor"
-    },
-    {
-      "filename": "rewards.wasm",
-      "package_name": "rewards2",
-      "package_version": "0.1.0",
-      "trigger_event": "WavsRewardsTrigger(uint64)",
-      "trigger_json_path": "reward_contracts.reward_distributor",
-      "submit_json_path": "zodiac_safes.safe1.merkle_gov_module"
-    },
-    {
-      "filename": "prediction_market_oracle.wasm",
-      "package_name": "predictionmarketoracle",
-      "package_version": "0.1.0",
-      "trigger_event": "NewTrigger(bytes)",
-      "trigger_json_path": "prediction_market_contracts.oracle_controller",
-      "submit_json_path": "prediction_market_contracts.oracle_controller"
-    }
-  ]
-}'
-
 # Helper functions
 usage() {
     echo "Usage: $0 [COMMAND] [OPTIONS]"
     echo ""
     echo "Commands:"
-    echo "  init                 Initialize components configuration file"
     echo "  list                 List all configured components"
     echo "  add                  Add a new component interactively"
     echo "  add-batch            Add a component with all parameters"
@@ -70,8 +23,38 @@ usage() {
     echo "Batch add format:"
     echo "  $0 add-batch FILENAME PKG_NAME PKG_VERSION TRIGGER_EVENT TRIGGER_PATH SUBMIT_PATH"
     echo ""
-    echo "Example:"
+    echo "Example command:"
     echo "  $0 add-batch my_component.wasm wasm-my-comp 1.0.0 'MyEvent(uint256)' service_contracts.my_trigger eas_contracts.my_submitter"
+    echo ""
+    echo "Expected JSON configuration format in config/components.json:"
+    echo '  {
+    "components": [
+      {
+        "filename": "wavs_eas_attest.wasm",
+        "package_name": "wasm-eas-attest",
+        "package_version": "0.1.0",
+        "trigger_event": "AttestationRequested(address,bytes32,address,bytes)",
+        "trigger_json_path": "service_contracts.trigger",
+        "submit_json_path": "eas_contracts.attester"
+      },
+      {
+        "filename": "wavs_eas_compute.wasm",
+        "package_name": "wasm-eas-compute",
+        "package_version": "0.1.0",
+        "trigger_event": "Attested(address,address,bytes32,bytes32)",
+        "trigger_json_path": "eas_contracts.indexer_resolver",
+        "submit_json_path": "governance_contracts.voting_power"
+      },
+      {
+        "filename": "rewards.wasm",
+        "package_name": "rewards",
+        "package_version": "0.1.0",
+        "trigger_event": "WavsRewardsTrigger(uint64)",
+        "trigger_json_path": "reward_contracts.reward_distributor",
+        "submit_json_path": "reward_contracts.reward_distributor"
+      },
+    ]
+  }'
     exit 1
 }
 
@@ -80,22 +63,6 @@ check_jq() {
         echo "❌ jq is required but not installed. Please install jq first."
         exit 1
     fi
-}
-
-init_config() {
-    check_jq
-    mkdir -p "$COMPONENTS_CONFIG_DIR"
-    if [ -f "$COMPONENTS_CONFIG_FILE" ]; then
-        echo "⚠️  Configuration file already exists: $COMPONENTS_CONFIG_FILE"
-        read -p "Overwrite? (y/N): " confirm
-        if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
-            echo "Cancelled."
-            exit 0
-        fi
-    fi
-
-    echo "$DEFAULT_COMPONENTS_JSON" | jq '.' > "$COMPONENTS_CONFIG_FILE"
-    echo "✅ Initialized component configuration at: $COMPONENTS_CONFIG_FILE"
 }
 
 list_components() {
@@ -390,9 +357,6 @@ export_config() {
 
 # Main script logic
 case "${1:-}" in
-    "init")
-        init_config
-        ;;
     "list")
         list_components
         ;;

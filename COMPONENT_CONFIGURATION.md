@@ -11,14 +11,11 @@ WAVS supports deploying multiple WASM components within a single service. Each c
 - Package names and versions
 - Execution parameters
 
-Components are configured using a JSON file at `.docker/components-config.json`.
+Components are configured using a JSON file at `config/components.json`.
 
 ## Quick Start
 
 ```bash
-# Initialize configuration with default components
-./script/configure-components.sh init
-
 # View configured components
 ./script/configure-components.sh list
 
@@ -72,14 +69,6 @@ The `trigger_json_path` and `submit_json_path` fields reference addresses in `.d
 ```
 
 ## Management Commands
-
-### Initialize Configuration
-
-```bash
-./script/configure-components.sh init
-```
-
-Creates `.docker/components-config.json` with default EAS components.
 
 ### List Components
 
@@ -139,7 +128,7 @@ The system includes two default components:
 - **Trigger**: `AttestationRequested(address,bytes32,address,bytes)`
 - **Submit**: EAS attester contract
 
-### EAS Compute Component  
+### EAS Compute Component
 - **File**: `wavs_eas_compute.wasm`
 - **Purpose**: Performs computations on attestations
 - **Trigger**: `Attested(address,address,bytes32,bytes32)`
@@ -197,7 +186,7 @@ The system includes two default components:
 ### Configuration File Not Found
 
 ```bash
-❌ Component configuration file not found: .docker/components-config.json
+❌ Component configuration file not found: config/components.json
 Please run 'script/configure-components.sh init' to create the configuration.
 ```
 
@@ -209,7 +198,7 @@ Please run 'script/configure-components.sh init' to create the configuration.
 ❌ Invalid JSON format in configuration file
 ```
 
-**Solution**: Validate with `jq '.' .docker/components-config.json`
+**Solution**: Validate with `jq '.' config/components.json`
 
 ### Missing WASM File
 

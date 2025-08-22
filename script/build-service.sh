@@ -53,13 +53,13 @@ if [ -z "$SUBMIT_ADDRESS" ]; then
     SUBMIT_ADDRESS=`jq -r '.eas_contracts.attester' .docker/deployment_summary.json`
 fi
 if [ -z "$DEPLOY_ENV" ]; then
-    DEPLOY_ENV=$(sh ./script/get-deploy-status.sh)
+    DEPLOY_ENV=$(task get-deploy-status)
 fi
 # === Core ===
 
 # Get PKG_NAMESPACE
 if [ -z "$PKG_NAMESPACE" ]; then
-    export PKG_NAMESPACE=`bash ./script/get-wasi-namespace.sh`
+    export PKG_NAMESPACE=`task get-wasi-namespace`
     if [ -z "$PKG_NAMESPACE" ]; then
         echo "PKG_NAMESPACE is not set. Please set the PKG_NAMESPACE environment variable."
         exit 1

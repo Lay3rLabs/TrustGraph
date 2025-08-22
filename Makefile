@@ -31,7 +31,7 @@ build: _build_forge wasi-build
 wasi-build:
 	@echo "🔨 Building WASI components..."
 	@warg reset
-	@./script/build_components.sh $(WASI_BUILD_DIR)
+	@task build:wasi WASI_BUILD_DIR=$(WASI_BUILD_DIR)
 	@echo "✅ WASI build complete"
 
 ## wasi-exec: executing the WAVS wasi component(s) with ABI function | COMPONENT_FILENAME, INPUT_DATA
@@ -148,7 +148,8 @@ deploy-service:
 PINATA_API_KEY?=""
 ## upload-to-ipfs: uploading the a service config to IPFS | SERVICE_FILE, [PINATA_API_KEY]
 upload-to-ipfs:
-	@if [ `sh script/get-deploy-status.sh` = "LOCAL" ]; then \
+	@DEPLOY_STATUS="$$(task get-deploy-status)"; \
+	if [ "$$DEPLOY_STATUS" = "LOCAL" ]; then \
 		curl -X POST "http://127.0.0.1:5001/api/v0/add?pin=true" -H "Content-Type: multipart/form-data" -F file=@${SERVICE_FILE} | jq -r .Hash; \
 	else \
 		if [ -z "${PINATA_API_KEY}" ]; then \

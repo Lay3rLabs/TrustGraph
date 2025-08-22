@@ -1,0 +1,68 @@
+version: "3"
+
+tasks:
+  wallet-address:
+    desc: "Get the wallet address"
+    cmds:
+      - 'echo "{{.WALLET_ADDRESS}}"'
+    silent: true
+
+  funded-key:
+    desc: "Get the funded private key"
+    cmds:
+      - 'echo "{{.FUNDED_KEY}}"'
+    silent: true
+
+vars:
+  # Repository general
+  REPO_ROOT:
+    sh: git rev-parse --show-toplevel
+
+  # Wallet configuration (from .env via Taskfile dotenv)
+  FUNDED_KEY: "{{.FUNDED_KEY}}"
+  WALLET_ADDRESS:
+    sh: test -n "{{.FUNDED_KEY}}" && cast wallet address "{{.FUNDED_KEY}}" 2>/dev/null || echo ""
+
+  # Docker images
+  WAVS_DOCKER_IMAGE: "ghcr.io/lay3rlabs/wavs:35c96a4"
+  MIDDLEWARE_DOCKER_IMAGE: "ghcr.io/lay3rlabs/wavs-middleware:0.5.0-beta.10"
+
+  # Service endpoints
+  IPFS_ENDPOINT: "http://localhost:5001"
+  IPFS_GATEWAY: "http://localhost:8080/ipfs/"
+  RPC_URL: "http://127.0.0.1:8545"
+  WAVS_ENDPOINT: "http://127.0.0.1:8000"
+  AGGREGATOR_URL: "http://localhost:8001"
+
+  # Deployment summary path
+  DEPLOY_SUMMARY: ".docker/deployment_summary.json"
+
+  # Contract addresses (loaded from deployment summary)
+  SERVICE_TRIGGER_ADDR:
+    sh: jq -r '.service_contracts.trigger' .docker/deployment_summary.json || echo ""
+  EAS_ADDR:
+    sh: jq -r '.eas_contracts.eas' .docker/deployment_summary.json || echo ""
+  SCHEMA_REGISTRAR_ADDR:
+    sh: jq -r '.eas_contracts.schema_registrar' .docker/deployment_summary.json || echo ""
+  EAS_INDEXER_ADDR:
+    sh: jq -r '.eas_contracts.indexer' .docker/deployment_summary.json || echo ""
+  INDEXER_RESOLVER_ADDR:
+    sh: jq -r '.eas_contracts.indexer_resolver' .docker/deployment_summary.json || echo ""
+  VOTING_POWER_ADDR:
+    sh: jq -r '.governance_contracts.voting_power' .docker/deployment_summary.json || echo ""
+  MERKLE_GOV_ADDR:
+    sh: jq -r '.merkle_governance_contracts.merkle_gov' .docker/deployment_summary.json || echo ""
+  MERKLE_VOTE_ADDR:
+    sh: jq -r '.merkle_governance_contracts.merkle_vote' .docker/deployment_summary.json || echo ""
+  REWARDS_TOKEN_ADDRESS:
+    sh: jq -r '.reward_contracts.reward_token' .docker/deployment_summary.json || echo ""
+  REWARD_DISTRIBUTOR_ADDRESS:
+    sh: jq -r '.reward_contracts.reward_distributor' .docker/deployment_summary.json || echo ""
+
+  # Schema UIDs (loaded from deployment summary)
+  VOUCH_SCHEMA_UID:
+    sh: jq -r '.eas_schemas.vouching_schema' .docker/deployment_summary.json || echo ""
+  BASIC_SCHEMA_UID:
+    sh: jq -r '.eas_schemas.basic_schema' .docker/deployment_summary.json || echo ""
+  COMPUTE_SCHEMA_UID:
+    sh: jq -r '.eas_schemas.compute_schema' .docker/deployment_summary.json || echo ""

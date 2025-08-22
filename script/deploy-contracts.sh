@@ -19,7 +19,7 @@ if [ -z "$WAVS_SERVICE_MANAGER_ADDRESS" ]; then
 fi
 
 # Get RPC URL and deployer key
-export RPC_URL=$(bash ./script/get-rpc.sh)
+export RPC_URL=$(task get-rpc)
 export DEPLOYER_PK=$(cat .nodes/deployer)
 
 echo "🔧 Configuration:"

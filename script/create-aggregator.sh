@@ -12,10 +12,10 @@ if [ -z "$AGGREGATOR_INDEX" ]; then
 fi
 
 if [ -z "$DEPLOY_ENV" ]; then
-    DEPLOY_ENV=$(sh ./script/get-deploy-status.sh)
+    DEPLOY_ENV=$(task get-deploy-status)
 fi
 if [ -z "$RPC_URL" ]; then
-    RPC_URL=`sh ./script/get-rpc.sh`
+    RPC_URL=`task get-rpc`
 fi
 
 SP=""; if [[ "$(uname)" == *"Darwin"* ]]; then SP=" "; fi

@@ -1,0 +1,44 @@
+{
+  "components": [
+    {
+      "filename": "wavs_eas_attest.wasm",
+      "package_name": "wasm-eas-attest",
+      "package_version": "0.1.0",
+      "trigger_event": "AttestationRequested(address,bytes32,address,bytes)",
+      "trigger_json_path": "service_contracts.trigger",
+      "submit_json_path": "eas_contracts.attester"
+    },
+    {
+      "filename": "wavs_eas_compute.wasm",
+      "package_name": "wasm-eas-compute",
+      "package_version": "0.1.0",
+      "trigger_event": "Attested(address,address,bytes32,bytes32)",
+      "trigger_json_path": "eas_contracts.indexer_resolver",
+      "submit_json_path": "governance_contracts.voting_power"
+    },
+    {
+      "filename": "rewards.wasm",
+      "package_name": "rewards",
+      "package_version": "0.1.0",
+      "trigger_event": "WavsRewardsTrigger(uint64)",
+      "trigger_json_path": "reward_contracts.reward_distributor",
+      "submit_json_path": "reward_contracts.reward_distributor"
+    },
+    {
+      "filename": "rewards.wasm",
+      "package_name": "rewards2",
+      "package_version": "0.1.0",
+      "trigger_event": "WavsRewardsTrigger(uint64)",
+      "trigger_json_path": "reward_contracts.reward_distributor",
+      "submit_json_path": "zodiac_safes.safe1.merkle_gov_module"
+    },
+    {
+      "filename": "prediction_market_oracle.wasm",
+      "package_name": "predictionmarketoracle",
+      "package_version": "0.1.0",
+      "trigger_event": "NewTrigger(bytes)",
+      "trigger_json_path": "prediction_market_contracts.oracle_controller",
+      "submit_json_path": "prediction_market_contracts.oracle_controller"
+    }
+  ]
+}

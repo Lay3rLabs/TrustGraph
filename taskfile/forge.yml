@@ -1,0 +1,129 @@
+version: "3"
+
+tasks:
+  trigger-attestation:
+    desc: "Trigger attestation creation via WAVS"
+    vars:
+      RPC_URL:
+        sh: task get-rpc
+    cmds:
+      - |
+        forge script script/Trigger.s.sol:EasTrigger \
+          --sig "triggerRawAttestation(string,string,string,string)" \
+          "{{.SERVICE_TRIGGER_ADDR}}" \
+          "{{.VOUCH_SCHEMA_UID}}" \
+          "{{.WALLET_ADDRESS}}" \
+          "Advanced Solidity Development Skills Verified" \
+          --rpc-url {{.RPC_URL}} --broadcast
+
+  query-attestations:
+    desc: "Query attestations for schema and recipient"
+    vars:
+      RPC_URL:
+        sh: task get-rpc
+    cmds:
+      - |
+        forge script script/Trigger.s.sol:EasTrigger \
+          --sig "queryAttestations(string,string,string,string,uint256)" \
+          "{{.EAS_INDEXER_ADDR}}" \
+          "{{.EAS_ADDR}}" \
+          "{{.VOUCH_SCHEMA_UID}}" \
+          "{{.WALLET_ADDRESS}}" \
+          10 \
+          --rpc-url {{.RPC_URL}}
+
+  query-voting-power:
+    desc: "Check voting power for recipient"
+    vars:
+      RPC_URL:
+        sh: task get-rpc
+    cmds:
+      - |
+        forge script script/Governance.s.sol:Governance \
+          --sig "queryVotingPower(string,string)" \
+          "{{.VOTING_POWER_ADDR}}" \
+          "{{.WALLET_ADDRESS}}" \
+          --rpc-url {{.RPC_URL}}
+
+  update-rewards:
+    desc: "Trigger rewards distribution"
+    vars:
+      RPC_URL:
+        sh: task get-rpc
+      REWARD_DISTRIBUTOR_ADDRESS:
+        sh: test -f .docker/deployment_summary.json && jq -r '.reward_contracts.reward_distributor' .docker/deployment_summary.json || echo ""
+    preconditions:
+      - test -f .docker/deployment_summary.json
+      - test -n "{{.REWARD_DISTRIBUTOR_ADDRESS}}"
+    cmds:
+      - |
+        echo "Using reward distributor: {{.REWARD_DISTRIBUTOR_ADDRESS}}"
+        forge script script/Rewards.s.sol:Rewards \
+          --sig "updateRewards(string)" \
+          "{{.REWARD_DISTRIBUTOR_ADDRESS}}" \
+          --rpc-url {{.RPC_URL}} \
+          --broadcast
+
+  query-rewards:
+    desc: "Query rewards contract state"
+    vars:
+      RPC_URL:
+        sh: task get-rpc
+      REWARD_DISTRIBUTOR_ADDRESS:
+        sh: test -f .docker/deployment_summary.json && jq -r '.reward_contracts.reward_distributor' .docker/deployment_summary.json || echo ""
+    preconditions:
+      - test -f .docker/deployment_summary.json
+      - test -n "{{.REWARD_DISTRIBUTOR_ADDRESS}}"
+    cmds:
+      - |
+        echo "Using reward distributor: {{.REWARD_DISTRIBUTOR_ADDRESS}}"
+        forge script script/Rewards.s.sol:Rewards \
+          --sig "queryContractState(string)" \
+          "{{.REWARD_DISTRIBUTOR_ADDRESS}}" \
+          --rpc-url {{.RPC_URL}}
+
+  claim-rewards:
+    desc: "Claim rewards from contract"
+    vars:
+      RPC_URL:
+        sh: task get-rpc
+      REWARD_DISTRIBUTOR_ADDRESS:
+        sh: test -f .docker/deployment_summary.json && jq -r '.reward_contracts.reward_distributor' .docker/deployment_summary.json || echo ""
+      REWARDS_TOKEN_ADDRESS:
+        sh: test -f .docker/deployment_summary.json && jq -r '.reward_contracts.reward_token' .docker/deployment_summary.json || echo ""
+    env:
+      IPFS_GATEWAY_URL: "http://127.0.0.1:8080/ipfs/"
+    preconditions:
+      - test -f .docker/deployment_summary.json
+      - test -n "{{.REWARD_DISTRIBUTOR_ADDRESS}}"
+      - test -n "{{.REWARDS_TOKEN_ADDRESS}}"
+    cmds:
+      - |
+        echo "Using reward distributor: {{.REWARD_DISTRIBUTOR_ADDRESS}}"
+        echo "Using rewards token: {{.REWARDS_TOKEN_ADDRESS}}"
+        forge script script/Rewards.s.sol:Rewards \
+          --sig "claimRewards(string,string)" \
+          "{{.REWARD_DISTRIBUTOR_ADDRESS}}" \
+          "{{.REWARDS_TOKEN_ADDRESS}}" \
+          --rpc-url {{.RPC_URL}} \
+          --broadcast --ffi
+
+  query-rewards-balance:
+    desc: "Query rewards token balance for an address"
+    vars:
+      RPC_URL:
+        sh: task get-rpc
+      REWARDS_TOKEN_ADDRESS:
+        sh: test -f .docker/deployment_summary.json && jq -r '.reward_contracts.reward_token' .docker/deployment_summary.json || echo ""
+    preconditions:
+      - test -f .docker/deployment_summary.json
+      - test -n "{{.REWARDS_TOKEN_ADDRESS}}"
+    cmds:
+      - |
+        echo "Querying rewards balance for: {{.WALLET_ADDRESS}}"
+        echo "Using rewards token: {{.REWARDS_TOKEN_ADDRESS}}"
+        forge script script/Rewards.s.sol:Rewards \
+          --sig "queryBalance(string,string)" \
+          "{{.REWARDS_TOKEN_ADDRESS}}" \
+          "{{.WALLET_ADDRESS}}" \
+          --rpc-url {{.RPC_URL}}

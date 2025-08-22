@@ -2,12 +2,12 @@
 # set -e
 SP=""; if [[ "$(uname)" == *"Darwin"* ]]; then SP=" "; fi
 
-# if DEPLOY_ENV is not set, grab it from the ./script/get-deploy-status.sh
+# if DEPLOY_ENV is not set, grab it from the `task get-deploy-status`
 if [ -z "$DEPLOY_ENV" ]; then
-    DEPLOY_ENV=$(sh ./script/get-deploy-status.sh)
+    DEPLOY_ENV=$(task get-deploy-status)
 fi
 if [ -z "$RPC_URL" ]; then
-    RPC_URL=`sh ./script/get-rpc.sh`
+    RPC_URL=`task get-rpc`
 fi
 
 if [ ! -f .env ]; then

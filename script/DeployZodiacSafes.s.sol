@@ -147,8 +147,8 @@ contract DeployZodiacSafes is Common {
             signature // signatures
         );
 
-        // Fund the Safe with 10 ETH
-        uint256 fundingAmount = 10 ether;
+        // Fund the Safe with ETH
+        uint256 fundingAmount = 2 ether;
         (bool fundingSuccess,) = safeProxy.call{value: fundingAmount}("");
         require(fundingSuccess, "Failed to fund Safe");
 
