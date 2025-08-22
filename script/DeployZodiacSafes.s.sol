@@ -16,6 +16,9 @@ import {GnosisSafeProxyFactory} from "@gnosis.pm/safe-contracts/proxies/GnosisSa
 import {BasicZodiacModule} from "contracts/zodiac/BasicZodiacModule.sol";
 import {SignerManagerModule} from "contracts/zodiac/SignerManagerModule.sol";
 
+// WAVS interfaces
+import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
+
 /// @dev Deployment script for Zodiac-enabled Safe setup with auto-enabled modules
 contract DeployZodiacSafes is Common {
     using stdJson for string;
@@ -42,15 +45,20 @@ contract DeployZodiacSafes is Common {
 
         vm.startBroadcast(_privateKey);
 
+        // Get WAVS service manager from deployment
+        IWavsServiceManager serviceManager = _getWavsServiceManager();
+
         // Deploy Safe singleton and factory (if needed)
         GnosisSafe safeSingleton = new GnosisSafe();
         GnosisSafeProxyFactory safeFactory = new GnosisSafeProxyFactory();
 
         // Deploy first Safe with single signer for easy module enablement
-        SafeDeployment memory safe1 = deployAndConfigureZodiacSafe(safeSingleton, safeFactory, deployer, "Safe1");
+        SafeDeployment memory safe1 =
+            deployAndConfigureZodiacSafe(safeSingleton, safeFactory, deployer, serviceManager, "Safe1");
 
         // Deploy second Safe with single signer for easy module enablement
-        SafeDeployment memory safe2 = deployAndConfigureZodiacSafe(safeSingleton, safeFactory, deployer, "Safe2");
+        SafeDeployment memory safe2 =
+            deployAndConfigureZodiacSafe(safeSingleton, safeFactory, deployer, serviceManager, "Safe2");
 
         vm.stopBroadcast();
 
@@ -62,6 +70,7 @@ contract DeployZodiacSafes is Common {
         GnosisSafe safeSingleton,
         GnosisSafeProxyFactory safeFactory,
         address deployer,
+        IWavsServiceManager serviceManager,
         string memory safeName
     ) internal returns (SafeDeployment memory deployment) {
         // Setup with single signer (deployer) and threshold of 1 for easy module enablement
@@ -93,7 +102,7 @@ contract DeployZodiacSafes is Common {
         BasicZodiacModule basicModule = new BasicZodiacModule(deployer, safeProxy, safeProxy);
 
         // Deploy Signer Manager Module
-        SignerManagerModule signerModule = new SignerManagerModule(deployer, safeProxy, safeProxy);
+        SignerManagerModule signerModule = new SignerManagerModule(deployer, safeProxy, safeProxy, serviceManager);
 
         // Enable modules on the Safe
         // Since we have threshold of 1 and deployer is the signer, we can execute directly
@@ -248,4 +257,18 @@ contract DeployZodiacSafes is Common {
 
     // Events for logging
     event ModulesEnabled(address indexed safe, address indexed basicModule, address indexed signerModule);
+
+    function _getWavsServiceManager() internal view returns (IWavsServiceManager) {
+        // Read from deployment output or use environment-specific address
+        string memory projectRoot = vm.projectRoot();
+        string memory path = string.concat(projectRoot, "/.docker/deployment_output.json");
+
+        try vm.readFile(path) returns (string memory json) {
+            address serviceManagerAddress = vm.parseJsonAddress(json, ".wavsServiceManager");
+            return IWavsServiceManager(serviceManagerAddress);
+        } catch {
+            // If deployment output doesn't exist, revert with helpful message
+            revert("WAVS Service Manager not found. Please deploy WAVS contracts first using deploy-script.sh");
+        }
+    }
 }

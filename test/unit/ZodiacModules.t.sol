@@ -11,6 +11,10 @@ import {GnosisSafeProxyFactory} from "@gnosis.pm/safe-contracts/proxies/GnosisSa
 // Zodiac
 import {Operation} from "@gnosis-guild/zodiac-core/core/Operation.sol";
 
+// WAVS interfaces
+import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
+import {IWavsServiceHandler} from "@wavs/interfaces/IWavsServiceHandler.sol";
+
 // Our modules
 import {BasicZodiacModule} from "../../src/contracts/zodiac/BasicZodiacModule.sol";
 import {SignerManagerModule} from "../../src/contracts/zodiac/SignerManagerModule.sol";
@@ -22,6 +26,7 @@ contract ZodiacModulesTest is Test {
     GnosisSafe public safe;
     BasicZodiacModule public basicModule;
     SignerManagerModule public signerModule;
+    IWavsServiceManager public mockServiceManager;
 
     // Test accounts
     address public owner = address(0x1111111111111111111111111111111111111111);
@@ -70,9 +75,12 @@ contract ZodiacModulesTest is Test {
 
         safe = GnosisSafe(payable(safeProxy));
 
+        // Deploy mock service manager
+        mockServiceManager = IWavsServiceManager(address(new MockWavsServiceManager()));
+
         // Deploy modules
         basicModule = new BasicZodiacModule(owner, address(safe), address(safe));
-        signerModule = new SignerManagerModule(owner, address(safe), address(safe));
+        signerModule = new SignerManagerModule(owner, address(safe), address(safe), mockServiceManager);
     }
 
     function test_BasicModule_Setup() public {
@@ -205,5 +213,160 @@ contract ZodiacModulesTest is Test {
         // For now, we can test that the Safe has the enableModule function
         bytes memory enableData = abi.encodeWithSignature("enableModule(address)", module);
         assertTrue(enableData.length > 0, "Enable module data should be non-empty");
+    }
+
+    // WAVS functionality tests
+    function test_SignerModule_WAVSAddSigner() public {
+        // First enable the module on the Safe
+        // Note: In real scenario, this would require multi-sig approval
+
+        // Create WAVS payload for adding a signer
+        SignerManagerModule.SignerOperation[] memory operations = new SignerManagerModule.SignerOperation[](1);
+        operations[0] = SignerManagerModule.SignerOperation({
+            operationType: SignerManagerModule.OperationType.ADD_SIGNER,
+            prevSigner: address(0),
+            signer: newSigner,
+            newSigner: address(0),
+            threshold: 2
+        });
+
+        SignerManagerModule.SignerManagerPayload memory payload =
+            SignerManagerModule.SignerManagerPayload({operations: operations});
+
+        // Create envelope
+        IWavsServiceHandler.Envelope memory envelope = IWavsServiceHandler.Envelope({
+            eventId: bytes20(uint160(0x1)),
+            ordering: bytes12(uint96(0)),
+            payload: abi.encode(payload)
+        });
+
+        // Create signature data (mock)
+        IWavsServiceHandler.SignatureData memory signatureData;
+
+        // Execute through WAVS - this should fail because module is not enabled on Safe
+        vm.expectRevert("GS104");
+        signerModule.handleSignedEnvelope(envelope, signatureData);
+    }
+
+    function test_SignerModule_WAVSOperations() public {
+        // Test multiple operations in one envelope
+        SignerManagerModule.SignerOperation[] memory operations = new SignerManagerModule.SignerOperation[](2);
+
+        // Operation 1: Change threshold
+        operations[0] = SignerManagerModule.SignerOperation({
+            operationType: SignerManagerModule.OperationType.CHANGE_THRESHOLD,
+            prevSigner: address(0),
+            signer: address(0),
+            newSigner: address(0),
+            threshold: 3
+        });
+
+        // Operation 2: Add signer
+        operations[1] = SignerManagerModule.SignerOperation({
+            operationType: SignerManagerModule.OperationType.ADD_SIGNER,
+            prevSigner: address(0),
+            signer: newSigner,
+            newSigner: address(0),
+            threshold: 3
+        });
+
+        SignerManagerModule.SignerManagerPayload memory payload =
+            SignerManagerModule.SignerManagerPayload({operations: operations});
+
+        // Create envelope
+        IWavsServiceHandler.Envelope memory envelope = IWavsServiceHandler.Envelope({
+            eventId: bytes20(uint160(0x2)),
+            ordering: bytes12(uint96(0)),
+            payload: abi.encode(payload)
+        });
+
+        // Create signature data (mock)
+        IWavsServiceHandler.SignatureData memory signatureData;
+
+        // This will revert with GS104 because module is not enabled
+        vm.expectRevert("GS104");
+        signerModule.handleSignedEnvelope(envelope, signatureData);
+    }
+
+    function test_SignerModule_WAVSSwapSigner() public {
+        // Test swap signer operation
+        SignerManagerModule.SignerOperation[] memory operations = new SignerManagerModule.SignerOperation[](1);
+        operations[0] = SignerManagerModule.SignerOperation({
+            operationType: SignerManagerModule.OperationType.SWAP_SIGNER,
+            prevSigner: owner,
+            signer: user1,
+            newSigner: newSigner,
+            threshold: 0 // Not used for swap
+        });
+
+        SignerManagerModule.SignerManagerPayload memory payload =
+            SignerManagerModule.SignerManagerPayload({operations: operations});
+
+        IWavsServiceHandler.Envelope memory envelope = IWavsServiceHandler.Envelope({
+            eventId: bytes20(uint160(0x3)),
+            ordering: bytes12(uint96(0)),
+            payload: abi.encode(payload)
+        });
+
+        IWavsServiceHandler.SignatureData memory signatureData;
+
+        vm.expectRevert("GS104");
+        signerModule.handleSignedEnvelope(envelope, signatureData);
+    }
+
+    function test_SignerModule_WAVSRemoveSigner() public {
+        // Test remove signer operation
+        SignerManagerModule.SignerOperation[] memory operations = new SignerManagerModule.SignerOperation[](1);
+        operations[0] = SignerManagerModule.SignerOperation({
+            operationType: SignerManagerModule.OperationType.REMOVE_SIGNER,
+            prevSigner: owner,
+            signer: user1,
+            newSigner: address(0),
+            threshold: 1 // New threshold after removal
+        });
+
+        SignerManagerModule.SignerManagerPayload memory payload =
+            SignerManagerModule.SignerManagerPayload({operations: operations});
+
+        IWavsServiceHandler.Envelope memory envelope = IWavsServiceHandler.Envelope({
+            eventId: bytes20(uint160(0x4)),
+            ordering: bytes12(uint96(0)),
+            payload: abi.encode(payload)
+        });
+
+        IWavsServiceHandler.SignatureData memory signatureData;
+
+        vm.expectRevert("GS104");
+        signerModule.handleSignedEnvelope(envelope, signatureData);
+    }
+}
+
+// Mock WAVS Service Manager for testing
+contract MockWavsServiceManager is IWavsServiceManager {
+    function validate(IWavsServiceHandler.Envelope calldata, IWavsServiceHandler.SignatureData calldata)
+        external
+        pure
+    {
+        // Mock validation - always passes for testing
+        return;
+    }
+
+    function getOperatorWeight(address) external pure returns (uint256) {
+        // Return a default weight for testing
+        return 100;
+    }
+
+    function getLatestOperatorForSigningKey(address) external pure returns (address) {
+        // Return a mock operator address
+        return address(0x1234567890123456789012345678901234567890);
+    }
+
+    function getServiceURI() external pure returns (string memory) {
+        // Return a mock service URI
+        return "https://mock-service.example.com";
+    }
+
+    function setServiceURI(string calldata) external {
+        // Mock implementation - does nothing in tests
     }
 }

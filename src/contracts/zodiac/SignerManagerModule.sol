@@ -3,31 +3,66 @@ pragma solidity ^0.8.22;
 
 import {Module} from "@gnosis-guild/zodiac-core/core/Module.sol";
 import {Operation} from "@gnosis-guild/zodiac-core/core/Operation.sol";
+import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
+import {IWavsServiceHandler} from "@wavs/interfaces/IWavsServiceHandler.sol";
+import {ITypes} from "../../interfaces/ITypes.sol";
 
 /// @title SignerManagerModule - A Zodiac module that can manage Safe signers
 /// @notice This module allows for programmatic management of Safe signers and threshold
 /// @dev Provides functions to add, remove, swap owners and change threshold on the connected Safe
-contract SignerManagerModule is Module {
+contract SignerManagerModule is Module, IWavsServiceHandler {
+    /// @dev Operation types for signer management
+    enum OperationType {
+        ADD_SIGNER, // 0 - Add a new signer with threshold
+        REMOVE_SIGNER, // 1 - Remove a signer with threshold
+        SWAP_SIGNER, // 2 - Swap an existing signer with a new one
+        CHANGE_THRESHOLD // 3 - Change only the threshold
+
+    }
+
+    /// @dev Single signer management operation
+    struct SignerOperation {
+        OperationType operationType; // The operation to perform
+        address prevSigner; // Previous signer in linked list (for remove/swap)
+        address signer; // The signer address (to add/remove/swap)
+        address newSigner; // New signer address (for swap only)
+        uint256 threshold; // New threshold (0 means no change)
+    }
+
+    /// @dev Main payload structure for WAVS envelope
+    struct SignerManagerPayload {
+        SignerOperation[] operations; // Array of operations to execute
+    }
+
     event SignerAdded(address indexed signer, uint256 newThreshold);
     event SignerRemoved(address indexed signer, uint256 newThreshold);
     event SignerSwapped(address indexed oldSigner, address indexed newSigner);
     event ThresholdChanged(uint256 newThreshold);
     event ModuleConfigured(address indexed avatar, address indexed target);
+    event WAVSOperationExecuted(OperationType indexed operationType, uint256 totalOperations);
+
+    // The WAVS service manager instance
+    IWavsServiceManager private _serviceManager;
 
     bool private _initialized;
 
-    constructor(address _owner, address _avatar, address _target) {
+    constructor(address _owner, address _avatar, address _target, IWavsServiceManager serviceManager) {
+        require(address(serviceManager) != address(0), "SignerManagerModule: invalid service manager");
+        _serviceManager = serviceManager;
         // For direct deployment via constructor
         _setUp(_owner, _avatar, _target);
     }
 
     /// @notice Sets up the module - required by FactoryFriendly interface
-    /// @param initializeParams Encoded parameters for initialization (_owner, _avatar, _target)
+    /// @param initializeParams Encoded parameters for initialization (_owner, _avatar, _target, _serviceManager)
     function setUp(bytes memory initializeParams) public override {
         require(!_initialized, "Module already initialized");
 
-        (address _owner, address _avatar, address _target) = abi.decode(initializeParams, (address, address, address));
+        (address _owner, address _avatar, address _target, IWavsServiceManager serviceManager) =
+            abi.decode(initializeParams, (address, address, address, IWavsServiceManager));
 
+        require(address(serviceManager) != address(0), "SignerManagerModule: invalid service manager");
+        _serviceManager = serviceManager;
         _setUp(_owner, _avatar, _target);
     }
 
@@ -150,5 +185,85 @@ contract SignerManagerModule is Module {
         } else {
             return 0;
         }
+    }
+
+    /// @inheritdoc IWavsServiceHandler
+    /// @notice Handles signed envelope from WAVS for signer management operations
+    /// @param envelope The envelope containing the signer operation data
+    /// @param signatureData The signature data for validation
+    function handleSignedEnvelope(Envelope calldata envelope, SignatureData calldata signatureData) external {
+        // Validate the envelope signature through the service manager
+        _serviceManager.validate(envelope, signatureData);
+
+        // Decode the payload
+        SignerManagerPayload memory payload = abi.decode(envelope.payload, (SignerManagerPayload));
+
+        // Execute the operations
+        _executeOperations(payload);
+    }
+
+    /// @dev Execute signer management operations
+    /// @param payload The operation payload to execute
+    function _executeOperations(SignerManagerPayload memory payload) internal {
+        uint256 totalOperations = payload.operations.length;
+
+        unchecked {
+            for (uint256 i = 0; i < totalOperations; ++i) {
+                SignerOperation memory op = payload.operations[i];
+
+                if (op.operationType == OperationType.ADD_SIGNER) {
+                    require(op.signer != address(0), "Invalid signer address");
+                    require(op.threshold > 0, "Invalid threshold");
+
+                    bytes memory data =
+                        abi.encodeWithSignature("addOwnerWithThreshold(address,uint256)", op.signer, op.threshold);
+
+                    bool success = exec(target, 0, data, Operation.Call);
+                    require(success, "Failed to add signer");
+
+                    emit SignerAdded(op.signer, op.threshold);
+                } else if (op.operationType == OperationType.REMOVE_SIGNER) {
+                    require(op.prevSigner != address(0), "Invalid prevSigner address");
+                    require(op.signer != address(0), "Invalid signer address");
+                    require(op.threshold > 0, "Invalid threshold");
+
+                    bytes memory data = abi.encodeWithSignature(
+                        "removeOwner(address,address,uint256)", op.prevSigner, op.signer, op.threshold
+                    );
+
+                    bool success = exec(target, 0, data, Operation.Call);
+                    require(success, "Failed to remove signer");
+
+                    emit SignerRemoved(op.signer, op.threshold);
+                } else if (op.operationType == OperationType.SWAP_SIGNER) {
+                    require(op.prevSigner != address(0), "Invalid prevSigner address");
+                    require(op.signer != address(0), "Invalid signer address");
+                    require(op.newSigner != address(0), "Invalid newSigner address");
+
+                    bytes memory data = abi.encodeWithSignature(
+                        "swapOwner(address,address,address)", op.prevSigner, op.signer, op.newSigner
+                    );
+
+                    bool success = exec(target, 0, data, Operation.Call);
+                    require(success, "Failed to swap signer");
+
+                    emit SignerSwapped(op.signer, op.newSigner);
+                } else if (op.operationType == OperationType.CHANGE_THRESHOLD) {
+                    require(op.threshold > 0, "Invalid threshold");
+
+                    bytes memory data = abi.encodeWithSignature("changeThreshold(uint256)", op.threshold);
+
+                    bool success = exec(target, 0, data, Operation.Call);
+                    require(success, "Failed to change threshold");
+
+                    emit ThresholdChanged(op.threshold);
+                }
+            }
+        }
+
+        emit WAVSOperationExecuted(
+            payload.operations.length > 0 ? payload.operations[0].operationType : OperationType.ADD_SIGNER,
+            totalOperations
+        );
     }
 }
