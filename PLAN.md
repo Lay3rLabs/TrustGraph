@@ -31,18 +31,14 @@ Fix eas-attest component and Attester.sol contract:
 - [ ] Revoking an attestation should lower voting power
 - [ ] Resolver that only let's people who have voting power attest.
 - [ ] Vibe code Service UI from service.json (get IPFS hash)
-- [ ] Deploy voting power contract with initial set?
-- [ ] Make a generic weights contract
-- [ ] Vouching app needs to be easy to use
+- [ ] Make a generic weights contract?
 - [ ] Make a Zodiac module
 - [ ] Add LLM module
 
-
-
-
-Distribution is an evolving merkledrop.
-
-How do you have a ritual for attestation?
+# Things to add
+- [ ] Prediction market
+- [ ] WAVS-NFT contracts (just contracts)
+- [ ] Wavs Service Manager if we want to go crazy
 
 # MVP Merkle Gov:
 - [x] New voting power contract to consume merkle tree
@@ -57,10 +53,10 @@ How do you have a ritual for attestation?
 Let's use a zodiac module + safe to create a system with a nice fallback while we're experimenting with novel governance mechanisms.
 
 1. Basic Setup:
-- [ ] Create a basic Zodiac module
-- [ ] Create a basic Zodiac module that is able to update signers on a safe
-- [ ] Create a deploy script that deploys two Safes with each of the custom zodiac modules
-- [ ] Basic test scaffold
+- [x] Create a basic Zodiac module
+- [x] Create a basic Zodiac module that is able to update signers on a safe
+- [x] Create a deploy script that deploys two Safes with each of the custom zodiac modules
+- [x] Basic test scaffold
 
 2. MVP
 - [ ] Module for direct voting with Merkle Proofs (similar to MerkleGov + MerkleVote)
