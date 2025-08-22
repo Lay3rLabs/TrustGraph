@@ -11,6 +11,7 @@
 - [x] Deploy Prediction market
 - [x] Fix up Zodiac modules
 - [x] Fund safe when setting up zodiac modules
+- [ ] Add IPFS CID to merkle gov module to fix ui
 - [ ] Merkle gov module probably needs some notion of total voting power
 - [ ] Redo governance UI to work with new zodiac modules + safe
 - [ ] Get prediction market to actually work (currently partially working)
@@ -18,6 +19,27 @@
 - [ ] Clean up wavs-llm package
 - [ ] Make LLM attester
 - [ ] Automatically make attestations when participating in prediction market
+
+We've recently refactored our governance contracts to use Gnosis Safe + some custom zodiac governance modules.
+
+The new modules are:
+- @src/contracts/zodiac/SignerManagerModule.sol
+- @src/contracts/zodiac/MerkleGovModule.sol
+
+We need to update the governance UI to work with the new zodiac modules and safe. Backwards compatibility is not needed. See @frontend/app/backroom/governance/page.tsx and @frontend/hooks/useGovernance.ts.
+
+I've updated @frontend/wagmi.config.ts with the latest smart contract ABIs available in @frontend/lib/contracts.ts.
+
+The main page will tied to the MerkleGovModule.sol module (as it is our main focus). It should have an Safe button which will link externally to the Gnosis Safe address.
+
+As a user I should be able to:
+- create a proposal (let's default the UX to making a basic spend proposal while still allowing for more complex proposals)
+- see how much ETH the Safe has
+- see how much voting power I have (which we still get from the Merkle Tree)
+- see a list of proposals
+- see the details of a proposal
+- Vote on a proposal
+- Execute a passed proposal
 
 # Project Organization and Cleanup TODO
 - [x] Sepolia

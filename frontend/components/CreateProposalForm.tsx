@@ -34,6 +34,7 @@ export function CreateProposalForm({
       target: "",
       value: "0",
       data: "0x",
+      operation: 0, // Default to Call operation
       description: "",
     },
   ]);
@@ -45,6 +46,7 @@ export function CreateProposalForm({
         target: "",
         value: "0", 
         data: "0x",
+        operation: 0, // Default to Call operation
         description: "",
       },
     ]);
@@ -116,6 +118,7 @@ export function CreateProposalForm({
           target: "",
           value: "0",
           data: "0x",
+          operation: 0,
           description: "",
         }]);
         setIsExpanded(false);
@@ -179,7 +182,7 @@ export function CreateProposalForm({
                 <span className="terminal-command text-xs">CREATE PROPOSAL</span>
               </Button>
               <div className="terminal-dim text-xs">
-                Insufficient voting power. Need {proposalThreshold ? formatVotingPower(proposalThreshold) : "0"} minimum.
+                Governance not initialized. Merkle root required.
               </div>
             </div>
           )}
@@ -229,14 +232,33 @@ export function CreateProposalForm({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="terminal-bright text-sm">PROPOSAL ACTIONS</div>
-            <Button
-              type="button"
-              onClick={addAction}
-              variant="outline"
-              className="border-gray-700 text-gray-400 hover:bg-gray-900/20 text-xs"
-            >
-              ADD ACTION
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                onClick={() => {
+                  setActions([{
+                    target: "",
+                    value: "0",
+                    data: "0x",
+                    operation: 0,
+                    description: "Send ETH to recipient",
+                  }]);
+                  setDescription("Send ETH from treasury");
+                }}
+                variant="outline"
+                className="border-blue-700 text-blue-400 hover:bg-blue-900/20 text-xs"
+              >
+                ETH SEND
+              </Button>
+              <Button
+                type="button"
+                onClick={addAction}
+                variant="outline"
+                className="border-gray-700 text-gray-400 hover:bg-gray-900/20 text-xs"
+              >
+                ADD ACTION
+              </Button>
+            </div>
           </div>
           
           <div className="terminal-dim text-xs">
@@ -259,7 +281,7 @@ export function CreateProposalForm({
                 )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <div className="terminal-dim text-xs">TARGET CONTRACT</div>
                   <input
@@ -281,6 +303,18 @@ export function CreateProposalForm({
                     placeholder="0"
                     className="w-full bg-black/20 border border-gray-700 rounded-sm p-2 text-sm text-gray-300 placeholder-gray-500 focus:border-gray-500 focus:outline-none"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="terminal-dim text-xs">OPERATION TYPE</div>
+                  <select
+                    value={action.operation || 0}
+                    onChange={(e) => updateAction(index, "operation", e.target.value)}
+                    className="w-full bg-black/20 border border-gray-700 rounded-sm p-2 text-sm text-gray-300 focus:border-gray-500 focus:outline-none"
+                  >
+                    <option value={0}>Call</option>
+                    <option value={1}>DelegateCall</option>
+                  </select>
                 </div>
               </div>
 
@@ -337,7 +371,7 @@ export function CreateProposalForm({
 
         {/* Requirements Note */}
         <div className="terminal-dim text-xs text-center">
-          Requires {proposalThreshold ? formatVotingPower(proposalThreshold) : "0"} voting power minimum
+          Anyone can create proposals when merkle root is set
         </div>
       </form>
     </div>

@@ -36,6 +36,8 @@ export default function GovernancePage() {
     getProposalStateText,
     merkleGovAddress,
     merkleVoteAddress,
+    safeBalance,
+    safeAddress,
   } = useGovernance();
 
   const handleConnect = useCallback(() => {
@@ -175,8 +177,40 @@ export default function GovernancePage() {
             isLoading={isLoading}
           />
 
+          {/* Safe Info Card */}
+          <div className="border border-blue-700 bg-blue-900/10 p-4 rounded-sm">
+            <div className="flex items-center justify-between mb-3">
+              <div className="terminal-bright text-lg">GNOSIS SAFE</div>
+              <Button
+                onClick={() => window.open(`https://app.safe.global/home?safe=eth:${safeAddress}`, '_blank')}
+                className="mobile-terminal-btn px-3 py-1 text-xs"
+                disabled={!safeAddress}
+              >
+                <span className="terminal-command">OPEN SAFE →</span>
+              </Button>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="terminal-dim text-xs">ETH BALANCE:</span>
+                <span className="terminal-bright text-sm">
+                  {safeBalance ? `${Number(safeBalance) / 1e18} ETH` : '0 ETH'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="terminal-dim text-xs">ADDRESS:</span>
+                <span className="terminal-text text-xs font-mono break-all">
+                  {safeAddress ? `${safeAddress.slice(0, 6)}...${safeAddress.slice(-4)}` : 'N/A'}
+                </span>
+              </div>
+            </div>
+            <div className="system-message text-xs mt-2">
+              ◆ MULTI-SIG TREASURY ◆
+            </div>
+          </div>
+
           {/* Governance Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
             <div className="border border-gray-700 bg-black/10 p-4 rounded-sm">
               <div className="terminal-dim text-xs mb-2">TOTAL PROPOSALS</div>
               <div className="terminal-bright text-xl">{proposalCounter}</div>
@@ -197,8 +231,8 @@ export default function GovernancePage() {
 
             <div className="border border-gray-700 bg-black/10 p-4 rounded-sm">
               <div className="terminal-dim text-xs mb-2">QUORUM REQUIRED</div>
-              <div className="terminal-bright text-xl">{(quorumBasisPoints / 100).toFixed(1)}%</div>
-              <div className="system-message text-xs mt-1">of voting power</div>
+              <div className="terminal-bright text-xl">{formatVotingPower(quorumBasisPoints.toString())}</div>
+              <div className="system-message text-xs mt-1">voting power tokens</div>
             </div>
           </div>
 

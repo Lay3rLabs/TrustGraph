@@ -3942,6 +3942,13 @@ export const merkleGovModuleAbi = [
   {
     type: 'function',
     inputs: [],
+    name: 'ipfsHashCid',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
     name: 'owner',
     outputs: [{ name: '', internalType: 'address', type: 'address' }],
     stateMutability: 'view',

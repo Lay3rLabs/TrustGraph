@@ -44,22 +44,18 @@ export function ProposalCard({
   const againstPercentage = totalVotes > 0 ? (Number(proposal.againstVotes) / totalVotes) * 100 : 0;
   const abstainPercentage = totalVotes > 0 ? (Number(proposal.abstainVotes) / totalVotes) * 100 : 0;
 
-  // Time calculations
-  const now = Math.floor(Date.now() / 1000);
-  const startTime = Number(proposal.startTime);
-  const endTime = Number(proposal.endTime);
-  const eta = Number(proposal.eta);
+  // Block-based timing for MerkleGovModule
+  // Note: In a real app, you'd want to get current block number and estimate block times
+  const startBlock = Number(proposal.startBlock || 0);
+  const endBlock = Number(proposal.endBlock || 0);
 
   const getTimeLeft = () => {
-    if (state === ProposalState.Pending && now < startTime) {
-      const timeLeft = startTime - now;
-      return `Starts in ${Math.floor(timeLeft / 3600)}h ${Math.floor((timeLeft % 3600) / 60)}m`;
-    } else if (isActive && now < endTime) {
-      const timeLeft = endTime - now;
-      return `Ends in ${Math.floor(timeLeft / 3600)}h ${Math.floor((timeLeft % 3600) / 60)}m`;
-    } else if (isQueued && eta > 0) {
-      const timeLeft = eta - now;
-      return `Executable in ${Math.floor(timeLeft / 3600)}h ${Math.floor((timeLeft % 3600) / 60)}m`;
+    // Since we don't have current block number easily available in the frontend,
+    // we'll show block numbers instead of estimated time
+    if (state === ProposalState.Pending) {
+      return `Starts at block ${startBlock}`;
+    } else if (isActive) {
+      return `Ends at block ${endBlock}`;
     }
     return null;
   };
@@ -263,21 +259,14 @@ export function ProposalCard({
       )}
 
       {/* Admin Actions */}
-      {(isSucceeded || isQueued) && (
+      {isSucceeded && (
         <div className="border-t border-gray-700 pt-4 space-y-3">
           <div className="terminal-bright text-sm">PROPOSAL EXECUTION</div>
+          <div className="terminal-dim text-xs mb-3">
+            Succeeded proposals can be executed immediately
+          </div>
           <div className="flex gap-3">
-            {isSucceeded && onQueue && (
-              <Button
-                onClick={handleQueue}
-                disabled={isLoading}
-                variant="outline"
-                className="border-gray-700 text-gray-400 hover:bg-gray-900/20"
-              >
-                <span className="text-xs">QUEUE FOR EXECUTION</span>
-              </Button>
-            )}
-            {isQueued && onExecute && eta <= now && (
+            {onExecute && (
               <Button
                 onClick={handleExecute}
                 disabled={isLoading}

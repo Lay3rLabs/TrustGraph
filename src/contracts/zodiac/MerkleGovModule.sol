@@ -83,6 +83,9 @@ contract MerkleGovModule is Module, IWavsServiceHandler {
     /// @notice IPFS hash for current merkle root metadata
     bytes32 public ipfsHash;
 
+    /// @notice The optional ipfs hash CID containing metadata about the root (e.g. the merkle tree itself).
+    string public ipfsHashCid;
+
     /// @notice Proposal counter
     uint256 public proposalCount;
 
@@ -308,6 +311,7 @@ contract MerkleGovModule is Module, IWavsServiceHandler {
         // Update merkle root
         currentMerkleRoot = avsOutput.root;
         ipfsHash = avsOutput.ipfsHashData;
+        ipfsHashCid = avsOutput.ipfsHash;
 
         emit MerkleRootUpdated(avsOutput.root, avsOutput.ipfsHashData);
     }
