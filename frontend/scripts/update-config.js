@@ -26,78 +26,90 @@ try {
   // UPDATE WAGMI CONFIG WITH CONTRACT ADDRESSES
   // ========================================
 
-  // Collect all contract addresses from different sections
-  const contracts = {
-    ...deployment.eas_contracts,
-    ...deployment.service_contracts,
-    ...deployment.governance_contracts,
-    ...deployment.reward_contracts,
-    ...deployment.merkle_governance_contracts,
-  };
+  // Create a flattened mapping of all contract addresses
+  const contractAddresses = {};
 
-  console.log("📋 Contract addresses:", contracts);
+  // Add all contract addresses from different sections
+  if (deployment.eas_contracts) {
+    Object.assign(contractAddresses, deployment.eas_contracts);
+  }
+  if (deployment.service_contracts) {
+    Object.assign(contractAddresses, deployment.service_contracts);
+  }
+  if (deployment.reward_contracts) {
+    Object.assign(contractAddresses, deployment.reward_contracts);
+  }
+  if (deployment.prediction_market_contracts) {
+    Object.assign(contractAddresses, deployment.prediction_market_contracts);
+  }
+  if (deployment.zodiac_safes) {
+    contractAddresses.safe_singleton = deployment.zodiac_safes.safe_singleton;
+    contractAddresses.safe_factory = deployment.zodiac_safes.safe_factory;
+    if (deployment.zodiac_safes.safe1) {
+      contractAddresses.merkle_gov_module =
+        deployment.zodiac_safes.safe1.merkle_gov_module;
+      contractAddresses.signer_module =
+        deployment.zodiac_safes.safe1.signer_module;
+    }
+  }
 
-  // Read current wagmi config
-  const configContent = fs.readFileSync(wagmiConfigFile, "utf8");
+  console.log("📋 Contract addresses:", contractAddresses);
 
-  // Update contract addresses in the config
-  let updatedConfigContent = configContent;
-
-  // Map deployment contract names to wagmi config names
+  // Contract name mappings from deployment keys to wagmi config names
   const contractNameMapping = {
-    attester: "Attester",
-    eas: "EAS",
+    // EAS contracts
     schema_registry: "SchemaRegistry",
+    eas: "EAS",
+    attester: "Attester",
     schema_registrar: "SchemaRegistrar",
     indexer: "Indexer",
     indexer_resolver: "IndexerResolver",
+
+    // Service contracts
     trigger: "EASAttestTrigger",
-    voting_power: "VotingPower",
-    governor: "AttestationGovernor",
-    timelock: "Timelock",
+
+    // Reward contracts
     reward_distributor: "RewardDistributor",
-    reward_token: "RewardToken",
-    merkle_vote: "MerkleVote",
-    merkle_gov: "MerkleGov",
+    reward_token: "ENOVA",
+
+    // Prediction market contracts
+    oracle_controller: "PredictionMarketOracleController",
+    factory: "PredictionMarketFactory",
+    collateral_token: "MockUSDC",
+    conditional_tokens: "ConditionalTokens",
+    market_maker: "LMSRMarketMaker",
+
+    // Zodiac Safe contracts
+    safe_singleton: "GnosisSafe",
+    safe_factory: "GnosisSafeProxy",
+    merkle_gov_module: "MerkleGovModule",
+    signer_module: "SignerManagerModule",
   };
 
-  // Update addresses for each contract
-  Object.entries(contracts).forEach(([deploymentName, address]) => {
-    const configName = contractNameMapping[deploymentName];
-    if (configName) {
-      // Find the contract block and update the address
-      const contractPattern = new RegExp(
-        `(\\{[^}]*name: ["']${configName}["'][^}]*address: ["'])([^"']*)?(['"].*?\\})`,
-        "s",
-      );
-      const replacement = `$1${address}$3`;
+  // Read current wagmi config
+  let configContent = fs.readFileSync(wagmiConfigFile, "utf8");
 
-      if (contractPattern.test(updatedConfigContent)) {
-        updatedConfigContent = updatedConfigContent.replace(
-          contractPattern,
-          replacement,
-        );
+  // Update each contract address
+  Object.entries(contractAddresses).forEach(([deploymentName, address]) => {
+    const configName = contractNameMapping[deploymentName];
+    if (configName && address) {
+      // Simple regex to find and replace the address field for each contract
+      const addressRegex = new RegExp(
+        `(name:\\s*["']${configName}["'][^}]*address:\\s*["'])([^"']*)(["'])`,
+        "g",
+      );
+
+      if (addressRegex.test(configContent)) {
+        configContent = configContent.replace(addressRegex, `$1${address}$3`);
         console.log(`✅ Updated ${configName}: ${address}`);
       } else {
-        // Check if contract block exists but has no address field or has comment
-        const contractBlockPattern = new RegExp(
-          `(\\{[^}]*name: ["']${configName}["'][^}]*?)((?://[^\\n]*\\n\\s*)?)(\\s*\\})`,
-          "s",
-        );
-        if (contractBlockPattern.test(updatedConfigContent)) {
-          const addAddressReplacement = `$1\n      address: "${address}",\n    $3`;
-          updatedConfigContent = updatedConfigContent.replace(
-            contractBlockPattern,
-            addAddressReplacement,
-          );
-          console.log(`✅ Added address for ${configName}: ${address}`);
-        }
+        console.log(`⚠️  Could not find ${configName} in config`);
       }
     }
   });
 
   // Write updated wagmi config
-  fs.writeFileSync(wagmiConfigFile, updatedConfigContent);
+  fs.writeFileSync(wagmiConfigFile, configContent);
   console.log("✅ wagmi.config.ts updated successfully!");
 
   // ========================================
@@ -108,10 +120,9 @@ try {
     console.log("📋 Schema IDs:", deployment.eas_schemas);
 
     // Read current schemas file
-    const schemasContent = fs.readFileSync(schemasFile, "utf8");
-    let updatedSchemasContent = schemasContent;
+    let schemasContent = fs.readFileSync(schemasFile, "utf8");
 
-    // Map deployment schema names to code schema names
+    // Schema name mappings
     const schemaNameMapping = {
       basic_schema: "basicSchema",
       compute_schema: "computeSchema",
@@ -125,35 +136,27 @@ try {
     Object.entries(deployment.eas_schemas).forEach(
       ([deploymentName, schemaId]) => {
         const codeName = schemaNameMapping[deploymentName];
-        if (codeName) {
-          // Find and replace the schema ID
-          const schemaPattern = new RegExp(`(${codeName}:\\s*)"([^"]*)"`, "g");
-          const testPattern = new RegExp(`${codeName}:\\s*"([^"]*)"`, "g");
+        if (codeName && schemaId) {
+          const schemaRegex = new RegExp(
+            `(${codeName}:\\s*["'])([^"']*)(["'])`,
+            "g",
+          );
 
-          if (testPattern.test(updatedSchemasContent)) {
-            updatedSchemasContent = updatedSchemasContent.replace(
-              schemaPattern,
-              `$1"${schemaId}"`,
+          if (schemaRegex.test(schemasContent)) {
+            schemasContent = schemasContent.replace(
+              schemaRegex,
+              `$1${schemaId}$3`,
             );
             console.log(`✅ Updated ${codeName}: ${schemaId}`);
           } else {
-            // If schema doesn't exist in file, add it to the schemas object
-            const schemasObjectPattern = /(export const schemas = \{[^}]*)/;
-            if (schemasObjectPattern.test(updatedSchemasContent)) {
-              const replacement = `$1\n  ${codeName}: "${schemaId}",`;
-              updatedSchemasContent = updatedSchemasContent.replace(
-                schemasObjectPattern,
-                replacement,
-              );
-              console.log(`✅ Added new schema ${codeName}: ${schemaId}`);
-            }
+            console.log(`⚠️  Could not find ${codeName} in schemas`);
           }
         }
       },
     );
 
     // Write updated schemas file
-    fs.writeFileSync(schemasFile, updatedSchemasContent);
+    fs.writeFileSync(schemasFile, schemasContent);
     console.log("✅ schemas.ts updated successfully!");
   }
 
