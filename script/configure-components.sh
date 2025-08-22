@@ -45,7 +45,7 @@ DEFAULT_COMPONENTS_JSON='{
     },
     {
       "filename": "prediction_market_oracle.wasm",
-      "package_name": "prediction_market_oracle",
+      "package_name": "predictionmarketoracle",
       "package_version": "0.1.0",
       "trigger_event": "NewTrigger(bytes)",
       "trigger_json_path": "prediction_market_contracts.oracle_controller",

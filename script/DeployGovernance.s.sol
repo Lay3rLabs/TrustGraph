@@ -22,6 +22,7 @@ contract DeployGovernance is Common {
     /// @param wavsServiceManagerAddr The WAVS service manager address
     /// @return deployment The deployed contract addresses
     function run(string calldata wavsServiceManagerAddr) public returns (GovernanceDeployment memory deployment) {
+        address deployer = vm.addr(_privateKey);
         vm.startBroadcast(_privateKey);
 
         address serviceManager = vm.parseAddress(wavsServiceManagerAddr);
@@ -33,7 +34,7 @@ contract DeployGovernance is Common {
         VotingPower votingPower = new VotingPower(
             "WAVS Governance Token",
             "WAVS",
-            msg.sender, // Initial owner
+            deployer, // Initial owner
             IWavsServiceManager(serviceManager)
         );
         deployment.votingPower = address(votingPower);
@@ -49,7 +50,7 @@ contract DeployGovernance is Common {
             2 days, // 2 day delay
             proposers,
             executors,
-            msg.sender // Admin (can be renounced later)
+            deployer // Admin (can be renounced later)
         );
         deployment.timelock = address(timelock);
         console.log("TimelockController deployed at:", deployment.timelock);
@@ -63,8 +64,6 @@ contract DeployGovernance is Common {
         bytes32 proposerRole = timelock.PROPOSER_ROLE();
         timelock.grantRole(proposerRole, deployment.governor);
 
-        // Revoke proposer role from deployer
-        timelock.revokeRole(proposerRole, msg.sender);
         console.log("Governor granted proposer role on timelock");
 
         vm.stopBroadcast();

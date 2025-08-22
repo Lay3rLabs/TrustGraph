@@ -9,6 +9,22 @@
 
 # Project organization
 
+Let's reorganize our src/contracts folder as we've added new contracts.
+
+Let's make a new `eas` folder and move in the following contracts:
+- Attester.sol
+- Indexer.sol
+- IndexerResolver.sol
+- OffchainAttestationVerifier.sol
+- SchemaRegistrar.sol
+
+Let's make a new `tokens` folder and move in the following contracts:
+- ERC20.sol
+- MockUSDC.sol
+
+Let's make a `misc` folder and move in the following contracts:
+- Daico.sol
+
 # Next steps
 - [ ] Deploy Prediction market
 - [ ] Fix up Zodiac modules
