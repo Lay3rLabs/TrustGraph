@@ -93,19 +93,19 @@ contract Rewards is Common {
 
         // access IPFS_GATEWAY_URL from env
         string memory ipfsGatewayUrl = vm.envString("IPFS_GATEWAY_URL");
-        string memory url = string.concat(ipfsGatewayUrl, "cat?arg=", ipfsHashCid);
-
-        console.log("Merkle data URL: ", url);
-        console.log("Claiming rewards...");
-        console.log(string.concat("curl -s -X POST ", url, " | jq -c .tree[0]"));
+        string memory url = string.concat(ipfsGatewayUrl, ipfsHashCid);
 
         // Get the claimer address first
         address claimer = vm.addr(_privateKey);
 
+        console.log("Merkle data URL: ", url);
+        console.log("Claiming rewards...");
+        // console.log(string.concat("curl -s -X GET ", url, " | jq -c .tree[0]"));
+
         // Query for the merkle entry for this specific claimer
         string memory claimerStr = vm.toString(claimer);
         string memory entry = runCmd(
-            string.concat("curl -s -X POST ", url, " | jq -c '.tree[] | select(.account == \"", claimerStr, "\")'")
+            string.concat("curl -s -X GET ", url, " | jq -c '.tree[] | select(.account == \"", claimerStr, "\")'")
         );
 
         // Check if entry was found

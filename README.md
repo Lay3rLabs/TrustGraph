@@ -256,9 +256,10 @@ This script automates the complete WAVS deployment process in a single command:
 **Result:** A fully operational WAVS service that monitors blockchain events, executes WebAssembly components, and submits verified results on-chain.
 
 ```bash
+sh script/configure-components.sh init
+
 export RPC_URL=`bash ./script/get-rpc.sh`
 export AGGREGATOR_URL=http://localhost:8001
-
 bash ./script/deploy-script.sh
 ```
 
@@ -295,7 +296,8 @@ export REWARD_DISTRIBUTOR_ADDRESS=$(jq -r '.reward_contracts.reward_distributor'
 export VOUCH_SCHEMA_UID=$(jq -r '.eas_schemas.vouching_schema' .docker/deployment_summary.json)
 
 # Set demo wallet address
-export WALLET_ADDRESS=0xDf3679681B87fAE75CE185e4f01d98b64Ddb64a3
+export FUNDED_KEY=`cat .env | grep FUNDED_KEY | cut -d '=' -f2`
+export WALLET_ADDRESS=`cast wallet address ${FUNDED_KEY}`
 ```
 
 ### PageRank Testing (Optional)
@@ -304,10 +306,10 @@ Create a comprehensive PageRank test network with real attestations:
 
 ```bash
 # Create 40+ real attestations across different network patterns
-./script/create-pagerank-attestations.sh
+TEST_ADDRESS=${WALLET_ADDRESS} ./script/create-pagerank-attestations.sh
 
 # Verify the network and get PageRank recommendations
-./script/verify-pagerank-network.sh
+# ./script/verify-pagerank-network.sh
 ```
 
 This creates a realistic attestation network with:
@@ -351,7 +353,7 @@ forge script script/Trigger.s.sol:EasTrigger --sig "queryAttestations(string,str
   --rpc-url $WAVS_ENV_RPC_URL
 ```
 
-Check voting power for recipien, it should have gone up by number of attestations (note this is a separate demo from MerkleGov which we'll show later):
+Check voting power for recipient, it should have gone up by number of attestations (note this is a separate demo from MerkleGov which we'll show later):
 ```bash
 forge script script/Governance.s.sol:Governance \
     --sig "queryVotingPower(string,string)" \
@@ -380,6 +382,7 @@ forge script script/Rewards.s.sol:Rewards \
 
 Claim:
 ```bash
+export IPFS_GATEWAY_URL="http://127.0.0.1:8080/ipfs/"
 forge script script/Rewards.s.sol:Rewards \
     --sig "claimRewards(string,string)" \
     $WAVS_ENV_REWARD_DISTRIBUTOR_ADDRESS \

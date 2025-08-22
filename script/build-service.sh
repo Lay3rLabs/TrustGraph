@@ -91,6 +91,16 @@ jq -r '.components[] | @json' "${COMPONENT_CONFIGS_FILE}" | while read -r compon
     COMP_TRIGGER_ADDRESS=`jq -r ".${COMP_TRIGGER_JSON_PATH}" .docker/deployment_summary.json`
     COMP_SUBMIT_ADDRESS=`jq -r ".${COMP_SUBMIT_JSON_PATH}" .docker/deployment_summary.json`
 
+    # The key COMP_SUBMIT_JSON_PATH may not be found in the deployment_summary (i.e. a typo). Make sure it exists. If it doesn't then return an error.
+    if [ -z "$COMP_TRIGGER_ADDRESS" ] || [ "$COMP_TRIGGER_ADDRESS" == "null" ]; then
+        echo "❌ Trigger address not found for component: ${COMP_FILENAME} at path: ${COMP_TRIGGER_JSON_PATH}"
+        exit 1
+    fi
+    if [ -z "$COMP_SUBMIT_ADDRESS" ] || [ "$COMP_SUBMIT_ADDRESS" == "null" ]; then
+        echo "❌ Submit address not found for component: ${COMP_FILENAME} at path: ${COMP_SUBMIT_JSON_PATH}"
+        exit 1
+    fi
+
     COMP_TRIGGER_EVENT_HASH=`cast keccak ${COMP_TRIGGER_EVENT}`
 
     echo "Creating workflow for component: ${COMP_FILENAME}"

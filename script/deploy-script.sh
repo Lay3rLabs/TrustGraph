@@ -1,6 +1,8 @@
 #!/bin/bash
 # set -e
 
+warg reset
+
 if [ ! -d compiled/ ] || [ -z "$(find compiled/ -name '*.wasm')" ]; then
     echo "No WASM files found in compiled/. Building components."
     make wasi-build
