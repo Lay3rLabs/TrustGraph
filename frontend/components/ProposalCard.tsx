@@ -235,24 +235,26 @@ export function ProposalCard({
             <Button
               onClick={() => handleVote(VoteType.For)}
               disabled={isVoting || isLoading}
-              className="flex-1 bg-green-800 hover:bg-green-700 text-green-100"
+              variant="outline"
+              className="flex-1 border-green-700 text-green-400 hover:bg-green-900/20 mobile-terminal-btn"
             >
-              <span className="text-xs">VOTE FOR</span>
+              <span className="terminal-command text-xs">VOTE FOR</span>
             </Button>
             <Button
               onClick={() => handleVote(VoteType.Against)}
               disabled={isVoting || isLoading}
-              className="flex-1 bg-red-800 hover:bg-red-700 text-red-100"
+              variant="outline"
+              className="flex-1 border-red-700 text-red-400 hover:bg-red-900/20 mobile-terminal-btn"
             >
-              <span className="text-xs">VOTE AGAINST</span>
+              <span className="terminal-command text-xs">VOTE AGAINST</span>
             </Button>
             <Button
               onClick={() => handleVote(VoteType.Abstain)}
               disabled={isVoting || isLoading}
               variant="outline"
-              className="flex-1 border-gray-700 text-gray-400 hover:bg-gray-900/20"
+              className="flex-1 border-gray-700 text-gray-400 hover:bg-gray-900/20 mobile-terminal-btn"
             >
-              <span className="text-xs">ABSTAIN</span>
+              <span className="terminal-command text-xs">ABSTAIN</span>
             </Button>
           </div>
         </div>
@@ -270,9 +272,10 @@ export function ProposalCard({
               <Button
                 onClick={handleExecute}
                 disabled={isLoading}
-                className="bg-purple-800 hover:bg-purple-700 text-purple-100"
+                variant="outline"
+                className="border-purple-700 text-purple-400 hover:bg-purple-900/20 mobile-terminal-btn"
               >
-                <span className="text-xs">EXECUTE PROPOSAL</span>
+                <span className="terminal-command text-xs">EXECUTE PROPOSAL</span>
               </Button>
             )}
           </div>

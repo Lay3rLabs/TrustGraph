@@ -319,7 +319,7 @@ export function useGovernance() {
 
           const proposalActions: ProposalAction[] = (actions as any[]).map((action: any) => ({
             target: action.target,
-            value: action.value.toString(),
+            value: BigInt(action.value).toString(),
             data: action.data,
             operation: Number(action.operation),
             description: `Action for ${action.target}`,
@@ -460,7 +460,7 @@ export function useGovernance() {
 
   // Cast vote with merkle proof
   const castVote = useCallback(
-    async (proposalId: number, support: VoteType) => {
+    async (proposalId: number, support: VoteType): Promise<string | null> => {
       if (!isConnected || !address) {
         setError("Wallet not connected");
         return null;
@@ -473,8 +473,14 @@ export function useGovernance() {
         return null;
       }
 
+      if (!publicClient) {
+        setError("Public client not available");
+        return null;
+      }
+
       try {
         setError(null);
+        setIsLoading(true);
 
         console.log("Casting vote with:", {
           proposalId: BigInt(proposalId),
@@ -484,7 +490,14 @@ export function useGovernance() {
           proof: userVotingPower.proof,
         });
 
-        const hash = await writeContract({
+        // Get current nonce
+        const nonce = await publicClient.getTransactionCount({
+          address: address,
+          blockTag: "pending",
+        });
+
+        // Estimate gas
+        const gasEstimate = await publicClient.estimateContractGas({
           address: merkleGovModuleAddress,
           abi: merkleGovModuleAbi,
           functionName: "castVote",
@@ -495,19 +508,64 @@ export function useGovernance() {
             merkleData.metadata.reward_token_address as `0x${string}`,
             userVotingPower.proof as `0x${string}`[],
           ],
+          account: address,
         });
 
-        console.log("Vote cast:", hash);
-        return hash;
+        // Get gas price
+        const gasPrice = await publicClient.getGasPrice();
+
+        // Call writeContract
+        writeContract({
+          address: merkleGovModuleAddress,
+          abi: merkleGovModuleAbi,
+          functionName: "castVote",
+          args: [
+            BigInt(proposalId),
+            support,
+            BigInt(userVotingPower.claimable),
+            merkleData.metadata.reward_token_address as `0x${string}`,
+            userVotingPower.proof as `0x${string}`[],
+          ],
+          gas: (gasEstimate * BigInt(120)) / BigInt(100),
+          gasPrice: gasPrice,
+          nonce,
+          type: "legacy",
+        });
+
+        // Return promise that resolves when the transaction hash is available
+        return new Promise((resolve, reject) => {
+          const checkForHash = () => {
+            if (writeHash) {
+              console.log("Vote transaction hash received:", writeHash);
+              resolve(writeHash);
+              return;
+            }
+            if (writeError) {
+              console.error("Vote write error:", writeError);
+              reject(writeError);
+              return;
+            }
+            setTimeout(checkForHash, 100);
+          };
+          
+          setTimeout(checkForHash, 100);
+          
+          setTimeout(() => {
+            reject(new Error("Vote transaction timeout - no response after 30 seconds"));
+          }, 30000);
+        });
+
       } catch (err: any) {
         console.error("Error casting vote:", err);
         setError(
           `Failed to cast vote: ${err.message || err.shortMessage || "Unknown error"}`,
         );
         return null;
+      } finally {
+        setIsLoading(false);
       }
     },
-    [isConnected, address, userVotingPower, merkleData, writeContract],
+    [isConnected, address, userVotingPower, merkleData, publicClient, writeContract, writeHash, writeError],
   );
 
   // No queuing in MerkleGovModule - proposals go directly from Succeeded to executable
@@ -520,31 +578,85 @@ export function useGovernance() {
 
   // Execute proposal
   const executeProposal = useCallback(
-    async (proposalId: number) => {
-      if (!isConnected) {
+    async (proposalId: number): Promise<string | null> => {
+      if (!isConnected || !address) {
         setError("Wallet not connected");
+        return null;
+      }
+
+      if (!publicClient) {
+        setError("Public client not available");
         return null;
       }
 
       try {
         setError(null);
+        setIsLoading(true);
 
-        const hash = await writeContract({
+        console.log("Executing proposal:", proposalId);
+
+        // Get current nonce
+        const nonce = await publicClient.getTransactionCount({
+          address: address,
+          blockTag: "pending",
+        });
+
+        // Estimate gas
+        const gasEstimate = await publicClient.estimateContractGas({
           address: merkleGovModuleAddress,
           abi: merkleGovModuleAbi,
           functionName: "execute",
           args: [BigInt(proposalId)],
+          account: address,
         });
 
-        console.log("Proposal executed:", hash);
-        return hash;
+        // Get gas price
+        const gasPrice = await publicClient.getGasPrice();
+
+        // Call writeContract
+        writeContract({
+          address: merkleGovModuleAddress,
+          abi: merkleGovModuleAbi,
+          functionName: "execute",
+          args: [BigInt(proposalId)],
+          gas: (gasEstimate * BigInt(120)) / BigInt(100),
+          gasPrice: gasPrice,
+          nonce,
+          type: "legacy",
+        });
+
+        // Return promise that resolves when the transaction hash is available
+        return new Promise((resolve, reject) => {
+          const checkForHash = () => {
+            if (writeHash) {
+              console.log("Execute transaction hash received:", writeHash);
+              resolve(writeHash);
+              return;
+            }
+            if (writeError) {
+              console.error("Execute write error:", writeError);
+              reject(writeError);
+              return;
+            }
+            setTimeout(checkForHash, 100);
+          };
+          
+          setTimeout(checkForHash, 100);
+          
+          setTimeout(() => {
+            reject(new Error("Execute transaction timeout - no response after 30 seconds"));
+          }, 30000);
+        });
+
       } catch (err: any) {
         console.error("Error executing proposal:", err);
-        setError(`Failed to execute proposal: ${err.message}`);
+        setError(`Failed to execute proposal: ${err.message || err.shortMessage || "Unknown error"}`);
         return null;
+      } finally {
+        setIsLoading(false);
       }
     },
-    [isConnected, writeContract],
+    [isConnected, address, publicClient, writeContract, writeHash, writeError],
   );
 
   // Helper functions

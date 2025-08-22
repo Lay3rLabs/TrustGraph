@@ -180,7 +180,7 @@ export default function GovernancePage() {
           {/* Safe Info Card */}
           <div className="border border-blue-700 bg-blue-900/10 p-4 rounded-sm">
             <div className="flex items-center justify-between mb-3">
-              <div className="terminal-bright text-lg">GNOSIS SAFE</div>
+              <div className="terminal-bright text-lg">GNOSIS SAFE TREASURY</div>
               <Button
                 onClick={() => window.open(`https://app.safe.global/home?safe=eth:${safeAddress}`, '_blank')}
                 className="mobile-terminal-btn px-3 py-1 text-xs"
@@ -197,10 +197,16 @@ export default function GovernancePage() {
                   {safeBalance ? `${Number(safeBalance) / 1e18} ETH` : '0 ETH'}
                 </span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="terminal-dim text-xs">ADDRESS:</span>
+              <div className="space-y-1">
+                <span className="terminal-dim text-xs">SAFE ADDRESS:</span>
                 <span className="terminal-text text-xs font-mono break-all">
-                  {safeAddress ? `${safeAddress.slice(0, 6)}...${safeAddress.slice(-4)}` : 'N/A'}
+                  {safeAddress || 'N/A'}
+                </span>
+              </div>
+              <div className="space-y-1">
+                <span className="terminal-dim text-xs">MERKLE GOV MODULE:</span>
+                <span className="terminal-text text-xs font-mono break-all">
+                  {merkleGovAddress}
                 </span>
               </div>
             </div>
@@ -286,20 +292,6 @@ export default function GovernancePage() {
             ))}
           </div>
 
-          {/* Contract Information */}
-          <div className="border-t border-gray-700 pt-4 space-y-3">
-            <div className="terminal-bright text-sm">CONTRACT ADDRESSES</div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div className="space-y-1">
-                <div className="terminal-dim text-xs">MERKLE GOVERNANCE</div>
-                <div className="terminal-text font-mono break-all">{merkleGovAddress}</div>
-              </div>
-              <div className="space-y-1">
-                <div className="terminal-dim text-xs">MERKLE VOTE VERIFIER</div>
-                <div className="terminal-text font-mono break-all">{merkleVoteAddress}</div>
-              </div>
-            </div>
-          </div>
         </>
       )}
 
