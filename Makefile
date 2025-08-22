@@ -9,7 +9,7 @@ INPUT_DATA?=``
 COMPONENT_FILENAME?=wavs_eas_attest.wasm
 CREDENTIAL?=""
 DOCKER_IMAGE?=ghcr.io/lay3rlabs/wavs:35c96a4
-MIDDLEWARE_DOCKER_IMAGE?=ghcr.io/lay3rlabs/wavs-middleware:0.4.1
+MIDDLEWARE_DOCKER_IMAGE?=ghcr.io/lay3rlabs/wavs-middleware:0.5.0-beta.10
 IPFS_ENDPOINT?=http://127.0.0.1:5001
 RPC_URL?=http://127.0.0.1:8545
 SERVICE_FILE?=.docker/service.json
@@ -162,7 +162,9 @@ PAST_BLOCKS?=500
 wavs-middleware:
 	@docker run --rm --network host --env-file ${ENV_FILE} \
 		$(if ${WAVS_SERVICE_MANAGER_ADDRESS},-e WAVS_SERVICE_MANAGER_ADDRESS=${WAVS_SERVICE_MANAGER_ADDRESS}) \
-		$(if ${PAST_BLOCKS},-e PAST_BLOCKS=${PAST_BLOCKS}) \
+		$(if ${OPERATOR_KEY},-e OPERATOR_KEY=${OPERATOR_KEY}) \
+		$(if ${WAVS_SIGNING_KEY},-e WAVS_SIGNING_KEY=${WAVS_SIGNING_KEY}) \
+		$(if ${WAVS_DELEGATE_AMOUNT},-e WAVS_DELEGATE_AMOUNT=${WAVS_DELEGATE_AMOUNT}) \
 		-v ./.nodes:/root/.nodes ${MIDDLEWARE_DOCKER_IMAGE} ${COMMAND}
 
 ## update-submodules: update the git submodules

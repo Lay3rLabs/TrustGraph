@@ -6,7 +6,7 @@ This guide explains how Ethereum Attestation Service (EAS) addresses are automat
 
 The EAS compute component requires three configuration parameters:
 - **`eas_address`**: The main EAS contract address
-- **`indexer_address`**: The EAS indexer contract address  
+- **`indexer_address`**: The EAS indexer contract address
 - **`chain_name`**: The blockchain network name (must match `wavs.toml` configuration)
 
 These parameters are **automatically configured** during deployment from the contract deployment summary.
@@ -71,7 +71,7 @@ use crate::bindings::host::config_var;
 
 // In QueryConfig::from_wavs_config()
 let eas_address = config_var("eas_address")?;
-let indexer_address = config_var("indexer_address")?; 
+let indexer_address = config_var("indexer_address")?;
 let chain_name = config_var("chain_name")?;
 ```
 
@@ -85,10 +85,10 @@ chain_id = "31337"
 ws_endpoint = "ws://localhost:8545"
 http_endpoint = "http://localhost:8545"
 
-[default.chains.evm.holesky]
-chain_id = "17000"
-ws_endpoint = "wss://holesky.drpc.org"
-http_endpoint = "https://holesky.drpc.org"
+[default.chains.evm.sepolia]
+chain_id = "11155111"
+ws_endpoint = "wss://ethereum-sepolia-rpc.publicnode.com"
+http_endpoint = "https://ethereum-sepolia-rpc.publicnode.com"
 ```
 
 ## Manual Override (Development Only)
@@ -107,7 +107,7 @@ export CONFIG_VALUES="eas_address=0x...,indexer_address=0x...,chain_name=local"
 
 **Problem**: Components use zero addresses despite deployment.
 
-**Check**: 
+**Check**:
 1. Verify addresses exist in deployment summary:
    ```bash
    cat .docker/deployment_summary.json | jq '.eas_contracts'
@@ -140,7 +140,7 @@ cat .docker/deployment_summary.json | jq '.eas_contracts | keys'
 | Environment | Chain Name | Configuration Source |
 |-------------|------------|----------------------|
 | Local | `local` | deployment_summary.json |
-| Testnet | `holesky` | deployment_summary.json |
+| Testnet | `sepolia` | deployment_summary.json |
 | Custom | Set manually | Manual CONFIG_VALUES |
 
 ## Development Workflow

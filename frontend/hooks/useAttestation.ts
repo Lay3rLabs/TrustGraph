@@ -100,8 +100,8 @@ export function useAttestation() {
       throw new Error("Please connect your wallet");
     }
 
-    if (chainId !== 17000) {
-      throw new Error("Please switch to the local network (chain ID 17000)");
+    if (chainId !== 11155111) {
+      throw new Error("Please switch to the local network (chain ID 11155111)");
     }
 
     // Declare variables in higher scope for retry logic
@@ -258,7 +258,7 @@ export function useAttestation() {
 
           if (encodedData !== undefined && gasEstimate !== undefined) {
             const gasPrice = await publicClient!.getGasPrice();
-            
+
             // Recreate the attestation request for retry
             const retryAttestationRequest = {
               schema: attestationData.schema as `0x${string}`,
@@ -308,7 +308,7 @@ export function useAttestation() {
           });
 
           const gasPrice = await publicClient!.getGasPrice();
-          
+
           // Recreate the attestation request for final retry
           const finalRetryAttestationRequest = {
             schema: attestationData.schema as `0x${string}`,

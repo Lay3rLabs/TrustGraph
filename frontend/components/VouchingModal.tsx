@@ -51,7 +51,7 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, onCl
     }
   };
   const [selectedSchema, setSelectedSchema] = useState<string>("");
-  
+
   const { address, isConnected, chain } = useAccount();
   const { connect } = useConnect();
   const { switchChain } = useSwitchChain();
@@ -90,7 +90,7 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, onCl
         method: "wallet_addEthereumChain",
         params: [
           {
-            chainId: "0x4268", // 17000 in hex
+            chainId: "0xAA36A7", // 11155111 in hex
             chainName: "Local Anvil",
             nativeCurrency: {
               name: "Ether",
@@ -110,12 +110,12 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, onCl
 
   const handleSwitchToLocal = async () => {
     try {
-      switchChain({ chainId: 17000 });
+      switchChain({ chainId: 11155111 });
     } catch (err) {
       console.error("Failed to switch network:", err);
       try {
         await addLocalNetwork();
-        switchChain({ chainId: 17000 });
+        switchChain({ chainId: 11155111 });
       } catch (addErr) {
         console.error("Failed to add and switch network:", addErr);
       }
@@ -136,7 +136,7 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, onCl
 
   const getSchemaPlaceholder = (schemaInfo: typeof selectedSchemaInfo) => {
     if (!schemaInfo) return "Select a schema first...";
-    
+
     switch (schemaInfo.uid) {
       case schemas.vouchingSchema:
         return "Enter vouch weight (e.g., 1, 5, 100)";
@@ -151,7 +151,7 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, onCl
 
   const getSchemaHelperText = (schemaInfo: typeof selectedSchemaInfo) => {
     if (!schemaInfo) return null;
-    
+
     switch (schemaInfo.uid) {
       case schemas.vouchingSchema:
         return "Enter a numeric weight value representing the strength of your vouch";
@@ -165,7 +165,7 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, onCl
   };
 
   const defaultTrigger = (
-    <Button 
+    <Button
       className="mobile-terminal-btn px-6 py-2"
       onClick={() => setIsOpen(true)}
     >
@@ -182,9 +182,9 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, onCl
       ) : (
         defaultTrigger
       )}
-      
-      <Modal 
-        isOpen={isOpen} 
+
+      <Modal
+        isOpen={isOpen}
         onClose={() => setIsOpen(false)}
         title="ATTESTATION CREATION PROTOCOL"
         className="max-w-2xl max-h-[90vh] overflow-y-auto"
@@ -363,7 +363,7 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, onCl
                         <div>
                           ✓ Attestation created! Tx: {hash.slice(0, 10)}...{hash.slice(-8)}
                         </div>
-                        {chain?.id === 17000 && (
+                        {chain?.id === 11155111 && (
                           <div className="opacity-75">
                             Local network transaction confirmed
                           </div>
@@ -371,7 +371,7 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, onCl
                       </div>
                     )}
 
-                    {isLoading && chain?.id === 17000 && (
+                    {isLoading && chain?.id === 11155111 && (
                       <div className="terminal-dim text-xs">
                         🔄 Processing on local Anvil network... Nonce conflicts auto-handled
                       </div>

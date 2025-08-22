@@ -37,20 +37,20 @@ chain_id = "1"
 ws_endpoint = "wss://eth.drpc.org"
 http_endpoint = "https://eth.drpc.org"
 
-[default.chains.evm.base]
-chain_id = "8453"
-ws_endpoint = "wss://base.drpc.org"
-http_endpoint = "https://base.drpc.org"
+# [default.chains.evm.base]
+# chain_id = "8453"
+# ws_endpoint = "wss://base.drpc.org"
+# http_endpoint = "https://base.drpc.org"
 
-[default.chains.evm.optimism]
-chain_id = "10"
-ws_endpoint = "wss://optimism.drpc.org"
-http_endpoint = "https://optimism.drpc.org"
+# [default.chains.evm.optimism]
+# chain_id = "10"
+# ws_endpoint = "wss://optimism.drpc.org"
+# http_endpoint = "https://optimism.drpc.org"
 
-[default.chains.evm.arbitrum]
-chain_id = "42161"
-ws_endpoint = "wss://arbitrum.drpc.org"
-http_endpoint = "https://arbitrum.drpc.org"
+# [default.chains.evm.arbitrum]
+# chain_id = "42161"
+# ws_endpoint = "wss://arbitrum.drpc.org"
+# http_endpoint = "https://arbitrum.drpc.org"
 
 # Local / Testnet
 [default.chains.evm.local]
@@ -70,26 +70,26 @@ chain_id = "11155111"
 ws_endpoint = "wss://ethereum-sepolia-rpc.publicnode.com"
 http_endpoint = "https://ethereum-sepolia-rpc.publicnode.com"
 
-[default.chains.evm.holesky]
-chain_id = "17000"
-ws_endpoint = "wss://ethereum-holesky-rpc.publicnode.com"
-http_endpoint = "https://ethereum-holesky-rpc.publicnode.com"
+# [default.chains.evm.holesky]
+# chain_id = "17000"
+# ws_endpoint = "wss://ethereum-holesky-rpc.publicnode.com"
+# http_endpoint = "https://ethereum-holesky-rpc.publicnode.com"
 
-[default.chains.evm.holesky-fork]
-chain_id = "17000"
-ws_endpoint = "ws://localhost:8545"
-http_endpoint = "http://localhost:8545"
-poll_interval_ms = 7000
+# [default.chains.evm.holesky-fork]
+# chain_id = "17000"
+# ws_endpoint = "ws://localhost:8545"
+# http_endpoint = "http://localhost:8545"
+# poll_interval_ms = 7000
 
 # == Cosmos chains ==
 
-[default.chains.cosmos.neutron]
-chain_id = "pion-1"
-bech32_prefix = "neutron"
-rpc_endpoint = "https://rpc-falcron.pion-1.ntrn.tech"
-grpc_endpoint = "http://grpc-falcron.pion-1.ntrn.tech:80"
-gas_price = 0.0053
-gas_denom = "untrn"
+# [default.chains.cosmos.neutron]
+# chain_id = "pion-1"
+# bech32_prefix = "neutron"
+# rpc_endpoint = "https://rpc-falcron.pion-1.ntrn.tech"
+# grpc_endpoint = "http://grpc-falcron.pion-1.ntrn.tech:80"
+# gas_price = 0.0053
+# gas_denom = "untrn"
 
 # ----------------------------
 # WAVS specific settings

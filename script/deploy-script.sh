@@ -60,8 +60,8 @@ fi
 
 # Testnet: set values (default: local if not set)
 if [ "$(sh ./script/get-deploy-status.sh)" = "TESTNET" ]; then
-    export TRIGGER_CHAIN=holesky
-    export SUBMIT_CHAIN=holesky
+    export TRIGGER_CHAIN=sepolia
+    export SUBMIT_CHAIN=sepolia
 fi
 
 # Configure EAS addresses from deployment summary
@@ -72,7 +72,7 @@ VOUCHING_SCHEMA_ID=$(jq -r '.eas_schemas.vouching_schema' .docker/deployment_sum
 
 # Determine chain name based on deployment environment
 if [ "$(sh ./script/get-deploy-status.sh)" = "TESTNET" ]; then
-    CHAIN_NAME="holesky"
+    CHAIN_NAME="sepolia"
 else
     CHAIN_NAME="local"
 fi
@@ -202,7 +202,13 @@ if [ "$(sh ./script/get-deploy-status.sh)" = "TESTNET" ]; then
 fi
 
 export WAVS_SERVICE_MANAGER_ADDRESS=$(jq -r .addresses.WavsServiceManager ./.nodes/avs_deploy.json)
-COMMAND="register ${OPERATOR_PRIVATE_KEY} ${AVS_SIGNING_ADDRESS} 0.001ether" make wavs-middleware
+
+source infra/wavs-1/.env
+export OPERATOR_KEY=`cast wallet private-key --mnemonic "$WAVS_SUBMISSION_MNEMONIC" --mnemonic-index 0`
+export WAVS_SIGNING_KEY=`cast wallet address --mnemonic-path "$WAVS_SUBMISSION_MNEMONIC" --mnemonic-index 1`
+export WAVS_DELEGATE_AMOUNT=`cast --to-unit 0.001ether`
+OPERATOR_KEY=${OPERATOR_KEY} WAVS_SIGNING_KEY=${WAVS_SIGNING_KEY} WAVS_DELEGATE_AMOUNT=${WAVS_DELEGATE_AMOUNT} make wavs-middleware COMMAND="register"
+# COMMAND="register ${OPERATOR_PRIVATE_KEY} ${AVS_SIGNING_ADDRESS} "
 
 # Verify registration
 COMMAND="list_operators" PAST_BLOCKS=500 make wavs-middleware

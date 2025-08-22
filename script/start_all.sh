@@ -5,13 +5,13 @@ set -e
 if [ -f .env ] && grep -q '^TESTNET_RPC_URL=' .env; then
   TESTNET_RPC_URL=$(grep -E '^TESTNET_RPC_URL=' .env | cut -d '=' -f2- | tr -d '"')
 else
-  rpc_url="https://holesky.drpc.org"
+  rpc_url="https://ethereum-sepolia-rpc.publicnode.com"
   echo "No TESTNET_RPC_URL found in .env, using default ${rpc_url}"
   TESTNET_RPC_URL=${rpc_url}
 fi
 
 PORT=8545
-MIDDLEWARE_IMAGE=ghcr.io/lay3rlabs/wavs-middleware:0.4.0
+MIDDLEWARE_IMAGE=ghcr.io/lay3rlabs/wavs-middleware:0.5.0-beta.10
 FORK_RPC_URL=${FORK_RPC_URL:-"${TESTNET_RPC_URL}"}
 DEPLOY_ENV=$(sh ./script/get-deploy-status.sh)
 
