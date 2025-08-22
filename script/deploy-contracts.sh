@@ -133,10 +133,10 @@ export PREDICTION_MARKET_MAKER_ADDR=$(jq -r '.market_maker' .docker/prediction_m
 
 # Extract deployed addresses from Zodiac Safes deployment
 export SAFE1_ADDR=$(jq -r '.safe1_address' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
-export SAFE1_BASIC_MODULE=$(jq -r '.safe1_basic_module' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
+export SAFE1_MERKLE_GOV_MODULE=$(jq -r '.safe1_merkle_gov_module' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
 export SAFE1_SIGNER_MODULE=$(jq -r '.safe1_signer_module' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
 export SAFE2_ADDR=$(jq -r '.safe2_address' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
-export SAFE2_BASIC_MODULE=$(jq -r '.safe2_basic_module' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
+export SAFE2_MERKLE_GOV_MODULE=$(jq -r '.safe2_merkle_gov_module' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
 export SAFE2_SIGNER_MODULE=$(jq -r '.safe2_signer_module' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
 export SAFE_SINGLETON=$(jq -r '.safe_singleton' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
 export SAFE_FACTORY=$(jq -r '.safe_factory' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
@@ -194,12 +194,12 @@ cat > .docker/deployment_summary.json << EOF
     "safe_factory": "${SAFE_FACTORY}",
     "safe1": {
       "address": "${SAFE1_ADDR}",
-      "basic_module": "${SAFE1_BASIC_MODULE}",
+      "merkle_gov_module": "${SAFE1_MERKLE_GOV_MODULE}",
       "signer_module": "${SAFE1_SIGNER_MODULE}"
     },
     "safe2": {
       "address": "${SAFE2_ADDR}",
-      "basic_module": "${SAFE2_BASIC_MODULE}",
+      "merkle_gov_module": "${SAFE2_MERKLE_GOV_MODULE}",
       "signer_module": "${SAFE2_SIGNER_MODULE}"
     }
   }
@@ -258,11 +258,11 @@ echo "   SAFE_SINGLETON: ${SAFE_SINGLETON}"
 echo "   SAFE_FACTORY: ${SAFE_FACTORY}"
 echo "   Safe 1:"
 echo "     Address: ${SAFE1_ADDR}"
-echo "     Basic Module: ${SAFE1_BASIC_MODULE}"
+echo "     Merkle Gov Module: ${SAFE1_MERKLE_GOV_MODULE}"
 echo "     Signer Module: ${SAFE1_SIGNER_MODULE}"
 echo "   Safe 2:"
 echo "     Address: ${SAFE2_ADDR}"
-echo "     Basic Module: ${SAFE2_BASIC_MODULE}"
+echo "     Merkle Gov Module: ${SAFE2_MERKLE_GOV_MODULE}"
 echo "     Signer Module: ${SAFE2_SIGNER_MODULE}"
 echo ""
 echo "📄 Deployment details saved to .docker/deployment_summary.json"

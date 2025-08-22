@@ -13,7 +13,7 @@ import {Enum} from "@gnosis.pm/safe-contracts/common/Enum.sol";
 import {GnosisSafeProxyFactory} from "@gnosis.pm/safe-contracts/proxies/GnosisSafeProxyFactory.sol";
 
 // Our modules
-import {BasicZodiacModule} from "contracts/zodiac/BasicZodiacModule.sol";
+import {MerkleGovModule} from "contracts/zodiac/MerkleGovModule.sol";
 import {SignerManagerModule} from "contracts/zodiac/SignerManagerModule.sol";
 
 // WAVS interfaces
@@ -28,7 +28,7 @@ contract DeployZodiacSafes is Common {
 
     struct SafeDeployment {
         address safe;
-        address basicModule;
+        address merkleGovModule;
         address signerModule;
         address[] initialSigners;
         uint256 threshold;
@@ -98,8 +98,8 @@ contract DeployZodiacSafes is Common {
             )
         );
 
-        // Deploy Basic Zodiac Module
-        BasicZodiacModule basicModule = new BasicZodiacModule(deployer, safeProxy, safeProxy);
+        // Deploy Merkle Gov Module
+        MerkleGovModule merkleGovModule = new MerkleGovModule(deployer, safeProxy, safeProxy, serviceManager);
 
         // Deploy Signer Manager Module
         SignerManagerModule signerModule = new SignerManagerModule(deployer, safeProxy, safeProxy, serviceManager);
@@ -109,17 +109,18 @@ contract DeployZodiacSafes is Common {
         GnosisSafe safe = GnosisSafe(payable(safeProxy));
 
         // Prepare module enablement transactions
-        bytes memory enableBasicModuleData = abi.encodeWithSignature("enableModule(address)", address(basicModule));
+        bytes memory enableMerkleGovModuleData =
+            abi.encodeWithSignature("enableModule(address)", address(merkleGovModule));
         bytes memory enableSignerModuleData = abi.encodeWithSignature("enableModule(address)", address(signerModule));
 
         // Execute module enablement as the Safe (threshold is 1, deployer can execute)
-        bytes memory signature = generateSignature(deployer, safe, address(safe), enableBasicModuleData);
+        bytes memory signature = generateSignature(deployer, safe, address(safe), enableMerkleGovModuleData);
 
-        // Enable Basic Module
+        // Enable Merkle Gov Module
         bool success1 = safe.execTransaction(
             address(safe), // to
             0, // value
-            enableBasicModuleData, // data
+            enableMerkleGovModuleData, // data
             Enum.Operation.Call, // operation
             0, // safeTxGas
             0, // baseGas
@@ -146,7 +147,7 @@ contract DeployZodiacSafes is Common {
 
         deployment = SafeDeployment({
             safe: safeProxy,
-            basicModule: address(basicModule),
+            merkleGovModule: address(merkleGovModule),
             signerModule: address(signerModule),
             initialSigners: initialSigners,
             threshold: threshold,
@@ -155,7 +156,7 @@ contract DeployZodiacSafes is Common {
 
         // Log the deployment and enablement status
         if (deployment.modulesEnabled) {
-            emit ModulesEnabled(safeProxy, address(basicModule), address(signerModule));
+            emit ModulesEnabled(safeProxy, address(merkleGovModule), address(signerModule));
         }
 
         return deployment;
@@ -211,14 +212,14 @@ contract DeployZodiacSafes is Common {
 
         // Safe 1 data
         vm.serializeString(jsonKey, "safe1_address", Strings.toHexString(safe1.safe));
-        vm.serializeString(jsonKey, "safe1_basic_module", Strings.toHexString(safe1.basicModule));
+        vm.serializeString(jsonKey, "safe1_merkle_gov_module", Strings.toHexString(safe1.merkleGovModule));
         vm.serializeString(jsonKey, "safe1_signer_module", Strings.toHexString(safe1.signerModule));
         vm.serializeUint(jsonKey, "safe1_threshold", safe1.threshold);
         vm.serializeBool(jsonKey, "safe1_modules_enabled", safe1.modulesEnabled);
 
         // Safe 2 data
         vm.serializeString(jsonKey, "safe2_address", Strings.toHexString(safe2.safe));
-        vm.serializeString(jsonKey, "safe2_basic_module", Strings.toHexString(safe2.basicModule));
+        vm.serializeString(jsonKey, "safe2_merkle_gov_module", Strings.toHexString(safe2.merkleGovModule));
         vm.serializeString(jsonKey, "safe2_signer_module", Strings.toHexString(safe2.signerModule));
         vm.serializeUint(jsonKey, "safe2_threshold", safe2.threshold);
         vm.serializeBool(jsonKey, "safe2_modules_enabled", safe2.modulesEnabled);
@@ -237,12 +238,12 @@ contract DeployZodiacSafes is Common {
         console.log("");
         console.log("Safe 1:");
         console.log("  Address:", safe1.safe);
-        console.log("  Basic Module:", safe1.basicModule, safe1.modulesEnabled ? "(ENABLED)" : "(NOT ENABLED)");
+        console.log("  Merkle Gov Module:", safe1.merkleGovModule, safe1.modulesEnabled ? "(ENABLED)" : "(NOT ENABLED)");
         console.log("  Signer Module:", safe1.signerModule, safe1.modulesEnabled ? "(ENABLED)" : "(NOT ENABLED)");
         console.log("");
         console.log("Safe 2:");
         console.log("  Address:", safe2.safe);
-        console.log("  Basic Module:", safe2.basicModule, safe2.modulesEnabled ? "(ENABLED)" : "(NOT ENABLED)");
+        console.log("  Merkle Gov Module:", safe2.merkleGovModule, safe2.modulesEnabled ? "(ENABLED)" : "(NOT ENABLED)");
         console.log("  Signer Module:", safe2.signerModule, safe2.modulesEnabled ? "(ENABLED)" : "(NOT ENABLED)");
         console.log("");
         console.log("Next Steps:");
@@ -256,7 +257,7 @@ contract DeployZodiacSafes is Common {
     }
 
     // Events for logging
-    event ModulesEnabled(address indexed safe, address indexed basicModule, address indexed signerModule);
+    event ModulesEnabled(address indexed safe, address indexed merkleGovModule, address indexed signerModule);
 
     function _getWavsServiceManager() internal view returns (IWavsServiceManager) {
         // Read from deployment output or use environment-specific address

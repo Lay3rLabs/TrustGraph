@@ -6,7 +6,7 @@ This project includes Gnosis Safe integration with custom Zodiac modules for enh
 
 Zodiac is a modular framework for Gnosis Safe that allows extending Safe functionality through modules. Our implementation includes two core modules:
 
-1. **BasicZodiacModule** - Provides basic transaction execution capabilities
+1. **MerkleGovModule** - Provides merkle-based governance with proposal creation and voting
 2. **SignerManagerModule** - Manages Safe signers and threshold programmatically
 
 ## Architecture
@@ -23,26 +23,44 @@ Zodiac is a modular framework for Gnosis Safe that allows extending Safe functio
     ┌────┴────┐
     │         │
 ┌───▼───┐ ┌──▼──────┐
-│ Basic │ │ Signer  │
-│Module │ │ Manager │
-└───────┘ └─────────┘
+│Merkle │ │ Signer  │
+│  Gov  │ │ Manager │
+└───┬───┘ └─────────┘
+    │
+    └─── WAVS Integration
 ```
 
 ## Modules
 
-### BasicZodiacModule
+### MerkleGovModule
 
-A foundational module that enables programmatic transaction execution through the Safe.
+A sophisticated governance module that enables merkle-proof based voting and proposal execution through the Safe.
 
 **Key Features:**
-- Execute transactions through the Safe
-- Owner-controlled operations
-- Support for both call and delegatecall operations
+- Merkle-based voting power verification
+- Proposal creation with multiple actions
+- Support for Against, For, and Abstain votes
+- Integrates with WAVS for merkle root updates
+- Configurable governance parameters (voting delay, period, quorum)
+- Time-bound voting periods
+- Safe execution of successful proposals
 
 **Functions:**
-- `executeTransaction(address to, uint256 value, bytes data, Operation operation)` - Execute a transaction
-- `executeTransactionReturnData(...)` - Execute and return transaction data
-- `setUpModule(address avatar, address target)` - Reconfigure module targets
+- `propose(address[] targets, uint256[] values, bytes[] calldatas, Operation[] operations, string description)` - Create a new proposal
+- `castVote(uint256 proposalId, VoteType voteType, uint256 votingPower, address rewardToken, bytes32[] proof)` - Cast a vote with merkle proof
+- `execute(uint256 proposalId)` - Execute a successful proposal
+- `cancel(uint256 proposalId)` - Cancel a proposal (proposer or owner only)
+- `state(uint256 proposalId)` - Get current state of a proposal
+- `getActions(uint256 proposalId)` - View proposal actions
+- `hasVoted(uint256 proposalId, address account)` - Check if address has voted
+
+**Governance Parameters (Owner-controlled):**
+- `setQuorum(uint256 newQuorum)` - Update quorum requirement
+- `setVotingDelay(uint256 newDelay)` - Update voting delay
+- `setVotingPeriod(uint256 newPeriod)` - Update voting period
+
+**WAVS Integration:**
+- `handleSignedEnvelope(Envelope envelope, SignatureData signatureData)` - Update merkle root via WAVS
 
 ### SignerManagerModule
 
@@ -53,6 +71,7 @@ Manages Safe signers and threshold settings programmatically.
 - Swap signers
 - Change threshold requirements
 - Query current signers and threshold
+- WAVS integration for automated signer management
 
 **Functions:**
 - `addSigner(address signer, uint256 newThreshold)` - Add a new signer
@@ -74,7 +93,7 @@ The modules are automatically deployed and enabled as part of the main deploymen
 
 This will:
 1. Deploy two Gnosis Safes with single signer (deployer) and threshold of 1
-2. Deploy BasicZodiacModule and SignerManagerModule for each Safe
+2. Deploy MerkleGovModule and SignerManagerModule for each Safe
 3. **Automatically enable both modules on each Safe**
 4. Save deployment addresses to `.docker/zodiac_safes_deploy.json`
 
@@ -102,16 +121,51 @@ The deployment script automatically:
 
 ## Usage Examples
 
-### Execute Transaction via BasicModule
+### Create Proposal via MerkleGovModule
 
 ```solidity
-// After module is enabled on the Safe
-basicModule.executeTransaction(
-    recipient,    // to address
-    1 ether,      // value
-    "",           // data
-    Operation.Call // operation type
+// Create a proposal to transfer funds
+address[] memory targets = new address[](1);
+targets[0] = recipient;
+
+uint256[] memory values = new uint256[](1);
+values[0] = 1 ether;
+
+bytes[] memory calldatas = new bytes[](1);
+calldatas[0] = "";
+
+Operation[] memory operations = new Operation[](1);
+operations[0] = Operation.Call;
+
+uint256 proposalId = merkleGovModule.propose(
+    targets,
+    values,
+    calldatas,
+    operations,
+    "Transfer 1 ETH to recipient"
 );
+```
+
+### Cast Vote with Merkle Proof
+
+```solidity
+// Vote on a proposal with merkle proof
+bytes32[] memory proof = getMerkleProof(voter); // Get proof from off-chain
+
+merkleGovModule.castVote(
+    proposalId,
+    MerkleGovModule.VoteType.For,
+    1000e18,        // voting power
+    rewardToken,    // token address (part of merkle leaf)
+    proof           // merkle proof
+);
+```
+
+### Execute Successful Proposal
+
+```solidity
+// After voting period ends and proposal succeeded
+merkleGovModule.execute(proposalId);
 ```
 
 ### Add Signer via SignerManagerModule
@@ -134,18 +188,27 @@ signerModule.removeSigner(
 );
 ```
 
+## Governance Flow
+
+1. **Merkle Root Update**: WAVS service updates the merkle root containing voting power data
+2. **Proposal Creation**: Anyone can create a proposal with the current merkle root
+3. **Voting Period**: Users vote using merkle proofs to verify their voting power
+4. **Execution**: After voting ends, successful proposals can be executed
+
 ## Testing
 
 Run module tests:
 
 ```bash
-forge test --match-contract ZodiacModules -vv
+forge test --match-contract MerkleGovModule -vv
+forge test --match-contract SignerManagerModule -vv
 ```
 
 Test specific functionality:
 
 ```bash
-forge test --match-test test_BasicModule_Setup -vvv
+forge test --match-test test_MerkleGov_CreateProposal -vvv
+forge test --match-test test_MerkleGov_VoteWithProof -vvv
 forge test --match-test test_SignerModule_GetCurrentSigners -vvv
 ```
 
@@ -157,7 +220,11 @@ forge test --match-test test_SignerModule_GetCurrentSigners -vvv
 
 3. **Threshold Management:** When using SignerManagerModule to change signers or threshold, ensure you don't lock yourself out.
 
-4. **Transaction Validation:** BasicModule allows arbitrary transaction execution. Implement proper validation in production.
+4. **Merkle Root Updates:** MerkleGovModule relies on WAVS for merkle root updates. Ensure the WAVS service is properly configured and secured.
+
+5. **Proposal Validation:** Review proposal actions carefully before voting, as executed proposals perform actions directly through the Safe.
+
+6. **Voting Power:** Voting power is determined by the merkle tree data. Ensure the off-chain process generating merkle trees is secure and accurate.
 
 ## Deployment Artifacts
 
@@ -191,13 +258,27 @@ Safe rejects certain addresses as signers (e.g., 0x0, 0x1). Ensure you're using 
 
 Modules can only be initialized once. If you see this error, the module has already been set up.
 
+### Invalid Merkle Proof
+
+Ensure your merkle proof matches the current merkle root stored in the module and that the leaf data is correctly formatted.
+
 ## Integration with WAVS
 
-The Zodiac modules can be integrated with the WAVS (WebAssembly Verification Service) system to enable:
+The Zodiac modules are deeply integrated with the WAVS (WebAssembly Verification Service) system:
 
-- Automated governance actions based on attestations
-- Programmatic signer management based on on-chain events
-- Integration with EAS (Ethereum Attestation Service) for trust-based operations
+- **MerkleGovModule** receives merkle root updates via WAVS for voting power verification
+- **SignerManagerModule** can execute automated signer updates based on WAVS computations
+- Both modules implement `IWavsServiceHandler` for receiving validated data
+
+## Governance Parameters
+
+### MerkleGovModule Parameters
+
+- **Voting Delay**: 1 block (default) - Delay before voting starts
+- **Voting Period**: 50,400 blocks (~1 week at 12s blocks) - Duration of voting
+- **Quorum**: 4% (default) - Minimum participation required
+
+These can be adjusted by the module owner to suit your governance needs.
 
 ## Further Resources
 
@@ -205,3 +286,4 @@ The Zodiac modules can be integrated with the WAVS (WebAssembly Verification Ser
 - [Gnosis Safe Documentation](https://docs.safe.global)
 - [Safe SDK](https://github.com/safe-global/safe-sdk)
 - [EAS Integration Guide](./EAS_INTEGRATION.md)
+- [WAVS Documentation](./WAVS_INTEGRATION.md)

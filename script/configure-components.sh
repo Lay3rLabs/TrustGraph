@@ -41,7 +41,7 @@ DEFAULT_COMPONENTS_JSON='{
       "package_version": "0.1.0",
       "trigger_event": "WavsRewardsTrigger(uint64)",
       "trigger_json_path": "reward_contracts.reward_distributor",
-      "submit_json_path": "merkle_governance_contracts.merkle_vote"
+      "submit_json_path": "zodiac_safes.safe1.merkle_gov_module"
     },
     {
       "filename": "prediction_market_oracle.wasm",
