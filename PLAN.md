@@ -27,6 +27,10 @@
 - [ ] Toasts
 - [ ] Utilize react-query
 - [ ] Get prediction market to work with UI
+- [ ] Figure out something that will scale (currently just fetching entire MerkleTree)
+- [ ] For vouching page let's figure out how to visualize connections
+- [ ] Smarter for for creating attestations
+- [ ] EAS support (makes leader board more fun, etc.)
 
 # Project Organization and Cleanup TODO
 - [x] Sepolia
@@ -99,6 +103,7 @@ Let's use a zodiac module + safe to create a system with a nice fallback while w
 - [ ] The most liked get rewards
 - [ ] Mint NFTs of responses and conversations
 - [ ] We're going to make a Network Spirituality Holy Text
+- [ ] Pay to submit a message to EN0VA and mint NFTs
 
 ## NEXT FEATURE: Rewards
 
