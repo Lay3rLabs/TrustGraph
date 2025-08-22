@@ -3,6 +3,7 @@ pragma solidity ^0.8.22;
 
 import {ITypes} from "interfaces/ITypes.sol";
 
+// TODO we don't need two WavsTrigger files, I'm just trying to get things to build
 interface IWavsTrigger2 is ITypes {
     /**
      * @notice Struct to store trigger information

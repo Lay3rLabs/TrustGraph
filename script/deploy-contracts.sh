@@ -75,6 +75,15 @@ forge script script/DeployMerkleGov.s.sol:DeployScript \
     --private-key "${DEPLOYER_PK}" \
     --broadcast
 
+echo "🎲 Deploying Prediction Market contracts..."
+
+# Deploy Prediction Market contracts using Foundry script
+forge script script/DeployPredictionMarket.s.sol:DeployScript \
+    --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
+    --rpc-url "${RPC_URL}" \
+    --private-key "${DEPLOYER_PK}" \
+    --broadcast
+
 echo "🔐 Deploying Zodiac-enabled Safes with modules..."
 
 # Deploy Zodiac Safes using Foundry script
@@ -114,6 +123,13 @@ export REWARD_TOKEN_ADDR=$(jq -r '.reward_token' .docker/rewards_deploy.json 2>/
 export MERKLE_VOTE_ADDR=$(jq -r '.merkle_vote' .docker/merkle_gov_deploy.json 2>/dev/null || echo "")
 export MERKLE_GOV_ADDR=$(jq -r '.merkle_gov' .docker/merkle_gov_deploy.json 2>/dev/null || echo "")
 export MERKLE_GOV_FUNDED_AMOUNT=$(jq -r '.funded_amount_wei' .docker/merkle_gov_deploy.json 2>/dev/null || echo "0")
+
+# Extract deployed addresses from Prediction Market deployment
+export PREDICTION_ORACLE_CONTROLLER_ADDR=$(jq -r '.oracle_controller' .docker/prediction_market_deploy.json 2>/dev/null || echo "")
+export PREDICTION_FACTORY_ADDR=$(jq -r '.factory' .docker/prediction_market_deploy.json 2>/dev/null || echo "")
+export PREDICTION_COLLATERAL_TOKEN_ADDR=$(jq -r '.collateral_token' .docker/prediction_market_deploy.json 2>/dev/null || echo "")
+export PREDICTION_CONDITIONAL_TOKENS_ADDR=$(jq -r '.conditional_tokens' .docker/prediction_market_deploy.json 2>/dev/null || echo "")
+export PREDICTION_MARKET_MAKER_ADDR=$(jq -r '.market_maker' .docker/prediction_market_deploy.json 2>/dev/null || echo "")
 
 # Extract deployed addresses from Zodiac Safes deployment
 export SAFE1_ADDR=$(jq -r '.safe1_address' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
@@ -165,6 +181,13 @@ cat > .docker/deployment_summary.json << EOF
     "merkle_vote": "${MERKLE_VOTE_ADDR}",
     "merkle_gov": "${MERKLE_GOV_ADDR}",
     "funded_amount_wei": "${MERKLE_GOV_FUNDED_AMOUNT}"
+  },
+  "prediction_market_contracts": {
+    "oracle_controller": "${PREDICTION_ORACLE_CONTROLLER_ADDR}",
+    "factory": "${PREDICTION_FACTORY_ADDR}",
+    "collateral_token": "${PREDICTION_COLLATERAL_TOKEN_ADDR}",
+    "conditional_tokens": "${PREDICTION_CONDITIONAL_TOKENS_ADDR}",
+    "market_maker": "${PREDICTION_MARKET_MAKER_ADDR}"
   },
   "zodiac_safes": {
     "safe_singleton": "${SAFE_SINGLETON}",
@@ -223,6 +246,13 @@ echo "   MERKLE_VOTE_ADDR: ${MERKLE_VOTE_ADDR}"
 echo "   MERKLE_GOV_ADDR: ${MERKLE_GOV_ADDR}"
 echo "   MERKLE_GOV_FUNDED: ${MERKLE_GOV_FUNDED_AMOUNT} wei"
 echo ""
+echo "🎲 Prediction Market Contracts:"
+echo "   ORACLE_CONTROLLER_ADDR: ${PREDICTION_ORACLE_CONTROLLER_ADDR}"
+echo "   FACTORY_ADDR: ${PREDICTION_FACTORY_ADDR}"
+echo "   COLLATERAL_TOKEN_ADDR: ${PREDICTION_COLLATERAL_TOKEN_ADDR}"
+echo "   CONDITIONAL_TOKENS_ADDR: ${PREDICTION_CONDITIONAL_TOKENS_ADDR}"
+echo "   MARKET_MAKER_ADDR: ${PREDICTION_MARKET_MAKER_ADDR}"
+echo ""
 echo "🔐 Zodiac Safes:"
 echo "   SAFE_SINGLETON: ${SAFE_SINGLETON}"
 echo "   SAFE_FACTORY: ${SAFE_FACTORY}"
@@ -240,6 +270,7 @@ echo "📄 EAS deployment logs saved to .docker/eas_deploy.json"
 echo "📄 Governance deployment logs saved to .docker/governance_deploy.json"
 echo "📄 Rewards deployment details saved to .docker/rewards_deploy.json"
 echo "📄 Merkle Governance deployment details saved to .docker/merkle_gov_deploy.json"
+echo "📄 Prediction Market deployment details saved to .docker/prediction_market_deploy.json"
 echo "📄 Zodiac Safes deployment details saved to .docker/zodiac_safes_deploy.json"
 
 # Update environment variables for other scripts
