@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useAccount, useBalance } from "wagmi";
+import { useAccount, useBalance, usePublicClient } from "wagmi";
 import { useReadContract, useWriteContract } from "wagmi";
 import {
   merkleGovModuleAbi,
@@ -78,7 +78,22 @@ interface VotingPowerEntry {
 
 export function useGovernance() {
   const { address, isConnected } = useAccount();
-  const { writeContract, isPending: isWriting } = useWriteContract();
+  const publicClient = usePublicClient();
+  const { 
+    writeContract,
+    isPending: isWriting,
+    error: writeError,
+    data: writeHash
+  } = useWriteContract({
+    mutation: {
+      onSuccess: (hash) => {
+        console.log(`✅ Proposal transaction submitted: ${hash}`);
+      },
+      onError: (error) => {
+        console.error("Proposal transaction failed:", error);
+      },
+    },
+  });
 
   // Local state
   const [isLoading, setIsLoading] = useState(false);
@@ -234,26 +249,103 @@ export function useGovernance() {
     { core: ProposalCore; actions: ProposalAction[] }[]
   > => {
     try {
+      if (!proposalCount || proposalCount === 0) {
+        console.log("No proposals to fetch");
+        return [];
+      }
+
       console.log(`Getting all ${proposalCount} proposals`);
-      // This is a simplified implementation. In production, you'd use a subgraph
       const proposals: { core: ProposalCore; actions: ProposalAction[] }[] = [];
 
-      // Return empty for now since we can't easily do multiple contract calls
-      // In a real implementation, you'd use wagmi's multicall or a subgraph
-      console.log(
-        "Proposal listing not yet implemented - use subgraph or multicall for production",
-      );
+      if (!publicClient) {
+        console.error("Public client not available");
+        return [];
+      }
+
+      // Query each proposal individually
+      for (let i = 1; i <= proposalCount; i++) {
+        try {
+          // Read proposal core data
+          const proposalData = await publicClient.readContract({
+            address: merkleGovModuleAddress,
+            abi: merkleGovModuleAbi,
+            functionName: "proposals",
+            args: [BigInt(i)],
+          });
+
+          // Read proposal actions
+          const actions = await publicClient.readContract({
+            address: merkleGovModuleAddress,
+            abi: merkleGovModuleAbi,
+            functionName: "getActions",
+            args: [BigInt(i)],
+          });
+
+          // Get proposal state
+          const proposalState = await publicClient.readContract({
+            address: merkleGovModuleAddress,
+            abi: merkleGovModuleAbi,
+            functionName: "state",
+            args: [BigInt(i)],
+          });
+
+          const [
+            id,
+            proposer,
+            startBlock,
+            endBlock,
+            forVotes,
+            againstVotes,
+            abstainVotes,
+            executed,
+            cancelled,
+            merkleRoot
+          ] = proposalData as [bigint, string, bigint, bigint, bigint, bigint, bigint, boolean, boolean, string];
+
+          const core: ProposalCore = {
+            id: id,
+            proposer: proposer,
+            startBlock: startBlock,
+            endBlock: endBlock,
+            forVotes: forVotes,
+            againstVotes: againstVotes,
+            abstainVotes: abstainVotes,
+            executed: executed,
+            cancelled: cancelled,
+            merkleRoot: merkleRoot,
+            description: `Proposal ${i}`, // We don't store description in contract
+            state: Number(proposalState),
+          };
+
+          const proposalActions: ProposalAction[] = (actions as any[]).map((action: any) => ({
+            target: action.target,
+            value: action.value.toString(),
+            data: action.data,
+            operation: Number(action.operation),
+            description: `Action for ${action.target}`,
+          }));
+
+          proposals.push({ core, actions: proposalActions });
+        } catch (err) {
+          console.error(`Error fetching proposal ${i}:`, err);
+        }
+      }
+
+      console.log(`Fetched ${proposals.length} proposals`);
       return proposals;
     } catch (err) {
       console.error("Error getting all proposals:", err);
       return [];
     }
-  }, [proposalCount]);
+  }, [proposalCount, publicClient]);
 
   // Create proposal using MerkleGovModule
   const createProposal = useCallback(
-    async (actions: ProposalAction[], description: string) => {
+    async (actions: ProposalAction[], description: string): Promise<string | null> => {
+      console.log("createProposal called with:", { actions, description });
+
       if (!isConnected || !address) {
+        console.log("Wallet not connected");
         setError("Wallet not connected");
         return null;
       }
@@ -263,20 +355,28 @@ export function useGovernance() {
         currentMerkleRoot ===
           "0x0000000000000000000000000000000000000000000000000000000000000000"
       ) {
+        console.log("No merkle root set", { currentMerkleRoot });
         setError("No merkle root set. Governance not initialized.");
         return null;
       }
 
+      if (!publicClient) {
+        setError("Public client not available");
+        return null;
+      }
+
       try {
+        console.log("Starting proposal creation...");
         setError(null);
+        setIsLoading(true);
 
         // Convert actions to the format expected by MerkleGovModule
         const targets = actions.map((action) => action.target as `0x${string}`);
         const values = actions.map((action) => BigInt(action.value || "0"));
         const calldatas = actions.map((action) => action.data as `0x${string}`);
-        const operations = actions.map((action) => action.operation || 0); // Default to Call operation
+        const operations = actions.map((action) => action.operation || 0);
 
-        console.log("Creating proposal with:", {
+        console.log("Proposal parameters:", {
           targets,
           values,
           calldatas,
@@ -284,24 +384,78 @@ export function useGovernance() {
           description,
         });
 
-        const hash = await writeContract({
+        // Get current nonce
+        const nonce = await publicClient.getTransactionCount({
+          address: address,
+          blockTag: "pending",
+        });
+
+        // Estimate gas for the transaction
+        const gasEstimate = await publicClient.estimateContractGas({
           address: merkleGovModuleAddress,
           abi: merkleGovModuleAbi,
           functionName: "propose",
           args: [targets, values, calldatas, operations, description],
+          account: address,
         });
 
-        console.log("Proposal created with hash:", hash);
-        return hash;
+        console.log("Gas estimate:", gasEstimate);
+
+        // Get gas price
+        const gasPrice = await publicClient.getGasPrice();
+
+        console.log("Calling writeContract...");
+        
+        // Call writeContract and wait for it to return a hash
+        writeContract({
+          address: merkleGovModuleAddress,
+          abi: merkleGovModuleAbi,
+          functionName: "propose",
+          args: [targets, values, calldatas, operations, description],
+          gas: (gasEstimate * BigInt(120)) / BigInt(100), // Add 20% buffer
+          gasPrice: gasPrice,
+          nonce,
+          type: "legacy",
+        });
+
+        // Return a promise that resolves when the transaction hash is available
+        return new Promise((resolve, reject) => {
+          // Set up a listener for when writeHash changes
+          const checkForHash = () => {
+            if (writeHash) {
+              console.log("Transaction hash received:", writeHash);
+              resolve(writeHash);
+              return;
+            }
+            if (writeError) {
+              console.error("Write error:", writeError);
+              reject(writeError);
+              return;
+            }
+            // Check again in 100ms
+            setTimeout(checkForHash, 100);
+          };
+          
+          // Start checking
+          setTimeout(checkForHash, 100);
+          
+          // Timeout after 30 seconds
+          setTimeout(() => {
+            reject(new Error("Transaction timeout - no response after 30 seconds"));
+          }, 30000);
+        });
+
       } catch (err: any) {
         console.error("Error creating proposal:", err);
         setError(
           `Failed to create proposal: ${err.message || err.shortMessage || "Unknown error"}`,
         );
         return null;
+      } finally {
+        setIsLoading(false);
       }
     },
-    [isConnected, address, currentMerkleRoot, writeContract],
+    [isConnected, address, currentMerkleRoot, publicClient, writeContract, writeHash, writeError],
   );
 
   // Cast vote with merkle proof

@@ -107,6 +107,7 @@ export function CreateProposalForm({
 
     try {
       console.log("Submitting proposal with:", { actions, description });
+      
       const hash = await onCreateProposal(actions, description);
       console.log("Received hash from createProposal:", hash);
       
