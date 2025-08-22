@@ -7,7 +7,7 @@
 - [ ] WAVS-NFT contracts (just contracts)
 - [ ] Wavs Service Manager if we want to go crazy
 
-# Project organization
+# Project organization (contracts)
 
 Let's reorganize our src/contracts folder as we've added new contracts.
 
@@ -18,15 +18,26 @@ Let's make a new `eas` folder and move in the following contracts:
 - OffchainAttestationVerifier.sol
 - SchemaRegistrar.sol
 
+Let's make a new `rewards` folder and move in the following contracts:
+- RewardDistributor.sol
+
+Let's make a new `governance` folder and move in the following contracts:
+- Governor.sol
+- MerkleGov.sol
+- MerkleVote.sol
+- VotingPower.sol
+
 Let's make a new `tokens` folder and move in the following contracts:
 - ERC20.sol
 - MockUSDC.sol
 
 Let's make a `misc` folder and move in the following contracts:
 - Daico.sol
+- Trigger.sol
 
 # Next steps
-- [ ] Deploy Prediction market
+- [x] Deploy Prediction market
+- [ ] Get prediction market to actually work
 - [ ] Fix up Zodiac modules
 - [ ] Add ollama docker container?
 - [ ] Clean up wavs-llm package
