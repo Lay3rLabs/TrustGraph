@@ -1,32 +1,16 @@
 # The Plan
 
-## FSV (get a basic thing working)
-Fix eas-attest component and Attester.sol contract:
-- [x] Response should be an AttestationRequest
-- [x] Trigger should be AttestationRequested
-- [x] Script to create a new schema
-- [x] Clean up trigger script
-- [x] Figure out how to query attestations (with indexer)
-- [x] Remove log resolver
-- [x] Make sure attestations are being indexed
-- [x] Add Governor contract example with custom votes extension?
-- [x] Update VotingPower.sol to be updatable via the AVS.
-- [x] Script to query voting power
-- [x] What triggers the EAS compute component: IndexerResolver events
-- [x] Make indexer resolver trigger compute
-- [x] Fix up deployment so two or more services are deployed (eas-attest and eas-compute)
-- [x] Fix up schema id being 0x00000 in eas-compute
-- [x] Finish rewards deployment (deploy script for contracts)
-- [x] Deploy rewards service
-- [x] Fix ERROR Engine(ExecResult("Failed to get reward token address"))
-- [x] Add EN0VA frontend
-- [x] Set operation to Voting power
-- [x] Realistic vouching schema
-- [x] Vibe code working attestation UI
-- [x] Implement page rank for rewards
-- [x] Make a points page.
-- [x] Add operations to Attester.sol (revoke, multi-attest, etc.)
-- [x] attest method on Attester.sol doesn't really make sense as users should attest to EAS directly.
+# Epochs
+- [ ] Prediction market -> working hyperstition market
+- [ ] Add LLM package / component (attester example?)
+- [ ] WAVS zodiac modules to replace MerkleGov and MerkleVote
+- [ ] WAVS-NFT contracts (just contracts)
+- [ ] Wavs Service Manager if we want to go crazy
+
+# Project organization
+- [ ] Organize project better (put contracts in folders)
+
+# Misc improvements
 - [ ] Better computation of attestations (actually use attestation data?)
 - [ ] Revoking an attestation should lower voting power
 - [ ] Resolver that only let's people who have voting power attest.
@@ -37,19 +21,8 @@ Fix eas-attest component and Attester.sol contract:
 
 # Things to add
 - [ ] Prediction market
-- [ ] WAVS-NFT contracts (just contracts)
-- [ ] Wavs Service Manager if we want to go crazy
 
-# MVP Merkle Gov:
-- [x] New voting power contract to consume merkle tree
-- [x] Extend create attestations script to also have alice vouch for my wallets
-- [x] Tests for new voting power contract to consume merkle tree (make sure it actually works in theory)
-- [x] Deploy scripts for MerkleVote and Merkle Gov contracts
-- [x] Wire up rewards component to MerkleVote contract
-- [x] Fix frontend rewards claiming
-- [-] Vibe code governance UI
-
-# Improved Version
+### Zodiac Modules
 Let's use a zodiac module + safe to create a system with a nice fallback while we're experimenting with novel governance mechanisms.
 
 1. Basic Setup:
@@ -68,7 +41,7 @@ Let's use a zodiac module + safe to create a system with a nice fallback while w
 3. Refinement
 - [ ] Implement and document the fallback mechanism for governance (this should be fairly straightforward with Zodiac hopefully)
 
-MVP Symbient
+### MVP Symbient
 - [ ] Add LLM Module
 - [ ] People make an attestation (with payment, some funds go to operators)
 - [ ] Deterministic Agent evaluates suggestion ()
@@ -78,10 +51,6 @@ MVP Symbient
 - [ ] We're going to make a Network Spirituality Holy Text
 
 
-Project organization (low priority):
-- [ ] eas-compute -> eas-compute-voting-power
-- [ ] Rename to Voting Power to Membrane? Should a membrane be a resolver?
-- [ ] Organize project better (put contracts in folders)
 
 ## NEXT FEATURE: Rewards
 
@@ -95,21 +64,15 @@ ATTESTATION -> REWARDS CALCULATION SERVICE -> RewardsDistributor.sol
 Can we make these reputation based?
 
 ## Future Service Improvements
-- [] Add llm component.
-- [] Break out Indexer contract, could be modified to be multichain? EAS indexer component (indexes certain attestations without a resolver?)
-- [] Add eas-indexer sidecar to docker compose?
-- [] JS example using EAS SDK
-- [] EAS Verify component? An EAS flow that verifies attestations
-- [] Add rewards and eas-compute-rewards component
-- [ ] Add safe module
-- [] Vesting
-- [] More resolvers
-- [] UI for demo
-- [] Docs and writeup
-- [] Symbient exploration
-- [] Futarchy
-- [] review and fixup tests
-- [] ERC20 bridging
+- [ ] Break out Indexer contract, could be modified to be multichain? EAS indexer component (indexes certain attestations without a resolver?)
+- [ ] Add eas-indexer sidecar to docker compose?
+- [ ] JS example using EAS SDK?
+- [ ] Performance based Vesting
+- [ ] More EAS resolvers
+- [ ] UI for demo
+- [ ] Docs and writeup
+- [ ] review and fixup tests
+- [ ] bridge integration
 
 # Idea space
 ### Attestation Components
