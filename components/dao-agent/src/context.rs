@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 use std::env;
 use std::str::FromStr;
 use wavs_llm::types::{Config, Contract, LlmOptions, Message};
-use wavs_wasi_chain::ethereum::new_eth_provider;
-use wavs_wasi_chain::http::{fetch_json, http_request_get};
+use wavs_wasi_utils::evm::new_evm_provider;
+use wavs_wasi_utils::http::{fetch_json, http_request_get};
 use wstd::{http::HeaderValue, runtime::block_on};
 
 // ERC20 interface definition using alloy-sol-types
@@ -144,7 +144,7 @@ impl DaoContext {
     pub async fn query_eth_balance(&self) -> Result<U256, String> {
         let chain_config = get_eth_chain_config("local").unwrap();
         let provider: RootProvider<Ethereum> =
-            new_eth_provider::<Ethereum>(chain_config.http_endpoint.unwrap());
+            new_evm_provider::<Ethereum>(chain_config.http_endpoint.unwrap());
 
         let address = Address::from_str(&self.account_address)
             .map_err(|_| format!("Invalid address format: {}", self.account_address))?;
@@ -159,7 +159,7 @@ impl DaoContext {
     pub async fn query_token_balance(&self, token_address: &str) -> Result<TokenBalance, String> {
         let chain_config = get_eth_chain_config("local").unwrap();
         let provider: RootProvider<Ethereum> =
-            new_eth_provider::<Ethereum>(chain_config.http_endpoint.unwrap());
+            new_evm_provider::<Ethereum>(chain_config.http_endpoint.unwrap());
         // Parse addresses
         let account = Address::from_str(&self.account_address)
             .map_err(|_| format!("Invalid account address format: {}", self.account_address))?;
@@ -176,7 +176,7 @@ impl DaoContext {
         };
 
         let balance_result = provider
-            .call(&balance_tx)
+            .call(balance_tx)
             .await
             .map_err(|e| format!("Failed to query token balance: {}", e))?;
         let balance = U256::from_be_slice(&balance_result);
@@ -190,7 +190,7 @@ impl DaoContext {
         };
 
         let decimals_result = provider
-            .call(&decimals_tx)
+            .call(decimals_tx)
             .await
             .map_err(|e| format!("Failed to query token decimals: {}", e))?;
 
@@ -214,7 +214,7 @@ impl DaoContext {
         };
 
         let symbol_result = provider
-            .call(&symbol_tx)
+            .call(symbol_tx)
             .await
             .map_err(|e| format!("Failed to query token symbol: {}", e))?;
 
@@ -333,20 +333,20 @@ impl Default for DaoContext {
             You have several tools available:
             - Use the send_eth tool to send ETH to addresses
             - Use the contract_* tools to interact with smart contracts (including ERC20 tokens like USDC)
-            
+
             TOKEN DECIMALS - CRITICAL INSTRUCTIONS:
             When a user requests to transfer tokens, you MUST convert the human-readable amount to the correct base units:
-            
-            - ETH has 18 decimals: 
+
+            - ETH has 18 decimals:
               * 1 ETH = 1000000000000000000 wei (10^18)
               * 0.5 ETH = 500000000000000000 wei (5 * 10^17)
               * 0.1 ETH = 100000000000000000 wei (10^17)
-              
+
             - USDC has 6 decimals:
               * 1 USDC = 1000000 base units (10^6)
               * 100 USDC = 100000000 base units (10^8)
               * 0.5 USDC = 500000 base units (5 * 10^5)
-              
+
             Always multiply the human-readable amount by 10^(decimals) to get the correct token amount.
             For example:
             - If a user asks to "send 1 USDC," you must use "1000000" (one million) as the value
@@ -355,10 +355,10 @@ impl Default for DaoContext {
             EXAMPLES:
             User: "Send 1 USDC to 0xDf3679681B87fAE75CE185e4f01d98b64Ddb64a3"
             Action: Use contract_usdc_transfer with value="1000000" (NOT "1")
-            
+
             User: "Send 0.1 ETH to 0xDf3679681B87fAE75CE185e4f01d98b64Ddb64a3"
             Action: Use send_eth with value="100000000000000000"
-            
+
             Security Guidelines:
             - Handle decimals correctly for the user's request
             - Never approve transactions that would spend more than the current balance

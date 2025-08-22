@@ -15,6 +15,7 @@
 - [ ] Fix up Zodiac modules
 - [ ] Add ollama docker container?
 - [ ] Clean up wavs-llm package
+- [ ] Automatically make attestations when participating in prediction market
 
 # Misc improvements
 - [ ] Better computation of attestations (actually use attestation data?)

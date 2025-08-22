@@ -28,7 +28,7 @@ impl Guest for Component {
         let prompt = match trigger_action.data {
             TriggerData::EvmContractEvent(TriggerDataEvmContractEvent { log, .. }) => {
                 // Decode the ABI-encoded string first
-                let decoded = alloy_sol_types::sol_data::String::abi_decode(&log.data, false)
+                let decoded = alloy_sol_types::sol_data::String::abi_decode(&log.data)
                     .map_err(|e| format!("Failed to decode ABI string: {}", e))?;
 
                 Ok(decoded.to_string())

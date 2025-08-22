@@ -1504,6 +1504,7 @@ dependencies = [
  "serde_json",
  "tiny-keccak",
  "wavs-llm",
+ "wavs-wasi-utils",
  "wit-bindgen-rt 0.42.1",
  "wstd",
 ]
