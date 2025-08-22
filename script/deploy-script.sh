@@ -201,14 +201,13 @@ if [ "$(sh ./script/get-deploy-status.sh)" = "TESTNET" ]; then
     done
 fi
 
-export WAVS_SERVICE_MANAGER_ADDRESS=$(jq -r .addresses.WavsServiceManager ./.nodes/avs_deploy.json)
+export WAVS_SERVICE_MANAGER_ADDRESS=$(jq -r '.addresses.WavsServiceManager' ./.nodes/avs_deploy.json)
 
 source infra/wavs-1/.env
 export OPERATOR_KEY=`cast wallet private-key --mnemonic "$WAVS_SUBMISSION_MNEMONIC" --mnemonic-index 0`
 export WAVS_SIGNING_KEY=`cast wallet address --mnemonic-path "$WAVS_SUBMISSION_MNEMONIC" --mnemonic-index 1`
 export WAVS_DELEGATE_AMOUNT=`cast --to-unit 0.001ether`
 OPERATOR_KEY=${OPERATOR_KEY} WAVS_SIGNING_KEY=${WAVS_SIGNING_KEY} WAVS_DELEGATE_AMOUNT=${WAVS_DELEGATE_AMOUNT} make wavs-middleware COMMAND="register"
-# COMMAND="register ${OPERATOR_PRIVATE_KEY} ${AVS_SIGNING_ADDRESS} "
 
 # Verify registration
 COMMAND="list_operators" PAST_BLOCKS=500 make wavs-middleware

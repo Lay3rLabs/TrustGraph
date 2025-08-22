@@ -30,6 +30,7 @@ build: _build_forge wasi-build
 ## wasi-build: building WAVS wasi components | WASI_BUILD_DIR
 wasi-build:
 	@echo "🔨 Building WASI components..."
+	@warg reset
 	@./script/build_components.sh $(WASI_BUILD_DIR)
 	@echo "✅ WASI build complete"
 
