@@ -916,7 +916,7 @@ export const attestationGovernorAbi = [
 ] as const
 
 export const attestationGovernorAddress =
-  '0x88526a39A9B6b1ECecB3F421340D2Ad1410D0251' as const
+  '0xcb9D39cd0cD34D5848B0fDfED18F737133d21319' as const
 
 export const attestationGovernorConfig = {
   address: attestationGovernorAddress,
@@ -1067,7 +1067,7 @@ export const attesterAbi = [
 ] as const
 
 export const attesterAddress =
-  '0x4161883923F2457A36f4D815fcb5F617f867dA72' as const
+  '0x606e6FbF31AF9bA8Cf4CD203159f5EaA2eE33D1F' as const
 
 export const attesterConfig = {
   address: attesterAddress,
@@ -1665,7 +1665,7 @@ export const easAbi = [
   { type: 'error', inputs: [], name: 'WrongSchema' },
 ] as const
 
-export const easAddress = '0x2F49adaB4d48D865eA0E78d5ca7cD9Adcc13c545' as const
+export const easAddress = '0x4F9eCd4471fA836Bd8a19B4B42450b70d12fbE83' as const
 
 export const easConfig = { address: easAddress, abi: easAbi } as const
 
@@ -1751,7 +1751,7 @@ export const easAttestTriggerAbi = [
 ] as const
 
 export const easAttestTriggerAddress =
-  '0x3b58A098215DfbB019920b8ea032f907a153f2aF' as const
+  '0xFA5b64f163c3D538a565d3e99604C5300b8CFB6D' as const
 
 export const easAttestTriggerConfig = {
   address: easAttestTriggerAddress,
@@ -2674,7 +2674,7 @@ export const indexerAbi = [
 ] as const
 
 export const indexerAddress =
-  '0xbC9A451a3fd48ccB7aE8D67583Ef7DB77b9e74d0' as const
+  '0xA925aF24159e4a9361B577a43aD76e4b478854BA' as const
 
 export const indexerConfig = {
   address: indexerAddress,
@@ -2860,7 +2860,7 @@ export const indexerResolverAbi = [
 ] as const
 
 export const indexerResolverAddress =
-  '0xB971f1aD5B50B259D13C0FE8c8e2fC04175B6434' as const
+  '0x3DA1242362539185Bc14398995B097E9F729CD8a' as const
 
 export const indexerResolverConfig = {
   address: indexerResolverAddress,
@@ -3355,7 +3355,7 @@ export const merkleGovAbi = [
 ] as const
 
 export const merkleGovAddress =
-  '0xBAE4DA60517e83ebC4F6682CDB7E745f7b9A5132' as const
+  '0x375CE9578D36855B0049664c8911990Cc9aF1fC4' as const
 
 export const merkleGovConfig = {
   address: merkleGovAddress,
@@ -3776,7 +3776,7 @@ export const merkleVoteAbi = [
 ] as const
 
 export const merkleVoteAddress =
-  '0xFaE67Ab740Ce02Ac9EEA4b255e04998CBf17B52C' as const
+  '0x718dd2c5f5D711A5B9e9d531EC782DA91355F0bf' as const
 
 export const merkleVoteConfig = {
   address: merkleVoteAddress,
@@ -4217,7 +4217,7 @@ export const rewardDistributorAbi = [
 ] as const
 
 export const rewardDistributorAddress =
-  '0x8956092EAd86E5aec31960a27e126BE029BA43e0' as const
+  '0x98Fe79B6D7BD2EFDeE41F0B61bfa26bF44753275' as const
 
 export const rewardDistributorConfig = {
   address: rewardDistributorAddress,
@@ -4261,7 +4261,7 @@ export const schemaRegistrarAbi = [
 ] as const
 
 export const schemaRegistrarAddress =
-  '0xC75e7c8858537c99E58EA18909184752d85a1635' as const
+  '0xa52dEF455ff2667c3a196aa690639479F61d0ac4' as const
 
 export const schemaRegistrarConfig = {
   address: schemaRegistrarAddress,
@@ -4353,7 +4353,7 @@ export const schemaRegistryAbi = [
 ] as const
 
 export const schemaRegistryAddress =
-  '0xd0bBaD879C3E00C0d2eE4F5bC55451491491A2D7' as const
+  '0x5340e5798670991110dc6B7DcEAe0237ADDE1Bd2' as const
 
 export const schemaRegistryConfig = {
   address: schemaRegistryAddress,
@@ -4804,7 +4804,7 @@ export const votingPowerAbi = [
 ] as const
 
 export const votingPowerAddress =
-  '0x4893592de610cD99701592E14AE88C25B50A9f94' as const
+  '0x86E5462a7e3B3B0082558D88052E80D6930be5B3' as const
 
 export const votingPowerConfig = {
   address: votingPowerAddress,
