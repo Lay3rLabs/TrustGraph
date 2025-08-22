@@ -1,5 +1,5 @@
 import { http, createConfig } from "wagmi";
-import { mainnet, sepolia, holesky } from "wagmi/chains";
+import { mainnet, sepolia } from "wagmi/chains";
 import { injected, metaMask } from "wagmi/connectors";
 
 // Local chain configuration matching the deployment
@@ -22,7 +22,7 @@ const localChain = {
 } as const;
 
 export const config = createConfig({
-  chains: [localChain, mainnet, sepolia, holesky],
+  chains: [localChain, mainnet],
   connectors: [injected(), metaMask()],
   transports: {
     [localChain.id]: http("http://localhost:8545", {
@@ -30,7 +30,6 @@ export const config = createConfig({
       timeout: 60000,
     }),
     [mainnet.id]: http(),
-    [sepolia.id]: http(),
   },
 });
 
