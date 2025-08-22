@@ -28,7 +28,10 @@ ATTESTER_ADDRESS=""
 VOUCHING_SCHEMA_ID=""
 
 # Test address that will receive vouches from Alice and Bob
-TEST_ADDRESS="0xDf3679681B87fAE75CE185e4f01d98b64Ddb64a3"
+if [[ -z "${TEST_ADDRESS:-}" ]]; then
+    echo -e "${RED}Error: TEST_ADDRESS is not set. Please set it to a valid address.${NC}"
+    exit 1
+fi
 
 # Function to get private key by account name
 get_private_key() {
