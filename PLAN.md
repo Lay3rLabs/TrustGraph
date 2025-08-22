@@ -8,7 +8,6 @@
 - [ ] Wavs Service Manager if we want to go crazy
 
 # Project organization
-- [ ] Organize project better (put contracts in folders)
 
 # Next steps
 - [ ] Deploy Prediction market
@@ -16,6 +15,14 @@
 - [ ] Add ollama docker container?
 - [ ] Clean up wavs-llm package
 - [ ] Automatically make attestations when participating in prediction market
+
+# Project Organization and Cleanup TODO
+- [ ] Organize project better (put contracts in folders)
+- [ ] Sepolia
+- [ ] Use better upstream WAVS patterns
+- [ ] Add config values to components-config.json (currently all components share the same config lol)
+- [ ] Investigate why dao-agent doesn't compile running make build
+- [ ] Unnessary envrionement variables in Demo (many redundent ones)
 
 # Misc improvements
 - [ ] Better computation of attestations (actually use attestation data?)

@@ -100,9 +100,18 @@ echo "✅ Chain Name: ${CHAIN_NAME}"
 
 REWARDS_TOKEN_ADDRESS=$(jq -r '.reward_contracts.reward_token' .docker/deployment_summary.json)
 
+# === Prediction Market Oracle ===
+ORACLE_CONTROLLER_ADDRESS=`jq -r '.prediction_market_contracts.oracle_controller' "./.docker/deployment_summary.json"`
+MARKET_MAKER_ADDRESS=`jq -r '.prediction_market_contracts.market_maker' "./.docker/deployment_summary.json"`
+CONDITIONAL_TOKENS_ADDRESS=`jq -r '.prediction_market_contracts.conditional_tokens' "./.docker/deployment_summary.json"`
+
+echo "✅ Oracle Controller Address: ${ORACLE_CONTROLLER_ADDRESS}"
+echo "✅ Market Maker Address: ${MARKET_MAKER_ADDRESS}"
+echo "✅ Conditional Tokens Address: ${CONDITIONAL_TOKENS_ADDRESS}"
+
 # Set CONFIG_VALUES with EAS configuration, rewards token address, and Trust Aware PageRank settings
-export CONFIG_VALUES="eas_address=${EAS_ADDRESS},indexer_address=${INDEXER_ADDRESS},chain_name=${CHAIN_NAME},reward_token=${REWARDS_TOKEN_ADDRESS},reward_schema_uid=${VOUCHING_SCHEMA_ID},pagerank_reward_pool=1000000000000000000000,pagerank_trusted_seeds=0x70997970C51812dc3A010C7d01b50e0d17dc79C8,pagerank_trust_multiplier=10.5,pagerank_trust_boost=0.99"
-echo "📋 EAS Configuration with Trust Aware PageRank: ${CONFIG_VALUES}"
+export CONFIG_VALUES="eas_address=${EAS_ADDRESS},indexer_address=${INDEXER_ADDRESS},chain_name=${CHAIN_NAME},reward_token=${REWARDS_TOKEN_ADDRESS},reward_schema_uid=${VOUCHING_SCHEMA_ID},pagerank_reward_pool=1000000000000000000000,pagerank_trusted_seeds=0x70997970C51812dc3A010C7d01b50e0d17dc79C8,pagerank_trust_multiplier=10.5,pagerank_trust_boost=0.99,market_maker=${MARKET_MAKER_ADDRESS},conditional_tokens=${CONDITIONAL_TOKENS_ADDRESS}"
+echo "📋 Config Values: ${CONFIG_VALUES}"
 
 # Upload components to WASI registry
 echo "Uploading components to WASI registry..."

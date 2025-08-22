@@ -42,6 +42,14 @@ DEFAULT_COMPONENTS_JSON='{
       "trigger_event": "WavsRewardsTrigger(uint64)",
       "trigger_json_path": "reward_contracts.reward_distributor",
       "submit_json_path": "merkle_governance_contracts.merkle_vote"
+    },
+    {
+      "filename": "prediction_market_oracle.wasm",
+      "package_name": "prediction_market_oracle",
+      "package_version": "0.1.0",
+      "trigger_event": "NewTrigger(bytes)",
+      "trigger_json_path": "prediction_market_contracts.oracle_controller",
+      "submit_json_path": "prediction_market_contracts.oracle_controller"
     }
   ]
 }'
