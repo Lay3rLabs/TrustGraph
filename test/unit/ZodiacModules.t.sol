@@ -16,7 +16,6 @@ import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
 import {IWavsServiceHandler} from "@wavs/interfaces/IWavsServiceHandler.sol";
 
 // Our modules
-import {BasicZodiacModule} from "../../src/contracts/zodiac/BasicZodiacModule.sol";
 import {SignerManagerModule} from "../../src/contracts/zodiac/SignerManagerModule.sol";
 
 contract ZodiacModulesTest is Test {
@@ -24,7 +23,6 @@ contract ZodiacModulesTest is Test {
     GnosisSafe public safeSingleton;
     GnosisSafeProxyFactory public safeFactory;
     GnosisSafe public safe;
-    BasicZodiacModule public basicModule;
     SignerManagerModule public signerModule;
     IWavsServiceManager public mockServiceManager;
 
@@ -79,39 +77,13 @@ contract ZodiacModulesTest is Test {
         mockServiceManager = IWavsServiceManager(address(new MockWavsServiceManager()));
 
         // Deploy modules
-        basicModule = new BasicZodiacModule(owner, address(safe), address(safe));
         signerModule = new SignerManagerModule(owner, address(safe), address(safe), mockServiceManager);
-    }
-
-    function test_BasicModule_Setup() public {
-        assertEq(basicModule.avatar(), address(safe));
-        assertEq(basicModule.target(), address(safe));
-        assertEq(basicModule.owner(), owner);
     }
 
     function test_SignerModule_Setup() public {
         assertEq(signerModule.avatar(), address(safe));
         assertEq(signerModule.target(), address(safe));
         assertEq(signerModule.owner(), owner);
-    }
-
-    function test_BasicModule_Configuration() public {
-        address newAvatar = address(0x999);
-        address newTarget = address(0x888);
-
-        vm.prank(owner);
-        vm.expectEmit(true, true, false, true);
-        emit ModuleConfigured(newAvatar, newTarget);
-        basicModule.setUpModule(newAvatar, newTarget);
-
-        assertEq(basicModule.avatar(), newAvatar);
-        assertEq(basicModule.target(), newTarget);
-    }
-
-    function test_BasicModule_OnlyOwner() public {
-        vm.prank(user1);
-        vm.expectRevert();
-        basicModule.setUpModule(address(0x999), address(0x888));
     }
 
     function test_SignerModule_GetCurrentSigners() public {
@@ -160,30 +132,11 @@ contract ZodiacModulesTest is Test {
         signerModule.changeThreshold(3);
     }
 
-    function test_BasicModule_ExecuteTransaction() public {
-        // Test executing a simple transaction
-        address recipient = address(0x777);
-        uint256 value = 1 ether;
-        bytes memory data = "";
-
-        // Fund the safe first
-        vm.deal(address(safe), 2 ether);
-
-        // The module is not enabled on the Safe, so this should revert with GS104
-        // In a real scenario, you'd need to enable the module through a Safe transaction first
-        vm.prank(owner);
-        vm.expectRevert("GS104");
-        basicModule.executeTransaction(recipient, value, data, Operation.Call);
-    }
-
     function test_ModulesHaveCorrectInterfaces() public view {
         // Test that modules implement expected functions
-        assertTrue(address(basicModule).code.length > 0);
         assertTrue(address(signerModule).code.length > 0);
 
         // Modules should have the expected avatar and target
-        assertEq(basicModule.avatar(), address(safe));
-        assertEq(basicModule.target(), address(safe));
         assertEq(signerModule.avatar(), address(safe));
         assertEq(signerModule.target(), address(safe));
     }

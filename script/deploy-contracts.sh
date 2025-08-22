@@ -22,13 +22,9 @@ fi
 export RPC_URL=$(bash ./script/get-rpc.sh)
 export DEPLOYER_PK=$(cat .nodes/deployer)
 
-# Set MerkleGov funding amount (default 0.1 ETH if not specified)
-MERKLE_GOV_FUNDING="${MERKLE_GOV_FUNDING:-100000000000000000}"  # 0.1 ETH in wei
-
 echo "🔧 Configuration:"
 echo "   RPC_URL: ${RPC_URL}"
 echo "   WAVS_SERVICE_MANAGER_ADDRESS: ${WAVS_SERVICE_MANAGER_ADDRESS}"
-echo "   MERKLE_GOV_FUNDING: ${MERKLE_GOV_FUNDING} wei"
 
 # Create output directory
 mkdir -p .docker
@@ -62,19 +58,6 @@ forge script script/DeployRewards.s.sol:DeployScript \
     --private-key "${DEPLOYER_PK}" \
     --broadcast
 
-# Extract reward distributor address for MerkleGov deployment
-export REWARD_DISTRIBUTOR_ADDR=$(jq -r '.reward_distributor' .docker/rewards_deploy.json 2>/dev/null || echo "")
-
-echo "🗳️  Deploying Merkle Governance contracts..."
-echo "   Funding MerkleGov with: ${MERKLE_GOV_FUNDING} wei"
-
-# Deploy MerkleGov contracts using Foundry script with funding
-forge script script/DeployMerkleGov.s.sol:DeployScript \
-    --sig 'run(string,string,uint256)' "${WAVS_SERVICE_MANAGER_ADDRESS}" "${REWARD_DISTRIBUTOR_ADDR}" "${MERKLE_GOV_FUNDING}" \
-    --rpc-url "${RPC_URL}" \
-    --private-key "${DEPLOYER_PK}" \
-    --broadcast
-
 echo "🎲 Deploying Prediction Market contracts..."
 
 # Deploy Prediction Market contracts using Foundry script
@@ -88,7 +71,7 @@ echo "🔐 Deploying Zodiac-enabled Safes with modules..."
 
 # Deploy Zodiac Safes using Foundry script
 forge script script/DeployZodiacSafes.s.sol:DeployZodiacSafes \
-    --sig 'run()' \
+    --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
     --rpc-url "${RPC_URL}" \
     --private-key "${DEPLOYER_PK}" \
     --broadcast
@@ -118,11 +101,6 @@ export GOVERNOR_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("
 # Extract deployed addresses from Rewards deployment
 export REWARD_DISTRIBUTOR_ADDR=$(jq -r '.reward_distributor' .docker/rewards_deploy.json 2>/dev/null || echo "")
 export REWARD_TOKEN_ADDR=$(jq -r '.reward_token' .docker/rewards_deploy.json 2>/dev/null || echo "")
-
-# Extract deployed addresses from MerkleGov deployment
-export MERKLE_VOTE_ADDR=$(jq -r '.merkle_vote' .docker/merkle_gov_deploy.json 2>/dev/null || echo "")
-export MERKLE_GOV_ADDR=$(jq -r '.merkle_gov' .docker/merkle_gov_deploy.json 2>/dev/null || echo "")
-export MERKLE_GOV_FUNDED_AMOUNT=$(jq -r '.funded_amount_wei' .docker/merkle_gov_deploy.json 2>/dev/null || echo "0")
 
 # Extract deployed addresses from Prediction Market deployment
 export PREDICTION_ORACLE_CONTROLLER_ADDR=$(jq -r '.oracle_controller' .docker/prediction_market_deploy.json 2>/dev/null || echo "")
@@ -176,11 +154,6 @@ cat > .docker/deployment_summary.json << EOF
   "reward_contracts": {
     "reward_distributor": "${REWARD_DISTRIBUTOR_ADDR}",
     "reward_token": "${REWARD_TOKEN_ADDR}"
-  },
-  "merkle_governance_contracts": {
-    "merkle_vote": "${MERKLE_VOTE_ADDR}",
-    "merkle_gov": "${MERKLE_GOV_ADDR}",
-    "funded_amount_wei": "${MERKLE_GOV_FUNDED_AMOUNT}"
   },
   "prediction_market_contracts": {
     "oracle_controller": "${PREDICTION_ORACLE_CONTROLLER_ADDR}",
@@ -241,11 +214,6 @@ echo "💰 Reward Contracts:"
 echo "   REWARD_DISTRIBUTOR_ADDR: ${REWARD_DISTRIBUTOR_ADDR}"
 echo "   REWARD_TOKEN_ADDR: ${REWARD_TOKEN_ADDR}"
 echo ""
-echo "🗳️  Merkle Governance Contracts:"
-echo "   MERKLE_VOTE_ADDR: ${MERKLE_VOTE_ADDR}"
-echo "   MERKLE_GOV_ADDR: ${MERKLE_GOV_ADDR}"
-echo "   MERKLE_GOV_FUNDED: ${MERKLE_GOV_FUNDED_AMOUNT} wei"
-echo ""
 echo "🎲 Prediction Market Contracts:"
 echo "   ORACLE_CONTROLLER_ADDR: ${PREDICTION_ORACLE_CONTROLLER_ADDR}"
 echo "   FACTORY_ADDR: ${PREDICTION_FACTORY_ADDR}"
@@ -269,7 +237,6 @@ echo "📄 Deployment details saved to .docker/deployment_summary.json"
 echo "📄 EAS deployment logs saved to .docker/eas_deploy.json"
 echo "📄 Governance deployment logs saved to .docker/governance_deploy.json"
 echo "📄 Rewards deployment details saved to .docker/rewards_deploy.json"
-echo "📄 Merkle Governance deployment details saved to .docker/merkle_gov_deploy.json"
 echo "📄 Prediction Market deployment details saved to .docker/prediction_market_deploy.json"
 echo "📄 Zodiac Safes deployment details saved to .docker/zodiac_safes_deploy.json"
 

@@ -33,20 +33,22 @@ contract DeployZodiacSafes is Common {
         address[] initialSigners;
         uint256 threshold;
         bool modulesEnabled;
+        uint256 fundingAmount;
     }
 
     /**
      * @dev Deploys two Safes with Zodiac modules and auto-enables them
      * @notice Safes are deployed with single signer (deployer) for easy module enablement
      *         Additional signers can be added later using the SignerManagerModule
+     * @param serviceManagerAddr The address of the WAVS service manager
      */
-    function run() public {
+    function run(string calldata serviceManagerAddr) public {
         address deployer = vm.addr(_privateKey);
 
         vm.startBroadcast(_privateKey);
 
-        // Get WAVS service manager from deployment
-        IWavsServiceManager serviceManager = _getWavsServiceManager();
+        // Parse WAVS service manager address
+        IWavsServiceManager serviceManager = IWavsServiceManager(vm.parseAddress(serviceManagerAddr));
 
         // Deploy Safe singleton and factory (if needed)
         GnosisSafe safeSingleton = new GnosisSafe();
@@ -145,13 +147,19 @@ contract DeployZodiacSafes is Common {
             signature // signatures
         );
 
+        // Fund the Safe with 10 ETH
+        uint256 fundingAmount = 10 ether;
+        (bool fundingSuccess,) = safeProxy.call{value: fundingAmount}("");
+        require(fundingSuccess, "Failed to fund Safe");
+
         deployment = SafeDeployment({
             safe: safeProxy,
             merkleGovModule: address(merkleGovModule),
             signerModule: address(signerModule),
             initialSigners: initialSigners,
             threshold: threshold,
-            modulesEnabled: success1 && success2
+            modulesEnabled: success1 && success2,
+            fundingAmount: fundingAmount
         });
 
         // Log the deployment and enablement status
@@ -216,6 +224,7 @@ contract DeployZodiacSafes is Common {
         vm.serializeString(jsonKey, "safe1_signer_module", Strings.toHexString(safe1.signerModule));
         vm.serializeUint(jsonKey, "safe1_threshold", safe1.threshold);
         vm.serializeBool(jsonKey, "safe1_modules_enabled", safe1.modulesEnabled);
+        vm.serializeUint(jsonKey, "safe1_funding_amount", safe1.fundingAmount);
 
         // Safe 2 data
         vm.serializeString(jsonKey, "safe2_address", Strings.toHexString(safe2.safe));
@@ -223,6 +232,7 @@ contract DeployZodiacSafes is Common {
         vm.serializeString(jsonKey, "safe2_signer_module", Strings.toHexString(safe2.signerModule));
         vm.serializeUint(jsonKey, "safe2_threshold", safe2.threshold);
         vm.serializeBool(jsonKey, "safe2_modules_enabled", safe2.modulesEnabled);
+        vm.serializeUint(jsonKey, "safe2_funding_amount", safe2.fundingAmount);
 
         // Factory data
         vm.serializeString(jsonKey, "safe_singleton", Strings.toHexString(safeSingleton));
@@ -238,16 +248,18 @@ contract DeployZodiacSafes is Common {
         console.log("");
         console.log("Safe 1:");
         console.log("  Address:", safe1.safe);
+        console.log("  Balance:", safe1.fundingAmount / 1 ether, "ETH");
         console.log("  Merkle Gov Module:", safe1.merkleGovModule, safe1.modulesEnabled ? "(ENABLED)" : "(NOT ENABLED)");
         console.log("  Signer Module:", safe1.signerModule, safe1.modulesEnabled ? "(ENABLED)" : "(NOT ENABLED)");
         console.log("");
         console.log("Safe 2:");
         console.log("  Address:", safe2.safe);
+        console.log("  Balance:", safe2.fundingAmount / 1 ether, "ETH");
         console.log("  Merkle Gov Module:", safe2.merkleGovModule, safe2.modulesEnabled ? "(ENABLED)" : "(NOT ENABLED)");
         console.log("  Signer Module:", safe2.signerModule, safe2.modulesEnabled ? "(ENABLED)" : "(NOT ENABLED)");
         console.log("");
         console.log("Next Steps:");
-        console.log("1. Modules are already enabled and ready to use!");
+        console.log("1. Each Safe has been funded with 10 ETH and modules are enabled!");
         console.log("2. Use SignerManagerModule.addSigner() to add more signers");
         console.log("3. Use SignerManagerModule.changeThreshold() to update threshold");
         console.log("");
@@ -258,18 +270,4 @@ contract DeployZodiacSafes is Common {
 
     // Events for logging
     event ModulesEnabled(address indexed safe, address indexed merkleGovModule, address indexed signerModule);
-
-    function _getWavsServiceManager() internal view returns (IWavsServiceManager) {
-        // Read from deployment output or use environment-specific address
-        string memory projectRoot = vm.projectRoot();
-        string memory path = string.concat(projectRoot, "/.docker/deployment_output.json");
-
-        try vm.readFile(path) returns (string memory json) {
-            address serviceManagerAddress = vm.parseJsonAddress(json, ".wavsServiceManager");
-            return IWavsServiceManager(serviceManagerAddress);
-        } catch {
-            // If deployment output doesn't exist, revert with helpful message
-            revert("WAVS Service Manager not found. Please deploy WAVS contracts first using deploy-script.sh");
-        }
-    }
 }

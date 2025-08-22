@@ -1,15 +1,18 @@
 # The Plan
 
 # Epochs
+- [x] WAVS zodiac modules to replace MerkleGov and MerkleVote
 - [-] Prediction market -> working hyperstition market
 - [-] Add LLM package / component (attester example?)
-- [-] WAVS zodiac modules to replace MerkleGov and MerkleVote
 - [ ] WAVS-NFT contracts (just contracts)
 - [ ] Wavs Service Manager if we want to go crazy
 
 # Next steps
 - [x] Deploy Prediction market
-- [-] Fix up Zodiac modules
+- [x] Fix up Zodiac modules
+- [x] Fund safe when setting up zodiac modules
+- [ ] Merkle gov module probably needs some notion of total voting power
+- [ ] Redo governance UI to work with new zodiac modules + safe
 - [ ] Get prediction market to actually work (currently partially working)
 - [ ] Add ollama docker container?
 - [ ] Clean up wavs-llm package
