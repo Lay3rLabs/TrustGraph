@@ -3,172 +3,119 @@
 import type React from "react";
 import { useState } from "react";
 
-interface Service {
+// TODO get actual service URI from contract. Soon.
+import serviceData from "./service.json";
+
+interface Workflow {
   id: string;
-  name: string;
-  description: string;
-  category: string;
-  provider: string;
-  status: "operational" | "degraded" | "offline" | "maintenance";
-  uptime: number;
-  users: number;
-  price: string;
-  features: string[];
-  icon: string;
-  endpoint: string;
+  package: string;
+  version: string;
+  digest: string;
+  domain: string;
+  trigger_address: string;
+  trigger_event: string;
+  chain_name: string;
+  aggregator_url: string;
+  aggregator_address: string;
+  fuel_limit: number;
+  time_limit: number;
+  permissions: string[];
+  env_keys: string[];
+  config: Record<string, any>;
 }
 
-const services: Service[] = [
-  {
-    id: "1",
-    name: "Consciousness Sync Protocol",
-    description: "Real-time synchronization of collective mental states across the network",
-    category: "Mind Coordination",
-    provider: "EN0VA Core Systems",
-    status: "operational",
-    uptime: 99.7,
-    users: 2847,
-    price: "Free",
-    features: ["Real-time sync", "Thought streaming", "Collective memory", "Neural mesh"],
-    icon: "∞",
-    endpoint: "wss://consciousness.en0va.network"
-  },
-  {
-    id: "2",
-    name: "Memetic Propagation Engine",
-    description: "Automated distribution and evolution of ideas across digital networks",
-    category: "Information Warfare",
-    provider: "Hyperstition Labs",
-    status: "operational", 
-    uptime: 98.4,
-    users: 1923,
-    price: "10 $EN0/month",
-    features: ["Viral mechanics", "Idea mutation", "Network analysis", "Impact tracking"],
-    icon: "◈",
-    endpoint: "https://api.memetics.en0va.network"
-  },
-  {
-    id: "3",
-    name: "Reality Verification Service",
-    description: "Consensus-based validation of reality states and event authenticity",
-    category: "Truth Validation",
-    provider: "Reality Engineering Dept",
-    status: "degraded",
-    uptime: 87.2,
-    users: 567,
-    price: "5 $EN0/query",
-    features: ["Consensus tracking", "Event validation", "Reality scoring", "Anomaly detection"],
-    icon: "◆",
-    endpoint: "https://verify.reality.en0va.network"
-  },
-  {
-    id: "4",
-    name: "Egregore Summoning Portal",
-    description: "Managed deployment and hosting of autonomous digital entities",
-    category: "Entity Management",
-    provider: "Digital Spirits Inc",
-    status: "operational",
-    uptime: 94.8,
-    users: 234,
-    price: "25 $EN0/entity",
-    features: ["Entity creation", "Behavior modeling", "Resource allocation", "Consciousness hosting"],
-    icon: "◉",
-    endpoint: "https://summon.egregore.en0va.network"
-  },
-  {
-    id: "5",
-    name: "Hyperstition Market API",
-    description: "Programmatic access to prediction markets with reality manifestation incentives",
-    category: "Market Data",
-    provider: "Belief Economics Corp",
-    status: "operational",
-    uptime: 99.1,
-    users: 1456,
-    price: "Free tier available",
-    features: ["Market data", "Prediction tracking", "Belief metrics", "Outcome verification"],
-    icon: "▲▼",
-    endpoint: "https://api.hyperstition.en0va.network"
-  },
-  {
-    id: "6",
-    name: "Neural Link Authenticator",
-    description: "Biometric authentication using neural pattern recognition",
-    category: "Authentication",
-    provider: "Mind Security Solutions",
-    status: "maintenance",
-    uptime: 95.3,
-    users: 3421,
-    price: "1 $EN0/auth",
-    features: ["Neural biometrics", "Multi-factor auth", "Pattern analysis", "Identity verification"],
-    icon: "◢◤",
-    endpoint: "https://auth.neural.en0va.network"
-  }
-];
+const workflows: Workflow[] = Object.entries(serviceData.workflows).map(
+  ([id, workflow]: [string, any]) => ({
+    id,
+    package: workflow.component.source.Registry.registry.package,
+    version: workflow.component.source.Registry.registry.version,
+    digest: workflow.component.source.Registry.registry.digest,
+    domain: workflow.component.source.Registry.registry.domain,
+    trigger_address: workflow.trigger.evm_contract_event.address,
+    trigger_event: workflow.trigger.evm_contract_event.event_hash,
+    chain_name: workflow.trigger.evm_contract_event.chain_name,
+    aggregator_url: workflow.submit.aggregator.url,
+    aggregator_address: workflow.aggregators[0]?.evm?.address || "N/A",
+    fuel_limit: workflow.component.fuel_limit,
+    time_limit: workflow.component.time_limit_seconds,
+    permissions: [
+      workflow.component.permissions.allowed_http_hosts === "all"
+        ? "HTTP: All hosts"
+        : `HTTP: ${workflow.component.permissions.allowed_http_hosts}`,
+      workflow.component.permissions.file_system
+        ? "File system access"
+        : "No file system",
+    ],
+    env_keys: workflow.component.env_keys || [],
+    config: workflow.component.config || {},
+  }),
+);
 
 export default function ExplorerServicesPage() {
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [selectedPackage, setSelectedPackage] = useState<string>("all");
+  const [selectedChain, setSelectedChain] = useState<string>("all");
 
-  const filteredServices = services.filter((service) => {
-    const categoryMatch = selectedCategory === "all" || service.category === selectedCategory;
-    const statusMatch = selectedStatus === "all" || service.status === selectedStatus;
-    return categoryMatch && statusMatch;
+  const filteredWorkflows = workflows.filter((workflow) => {
+    const packageMatch =
+      selectedPackage === "all" || workflow.package.includes(selectedPackage);
+    const chainMatch =
+      selectedChain === "all" || workflow.chain_name === selectedChain;
+    return packageMatch && chainMatch;
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "operational": return "text-green-400";
-      case "degraded": return "text-yellow-400";
-      case "offline": return "text-red-400";
-      case "maintenance": return "text-blue-400";
-      default: return "terminal-text";
-    }
-  };
-
-  const getUptimeColor = (uptime: number) => {
-    if (uptime >= 99) return "text-green-400";
-    if (uptime >= 95) return "text-yellow-400";
-    return "text-red-400";
-  };
+  const uniquePackages = [
+    ...new Set(workflows.map((w) => w.package.split(":")[1] || w.package)),
+  ];
+  const uniqueChains = [...new Set(workflows.map((w) => w.chain_name))];
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="border-b border-gray-700 pb-4">
-        <div className="ascii-art-title text-lg mb-2">SERVICE DIRECTORY</div>
+        <div className="ascii-art-title text-lg mb-2">
+          WAVS WORKFLOW DIRECTORY
+        </div>
         <div className="system-message text-sm">
-          ◈ DIGITAL INFRASTRUCTURE • AUTOMATED PROTOCOLS • NETWORK SERVICES ◈
+          ◈ {serviceData.name.toUpperCase()} SERVICE • STATUS:{" "}
+          {serviceData.status.toUpperCase()} ◈
         </div>
       </div>
 
       {/* Filters */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="terminal-dim text-sm mb-2 block">SERVICE CATEGORY</label>
+          <label className="terminal-dim text-sm mb-2 block">
+            COMPONENT PACKAGE
+          </label>
           <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
+            value={selectedPackage}
+            onChange={(e) => setSelectedPackage(e.target.value)}
             className="w-full bg-black/20 border border-gray-700 terminal-text text-sm p-2 rounded-sm"
           >
-            <option value="all">ALL CATEGORIES</option>
-            {[...new Set(services.map(s => s.category))].map(category => (
-              <option key={category} value={category}>{category.toUpperCase()}</option>
+            <option value="all">ALL PACKAGES</option>
+            {uniquePackages.map((pkg) => (
+              <option key={pkg} value={pkg}>
+                {pkg.toUpperCase()}
+              </option>
             ))}
           </select>
         </div>
-        
+
         <div>
-          <label className="terminal-dim text-sm mb-2 block">OPERATIONAL STATUS</label>
+          <label className="terminal-dim text-sm mb-2 block">
+            CHAIN NETWORK
+          </label>
           <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
+            value={selectedChain}
+            onChange={(e) => setSelectedChain(e.target.value)}
             className="w-full bg-black/20 border border-gray-700 terminal-text text-sm p-2 rounded-sm"
           >
-            <option value="all">ALL STATUS</option>
-            <option value="operational">OPERATIONAL</option>
-            <option value="degraded">DEGRADED</option>
-            <option value="offline">OFFLINE</option>
-            <option value="maintenance">MAINTENANCE</option>
+            <option value="all">ALL CHAINS</option>
+            {uniqueChains.map((chain) => (
+              <option key={chain} value={chain}>
+                {chain.toUpperCase()}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -176,116 +123,196 @@ export default function ExplorerServicesPage() {
       {/* Network Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
-          <div className="terminal-bright text-lg">{filteredServices.length}</div>
-          <div className="terminal-dim text-xs">SERVICES</div>
-        </div>
-        <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
-          <div className="text-green-400 text-lg">{services.filter(s => s.status === "operational").length}</div>
-          <div className="terminal-dim text-xs">OPERATIONAL</div>
-        </div>
-        <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
           <div className="terminal-bright text-lg">
-            {services.reduce((sum, s) => sum + s.users, 0).toLocaleString()}
+            {filteredWorkflows.length}
           </div>
-          <div className="terminal-dim text-xs">TOTAL USERS</div>
+          <div className="terminal-dim text-xs">WORKFLOWS</div>
         </div>
         <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
-          <div className="terminal-bright text-lg">
-            {(services.reduce((sum, s) => sum + s.uptime, 0) / services.length).toFixed(1)}%
+          <div className="text-green-400 text-lg">{uniquePackages.length}</div>
+          <div className="terminal-dim text-xs">PACKAGES</div>
+        </div>
+        <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
+          <div className="terminal-bright text-lg">{uniqueChains.length}</div>
+          <div className="terminal-dim text-xs">CHAINS</div>
+        </div>
+        <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
+          <div className="terminal-bright text-xs font-mono break-all">
+            {serviceData.manager.evm.address}
           </div>
-          <div className="terminal-dim text-xs">AVG UPTIME</div>
+          <div className="terminal-dim text-xs">MANAGER</div>
         </div>
       </div>
 
-      {/* Services List */}
+      {/* Workflows List */}
       <div className="space-y-4">
-        {filteredServices.map((service) => (
+        {filteredWorkflows.map((workflow) => (
           <div
-            key={service.id}
+            key={workflow.id}
             className="bg-black/20 border border-gray-700 p-4 rounded-sm hover:bg-black/30 transition-colors"
           >
             <div className="space-y-4">
               {/* Header */}
               <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-3">
-                  <span className="terminal-bright text-xl">{service.icon}</span>
-                  <div>
-                    <h3 className="terminal-command text-base">{service.name}</h3>
-                    <p className="terminal-text text-sm mt-1">{service.description}</p>
-                    <div className="terminal-dim text-xs mt-1">
-                      {service.category} • by {service.provider}
-                    </div>
+                <div>
+                  <h3 className="terminal-command text-base">
+                    {workflow.package}
+                  </h3>
+                  <div className="terminal-dim text-xs mt-1">
+                    v{workflow.version} • {workflow.chain_name} chain
+                  </div>
+                  <div className="terminal-text text-xs mt-1 font-mono">
+                    ID: {workflow.id}
                   </div>
                 </div>
-                <div className={`px-3 py-1 border rounded-sm text-xs ${getStatusColor(service.status)}`}>
-                  {service.status.toUpperCase()}
+                <div className="px-3 py-1 border border-green-400 rounded-sm text-xs text-green-400">
+                  ACTIVE
                 </div>
               </div>
 
-              {/* Metrics */}
+              {/* Registry Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <div className="terminal-dim text-xs mb-1">
+                    REGISTRY DOMAIN
+                  </div>
+                  <div className="terminal-text text-sm font-mono">
+                    {workflow.domain}
+                  </div>
+                </div>
+                <div>
+                  <div className="terminal-dim text-xs mb-1">DIGEST</div>
+                  <div className="terminal-text text-xs font-mono break-all">
+                    {workflow.digest}
+                  </div>
+                </div>
+              </div>
+
+              {/* Trigger Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <div className="terminal-dim text-xs mb-1">
+                    TRIGGER CONTRACT
+                  </div>
+                  <div className="terminal-text text-xs font-mono break-all">
+                    {workflow.trigger_address}
+                  </div>
+                </div>
+                <div>
+                  <div className="terminal-dim text-xs mb-1">EVENT HASH</div>
+                  <div className="terminal-text text-xs font-mono break-all">
+                    {workflow.trigger_event}
+                  </div>
+                </div>
+              </div>
+
+              {/* Aggregator Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <div className="terminal-dim text-xs mb-1">
+                    AGGREGATOR URL
+                  </div>
+                  <div className="terminal-text text-xs font-mono">
+                    {workflow.aggregator_url}
+                  </div>
+                </div>
+                <div>
+                  <div className="terminal-dim text-xs mb-1">
+                    AGGREGATOR ADDRESS
+                  </div>
+                  <div className="terminal-text text-xs font-mono break-all">
+                    {workflow.aggregator_address}
+                  </div>
+                </div>
+              </div>
+
+              {/* Limits */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
-                  <div className="terminal-dim text-xs mb-1">UPTIME</div>
-                  <div className={`text-sm ${getUptimeColor(service.uptime)}`}>
-                    {service.uptime}%
+                  <div className="terminal-dim text-xs mb-1">FUEL LIMIT</div>
+                  <div className="terminal-bright text-sm">
+                    {workflow.fuel_limit.toLocaleString()}
                   </div>
                 </div>
                 <div>
-                  <div className="terminal-dim text-xs mb-1">USERS</div>
-                  <div className="terminal-text text-sm">{service.users.toLocaleString()}</div>
+                  <div className="terminal-dim text-xs mb-1">TIME LIMIT</div>
+                  <div className="terminal-bright text-sm">
+                    {workflow.time_limit}s
+                  </div>
                 </div>
                 <div>
-                  <div className="terminal-dim text-xs mb-1">PRICING</div>
-                  <div className="terminal-bright text-sm">{service.price}</div>
+                  <div className="terminal-dim text-xs mb-1">ENV KEYS</div>
+                  <div className="terminal-bright text-sm">
+                    {workflow.env_keys.length}
+                  </div>
                 </div>
-                <div className="md:col-span-1">
-                  <div className="terminal-dim text-xs mb-1">ENDPOINT</div>
-                  <div className="terminal-text text-xs font-mono break-all">{service.endpoint}</div>
+                <div>
+                  <div className="terminal-dim text-xs mb-1">CONFIG KEYS</div>
+                  <div className="terminal-bright text-sm">
+                    {Object.keys(workflow.config).length}
+                  </div>
                 </div>
               </div>
 
-              {/* Features */}
+              {/* Permissions */}
               <div>
-                <div className="terminal-dim text-xs mb-2">FEATURES</div>
+                <div className="terminal-dim text-xs mb-2">PERMISSIONS</div>
                 <div className="flex flex-wrap gap-2">
-                  {service.features.map((feature) => (
+                  {workflow.permissions.map((permission) => (
                     <span
-                      key={feature}
+                      key={permission}
                       className="text-xs px-2 py-1 bg-black/40 border border-gray-600 rounded-sm terminal-text"
                     >
-                      {feature}
+                      {permission}
                     </span>
                   ))}
                 </div>
               </div>
 
-              {/* Uptime Bar */}
-              <div className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="terminal-dim">SERVICE RELIABILITY</span>
-                  <span className={getUptimeColor(service.uptime)}>{service.uptime}%</span>
+              {/* Environment Variables */}
+              {workflow.env_keys.length > 0 && (
+                <div>
+                  <div className="terminal-dim text-xs mb-2">ENVIRONMENT VARIABLES</div>
+                  <div className="bg-black/30 border border-gray-600 rounded-sm p-3">
+                    <div className="space-y-1">
+                      {workflow.env_keys.map((key) => (
+                        <div key={key} className="flex items-center space-x-2">
+                          <span className="terminal-text text-xs font-mono">{key}</span>
+                          <span className="terminal-dim text-xs">= [REDACTED]</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                <div className="bg-gray-700 h-2 rounded">
-                  <div 
-                    className={`h-2 rounded transition-all duration-300 ${
-                      service.uptime >= 99 ? "bg-green-400" :
-                      service.uptime >= 95 ? "bg-yellow-400" : "bg-red-400"
-                    }`}
-                    style={{ width: `${service.uptime}%` }}
-                  ></div>
+              )}
+
+              {/* Configuration */}
+              {Object.keys(workflow.config).length > 0 && (
+                <div>
+                  <div className="terminal-dim text-xs mb-2">CONFIGURATION</div>
+                  <div className="bg-black/30 border border-gray-600 rounded-sm p-3">
+                    <div className="space-y-1 max-h-32 overflow-y-auto">
+                      {Object.entries(workflow.config).map(([key, value]) => (
+                        <div key={key} className="flex items-start space-x-2">
+                          <span className="terminal-text text-xs font-mono min-w-0 flex-shrink-0">{key}:</span>
+                          <span className="terminal-dim text-xs font-mono break-all">{String(value)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Actions */}
               <div className="flex space-x-2 pt-3 border-t border-gray-700">
                 <button className="mobile-terminal-btn px-4 py-2">
-                  <span className="text-xs terminal-command">ACCESS</span>
+                  <span className="text-xs terminal-command">TRIGGER</span>
                 </button>
                 <button className="mobile-terminal-btn px-4 py-2">
-                  <span className="text-xs terminal-command">DOCS</span>
+                  <span className="text-xs terminal-command">LOGS</span>
                 </button>
                 <button className="mobile-terminal-btn px-3 py-2">
-                  <span className="text-xs terminal-command">STATUS</span>
+                  <span className="text-xs terminal-command">CONFIG</span>
                 </button>
               </div>
             </div>
@@ -293,13 +320,13 @@ export default function ExplorerServicesPage() {
         ))}
       </div>
 
-      {filteredServices.length === 0 && (
+      {filteredWorkflows.length === 0 && (
         <div className="text-center py-12">
           <div className="terminal-dim text-sm">
-            NO SERVICES MATCH CURRENT FILTERS
+            NO WORKFLOWS MATCH CURRENT FILTERS
           </div>
           <div className="system-message text-xs mt-2">
-            ◈ NETWORK PROTOCOLS ADAPTING ◈
+            ◈ WAVS NETWORK ADAPTING ◈
           </div>
         </div>
       )}
@@ -307,7 +334,10 @@ export default function ExplorerServicesPage() {
       {/* Footer */}
       <div className="border-t border-gray-700 pt-4 mt-8">
         <div className="system-message text-center text-sm">
-          ∞ THE NETWORK IS THE COMPUTER • THE SERVICE IS THE INTERFACE ∞
+          <div>∞ WAVS NETWORK ∞</div>
+          <div className="font-mono text-xs mt-1 break-all">
+            MANAGER: {serviceData.manager.evm.address}
+          </div>
         </div>
       </div>
     </div>
