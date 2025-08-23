@@ -66,15 +66,15 @@ fi
 
 # Configure EAS addresses from deployment summary
 echo "Configuring EAS addresses from deployment summary..."
-EAS_ADDRESS=$(jq -r '.eas_contracts.eas' .docker/deployment_summary.json)
-INDEXER_ADDRESS=$(jq -r '.eas_contracts.indexer' .docker/deployment_summary.json)
-VOUCHING_SCHEMA_ID=$(jq -r '.eas_schemas.vouching_schema' .docker/deployment_summary.json)
+export EAS_ADDRESS=$(jq -r '.eas_contracts.eas' .docker/deployment_summary.json)
+export INDEXER_ADDRESS=$(jq -r '.eas_contracts.indexer' .docker/deployment_summary.json)
+export VOUCHING_SCHEMA_ID=$(jq -r '.eas_schemas.vouching_schema' .docker/deployment_summary.json)
 
 # Determine chain name based on deployment environment
 if [ "$(task get-deploy-status)" = "TESTNET" ]; then
-    CHAIN_NAME="sepolia"
+    export CHAIN_NAME="sepolia"
 else
-    CHAIN_NAME="local"
+    export CHAIN_NAME="local"
 fi
 
 # Validate EAS addresses were extracted successfully
@@ -98,20 +98,25 @@ echo "✅ Indexer Address: ${INDEXER_ADDRESS}"
 echo "✅ Vouching Schema ID: ${VOUCHING_SCHEMA_ID}"
 echo "✅ Chain Name: ${CHAIN_NAME}"
 
-REWARDS_TOKEN_ADDRESS=$(jq -r '.reward_contracts.reward_token' .docker/deployment_summary.json)
+export REWARDS_TOKEN_ADDRESS=$(jq -r '.reward_contracts.reward_token' .docker/deployment_summary.json)
 
 # === Prediction Market Oracle ===
-ORACLE_CONTROLLER_ADDRESS=`jq -r '.prediction_market_contracts.oracle_controller' "./.docker/deployment_summary.json"`
-MARKET_MAKER_ADDRESS=`jq -r '.prediction_market_contracts.market_maker' "./.docker/deployment_summary.json"`
-CONDITIONAL_TOKENS_ADDRESS=`jq -r '.prediction_market_contracts.conditional_tokens' "./.docker/deployment_summary.json"`
+export ORACLE_CONTROLLER_ADDRESS=`jq -r '.prediction_market_contracts.oracle_controller' "./.docker/deployment_summary.json"`
+export MARKET_MAKER_ADDRESS=`jq -r '.prediction_market_contracts.market_maker' "./.docker/deployment_summary.json"`
+export CONDITIONAL_TOKENS_ADDRESS=`jq -r '.prediction_market_contracts.conditional_tokens' "./.docker/deployment_summary.json"`
 
 echo "✅ Oracle Controller Address: ${ORACLE_CONTROLLER_ADDRESS}"
 echo "✅ Market Maker Address: ${MARKET_MAKER_ADDRESS}"
 echo "✅ Conditional Tokens Address: ${CONDITIONAL_TOKENS_ADDRESS}"
+echo "✅ Rewards Token Address: ${REWARDS_TOKEN_ADDRESS}"
 
-# Set CONFIG_VALUES with EAS configuration, rewards token address, and Trust Aware PageRank settings
-export CONFIG_VALUES="eas_address=${EAS_ADDRESS},indexer_address=${INDEXER_ADDRESS},chain_name=${CHAIN_NAME},reward_token=${REWARDS_TOKEN_ADDRESS},reward_schema_uid=${VOUCHING_SCHEMA_ID},pagerank_reward_pool=1000000000000000000000,pagerank_trusted_seeds=0x70997970C51812dc3A010C7d01b50e0d17dc79C8,pagerank_trust_multiplier=10.5,pagerank_trust_boost=0.99,market_maker=${MARKET_MAKER_ADDRESS},conditional_tokens=${CONDITIONAL_TOKENS_ADDRESS}"
-echo "📋 Config Values: ${CONFIG_VALUES}"
+# Export additional configuration values that components might need
+export PAGERANK_REWARD_POOL="1000000000000000000000"
+export PAGERANK_TRUSTED_SEEDS="0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+export PAGERANK_TRUST_MULTIPLIER="10.5"
+export PAGERANK_TRUST_BOOST="0.99"
+
+echo "📋 All configuration variables exported for component-specific substitution"
 
 # Upload components to WASI registry
 echo "Uploading components to WASI registry..."
@@ -136,6 +141,7 @@ done
 # Create service with multiple workflows
 echo "Creating service with multiple component workflows..."
 export COMPONENT_CONFIGS_FILE="$COMPONENT_CONFIGS_FILE"
+# All required variables are now exported for component-specific substitution
 REGISTRY=`task get-registry` source ./script/build-service.sh
 sleep 1
 

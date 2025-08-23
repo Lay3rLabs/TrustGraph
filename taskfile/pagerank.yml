@@ -9,7 +9,7 @@ tasks:
   create-network:
     desc: "Create PageRank vouching attestation network"
     vars:
-      TEST_ADDRESS: '{{.TEST_ADDRESS}}'
+      TEST_ADDRESS: "{{.TEST_ADDRESS}}"
     preconditions:
       - test -n "{{.TEST_ADDRESS}}"
       - test -f {{.DEPLOYMENT_FILE}}
@@ -76,6 +76,7 @@ tasks:
             Grace) recipient_addr="0x14dC79964da2C08b23698B3D3cc7Ca32193d9955" ;;
             Henry) recipient_addr="0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f" ;;
             Ivy) recipient_addr="0xa0Ee7A142d267C1f36714E4a8F75612F20a79720" ;;
+            *) ;; # Keep address as-is if it's already a valid address
           esac
 
           local data=$(cast abi-encode "f(uint256)" $weight)
@@ -105,23 +106,23 @@ tasks:
         echo -e "${CYAN}👑 Creating authority vouchers...${NC}"
 
         if create_vouching_attestation "Alice" "Bob" "95"; then
-          ((total_attestations++))
+          total_attestations=$((total_attestations + 1))
         else
-          ((failed_attestations++))
+          failed_attestations=$((failed_attestations + 1))
         fi
         sleep 0.1
 
         if create_vouching_attestation "Alice" "{{.TEST_ADDRESS}}" "85"; then
-          ((total_attestations++))
+          total_attestations=$((total_attestations + 1))
         else
-          ((failed_attestations++))
+          failed_attestations=$((failed_attestations + 1))
         fi
         sleep 0.1
 
         if create_vouching_attestation "Bob" "{{.TEST_ADDRESS}}" "75"; then
-          ((total_attestations++))
+          total_attestations=$((total_attestations + 1))
         else
-          ((failed_attestations++))
+          failed_attestations=$((failed_attestations + 1))
         fi
         sleep 0.1
 
@@ -129,9 +130,9 @@ tasks:
         echo -e "${CYAN}🤬 Creating spammer self-vouchers...${NC}"
         for spammer in Grace Henry Ivy; do
           if create_vouching_attestation "$spammer" "$spammer" "100"; then
-            ((total_attestations++))
+            total_attestations=$((total_attestations + 1))
           else
-            ((failed_attestations++))
+            failed_attestations=$((failed_attestations + 1))
           fi
           sleep 0.1
         done
@@ -153,9 +154,9 @@ tasks:
           IFS=':' read -r attester recipient <<< "$vouch"
           weight="${vouches[$vouch]}"
           if create_vouching_attestation "$attester" "$recipient" "$weight"; then
-            ((total_attestations++))
+            total_attestations=$((total_attestations + 1))
           else
-            ((failed_attestations++))
+            failed_attestations=$((failed_attestations + 1))
           fi
           sleep 0.1
         done
@@ -169,7 +170,7 @@ tasks:
   analyze:
     desc: "Analyze the created PageRank vouching network"
     vars:
-      TEST_ADDRESS: '{{.TEST_ADDRESS}}'
+      TEST_ADDRESS: "{{.TEST_ADDRESS}}"
     preconditions:
       - test -n "{{.TEST_ADDRESS}}"
       - test -f {{.DEPLOYMENT_FILE}}
@@ -210,7 +211,7 @@ tasks:
   next-steps:
     desc: "Show next steps for PageRank testing"
     vars:
-      TEST_ADDRESS: '{{.TEST_ADDRESS}}'
+      TEST_ADDRESS: "{{.TEST_ADDRESS}}"
     preconditions:
       - test -f {{.DEPLOYMENT_FILE}}
     cmds:
@@ -242,16 +243,16 @@ tasks:
   full-setup:
     desc: "Complete PageRank network setup with analysis"
     vars:
-      TEST_ADDRESS: '{{.TEST_ADDRESS}}'
+      TEST_ADDRESS: "{{.TEST_ADDRESS}}"
     preconditions:
       - test -n "{{.TEST_ADDRESS}}"
     cmds:
       - task: create-network
         vars:
-          TEST_ADDRESS: '{{.TEST_ADDRESS}}'
+          TEST_ADDRESS: "{{.TEST_ADDRESS}}"
       - task: analyze
         vars:
-          TEST_ADDRESS: '{{.TEST_ADDRESS}}'
+          TEST_ADDRESS: "{{.TEST_ADDRESS}}"
       - task: next-steps
         vars:
-          TEST_ADDRESS: '{{.TEST_ADDRESS}}'
+          TEST_ADDRESS: "{{.TEST_ADDRESS}}"

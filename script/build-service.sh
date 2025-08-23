@@ -27,14 +27,65 @@ SUBMIT_CHAIN=${SUBMIT_CHAIN:-"local"}
 AGGREGATOR_URL=${AGGREGATOR_URL:-""}
 DEPLOY_ENV=${DEPLOY_ENV:-""}
 REGISTRY=${REGISTRY:-"wa.dev"}
-CONFIG_VALUES=${CONFIG_VALUES:-"key=value,key2=value2"}
 
-# Display configuration being applied
-if [[ "$CONFIG_VALUES" == *"eas_address"* ]]; then
-    echo "📋 Applying EAS configuration: ${CONFIG_VALUES}"
-else
-    echo "⚠️  Using default configuration values (EAS addresses not configured): ${CONFIG_VALUES}"
-fi
+# Function to substitute variables in config values
+substitute_config_vars() {
+    local config_str="$1"
+
+    # Replace all ${VAR_NAME} patterns with their environment variable values
+    while [[ "$config_str" =~ \$\{([^}]+)\} ]]; do
+        var_name="${BASH_REMATCH[1]}"
+        var_value="${!var_name}"
+        if [ -z "$var_value" ]; then
+            echo "⚠️  Warning: Variable ${var_name} is not set, using empty string" >&2
+            var_value=""
+        fi
+        config_str="${config_str//\$\{${var_name}\}/${var_value}}"
+    done
+
+    echo "$config_str"
+}
+
+# Function to build config string from JSON object
+build_config_string() {
+    local config_json="$1"
+    local config_str=""
+
+    if [ -n "$config_json" ] && [ "$config_json" != "null" ] && [ "$config_json" != "{}" ]; then
+        # Process each key-value pair
+        while IFS= read -r line; do
+            if [ -n "$config_str" ]; then
+                config_str="${config_str},"
+            fi
+            key=$(echo "$line" | jq -r '.key')
+            value=$(echo "$line" | jq -r '.value')
+            # Substitute variables in the value
+            value=$(substitute_config_vars "$value")
+            config_str="${config_str}${key}=${value}"
+        done < <(echo "$config_json" | jq -c 'to_entries[]')
+    fi
+
+    echo "$config_str"
+}
+
+# Function to build environment variables string
+build_env_string() {
+    local env_json="$1"
+    local env_str=""
+
+    if [ -n "$env_json" ] && [ "$env_json" != "null" ] && [ "$env_json" != "[]" ]; then
+        # Process each environment variable
+        while IFS= read -r env_var; do
+            env_var=$(echo "$env_var" | jq -r '.')
+            if [ -n "$env_str" ]; then
+                env_str="${env_str},"
+            fi
+            env_str="${env_str}${env_var}"
+        done < <(echo "$env_json" | jq -c '.[]')
+    fi
+
+    echo "$env_str"
+}
 
 BASE_CMD="docker run --rm --network host -w /data -v $(pwd):/data ghcr.io/lay3rlabs/wavs:35c96a4 wavs-cli service --json true --home /data --file /data/${FILE_LOCATION}"
 
@@ -55,6 +106,7 @@ fi
 if [ -z "$DEPLOY_ENV" ]; then
     DEPLOY_ENV=$(task get-deploy-status)
 fi
+
 # === Core ===
 
 # Get PKG_NAMESPACE
@@ -73,13 +125,34 @@ echo "Service ID: ${SERVICE_ID}"
 
 # Process component configurations from JSON file
 if [ -z "${COMPONENT_CONFIGS_FILE}" ] || [ ! -f "${COMPONENT_CONFIGS_FILE}" ]; then
-    echo "❌ Component configuration file not found: ${COMPONENT_CONFIGS_FILE}"
-    echo "Please run 'script/configure-components.sh init' to create the configuration."
-    exit 1
+    # Try default location
+    COMPONENT_CONFIGS_FILE="config/components.json"
+    if [ ! -f "${COMPONENT_CONFIGS_FILE}" ]; then
+        # Try .docker location
+        COMPONENT_CONFIGS_FILE=".docker/components-config.json"
+        if [ ! -f "${COMPONENT_CONFIGS_FILE}" ]; then
+            echo "❌ Component configuration file not found"
+            echo "Please specify COMPONENT_CONFIGS_FILE or ensure config/components.json or .docker/components-config.json exists"
+            exit 1
+        fi
+    fi
 fi
 
-echo "Reading component configurations from JSON file..."
-jq -r '.components[] | @json' "${COMPONENT_CONFIGS_FILE}" | while read -r component; do
+echo "Reading component configurations from: ${COMPONENT_CONFIGS_FILE}"
+
+# Export all required variables that might be used in config value substitutions
+# These should be set by deploy-script.sh before calling this script
+echo "📋 Available configuration variables:"
+[ -n "${EAS_ADDRESS}" ] && echo "  EAS_ADDRESS: ${EAS_ADDRESS}"
+[ -n "${INDEXER_ADDRESS}" ] && echo "  INDEXER_ADDRESS: ${INDEXER_ADDRESS}"
+[ -n "${VOUCHING_SCHEMA_ID}" ] && echo "  VOUCHING_SCHEMA_ID: ${VOUCHING_SCHEMA_ID}"
+[ -n "${CHAIN_NAME}" ] && echo "  CHAIN_NAME: ${CHAIN_NAME}"
+[ -n "${REWARDS_TOKEN_ADDRESS}" ] && echo "  REWARDS_TOKEN_ADDRESS: ${REWARDS_TOKEN_ADDRESS}"
+[ -n "${MARKET_MAKER_ADDRESS}" ] && echo "  MARKET_MAKER_ADDRESS: ${MARKET_MAKER_ADDRESS}"
+[ -n "${CONDITIONAL_TOKENS_ADDRESS}" ] && echo "  CONDITIONAL_TOKENS_ADDRESS: ${CONDITIONAL_TOKENS_ADDRESS}"
+echo ""
+
+jq -c '.components[]' "${COMPONENT_CONFIGS_FILE}" | while IFS= read -r component; do
     COMP_FILENAME=$(echo "$component" | jq -r '.filename')
     COMP_PKG_NAME=$(echo "$component" | jq -r '.package_name')
     COMP_PKG_VERSION=$(echo "$component" | jq -r '.package_version')
@@ -87,11 +160,15 @@ jq -r '.components[] | @json' "${COMPONENT_CONFIGS_FILE}" | while read -r compon
     COMP_TRIGGER_JSON_PATH=$(echo "$component" | jq -r '.trigger_json_path')
     COMP_SUBMIT_JSON_PATH=$(echo "$component" | jq -r '.submit_json_path')
 
+    # Extract component-specific config values and env variables
+    COMP_CONFIG_VALUES=$(echo "$component" | jq '.config_values // {}')
+    COMP_ENV_VARIABLES=$(echo "$component" | jq '.env_variables // []')
+
     # Extract addresses from JSON paths
     COMP_TRIGGER_ADDRESS=`jq -r ".${COMP_TRIGGER_JSON_PATH}" .docker/deployment_summary.json`
     COMP_SUBMIT_ADDRESS=`jq -r ".${COMP_SUBMIT_JSON_PATH}" .docker/deployment_summary.json`
 
-    # The key COMP_SUBMIT_JSON_PATH may not be found in the deployment_summary (i.e. a typo). Make sure it exists. If it doesn't then return an error.
+    # Validate addresses
     if [ -z "$COMP_TRIGGER_ADDRESS" ] || [ "$COMP_TRIGGER_ADDRESS" == "null" ]; then
         echo "❌ Trigger address not found for component: ${COMP_FILENAME} at path: ${COMP_TRIGGER_JSON_PATH}"
         exit 1
@@ -123,18 +200,31 @@ jq -r '.components[] | @json' "${COMPONENT_CONFIGS_FILE}" | while read -r compon
 
     eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} permissions --http-hosts '*' --file-system true" > /dev/null
     eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} time-limit --seconds 30" > /dev/null
+
     # Set component-specific environment variables
-    if [ "$COMP_PKG_NAME" = "rewards" ]; then
-        eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} env --values WAVS_ENV_SOME_SECRET,WAVS_ENV_PINATA_API_URL,WAVS_ENV_PINATA_API_KEY" > /dev/null
+    ENV_STRING=$(build_env_string "$COMP_ENV_VARIABLES")
+    if [ -n "$ENV_STRING" ]; then
+        echo "  📋 Setting environment variables: ${ENV_STRING}"
+        eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} env --values \"${ENV_STRING}\"" > /dev/null
     else
+        # Default env variables if none specified
+        echo "  📋 Setting default environment variables"
         eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} env --values WAVS_ENV_SOME_SECRET" > /dev/null
     fi
 
-    echo "  📋 Configuring component with: ${CONFIG_VALUES}"
-    eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} config --values \"${CONFIG_VALUES}\"" > /dev/null
+    # Set component-specific config values
+    CONFIG_STRING=$(build_config_string "$COMP_CONFIG_VALUES")
+    if [ -n "$CONFIG_STRING" ]; then
+        echo "  📋 Configuring component with: ${CONFIG_STRING}"
+        eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} config --values \"${CONFIG_STRING}\"" > /dev/null
+    else
+        echo "  ⚠️  No configuration values specified for ${COMP_FILENAME}"
+    fi
+
     eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} fuel-limit --fuel ${FUEL_LIMIT}" > /dev/null
 
     echo "  ✅ Workflow configured for ${COMP_FILENAME}"
+    echo ""
 done
 
 eval "$BASE_CMD manager set-evm --chain-name ${SUBMIT_CHAIN} --address `cast --to-checksum ${WAVS_SERVICE_MANAGER_ADDRESS}`" > /dev/null

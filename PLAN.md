@@ -13,14 +13,15 @@
 - [x] Fund safe when setting up zodiac modules
 - [x] Add IPFS CID to merkle gov module to fix ui
 - [x] Redo governance UI to work with new zodiac modules + safe
+- [x] Modify dao-agent component to work with a zodiac module
+- [x] Add ollama docker container?
+- [x] Make LLM attester
+- [x] Improve component configuration experience (support config values and environment variables)
 - [ ] Merkle gov module probably needs some notion of total voting power
 - [ ] Get prediction market to actually work (currently partially working)
 - [ ] Make attestation on participating in prediction market
-- [ ] Modify dao-agent component to work with a zodiac module
 - [ ] More realistic Hyperstition market resolver component
-- [ ] Add ollama docker container?
 - [ ] Clean up wavs-llm package
-- [ ] Make LLM attester
 - [ ] Automatically make attestations when participating in prediction market
 - [ ] Wire up new component to utilize SignerManagerModule
 - [ ] Figure out some way to pay for these services
