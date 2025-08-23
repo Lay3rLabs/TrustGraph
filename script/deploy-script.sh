@@ -25,7 +25,7 @@ fi
 
 # local: create deployer & auto fund. testnet: create & iterate check balance
 bash ./script/create-deployer.sh
-export DEPLOYER_PK=$(cat .nodes/deployer)
+export DEPLOYER_PK=$(task config:funded-key)
 sleep 1
 
 ## Deploy Eigenlayer from Deployer

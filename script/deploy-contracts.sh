@@ -20,7 +20,7 @@ fi
 
 # Get RPC URL and deployer key
 export RPC_URL=$(task get-rpc)
-export DEPLOYER_PK=$(cat .nodes/deployer)
+export DEPLOYER_PK=$(task config:funded-key)
 
 echo "🔧 Configuration:"
 echo "   RPC_URL: ${RPC_URL}"
