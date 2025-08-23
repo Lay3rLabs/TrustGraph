@@ -10172,10 +10172,10 @@ macro_rules! __export_layer_trigger_world_impl {
 #[doc(inline)]
 pub(crate) use __export_layer_trigger_world_impl as export;
 #[cfg(target_arch = "wasm32")]
-#[link_section = "component-type:wit-bindgen:0.35.0:component:dao-agent:layer-trigger-world:encoded world"]
+#[link_section = "component-type:wit-bindgen:0.35.0:component:llm-attester:layer-trigger-world:encoded world"]
 #[doc(hidden)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 6544] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\x862\x01A\x02\x01A)\x01\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 6547] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\x892\x01A\x02\x01A)\x01\
 B1\x01r\x01\x05nanosw\x04\0\x09timestamp\x03\0\0\x01r\x02\x0bbech32-addrs\x0apre\
 fix-leny\x04\0\x0ecosmos-address\x03\0\x02\x01o\x02ss\x01p\x04\x01r\x02\x02tys\x0a\
 attributes\x05\x04\0\x0ccosmos-event\x03\0\x06\x01ks\x01r\x07\x08chain-ids\x0crp\
@@ -10307,8 +10307,8 @@ self\x0f\x06client\x01\x10initial-messages\x1a\x08response\x03\x0atool-calls\x1b
 \x01\x0achain-names\0\x06\x04\0\x14get-eth-chain-config\x01\x07\x01k\x03\x01@\x01\
 \x0achain-names\0\x08\x04\0\x17get-cosmos-chain-config\x01\x09\x01@\x02\x05level\
 \x05\x07messages\x01\0\x04\0\x03log\x01\x0a\x03\0\x04host\x05\x1c\x01k\x04\x01j\x01\
-\x1d\x01s\x01@\x01\x0etrigger-action\x02\0\x1e\x04\0\x03run\x01\x1f\x04\0'compon\
-ent:dao-agent/layer-trigger-world\x04\0\x0b\x19\x01\0\x13layer-trigger-world\x03\
+\x1d\x01s\x01@\x01\x0etrigger-action\x02\0\x1e\x04\0\x03run\x01\x1f\x04\0*compon\
+ent:llm-attester/layer-trigger-world\x04\0\x0b\x19\x01\0\x13layer-trigger-world\x03\
 \0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.220.0\x10wit-\
 bindgen-rust\x060.35.0";
 #[inline(never)]

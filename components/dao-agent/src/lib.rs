@@ -12,6 +12,7 @@ use bindings::{
     Guest, TriggerAction, WasmResponse,
 };
 use context::DaoContext;
+use sol_interfaces::{Operation, Transaction};
 use std::str::FromStr;
 use wavs_llm::{
     client::with_config,
@@ -118,7 +119,17 @@ impl Guest for Component {
                 };
 
                 Ok(Some(WasmResponse {
-                    payload: TransactionPayload { to, value, data }.abi_encode(),
+                    payload: TransactionPayload {
+                        nonce: U256::ZERO,
+                        transactions: vec![Transaction {
+                            target: to,
+                            data,
+                            value,
+                            operation: Operation::Call,
+                        }],
+                        description: "".to_string(),
+                    }
+                    .abi_encode(),
                     ordering: None,
                 }))
             }

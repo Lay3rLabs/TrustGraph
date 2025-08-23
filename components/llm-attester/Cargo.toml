@@ -1,0 +1,50 @@
+[package]
+name = "llm-attester"
+edition.workspace = true
+version.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[dependencies]
+wavs-llm = { workspace = true }
+wavs-wasi-utils = { workspace = true }
+wstd = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+wit-bindgen-rt = { workspace = true, features = ["bitflags"] }
+alloy-sol-macro = { workspace = true }
+alloy-sol-types = { workspace = true }
+alloy-primitives = { workspace = true }
+alloy-json-abi = { workspace = true }
+alloy-dyn-abi = { workspace = true }
+alloy-network = { workspace = true }
+alloy-provider = { workspace = true }
+alloy-rpc-types = { workspace = true }
+hex = { workspace = true }
+tiny-keccak = { workspace = true }
+
+[dev-dependencies]
+mockall = { workspace = true }
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+codegen-units = 1
+opt-level = "s"
+debug = false
+strip = true
+lto = true
+
+[package.metadata.component]
+package = "component:llm-attester"
+
+[package.metadata.component.target]
+path = "./wit"
+
+# Add dependencies on the wavs-llm component interfaces and layer-trigger-world
+[package.metadata.component.target.dependencies]
+"wavs:agent" = { path = "../../packages/llm/wit" }
+"wavs:worker" = "0.4.0"

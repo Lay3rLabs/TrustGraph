@@ -3107,6 +3107,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "241eaef5fd12c88705a01fc1066c48c4b36e0dd4377dcdc7ec3942cea7a69956"
 
 [[package]]
+name = "llm-attester"
+version = "0.4.0"
+dependencies = [
+ "alloy-dyn-abi",
+ "alloy-json-abi",
+ "alloy-network",
+ "alloy-primitives",
+ "alloy-provider",
+ "alloy-rpc-types",
+ "alloy-sol-macro",
+ "alloy-sol-types",
+ "anyhow",
+ "hex",
+ "mockall",
+ "serde",
+ "serde_json",
+ "tiny-keccak",
+ "wavs-llm",
+ "wavs-wasi-utils",
+ "wit-bindgen-rt 0.42.1",
+ "wstd",
+]
+
+[[package]]
 name = "lock_api"
 version = "0.4.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
