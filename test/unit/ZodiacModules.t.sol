@@ -17,6 +17,7 @@ import {IWavsServiceHandler} from "@wavs/interfaces/IWavsServiceHandler.sol";
 
 // Our modules
 import {SignerManagerModule} from "../../src/contracts/zodiac/SignerManagerModule.sol";
+import {WavsModule} from "../../src/contracts/zodiac/WavsModule.sol";
 
 contract ZodiacModulesTest is Test {
     // Core contracts
@@ -24,6 +25,7 @@ contract ZodiacModulesTest is Test {
     GnosisSafeProxyFactory public safeFactory;
     GnosisSafe public safe;
     SignerManagerModule public signerModule;
+    WavsModule public wavsModule;
     IWavsServiceManager public mockServiceManager;
 
     // Test accounts
@@ -78,6 +80,7 @@ contract ZodiacModulesTest is Test {
 
         // Deploy modules
         signerModule = new SignerManagerModule(owner, address(safe), address(safe), mockServiceManager);
+        wavsModule = new WavsModule(owner, address(safe), address(safe), mockServiceManager, true); // strict nonce ordering
     }
 
     function test_SignerModule_Setup() public {
@@ -291,6 +294,282 @@ contract ZodiacModulesTest is Test {
 
         vm.expectRevert("GS104");
         signerModule.handleSignedEnvelope(envelope, signatureData);
+    }
+
+    // ============================================
+    // WavsModule Tests
+    // ============================================
+
+    function test_WavsModule_Setup() public {
+        assertEq(wavsModule.avatar(), address(safe));
+        assertEq(wavsModule.target(), address(safe));
+        assertEq(wavsModule.owner(), owner);
+        assertEq(address(wavsModule.serviceManager()), address(mockServiceManager));
+        assertTrue(wavsModule.strictNonceOrdering());
+        assertEq(wavsModule.lastExecutedNonce(), 0);
+    }
+
+    function test_WavsModule_DirectExecutionOnlyOwner() public {
+        bytes memory data = abi.encodeWithSignature("transfer(address,uint256)", user1, 100);
+
+        // Non-owner cannot execute
+        vm.prank(user1);
+        vm.expectRevert();
+        wavsModule.executeTransaction(address(0x123), 0, data, Operation.Call);
+
+        // Owner can execute (will fail with GS104 since module not enabled on Safe)
+        vm.prank(owner);
+        vm.expectRevert("GS104");
+        wavsModule.executeTransaction(address(safe), 0, data, Operation.Call);
+    }
+
+    function test_WavsModule_BatchExecution() public {
+        WavsModule.Transaction[] memory transactions = new WavsModule.Transaction[](2);
+
+        transactions[0] = WavsModule.Transaction({
+            target: address(0x123),
+            value: 0,
+            data: abi.encodeWithSignature("test()"),
+            operation: Operation.Call
+        });
+
+        transactions[1] =
+            WavsModule.Transaction({target: address(0x456), value: 100, data: "", operation: Operation.Call});
+
+        // Non-owner cannot execute batch
+        vm.prank(user1);
+        vm.expectRevert();
+        wavsModule.executeBatch(transactions);
+
+        // Owner tries to execute batch (will fail on first tx since module not enabled)
+        vm.prank(owner);
+        vm.expectRevert("GS104");
+        wavsModule.executeBatch(transactions);
+    }
+
+    function test_WavsModule_StrictNonceOrdering() public {
+        // Create first transaction with nonce 1
+        WavsModule.Transaction[] memory transactions = new WavsModule.Transaction[](1);
+        transactions[0] = WavsModule.Transaction({
+            target: address(0x123),
+            value: 0,
+            data: abi.encodeWithSignature("test()"),
+            operation: Operation.Call
+        });
+
+        WavsModule.TransactionPayload memory payload1 =
+            WavsModule.TransactionPayload({nonce: 1, transactions: transactions, description: "Test transaction 1"});
+
+        IWavsServiceHandler.Envelope memory envelope1 = IWavsServiceHandler.Envelope({
+            eventId: bytes20(uint160(0x10)),
+            ordering: bytes12(uint96(0)),
+            payload: abi.encode(payload1)
+        });
+
+        IWavsServiceHandler.SignatureData memory signatureData;
+
+        // Execute first transaction
+        vm.expectRevert("GS104"); // Module not enabled on Safe
+        wavsModule.handleSignedEnvelope(envelope1, signatureData);
+
+        // Try to execute with wrong nonce (should fail even before module execution)
+        WavsModule.TransactionPayload memory payload3 = WavsModule.TransactionPayload({
+            nonce: 3, // Wrong nonce, should be 1
+            transactions: transactions,
+            description: "Test transaction 3"
+        });
+
+        IWavsServiceHandler.Envelope memory envelope3 = IWavsServiceHandler.Envelope({
+            eventId: bytes20(uint160(0x12)),
+            ordering: bytes12(uint96(0)),
+            payload: abi.encode(payload3)
+        });
+
+        vm.expectRevert("Invalid nonce: strict ordering required");
+        wavsModule.handleSignedEnvelope(envelope3, signatureData);
+    }
+
+    function test_WavsModule_NonStrictNonceOrdering() public {
+        // Deploy a new module with non-strict ordering
+        WavsModule nonStrictModule = new WavsModule(owner, address(safe), address(safe), mockServiceManager, false);
+
+        // For this test, we'll create a mock contract that we can successfully call
+        MockTarget mockTarget = new MockTarget();
+
+        WavsModule.Transaction[] memory transactions = new WavsModule.Transaction[](1);
+        transactions[0] = WavsModule.Transaction({
+            target: address(mockTarget),
+            value: 0,
+            data: abi.encodeWithSignature("successfulCall()"),
+            operation: Operation.Call
+        });
+
+        // Execute nonce 5 first (out of order)
+        WavsModule.TransactionPayload memory payload5 =
+            WavsModule.TransactionPayload({nonce: 5, transactions: transactions, description: "Test transaction 5"});
+
+        IWavsServiceHandler.Envelope memory envelope5 = IWavsServiceHandler.Envelope({
+            eventId: bytes20(uint160(0x15)),
+            ordering: bytes12(uint96(0)),
+            payload: abi.encode(payload5)
+        });
+
+        IWavsServiceHandler.SignatureData memory signatureData;
+
+        // This will still fail because module is not enabled on Safe
+        vm.expectRevert("GS104");
+        nonStrictModule.handleSignedEnvelope(envelope5, signatureData);
+
+        // Try to reuse same nonce - will fail with same error since transaction reverted
+        vm.expectRevert("GS104");
+        nonStrictModule.handleSignedEnvelope(envelope5, signatureData);
+    }
+
+    function test_WavsModule_EmptyTransactions() public {
+        WavsModule.Transaction[] memory emptyTransactions = new WavsModule.Transaction[](0);
+
+        WavsModule.TransactionPayload memory payload =
+            WavsModule.TransactionPayload({nonce: 1, transactions: emptyTransactions, description: "Empty batch"});
+
+        IWavsServiceHandler.Envelope memory envelope = IWavsServiceHandler.Envelope({
+            eventId: bytes20(uint160(0x20)),
+            ordering: bytes12(uint96(0)),
+            payload: abi.encode(payload)
+        });
+
+        IWavsServiceHandler.SignatureData memory signatureData;
+
+        vm.expectRevert("No transactions to execute");
+        wavsModule.handleSignedEnvelope(envelope, signatureData);
+    }
+
+    function test_WavsModule_UpdateServiceManager() public {
+        IWavsServiceManager newServiceManager = IWavsServiceManager(address(0x999));
+
+        // Non-owner cannot update
+        vm.prank(user1);
+        vm.expectRevert();
+        wavsModule.updateServiceManager(newServiceManager);
+
+        // Owner can update
+        vm.prank(owner);
+        wavsModule.updateServiceManager(newServiceManager);
+        assertEq(address(wavsModule.serviceManager()), address(newServiceManager));
+
+        // Cannot set to zero address
+        vm.prank(owner);
+        vm.expectRevert("Invalid service manager");
+        wavsModule.updateServiceManager(IWavsServiceManager(address(0)));
+    }
+
+    function test_WavsModule_ToggleStrictOrdering() public {
+        assertTrue(wavsModule.strictNonceOrdering());
+
+        // Non-owner cannot toggle
+        vm.prank(user1);
+        vm.expectRevert();
+        wavsModule.setStrictNonceOrdering(false);
+
+        // Owner can toggle
+        vm.prank(owner);
+        wavsModule.setStrictNonceOrdering(false);
+        assertFalse(wavsModule.strictNonceOrdering());
+
+        vm.prank(owner);
+        wavsModule.setStrictNonceOrdering(true);
+        assertTrue(wavsModule.strictNonceOrdering());
+    }
+
+    function test_WavsModule_UpdateModuleConfig() public {
+        address newAvatar = address(0x777);
+        address newTarget = address(0x888);
+
+        // Non-owner cannot update
+        vm.prank(user1);
+        vm.expectRevert();
+        wavsModule.updateModuleConfig(newAvatar, newTarget);
+
+        // Owner can update
+        vm.prank(owner);
+        wavsModule.updateModuleConfig(newAvatar, newTarget);
+        assertEq(wavsModule.avatar(), newAvatar);
+        assertEq(wavsModule.target(), newTarget);
+
+        // Cannot set to zero addresses
+        vm.prank(owner);
+        vm.expectRevert("Invalid avatar");
+        wavsModule.updateModuleConfig(address(0), newTarget);
+
+        vm.prank(owner);
+        vm.expectRevert("Invalid target");
+        wavsModule.updateModuleConfig(newAvatar, address(0));
+    }
+
+    function test_WavsModule_ViewFunctions() public {
+        // Test getNextNonce
+        assertEq(wavsModule.getNextNonce(), 1);
+
+        // Test isNonceExecuted
+        assertFalse(wavsModule.isNonceExecuted(1));
+        assertFalse(wavsModule.isNonceExecuted(5));
+
+        // Test getModuleConfig
+        (address _owner, address _avatar, address _target, address _serviceManager) = wavsModule.getModuleConfig();
+        assertEq(_owner, owner);
+        assertEq(_avatar, address(safe));
+        assertEq(_target, address(safe));
+        assertEq(_serviceManager, address(mockServiceManager));
+    }
+
+    function test_WavsModule_MultipleTransactionsInBatch() public {
+        WavsModule.Transaction[] memory transactions = new WavsModule.Transaction[](3);
+
+        // Transaction 1: Call to address
+        transactions[0] = WavsModule.Transaction({
+            target: address(0x111),
+            value: 0,
+            data: abi.encodeWithSignature("function1()"),
+            operation: Operation.Call
+        });
+
+        // Transaction 2: Send ETH
+        transactions[1] =
+            WavsModule.Transaction({target: address(0x222), value: 1 ether, data: "", operation: Operation.Call});
+
+        // Transaction 3: Delegate call
+        transactions[2] = WavsModule.Transaction({
+            target: address(0x333),
+            value: 0,
+            data: abi.encodeWithSignature("function2(uint256)", 42),
+            operation: Operation.DelegateCall
+        });
+
+        WavsModule.TransactionPayload memory payload = WavsModule.TransactionPayload({
+            nonce: 1,
+            transactions: transactions,
+            description: "Multiple operations batch"
+        });
+
+        IWavsServiceHandler.Envelope memory envelope = IWavsServiceHandler.Envelope({
+            eventId: bytes20(uint160(0x30)),
+            ordering: bytes12(uint96(0)),
+            payload: abi.encode(payload)
+        });
+
+        IWavsServiceHandler.SignatureData memory signatureData;
+
+        // Will fail because module is not enabled on Safe
+        vm.expectRevert("GS104");
+        wavsModule.handleSignedEnvelope(envelope, signatureData);
+    }
+}
+
+// Mock Target contract for testing successful calls
+contract MockTarget {
+    event Called();
+
+    function successfulCall() external {
+        emit Called();
     }
 }
 
