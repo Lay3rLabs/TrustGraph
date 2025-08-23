@@ -4,7 +4,7 @@ import { injected, metaMask } from "wagmi/connectors";
 
 // Local chain configuration matching the deployment
 const localChain = {
-  id: 11155111, // Anvil default chain ID
+  id: 31337, // Anvil default chain ID
   name: "Local Anvil",
   nativeCurrency: {
     decimals: 18,
