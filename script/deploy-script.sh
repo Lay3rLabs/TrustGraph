@@ -9,8 +9,8 @@ if [ ! -d compiled/ ] || [ -z "$(find compiled/ -name '*.wasm')" ]; then
     task build:wasi
 fi
 
-if git status --porcelain | grep -q "^.* components/"; then
-    echo "Found pending changes in components/*, building"
+if git status --porcelain | grep -v "bindings.rs" | grep -q "^.* components/"; then
+    echo "Found pending changes in components/* (excluding bindings.rs), building"
     task build:wasi
 fi
 
