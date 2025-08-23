@@ -6,7 +6,6 @@
 
 # docker volume rm $(docker volume ls -q -f "dangling=true")
 
-
 services:
   warg-server:
     image: "ghcr.io/reecepbcups/warg-registry:v0.9.3"
@@ -35,3 +34,22 @@ services:
     stop_signal: SIGKILL
     command: daemon
     restart: unless-stopped
+
+  ollama:
+    image: "ollama/ollama"
+    container_name: "ollama"
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        ollama serve &
+        sleep 5
+        ollama pull llama3.2
+        wait
+    restart: unless-stopped
+
+volumes:
+  ollama-data:
