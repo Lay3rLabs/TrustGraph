@@ -250,7 +250,17 @@ This script automates the complete WAVS deployment process in a single command:
 **Result:** A fully operational WAVS service that monitors blockchain events, executes WebAssembly components, and submits verified results on-chain.
 
 ```bash
+export PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+forge script script/DeployPOAServiceManagerMinimal.s.sol:DeployPOAServiceManagerMinimal --rpc-url http://localhost:8545 --broadcast
+export WAVS_SERVICE_MANAGER_ADDRESS=$(jq -r '.poaValidatorSetContract' .docker/poa_deployment.json)
+
 task deploy:full
+
+# OPERATOR_NUM is the index of the infra/wavs-###/.env
+POA_PK=${PRIVATE_KEY} OPERATOR_NUM=1 OPERATOR_WEIGHT=10 task operator:whitelist
+
+OPERATOR_NUM=1 task operator:register
+OPERATOR_NUM=1 task operator:verify
 ```
 
 # EAS Attestation Demo

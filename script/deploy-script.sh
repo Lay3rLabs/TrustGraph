@@ -1,5 +1,6 @@
 #!/bin/bash
 # set -e
+# set -x
 
 warg reset
 
@@ -28,8 +29,11 @@ export DEPLOYER_PK=$(cat .nodes/deployer)
 sleep 1
 
 ## Deploy Eigenlayer from Deployer
-COMMAND=deploy task docker:middleware
-sleep 1
+# COMMAND=deploy task docker:middleware
+# since we are no longer using the middleware, we manually fund the DEPLOYER_PK
+cast rpc anvil_setBalance `cast wallet address ${DEPLOYER_PK}` '15000000000000000000' --rpc-url ${RPC_URL}
+
+# sleep 1
 
 ### === Deploy Contracts === ###
 
@@ -181,7 +185,7 @@ wget -q --header="Content-Type: application/json" --post-data="{\"uri\": \"${IPF
 ### === Start WAVS ===
 bash ./script/create-operator.sh 1
 IPFS_GATEWAY=${IPFS_GATEWAY} bash ./infra/wavs-1/start.sh
-sleep 10
+sleep 5
 
 # Deploy the service JSON to WAVS so it now watches and submits.
 # 'opt in' for WAVS to watch (this is before we register to Eigenlayer)
@@ -206,17 +210,6 @@ if [ "$(task get-deploy-status)" = "TESTNET" ]; then
         fi
     done
 fi
-
-export WAVS_SERVICE_MANAGER_ADDRESS=$(jq -r '.addresses.WavsServiceManager' ./.nodes/avs_deploy.json)
-
-source infra/wavs-1/.env
-export OPERATOR_KEY=`cast wallet private-key --mnemonic "$WAVS_SUBMISSION_MNEMONIC" --mnemonic-index 0`
-export WAVS_SIGNING_KEY=`cast wallet address --mnemonic-path "$WAVS_SUBMISSION_MNEMONIC" --mnemonic-index 1`
-export WAVS_DELEGATE_AMOUNT=`cast --to-unit 0.001ether`
-OPERATOR_KEY=${OPERATOR_KEY} WAVS_SIGNING_KEY=${WAVS_SIGNING_KEY} WAVS_DELEGATE_AMOUNT=${WAVS_DELEGATE_AMOUNT} make wavs-middleware COMMAND="register"
-
-# Verify registration
-COMMAND="list_operators" PAST_BLOCKS=500 make wavs-middleware
 
 # Reset registry after deployment is complete
 echo "Cleaning up registry data..."
