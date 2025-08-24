@@ -65,6 +65,18 @@ const writings: Writing[] = [
     status: "published",
     filename: "Article4.md",
     slug: "post-individual-society"
+  },
+  {
+    id: "5",
+    title: "Symbient Society",
+    author: "Mutualistic Networks Collective",
+    date: "2024.02.10",
+    excerpt: "The Mutualistic Path Beyond Human. Symbiosis > Singularity. Not post-human but pan-human. Not leaving biology behind but weaving it forward...",
+    tags: ["symbiosis", "mutualism", "collaboration"],
+    type: "theory",
+    status: "published",
+    filename: "Article5.md",
+    slug: "symbient-society"
   }
 ];
 
