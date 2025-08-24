@@ -69,6 +69,11 @@ tasks:
         echo "🔑 Operator Address: ${OPERATOR_ADDRESS}"
         echo "🔑 Signing Key: ${WAVS_SIGNING_KEY}"
 
+        if [ -z "${WAVS_SERVICE_MANAGER_ADDRESS}" ]; then
+          WAVS_SERVICE_MANAGER_ADDRESS=$(jq -r '.contract' .docker/poa_sm_deploy.json)
+          echo "ℹ️ Using WAVS Service Manager address: ${WAVS_SERVICE_MANAGER_ADDRESS}"
+        fi
+
         echo "🔐 Setting signing key..."
         cast send ${WAVS_SERVICE_MANAGER_ADDRESS} "setSigningKey(address)" ${WAVS_SIGNING_KEY} \
           --private-key ${OPERATOR_KEY} \

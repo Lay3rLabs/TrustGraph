@@ -32,7 +32,10 @@ export FUNDED_KEY=$(task config:funded-key)
 
 echo "🟢 Deploying POA Service Manager..."
 forge script script/DeployPOAServiceManager.s.sol:DeployPOAServiceManager --rpc-url ${RPC_URL} --broadcast
-export WAVS_SERVICE_MANAGER_ADDRESS=$(jq -r '.contract' .docker/poa_sm_deploy.json)
+if [ -z "${WAVS_SERVICE_MANAGER_ADDRESS}" ]; then
+    WAVS_SERVICE_MANAGER_ADDRESS=$(jq -r '.contract' .docker/poa_sm_deploy.json)
+    echo "ℹ️ Using WAVS Service Manager address: ${WAVS_SERVICE_MANAGER_ADDRESS}"
+fi
 
 ### === Deploy Contracts === ###
 
