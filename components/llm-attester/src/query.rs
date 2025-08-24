@@ -6,6 +6,7 @@ use alloy_rpc_types::TransactionInput;
 use alloy_sol_types::{sol, SolCall};
 use std::str::FromStr;
 use wavs_wasi_utils::evm::{alloy_primitives::TxKind, new_evm_provider};
+use wstd::runtime::block_on;
 
 // Solidity interface definitions for EAS
 sol! {
@@ -38,43 +39,45 @@ sol! {
 ///
 /// # Returns
 /// The attestation data if found, or an error message
-pub async fn query_attestation(
+pub fn query_attestation(
     eas_address: &str,
     attestation_uid: FixedBytes<32>,
     chain_name: &str,
 ) -> Result<AttestationStruct, String> {
-    // Get chain configuration
-    let chain_config = get_evm_chain_config(chain_name)
-        .ok_or_else(|| format!("Failed to get chain config for {}", chain_name))?;
+    block_on(async move {
+        // Get chain configuration
+        let chain_config = get_evm_chain_config(chain_name)
+            .ok_or_else(|| format!("Failed to get chain config for {}", chain_name))?;
 
-    // Create provider for the chain
-    let provider = new_evm_provider::<Ethereum>(
-        chain_config.http_endpoint.ok_or_else(|| "No HTTP endpoint configured".to_string())?,
-    );
+        // Create provider for the chain
+        let provider = new_evm_provider::<Ethereum>(
+            chain_config.http_endpoint.ok_or_else(|| "No HTTP endpoint configured".to_string())?,
+        );
 
-    // Parse EAS contract address
-    let eas_addr =
-        Address::from_str(eas_address).map_err(|e| format!("Invalid EAS address: {}", e))?;
+        // Parse EAS contract address
+        let eas_addr =
+            Address::from_str(eas_address).map_err(|e| format!("Invalid EAS address: {}", e))?;
 
-    // Prepare the getAttestation call
-    let call = IEAS::getAttestationCall { uid: attestation_uid };
+        // Prepare the getAttestation call
+        let call = IEAS::getAttestationCall { uid: attestation_uid };
 
-    // Create transaction request
-    let tx = alloy_rpc_types::eth::TransactionRequest {
-        to: Some(TxKind::Call(eas_addr)),
-        input: TransactionInput { input: Some(call.abi_encode().into()), data: None },
-        ..Default::default()
-    };
+        // Create transaction request
+        let tx = alloy_rpc_types::eth::TransactionRequest {
+            to: Some(TxKind::Call(eas_addr)),
+            input: TransactionInput { input: Some(call.abi_encode().into()), data: None },
+            ..Default::default()
+        };
 
-    // Execute the call
-    let result =
-        provider.call(tx).await.map_err(|e| format!("Failed to call EAS contract: {}", e))?;
+        // Execute the call
+        let result =
+            provider.call(tx).await.map_err(|e| format!("Failed to call EAS contract: {}", e))?;
 
-    // Decode the result
-    let decoded = IEAS::getAttestationCall::abi_decode_returns(&result)
-        .map_err(|e| format!("Failed to decode attestation: {}", e))?;
+        // Decode the result
+        let decoded = IEAS::getAttestationCall::abi_decode_returns(&result)
+            .map_err(|e| format!("Failed to decode attestation: {}", e))?;
 
-    Ok(decoded)
+        Ok(decoded)
+    })
 }
 
 /// Check if an attestation UID is valid (non-zero)
