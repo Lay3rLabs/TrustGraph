@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import {Test} from "forge-std/Test.sol";
-import {PoAValidatorSet} from "src/contracts/POAServiceManagerMinimal.sol";
+import {POAServiceManager} from "src/contracts/POAServiceManager.sol";
 import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
 import {IWavsServiceHandler} from "@wavs/interfaces/IWavsServiceHandler.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
@@ -12,11 +12,11 @@ uint256 constant OPERATOR_WEIGHT = 100;
 /**
  * @title POAServiceManagerMinimalTest
  * @author Lay3rLabs
- * @notice This contract contains tests for the PoAValidatorSet contract.
- * @dev This contract is used to test the PoAValidatorSet contract functionality.
+ * @notice This contract contains tests for the POAServiceManager contract.
+ * @dev This contract is used to test the POAServiceManager contract functionality.
  */
 contract POAServiceManagerMinimalTest is Test {
-    PoAValidatorSet public validatorSet;
+    POAServiceManager public poaServiceManager;
 
     address public owner = address(0x123);
     address public nonOwner = address(0x456);
@@ -41,7 +41,7 @@ contract POAServiceManagerMinimalTest is Test {
 
     function setUp() public {
         vm.startPrank(owner);
-        validatorSet = new PoAValidatorSet();
+        poaServiceManager = new POAServiceManager();
         vm.stopPrank();
 
         // Initialize private keys and corresponding signing key addresses
@@ -64,11 +64,11 @@ contract POAServiceManagerMinimalTest is Test {
     /* solhint-disable func-name-mixedcase */
     function test_initial_state() public view {
         /* solhint-enable func-name-mixedcase */
-        assertEq(validatorSet.owner(), owner, "Initial owner should match");
-        assertEq(validatorSet.quorumNumerator(), 2, "Initial quorum numerator should be 2");
-        assertEq(validatorSet.quorumDenominator(), 3, "Initial quorum denominator should be 3");
-        assertEq(validatorSet.getTotalWeight(), 0, "Initial total weight should be 0");
-        assertEq(validatorSet.getServiceURI(), "", "Initial service URI should be empty");
+        assertEq(poaServiceManager.owner(), owner, "Initial owner should match");
+        assertEq(poaServiceManager.quorumNumerator(), 2, "Initial quorum numerator should be 2");
+        assertEq(poaServiceManager.quorumDenominator(), 3, "Initial quorum denominator should be 3");
+        assertEq(poaServiceManager.getTotalWeight(), 0, "Initial total weight should be 0");
+        assertEq(poaServiceManager.getServiceURI(), "", "Initial service URI should be empty");
     }
 
     /* solhint-disable func-name-mixedcase */
@@ -77,13 +77,13 @@ contract POAServiceManagerMinimalTest is Test {
         vm.startPrank(owner);
 
         vm.expectEmit(true, false, false, true);
-        emit PoAValidatorSet.OperatorWhitelisted(operator1, OPERATOR_WEIGHT);
+        emit POAServiceManager.OperatorWhitelisted(operator1, OPERATOR_WEIGHT);
 
-        validatorSet.whitelistOperator(operator1, OPERATOR_WEIGHT);
+        poaServiceManager.whitelistOperator(operator1, OPERATOR_WEIGHT);
 
-        assertEq(validatorSet.getOperatorWeight(operator1), OPERATOR_WEIGHT, "Operator weight should be set");
-        assertEq(validatorSet.getTotalWeight(), OPERATOR_WEIGHT, "Total weight should be updated");
-        assertTrue(validatorSet.isOperatorWhitelisted(operator1), "Operator should be whitelisted");
+        assertEq(poaServiceManager.getOperatorWeight(operator1), OPERATOR_WEIGHT, "Operator weight should be set");
+        assertEq(poaServiceManager.getTotalWeight(), OPERATOR_WEIGHT, "Total weight should be updated");
+        assertTrue(poaServiceManager.isOperatorWhitelisted(operator1), "Operator should be whitelisted");
 
         vm.stopPrank();
     }
@@ -93,8 +93,8 @@ contract POAServiceManagerMinimalTest is Test {
         /* solhint-enable func-name-mixedcase */
         vm.startPrank(owner);
 
-        vm.expectRevert(PoAValidatorSet.InvalidOperatorAddress.selector);
-        validatorSet.whitelistOperator(address(0), OPERATOR_WEIGHT);
+        vm.expectRevert(POAServiceManager.InvalidOperatorAddress.selector);
+        poaServiceManager.whitelistOperator(address(0), OPERATOR_WEIGHT);
 
         vm.stopPrank();
     }
@@ -104,8 +104,8 @@ contract POAServiceManagerMinimalTest is Test {
         /* solhint-enable func-name-mixedcase */
         vm.startPrank(owner);
 
-        vm.expectRevert(PoAValidatorSet.InvalidOperatorAddress.selector);
-        validatorSet.whitelistOperator(operator1, 0);
+        vm.expectRevert(POAServiceManager.InvalidOperatorAddress.selector);
+        poaServiceManager.whitelistOperator(operator1, 0);
 
         vm.stopPrank();
     }
@@ -115,10 +115,10 @@ contract POAServiceManagerMinimalTest is Test {
         /* solhint-enable func-name-mixedcase */
         vm.startPrank(owner);
 
-        validatorSet.whitelistOperator(operator1, OPERATOR_WEIGHT);
+        poaServiceManager.whitelistOperator(operator1, OPERATOR_WEIGHT);
 
-        vm.expectRevert(PoAValidatorSet.OperatorAlreadyWhitelisted.selector);
-        validatorSet.whitelistOperator(operator1, OPERATOR_WEIGHT);
+        vm.expectRevert(POAServiceManager.OperatorAlreadyWhitelisted.selector);
+        poaServiceManager.whitelistOperator(operator1, OPERATOR_WEIGHT);
 
         vm.stopPrank();
     }
@@ -129,7 +129,7 @@ contract POAServiceManagerMinimalTest is Test {
         vm.startPrank(nonOwner);
 
         vm.expectRevert();
-        validatorSet.whitelistOperator(operator1, OPERATOR_WEIGHT);
+        poaServiceManager.whitelistOperator(operator1, OPERATOR_WEIGHT);
 
         vm.stopPrank();
     }
@@ -139,17 +139,17 @@ contract POAServiceManagerMinimalTest is Test {
         /* solhint-enable func-name-mixedcase */
         vm.startPrank(owner);
 
-        validatorSet.whitelistOperator(operator1, OPERATOR_WEIGHT);
-        assertEq(validatorSet.getTotalWeight(), OPERATOR_WEIGHT, "Total weight should be OPERATOR_WEIGHT");
+        poaServiceManager.whitelistOperator(operator1, OPERATOR_WEIGHT);
+        assertEq(poaServiceManager.getTotalWeight(), OPERATOR_WEIGHT, "Total weight should be OPERATOR_WEIGHT");
 
         vm.expectEmit(true, false, false, true);
-        emit PoAValidatorSet.OperatorRemoved(operator1);
+        emit POAServiceManager.OperatorRemoved(operator1);
 
-        validatorSet.removeOperator(operator1);
+        poaServiceManager.removeOperator(operator1);
 
-        assertEq(validatorSet.getOperatorWeight(operator1), 0, "Operator weight should be 0");
-        assertEq(validatorSet.getTotalWeight(), 0, "Total weight should be 0");
-        assertFalse(validatorSet.isOperatorWhitelisted(operator1), "Operator should not be whitelisted");
+        assertEq(poaServiceManager.getOperatorWeight(operator1), 0, "Operator weight should be 0");
+        assertEq(poaServiceManager.getTotalWeight(), 0, "Total weight should be 0");
+        assertFalse(poaServiceManager.isOperatorWhitelisted(operator1), "Operator should not be whitelisted");
 
         vm.stopPrank();
     }
@@ -158,22 +158,22 @@ contract POAServiceManagerMinimalTest is Test {
     function test_removeOperator_with_signing_key() public {
         /* solhint-enable func-name-mixedcase */
         vm.startPrank(owner);
-        validatorSet.whitelistOperator(operator1, OPERATOR_WEIGHT);
+        poaServiceManager.whitelistOperator(operator1, OPERATOR_WEIGHT);
         vm.stopPrank();
 
         vm.startPrank(operator1);
-        validatorSet.setSigningKey(signingKey1);
+        poaServiceManager.setSigningKey(signingKey1);
         vm.stopPrank();
 
-        assertEq(validatorSet.getSigningKey(operator1), signingKey1, "Signing key should be set");
-        assertEq(validatorSet.getOperator(signingKey1), operator1, "Operator should be mapped to signing key");
+        assertEq(poaServiceManager.getLatestSigningKeyForOperator(operator1), signingKey1, "Signing key should be set");
+        assertEq(poaServiceManager.getLatestOperatorForSigningKey(signingKey1), operator1, "Operator should be mapped to signing key");
 
         vm.startPrank(owner);
-        validatorSet.removeOperator(operator1);
+        poaServiceManager.removeOperator(operator1);
         vm.stopPrank();
 
-        assertEq(validatorSet.getSigningKey(operator1), address(0), "Signing key should be cleared");
-        assertEq(validatorSet.getOperator(signingKey1), address(0), "Operator mapping should be cleared");
+        assertEq(poaServiceManager.getLatestSigningKeyForOperator(operator1), address(0), "Signing key should be cleared");
+        assertEq(poaServiceManager.getLatestOperatorForSigningKey(signingKey1), address(0), "Operator mapping should be cleared");
     }
 
     /* solhint-disable func-name-mixedcase */
@@ -181,8 +181,8 @@ contract POAServiceManagerMinimalTest is Test {
         /* solhint-enable func-name-mixedcase */
         vm.startPrank(owner);
 
-        vm.expectRevert(PoAValidatorSet.OperatorNotWhitelisted.selector);
-        validatorSet.removeOperator(operator1);
+        vm.expectRevert(POAServiceManager.OperatorNotWhitelisted.selector);
+        poaServiceManager.removeOperator(operator1);
 
         vm.stopPrank();
     }
@@ -192,11 +192,11 @@ contract POAServiceManagerMinimalTest is Test {
         /* solhint-enable func-name-mixedcase */
         vm.startPrank(owner);
 
-        validatorSet.whitelistOperator(operator1, OPERATOR_WEIGHT);
-        validatorSet.updateOperatorWeight(operator1, OPERATOR_WEIGHT * 2);
+        poaServiceManager.whitelistOperator(operator1, OPERATOR_WEIGHT);
+        poaServiceManager.updateOperatorWeight(operator1, OPERATOR_WEIGHT * 2);
 
-        assertEq(validatorSet.getOperatorWeight(operator1), OPERATOR_WEIGHT * 2, "Weight should be doubled");
-        assertEq(validatorSet.getTotalWeight(), OPERATOR_WEIGHT * 2, "Total weight should be doubled");
+        assertEq(poaServiceManager.getOperatorWeight(operator1), OPERATOR_WEIGHT * 2, "Weight should be doubled");
+        assertEq(poaServiceManager.getTotalWeight(), OPERATOR_WEIGHT * 2, "Total weight should be doubled");
 
         vm.stopPrank();
     }
@@ -206,11 +206,11 @@ contract POAServiceManagerMinimalTest is Test {
         /* solhint-enable func-name-mixedcase */
         vm.startPrank(owner);
 
-        validatorSet.whitelistOperator(operator1, OPERATOR_WEIGHT);
-        validatorSet.updateOperatorWeight(operator1, OPERATOR_WEIGHT / 2);
+        poaServiceManager.whitelistOperator(operator1, OPERATOR_WEIGHT);
+        poaServiceManager.updateOperatorWeight(operator1, OPERATOR_WEIGHT / 2);
 
-        assertEq(validatorSet.getOperatorWeight(operator1), OPERATOR_WEIGHT / 2, "Weight should be halved");
-        assertEq(validatorSet.getTotalWeight(), OPERATOR_WEIGHT / 2, "Total weight should be halved");
+        assertEq(poaServiceManager.getOperatorWeight(operator1), OPERATOR_WEIGHT / 2, "Weight should be halved");
+        assertEq(poaServiceManager.getTotalWeight(), OPERATOR_WEIGHT / 2, "Total weight should be halved");
 
         vm.stopPrank();
     }
@@ -220,8 +220,8 @@ contract POAServiceManagerMinimalTest is Test {
         /* solhint-enable func-name-mixedcase */
         vm.startPrank(owner);
 
-        vm.expectRevert(PoAValidatorSet.OperatorNotWhitelisted.selector);
-        validatorSet.updateOperatorWeight(operator1, OPERATOR_WEIGHT);
+        vm.expectRevert(POAServiceManager.OperatorNotWhitelisted.selector);
+        poaServiceManager.updateOperatorWeight(operator1, OPERATOR_WEIGHT);
 
         vm.stopPrank();
     }
@@ -230,19 +230,19 @@ contract POAServiceManagerMinimalTest is Test {
     function test_setSigningKey_success() public {
         /* solhint-enable func-name-mixedcase */
         vm.startPrank(owner);
-        validatorSet.whitelistOperator(operator1, OPERATOR_WEIGHT);
+        poaServiceManager.whitelistOperator(operator1, OPERATOR_WEIGHT);
         vm.stopPrank();
 
         vm.startPrank(operator1);
 
         vm.expectEmit(true, true, false, true);
-        emit PoAValidatorSet.SigningKeySet(operator1, signingKey1);
+        emit POAServiceManager.SigningKeySet(operator1, signingKey1);
 
-        validatorSet.setSigningKey(signingKey1);
+        poaServiceManager.setSigningKey(signingKey1);
 
-        assertEq(validatorSet.getSigningKey(operator1), signingKey1, "Signing key should be set");
-        assertEq(validatorSet.getOperator(signingKey1), operator1, "Operator should be mapped to signing key");
-        assertEq(validatorSet.getLatestOperatorForSigningKey(signingKey1), operator1, "Latest operator should match");
+        assertEq(poaServiceManager.getLatestSigningKeyForOperator(operator1), signingKey1, "Signing key should be set");
+        assertEq(poaServiceManager.getLatestOperatorForSigningKey(signingKey1), operator1, "Operator should be mapped to signing key");
+        assertEq(poaServiceManager.getLatestOperatorForSigningKey(signingKey1), operator1, "Latest operator should match");
 
         vm.stopPrank();
     }
@@ -252,8 +252,8 @@ contract POAServiceManagerMinimalTest is Test {
         /* solhint-enable func-name-mixedcase */
         vm.startPrank(operator1);
 
-        vm.expectRevert(PoAValidatorSet.OperatorNotWhitelisted.selector);
-        validatorSet.setSigningKey(signingKey1);
+        vm.expectRevert(POAServiceManager.OperatorNotWhitelisted.selector);
+        poaServiceManager.setSigningKey(signingKey1);
 
         vm.stopPrank();
     }
@@ -262,13 +262,13 @@ contract POAServiceManagerMinimalTest is Test {
     function test_setSigningKey_revert_cannot_use_operator_as_signing_key() public {
         /* solhint-enable func-name-mixedcase */
         vm.startPrank(owner);
-        validatorSet.whitelistOperator(operator1, OPERATOR_WEIGHT);
+        poaServiceManager.whitelistOperator(operator1, OPERATOR_WEIGHT);
         vm.stopPrank();
 
         vm.startPrank(operator1);
 
-        vm.expectRevert(PoAValidatorSet.CannotUseOperatorAsSigningKey.selector);
-        validatorSet.setSigningKey(operator1);
+        vm.expectRevert(POAServiceManager.CannotUseOperatorAsSigningKey.selector);
+        poaServiceManager.setSigningKey(operator1);
 
         vm.stopPrank();
     }
@@ -277,14 +277,14 @@ contract POAServiceManagerMinimalTest is Test {
     function test_setSigningKey_revert_already_has_signing_key() public {
         /* solhint-enable func-name-mixedcase */
         vm.startPrank(owner);
-        validatorSet.whitelistOperator(operator1, OPERATOR_WEIGHT);
+        poaServiceManager.whitelistOperator(operator1, OPERATOR_WEIGHT);
         vm.stopPrank();
 
         vm.startPrank(operator1);
-        validatorSet.setSigningKey(signingKey1);
+        poaServiceManager.setSigningKey(signingKey1);
 
-        vm.expectRevert(PoAValidatorSet.AlreadyHasSigningKey.selector);
-        validatorSet.setSigningKey(signingKey2);
+        vm.expectRevert(POAServiceManager.AlreadyHasSigningKey.selector);
+        poaServiceManager.setSigningKey(signingKey2);
 
         vm.stopPrank();
     }
@@ -293,25 +293,25 @@ contract POAServiceManagerMinimalTest is Test {
     function test_setSigningKey_revert_signing_key_already_used() public {
         /* solhint-enable func-name-mixedcase */
         vm.startPrank(owner);
-        validatorSet.whitelistOperator(operator1, OPERATOR_WEIGHT);
-        validatorSet.whitelistOperator(operator2, OPERATOR_WEIGHT);
+        poaServiceManager.whitelistOperator(operator1, OPERATOR_WEIGHT);
+        poaServiceManager.whitelistOperator(operator2, OPERATOR_WEIGHT);
         vm.stopPrank();
 
         vm.startPrank(operator1);
-        validatorSet.setSigningKey(signingKey1);
+        poaServiceManager.setSigningKey(signingKey1);
         vm.stopPrank();
 
         vm.startPrank(operator2);
-        vm.expectRevert(PoAValidatorSet.SigningKeyAlreadyUsed.selector);
-        validatorSet.setSigningKey(signingKey1);
+        vm.expectRevert(POAServiceManager.SigningKeyAlreadyUsed.selector);
+        poaServiceManager.setSigningKey(signingKey1);
         vm.stopPrank();
     }
 
     /* solhint-disable func-name-mixedcase */
     function test_getLatestOperatorForSigningKey_revert_not_exist() public {
         /* solhint-enable func-name-mixedcase */
-        vm.expectRevert(PoAValidatorSet.OperatorDoesNotExistForSigningKey.selector);
-        validatorSet.getLatestOperatorForSigningKey(signingKey1);
+        vm.expectRevert(POAServiceManager.OperatorDoesNotExistForSigningKey.selector);
+        poaServiceManager.getLatestOperatorForSigningKey(signingKey1);
     }
 
     /* solhint-disable func-name-mixedcase */
@@ -322,10 +322,10 @@ contract POAServiceManagerMinimalTest is Test {
         vm.expectEmit(false, false, false, true);
         emit IWavsServiceManager.QuorumThresholdUpdated(3, 5);
 
-        validatorSet.setQuorumThreshold(3, 5);
+        poaServiceManager.setQuorumThreshold(3, 5);
 
-        assertEq(validatorSet.quorumNumerator(), 3, "Quorum numerator should be updated");
-        assertEq(validatorSet.quorumDenominator(), 5, "Quorum denominator should be updated");
+        assertEq(poaServiceManager.quorumNumerator(), 3, "Quorum numerator should be updated");
+        assertEq(poaServiceManager.quorumDenominator(), 5, "Quorum denominator should be updated");
 
         vm.stopPrank();
     }
@@ -336,7 +336,7 @@ contract POAServiceManagerMinimalTest is Test {
         vm.startPrank(owner);
 
         vm.expectRevert(IWavsServiceManager.InvalidQuorumParameters.selector);
-        validatorSet.setQuorumThreshold(0, 5);
+        poaServiceManager.setQuorumThreshold(0, 5);
 
         vm.stopPrank();
     }
@@ -347,7 +347,7 @@ contract POAServiceManagerMinimalTest is Test {
         vm.startPrank(owner);
 
         vm.expectRevert(IWavsServiceManager.InvalidQuorumParameters.selector);
-        validatorSet.setQuorumThreshold(3, 0);
+        poaServiceManager.setQuorumThreshold(3, 0);
 
         vm.stopPrank();
     }
@@ -358,7 +358,7 @@ contract POAServiceManagerMinimalTest is Test {
         vm.startPrank(owner);
 
         vm.expectRevert(IWavsServiceManager.InvalidQuorumParameters.selector);
-        validatorSet.setQuorumThreshold(6, 5);
+        poaServiceManager.setQuorumThreshold(6, 5);
 
         vm.stopPrank();
     }
@@ -369,7 +369,7 @@ contract POAServiceManagerMinimalTest is Test {
         vm.startPrank(nonOwner);
 
         vm.expectRevert();
-        validatorSet.setQuorumThreshold(3, 5);
+        poaServiceManager.setQuorumThreshold(3, 5);
 
         vm.stopPrank();
     }
@@ -382,9 +382,9 @@ contract POAServiceManagerMinimalTest is Test {
         vm.expectEmit(false, false, false, true);
         emit IWavsServiceManager.ServiceURIUpdated(testURI);
 
-        validatorSet.setServiceURI(testURI);
+        poaServiceManager.setServiceURI(testURI);
 
-        assertEq(validatorSet.getServiceURI(), testURI, "Service URI should be set");
+        assertEq(poaServiceManager.getServiceURI(), testURI, "Service URI should be set");
     }
 
     /* solhint-disable func-name-mixedcase */
@@ -406,7 +406,7 @@ contract POAServiceManagerMinimalTest is Test {
         });
 
         vm.expectRevert(IWavsServiceManager.InvalidSignatureLength.selector);
-        validatorSet.validate(envelope, signatureData);
+        poaServiceManager.validate(envelope, signatureData);
     }
 
     /* solhint-disable func-name-mixedcase */
@@ -431,7 +431,7 @@ contract POAServiceManagerMinimalTest is Test {
         });
 
         vm.expectRevert(IWavsServiceManager.InvalidSignatureLength.selector);
-        validatorSet.validate(envelope, signatureData);
+        poaServiceManager.validate(envelope, signatureData);
     }
 
     /* solhint-disable func-name-mixedcase */
@@ -455,7 +455,7 @@ contract POAServiceManagerMinimalTest is Test {
         });
 
         vm.expectRevert(IWavsServiceManager.InvalidSignatureBlock.selector);
-        validatorSet.validate(envelope, signatureData);
+        poaServiceManager.validate(envelope, signatureData);
     }
 
     /* solhint-disable func-name-mixedcase */
@@ -481,24 +481,24 @@ contract POAServiceManagerMinimalTest is Test {
         });
 
         vm.expectRevert();
-        validatorSet.validate(envelope, signatureData);
+        poaServiceManager.validate(envelope, signatureData);
     }
 
     function _setupOperatorsWithSigningKeys() internal {
         vm.startPrank(owner);
-        validatorSet.whitelistOperator(operator1, OPERATOR_WEIGHT);
-        validatorSet.whitelistOperator(operator2, OPERATOR_WEIGHT);
-        validatorSet.whitelistOperator(operator3, OPERATOR_WEIGHT);
+        poaServiceManager.whitelistOperator(operator1, OPERATOR_WEIGHT);
+        poaServiceManager.whitelistOperator(operator2, OPERATOR_WEIGHT);
+        poaServiceManager.whitelistOperator(operator3, OPERATOR_WEIGHT);
         vm.stopPrank();
 
         vm.prank(operator1);
-        validatorSet.setSigningKey(signingKey1);
+        poaServiceManager.setSigningKey(signingKey1);
 
         vm.prank(operator2);
-        validatorSet.setSigningKey(signingKey2);
+        poaServiceManager.setSigningKey(signingKey2);
 
         vm.prank(operator3);
-        validatorSet.setSigningKey(signingKey3);
+        poaServiceManager.setSigningKey(signingKey3);
     }
 
     /* solhint-disable func-name-mixedcase */
@@ -516,7 +516,7 @@ contract POAServiceManagerMinimalTest is Test {
         IWavsServiceHandler.SignatureData memory signatureData = _createSignatureData(envelope, 2, 0);
 
         // Call validate - should not revert
-        validatorSet.validate(envelope, signatureData);
+        poaServiceManager.validate(envelope, signatureData);
     }
 
     /* solhint-disable func-name-mixedcase */
@@ -534,8 +534,8 @@ contract POAServiceManagerMinimalTest is Test {
         IWavsServiceHandler.SignatureData memory signatureData = _createSignatureData(envelope, 1, 0);
 
         // Should revert with insufficient signed stake (thrown by internal _checkSignatures)
-        vm.expectRevert(PoAValidatorSet.InsufficientSignedStake.selector);
-        validatorSet.validate(envelope, signatureData);
+        vm.expectRevert(POAServiceManager.InsufficientSignedStake.selector);
+        poaServiceManager.validate(envelope, signatureData);
     }
 
     /**

@@ -3,17 +3,17 @@ pragma solidity ^0.8.27;
 
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
-import {PoAValidatorSet} from "../src/contracts/POAServiceManagerMinimal.sol";
+import {POAServiceManager} from "../src/contracts/POAServiceManager.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 /**
- * @title DeployPOAServiceManagerMinimal
- * @notice Deployment script for the POAServiceManagerMinimal (PoAValidatorSet) contract
- * @dev Run with: forge script contracts/script/DeployPOAServiceManagerMinimal.s.sol --rpc-url <RPC_URL> --broadcast
+ * @title DeployPOAServiceManager
+ * @notice Deployment script for the POAServiceManagerMinimal (POAServiceManager) contract
+ * @dev Run with: forge script contracts/script/DeployPOAServiceManager.s.sol --rpc-url <RPC_URL> --broadcast
  */
-contract DeployPOAServiceManagerMinimal is Script {
-    /// @notice The deployed PoAValidatorSet contract
-    PoAValidatorSet public poaValidatorSet;
+contract DeployPOAServiceManager is Script {
+    /// @notice The deployed poaServiceManager contract
+    POAServiceManager public poaServiceManager;
 
     /// @notice Initial operators to whitelist with their weights
     struct InitialOperator {
@@ -24,7 +24,7 @@ contract DeployPOAServiceManagerMinimal is Script {
     function run() external {
         // Get the private key from environment or use default anvil key
         uint256 deployerPrivateKey = vm.envOr(
-            "PRIVATE_KEY",
+            "FUNDED_KEY",
             uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80)
         );
 
@@ -35,14 +35,14 @@ contract DeployPOAServiceManagerMinimal is Script {
         // Start broadcasting transactions
         vm.startBroadcast(deployerPrivateKey);
 
-        // Deploy the PoAValidatorSet contract
-        poaValidatorSet = new PoAValidatorSet();
-        console2.log("PoAValidatorSet deployed at:", address(poaValidatorSet));
+        // Deploy the POAServiceManager contract
+        poaServiceManager = new POAServiceManager();
+        console2.log("POAServiceManager deployed at:", address(poaServiceManager));
 
         // Set service URI (optional)
         string memory serviceURI = vm.envOr("SERVICE_URI", string(""));
         if (bytes(serviceURI).length > 0) {
-            poaValidatorSet.setServiceURI(serviceURI);
+            poaServiceManager.setServiceURI(serviceURI);
             console2.log("Service URI set to:", serviceURI);
         }
 
@@ -50,7 +50,7 @@ contract DeployPOAServiceManagerMinimal is Script {
         uint256 quorumNumerator = vm.envOr("QUORUM_NUMERATOR", uint256(2));
         uint256 quorumDenominator = vm.envOr("QUORUM_DENOMINATOR", uint256(3));
         if (quorumNumerator != 2 || quorumDenominator != 3) {
-            poaValidatorSet.setQuorumThreshold(quorumNumerator, quorumDenominator);
+            poaServiceManager.setQuorumThreshold(quorumNumerator, quorumDenominator);
             console2.log("Quorum threshold set to:", quorumNumerator, "/", quorumDenominator);
         }
 
@@ -63,7 +63,7 @@ contract DeployPOAServiceManagerMinimal is Script {
 
             for (uint256 i = 0; i < operators.length; i++) {
                 if (operators[i] != address(0) && weights[i] > 0) {
-                    poaValidatorSet.whitelistOperator(operators[i], weights[i]);
+                    poaServiceManager.whitelistOperator(operators[i], weights[i]);
                     console2.log("Whitelisted operator:", operators[i], "with weight:", weights[i]);
                 }
             }
@@ -123,17 +123,17 @@ contract DeployPOAServiceManagerMinimal is Script {
         string memory json = "deployment";
 
         // Add contract address
-        vm.serializeAddress(json, "poaValidatorSetContract", address(poaValidatorSet));
+        vm.serializeAddress(json, "contract", address(poaServiceManager));
 
         // Add owner
-        vm.serializeAddress(json, "owner", poaValidatorSet.owner());
+        vm.serializeAddress(json, "owner", poaServiceManager.owner());
 
         // Add quorum settings
-        vm.serializeUint(json, "quorumNumerator", poaValidatorSet.quorumNumerator());
-        vm.serializeUint(json, "quorumDenominator", poaValidatorSet.quorumDenominator());
+        vm.serializeUint(json, "quorumNumerator", poaServiceManager.quorumNumerator());
+        vm.serializeUint(json, "quorumDenominator", poaServiceManager.quorumDenominator());
 
         // Add service URI
-        vm.serializeString(json, "serviceURI", poaValidatorSet.getServiceURI());
+        vm.serializeString(json, "serviceURI", poaServiceManager.getServiceURI());
 
         // Add deployment block and timestamp
         vm.serializeUint(json, "deploymentBlock", block.number);
@@ -143,7 +143,7 @@ contract DeployPOAServiceManagerMinimal is Script {
         string memory finalJson = vm.serializeUint(json, "chainId", block.chainid);
 
         // Write the JSON to file in ../.docker directory (relative to contracts folder)
-        string memory filePath = string.concat(vm.projectRoot(), "/.docker/poa_deployment.json");
+        string memory filePath = string.concat(vm.projectRoot(), "/.docker/poa_sm_deploy.json");
         vm.writeJson(finalJson, filePath);
 
         console2.log("Deployment info saved to:", filePath);
@@ -154,12 +154,12 @@ contract DeployPOAServiceManagerMinimal is Script {
      */
     function _logDeploymentSummary() internal view {
         console2.log("\n========== Deployment Summary ==========");
-        console2.log("PoAValidatorSet:", address(poaValidatorSet));
-        console2.log("Owner:", poaValidatorSet.owner());
-        console2.log("Quorum Numerator:", poaValidatorSet.quorumNumerator());
-        console2.log("Quorum Denominator:", poaValidatorSet.quorumDenominator());
+        console2.log("POAServiceManager:", address(poaServiceManager));
+        console2.log("Owner:", poaServiceManager.owner());
+        console2.log("Quorum Numerator:", poaServiceManager.quorumNumerator());
+        console2.log("Quorum Denominator:", poaServiceManager.quorumDenominator());
 
-        string memory uri = poaValidatorSet.getServiceURI();
+        string memory uri = poaServiceManager.getServiceURI();
         if (bytes(uri).length > 0) {
             console2.log("Service URI:", uri);
         }

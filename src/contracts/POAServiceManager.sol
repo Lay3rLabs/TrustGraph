@@ -7,29 +7,13 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import {SignerECDSAUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/signers/SignerECDSAUpgradeable.sol";
+import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
+import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
-// ORIGINAL SOURCE: https://github.com/Lay3rLabs/wavs-bridge/pull/84/files
-
-/**
- * Openzepplin-contracts-upgradable v4.9.0 contracts/interfaces/IERC1271Upgradeable.sol
- * @dev Interface of the ERC1271 standard signature validation method for
- * contracts as defined in https://eips.ethereum.org/EIPS/eip-1271[ERC-1271].
- *
- * _Available since v4.1._
- */
-interface IERC1271Upgradeable {
-    /**
-     * @dev Should return whether the signature provided is valid for the provided data
-     * @param hash      Hash of the data to be signed
-     * @param signature Signature byte array associated with _data
-     */
-    function isValidSignature(bytes32 hash, bytes memory signature) external view returns (bytes4 magicValue);
-}
-
-// PoAValidatorSet is a contract that is a *really* minimal version of the contracts/src/eigenlayer/ecdsa/WavsServiceManager.sol
+// POAServiceManager is a contract that is a *really* minimal version of the contracts/src/eigenlayer/ecdsa/WavsServiceManager.sol
 // TODO(Jake): would be cool if we could have a WAVServiceManager + handler in 1. Not sure if we really want people to have to deploy both
 // TODO(reece): slashing could be done manually from owner (it's poa), rewards could be done with merkle drop / vault shares as payout.
-contract PoAValidatorSet is Ownable, ReentrancyGuard, IWavsServiceManager {
+contract POAServiceManager is Ownable, ReentrancyGuard, IWavsServiceManager {
     /// @notice The URI of the service
     string public serviceURI;
     /// @notice The numerator of the quorum threshold
@@ -37,24 +21,27 @@ contract PoAValidatorSet is Ownable, ReentrancyGuard, IWavsServiceManager {
     /// @notice The denominator of the quorum threshold
     uint256 public quorumDenominator;
 
-    // mapping of addresses to weights
+    /// @notice mapping of operator address to their weight
     mapping(address => uint256) private operatorWeights;
-    // array to track all operator addresses for pagination
+    /// @notice array to track all operator addresses for pagination
     address[] private operatorAddresses;
-    uint256 private totalWeight = 0;
+    /// @notice total weight of all operators (cache) of the operatorWeights map.
+    uint256 private totalWeight;
 
-    // operator address -> signing key link
+    /// @notice mapping of operator address -> signing key link
     mapping(address => address) private operatorSigningKeys;
-    // mapping of signing key -> operator address
+    /// @notice mapping of signing key -> operator address
     mapping(address => address) private signingKeyOperators;
 
+    // Errors
     error OperatorDoesNotExistForSigningKey();
+    error SingingKeyDoesNotExistForOperator();
     error OperatorAlreadyWhitelisted();
     error OperatorNotWhitelisted();
     error InvalidOperatorAddress();
     error InvalidOffset();
 
-    // sig verification
+    // Sig verification
     error LengthMismatch();
     error InvalidLength();
     error SignerNotRegistered();
@@ -62,180 +49,60 @@ contract PoAValidatorSet is Ownable, ReentrancyGuard, IWavsServiceManager {
     error InvalidSignedWeight();
     error InsufficientSignedStake();
 
+    // signing key
+    error AlreadyHasSigningKey();
+    error SigningKeyAlreadyUsed();
+    error CannotUseOperatorAsSigningKey();
+
+    // Events
+    event SigningKeySet(address indexed operator, address indexed signingKey);
+    event OperatorWhitelisted(address indexed operator, uint256 weight);
+    event OperatorRemoved(address indexed operator);
+
     constructor() Ownable(msg.sender) {
-        // TODO: move to initialize function call
+        // TODO: move to initialize function call?
+        totalWeight = 0;
         quorumNumerator = 2;
         quorumDenominator = 3;
-    }
-
-    function getOperatorWeight(
-        address operator
-    ) public view returns (uint256) {
-        return operatorWeights[operator];
-    }
-
-    function getOperator(address signingKey) public view returns (address) {
-        return signingKeyOperators[signingKey];
-    }
-
-    // TODO: issue, from eigen ECDSAStakeRegistry.sol (re: license)
-    function isValidSignature(
-        bytes32 digest,
-        bytes memory _signatureData
-    ) virtual public view returns (bytes4) {
-        (address[] memory operators, bytes[] memory signatures, uint32 referenceBlock) =
-            abi.decode(_signatureData, (address[], bytes[], uint32));
-        _checkSignatures(digest, operators, signatures, referenceBlock);
-        return IERC1271Upgradeable.isValidSignature.selector;
-    }
-
-    /**
-     * @notice Common logic to verify a batch of ECDSA signatures against a hash, using either last stake weight or at a specific block.
-     * @param digest The hash of the data the signers endorsed.
-     * @param signers A collection of signing key addresses that endorsed the data hash.
-     * @param signatures A collection of signatures matching the signers.
-     */
-    function _checkSignatures(
-        bytes32 digest,
-        address[] memory signers,
-        bytes[] memory signatures,
-        uint32 // referenceBlock not used since we are PoA and latest is always when we submit (for now at least)
-    ) internal view {
-        uint256 signersLength = signers.length;
-        address currentSigner;
-        address lastSigner;
-        address operator;
-        uint256 signedWeight;
-
-        if (signersLength != signatures.length) {
-            revert LengthMismatch();
-        }
-        if (signersLength == 0) {
-            revert InvalidLength();
-        }
-        for (uint256 i; i < signersLength; i++) {
-            currentSigner = signers[i];
-            operator = getOperator(currentSigner);
-            if (operator == address(0)) {
-                revert SignerNotRegistered();
-            }
-
-            if (lastSigner >= currentSigner) {
-                revert NotSorted();
-            }
-
-
-            // _validateSignature(currentSigner, digest, signatures[i]);
-            if( !SignatureChecker.isValidSignatureNow(currentSigner, digest, signatures[i])) {
-                revert InvalidSignature();
-            }
-
-            lastSigner = currentSigner;
-            uint256 operatorWeight = getOperatorWeight(operator);
-            signedWeight += operatorWeight;
-        }
-
-        // _validateThresholdStake(signedWeight, referenceBlock);
-        uint256 currentTotalWeight = _getTotalWeight();
-        if (signedWeight > currentTotalWeight) {
-            revert InvalidSignedWeight();
-        }
-        uint256 thresholdStake = _getThresholdStake();
-        if (thresholdStake > signedWeight) {
-            revert InsufficientSignedStake();
-        }
     }
 
     function validate(
         IWavsServiceHandler.Envelope calldata envelope,
         IWavsServiceHandler.SignatureData calldata signatureData
     ) external view override {
-        // Input validation
-        if (
-            signatureData.signers.length == 0
-                || signatureData.signers.length != signatureData.signatures.length
-        ) {
+        if (signatureData.signers.length == 0 || signatureData.signers.length != signatureData.signatures.length) {
             revert IWavsServiceManager.InvalidSignatureLength();
         }
         if (!(signatureData.referenceBlock < block.number)) {
             revert IWavsServiceManager.InvalidSignatureBlock();
         }
 
-        // Create message hash
         bytes32 message = keccak256(abi.encode(envelope));
-        bytes32 ethSignedMessageHash = toEthSignedMessageHash(message);
-
-        // Validate signatures through the stake registry
-        bytes4 magicValue = IERC1271Upgradeable.isValidSignature.selector;
+        bytes32 ethSignedMessageHash = MessageHashUtils.toEthSignedMessageHash(message);
         bytes memory signatureDataBytes = abi.encode(
             signatureData.signers, signatureData.signatures, signatureData.referenceBlock
         );
 
-        // Check signature validity
-        if (
-            // magicValue != ECDSAStakeRegistry(stakeRegistry).isValidSignature(ethSignedMessageHash, signatureDataBytes)
-            magicValue != isValidSignature(ethSignedMessageHash, signatureDataBytes)
-        ) {
+        bytes4 magicValue = IERC1271.isValidSignature.selector;
+        if (magicValue != isValidSignature(ethSignedMessageHash, signatureDataBytes)) {
             revert IWavsServiceManager.InvalidSignature();
         }
 
-        // // Calculate the total weight of the operators that signed
-        // IECDSAStakeRegistry registry = IECDSAStakeRegistry(stakeRegistry);
+        // Calculate the total weight of the operators that signed
         uint256 signedWeight = 0;
         for (uint256 i = 0; i < signatureData.signers.length; ++i) {
-            // address operator = registry.getOperatorForSigningKeyAtBlock(
-            //     signatureData.signers[i], signatureData.referenceBlock
-            // );
-            address operator = getOperator(signatureData.signers[i]);
-            // signedWeight +=
-            //     registry.getOperatorWeightAtBlock(operator, signatureData.referenceBlock);
+            address operator = getLatestOperatorForSigningKey(signatureData.signers[i]);
             signedWeight += getOperatorWeight(operator);
         }
 
-        // uint256 totalWeight =
-        //     registry.getLastCheckpointTotalWeightAtBlock(signatureData.referenceBlock);
-
         // Ensure sufficient quorum was reached
-        uint256 currentTotalWeight = _getTotalWeight();
-        _validateQuorumSigned(signedWeight, currentTotalWeight);
-    }
-
-    // openzeppelin-contracts-upgradable-v4.9.0 contracts/utils/cryptography/ECDSAUpgradable.sol
-   /**
-     * @dev Returns an Ethereum Signed Message, created from a `hash`. This
-     * produces hash corresponding to the one signed with the
-     * https://eth.wiki/json-rpc/API#eth_sign[`eth_sign`]
-     * JSON-RPC method as part of EIP-191.
-     *
-     * See {recover}.
-     */
-    function toEthSignedMessageHash(bytes32 hash) internal pure returns (bytes32 message) {
-        // 32 is the length in bytes of hash,
-        // enforced by the type signature above
-        /// @solidity memory-safe-assembly
-        assembly {
-            mstore(0x00, "\x19Ethereum Signed Message:\n32")
-            mstore(0x1c, hash)
-            message := keccak256(0x00, 0x3c)
-        }
-    }
-
-    /**
-     * @notice Validates that sufficient quorum has been reached
-     * @param signedWeight The total weight of operators who signed
-     * @param currentTotalWeight The total weight of all operators
-     * @dev Requires at least quorumNumerator/quorumDenominator of the total weight to have signed
-     */
-    function _validateQuorumSigned(uint256 signedWeight, uint256 currentTotalWeight) internal view {
-        // Avoid 0 weight ever passing this check
+        uint256 currentTotalWeight = getTotalWeight();
         if (currentTotalWeight == 0) {
             revert IWavsServiceManager.InsufficientQuorumZero();
         }
 
-        // Calculate threshold weight
-        uint256 thresholdWeight = (currentTotalWeight * quorumNumerator) / quorumDenominator;
-
         // Check if signedWeight >= thresholdWeight
+        uint256 thresholdWeight = (currentTotalWeight * quorumNumerator) / quorumDenominator;
         if (signedWeight < thresholdWeight) {
             revert IWavsServiceManager.InsufficientQuorum(
                 signedWeight, thresholdWeight, currentTotalWeight
@@ -243,27 +110,11 @@ contract PoAValidatorSet is Ownable, ReentrancyGuard, IWavsServiceManager {
         }
     }
 
-    function getServiceURI() external view override returns (string memory) {
-        return serviceURI;
-    }
-
-    function setServiceURI(string calldata _serviceURI) external override {
+    function setServiceURI(string calldata _serviceURI) external override onlyOwner {
         serviceURI = _serviceURI;
         emit ServiceURIUpdated(_serviceURI);
     }
 
-    function getLatestOperatorForSigningKey(
-        address signingKeyAddress
-    ) external view override returns (address) {
-        address operator = signingKeyOperators[signingKeyAddress];
-        if (operator == address(0)) {
-            revert OperatorDoesNotExistForSigningKey();
-
-        }
-        return operator;
-    }
-
-    // extra
     /**
      * @notice Sets a new quorum threshold for signature validation
      * @param numerator The numerator of the quorum fraction
@@ -288,10 +139,6 @@ contract PoAValidatorSet is Ownable, ReentrancyGuard, IWavsServiceManager {
         emit QuorumThresholdUpdated(numerator, denominator);
     }
 
-
-    // Operator management events
-    event OperatorWhitelisted(address indexed operator, uint256 weight);
-    event OperatorRemoved(address indexed operator);
 
     /**
      * @notice Whitelists an operator with a specified weight
@@ -335,7 +182,15 @@ contract PoAValidatorSet is Ownable, ReentrancyGuard, IWavsServiceManager {
         totalWeight -= operatorWeight;
 
         // Remove from operator addresses array
-        _removeFromOperatorAddresses(operator);
+        for (uint256 i = 0; i < operatorAddresses.length; i++) {
+            if (operatorAddresses[i] == operator) {
+                // Move last element to the position of the element to be removed
+                operatorAddresses[i] = operatorAddresses[operatorAddresses.length - 1];
+                // Remove last element
+                operatorAddresses.pop();
+                break;
+            }
+        }
 
         // Clean up signing key mappings if they exist
         address signingKey = operatorSigningKeys[operator];
@@ -376,22 +231,11 @@ contract PoAValidatorSet is Ownable, ReentrancyGuard, IWavsServiceManager {
         emit OperatorWhitelisted(operator, newWeight);
     }
 
+    // ==========================================
+    //          Signing Key Management
+    // ==========================================
+
     /**
-     * @notice Checks if an operator is whitelisted
-     * @param operator The address to check
-     * @return bool True if the operator is whitelisted
-     */
-    function isOperatorWhitelisted(address operator) external view returns (bool) {
-        return operatorWeights[operator] != 0;
-    }
-
-    // Signing key management
-    event SigningKeySet(address indexed operator, address indexed signingKey);
-    error AlreadyHasSigningKey();
-    error SigningKeyAlreadyUsed();
-    error CannotUseOperatorAsSigningKey();
-
-       /**
      * @dev Sets a signing key for an operator (can only be set once)
      * @param signingKey The signing key address
      */
@@ -425,36 +269,109 @@ contract PoAValidatorSet is Ownable, ReentrancyGuard, IWavsServiceManager {
         emit SigningKeySet(msg.sender, signingKey);
     }
 
-    // View functions
-    function getSigningKey(address operator) external view returns (address) {
-        return operatorSigningKeys[operator];
+    // ==========================================
+    //               View Functions
+    // ==========================================
+    function getLatestOperatorForSigningKey(address signingKeyAddress) public view override returns (address) {
+        address operator = signingKeyOperators[signingKeyAddress];
+        if (operator == address(0)) {
+            revert OperatorDoesNotExistForSigningKey();
+        }
+        return operator;
     }
 
-    function getTotalWeight() external view returns (uint256) {
+    function getLatestSigningKeyForOperator(address operatorAddress) external view returns (address) {
+        address sk = operatorSigningKeys[operatorAddress];
+        if (sk == address(0)) {
+            revert SingingKeyDoesNotExistForOperator();
+        }
+        return sk;
+    }
+
+    function isOperatorWhitelisted(address operatorAddress) external view returns (bool) {
+        return operatorWeights[operatorAddress] != 0;
+    }
+
+    function getOperatorWeight(address operatorAddress) public view returns (uint256) {
+        return operatorWeights[operatorAddress];
+    }
+
+    function getServiceURI() external view override returns (string memory) {
+        return serviceURI;
+    }
+
+    function getTotalWeight() public view returns (uint256) {
         return totalWeight;
     }
 
-    function _getTotalWeight() internal view returns (uint256) {
-        return totalWeight;
-    }
-
-    function _getThresholdStake() internal view returns (uint256) {
+    function getThresholdStake() public view returns (uint256) {
         return (totalWeight * quorumNumerator) / quorumDenominator;
     }
 
+    function getOperatorCount() external view returns (uint256) {
+        return operatorAddresses.length;
+    }
+
+    function isValidSignature(
+        bytes32 digest,
+        bytes memory _signatureData
+    ) virtual public view returns (bytes4) {
+        (address[] memory operators, bytes[] memory signatures, uint32 referenceBlock) =
+            abi.decode(_signatureData, (address[], bytes[], uint32));
+        _checkSignatures(digest, operators, signatures, referenceBlock);
+        return IERC1271.isValidSignature.selector;
+    }
+
     /**
-     * @notice Removes an operator from the operatorAddresses array
-     * @param operator The operator address to remove
+     * @notice Common logic to verify a batch of ECDSA signatures against a hash, using either last stake weight or at a specific block.
+     * @param digest The hash of the data the signers endorsed.
+     * @param signers A collection of signing key addresses that endorsed the data hash.
+     * @param signatures A collection of signatures matching the signers.
      */
-    function _removeFromOperatorAddresses(address operator) internal {
-        for (uint256 i = 0; i < operatorAddresses.length; i++) {
-            if (operatorAddresses[i] == operator) {
-                // Move last element to the position of the element to be removed
-                operatorAddresses[i] = operatorAddresses[operatorAddresses.length - 1];
-                // Remove last element
-                operatorAddresses.pop();
-                break;
+    function _checkSignatures(
+        bytes32 digest,
+        address[] memory signers,
+        bytes[] memory signatures,
+        uint32 // referenceBlock //  not used since we are POA and latest is always when we submit (for now at least)
+    ) internal view {
+        uint256 signersLength = signers.length;
+        address currentSigner;
+        address lastSigner;
+        address operator;
+        uint256 signedWeight;
+
+        if (signersLength != signatures.length) {
+            revert LengthMismatch();
+        }
+        if (signersLength == 0) {
+            revert InvalidLength();
+        }
+        for (uint256 i; i < signersLength; i++) {
+            currentSigner = signers[i];
+            operator = getLatestOperatorForSigningKey(currentSigner);
+            if (operator == address(0)) {
+                revert SignerNotRegistered();
             }
+            if (lastSigner >= currentSigner) {
+                revert NotSorted();
+            }
+
+            if( !SignatureChecker.isValidSignatureNow(currentSigner, digest, signatures[i])) {
+                revert InvalidSignature();
+            }
+
+            lastSigner = currentSigner;
+            uint256 operatorWeight = getOperatorWeight(operator);
+            signedWeight += operatorWeight;
+        }
+
+        uint256 currentTotalWeight = getTotalWeight();
+        if (signedWeight > currentTotalWeight) {
+            revert InvalidSignedWeight();
+        }
+        uint256 thresholdStake = getThresholdStake();
+        if (thresholdStake > signedWeight) {
+            revert InsufficientSignedStake();
         }
     }
 
@@ -499,13 +416,4 @@ contract PoAValidatorSet is Ownable, ReentrancyGuard, IWavsServiceManager {
             return (operators, weights);
         }
     }
-
-    /**
-     * @notice Returns the total number of operators
-     * @return The total number of operators
-     */
-    function getOperatorCount() external view returns (uint256) {
-        return operatorAddresses.length;
-    }
-
 }

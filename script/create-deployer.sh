@@ -22,9 +22,9 @@ fi
 mkdir -p .docker
 
 # Create new deployer
-export DEPLOYER_PK=$(cast wallet new-mnemonic --json | jq -r '.accounts[0].private_key')
-export DEPLOYER_ADDRESS=`cast wallet address $DEPLOYER_PK`
-sed -i${SP}'' -e "s/^FUNDED_KEY=.*$/FUNDED_KEY=$DEPLOYER_PK/" .env # task config:funded-key
+export FUNDED_KEY=$(cast wallet new-mnemonic --json | jq -r '.accounts[0].private_key')
+export DEPLOYER_ADDRESS=`cast wallet address $FUNDED_KEY`
+sed -i${SP}'' -e "s/^FUNDED_KEY=.*$/FUNDED_KEY=$FUNDED_KEY/" .env # task config:funded-key
 
 
 if [ "$DEPLOY_ENV" = "LOCAL" ]; then

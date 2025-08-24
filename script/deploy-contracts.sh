@@ -20,13 +20,13 @@ fi
 
 # Get RPC URL and deployer key
 export RPC_URL=$(task get-rpc)
-# Use DEPLOYER_PK from environment if set (from create-deployer.sh), otherwise read from .env
-if [ -z "$DEPLOYER_PK" ]; then
-    export DEPLOYER_PK=$(task config:funded-key)
+# Use FUNDED_KEY from environment if set (from create-deployer.sh), otherwise read from .env
+if [ -z "$FUNDED_KEY" ]; then
+    export FUNDED_KEY=$(task config:funded-key)
 fi
 
 # CRITICAL: Export FUNDED_KEY for Forge scripts to use. Without this the first run will get 'server returned an error response: error code -32003: Insufficient funds for gas * price + value'
-export FUNDED_KEY="${DEPLOYER_PK}"
+# export FUNDED_KEY="${FUNDED_KEY}"
 
 echo "🔧 Configuration:"
 echo "   RPC_URL: ${RPC_URL}"
@@ -41,7 +41,7 @@ echo "📦 Deploying EAS contracts..."
 forge script script/DeployEAS.s.sol:DeployEAS \
     --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
     --rpc-url "${RPC_URL}" \
-    --private-key "${DEPLOYER_PK}" \
+    --private-key "${FUNDED_KEY}" \
     --broadcast \
     --json > .docker/eas_deploy.json
 
@@ -51,7 +51,7 @@ echo "🏛️  Deploying Governance contracts..."
 forge script script/DeployGovernance.s.sol:DeployGovernance \
     --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
     --rpc-url "${RPC_URL}" \
-    --private-key "${DEPLOYER_PK}" \
+    --private-key "${FUNDED_KEY}" \
     --broadcast \
     --json > .docker/governance_deploy.json
 
@@ -61,7 +61,7 @@ echo "💰 Deploying Rewards contracts..."
 forge script script/DeployRewards.s.sol:DeployScript \
     --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
     --rpc-url "${RPC_URL}" \
-    --private-key "${DEPLOYER_PK}" \
+    --private-key "${FUNDED_KEY}" \
     --broadcast
 
 echo "🎲 Deploying Prediction Market contracts..."
@@ -70,7 +70,7 @@ echo "🎲 Deploying Prediction Market contracts..."
 forge script script/DeployPredictionMarket.s.sol:DeployScript \
     --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
     --rpc-url "${RPC_URL}" \
-    --private-key "${DEPLOYER_PK}" \
+    --private-key "${FUNDED_KEY}" \
     --broadcast
 
 echo "🔐 Deploying Zodiac-enabled Safes with modules..."
@@ -79,7 +79,7 @@ echo "🔐 Deploying Zodiac-enabled Safes with modules..."
 forge script script/DeployZodiacSafes.s.sol:DeployZodiacSafes \
     --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
     --rpc-url "${RPC_URL}" \
-    --private-key "${DEPLOYER_PK}" \
+    --private-key "${FUNDED_KEY}" \
     --broadcast
 
 # Extract deployed addresses from EAS deployment

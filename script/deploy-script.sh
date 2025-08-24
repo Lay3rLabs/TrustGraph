@@ -25,15 +25,14 @@ fi
 
 # local: create deployer & auto fund. testnet: create & iterate check balance
 bash ./script/create-deployer.sh
-export DEPLOYER_PK=$(task config:funded-key)
-sleep 1
+export FUNDED_KEY=$(task config:funded-key)
 
 ## Deploy Eigenlayer from Deployer
 # COMMAND=deploy task docker:middleware
-# since we are no longer using the middleware, we manually fund the DEPLOYER_PK
-cast rpc anvil_setBalance `cast wallet address ${DEPLOYER_PK}` '15000000000000000000' --rpc-url ${RPC_URL}
 
-# sleep 1
+echo "🟢 Deploying POA Service Manager..."
+forge script script/DeployPOAServiceManager.s.sol:DeployPOAServiceManager --rpc-url ${RPC_URL} --broadcast
+export WAVS_SERVICE_MANAGER_ADDRESS=$(jq -r '.contract' .docker/poa_sm_deploy.json)
 
 ### === Deploy Contracts === ###
 
@@ -164,10 +163,10 @@ echo "IPFS_URL=${IPFS_URL}"
 echo "Querying to verify IPFS upload... (120 second timeout)"
 curl ${IPFS_URL} --connect-timeout 120 --max-time 120 --show-error --fail
 
-if [ "$DEPLOYER_PK" ]; then
+if [ "$FUNDED_KEY" ]; then
     echo ""
     echo "Setting service URI on WAVS Service Manager..."
-    cast send ${WAVS_SERVICE_MANAGER_ADDRESS} 'setServiceURI(string)' "${IPFS_URI}" -r ${RPC_URL} --private-key ${DEPLOYER_PK}
+    cast send ${WAVS_SERVICE_MANAGER_ADDRESS} 'setServiceURI(string)' "${IPFS_URI}" -r ${RPC_URL} --private-key ${FUNDED_KEY}
 fi
 
 echo "IPFS_GATEWAY=${IPFS_GATEWAY}"
@@ -179,13 +178,13 @@ sleep 1
 
 bash ./script/create-aggregator.sh 1
 IPFS_GATEWAY=${IPFS_GATEWAY} bash ./infra/aggregator-1/start.sh
-sleep 5
+sleep 3
 wget -q --header="Content-Type: application/json" --post-data="{\"uri\": \"${IPFS_URI}\"}" ${AGGREGATOR_URL}/register-service -O -
 
 ### === Start WAVS ===
 bash ./script/create-operator.sh 1
 IPFS_GATEWAY=${IPFS_GATEWAY} bash ./infra/wavs-1/start.sh
-sleep 5
+sleep 3
 
 # Deploy the service JSON to WAVS so it now watches and submits.
 # 'opt in' for WAVS to watch (this is before we register to Eigenlayer)
