@@ -26,6 +26,8 @@ import {
 import { Modal } from "@/components/ui/modal";
 import { useAttestation } from "@/hooks/useAttestation";
 import { schemas, SCHEMA_OPTIONS } from "@/lib/schemas";
+import { localChain } from "@/lib/wagmi";
+import { toHex } from "viem";
 
 interface AttestationFormData {
   schema: string;
@@ -76,6 +78,14 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, onCl
     }
   }, [hash, isSuccess, onSuccess, form]);
 
+  // Auto-switch to local network when connected to wrong chain
+  useEffect(() => {
+    if (isConnected && chain && chain.id !== localChain.id) {
+      console.log(`Current chain: ${chain.id}, switching to local chain: ${localChain.id}`);
+      handleSwitchToLocal();
+    }
+  }, [isConnected, chain]);
+
   const handleConnect = () => {
     try {
       connect({ connector: injected() });
@@ -90,7 +100,7 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, onCl
         method: "wallet_addEthereumChain",
         params: [
           {
-            chainId: "0xAA36A7", // 11155111 in hex
+            chainId: toHex(localChain.id),
             chainName: "Local Anvil",
             nativeCurrency: {
               name: "Ether",
@@ -110,12 +120,12 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, onCl
 
   const handleSwitchToLocal = async () => {
     try {
-      switchChain({ chainId: 11155111 });
+      switchChain({ chainId: localChain.id });
     } catch (err) {
       console.error("Failed to switch network:", err);
       try {
         await addLocalNetwork();
-        switchChain({ chainId: 11155111 });
+        switchChain({ chainId: localChain.id });
       } catch (addErr) {
         console.error("Failed to add and switch network:", addErr);
       }
@@ -363,7 +373,7 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, onCl
                         <div>
                           ✓ Attestation created! Tx: {hash.slice(0, 10)}...{hash.slice(-8)}
                         </div>
-                        {chain?.id === 11155111 && (
+                        {chain?.id === localChain.id && (
                           <div className="opacity-75">
                             Local network transaction confirmed
                           </div>
@@ -371,7 +381,7 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, onCl
                       </div>
                     )}
 
-                    {isLoading && chain?.id === 11155111 && (
+                    {isLoading && chain?.id === localChain.id && (
                       <div className="terminal-dim text-xs">
                         🔄 Processing on local Anvil network... Nonce conflicts auto-handled
                       </div>

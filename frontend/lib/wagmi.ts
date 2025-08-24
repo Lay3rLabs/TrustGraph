@@ -3,7 +3,7 @@ import { mainnet, sepolia } from "wagmi/chains";
 import { injected, metaMask } from "wagmi/connectors";
 
 // Local chain configuration matching the deployment
-const localChain = {
+export const localChain = {
   id: 31337, // Anvil default chain ID
   name: "Local Anvil",
   nativeCurrency: {
@@ -22,14 +22,14 @@ const localChain = {
 } as const;
 
 export const config = createConfig({
-  chains: [localChain, mainnet],
+  chains: [localChain],
   connectors: [injected(), metaMask()],
   transports: {
-    [localChain.id]: http("http://localhost:8545", {
+    [localChain.id]: http(localChain.rpcUrls.default.http[0], {
       retryCount: 3,
       timeout: 60000,
     }),
-    [mainnet.id]: http(),
+    // [mainnet.id]: http(),
   },
 });
 

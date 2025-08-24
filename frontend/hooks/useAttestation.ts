@@ -12,6 +12,7 @@ import {
 import { easAddress, easAbi } from "@/lib/contracts";
 import { encodePacked } from "viem";
 import { schemas } from "@/lib/schemas";
+import { localChain } from "@/lib/wagmi";
 
 interface AttestationData {
   schema: string;
@@ -100,8 +101,8 @@ export function useAttestation() {
       throw new Error("Please connect your wallet");
     }
 
-    if (chainId !== 11155111) {
-      throw new Error("Please switch to the local network (chain ID 11155111)");
+    if (chainId !== localChain.id) {
+      throw new Error(`Please switch to the local network (chain ID ${localChain.id})`);
     }
 
     // Declare variables in higher scope for retry logic
