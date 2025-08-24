@@ -20,7 +20,13 @@ fi
 
 # Get RPC URL and deployer key
 export RPC_URL=$(task get-rpc)
-export DEPLOYER_PK=$(task config:funded-key)
+# Use DEPLOYER_PK from environment if set (from create-deployer.sh), otherwise read from .env
+if [ -z "$DEPLOYER_PK" ]; then
+    export DEPLOYER_PK=$(task config:funded-key)
+fi
+
+# CRITICAL: Export FUNDED_KEY for Forge scripts to use. Without this the first run will get 'server returned an error response: error code -32003: Insufficient funds for gas * price + value'
+export FUNDED_KEY="${DEPLOYER_PK}"
 
 echo "🔧 Configuration:"
 echo "   RPC_URL: ${RPC_URL}"
