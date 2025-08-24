@@ -4,6 +4,7 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { marked } from "marked";
 
 interface Writing {
   id: string;
@@ -742,15 +743,43 @@ const getStatusColor = (status: string) => {
   }
 };
 
+// Configure marked for better rendering
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+});
+
 export default function ArticlePage() {
   const params = useParams();
   const router = useRouter();
   const [article, setArticle] = useState<Writing | null>(null);
+  const [processedContent, setProcessedContent] = useState<string>("");
   const slug = params.slug as string;
 
   useEffect(() => {
     if (slug && articleData[slug]) {
-      setArticle(articleData[slug]);
+      const selectedArticle = articleData[slug];
+      setArticle(selectedArticle);
+      
+      // Process the markdown content with custom styling
+      let htmlContent = marked(selectedArticle.content);
+      
+      // Apply custom styling to markdown elements
+      htmlContent = htmlContent
+        .replace(/<h1>/g, '<h1 class="terminal-bright text-xl font-bold mb-4 mt-6">')
+        .replace(/<h2>/g, '<h2 class="terminal-bright text-lg font-bold mb-4 mt-6">')
+        .replace(/<h3>/g, '<h3 class="terminal-bright text-base font-bold mb-3 mt-5">')
+        .replace(/<h4>/g, '<h4 class="terminal-bright text-sm font-bold mb-3 mt-4">')
+        .replace(/<p>/g, '<p class="terminal-text mb-4 leading-relaxed">')
+        .replace(/<strong>/g, '<strong class="terminal-bright font-bold">')
+        .replace(/<ul>/g, '<ul class="terminal-text mb-4 ml-6 list-disc">')
+        .replace(/<ol>/g, '<ol class="terminal-text mb-4 ml-6 list-decimal">')
+        .replace(/<li>/g, '<li class="mb-1">')
+        .replace(/<code>/g, '<code class="bg-black/40 px-1 py-0.5 rounded text-xs terminal-bright">')
+        .replace(/<pre><code/g, '<pre class="bg-black/40 border border-gray-700 p-4 rounded-sm overflow-x-auto mb-4"><code class="bg-transparent p-0">')
+        .replace(/<blockquote>/g, '<blockquote class="border-l-2 border-gray-600 pl-4 terminal-dim italic mb-4">');
+      
+      setProcessedContent(htmlContent);
     } else {
       // Redirect to main page if article not found
       router.push('/backroom/memetics');
@@ -819,11 +848,10 @@ export default function ArticlePage() {
       </div>
 
       {/* Article Content */}
-      <div className="prose prose-invert max-w-none">
-        <pre className="terminal-text text-sm leading-relaxed whitespace-pre-wrap font-mono">
-          {article.content}
-        </pre>
-      </div>
+      <div 
+        className="max-w-none font-mono"
+        dangerouslySetInnerHTML={{ __html: processedContent }}
+      />
 
       {/* Footer */}
       <div className="text-center border-t border-gray-700 pt-8">
