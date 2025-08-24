@@ -41,9 +41,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         {children}
-        {process.env.NODE_ENV === "development" && (
+        {/* {process.env.NODE_ENV === "development" && (
           <ReactQueryDevtools initialIsOpen={false} />
-        )}
+        )} */}
       </QueryClientProvider>
     </WagmiProvider>
   )

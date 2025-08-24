@@ -30,10 +30,10 @@
 - [ ] Toasts
 - [ ] Utilize react-query
 - [ ] Get prediction market to work with UI
-- [ ] Figure out something that will scale (currently just fetching entire MerkleTree)
 - [ ] For vouching page let's figure out how to visualize connections
 - [ ] Smarter for for creating attestations
 - [ ] EAS support (makes leader board more fun, etc.)
+- [ ] Figure out something that will scale (currently just fetching entire MerkleTree)
 
 # Project Organization and Cleanup TODO
 - [x] Sepolia

@@ -16,6 +16,7 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
+  { id: "points", label: "Points", path: "/backroom/points", icon: "★" },
   {
     id: "explorer",
     label: "Explorer",
@@ -87,7 +88,6 @@ const menuItems: MenuItem[] = [
         path: "/backroom/incentives",
         icon: "◇◆",
       },
-      { id: "points", label: "Points", path: "/backroom/points", icon: "★" },
       {
         id: "systems",
         label: "Systems",
