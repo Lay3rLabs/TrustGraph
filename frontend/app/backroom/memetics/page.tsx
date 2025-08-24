@@ -137,9 +137,10 @@ export default function MemeticsPage() {
       {/* Clean Article List */}
       <div className="space-y-6">
         {writings.map((writing) => (
-          <div
+          <Link
             key={writing.id}
-            className="border-b border-gray-800 pb-6 hover:bg-black/10 transition-colors group"
+            href={`/backroom/memetics/articles/${writing.slug}`}
+            className="block border-b border-gray-800 pb-6 hover:bg-black/10 transition-colors group cursor-pointer"
           >
             <div className="flex items-start justify-between mb-2">
               <div className="space-y-1">
@@ -173,15 +174,12 @@ export default function MemeticsPage() {
                 >
                   SHARE
                 </button>
-                <Link 
-                  href={`/backroom/memetics/articles/${writing.slug}`}
-                  className="terminal-command text-xs group-hover:terminal-bright transition-colors"
-                >
+                <span className="terminal-command text-xs group-hover:terminal-bright transition-colors">
                   READ →
-                </Link>
+                </span>
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 
