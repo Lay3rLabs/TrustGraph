@@ -30,12 +30,10 @@ impl Guest for Component {
         let (payload, dest) = decode_trigger_event(action.data).map_err(|e| e.to_string())?;
 
         block_on(async move {
-            // Decode the AttestationRequest from the payload data
-            let attestation_request = AttestationRequest::abi_decode(&payload.data)
-                .map_err(|e| format!("Failed to decode attestation request: {}", e))?;
-
-            let schema_uid = attestation_request.schema;
-            let ref_uid = attestation_request.data.refUID;
+            // Use the Attested event data directly
+            let schema_uid = payload.schemaUID;
+            let ref_uid = payload.uid;
+            let recipient = payload.recipient;
 
             // Get EAS configuration
             let eas_address = config_var("eas_address").unwrap_or_else(|| {
@@ -69,10 +67,10 @@ impl Guest for Component {
                         expirationTime: 0,
                         revocationTime: 0,
                         refUID: FixedBytes::ZERO,
-                        recipient: attestation_request.data.recipient,
+                        recipient,
                         attester: Address::ZERO,
-                        revocable: attestation_request.data.revocable,
-                        data: attestation_request.data.data.clone(),
+                        revocable: true, // Default to true since we don't have this from the event
+                        data: Bytes::new(), // Empty data since we don't have this from the event
                     }
                 }
             };
@@ -81,11 +79,11 @@ impl Guest for Component {
             let model = config_var("llm_model").unwrap_or_else(|| "llama3.2".to_string());
 
             let temperature =
-                config_var("llm_temperature").and_then(|s| s.parse::<f64>().ok()).unwrap_or(0.0);
+                config_var("llm_temperature").and_then(|s| s.parse::<f32>().ok()).unwrap_or(0.0);
 
-            let top_p = config_var("llm_top_p").and_then(|s| s.parse::<f64>().ok()).unwrap_or(1.0);
+            let top_p = config_var("llm_top_p").and_then(|s| s.parse::<f32>().ok()).unwrap_or(1.0);
 
-            let seed = config_var("llm_seed").and_then(|s| s.parse::<u64>().ok()).unwrap_or(42);
+            let seed = config_var("llm_seed").and_then(|s| s.parse::<u32>().ok()).unwrap_or(42);
 
             let max_tokens = config_var("llm_max_tokens")
                 .and_then(|s| s.parse::<u32>().ok())
@@ -190,7 +188,7 @@ impl Guest for Component {
                 data: AttestationRequest {
                     schema: attestation_schema.parse().unwrap_or(schema_uid),
                     data: AttestationRequestData {
-                        recipient: attestation_request.data.recipient, // The recipient of the attestation
+                        recipient,                       // The recipient of the attestation
                         expirationTime: expiration_time, // When the attestation expires
                         revocable,                       // Whether the attestation is revocable
                         refUID: ref_uid,                 // The UID of the related attestation

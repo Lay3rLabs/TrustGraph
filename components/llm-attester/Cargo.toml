@@ -40,11 +40,12 @@ lto = true
 
 [package.metadata.component]
 package = "component:llm-attester"
+target = "wavs:worker/layer-trigger-world@0.4.0"
 
-[package.metadata.component.target]
-path = "./wit"
+# [package.metadata.component.target]
+# path = "./wit"
 
-# Add dependencies on the wavs-llm component interfaces and layer-trigger-world
-[package.metadata.component.target.dependencies]
-"wavs:agent" = { path = "../../packages/llm/wit" }
-"wavs:worker" = "0.4.0"
+# # Add dependencies on the wavs-llm component interfaces and layer-trigger-world
+# [package.metadata.component.target.dependencies]
+# "wavs:agent" = { path = "../../packages/llm/wit" }
+# "wavs:worker" = "0.4.0"

@@ -1,17 +1,16 @@
+use crate::bindings::host::get_evm_chain_config;
 use alloy_network::Ethereum;
 use alloy_primitives::{Address, FixedBytes};
-use alloy_provider::{Provider, RootProvider};
+use alloy_provider::Provider;
 use alloy_rpc_types::TransactionInput;
 use alloy_sol_types::{sol, SolCall};
 use std::str::FromStr;
 use wavs_wasi_utils::evm::{alloy_primitives::TxKind, new_evm_provider};
 
-use crate::bindings::host::get_evm_chain_config;
-
 // Solidity interface definitions for EAS
 sol! {
     /// EAS Attestation structure
-    pub struct AttestationStruct {
+    struct AttestationStruct {
         bytes32 uid;
         bytes32 schema;
         uint64 time;

@@ -25,8 +25,7 @@ pub enum Destination {
 pub fn decode_trigger_event(trigger_data: TriggerData) -> Result<(Attested, Destination)> {
     match trigger_data {
         TriggerData::EvmContractEvent(TriggerDataEvmContractEvent { log, .. }) => {
-            // TODO change this to a normal attestation
-            // Decode the AttestationRequested event
+            // Decode the Attested event
             let event: Attested = decode_event_log_data!(log)?;
 
             println!(
@@ -68,15 +67,6 @@ sol! {
     /// @param uid The UID of the new attestation.
     /// @param schemaUID The UID of the schema.
     event Attested(address indexed recipient, address indexed attester, bytes32 uid, bytes32 indexed schemaUID);
-
-    // TODO maybe remove
-    /// Event emitted when an attestation is requested
-    event AttestationRequested(
-        address indexed creator,
-        bytes32 indexed schema,
-        address indexed recipient,
-        bytes data
-    );
 
     /// @notice Operation types for attestation operations
     #[derive(Debug)]
