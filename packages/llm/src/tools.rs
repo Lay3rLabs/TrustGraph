@@ -447,13 +447,14 @@ impl Tools {
                 for (i, tool_call) in tool_calls.iter().enumerate() {
                     tool_messages.push(Message::new_tool_result(
                         tool_call.id.clone(),
+                        tool_call.function.name.clone(),
                         tool_results[i].clone(),
                     ));
                 }
 
                 // Call OpenAI to get final response, but we don't use it for parsing
                 // It's mainly for human readable confirmation
-                let final_response = client.chat_completion_text(&tool_messages);
+                let final_response = client.chat_completion_text(tool_messages.clone());
                 println!("OpenAI final response (for logs only): {:?}", final_response);
 
                 // Return the original tool result which contains valid JSON
@@ -559,11 +560,15 @@ mod tests {
 
         // Test tool message
         let tool_call_id = "call_12345";
-        let tool_msg =
-            Message::new_tool_result(tool_call_id.to_string(), "Tool result test".to_string());
+        let tool_msg = Message::new_tool_result(
+            tool_call_id.to_string(),
+            "test_tool".to_string(),
+            "Tool result test".to_string(),
+        );
         assert_eq!(tool_msg.role, "tool");
         assert_eq!(tool_msg.content.unwrap(), "Tool result test");
         assert_eq!(tool_msg.tool_call_id.unwrap(), tool_call_id);
+        assert_eq!(tool_msg.name.unwrap(), "test_tool");
     }
 
     #[test]

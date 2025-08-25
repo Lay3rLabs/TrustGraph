@@ -7,67 +7,95 @@ use wavs_wasi_utils::http::{fetch_json, http_request_get};
 use wstd::http::HeaderValue;
 use wstd::runtime::block_on;
 
-// Configuration options for LLM API requests
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LlmOptions {
+/// Configuration options for Ollama LLM
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct LlmConfig {
     /// Temperature controls randomness (0.0-2.0)
-    pub temperature: f32,
-    /// Top_p controls diversity (0.0-1.0)
-    pub top_p: f32,
-    /// Seed for deterministic outputs
-    pub seed: u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub temperature: Option<f32>,
+
     /// Maximum tokens to generate
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub max_tokens: Option<u32>,
-    /// Context window size (mainly for Ollama)
-    pub context_window: Option<u32>,
+
+    /// Top_p controls diversity (0.0-1.0)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub top_p: Option<f32>,
+
+    /// Seed for deterministic outputs
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub seed: Option<u32>,
 }
 
-impl Default for LlmOptions {
-    fn default() -> Self {
-        Self {
-            temperature: 0.0,
-            top_p: 1.0,
-            seed: 42,
-            max_tokens: None,
-            context_window: Some(4096),
-        }
-    }
-}
-
-impl LlmOptions {
+impl LlmConfig {
     /// Create a new config with default values
     pub fn new() -> Self {
         Self::default()
     }
 
     /// Set temperature
+    pub fn with_temperature(mut self, temp: f32) -> Self {
+        self.temperature = Some(temp);
+        self
+    }
+
+    /// Set max tokens
+    pub fn with_max_tokens(mut self, max_tokens: u32) -> Self {
+        self.max_tokens = Some(max_tokens);
+        self
+    }
+
+    /// Set top_p
+    pub fn with_top_p(mut self, top_p: f32) -> Self {
+        self.top_p = Some(top_p);
+        self
+    }
+
+    /// Set seed
+    pub fn with_seed(mut self, seed: u32) -> Self {
+        self.seed = Some(seed);
+        self
+    }
+}
+
+/// Builder for LlmConfig
+pub struct LlmConfigBuilder {
+    config: LlmConfig,
+}
+
+impl LlmConfigBuilder {
+    /// Create a new builder
+    pub fn new() -> Self {
+        Self { config: LlmConfig::default() }
+    }
+
+    /// Set temperature
     pub fn temperature(mut self, temp: f32) -> Self {
-        self.temperature = temp;
+        self.config.temperature = Some(temp);
+        self
+    }
+
+    /// Set max tokens
+    pub fn max_tokens(mut self, max_tokens: u32) -> Self {
+        self.config.max_tokens = Some(max_tokens);
         self
     }
 
     /// Set top_p
     pub fn top_p(mut self, top_p: f32) -> Self {
-        self.top_p = top_p;
+        self.config.top_p = Some(top_p);
         self
     }
 
     /// Set seed
     pub fn seed(mut self, seed: u32) -> Self {
-        self.seed = seed;
+        self.config.seed = Some(seed);
         self
     }
 
-    /// Set max tokens
-    pub fn max_tokens(mut self, max_tokens: Option<u32>) -> Self {
-        self.max_tokens = max_tokens;
-        self
-    }
-
-    /// Set Config window size
-    pub fn context_window(mut self, context_window: Option<u32>) -> Self {
-        self.context_window = context_window;
-        self
+    /// Build the configuration
+    pub fn build(self) -> LlmConfig {
+        self.config
     }
 }
 
@@ -75,7 +103,7 @@ impl LlmOptions {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     pub contracts: Vec<Contract>,
-    pub llm_config: LlmOptions,
+    pub llm_config: LlmConfig,
     pub model: String,
     #[serde(default)]
     pub messages: Vec<Message>,
@@ -90,7 +118,6 @@ impl Config {
         // Check if CONFIG_URI environment variable is set
         if let Ok(config_uri) = env::var("config_uri") {
             println!("Loading config from URI: {}", config_uri);
-
             Self::load_from_uri(&config_uri)
         } else {
             println!("No CONFIG_URI found, using default configuration");
@@ -239,8 +266,6 @@ impl Config {
             }
         }
 
-        // Check for any required config items (none yet, but can be added)
-
         Ok(())
     }
 }
@@ -263,12 +288,11 @@ impl Default for Config {
                 r#"[{"type":"function","name":"transfer","inputs":[{"name":"to","type":"address","internalType":"address"},{"name":"value","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"nonpayable"}]"#,
                 "USDC is a stablecoin pegged to the US Dollar",
             )],
-            llm_config: LlmOptions::new()
-                .temperature(0.0)
-                .top_p(0.1)
-                .seed(42)
-                .max_tokens(Some(500))
-                .context_window(Some(4096)),
+            llm_config: LlmConfig::new()
+                .with_temperature(0.0)
+                .with_top_p(0.1)
+                .with_seed(42)
+                .with_max_tokens(500),
             model: "llama3.2".to_string(),
             messages: vec![Message::new_system(default_system_prompt)],
             config: std::collections::HashMap::new(),
@@ -296,8 +320,7 @@ mod tests {
                 "temperature": 0.7,
                 "top_p": 0.9,
                 "seed": 123,
-                "max_tokens": 500,
-                "context_window": 4096
+                "max_tokens": 500
             },
             "model": "test-model",
             "messages": [
@@ -318,11 +341,10 @@ mod tests {
         assert_eq!(config.contracts[0].name, "TestContract");
         assert_eq!(config.contracts[0].address, "0x1234567890123456789012345678901234567890");
         assert_eq!(config.model, "test-model");
-        assert_eq!(config.llm_config.temperature, 0.7);
-        assert_eq!(config.llm_config.top_p, 0.9);
-        assert_eq!(config.llm_config.seed, 123);
+        assert_eq!(config.llm_config.temperature, Some(0.7));
+        assert_eq!(config.llm_config.top_p, Some(0.9));
+        assert_eq!(config.llm_config.seed, Some(123));
         assert_eq!(config.llm_config.max_tokens, Some(500));
-        assert_eq!(config.llm_config.context_window, Some(4096));
         assert_eq!(config.messages.len(), 1);
         assert_eq!(config.messages[0].role, "system");
         assert_eq!(config.messages[0].content.as_ref().unwrap(), "Test system message");
@@ -338,7 +360,7 @@ mod tests {
                 "0x1234567890123456789012345678901234567890",
                 "[{\"name\":\"test\",\"type\":\"function\",\"inputs\":[],\"outputs\":[]}]",
             )],
-            llm_config: LlmOptions::default(),
+            llm_config: LlmConfig::default(),
             model: "test-model".to_string(),
             messages: vec![Message::new_system("Test system message".to_string())],
             config: std::collections::HashMap::new(),
@@ -353,7 +375,7 @@ mod tests {
                 "invalid-address",
                 "[{\"name\":\"test\",\"type\":\"function\",\"inputs\":[],\"outputs\":[]}]",
             )],
-            llm_config: LlmOptions::default(),
+            llm_config: LlmConfig::default(),
             model: "test-model".to_string(),
             messages: vec![],
             config: std::collections::HashMap::new(),
@@ -368,7 +390,7 @@ mod tests {
                 "0x1234567890123456789012345678901234567890",
                 "",
             )],
-            llm_config: LlmOptions::default(),
+            llm_config: LlmConfig::default(),
             model: "test-model".to_string(),
             messages: vec![],
             config: std::collections::HashMap::new(),
@@ -392,7 +414,7 @@ mod tests {
                     "[{\"name\":\"test\",\"type\":\"function\",\"inputs\":[],\"outputs\":[]}]",
                 ),
             ],
-            llm_config: LlmOptions::default(),
+            llm_config: LlmConfig::default(),
             model: "test-model".to_string(),
             messages: vec![],
             config: std::collections::HashMap::new(),
@@ -430,7 +452,7 @@ mod tests {
                     "Second test contract",
                 ),
             ],
-            llm_config: LlmOptions::default(),
+            llm_config: LlmConfig::default(),
             model: "test-model".to_string(),
             messages: vec![],
             config: std::collections::HashMap::new(),
@@ -458,5 +480,30 @@ mod tests {
         assert!(!config.messages.is_empty());
         assert_eq!(config.messages[0].role, "system");
         assert!(config.messages[0].content.is_some());
+    }
+
+    #[test]
+    fn test_llm_config_builder() {
+        let config =
+            LlmConfigBuilder::new().temperature(0.8).max_tokens(200).top_p(0.95).seed(42).build();
+
+        assert_eq!(config.temperature, Some(0.8));
+        assert_eq!(config.max_tokens, Some(200));
+        assert_eq!(config.top_p, Some(0.95));
+        assert_eq!(config.seed, Some(42));
+    }
+
+    #[test]
+    fn test_llm_config_fluent_api() {
+        let config = LlmConfig::new()
+            .with_temperature(0.5)
+            .with_max_tokens(150)
+            .with_top_p(0.9)
+            .with_seed(123);
+
+        assert_eq!(config.temperature, Some(0.5));
+        assert_eq!(config.max_tokens, Some(150));
+        assert_eq!(config.top_p, Some(0.9));
+        assert_eq!(config.seed, Some(123));
     }
 }

@@ -1,5 +1,37 @@
 use thiserror::Error;
 
+/// Error type for LLM operations
+#[derive(Error, Debug)]
+pub enum LlmError {
+    /// Configuration errors
+    #[error("Configuration error: {0}")]
+    ConfigError(String),
+
+    /// Invalid input errors
+    #[error("Invalid input: {0}")]
+    InvalidInput(String),
+
+    /// HTTP request errors
+    #[error("Request error: {0}")]
+    RequestError(String),
+
+    /// API response errors
+    #[error("API error: {0}")]
+    ApiError(String),
+
+    /// Parsing errors
+    #[error("Parse error: {0}")]
+    ParseError(String),
+
+    /// Image encoding errors
+    #[error("Image encoding error: {0}")]
+    ImageError(String),
+
+    /// IO errors
+    #[error("IO error: {0}")]
+    IoError(#[from] std::io::Error),
+}
+
 /// Error type for Agent operations
 #[derive(Error, Debug)]
 pub enum AgentError {
@@ -71,5 +103,27 @@ impl From<String> for AgentError {
 impl From<&str> for AgentError {
     fn from(error: &str) -> Self {
         AgentError::Other(error.to_string())
+    }
+}
+
+// Implement a conversion from AgentError to String
+impl From<AgentError> for String {
+    fn from(error: AgentError) -> Self {
+        match error {
+            AgentError::Llm(msg) => format!("LLM error: {}", msg),
+            AgentError::Http(msg) => format!("HTTP error: {}", msg),
+            AgentError::Config(msg) => format!("Config error: {}", msg),
+            AgentError::Contract(msg) => format!("Contract error: {}", msg),
+            AgentError::Transaction(msg) => format!("Transaction error: {}", msg),
+            AgentError::Io(msg) => format!("IO error: {}", msg),
+            AgentError::Json(msg) => format!("JSON error: {}", msg),
+            AgentError::Utf8(msg) => format!("UTF8 error: {}", msg),
+            AgentError::Other(msg) => format!("Other error: {}", msg),
+            AgentError::Api(msg) => format!("API error: {}", msg),
+            AgentError::ExternalService(msg) => format!("External service error: {}", msg),
+            AgentError::Configuration(msg) => format!("Configuration error: {}", msg),
+            AgentError::ContextLoading(msg) => format!("Context loading error: {}", msg),
+            AgentError::ContextValidation(msg) => format!("Context validation error: {}", msg),
+        }
     }
 }

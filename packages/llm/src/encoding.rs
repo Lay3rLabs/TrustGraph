@@ -1,9 +1,30 @@
-use crate::errors::AgentError;
+use crate::errors::{AgentError, LlmError};
 use alloy_dyn_abi::{DynSolType, DynSolValue};
 use alloy_json_abi::Function;
 use alloy_primitives::{Address, FixedBytes, U256};
+use base64::{engine::general_purpose::STANDARD, Engine};
 use hex;
+use std::fs;
+use std::path::Path;
 use std::str::FromStr;
+
+/// Encode an image file to base64 for use with Ollama
+pub fn encode_image_to_base64(image_path: &str) -> Result<String, LlmError> {
+    // Check if the file exists
+    let path = Path::new(image_path);
+    if !path.exists() {
+        return Err(LlmError::ImageError(format!("Image file not found: {}", image_path)));
+    }
+
+    // Read the file
+    let image_data = fs::read(path)
+        .map_err(|e| LlmError::ImageError(format!("Failed to read image file: {}", e)))?;
+
+    // Encode to base64
+    let encoded = STANDARD.encode(&image_data);
+
+    Ok(encoded)
+}
 
 /// Convert a string to a DynSolValue based on the type
 pub fn json_to_sol_value(
@@ -159,14 +180,12 @@ pub fn is_dynamic_type(ty: &DynSolType) -> bool {
 }
 
 mod tests {
+    use super::{is_dynamic_type, json_to_sol_value};
+    use alloy_dyn_abi::DynSolType;
     use serde_json::json;
-
-    use super::*;
 
     #[test]
     fn test_json_to_sol_value() {
-        use alloy_dyn_abi::DynSolType;
-
         // Test address conversion
         let addr_type = DynSolType::Address;
         let addr_json = json!("0x1234567890123456789012345678901234567890");
@@ -212,8 +231,6 @@ mod tests {
 
     #[test]
     fn test_is_dynamic_type() {
-        use alloy_dyn_abi::DynSolType;
-
         // Test dynamic types
         assert!(is_dynamic_type(&DynSolType::String));
         assert!(is_dynamic_type(&DynSolType::Bytes));

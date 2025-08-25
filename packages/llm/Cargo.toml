@@ -21,12 +21,16 @@ alloy-dyn-abi = { workspace = true }
 alloy-network = { workspace = true }
 alloy-provider = { workspace = true }
 alloy-rpc-types = { workspace = true }
+base64 = { workspace = true }
 hex = { workspace = true }
 tiny-keccak = { workspace = true }
 thiserror = { workspace = true }
 
 [dev-dependencies]
 mockall = { workspace = true }
+
+[features]
+integration-tests = []
 
 [profile.release]
 codegen-units = 1

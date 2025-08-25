@@ -154,10 +154,8 @@ These can be done immediately without breaking changes:
 - [ ] Remove OpenAI support completely
 
 #### Phase 2: Clean Separation (Priority)
-- [ ] Remove `sol_interfaces.rs`
-- [ ] Extract contract-related code to separate module or package
+- [ ] Extract contract-related code to separate module
 - [ ] Simplify configuration to LLM-only concerns
-- [ ] Update bindings if necessary
 
 #### Phase 3: Enhanced Features
 - [ ] Add structured response support with JSON schema
@@ -170,24 +168,6 @@ These can be done immediately without breaking changes:
 - [ ] Add comprehensive examples
 - [ ] Document all public APIs
 - [ ] Create usage guide for WAVS components
-
-## Key Decisions
-
-### 1. Contract Integration
-**Decision**: Make contract integration an optional feature or separate package
-**Rationale**: Not all LLM use cases need contract interaction; separation improves modularity
-
-### 2. Tool/Function System
-**Decision**: Simplify to basic function definitions without complex encoding
-**Rationale**: Current system is over-engineered; most use cases need simple function calls
-
-### 3. Configuration
-**Decision**: Use builder pattern for configuration, no JSON config files for LLM
-**Rationale**: Builder pattern is more idiomatic Rust and provides compile-time safety
-
-### 4. Response Format
-**Decision**: Support both text and structured (JSON) responses as first-class citizens
-**Rationale**: Many AI use cases require structured data extraction
 
 ## Migration Guide
 

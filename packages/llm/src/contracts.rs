@@ -1,9 +1,8 @@
 use crate::config::Config;
 use crate::encoding::encode_function_args;
 use crate::errors::AgentError;
-use crate::sol_interfaces::TransactionPayload;
 use alloy_json_abi::{Function, JsonAbi};
-use alloy_primitives::{Address, Bytes, U256};
+use alloy_primitives::{Bytes, U256};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -174,40 +173,40 @@ impl Transaction {
         Ok(())
     }
 
-    /// Helper function to create a TransactionPayload from a Transaction
-    pub fn create_payload_from_tx(tx: &Transaction) -> Result<TransactionPayload, AgentError> {
-        // Parse address
-        let to: Address = tx
-            .to
-            .parse()
-            .map_err(|e| AgentError::Transaction(format!("Invalid address: {}", e)))?;
+    // /// Helper function to create a TransactionPayload from a Transaction
+    // pub fn create_payload_from_tx(tx: &Transaction) -> Result<TransactionPayload, AgentError> {
+    //     // Parse address
+    //     let to: Address = tx
+    //         .to
+    //         .parse()
+    //         .map_err(|e| AgentError::Transaction(format!("Invalid address: {}", e)))?;
 
-        // Parse value
-        let value = U256::from_str(&tx.value)
-            .map_err(|e| AgentError::Transaction(format!("Invalid value: {}", e)))?;
+    //     // Parse value
+    //     let value = U256::from_str(&tx.value)
+    //         .map_err(|e| AgentError::Transaction(format!("Invalid value: {}", e)))?;
 
-        // Handle contract calls
-        let data = if let Some(contract_call) = &tx.contract_call {
-            // Get contract details from the Config
-            let config = Config::default();
+    //     // Handle contract calls
+    //     let data = if let Some(contract_call) = &tx.contract_call {
+    //         // Get contract details from the Config
+    //         let config = Config::default();
 
-            // Try to find the contract by address
-            let contract = config
-                .contracts
-                .iter()
-                .find(|c| c.address.to_lowercase() == tx.to.to_lowercase())
-                .ok_or_else(|| {
-                    AgentError::Contract(format!("Cannot find contract at address {}", tx.to))
-                })?;
+    //         // Try to find the contract by address
+    //         let contract = config
+    //             .contracts
+    //             .iter()
+    //             .find(|c| c.address.to_lowercase() == tx.to.to_lowercase())
+    //             .ok_or_else(|| {
+    //                 AgentError::Contract(format!("Cannot find contract at address {}", tx.to))
+    //             })?;
 
-            // Use the contract to encode the function call
-            contract.encode_function_call(&contract_call.function, &contract_call.args)?
-        } else {
-            Bytes::default()
-        };
+    //         // Use the contract to encode the function call
+    //         contract.encode_function_call(&contract_call.function, &contract_call.args)?
+    //     } else {
+    //         Bytes::default()
+    //     };
 
-        Ok(TransactionPayload { to, value, data })
-    }
+    //     Ok(TransactionPayload { to, value, data })
+    // }
 }
 
 #[cfg(test)]

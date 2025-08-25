@@ -15,13 +15,8 @@ use bindings::{
 use context::DaoContext;
 use sol_interfaces::{Operation, Transaction};
 use std::str::FromStr;
-use wavs_llm::{
-    client::with_config,
-    contracts::{self, ContractManagerImpl},
-    traits::{GuestContractManager, GuestLlmClientManager},
-    types::{LlmResponse, Message},
-    AgentError,
-};
+use wavs_llm::client::{LlmResponse, Message};
+use wavs_llm::{client, errors::AgentError};
 
 struct Component;
 
@@ -71,12 +66,13 @@ impl Guest for Component {
         }
 
         // Create LLM client implementation using the standalone constructor
-        let llm_client = with_config(llm_context.model.clone(), llm_context.llm_config.clone())
-            .map_err(|e| e.to_string())?;
+        let llm_client =
+            client::LLMClient::with_config(&llm_context.model, llm_context.llm_config.clone())
+                .map_err(|e| e.to_string())?;
 
         // Use the helper function to process the prompt
         let result = llm_client
-            .process_prompt(prompt, llm_context.clone(), None, None)
+            .process_prompt(&prompt, &llm_context, None, None)
             .map_err(|e| e.to_string())?;
 
         // Handle the response
@@ -106,15 +102,12 @@ impl Guest for Component {
                                 "Cannot find contract at address {}",
                                 tx.to
                             ))
-                        })?;
+                        })
+                        .unwrap();
 
-                    contracts::ContractManagerImpl::encode_function_call(
-                        &ContractManagerImpl,
-                        contract.clone(),
-                        contract_call.function.clone(),
-                        contract_call.args.clone(),
-                    )?
-                    .into()
+                    contract
+                        .encode_function_call(&contract_call.function, &contract_call.args)
+                        .unwrap()
                 } else {
                     Bytes::default()
                 };

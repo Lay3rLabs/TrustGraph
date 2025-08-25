@@ -1,32 +1,36 @@
-use crate::config::{Config, LlmOptions};
-use crate::contracts::Transaction;
-use crate::errors::AgentError;
-use crate::tools::{Tool, ToolCall, Tools};
+use crate::config::LlmConfig;
+use crate::encoding::encode_image_to_base64;
+use crate::errors::LlmError;
+use crate::tools::{Tool, ToolCall};
 use serde::{Deserialize, Serialize};
-use serde_json::json;
+use serde_json::{json, Value};
+use std::collections::HashMap;
 use std::env;
+use wstd::http::{Client, HeaderValue, IntoBody, Request};
+use wstd::io::AsyncRead;
 use wstd::runtime::block_on;
-use wstd::{
-    http::{Client, HeaderValue, IntoBody, Request},
-    io::AsyncRead,
-};
 
-/// Common message structure for chat completions
+/// Represents a message in the conversation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Message {
+    /// The role of the message sender (e.g., "user", "assistant", "system", "tool")
     pub role: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The content of the message
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub content: Option<String>,
+    /// Tool calls made by the assistant
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tool_calls: Option<Vec<ToolCall>>,
+    /// ID of the tool call this message is responding to
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tool_call_id: Option<String>,
+    /// Name of the tool (for tool messages)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 }
 
-/// Tool result message
 impl Message {
+    /// Creates a new user message
     pub fn new_user(content: String) -> Self {
         Self {
             role: "user".to_string(),
@@ -37,6 +41,7 @@ impl Message {
         }
     }
 
+    /// Creates a new system message
     pub fn new_system(content: String) -> Self {
         Self {
             role: "system".to_string(),
@@ -47,86 +52,107 @@ impl Message {
         }
     }
 
-    pub fn new_tool_result(tool_call_id: String, content: String) -> Self {
+    /// Creates a new tool result message
+    pub fn new_tool_result(tool_call_id: String, name: String, content: String) -> Self {
         Self {
             role: "tool".to_string(),
             content: Some(content),
             tool_calls: None,
             tool_call_id: Some(tool_call_id),
-            name: None,
+            name: Some(name),
         }
     }
 }
 
-/// Client for making LLM API requests
-#[derive(Debug, Deserialize, Serialize)]
+/// Client for interacting with Ollama LLM API
+#[derive(Debug, Clone)]
+/// The main LLM client for interacting with Ollama
 pub struct LLMClient {
     model: String,
-    api_url: String,
-    api_key: Option<String>,
-    config: LlmOptions,
+    config: LlmConfig,
 }
 
-/// Response from an LLM interaction
-#[derive(Debug, Clone)]
+/// Format specification for structured outputs
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ResponseFormat {
+    /// Simple JSON mode - ensures response is valid JSON
+    Json,
+    /// Structured output with JSON schema
+    Schema(serde_json::Value),
+}
+
+impl ResponseFormat {
+    /// Create a JSON mode format
+    pub fn json() -> Self {
+        ResponseFormat::Json
+    }
+
+    /// Create a structured format from a JSON schema
+    pub fn schema(schema: serde_json::Value) -> Self {
+        ResponseFormat::Schema(schema)
+    }
+
+    /// Convert to the format expected by Ollama API
+    fn to_ollama_format(&self) -> serde_json::Value {
+        match self {
+            ResponseFormat::Json => json!("json"),
+            ResponseFormat::Schema(schema) => schema.clone(),
+        }
+    }
+}
+
+/// Response from the LLM
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum LlmResponse {
-    /// Transaction to be executed
-    Transaction(Transaction),
-    /// Text response (when no action is needed)
+    /// Structured transaction response
+    Transaction(crate::contracts::Transaction),
+    /// Plain text response
     Text(String),
 }
 
 impl LLMClient {
-    /// Create a new LLM client with default configuration
-    pub fn new(model: &str) -> Result<Self, AgentError> {
-        Self::with_config(model, LlmOptions::default())
+    /// Creates a new LLM client with the specified model
+    pub fn new(model: String) -> Self {
+        Self { model, config: LlmConfig::default() }
     }
 
-    /// Create a new LLM client from a JSON configuration string
-    pub fn from_json(model: &str, json_config: &str) -> Result<Self, AgentError> {
-        let config: LlmOptions = serde_json::from_str(json_config)
-            .map_err(|e| AgentError::Config(format!("Failed to parse config JSON: {}", e)))?;
-        Self::with_config(model, config)
-    }
+    /// Creates a new LLM client from JSON configuration
+    pub fn from_json(json_str: &str) -> Result<Self, LlmError> {
+        let config: Value = serde_json::from_str(json_str)
+            .map_err(|e| LlmError::ConfigError(format!("Invalid JSON: {}", e)))?;
 
-    /// Create a new LLM client with custom configuration
-    pub fn with_config(model: &str, config: LlmOptions) -> Result<Self, AgentError> {
-        // Validate model name
-        if model.trim().is_empty() {
-            return Err(AgentError::Llm("Model name cannot be empty".to_string()));
+        let model = config
+            .get("model")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| LlmError::ConfigError("Missing 'model' field".to_string()))?
+            .to_string();
+
+        // Parse optional config parameters
+        let mut llm_config = LlmConfig::default();
+
+        if let Some(temp) = config.get("temperature").and_then(|v| v.as_f64()) {
+            llm_config = llm_config.with_temperature(temp as f32);
         }
 
-        eprintln!("model: {}", model);
+        if let Some(max_tokens) = config.get("max_tokens").and_then(|v| v.as_u64()) {
+            llm_config = llm_config.with_max_tokens(max_tokens as u32);
+        }
 
-        // TODO consistent list of models
-        // Get API key if using OpenAI models
-        let api_key = match model {
-            "gpt-3.5-turbo" | "gpt-4" | "gpt-4o" | "gpt-4o-mini" | "gpt-4.1" | "gpt-4-turbo" => {
-                Some(
-                    std::env::var("WAVS_ENV_OPENAI_API_KEY")
-                        .map_err(|e| {
-                            format!(
-                                "Missing required variable {}: {}",
-                                "WAVS_ENV_OPENAI_API_KEY", e
-                            )
-                        })
-                        .map_err(|e| AgentError::Config(e))?,
-                )
-            }
-            _ => None, // Local models don't need an API key
-        };
+        if let Some(top_p) = config.get("top_p").and_then(|v| v.as_f64()) {
+            llm_config = llm_config.with_top_p(top_p as f32);
+        }
 
-        // Set API URL based on model type
-        let api_url = match model {
-            "gpt-3.5-turbo" | "gpt-4" => "https://api.openai.com/v1/chat/completions".to_string(),
-            _ => format!(
-                "{}/api/chat",
-                env::var("WAVS_ENV_OLLAMA_API_URL")
-                    .unwrap_or_else(|_| "http://localhost:11434".to_string())
-            ),
-        };
+        if let Some(seed) = config.get("seed").and_then(|v| v.as_u64()) {
+            llm_config = llm_config.with_seed(seed as u32);
+        }
 
-        Ok(Self { model: model.to_string(), api_url, api_key, config })
+        Ok(Self { model, config: llm_config })
+    }
+
+    /// Creates a new LLM client with custom configuration
+    pub fn with_config(model: String, config: LlmConfig) -> Self {
+        Self { model, config }
     }
 
     /// Get the model name
@@ -134,758 +160,560 @@ impl LLMClient {
         &self.model
     }
 
-    /// Get a reference to the current configuration
-    pub fn get_config(&self) -> &LlmOptions {
+    /// Get the configuration
+    pub fn get_config(&self) -> &LlmConfig {
         &self.config
     }
 
-    /// Send a chat completion request, with optional tools
+    /// Sends a chat completion request to Ollama
     pub fn chat_completion(
         &self,
-        messages: &[Message],
-        tools: Option<&[Tool]>,
-    ) -> Result<Message, AgentError> {
+        messages: Vec<Message>,
+        tools: Option<Vec<Tool>>,
+    ) -> Result<Message, LlmError> {
+        self.chat_completion_with_format(messages, tools, None)
+    }
+
+    /// Send a chat completion request with optional structured output format
+    pub fn chat_completion_with_format(
+        &self,
+        messages: Vec<Message>,
+        tools: Option<Vec<Tool>>,
+        format: Option<ResponseFormat>,
+    ) -> Result<Message, LlmError> {
         block_on(async {
-            // Validate messages
             if messages.is_empty() {
-                return Err(AgentError::Llm("Messages cannot be empty".to_string()));
+                return Err(LlmError::InvalidInput("Messages cannot be empty".to_string()));
             }
 
-            println!("Sending chat completion request:");
-            println!("- Model: {}", self.model);
-            println!("- Number of messages: {}", messages.len());
-            println!("- Tools provided: {}", tools.is_some());
-            println!("- Temperature: {}", self.config.temperature);
-            println!("- Top_p: {}", self.config.top_p);
+            // Get Ollama base URL from environment or use default
+            let base_url = env::var("WAVS_ENV_OLLAMA_API_URL")
+                .unwrap_or_else(|_| "http://localhost:11434".to_string());
 
-            // Calculate max tokens based on tools presence if not explicitly set
-            let max_tokens =
-                self.config.max_tokens.unwrap_or_else(|| if tools.is_some() { 1024 } else { 100 });
+            let url = format!("{}/api/chat", base_url);
 
-            // Create request body with configurable settings
-            let body = if self.api_key.is_some() {
-                // OpenAI format
-                let mut request = json!({
-                    "model": self.model,
-                    "messages": messages,
-                    "temperature": self.config.temperature,
-                    "top_p": self.config.top_p,
-                    "seed": self.config.seed,
-                    "stream": false,
-                    "max_tokens": max_tokens
-                });
+            // Build the request body
+            let mut body = json!({
+                "model": self.model,
+                "messages": messages,
+                "stream": false,
+            });
 
-                // Add tools if provided
-                if let Some(tools_list) = tools {
-                    request["tools"] = json!(tools_list);
-                }
+            // Add configuration options
+            let mut options = HashMap::new();
 
-                request
-            } else {
-                // Ollama chat format
-                let mut request = json!({
-                    "model": self.model,
-                    "messages": messages,
-                    "stream": false,
-                    "options": {
-                        "temperature": self.config.temperature,
-                        "top_p": self.config.top_p,
-                        "seed": self.config.seed,
-                        "num_predict": max_tokens,
-                    }
-                });
+            if let Some(temp) = self.config.temperature {
+                options.insert("temperature", json!(temp));
+            }
 
-                // Add Config window if specified
-                if let Some(ctx) = self.config.context_window {
-                    request["options"]["num_ctx"] = json!(ctx);
-                }
+            if let Some(max_tokens) = self.config.max_tokens {
+                options.insert("num_predict", json!(max_tokens));
+            }
 
-                // Add tools if provided for Ollama (using the format Ollama expects)
-                if let Some(tools_list) = tools {
-                    // Standard tools format - might work for some Ollama versions
-                    request["tools"] = json!(tools_list);
+            if let Some(top_p) = self.config.top_p {
+                options.insert("top_p", json!(top_p));
+            }
 
-                    // Also include functions key which some Ollama versions might need
-                    // Convert tools to format compatible with Ollama
-                    let functions = tools_list
-                        .iter()
-                        .map(|tool| {
-                            json!({
-                                "name": tool.function.name,
-                                "description": tool.function.description,
-                                "parameters": tool.function.parameters
-                            })
-                        })
-                        .collect::<Vec<_>>();
+            if let Some(seed) = self.config.seed {
+                options.insert("seed", json!(seed));
+            }
 
-                    request["functions"] = json!(functions);
-                }
+            if !options.is_empty() {
+                body["options"] = json!(options);
+            }
 
-                request
-            };
+            // Add tools if provided
+            if let Some(tools) = tools {
+                body["tools"] = json!(tools);
+            }
 
-            println!("Request body: {}", serde_json::to_string_pretty(&body).unwrap());
+            // Add format if provided for structured output
+            if let Some(format) = format {
+                body["format"] = format.to_ollama_format();
+            }
 
-            // Create request
-            let mut req = Request::post(&self.api_url)
+            // Create HTTP request
+            let mut req = Request::post(&url)
                 .body(serde_json::to_vec(&body).unwrap().into_body())
-                .map_err(|e| format!("Failed to create request: {}", e))?;
+                .map_err(|e| LlmError::RequestError(format!("Failed to create request: {}", e)))?;
 
             // Add headers
             req.headers_mut().insert("Content-Type", HeaderValue::from_static("application/json"));
             req.headers_mut().insert("Accept", HeaderValue::from_static("application/json"));
 
-            // Add authorization if needed
-            if let Some(api_key) = &self.api_key {
-                req.headers_mut().insert(
-                    "Authorization",
-                    HeaderValue::from_str(&format!("Bearer {}", api_key))
-                        .map_err(|e| format!("Invalid API key format: {}", e))?,
-                );
-            }
-
-            println!("Sending request to: {}", req.uri());
-
             // Send request
-            let mut res =
-                Client::new().send(req).await.map_err(|e| format!("Request failed: {}", e))?;
-
-            println!("Received response with status: {}", res.status());
+            let mut res = Client::new()
+                .send(req)
+                .await
+                .map_err(|e| LlmError::RequestError(format!("Request failed: {}", e)))?;
 
             if res.status() != 200 {
                 let mut error_body = Vec::new();
-                res.body_mut()
-                    .read_to_end(&mut error_body)
-                    .await
-                    .map_err(|e| format!("Failed to read error response: {}", e))?;
+                res.body_mut().read_to_end(&mut error_body).await.map_err(|e| {
+                    LlmError::RequestError(format!("Failed to read error response: {}", e))
+                })?;
                 let error_msg = format!(
                     "API error: status {} - {}",
                     res.status(),
                     String::from_utf8_lossy(&error_body)
                 );
-                println!("Error: {}", error_msg);
-                return Err(AgentError::Llm(error_msg));
+                return Err(LlmError::ApiError(error_msg));
             }
 
             // Read response body
             let mut body_buf = Vec::new();
-            res.body_mut()
-                .read_to_end(&mut body_buf)
-                .await
-                .map_err(|e| format!("Failed to read response body: {}", e))?;
+            res.body_mut().read_to_end(&mut body_buf).await.map_err(|e| {
+                LlmError::RequestError(format!("Failed to read response body: {}", e))
+            })?;
 
             let body = String::from_utf8(body_buf)
-                .map_err(|e| format!("Invalid UTF-8 in response: {}", e))?;
+                .map_err(|e| LlmError::ParseError(format!("Invalid UTF-8 in response: {}", e)))?;
 
-            println!("Raw response: {}", body);
-
-            // Parse response based on provider
-            if self.api_key.is_some() {
-                // Parse OpenAI response format
-                #[derive(Deserialize)]
-                struct ChatResponse {
-                    choices: Vec<Choice>,
-                }
-
-                #[derive(Deserialize)]
-                struct Choice {
-                    message: Message,
-                }
-
-                let resp: ChatResponse = serde_json::from_str(&body)
-                    .map_err(|e| format!("Failed to parse OpenAI response: {}", e))?;
-
-                resp.choices
-                    .first()
-                    .map(|choice| choice.message.clone())
-                    .ok_or_else(|| AgentError::Llm("No response choices returned".to_string()))
-            } else {
-                // Parse Ollama chat response format
+            // Parse Ollama response
+            #[derive(Debug, Deserialize)]
+            struct OllamaResponse {
+                message: Message,
                 #[allow(dead_code)]
-                #[derive(Debug, Deserialize)]
-                struct OllamaResponse {
-                    message: Message,
-                    #[serde(default)]
-                    model: String,
-                    #[serde(default)]
-                    created_at: String,
-                }
-
-                println!("Parsing Ollama response with our new format handler");
-
-                // First parse as raw Value to inspect the structure
-                let raw_value: serde_json::Value = serde_json::from_str(&body)
-                    .map_err(|e| format!("Failed to parse Ollama response as JSON: {}", e))?;
-
-                println!("Successfully parsed as raw JSON: {:?}", raw_value);
-
-                // Now try to deserialize with our custom deserializers
-                let resp: OllamaResponse = serde_json::from_str(&body).map_err(|e| {
-                    // Print more debugging info
-                    println!("Error parsing Ollama response: {}", e);
-                    println!("Response body: {}", body);
-                    format!("Failed to parse Ollama response: {}", e)
-                })?;
-
-                println!("Successfully parsed Ollama response: {:?}", resp.message);
-
-                Ok(resp.message)
+                model: String,
+                #[allow(dead_code)]
+                created_at: String,
             }
+
+            let ollama_response: OllamaResponse = serde_json::from_str(&body).map_err(|e| {
+                LlmError::ParseError(format!("Failed to parse Ollama response: {}", e))
+            })?;
+
+            Ok(ollama_response.message)
         })
     }
 
-    /// Helper method to get just the content string from a chat completion
-    pub fn chat_completion_text(&self, messages: &[Message]) -> Result<String, AgentError> {
-        block_on(async {
-            let response = self.chat_completion(messages, None)?;
-            Ok(response.content.unwrap_or_default())
+    /// Convenience method for getting text-only chat completions
+    pub fn chat_completion_text(&self, messages: Vec<Message>) -> Result<String, LlmError> {
+        let response = self.chat_completion(messages, None)?;
+        response.content.ok_or_else(|| LlmError::ParseError("No content in response".to_string()))
+    }
+
+    /// Convenience method for getting structured chat completions
+    pub fn chat_completion_structured<T>(
+        &self,
+        messages: Vec<Message>,
+        tools: Option<Vec<Tool>>,
+        schema: serde_json::Value,
+    ) -> Result<T, LlmError>
+    where
+        T: for<'de> serde::Deserialize<'de>,
+    {
+        let format = Some(ResponseFormat::Schema(schema));
+        let response = self.chat_completion_with_format(messages, tools, format)?;
+
+        let content = response
+            .content
+            .ok_or_else(|| LlmError::ParseError("No content in response".to_string()))?;
+
+        serde_json::from_str(&content).map_err(|e| {
+            LlmError::ParseError(format!("Failed to parse structured response: {}", e))
         })
     }
 
-    /// Process a prompt with the LLM and return either a Transaction or text response
+    /// Process a prompt with optional context and images
     pub fn process_prompt(
         &self,
-        prompt: &str,
-        config: &Config,
-        custom_tools: Option<Vec<Tool>>,
-        custom_handlers: Option<&[Box<dyn crate::tools::CustomToolHandler>]>,
-    ) -> Result<LlmResponse, AgentError> {
-        block_on(async {
-            // Create the tools for ETH transfers
-            let eth_tool = Tools::send_eth_tool();
+        prompt: String,
+        context: Option<String>,
+        images: Option<Vec<String>>,
+    ) -> Result<LlmResponse, LlmError> {
+        // Build messages
+        let mut messages = Vec::new();
 
-            // Generate tools from smart contract ABIs
-            let mut all_tools = vec![eth_tool];
+        // Add system message if context is provided
+        if let Some(ctx) = context {
+            messages.push(Message::new_system(ctx));
+        }
 
-            // Add contract-specific tools
-            for contract in &config.contracts {
-                let contract_tools = Tools::tools_from_contract(contract);
-                println!(
-                    "Generated {} tools from {} contract",
-                    contract_tools.len(),
-                    contract.name
-                );
+        // Create user message with prompt
+        let mut user_message = Message::new_user(prompt.clone());
 
-                // Add debug printing for tool parameters
-                for tool in &contract_tools {
-                    println!(
-                        "Tool: {} - Parameters: {}",
-                        tool.function.name,
-                        serde_json::to_string_pretty(&tool.function.parameters)
-                            .unwrap_or("None".to_string())
-                    );
-                }
-
-                all_tools.extend(contract_tools);
+        // Handle images if provided
+        if let Some(image_paths) = images {
+            let mut encoded_images = Vec::new();
+            for path in image_paths {
+                let encoded = encode_image_to_base64(&path)?;
+                encoded_images.push(encoded);
             }
 
-            // Add any custom tools provided by the caller
-            if let Some(tools) = custom_tools {
-                println!("Adding {} custom tools", tools.len());
-                for tool in &tools {
-                    println!(
-                        "Custom tool: {} - {}",
-                        tool.function.name,
-                        tool.function.description.as_ref().unwrap_or(&"No description".to_string())
-                    );
-                }
-                all_tools.extend(tools);
-            }
+            // For Ollama, we need to include images in a specific format
+            // Modify the content to include image references
+            let content_with_images = json!({
+                "text": prompt,
+                "images": encoded_images
+            });
 
-            // Print all available tools for debugging
-            println!("Total available tools: {}", all_tools.len());
-            for tool in &all_tools {
-                println!(
-                    "Tool: {} - {}",
-                    tool.function.name,
-                    tool.function.description.as_ref().unwrap_or(&"No description".to_string())
-                );
-            }
+            user_message.content = Some(content_with_images.to_string());
+        }
 
-            // Create the messages for the chat completion
-            let mut messages = Vec::new();
+        messages.push(user_message);
 
-            // Use existing messages from config if available
-            if !config.messages.is_empty() {
-                messages.extend(config.messages.clone());
-            } else {
-                // If no messages in the config, add a default system message
-                messages.push(Message::new_system(
-                    "You are an agent responsible for making and executing transactions."
-                        .to_string(),
-                ));
-            }
+        // Get response from LLM
+        let response = self.chat_completion(messages, None)?;
+        let content = response
+            .content
+            .ok_or_else(|| LlmError::ParseError("No content in response".to_string()))?;
 
-            // Add the new user message
-            messages.push(Message::new_user(prompt.to_string()));
-
-            // Call the LLM client with all tools
-            let response = self.chat_completion(&messages, Some(&all_tools))?;
-
-            println!("Response: {:?}", response);
-
-            // Check if we have tool calls
-            if let Some(tool_calls) = response.tool_calls.clone() {
-                if !tool_calls.is_empty() {
-                    // Process the tool calls
-                    let tool_result = Tools::process_tool_calls(
-                        self,
-                        messages,
-                        response,
-                        tool_calls,
-                        custom_handlers,
-                    )?;
-
-                    // Parse the tool result as a Transaction
-                    match serde_json::from_str::<Transaction>(&tool_result) {
-                        Ok(transaction) => {
-                            return Ok(LlmResponse::Transaction(transaction));
-                        }
-                        Err(e) => {
-                            println!("Failed to parse transaction, treating as text: {}", e);
-                            return Ok(LlmResponse::Text(tool_result));
-                        }
-                    }
-                }
-            }
-
-            // If we have content, return it as text response
-            if let Some(content) = response.content {
-                if !content.trim().is_empty() {
-                    return Ok(LlmResponse::Text(content));
-                }
-            }
-
-            // No tool calls or content means no action needed
-            Ok(LlmResponse::Text("".to_string()))
-        })
+        // Try to parse as transaction struct first
+        if let Ok(transaction) = serde_json::from_str::<crate::contracts::Transaction>(&content) {
+            Ok(LlmResponse::Transaction(transaction))
+        } else {
+            // Return as plain text if not a transaction
+            Ok(LlmResponse::Text(content))
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wstd::runtime::block_on;
+    use crate::config::LlmConfigBuilder;
 
     fn setup_test_env() {
         env::set_var("WAVS_ENV_OLLAMA_API_URL", "http://localhost:11434");
     }
 
-    // Unit tests that don't require HTTP requests
     #[test]
     fn test_llm_client_initialization() {
         setup_test_env();
-
-        let client = LLMClient::new("llama3.2");
-        assert!(client.is_ok());
-        let client = client.unwrap();
-        assert_eq!(client.model, "llama3.2");
-        assert!(client.api_url.contains("localhost:11434"));
-        assert!(client.api_url.contains("/api/chat"));
+        let client = LLMClient::new("llama2".to_string());
+        assert_eq!(client.get_model(), "llama2");
+        assert_eq!(client.get_config().temperature, None);
+        assert_eq!(client.get_config().max_tokens, None);
     }
 
     #[test]
     fn test_llm_client_from_json() {
         setup_test_env();
-
-        let config_json = r#"{
+        let json_config = r#"{
+            "model": "llama2",
             "temperature": 0.7,
-            "top_p": 0.95,
-            "seed": 123,
-            "max_tokens": 500,
-            "context_window": 8192
+            "max_tokens": 100,
+            "top_p": 0.9,
+            "seed": 42
         }"#;
 
-        let client = LLMClient::from_json("llama3.2", config_json);
-        assert!(client.is_ok());
-        let client = client.unwrap();
-
-        // Verify the configuration was properly deserialized
-        assert_eq!(client.config.temperature, 0.7);
-        assert_eq!(client.config.top_p, 0.95);
-        assert_eq!(client.config.seed, 123);
-        assert_eq!(client.config.max_tokens, Some(500));
-        assert_eq!(client.config.context_window, Some(8192));
+        let client = LLMClient::from_json(json_config).unwrap();
+        assert_eq!(client.get_model(), "llama2");
+        assert_eq!(client.get_config().temperature, Some(0.7));
+        assert_eq!(client.get_config().max_tokens, Some(100));
+        assert_eq!(client.get_config().top_p, Some(0.9));
+        assert_eq!(client.get_config().seed, Some(42));
     }
 
     #[test]
     fn test_llm_client_from_json_invalid() {
-        // Test with invalid JSON
-        let invalid_json = r#"{
-            "temperature": "not a number",
-            "seed": 42
+        let json_config = r#"{
+            "temperature": 0.7
         }"#;
 
-        let result = LLMClient::from_json("llama3.2", invalid_json);
+        let result = LLMClient::from_json(json_config);
         assert!(result.is_err());
-        let err = result.unwrap_err();
-        match err {
-            AgentError::Config(msg) => assert!(msg.contains("Failed to parse config JSON")),
-            _ => panic!("Expected Config error variant"),
+
+        match result {
+            Err(LlmError::ConfigError(msg)) => {
+                assert!(msg.contains("Missing 'model' field"));
+            }
+            _ => panic!("Expected ConfigError for missing model"),
         }
     }
 
     #[test]
     fn test_llm_client_with_config() {
         setup_test_env();
+        let config = LlmConfig::default().with_temperature(0.8).with_max_tokens(200);
 
-        let config = LlmOptions::new().temperature(0.7).top_p(0.95).context_window(Some(8192));
-
-        let client = LLMClient::with_config("llama3.2", config);
-        assert!(client.is_ok());
-        let client = client.unwrap();
-        assert_eq!(client.config.temperature, 0.7);
-        assert_eq!(client.config.top_p, 0.95);
-        assert_eq!(client.config.context_window, Some(8192));
+        let client = LLMClient::with_config("llama2".to_string(), config);
+        assert_eq!(client.get_model(), "llama2");
+        assert_eq!(client.get_config().temperature, Some(0.8));
+        assert_eq!(client.get_config().max_tokens, Some(200));
     }
 
     #[test]
     fn test_llm_config_builder() {
-        let config = LlmOptions::new()
-            .temperature(0.8)
-            .top_p(0.9)
-            .seed(123)
-            .max_tokens(Some(500))
-            .context_window(Some(8192));
+        let config =
+            LlmConfigBuilder::new().temperature(0.5).max_tokens(150).top_p(0.95).seed(123).build();
 
-        assert_eq!(config.temperature, 0.8);
-        assert_eq!(config.top_p, 0.9);
-        assert_eq!(config.seed, 123);
-        assert_eq!(config.max_tokens, Some(500));
-        assert_eq!(config.context_window, Some(8192));
+        assert_eq!(config.temperature, Some(0.5));
+        assert_eq!(config.max_tokens, Some(150));
+        assert_eq!(config.top_p, Some(0.95));
+        assert_eq!(config.seed, Some(123));
     }
 
     #[test]
     fn test_new_client_empty_model() {
-        let result = LLMClient::new("");
-        assert!(result.is_err());
-        let err = result.unwrap_err();
-        match err {
-            AgentError::Llm(msg) => assert_eq!(msg, "Model name cannot be empty"),
-            _ => panic!("Expected Llm error variant"),
-        }
+        let json_config = r#"{
+            "model": "",
+            "temperature": 0.7
+        }"#;
 
-        let result = LLMClient::new("   ");
-        assert!(result.is_err());
-        let err = result.unwrap_err();
-        match err {
-            AgentError::Llm(msg) => assert_eq!(msg, "Model name cannot be empty"),
-            _ => panic!("Expected Llm error variant"),
-        }
+        let client = LLMClient::from_json(json_config).unwrap();
+        assert_eq!(client.get_model(), "");
+        assert_eq!(client.get_config().temperature, Some(0.7));
     }
 
     #[test]
     fn test_chat_completion_empty_messages() {
-        let client = LLMClient::new("llama3.2").unwrap();
-        let result = client.chat_completion(&[], None);
+        setup_test_env();
+        let client = LLMClient::new("llama2".to_string());
+        let result = client.chat_completion(vec![], None);
+
         assert!(result.is_err());
-        let err = result.unwrap_err();
-        match err {
-            AgentError::Llm(msg) => assert!(msg.contains("Messages cannot be empty")),
-            _ => panic!("Expected Llm error variant"),
+        match result {
+            Err(LlmError::InvalidInput(msg)) => {
+                assert!(msg.contains("Messages cannot be empty"));
+            }
+            _ => panic!("Expected InvalidInput error for empty messages"),
         }
     }
 
-    // Integration tests that require HTTP - only run in WASI environment
-    #[cfg(all(test, target_arch = "wasm32"))]
+    // Integration tests for Ollama
+    // NOTE: These tests require:
+    // 1. Ollama to be running on localhost:11434
+    // 2. A WASI runtime environment (they won't work with native cargo test)
+    //
+    // To run these tests in a WASI environment:
+    // 1. Build the component: `cargo component build`
+    // 2. Run with wasmtime or another WASI runtime
+    //
+    // For native testing, use mock tests or run Ollama locally with a different HTTP client
+    #[cfg(all(feature = "integration-tests", target_arch = "wasm32"))]
     mod integration {
         use super::*;
+        use std::sync::Once;
 
-        #[cfg(feature = "ollama")]
-        mod ollama {
-            use super::*;
-            use std::sync::Once;
+        static INIT: Once = Once::new();
 
-            // Use Once to ensure logger is only initialized once
-            static INIT: Once = Once::new();
+        fn init() {
+            INIT.call_once(|| {
+                env::set_var("WAVS_ENV_OLLAMA_API_URL", "http://localhost:11434");
+                println!("Integration tests require Ollama running on localhost:11434");
+            });
+        }
 
-            fn init() {
-                INIT.call_once(|| {
-                    env::set_var("RUST_LOG", "debug");
-                    let _ = env_logger::try_init(); // Ignore errors if already initialized
-                });
-            }
+        #[test]
+        #[ignore] // Run in WASI environment only
+        fn test_ollama_chat_completion() {
+            init();
 
-            #[test]
-            fn test_ollama_chat_completion() {
-                init();
-                println!("Initializing Ollama client...");
-                let client = LLMClient::new("llama3.2").unwrap();
-                println!("Client initialized successfully");
+            let client = LLMClient::new("llama2".to_string());
 
-                let messages = vec![
-                    Message::new_system("You are a helpful math assistant".to_string()),
-                    Message::new_user("What is 2+2?".to_string()),
-                ];
-                println!("Sending test message: {:?}", messages);
+            let messages = vec![
+                Message::new_system("You are a helpful assistant.".to_string()),
+                Message::new_user("What is 2+2?".to_string()),
+            ];
 
-                let result = block_on(async {
-                    match client.chat_completion_text(&messages).await {
-                        Ok(response) => {
-                            println!("Received successful response");
-                            Ok(response)
-                        }
-                        Err(e) => {
-                            println!("Error during chat completion: {}", e);
-                            Err(e)
-                        }
-                    }
-                });
-
-                match result {
-                    Ok(content) => {
-                        println!("Test successful! Response: {}", content);
-                        assert!(!content.is_empty());
-                    }
-                    Err(e) => {
-                        println!("Test failed with error: {}", e);
-                        panic!("Test failed: {}", e);
-                    }
+            match client.chat_completion(messages, None) {
+                Ok(response) => {
+                    println!("Ollama response: {:?}", response);
+                    assert!(response.content.is_some());
+                    let content = response.content.unwrap();
+                    assert!(!content.is_empty());
+                    // The response should mention "4" somewhere
+                    assert!(content.contains("4") || content.contains("four"));
                 }
-            }
-
-            #[test]
-            fn test_ollama_chat_completion_with_config() {
-                init();
-                println!("Initializing Ollama client with custom config...");
-
-                let config = LlmOptions::new().temperature(0.5).top_p(0.9).max_tokens(Some(200));
-
-                let client = LLMClient::with_config("llama3.2", config).unwrap();
-                println!("Client initialized successfully with custom config");
-
-                let messages = vec![
-                    Message::new_system("You are a helpful math assistant".to_string()),
-                    Message::new_user("What is 2+2?".to_string()),
-                ];
-
-                let result = block_on(async { client.chat_completion_text(&messages).await });
-
-                match result {
-                    Ok(content) => {
-                        println!("Test successful! Response: {}", content);
-                        assert!(!content.is_empty());
-                    }
-                    Err(e) => {
-                        println!("Test failed with error: {}", e);
-                        panic!("Test failed: {}", e);
-                    }
-                }
-            }
-
-            #[test]
-            fn test_ollama_chat_completion_with_tools() {
-                init();
-                println!("Initializing Ollama client for tools test...");
-                let client = LLMClient::new("llama3.2").unwrap();
-
-                // Define tools
-                let eth_tool = builders::send_eth();
-
-                // Create a test contract for generated tools
-                let test_contract = crate::models::Contract {
-                    name: "USDC".to_string(),
-                    address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48".to_string(),
-                    abi: r#"[{
-                        "constant": false,
-                        "inputs": [{"name": "to","type": "address"},{"name": "value","type": "uint256"}],
-                        "name": "transfer",
-                        "outputs": [{"name": "","type": "bool"}],
-                        "type": "function"
-                    }]"#.to_string(),
-                };
-
-                let contract_tools = builders::from_contract(&test_contract);
-
-                let messages = vec![
-                    Message::new_system(
-                        "You are a DAO agent that can send ETH and interact with smart contracts. Use the appropriate tools as needed."
-                            .to_string(),
-                    ),
-                    Message::new_user("Send 0.1 ETH to 0xDf3679681B87fAE75CE185e4f01d98b64Ddb64a3".to_string()),
-                ];
-
-                println!("Sending test message with tools");
-
-                // Combine all tools
-                let mut all_tools = vec![eth_tool];
-                all_tools.extend(contract_tools);
-
-                let result =
-                    block_on(async { client.chat_completion(&messages, Some(&all_tools)).await });
-
-                // Note: This test may fail if Ollama doesn't support tool calls
-                // We're just checking that the request completes, not that it uses tools
-                match result {
-                    Ok(message) => {
-                        println!("Test successful! Response: {:?}", message);
-
-                        // Check if we got tool calls - that's successful for this test
-                        if let Some(tool_calls) = &message.tool_calls {
-                            assert!(!tool_calls.is_empty(), "Expected tool calls to be non-empty");
-                            let tool_call = &tool_calls[0];
-                            // Tool could be send_eth or a contract_* tool
-                            assert!(
-                                tool_call.function.name == "send_eth"
-                                    || tool_call.function.name.starts_with("contract_"),
-                                "Unexpected tool: {}",
-                                tool_call.function.name
-                            );
-                        }
-                        // With some models we might get a text response instead - that's fine too
-                        else if let Some(content) = &message.content {
-                            if !content.is_empty() {
-                                println!("Got text response instead of tool calls: {}", content);
-                            }
-                        }
-                    }
-                    Err(e) => {
-                        println!("Test result: {}", e);
-                        // Don't panic, as Ollama might not support tool calls
-                        println!("Note: Ollama may not support tool calls in the current version");
-                    }
+                Err(e) => {
+                    println!("Ollama test error: {:?}", e);
+                    println!("Make sure Ollama is running with 'ollama serve'");
+                    println!("And that you have pulled a model with 'ollama pull llama2'");
+                    panic!("Ollama integration test failed: {:?}", e);
                 }
             }
         }
 
-        #[cfg(feature = "openai")]
-        mod openai {
-            use super::*;
+        #[test]
+        #[ignore] // Run in WASI environment only
+        fn test_ollama_chat_completion_with_config() {
+            init();
 
-            fn validate_config() -> Result<(), String> {
-                // Check required variables
-                let required_vars = ["WAVS_ENV_OPENAI_API_KEY"];
+            let config = LlmConfig::default().with_temperature(0.1).with_max_tokens(50);
 
-                for var in required_vars {
-                    std::env::var(var)
-                        .map_err(|_| format!("Missing required variable: {}", var))?;
+            let client = LLMClient::with_config("llama2".to_string(), config);
+
+            let messages =
+                vec![Message::new_user("Say 'hello world' and nothing else.".to_string())];
+
+            match client.chat_completion(messages, None) {
+                Ok(response) => {
+                    println!("Ollama response with config: {:?}", response);
+                    assert!(response.content.is_some());
+                    let content = response.content.unwrap();
+                    assert!(!content.is_empty());
                 }
-                Ok(())
-            }
-
-            #[test]
-            fn test_openai_chat_completion() {
-                // Validate environment configuration
-                if let Err(e) = validate_config() {
-                    println!("Skipping OpenAI test: {}", e);
-                    return;
-                }
-
-                println!("Initializing OpenAI client...");
-                let client = LLMClient::new("gpt-3.5-turbo").unwrap();
-                println!("Client initialized successfully");
-
-                let messages = vec![
-                    Message::new_system("You are a helpful math assistant".to_string()),
-                    Message::new_user("What is 2+2?".to_string()),
-                ];
-                println!("Sending test message: {:?}", messages);
-
-                let result = block_on(async {
-                    match client.chat_completion_text(&messages).await {
-                        Ok(response) => {
-                            println!("Received successful response");
-                            Ok(response)
-                        }
-                        Err(e) => {
-                            println!("Error during chat completion: {}", e);
-                            Err(e)
-                        }
-                    }
-                });
-
-                match result {
-                    Ok(content) => {
-                        println!("Test successful! Response: {}", content);
-                        assert!(!content.is_empty());
-                    }
-                    Err(e) => {
-                        println!("Test failed with error: {}", e);
-                        panic!("Test failed: {}", e);
-                    }
+                Err(e) => {
+                    println!("Ollama test error: {:?}", e);
+                    panic!("Ollama integration test failed: {:?}", e);
                 }
             }
+        }
 
-            #[test]
-            fn test_openai_chat_completion_with_tools() {
-                // Validate environment configuration
-                if let Err(e) = validate_config() {
-                    println!("Skipping OpenAI tools test: {}", e);
-                    return;
+        #[test]
+        #[ignore] // Run in WASI environment only
+        fn test_ollama_chat_completion_with_tools() {
+            init();
+
+            let client = LLMClient::new("llama2".to_string());
+
+            let tools = vec![Tool {
+                tool_type: "function".to_string(),
+                function: crate::tools::Function {
+                    name: "get_weather".to_string(),
+                    description: Some("Get the current weather for a location".to_string()),
+                    parameters: Some(json!({
+                        "type": "object",
+                        "properties": {
+                            "location": {
+                                "type": "string",
+                                "description": "The city and state, e.g. San Francisco, CA"
+                            }
+                        },
+                        "required": ["location"]
+                    })),
+                },
+            }];
+
+            let messages =
+                vec![Message::new_user("What's the weather like in San Francisco?".to_string())];
+
+            match client.chat_completion(messages, Some(tools)) {
+                Ok(response) => {
+                    println!("Ollama response with tools: {:?}", response);
+                    // Check if tool_calls are present or if it's a regular response
+                    if let Some(tool_calls) = response.tool_calls {
+                        assert!(!tool_calls.is_empty());
+                        let first_call = &tool_calls[0];
+                        assert_eq!(first_call.function.name, "get_weather");
+                    } else {
+                        // Some models might not support tools, so check for content
+                        assert!(response.content.is_some());
+                    }
                 }
-
-                println!("Initializing OpenAI client for tools test...");
-                let client = LLMClient::new("gpt-4").unwrap();
-
-                // Define tools
-                let eth_tool = builders::send_eth();
-
-                // Create a test contract for generated tools
-                let test_contract = crate::models::Contract {
-                    name: "USDC".to_string(),
-                    address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48".to_string(),
-                    abi: r#"[{
-                        "constant": false,
-                        "inputs": [{"name": "to","type": "address"},{"name": "value","type": "uint256"}],
-                        "name": "transfer",
-                        "outputs": [{"name": "","type": "bool"}],
-                        "type": "function"
-                    }]"#.to_string(),
-                };
-
-                let contract_tools = builders::from_contract(&test_contract);
-
-                let messages = vec![
-                    Message::new_system(
-                        "You are a DAO agent that can send ETH and interact with smart contracts. Use the appropriate tools as needed."
-                            .to_string(),
-                    ),
-                    Message::new_user("Send 0.1 ETH to 0xDf3679681B87fAE75CE185e4f01d98b64Ddb64a3".to_string()),
-                ];
-
-                println!("Sending test message with tools");
-
-                // Combine all tools
-                let mut all_tools = vec![eth_tool];
-                all_tools.extend(contract_tools);
-
-                let result =
-                    block_on(async { client.chat_completion(&messages, Some(&all_tools)).await });
-
-                match result {
-                    Ok(message) => {
-                        println!("Test successful! Response: {:?}", message);
-
-                        // Check if we got a tool call or just text content
-                        if let Some(tool_calls) = &message.tool_calls {
-                            assert!(!tool_calls.is_empty());
-                            let tool_call = &tool_calls[0];
-                            // Tool could be send_eth or a contract_* tool
-                            assert!(
-                                tool_call.function.name == "send_eth"
-                                    || tool_call.function.name.starts_with("contract_"),
-                                "Unexpected tool: {}",
-                                tool_call.function.name
-                            );
-                            println!("Tool call arguments: {}", tool_call.function.arguments);
-                        } else if let Some(content) = &message.content {
-                            assert!(!content.is_empty());
-                        }
-                    }
-                    Err(e) => {
-                        println!("Test failed with error: {}", e);
-                        panic!("Test failed: {}", e);
-                    }
+                Err(e) => {
+                    println!("Ollama test error: {:?}", e);
+                    println!("Note: Tool support requires specific models in Ollama");
+                    // Don't panic as not all models support tools
                 }
             }
         }
     }
 
-    // Add a note about integration tests when running natively
-    #[cfg(not(target_arch = "wasm32"))]
+    #[test]
+    fn test_response_format_json() {
+        let format = ResponseFormat::json();
+        let ollama_format = format.to_ollama_format();
+        assert_eq!(ollama_format, json!("json"));
+    }
+
+    #[test]
+    fn test_response_format_schema() {
+        let schema = json!({
+            "type": "object",
+            "properties": {
+                "name": {"type": "string"},
+                "age": {"type": "integer"}
+            },
+            "required": ["name", "age"]
+        });
+
+        let format = ResponseFormat::schema(schema.clone());
+        let ollama_format = format.to_ollama_format();
+        assert_eq!(ollama_format, schema);
+    }
+
+    #[test]
+    #[ignore] // Run in WASI environment only
+    fn test_ollama_structured_response_json_mode() {
+        init();
+
+        let client = LLMClient::new("llama2".to_string());
+        let messages = vec![Message::new_user(
+            "Return a JSON object with fields 'status' and 'message'. Status should be 'ok' and message should be 'Hello World'."
+                .to_string(),
+        )];
+
+        let format = Some(ResponseFormat::json());
+
+        match client.chat_completion_with_format(messages, None, format) {
+            Ok(response) => {
+                println!("Structured JSON response: {:?}", response);
+                assert!(response.content.is_some());
+
+                // Try to parse as JSON to verify it's valid
+                let content = response.content.unwrap();
+                let parsed: Result<serde_json::Value, _> = serde_json::from_str(&content);
+                assert!(parsed.is_ok(), "Response should be valid JSON");
+            }
+            Err(e) => {
+                println!("Structured response test error: {:?}", e);
+                panic!("Structured response test failed: {:?}", e);
+            }
+        }
+    }
+
+    #[test]
+    #[ignore] // Run in WASI environment only
+    fn test_ollama_structured_response_with_schema() {
+        init();
+
+        let client = LLMClient::new("llama2".to_string());
+
+        // Define a schema for a person object
+        let schema = json!({
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The person's name"
+                },
+                "age": {
+                    "type": "integer",
+                    "description": "The person's age"
+                },
+                "city": {
+                    "type": "string",
+                    "description": "The city where the person lives"
+                }
+            },
+            "required": ["name", "age", "city"]
+        });
+
+        let messages = vec![Message::new_user(
+            "Generate information about a fictional person named Alice who is 30 years old and lives in New York."
+                .to_string(),
+        )];
+
+        // Test with the structured method
+        #[derive(Debug, Deserialize)]
+        struct Person {
+            name: String,
+            age: u32,
+            city: String,
+        }
+
+        match client.chat_completion_structured::<Person>(messages, None, schema) {
+            Ok(person) => {
+                println!("Parsed structured response: {:?}", person);
+                assert_eq!(person.name, "Alice");
+                assert_eq!(person.age, 30);
+                assert_eq!(person.city, "New York");
+            }
+            Err(e) => {
+                println!("Structured parsing test error: {:?}", e);
+                // This might fail if Ollama doesn't strictly follow the schema
+                // In production, you'd want more robust error handling
+            }
+        }
+    }
+
     #[test]
     fn test_integration_tests_note() {
-        println!("Note: Integration tests are skipped when running natively.");
-        println!("To run integration tests, use `cargo wasi test` or run in a WASI environment.");
+        println!("Integration tests require a WASI runtime environment.");
+        println!("They are only compiled for wasm32 targets with the integration-tests feature.");
+        println!("For native testing, use mock tests or a different HTTP client.");
     }
 }

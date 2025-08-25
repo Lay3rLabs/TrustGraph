@@ -1,12 +1,12 @@
-use crate::bindings::host::get_eth_chain_config;
+use crate::bindings::host::get_evm_chain_config;
 use alloy_network::Ethereum;
 use alloy_primitives::{Address, TxKind, U256};
 use alloy_provider::{Provider, RootProvider};
 use alloy_rpc_types::{eth::TransactionRequest, TransactionInput};
 use alloy_sol_types::{sol, SolCall};
 use serde::{Deserialize, Serialize};
-use std::env;
 use std::str::FromStr;
+use std::{collections::HashMap, env};
 use wavs_llm::{
     client::Message,
     config::{Config, LlmOptions},
@@ -147,7 +147,7 @@ impl DaoContext {
 
     /// Query the ETH balance for this DAO's account
     pub async fn query_eth_balance(&self) -> Result<U256, String> {
-        let chain_config = get_eth_chain_config("local").unwrap();
+        let chain_config = get_evm_chain_config("local").unwrap();
         let provider: RootProvider<Ethereum> =
             new_evm_provider::<Ethereum>(chain_config.http_endpoint.unwrap());
 
@@ -162,7 +162,7 @@ impl DaoContext {
 
     /// Query an ERC20 token balance
     pub async fn query_token_balance(&self, token_address: &str) -> Result<TokenBalance, String> {
-        let chain_config = get_eth_chain_config("local").unwrap();
+        let chain_config = get_evm_chain_config("local").unwrap();
         let provider: RootProvider<Ethereum> =
             new_evm_provider::<Ethereum>(chain_config.http_endpoint.unwrap());
         // Parse addresses
@@ -388,7 +388,7 @@ impl Default for DaoContext {
                 abi: r#"[{"type":"function","name":"transfer","inputs":[{"name":"to","type":"address","internalType":"address"},{"name":"value","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"nonpayable"}]"#.into(),
                 description: Some("USDC is a stablecoin pegged to the US Dollar".into()),
             }],
-            config: vec![],
+            config: HashMap::new(),
         };
 
         Self {
