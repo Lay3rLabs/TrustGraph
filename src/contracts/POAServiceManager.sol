@@ -9,11 +9,12 @@ import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/Signa
 import {SignerECDSAUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/signers/SignerECDSAUpgradeable.sol";
 import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {IPOAServiceManager} from "interfaces/POA.sol";
 
 // POAServiceManager is a contract that is a *really* minimal version of the contracts/src/eigenlayer/ecdsa/WavsServiceManager.sol
 // TODO(Jake): would be cool if we could have a WAVServiceManager + handler in 1. Not sure if we really want people to have to deploy both
 // TODO(reece): slashing could be done manually from owner (it's poa), rewards could be done with merkle drop / vault shares as payout.
-contract POAServiceManager is Ownable, ReentrancyGuard, IWavsServiceManager {
+contract POAServiceManager is Ownable, ReentrancyGuard, IPOAServiceManager, IWavsServiceManager {
     /// @notice The URI of the service
     string public serviceURI;
     /// @notice The numerator of the quorum threshold
@@ -33,14 +34,6 @@ contract POAServiceManager is Ownable, ReentrancyGuard, IWavsServiceManager {
     /// @notice mapping of signing key -> operator address
     mapping(address => address) private signingKeyOperators;
 
-    // Errors
-    error OperatorDoesNotExistForSigningKey();
-    error SingingKeyDoesNotExistForOperator();
-    error OperatorAlreadyWhitelisted();
-    error OperatorNotWhitelisted();
-    error InvalidOperatorAddress();
-    error InvalidOffset();
-
     // Sig verification
     error LengthMismatch();
     error InvalidLength();
@@ -49,16 +42,6 @@ contract POAServiceManager is Ownable, ReentrancyGuard, IWavsServiceManager {
     error InvalidSignedWeight();
     error InsufficientSignedStake();
 
-    // signing key
-    error AlreadyHasSigningKey();
-    error SigningKeyAlreadyUsed();
-    error CannotUseOperatorAsSigningKey();
-
-    // Events
-    event SigningKeySet(address indexed operator, address indexed signingKey);
-    event OperatorWhitelisted(address indexed operator, uint256 weight);
-    event OperatorRemoved(address indexed operator);
-
     constructor() Ownable(msg.sender) {
         // TODO: move to initialize function call?
         totalWeight = 0;
@@ -66,6 +49,7 @@ contract POAServiceManager is Ownable, ReentrancyGuard, IWavsServiceManager {
         quorumDenominator = 3;
     }
 
+    /// @dev IWavsServiceManager
     function validate(
         IWavsServiceHandler.Envelope calldata envelope,
         IWavsServiceHandler.SignatureData calldata signatureData
@@ -280,9 +264,10 @@ contract POAServiceManager is Ownable, ReentrancyGuard, IWavsServiceManager {
         }
 
         // Check if operator already has a signing key
-        if (operatorSigningKeys[msg.sender] != address(0)) {
-            revert AlreadyHasSigningKey();
-        }
+        // TODO: is this required? if they need to update their singing key we should let them.
+        // if (operatorSigningKeys[msg.sender] != address(0)) {
+        //     revert AlreadyHasSigningKey();
+        // }
 
         // Check if signing key is already used
         if (signingKeyOperators[signingKey] != address(0)) {
