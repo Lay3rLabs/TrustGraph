@@ -27,6 +27,7 @@ SUBMIT_CHAIN=${SUBMIT_CHAIN:-"local"}
 AGGREGATOR_URL=${AGGREGATOR_URL:-""}
 DEPLOY_ENV=${DEPLOY_ENV:-""}
 REGISTRY=${REGISTRY:-"wa.dev"}
+WAVS_SERVICE_MANAGER_ADDRESS=${WAVS_SERVICE_MANAGER_ADDRESS:-`task config:service-manager-address`}
 
 # Function to substitute variables in config values
 substitute_config_vars() {
@@ -88,14 +89,6 @@ build_env_string() {
 }
 
 BASE_CMD="docker run --rm --network host -w /data -v $(pwd):/data ghcr.io/lay3rlabs/wavs:0.5.5 wavs-cli service --json true --home /data --file /data/${FILE_LOCATION}"
-
-if [ -z "$WAVS_SERVICE_MANAGER_ADDRESS" ]; then
-    export WAVS_SERVICE_MANAGER_ADDRESS=$(jq -r .addresses.WavsServiceManager ./.nodes/avs_deploy.json)
-    if [ -z "$WAVS_SERVICE_MANAGER_ADDRESS" ]; then
-        echo "WAVS_SERVICE_MANAGER_ADDRESS is not set. Please set it to the address of the service manager."
-        return
-    fi
-fi
 
 if [ -z "$TRIGGER_ADDRESS" ]; then
     TRIGGER_ADDRESS=`jq -r '.service_contracts.trigger' .docker/deployment_summary.json`

@@ -8,15 +8,7 @@ set -e
 echo "🚀 Starting WAVS EAS contract deployment..."
 
 # Check for required WAVS service manager address
-if [ -z "$WAVS_SERVICE_MANAGER_ADDRESS" ]; then
-    if [ -f .nodes/avs_deploy.json ]; then
-        echo "📋 Using WAVS_SERVICE_MANAGER_ADDRESS from .nodes/avs_deploy.json"
-        export WAVS_SERVICE_MANAGER_ADDRESS=$(jq -r '.addresses.WavsServiceManager' .nodes/avs_deploy.json)
-    else
-        echo "WAVS_SERVICE_MANAGER_ADDRESS is not set."
-        return
-    fi
-fi
+export WAVS_SERVICE_MANAGER_ADDRESS=${WAVS_SERVICE_MANAGER_ADDRESS:-`task config:service-manager-address`}
 
 # Get RPC URL and deployer key
 export RPC_URL=$(task get-rpc)

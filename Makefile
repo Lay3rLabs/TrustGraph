@@ -19,6 +19,7 @@ WASI_BUILD_DIR ?= ""
 ENV_FILE?=.env
 WAVS_CMD ?= $(SUDO) docker run --rm --network host $$(test -f ${ENV_FILE} && echo "--env-file ./${ENV_FILE}") -v $$(pwd):/data ${DOCKER_IMAGE} wavs-cli
 WAVS_ENDPOINT?="http://127.0.0.1:8000"
+WAVS_SERVICE_MANAGER_ADDRESS?=`task config:service-manager-address`
 -include ${ENV_FILE}
 
 # Default target is build

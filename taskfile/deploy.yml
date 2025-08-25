@@ -16,7 +16,7 @@ tasks:
     desc: "Upload service config to IPFS"
     vars:
       SERVICE_FILE: '{{.SERVICE_FILE | default ".docker/service.json"}}'
-      PINATA_API_KEY: '{{.PINATA_API_KEY}}'
+      PINATA_API_KEY: "{{.PINATA_API_KEY}}"
     preconditions:
       - test -f {{.SERVICE_FILE}}
     cmds:
@@ -43,7 +43,7 @@ tasks:
     desc: "Upload WASI component to WAVS endpoint"
     vars:
       COMPONENT_FILENAME: '{{.COMPONENT_FILENAME | default "wavs_eas_attest.wasm"}}'
-      WAVS_ENDPOINT: '{{.WAVS_ENDPOINT}}'
+      WAVS_ENDPOINT: "{{.WAVS_ENDPOINT}}"
     preconditions:
       - test -n "{{.COMPONENT_FILENAME}}"
       - test -f "./compiled/{{.COMPONENT_FILENAME}}"
@@ -58,9 +58,9 @@ tasks:
   service:
     desc: "Deploy WAVS service from URL"
     vars:
-      SERVICE_URL: '{{.SERVICE_URL}}'
-      WAVS_ENDPOINT: '{{.WAVS_ENDPOINT}}'
-      IPFS_GATEWAY: '{{.IPFS_GATEWAY}}'
+      SERVICE_URL: "{{.SERVICE_URL}}"
+      WAVS_ENDPOINT: "{{.WAVS_ENDPOINT}}"
+      IPFS_GATEWAY: "{{.IPFS_GATEWAY}}"
     preconditions:
       - test -n "{{.SERVICE_URL}}"
     cmds:
@@ -83,3 +83,16 @@ tasks:
           {{if .WAVS_ENDPOINT}}--wavs-endpoint {{.WAVS_ENDPOINT}}{{end}} \
           {{if .IPFS_GATEWAY}}--ipfs-gateway {{.IPFS_GATEWAY}}{{end}}
         echo "✅ Service deployed successfully"
+
+  single-operator-poa:
+    desc: "Deploy a single operator with POA"
+    cmds:
+      - |
+        echo "Deploying single operator with POA..."
+
+        PRIVATE_KEY=`task config:funded-key` OPERATOR_NUM=1 OPERATOR_WEIGHT=10 task operator:whitelist
+
+        OPERATOR_NUM=1 task operator:register
+        OPERATOR_NUM=1 task operator:verify
+
+        echo "✅ Single operator with POA deployed successfully"

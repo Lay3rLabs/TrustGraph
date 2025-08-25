@@ -13,6 +13,12 @@ tasks:
       - 'echo "{{.FUNDED_KEY}}"'
     silent: true
 
+  service-manager-address:
+    desc: "Get the WAVS Service Manager address"
+    cmds:
+      - 'echo "{{.WAVS_SERVICE_MANAGER_ADDRESS}}"'
+    silent: true
+
 vars:
   # Repository general
   REPO_ROOT:
@@ -37,7 +43,19 @@ vars:
   # Deployment summary path
   DEPLOY_SUMMARY: ".docker/deployment_summary.json"
 
-  # Contract addresses (loaded from deployment summary)
+  WAVS_SERVICE_MANAGER_ADDRESS:
+    sh: |
+      if [ -n "${WAVS_SERVICE_MANAGER_ADDRESS}" ]; then
+        echo "${WAVS_SERVICE_MANAGER_ADDRESS}"
+      else
+        addr=$(jq -r '.contract' .docker/poa_sm_deploy.json 2>/dev/null || echo "")
+        if [ -n "$addr" ] && [ "$addr" != "null" ]; then
+          echo "$addr"
+        else
+          echo "⚠️ WAVS Service Manager address not found (looked in \$WAVS_SERVICE_MANAGER_ADDRESS env and .docker/poa_sm_deploy.json file)" >&2
+          echo ""
+        fi
+      fi
   SERVICE_TRIGGER_ADDR:
     sh: jq -r '.service_contracts.trigger' .docker/deployment_summary.json || echo ""
   EAS_ADDR:

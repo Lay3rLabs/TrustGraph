@@ -251,12 +251,7 @@ This script automates the complete WAVS deployment process in a single command:
 
 ```bash
 task deploy:full
-
-export WAVS_SERVICE_MANAGER_ADDRESS=$(jq -r '.contract' .docker/poa_sm_deploy.json)
-PRIVATE_KEY=`task config:funded-key` OPERATOR_NUM=1 OPERATOR_WEIGHT=10 task operator:whitelist
-
-OPERATOR_NUM=1 task operator:register
-OPERATOR_NUM=1 task operator:verify
+task deploy:single-operator-poa
 ```
 
 # EAS Attestation Demo
@@ -427,6 +422,7 @@ task prediction-market:query-balances
 ```bash
 # execute againt the WAVS trigger for the deployment summary
 GYSER_ADDR=`jq -rc .geyser.trigger .docker/deployment_summary.json`
+WAVS_SERVICE_MANAGER_ADDRESS=`task config:service-manager-address`
 
 # just for debugging
 IPFS_URL=$(cast call --rpc-url http://localhost:8545 $WAVS_SERVICE_MANAGER_ADDRESS "getServiceURI()(string)" | tr -d '"' | tr -d '\')

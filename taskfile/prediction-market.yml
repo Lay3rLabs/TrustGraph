@@ -176,11 +176,15 @@ tasks:
     desc: "Run the complete prediction market demo flow"
     cmds:
       - task: query-balances
-      - echo "--- Step 1: Buying YES tokens ---"
+      - |
+        echo "--- Step 1: Buying YES tokens ---"
       - task: buy-yes
-      - echo "--- Step 2: Triggering oracle to resolve market ---"
+      - |
+        echo "--- Step 2: Triggering oracle to resolve market ---"
       - task: trigger-oracle
-      - echo "--- Step 3: Redeeming outcome tokens ---"
+      - |
+        echo "--- Step 3: Redeeming outcome tokens ---"
       - task: redeem-tokens
-      - echo "--- Step 4: Final balance check ---"
+      - |
+        echo "--- Step 4: Final balance check ---"
       - task: query-balances

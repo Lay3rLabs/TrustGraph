@@ -93,6 +93,7 @@ export IPFS_GATEWAY=$(sh script/get-ipfs-gateway.sh)
 curl "${IPFS_GATEWAY}${ipfs_cid}"
 
 # Set service URI on service manager contract
+WAVS_SERVICE_MANAGER_ADDRESS=`task config:service-manager-address`
 cast send ${WAVS_SERVICE_MANAGER_ADDRESS} 'setServiceURI(string)' "${SERVICE_URI}" -r ${RPC_URL} --private-key ${FUNDED_KEY}
 ```
 
