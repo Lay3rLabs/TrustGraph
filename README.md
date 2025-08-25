@@ -299,7 +299,7 @@ Create an attestation request using your schema.
 
 ```bash
 # Trigger attestation creation via WAVS
-task forge:trigger-attestation
+task forge:trigger-attestation INPUT="Advanced Solidity Development Skills Verified"
 ```
 
 ### 2. View Results
