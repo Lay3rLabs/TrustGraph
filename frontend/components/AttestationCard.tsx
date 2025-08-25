@@ -14,8 +14,6 @@ export function AttestationCard({ uid, index }: AttestationCardProps) {
     error,
   } = useIndividualAttestation(uid);
 
-  console.log(attestationData);
-  
   const formatTimestamp = (timestamp: number) => {
     const date = new Date(timestamp * 1000);
     return date.toISOString().replace('T', ' ').split('.')[0];
@@ -155,7 +153,7 @@ export function AttestationCard({ uid, index }: AttestationCardProps) {
   const statusInfo = getAttestationStatus(attestation);
 
   return (
-    <div className="border border-gray-700 bg-black/5 p-4 rounded-sm hover:bg-black/10 transition-colors">
+    <div className="border border-gray-700 bg-card-foreground/70 p-4 rounded-sm hover:bg-card-foreground/75 transition-colors">
       <div className="space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">

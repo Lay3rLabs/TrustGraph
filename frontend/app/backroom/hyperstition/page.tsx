@@ -185,7 +185,7 @@ export default function HyperstitionPage() {
         {/* Hyperstition Markets */}
         <div className="space-y-4">
           {filteredMarkets.map((market) => (
-            <div key={market.id} className="border border-gray-700 bg-black/10 p-4 rounded-sm">
+            <div key={market.id} className="border border-gray-700 bg-card-foreground/70 p-4 rounded-sm hover:bg-card-foreground/75 transition-colors">
               <div className="space-y-4">
                 {/* Header */}
                 <div className="flex items-start justify-between">
