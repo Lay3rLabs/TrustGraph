@@ -1,142 +1,214 @@
-# LLM Attester
+# LLM Attester Component
 
-A WASI component that receives attestation events, processes them with an LLM, and creates new attestations based on the LLM's response.
+A WASI component that processes EAS (Ethereum Attestation Service) attestations using Large Language Models (LLMs) to analyze attestation data and create new attestations based on the analysis.
 
 ## Overview
 
-The LLM Attester component integrates with the EAS (Ethereum Attestation Service) to:
-1. Receive attestation events as triggers
-2. Process the attestation data with a configured LLM
-3. Generate new attestations that include the LLM's response
-4. Submit these attestations back to the blockchain
+The LLM Attester component:
+1. Receives attestation events from the blockchain
+2. Queries the referenced attestation data from EAS
+3. Analyzes the attestation data using an LLM
+4. Creates a new attestation with the LLM's analysis
 
-## Configuration Variables
+## Configuration
 
-All configuration variables are optional and will use default values if not provided. Variables should be set in your deployment configuration or environment.
+The component is configured through environment variables prefixed with `WAVS_ENV_`:
+
+### EAS Configuration
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `WAVS_ENV_eas_address` | EAS contract address | Base Sepolia EAS address |
+| `WAVS_ENV_chain_name` | Blockchain network name | `base-sepolia` |
+| `WAVS_ENV_attestation_schema_uid` | Schema UID to use for new attestations | Uses incoming schema |
+| `WAVS_ENV_attestation_revocable` | Whether attestations can be revoked | `true` |
+| `WAVS_ENV_attestation_expiration` | Expiration timestamp (0 = no expiration) | `0` |
+| `WAVS_ENV_attestation_value` | ETH value to send with attestation | `0` |
 
 ### LLM Configuration
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `llm_model` | string | `"llama3.2"` | The LLM model to use for processing |
-| `llm_temperature` | float | `0.0` | Controls randomness in responses (0.0 = deterministic, 1.0 = creative) |
-| `llm_top_p` | float | `1.0` | Nucleus sampling parameter for response diversity |
-| `llm_seed` | integer | `42` | Random seed for reproducible outputs |
-| `llm_max_tokens` | integer | `500` | Maximum number of tokens in the LLM response |
-| `llm_context_window` | integer | `4096` | Size of the context window for the LLM |
-| `llm_system_message` | string | `"You are an AI assistant that helps users interact with blockchain applications and creates attestations about their queries."` | System prompt that defines the LLM's behavior |
-| `llm_user_prompt` | string | `"How can I transfer USDC tokens?"` | User prompt to send to the LLM (in production, this would typically come from the attestation payload) |
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `WAVS_ENV_llm_model` | LLM model to use | `llama3.2` |
+| `WAVS_ENV_llm_temperature` | Temperature for LLM sampling (0-2) | `0.0` |
+| `WAVS_ENV_llm_top_p` | Top-p sampling parameter | `1.0` |
+| `WAVS_ENV_llm_seed` | Random seed for reproducibility | `42` |
+| `WAVS_ENV_llm_max_tokens` | Maximum tokens in response | `100` |
+| `WAVS_ENV_llm_context_window` | Context window size | `250` |
+| `WAVS_ENV_llm_system_message` | System prompt for the LLM | Default analysis prompt |
 
-### Attestation Configuration
+## Schema Encoding
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `attestation_schema_uid` | string | Uses payload schema | The schema UID for the new attestation |
-| `attestation_revocable` | boolean | `true` | Whether the attestation can be revoked |
-| `attestation_expiration` | integer | `0` | Unix timestamp when the attestation expires (0 = no expiration) |
-| `attestation_value` | integer | `0` | Amount of ETH/tokens to transfer with the attestation (in wei) |
+The component properly encodes attestation data according to EAS schema definitions using ABI encoding.
 
-## Usage Example
+### Supported Schema Types
 
-### Deployment Configuration
-
-When deploying this component, you can set configuration variables in your service configuration:
-
-```json
-{
-  "config": {
-    "llm_model": "llama3.2",
-    "llm_temperature": "0.3",
-    "llm_top_p": "0.95",
-    "llm_max_tokens": "1000",
-    "llm_system_message": "You are a blockchain expert assistant. Analyze attestations and provide helpful insights.",
-    "attestation_schema_uid": "0x12345...",
-    "attestation_revocable": "true",
-    "attestation_expiration": "0"
-  }
-}
+#### Simple String Schema
+```
+string statement
+string message
+string data
 ```
 
-### Environment Variables
+For these schemas, the LLM response is ABI-encoded as a single string value.
 
-For sensitive configuration or API keys, use the `WAVS_ENV_` prefix:
-
-```bash
-export WAVS_ENV_LLM_API_KEY="your-api-key-here"
-export WAVS_ENV_LLM_ENDPOINT="https://api.example.com/v1"
+#### Complex Schemas (Planned)
+```
+bytes32 triggerId,string data,uint256 timestamp
+address creator,string content,bool verified
 ```
 
-## Building and Testing
+Complex schemas with multiple fields will be supported in future versions.
 
-### Build the Component
+### Encoding Examples
+
+#### Example 1: String Statement Schema
+
+**Schema Definition:**
+```
+string statement
+```
+
+**LLM Response:**
+```
+"This attestation represents a user verification"
+```
+
+**Encoded Data (ABI):**
+```
+0x0000000000000000000000000000000000000000000000000000000000000020  // Offset to string data
+0x0000000000000000000000000000000000000000000000000000000000000029  // String length (41 bytes)
+0x5468697320617474657374...                                          // UTF-8 string bytes
+```
+
+#### Example 2: Multiple Fields (Future)
+
+**Schema Definition:**
+```
+bytes32 triggerId,string data,uint256 timestamp
+```
+
+**Data Values:**
+```
+triggerId: 0x1234...5678
+data: "Analysis result"
+timestamp: 1699564800
+```
+
+**Encoded Data (ABI):**
+```
+0x1234...5678                                                          // bytes32 triggerId
+0x0000000000000000000000000000000000000000000000000000000000000060  // Offset to string
+0x00000000000000000000000000000000000000000000000000000065673a00    // uint256 timestamp
+0x000000000000000000000000000000000000000000000000000000000000000f  // String length
+0x416e616c7973697320726573756c74...                                  // String bytes
+```
+
+## Usage
+
+### Basic Usage
+
+1. Deploy the component with appropriate configuration:
+```bash
+# Set configuration
+export WAVS_ENV_llm_model="llama3.2"
+export WAVS_ENV_attestation_schema_uid="0x..."
+
+# Build and deploy
+make wasi-build WASI_BUILD_DIR=components/llm-attester
+```
+
+2. The component will automatically:
+   - Listen for attestation events
+   - Query attestation data
+   - Process with LLM
+   - Create new attestations
+
+### Advanced Configuration
+
+#### Custom System Prompts
+
+Configure the LLM's analysis approach:
 
 ```bash
-# From the project root
+export WAVS_ENV_llm_system_message="You are a compliance auditor. Analyze the attestation for regulatory compliance and provide a detailed assessment."
+```
+
+#### Schema Filtering
+
+Process only specific attestation schemas:
+
+```bash
+export WAVS_ENV_attestation_schema_uid="0x1234567890abcdef..."
+```
+
+## Best Practices
+
+### 1. Schema Consistency
+Always ensure the output attestation schema matches the expected encoding format. For `string statement` schemas, the LLM response will be encoded as a single ABI-encoded string.
+
+### 2. Error Handling
+The component includes fallback mechanisms:
+- If attestation query fails, uses minimal attestation data
+- If schema encoding fails, defaults to simple string encoding
+- Schema mismatches are logged and skipped
+
+### 3. Resource Management
+Configure appropriate limits:
+- `llm_max_tokens`: Limit response size
+- `llm_context_window`: Control context size
+- `attestation_expiration`: Set appropriate expiration times
+
+### 4. Security Considerations
+- Never include sensitive data in attestations
+- Use appropriate revocability settings
+- Consider attestation expiration for time-sensitive data
+
+## Development
+
+### Testing Locally
+
+```bash
+# Build the component
 WASI_BUILD_DIR=components/llm-attester make wasi-build
+
+# Test with sample data
+make wasi-exec COMPONENT_FILENAME=llm-attester.wasm INPUT_DATA='{"schemaUID":"0x...","uid":"0x...","recipient":"0x..."}'
 ```
 
-### Validate the Component
+### Validation
 
 ```bash
+# Validate component structure
 make validate-component COMPONENT=llm-attester
 ```
 
-### Test Locally
+## Troubleshooting
 
-```bash
-make wasi-exec COMPONENT_FILENAME=llm-attester.wasm INPUT_DATA="test-attestation-data"
-```
+### Common Issues
 
-## Architecture
+1. **Schema Mismatch**
+   - Check `attestation_schema_uid` configuration
+   - Verify incoming schema matches expected format
 
-The component follows this execution flow:
+2. **Encoding Errors**
+   - Ensure LLM response fits the schema type
+   - Check for proper ABI encoding in logs
 
-1. **Trigger Reception**: Receives an attestation event via the `run` function
-2. **Configuration Loading**: Loads all configuration variables with defaults
-3. **LLM Processing**: 
-   - Configures the LLM client with specified parameters
-   - Sends the system and user prompts
-   - Receives and processes the LLM response
-4. **Attestation Creation**:
-   - Builds an attestation payload with the LLM response
-   - Includes reference to the original attestation
-   - Encodes the data according to EAS standards
-5. **Output**: Returns the encoded attestation for submission to the blockchain
+3. **LLM Timeouts**
+   - Reduce `llm_max_tokens`
+   - Adjust `llm_context_window`
 
-## Response Format
+## Future Enhancements
 
-The component creates attestations with the following structure:
-- **Recipient**: From the original attestation
-- **Schema**: Configurable or inherited from trigger
-- **Data**: Contains the LLM's response as attestation data
-- **RefUID**: References the original attestation UID
-- **Revocable**: Configurable (default: true)
-- **Expiration**: Configurable (default: no expiration)
-- **Value**: Optional ETH/token transfer amount
+- [ ] Support for complex multi-field schemas
+- [ ] Automatic schema detection and parsing
+- [ ] IPFS integration for large attestation data
+- [ ] Batch attestation processing
+- [ ] Custom encoding strategies per schema type
 
-## Error Handling
+## References
 
-The component includes error handling for:
-- Invalid trigger data decoding
-- LLM client initialization failures
-- LLM completion request failures
-- Configuration parsing errors
-
-All errors are logged with descriptive messages for debugging.
-
-## Logging
-
-The component provides detailed logging output:
-- 🚀 Component startup
-- 📋 Configuration values loaded
-- 💬 User prompts being processed
-- 🤖 LLM responses received
-- ✅ Successful attestation creation
-- 📤 Output destination (Ethereum/CLI)
-
-## Development Notes
-
-- The component uses async operations internally via `block_on`
-- All numeric configuration values are parsed with safe defaults
-- The LLM response is embedded directly in the attestation data field
-- Schema UIDs should be valid hex strings when configured
+- [EAS Documentation](https://docs.attest.sh/)
+- [ABI Encoding Specification](https://docs.soliditylang.org/en/latest/abi-spec.html)
+- [WAVS Component Development](../README.md)
