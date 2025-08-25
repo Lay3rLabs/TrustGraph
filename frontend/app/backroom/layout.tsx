@@ -317,7 +317,7 @@ export default function BackroomLayout({
                 {/* Mobile menu toggle */}
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="lg:hidden mobile-terminal-btn !text-base !px-3 !py-0"
+                  className="lg:!hidden mobile-terminal-btn !text-base !px-3 !py-0"
                 >
                   {isMenuOpen ? "×" : "≡"}
                 </button>
