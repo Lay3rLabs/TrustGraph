@@ -43,18 +43,13 @@ tasks:
           cast rpc anvil_setBalance ${OPERATOR_ADDRESS} $(cast to-hex 100000000000000000) --rpc-url {{.RPC_URL}}
         fi
 
-        if [ -z "${WAVS_SERVICE_MANAGER_ADDRESS}" ]; then
-          WAVS_SERVICE_MANAGER_ADDRESS=$(jq -r '.contract' .docker/poa_sm_deploy.json)
-          echo "ℹ️ Using WAVS Service Manager address: ${WAVS_SERVICE_MANAGER_ADDRESS}"
-        fi
-
         echo "📝 Whitelisting operator in WAVS Service Manager..."
-        cast send ${WAVS_SERVICE_MANAGER_ADDRESS} "whitelistOperator(address,uint256)" ${OPERATOR_ADDRESS} {{.OPERATOR_WEIGHT}} \
+        cast send {{.WAVS_SERVICE_MANAGER_ADDRESS}} "whitelistOperator(address,uint256)" ${OPERATOR_ADDRESS} {{.OPERATOR_WEIGHT}} \
           --private-key ${PRIVATE_KEY} \
           --rpc-url {{.RPC_URL}}
 
         echo "⚖️ Checking operator weight..."
-        cast call ${WAVS_SERVICE_MANAGER_ADDRESS} "getOperatorWeight(address)" ${OPERATOR_ADDRESS} \
+        cast call {{.WAVS_SERVICE_MANAGER_ADDRESS}} "getOperatorWeight(address)" ${OPERATOR_ADDRESS} \
           --rpc-url {{.RPC_URL}}
 
         echo "✅ Whitelisting complete!"
@@ -69,13 +64,8 @@ tasks:
         echo "🔑 Operator Address: ${OPERATOR_ADDRESS}"
         echo "🔑 Signing Key: ${WAVS_SIGNING_KEY}"
 
-        if [ -z "${WAVS_SERVICE_MANAGER_ADDRESS}" ]; then
-          WAVS_SERVICE_MANAGER_ADDRESS=$(jq -r '.contract' .docker/poa_sm_deploy.json)
-          echo "ℹ️ Using WAVS Service Manager address: ${WAVS_SERVICE_MANAGER_ADDRESS}"
-        fi
-
         echo "🔐 Setting signing key..."
-        cast send ${WAVS_SERVICE_MANAGER_ADDRESS} "setSigningKey(address)" ${WAVS_SIGNING_KEY} \
+        cast send {{.WAVS_SERVICE_MANAGER_ADDRESS}} "setSigningKey(address)" ${WAVS_SIGNING_KEY} \
           --private-key ${OPERATOR_KEY} \
           --rpc-url {{.RPC_URL}}
 
@@ -94,13 +84,13 @@ tasks:
         echo "Operator Address: ${OPERATOR_ADDRESS}"
 
         echo -n "Operator Signing Key: "
-        cast call ${WAVS_SERVICE_MANAGER_ADDRESS} "getLatestSigningKeyForOperator(address)" ${OPERATOR_ADDRESS} \
+        cast call {{.WAVS_SERVICE_MANAGER_ADDRESS}} "getLatestSigningKeyForOperator(address)" ${OPERATOR_ADDRESS} \
           --rpc-url {{.RPC_URL}}
 
         echo -n "Signing Key -> Operator: "
-        cast call ${WAVS_SERVICE_MANAGER_ADDRESS} "getLatestOperatorForSigningKey(address)" ${WAVS_SIGNING_KEY} \
+        cast call {{.WAVS_SERVICE_MANAGER_ADDRESS}} "getLatestOperatorForSigningKey(address)" ${WAVS_SIGNING_KEY} \
           --rpc-url {{.RPC_URL}}
 
         echo -n "Operator Weight: "
-        cast call ${WAVS_SERVICE_MANAGER_ADDRESS} "getOperatorWeight(address)" ${OPERATOR_ADDRESS} \
+        cast call {{.WAVS_SERVICE_MANAGER_ADDRESS}} "getOperatorWeight(address)" ${OPERATOR_ADDRESS} \
           --rpc-url {{.RPC_URL}}
