@@ -3,19 +3,19 @@ pragma solidity ^0.8.27;
 
 import {Test} from "forge-std/Test.sol";
 import {POAServiceManager} from "src/contracts/POAServiceManager.sol";
-import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
-import {IWavsServiceHandler} from "@wavs/interfaces/IWavsServiceHandler.sol";
+import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
+import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 uint256 constant OPERATOR_WEIGHT = 100;
 
 /**
- * @title POAServiceManagerMinimalTest
+ * @title POAServiceManagerTest
  * @author Lay3rLabs
  * @notice This contract contains tests for the POAServiceManager contract.
  * @dev This contract is used to test the POAServiceManager contract functionality.
  */
-contract POAServiceManagerMinimalTest is Test {
+contract POAServiceManagerTest is Test {
     POAServiceManager public poaServiceManager;
 
     address public owner = address(0x123);
@@ -36,8 +36,8 @@ contract POAServiceManagerMinimalTest is Test {
     address public signingKey4 = address(0x44);
     address public signingKey5 = address(0x55);
 
-    error POAServiceManagerMinimalTest__ArraysLengthMismatch();
-    error POAServiceManagerMinimalTest__SignatureRecoveryFailed();
+    error POAServiceManagerTest__ArraysLengthMismatch();
+    error POAServiceManagerTest__SignatureRecoveryFailed();
 
     function setUp() public {
         vm.startPrank(owner);
@@ -172,8 +172,13 @@ contract POAServiceManagerMinimalTest is Test {
         poaServiceManager.removeOperator(operator1);
         vm.stopPrank();
 
-        assertEq(poaServiceManager.getLatestSigningKeyForOperator(operator1), address(0), "Signing key should be cleared");
-        assertEq(poaServiceManager.getLatestOperatorForSigningKey(signingKey1), address(0), "Operator mapping should be cleared");
+        // After removal, getLatestSigningKeyForOperator should revert with SingingKeyDoesNotExistForOperator
+        vm.expectRevert(POAServiceManager.SingingKeyDoesNotExistForOperator.selector);
+        poaServiceManager.getLatestSigningKeyForOperator(operator1);
+
+        // After removal, getLatestOperatorForSigningKey should revert with OperatorDoesNotExistForSigningKey
+        vm.expectRevert(POAServiceManager.OperatorDoesNotExistForSigningKey.selector);
+        poaServiceManager.getLatestOperatorForSigningKey(signingKey1);
     }
 
     /* solhint-disable func-name-mixedcase */
@@ -379,12 +384,16 @@ contract POAServiceManagerMinimalTest is Test {
         /* solhint-enable func-name-mixedcase */
         string memory testURI = "https://example.com/service";
 
+        vm.startPrank(owner);
+
         vm.expectEmit(false, false, false, true);
         emit IWavsServiceManager.ServiceURIUpdated(testURI);
 
         poaServiceManager.setServiceURI(testURI);
 
         assertEq(poaServiceManager.getServiceURI(), testURI, "Service URI should be set");
+
+        vm.stopPrank();
     }
 
     /* solhint-disable func-name-mixedcase */
@@ -633,13 +642,13 @@ contract POAServiceManagerMinimalTest is Test {
         bytes[] memory signatures
     ) internal pure {
         if (signers.length != signatures.length) {
-            revert POAServiceManagerMinimalTest__ArraysLengthMismatch();
+            revert POAServiceManagerTest__ArraysLengthMismatch();
         }
 
         for (uint256 i = 0; i < signers.length; ++i) {
             address recovered = ECDSA.recover(digest, signatures[i]);
             if (recovered != signers[i]) {
-                revert POAServiceManagerMinimalTest__SignatureRecoveryFailed();
+                revert POAServiceManagerTest__SignatureRecoveryFailed();
             }
         }
     }

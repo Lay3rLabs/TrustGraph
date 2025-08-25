@@ -3,8 +3,8 @@ pragma solidity ^0.8.22;
 
 import {Module} from "@gnosis-guild/zodiac-core/core/Module.sol";
 import {Operation} from "@gnosis-guild/zodiac-core/core/Operation.sol";
-import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
-import {IWavsServiceHandler} from "@wavs/interfaces/IWavsServiceHandler.sol";
+import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
+import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 import {ITypes} from "../../interfaces/ITypes.sol";
 
 /// @title SignerManagerModule - A Zodiac module that can manage Safe signers
@@ -265,5 +265,13 @@ contract SignerManagerModule is Module, IWavsServiceHandler {
             payload.operations.length > 0 ? payload.operations[0].operationType : OperationType.ADD_SIGNER,
             totalOperations
         );
+    }
+
+    /**
+     * @notice Get the service manager address
+     * @return address The address of the service manager
+     */
+    function getServiceManager() external view returns (address) {
+        return address(_serviceManager);
     }
 }

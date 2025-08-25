@@ -24,4 +24,4 @@ crate-type = ["cdylib"]
 
 [package.metadata.component]
 package = "component:wavs-eas-attest"
-target = "wavs:worker/layer-trigger-world@0.4.0"
+target = "wavs:worker/wavs-world@0.5.1"

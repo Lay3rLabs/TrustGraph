@@ -6,10 +6,11 @@ pub mod sol_interfaces;
 use crate::sol_interfaces::TransactionPayload;
 use alloy_primitives::{Address, Bytes, U256};
 use alloy_sol_types::{SolType, SolValue};
+use bindings::WasmResponse;
 use bindings::{
     export,
-    wavs::worker::layer_types::{TriggerData, TriggerDataEvmContractEvent},
-    Guest, TriggerAction, WasmResponse,
+    wavs::worker::input::{TriggerData, TriggerDataEvmContractEvent},
+    Guest, TriggerAction,
 };
 use context::DaoContext;
 use sol_interfaces::{Operation, Transaction};

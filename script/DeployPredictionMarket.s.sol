@@ -5,7 +5,7 @@ import {stdJson} from "forge-std/StdJson.sol";
 import {console} from "forge-std/console.sol";
 
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
+import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 import {ConditionalTokens} from "@lay3rlabs/conditional-tokens-contracts/ConditionalTokens.sol";
 import {LMSRMarketMaker} from "@lay3rlabs/conditional-tokens-market-makers/LMSRMarketMaker.sol";
 

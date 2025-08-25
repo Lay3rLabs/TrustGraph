@@ -17,7 +17,7 @@ import {MerkleGovModule} from "contracts/zodiac/MerkleGovModule.sol";
 import {SignerManagerModule} from "contracts/zodiac/SignerManagerModule.sol";
 
 // WAVS interfaces
-import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
+import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 
 /// @dev Deployment script for Zodiac-enabled Safe setup with auto-enabled modules
 contract DeployZodiacSafes is Common {

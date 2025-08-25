@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import {Test} from "forge-std/Test.sol";
 import {RewardDistributor} from "contracts/RewardDistributor.sol";
 import {ITypes} from "interfaces/ITypes.sol";
-import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
+import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 
 contract RewardDistributorTest is Test {
     RewardDistributor public rewardDistributor;

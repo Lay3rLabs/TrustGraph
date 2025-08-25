@@ -7,8 +7,8 @@ pragma solidity ^0.8.19;
 
 import {IWavsTrigger} from "interfaces/IWavsTrigger.sol";
 import {ITypes} from "interfaces/ITypes.sol";
-import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
-import {IWavsServiceHandler} from "@wavs/interfaces/IWavsServiceHandler.sol";
+import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
+import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 import {UniversalRewardsDistributor} from "@morpho-org/universal-rewards-distributor/UniversalRewardsDistributor.sol";
 
 contract RewardDistributor is IWavsTrigger, IWavsServiceHandler, UniversalRewardsDistributor {
@@ -97,5 +97,13 @@ contract RewardDistributor is IWavsTrigger, IWavsServiceHandler, UniversalReward
 
     function getData(TriggerId _triggerId) external view returns (bytes memory _data) {
         _data = _datas[_triggerId];
+    }
+
+    /**
+     * @notice Get the service manager address
+     * @return address The address of the service manager
+     */
+    function getServiceManager() external view returns (address) {
+        return address(_serviceManager);
     }
 }

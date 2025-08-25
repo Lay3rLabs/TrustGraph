@@ -1,6 +1,5 @@
-use crate::bindings::wavs::worker::layer_types::{
-    TriggerData, TriggerDataEvmContractEvent, WasmResponse,
-};
+use crate::bindings::wavs::worker::input::{TriggerData, TriggerDataEvmContractEvent};
+use crate::bindings::WasmResponse;
 
 use alloy_sol_types::SolValue;
 use anyhow::Result;

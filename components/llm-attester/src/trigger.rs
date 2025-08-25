@@ -1,6 +1,5 @@
-use crate::bindings::wavs::worker::layer_types::{
-    TriggerData, TriggerDataEvmContractEvent, WasmResponse,
-};
+use crate::bindings::wavs::worker::input::{TriggerData, TriggerDataEvmContractEvent};
+use crate::bindings::WasmResponse;
 use anyhow::Result;
 use wavs_wasi_utils::decode_event_log_data;
 

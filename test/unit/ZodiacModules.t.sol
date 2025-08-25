@@ -12,8 +12,8 @@ import {GnosisSafeProxyFactory} from "@gnosis.pm/safe-contracts/proxies/GnosisSa
 import {Operation} from "@gnosis-guild/zodiac-core/core/Operation.sol";
 
 // WAVS interfaces
-import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
-import {IWavsServiceHandler} from "@wavs/interfaces/IWavsServiceHandler.sol";
+import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
+import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 
 // Our modules
 import {SignerManagerModule} from "../../src/contracts/zodiac/SignerManagerModule.sol";
@@ -575,10 +575,10 @@ contract MockTarget {
 
 // Mock WAVS Service Manager for testing
 contract MockWavsServiceManager is IWavsServiceManager {
-    function validate(IWavsServiceHandler.Envelope calldata, IWavsServiceHandler.SignatureData calldata)
-        external
-        pure
-    {
+    function validate(
+        IWavsServiceHandler.Envelope calldata,
+        IWavsServiceHandler.SignatureData calldata
+    ) external pure {
         // Mock validation - always passes for testing
         return;
     }
@@ -588,7 +588,9 @@ contract MockWavsServiceManager is IWavsServiceManager {
         return 100;
     }
 
-    function getLatestOperatorForSigningKey(address) external pure returns (address) {
+    function getLatestOperatorForSigningKey(
+        address
+    ) external pure returns (address) {
         // Return a mock operator address
         return address(0x1234567890123456789012345678901234567890);
     }
@@ -601,4 +603,10 @@ contract MockWavsServiceManager is IWavsServiceManager {
     function setServiceURI(string calldata) external {
         // Mock implementation - does nothing in tests
     }
+
+    function getAllocationManager() external view override returns (address) {}
+
+    function getDelegationManager() external view override returns (address) {}
+
+    function getStakeRegistry() external view override returns (address) {}
 }

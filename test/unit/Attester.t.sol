@@ -15,8 +15,8 @@ import {
 } from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
 import {ISchemaRegistry} from "@ethereum-attestation-service/eas-contracts/contracts/ISchemaRegistry.sol";
 import {NO_EXPIRATION_TIME, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/contracts/Common.sol";
-import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
-import {IWavsServiceHandler} from "@wavs/interfaces/IWavsServiceHandler.sol";
+import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
+import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 
 // Mock service manager for testing
 contract MockWavsServiceManager is IWavsServiceManager {
@@ -24,10 +24,10 @@ contract MockWavsServiceManager is IWavsServiceManager {
         return 100;
     }
 
-    function validate(IWavsServiceHandler.Envelope calldata, IWavsServiceHandler.SignatureData calldata)
-        external
-        pure
-    {
+    function validate(
+        IWavsServiceHandler.Envelope calldata,
+        IWavsServiceHandler.SignatureData calldata
+    ) external pure {
         // Always pass validation in tests
         return;
     }
@@ -40,9 +40,17 @@ contract MockWavsServiceManager is IWavsServiceManager {
         // Mock implementation
     }
 
-    function getLatestOperatorForSigningKey(address) external pure returns (address) {
+    function getLatestOperatorForSigningKey(
+        address
+    ) external pure returns (address) {
         return address(0x1);
     }
+
+    function getAllocationManager() external view override returns (address) {}
+
+    function getDelegationManager() external view override returns (address) {}
+
+    function getStakeRegistry() external view override returns (address) {}
 }
 
 contract AttesterTest is Test {

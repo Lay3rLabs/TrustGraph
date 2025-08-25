@@ -41,6 +41,9 @@ interface ITypes {
      */
     event WavsRewardsTrigger(uint64 triggerId);
 
+    // Geyser
+    event UpdateService(string json);
+
     /**
      * @notice Struct to store trigger information
      * @param triggerId Unique identifier for the trigger

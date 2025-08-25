@@ -12,8 +12,8 @@ import {GnosisSafeProxyFactory} from "@gnosis.pm/safe-contracts/proxies/GnosisSa
 import {Operation} from "@gnosis-guild/zodiac-core/core/Operation.sol";
 
 // WAVS interfaces
-import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
-import {IWavsServiceHandler} from "@wavs/interfaces/IWavsServiceHandler.sol";
+import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
+import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 import {ITypes} from "interfaces/ITypes.sol";
 
 // Our contracts
@@ -523,10 +523,10 @@ contract TestTarget {
 
 // Mock WAVS Service Manager
 contract MockWavsServiceManager is IWavsServiceManager {
-    function validate(IWavsServiceHandler.Envelope calldata, IWavsServiceHandler.SignatureData calldata)
-        external
-        pure
-    {
+    function validate(
+        IWavsServiceHandler.Envelope calldata,
+        IWavsServiceHandler.SignatureData calldata
+    ) external pure {
         // Mock validation - always passes
     }
 
@@ -534,7 +534,9 @@ contract MockWavsServiceManager is IWavsServiceManager {
         return 100;
     }
 
-    function getLatestOperatorForSigningKey(address) external pure returns (address) {
+    function getLatestOperatorForSigningKey(
+        address
+    ) external pure returns (address) {
         return address(0x1234567890123456789012345678901234567890);
     }
 
@@ -545,4 +547,10 @@ contract MockWavsServiceManager is IWavsServiceManager {
     function setServiceURI(string calldata) external {
         // Mock implementation
     }
+
+    function getAllocationManager() external view override returns (address) {}
+
+    function getDelegationManager() external view override returns (address) {}
+
+    function getStakeRegistry() external view override returns (address) {}
 }

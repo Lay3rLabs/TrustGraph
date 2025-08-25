@@ -1,4 +1,4 @@
-use crate::bindings::wavs::worker::layer_types::{TriggerData, TriggerDataEvmContractEvent};
+use crate::bindings::wavs::worker::input::{TriggerData, TriggerDataEvmContractEvent};
 use alloy_sol_types::SolValue;
 use anyhow::Result;
 use wavs_wasi_utils::{decode_event_log_data, evm::alloy_primitives::Address};

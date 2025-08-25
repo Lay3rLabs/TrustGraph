@@ -4,8 +4,8 @@ pragma solidity ^0.8.27;
 import {Votes} from "@openzeppelin/contracts/governance/utils/Votes.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
-import {IWavsServiceHandler} from "@wavs/interfaces/IWavsServiceHandler.sol";
+import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
+import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 import {ITypes} from "../interfaces/ITypes.sol";
 
 /**
@@ -363,5 +363,13 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
             _transferVotingUnits(account, address(0), difference);
         }
         // If amount == currentBalance, no change needed
+    }
+
+    /**
+     * @notice Get the service manager address
+     * @return address The address of the service manager
+     */
+    function getServiceManager() external view returns (address) {
+        return address(_serviceManager);
     }
 }

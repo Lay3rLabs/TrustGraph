@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {IWavsServiceHandler} from "@wavs/interfaces/IWavsServiceHandler.sol";
-import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
+import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
+import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 import {ConditionalTokens} from "@lay3rlabs/conditional-tokens-contracts/ConditionalTokens.sol";
 import {LMSRMarketMaker} from "@lay3rlabs/conditional-tokens-market-makers/LMSRMarketMaker.sol";
 
@@ -72,5 +72,13 @@ contract PredictionMarketOracleController is IWavsTrigger2, IWavsServiceHandler 
     function getTrigger(TriggerId triggerId) external view override returns (TriggerInfo memory _triggerInfo) {
         Trigger storage _trigger = triggersById[triggerId];
         _triggerInfo = TriggerInfo({triggerId: triggerId, creator: _trigger.creator, data: _trigger.data});
+    }
+
+    /**
+     * @notice Get the service manager address
+     * @return address The address of the service manager
+     */
+    function getServiceManager() external view returns (address) {
+        return address(serviceManager);
     }
 }

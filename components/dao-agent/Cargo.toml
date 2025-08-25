@@ -48,4 +48,4 @@ path = "./wit"
 # Add dependencies on the wavs-llm component interfaces and layer-trigger-world
 [package.metadata.component.target.dependencies]
 "wavs:agent" = { path = "../../packages/llm/wit" }
-"wavs:worker" = "0.4.0"
+"wavs:worker" = "0.5.1"

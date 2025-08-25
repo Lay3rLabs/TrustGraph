@@ -12,8 +12,8 @@ import {
     MultiRevocationRequest
 } from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
 import {NO_EXPIRATION_TIME, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/contracts/Common.sol";
-import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
-import {IWavsServiceHandler} from "@wavs/interfaces/IWavsServiceHandler.sol";
+import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
+import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 import {ITypes} from "../interfaces/ITypes.sol";
 
 /// @title Attester
@@ -231,5 +231,13 @@ contract Attester is IWavsServiceHandler {
         }
 
         _eas.multiRevoke(multiRequests);
+    }
+
+    /**
+     * @notice Get the service manager address
+     * @return address The address of the service manager
+     */
+    function getServiceManager() external view returns (address) {
+        return address(_serviceManager);
     }
 }

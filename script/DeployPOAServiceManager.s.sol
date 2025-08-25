@@ -8,7 +8,7 @@ import {Vm} from "forge-std/Vm.sol";
 
 /**
  * @title DeployPOAServiceManager
- * @notice Deployment script for the POAServiceManagerMinimal (POAServiceManager) contract
+ * @notice Deployment script for the POAServiceManager (POAServiceManager) contract
  * @dev Run with: forge script contracts/script/DeployPOAServiceManager.s.sol --rpc-url <RPC_URL> --broadcast
  */
 contract DeployPOAServiceManager is Script {
@@ -30,7 +30,7 @@ contract DeployPOAServiceManager is Script {
 
         // Get deployer address
         address deployer = vm.addr(deployerPrivateKey);
-        console2.log("Deploying POAServiceManagerMinimal with deployer:", deployer);
+        console2.log("Deploying POAServiceManager with deployer:", deployer);
 
         // Start broadcasting transactions
         vm.startBroadcast(deployerPrivateKey);

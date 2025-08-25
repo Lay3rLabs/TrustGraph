@@ -182,7 +182,14 @@ sleep 1
 bash ./script/create-aggregator.sh 1
 IPFS_GATEWAY=${IPFS_GATEWAY} bash ./infra/aggregator-1/start.sh
 sleep 3
-wget -q --header="Content-Type: application/json" --post-data="{\"uri\": \"${IPFS_URI}\"}" ${AGGREGATOR_URL}/register-service -O -
+curl -s -H "Content-Type: application/json" -d "{
+  \"service_manager\": {
+    \"evm\": {
+      \"chain_name\": \"${CHAIN_NAME}\",
+      \"address\": \"${WAVS_SERVICE_MANAGER_ADDRESS}\"
+    }
+  }
+}" ${AGGREGATOR_URL}/register-service
 
 ### === Start WAVS ===
 bash ./script/create-operator.sh 1
@@ -196,7 +203,7 @@ WAVS_ENDPOINT=http://127.0.0.1:8000 SERVICE_URL=${IPFS_URI} IPFS_GATEWAY=${IPFS_
 ### === Register service specific operator ===
 
 # OPERATOR_PRIVATE_KEY, AVS_SIGNING_ADDRESS
-eval "$(task setup-avs-signing SERVICE_INDEX=0 | tail -4)"
+eval "$(task setup-avs-signing HD_INDEX=1 | tail -4)"
 
 # TODO: move this check into the middleware (?)
 if [ "$(task get-deploy-status)" = "TESTNET" ]; then

@@ -3,8 +3,8 @@ pragma solidity ^0.8.22;
 
 import {Module} from "@gnosis-guild/zodiac-core/core/Module.sol";
 import {Operation} from "@gnosis-guild/zodiac-core/core/Operation.sol";
-import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
-import {IWavsServiceHandler} from "@wavs/interfaces/IWavsServiceHandler.sol";
+import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
+import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 
 /// @title WavsModule - A flexible Zodiac module for executing arbitrary transactions via WAVS
 /// @notice This module can execute any transaction payload received through the WAVS service
@@ -289,5 +289,13 @@ contract WavsModule is Module, IWavsServiceHandler {
         returns (address _owner, address _avatar, address _target, address _serviceManager)
     {
         return (owner(), avatar, target, address(serviceManager));
+    }
+
+    /**
+     * @notice Get the service manager address
+     * @return address The address of the service manager
+     */
+    function getServiceManager() external view returns (address) {
+        return address(serviceManager);
     }
 }

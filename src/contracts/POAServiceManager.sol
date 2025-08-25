@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
-import {IWavsServiceHandler} from "@wavs/interfaces/IWavsServiceHandler.sol";
+import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
+import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
@@ -70,7 +70,10 @@ contract POAServiceManager is Ownable, ReentrancyGuard, IWavsServiceManager {
         IWavsServiceHandler.Envelope calldata envelope,
         IWavsServiceHandler.SignatureData calldata signatureData
     ) external view override {
-        if (signatureData.signers.length == 0 || signatureData.signers.length != signatureData.signatures.length) {
+        if (
+            signatureData.signers.length == 0 ||
+            signatureData.signers.length != signatureData.signatures.length
+        ) {
             revert IWavsServiceManager.InvalidSignatureLength();
         }
         if (!(signatureData.referenceBlock < block.number)) {
@@ -78,20 +81,29 @@ contract POAServiceManager is Ownable, ReentrancyGuard, IWavsServiceManager {
         }
 
         bytes32 message = keccak256(abi.encode(envelope));
-        bytes32 ethSignedMessageHash = MessageHashUtils.toEthSignedMessageHash(message);
+        bytes32 ethSignedMessageHash = MessageHashUtils.toEthSignedMessageHash(
+            message
+        );
         bytes memory signatureDataBytes = abi.encode(
-            signatureData.signers, signatureData.signatures, signatureData.referenceBlock
+            signatureData.signers,
+            signatureData.signatures,
+            signatureData.referenceBlock
         );
 
         bytes4 magicValue = IERC1271.isValidSignature.selector;
-        if (magicValue != isValidSignature(ethSignedMessageHash, signatureDataBytes)) {
+        if (
+            magicValue !=
+            isValidSignature(ethSignedMessageHash, signatureDataBytes)
+        ) {
             revert IWavsServiceManager.InvalidSignature();
         }
 
         // Calculate the total weight of the operators that signed
         uint256 signedWeight = 0;
         for (uint256 i = 0; i < signatureData.signers.length; ++i) {
-            address operator = getLatestOperatorForSigningKey(signatureData.signers[i]);
+            address operator = getLatestOperatorForSigningKey(
+                signatureData.signers[i]
+            );
             signedWeight += getOperatorWeight(operator);
         }
 
@@ -102,15 +114,20 @@ contract POAServiceManager is Ownable, ReentrancyGuard, IWavsServiceManager {
         }
 
         // Check if signedWeight >= thresholdWeight
-        uint256 thresholdWeight = (currentTotalWeight * quorumNumerator) / quorumDenominator;
+        uint256 thresholdWeight = (currentTotalWeight * quorumNumerator) /
+            quorumDenominator;
         if (signedWeight < thresholdWeight) {
             revert IWavsServiceManager.InsufficientQuorum(
-                signedWeight, thresholdWeight, currentTotalWeight
+                signedWeight,
+                thresholdWeight,
+                currentTotalWeight
             );
         }
     }
 
-    function setServiceURI(string calldata _serviceURI) external override onlyOwner {
+    function setServiceURI(
+        string calldata _serviceURI
+    ) external override onlyOwner {
         serviceURI = _serviceURI;
         emit ServiceURIUpdated(_serviceURI);
     }
@@ -122,7 +139,10 @@ contract POAServiceManager is Ownable, ReentrancyGuard, IWavsServiceManager {
      * @dev The fraction numerator/denominator represents the minimum portion of stake
      *      required for a valid signature (e.g., 2/3 or 51/100)
      */
-    function setQuorumThreshold(uint256 numerator, uint256 denominator) external onlyOwner {
+    function setQuorumThreshold(
+        uint256 numerator,
+        uint256 denominator
+    ) external onlyOwner {
         if (numerator == 0) {
             revert IWavsServiceManager.InvalidQuorumParameters();
         }
@@ -139,14 +159,16 @@ contract POAServiceManager is Ownable, ReentrancyGuard, IWavsServiceManager {
         emit QuorumThresholdUpdated(numerator, denominator);
     }
 
-
     /**
      * @notice Whitelists an operator with a specified weight
      * @param operator The address of the operator to whitelist
      * @param weight The weight to assign to the operator
      * @dev Only the owner can call this function
      */
-    function whitelistOperator(address operator, uint256 weight) external onlyOwner {
+    function whitelistOperator(
+        address operator,
+        uint256 weight
+    ) external onlyOwner {
         if (operator == address(0)) {
             revert InvalidOperatorAddress();
         }
@@ -185,7 +207,9 @@ contract POAServiceManager is Ownable, ReentrancyGuard, IWavsServiceManager {
         for (uint256 i = 0; i < operatorAddresses.length; i++) {
             if (operatorAddresses[i] == operator) {
                 // Move last element to the position of the element to be removed
-                operatorAddresses[i] = operatorAddresses[operatorAddresses.length - 1];
+                operatorAddresses[i] = operatorAddresses[
+                    operatorAddresses.length - 1
+                ];
                 // Remove last element
                 operatorAddresses.pop();
                 break;
@@ -208,7 +232,10 @@ contract POAServiceManager is Ownable, ReentrancyGuard, IWavsServiceManager {
      * @param newWeight The new weight to assign to the operator
      * @dev Only the owner can call this function
      */
-    function updateOperatorWeight(address operator, uint256 newWeight) external onlyOwner {
+    function updateOperatorWeight(
+        address operator,
+        uint256 newWeight
+    ) external onlyOwner {
         if (operator == address(0)) {
             revert InvalidOperatorAddress();
         }
@@ -272,7 +299,9 @@ contract POAServiceManager is Ownable, ReentrancyGuard, IWavsServiceManager {
     // ==========================================
     //               View Functions
     // ==========================================
-    function getLatestOperatorForSigningKey(address signingKeyAddress) public view override returns (address) {
+    function getLatestOperatorForSigningKey(
+        address signingKeyAddress
+    ) public view override returns (address) {
         address operator = signingKeyOperators[signingKeyAddress];
         if (operator == address(0)) {
             revert OperatorDoesNotExistForSigningKey();
@@ -280,7 +309,9 @@ contract POAServiceManager is Ownable, ReentrancyGuard, IWavsServiceManager {
         return operator;
     }
 
-    function getLatestSigningKeyForOperator(address operatorAddress) external view returns (address) {
+    function getLatestSigningKeyForOperator(
+        address operatorAddress
+    ) external view returns (address) {
         address sk = operatorSigningKeys[operatorAddress];
         if (sk == address(0)) {
             revert SingingKeyDoesNotExistForOperator();
@@ -288,11 +319,15 @@ contract POAServiceManager is Ownable, ReentrancyGuard, IWavsServiceManager {
         return sk;
     }
 
-    function isOperatorWhitelisted(address operatorAddress) external view returns (bool) {
+    function isOperatorWhitelisted(
+        address operatorAddress
+    ) external view returns (bool) {
         return operatorWeights[operatorAddress] != 0;
     }
 
-    function getOperatorWeight(address operatorAddress) public view returns (uint256) {
+    function getOperatorWeight(
+        address operatorAddress
+    ) public view returns (uint256) {
         return operatorWeights[operatorAddress];
     }
 
@@ -315,9 +350,12 @@ contract POAServiceManager is Ownable, ReentrancyGuard, IWavsServiceManager {
     function isValidSignature(
         bytes32 digest,
         bytes memory _signatureData
-    ) virtual public view returns (bytes4) {
-        (address[] memory operators, bytes[] memory signatures, uint32 referenceBlock) =
-            abi.decode(_signatureData, (address[], bytes[], uint32));
+    ) public view virtual returns (bytes4) {
+        (
+            address[] memory operators,
+            bytes[] memory signatures,
+            uint32 referenceBlock
+        ) = abi.decode(_signatureData, (address[], bytes[], uint32));
         _checkSignatures(digest, operators, signatures, referenceBlock);
         return IERC1271.isValidSignature.selector;
     }
@@ -356,7 +394,13 @@ contract POAServiceManager is Ownable, ReentrancyGuard, IWavsServiceManager {
                 revert NotSorted();
             }
 
-            if( !SignatureChecker.isValidSignatureNow(currentSigner, digest, signatures[i])) {
+            if (
+                !SignatureChecker.isValidSignatureNow(
+                    currentSigner,
+                    digest,
+                    signatures[i]
+                )
+            ) {
                 revert InvalidSignature();
             }
 
@@ -383,7 +427,11 @@ contract POAServiceManager is Ownable, ReentrancyGuard, IWavsServiceManager {
      * @return operators An array of operator addresses
      * @return weights An array of operator weights corresponding to the addresses
      */
-    function getOperators(uint256 start, uint256 length, bool reverseOrder)
+    function getOperators(
+        uint256 start,
+        uint256 length,
+        bool reverseOrder
+    )
         external
         view
         returns (address[] memory operators, uint256[] memory weights)
@@ -407,7 +455,9 @@ contract POAServiceManager is Ownable, ReentrancyGuard, IWavsServiceManager {
             weights = new uint256[](len);
 
             for (uint256 i = 0; i < len; ++i) {
-                uint256 index = reverseOrder ? operatorsLength - (start + i + 1) : start + i;
+                uint256 index = reverseOrder
+                    ? operatorsLength - (start + i + 1)
+                    : start + i;
                 address operator = operatorAddresses[index];
                 operators[i] = operator;
                 weights[i] = operatorWeights[operator];
@@ -416,4 +466,10 @@ contract POAServiceManager is Ownable, ReentrancyGuard, IWavsServiceManager {
             return (operators, weights);
         }
     }
+
+    function getAllocationManager() external view override returns (address) {}
+
+    function getDelegationManager() external view override returns (address) {}
+
+    function getStakeRegistry() external view override returns (address) {}
 }

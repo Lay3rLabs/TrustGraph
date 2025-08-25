@@ -4,8 +4,8 @@ pragma solidity ^0.8.22;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IWavsNftServiceTypes} from "interfaces/IWavsNftServiceTypes.sol";
-import {IWavsServiceHandler} from "@wavs/interfaces/IWavsServiceHandler.sol";
-import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
+import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
+import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 
 /**
  * @title Minter
@@ -145,5 +145,13 @@ contract WavsMinter is Ownable, ReentrancyGuard, IWavsServiceHandler {
      */
     function getTrigger(IWavsNftServiceTypes.TriggerId triggerId) external view returns (Receipt memory) {
         return receipts[triggerId];
+    }
+
+    /**
+     * @notice Get the service manager address
+     * @return address The address of the service manager
+     */
+    function getServiceManager() external view returns (address) {
+        return address(serviceManager);
     }
 }

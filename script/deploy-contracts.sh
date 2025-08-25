@@ -82,6 +82,9 @@ forge script script/DeployZodiacSafes.s.sol:DeployZodiacSafes \
     --private-key "${FUNDED_KEY}" \
     --broadcast
 
+echo "🌊 Deploying Geyser contracts..."
+forge create Geyser --json --rpc-url ${RPC_URL} --broadcast --private-key $FUNDED_KEY --constructor-args "${WAVS_SERVICE_MANAGER_ADDRESS}" > .docker/geyser_deploy.json
+
 # Extract deployed addresses from EAS deployment
 export EAS_REGISTRY_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("SchemaRegistry deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 export EAS_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("EAS deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
@@ -103,6 +106,9 @@ export VOUCHING_SCHEMA_ID=$(jq -r '.logs[] | select(type == "string" and startsw
 export VOTING_POWER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("VotingPower deployed at:")) | split(": ")[1]' .docker/governance_deploy.json 2>/dev/null || echo "")
 export TIMELOCK_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("TimelockController deployed at:")) | split(": ")[1]' .docker/governance_deploy.json 2>/dev/null || echo "")
 export GOVERNOR_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("AttestationGovernor deployed at:")) | split(": ")[1]' .docker/governance_deploy.json 2>/dev/null || echo "")
+
+# Extract deployed addresses from Geyser deployment
+export GYSER_ADDR=$(jq -r '.deployedTo' .docker/geyser_deploy.json 2>/dev/null || echo "")
 
 # Extract deployed addresses from Rewards deployment
 export REWARD_DISTRIBUTOR_ADDR=$(jq -r '.reward_distributor' .docker/rewards_deploy.json 2>/dev/null || echo "")
@@ -151,6 +157,9 @@ cat > .docker/deployment_summary.json << EOF
   },
   "service_contracts": {
     "trigger": "${SERVICE_TRIGGER_ADDR}"
+  },
+  "geyser": {
+    "trigger": "${GYSER_ADDR}"
   },
   "governance_contracts": {
     "voting_power": "${VOTING_POWER_ADDR}",

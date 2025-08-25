@@ -1,5 +1,5 @@
 [package]
-name = "wavs-eas-compute"
+name = "geyser"
 edition.workspace = true
 version.workspace = true
 authors.workspace = true
@@ -17,14 +17,29 @@ alloy-sol-types = { workspace = true }
 anyhow = { workspace = true }
 alloy-network = { workspace = true }
 alloy-provider = { workspace = true }
-alloy-primitives = { workspace = true }
 alloy-rpc-types = { workspace = true }
-hex = "0.4.3"
+
+## IPFS
+cid = { workspace = true }
+multibase = { workspace = true }
+multihash = { workspace = true }
+bs58 = { workspace = true }
+
+## Other
+async-trait = { workspace = true }
+merkle-tree-rs = "0.1.0"
+wavs-types = "0.5.5"
 
 [lib]
 crate-type = ["cdylib"]
 
+[profile.release]
+codegen-units = 1
+opt-level = "s"
+debug = false
+strip = true
+lto = true
 
 [package.metadata.component]
-package = "component:wavs-eas-compute"
+package = "component:geyser"
 target = "wavs:worker/wavs-world@0.5.1"

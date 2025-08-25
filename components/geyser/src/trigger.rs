@@ -6,12 +6,11 @@ use alloy_sol_types::SolValue;
 use anyhow::Result;
 use wavs_wasi_utils::decode_event_log_data;
 
-pub fn decode_trigger_event(trigger_data: TriggerData) -> Result<u64> {
+pub fn decode_trigger_event(trigger_data: TriggerData) -> Result<String> {
     match trigger_data {
-        TriggerData::Cron(TriggerDataCron { trigger_time }) => Ok(trigger_time.nanos),
         TriggerData::EvmContractEvent(TriggerDataEvmContractEvent { log, .. }) => {
-            let solidity::WavsRewardsTrigger { triggerId } = decode_event_log_data!(log)?;
-            Ok(triggerId)
+            let solidity::UpdateService { json } = decode_event_log_data!(log)?;
+            Ok(json)
         }
         _ => Err(anyhow::anyhow!("Unsupported trigger data type")),
     }

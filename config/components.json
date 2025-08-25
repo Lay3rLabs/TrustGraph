@@ -1,6 +1,18 @@
 {
   "components": [
     {
+      "filename": "geyser.wasm",
+      "package_name": "geyser",
+      "package_version": "0.1.0",
+      "trigger_event": "UpdateService(string)",
+      "trigger_json_path": "geyser.trigger",
+      "submit_json_path": "geyser.trigger",
+      "config_values": {
+        "chain_name": "${CHAIN_NAME}"
+      },
+      "env_variables": ["WAVS_ENV_SOME_SECRET"]
+    },
+    {
       "filename": "wavs_eas_attest.wasm",
       "package_name": "wavs-eas-attest",
       "package_version": "0.1.0",
@@ -55,7 +67,7 @@
     },
     {
       "filename": "rewards.wasm",
-      "package_name": "rewards2",
+      "package_name": "rewards",
       "package_version": "0.1.0",
       "trigger_event": "WavsRewardsTrigger(uint64)",
       "trigger_json_path": "reward_contracts.reward_distributor",
