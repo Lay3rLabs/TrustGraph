@@ -42,7 +42,7 @@ function AttestationWithStatus({
   return null;
 }
 
-export default function ExplorerAttestationsPage() {
+export default function AttestationsPage() {
   const [selectedSchema, setSelectedSchema] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
@@ -152,7 +152,7 @@ export default function ExplorerAttestationsPage() {
       {/* Header */}
       <div className="border-b border-gray-700 pb-4">
         <div className="flex items-center justify-between mb-2">
-          <div className="ascii-art-title text-lg">ATTESTATION EXPLORER</div>
+          <div className="ascii-art-title text-lg">ATTESTATION</div>
           <VouchingModal onSuccess={handleAttestationSuccess} />
         </div>
         <div className="system-message text-sm">
