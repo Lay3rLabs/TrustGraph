@@ -40,10 +40,10 @@ impl Guest for Component {
 
         println!("Attestation Schema: {}", attestation_schema);
 
+        // Only run if the schema matches
         if attestation_schema != schema_uid.to_string() {
-            return Err(
-                "Attestation schema UID does not match the schema UID in the request".to_string()
-            );
+            println!("Schema mismatch, returning no response");
+            return Ok(None);
         }
 
         // Get EAS configuration

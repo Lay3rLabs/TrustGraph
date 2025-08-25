@@ -85,9 +85,9 @@ contract Attester is IWavsServiceHandler {
 
         // Route to appropriate operation based on operation type
         if (payload.operationType == OperationType.ATTEST) {
-            try this.decodeAttestData(payload.data) returns (bytes32 schema, address recipient, bytes memory data) {
-                emit DebuggingAttestCalled(schema, recipient, data.length);
-                _attest(schema, recipient, data);
+            try this.decodeAttestData(payload.data) returns (AttestationRequest memory request) {
+                emit DebuggingAttestCalled(request.schema, request.data.recipient, request.data.data.length);
+                _attest(request);
             } catch {
                 revert DataDecodingFailed();
             }
@@ -113,33 +113,15 @@ contract Attester is IWavsServiceHandler {
     }
 
     /// @notice Helper function for decoding attest data
-    function decodeAttestData(bytes memory data)
-        external
-        pure
-        returns (bytes32 schema, address recipient, bytes memory attestationData)
-    {
-        return abi.decode(data, (bytes32, address, bytes));
+    function decodeAttestData(bytes memory data) external pure returns (AttestationRequest memory) {
+        return abi.decode(data, (AttestationRequest));
     }
 
-    /// @notice Internal function to attest to a schema with generic data.
-    /// @param schema The schema UID to attest to.
-    /// @param recipient The recipient of the attestation (use address(0) for no recipient).
-    /// @param data The encoded data to include in the attestation.
+    /// @notice Internal function to attest using an AttestationRequest.
+    /// @param request The AttestationRequest containing all attestation details.
     /// @return The UID of the new attestation.
-    function _attest(bytes32 schema, address recipient, bytes memory data) internal returns (bytes32) {
-        return _eas.attest(
-            AttestationRequest({
-                schema: schema,
-                data: AttestationRequestData({
-                    recipient: recipient,
-                    expirationTime: NO_EXPIRATION_TIME, // No expiration time
-                    revocable: true,
-                    refUID: EMPTY_UID, // No referenced UID
-                    data: data, // Use the provided data directly
-                    value: 0 // No value/ETH
-                })
-            })
-        );
+    function _attest(AttestationRequest memory request) internal returns (bytes32) {
+        return _eas.attest(request);
     }
 
     /// @notice Internal function to revoke an attestation.

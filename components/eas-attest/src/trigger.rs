@@ -1,6 +1,7 @@
 use crate::bindings::wavs::worker::input::{TriggerData, TriggerDataEvmContractEvent};
 use crate::bindings::WasmResponse;
 
+use alloy_primitives::{FixedBytes, U256};
 use alloy_sol_types::SolValue;
 use anyhow::Result;
 use wavs_wasi_utils::decode_event_log_data;
@@ -40,10 +41,20 @@ pub fn decode_trigger_event(
             println!("DEBUG: Event data bytes: {:?}", event.data);
 
             // Create attestation payload for ATTEST operation
-            // Data contains (schema, recipient, data) for the _attest internal function
-            // Convert Bytes to Vec<u8> to ensure proper ABI encoding as bytes type
-            let data_bytes: Vec<u8> = event.data.to_vec();
-            let attest_data = (event.schema, event.recipient, data_bytes).abi_encode();
+            // Create a full AttestationRequest struct as expected by the refactored contract
+            let attestation_request = AttestationRequest {
+                schema: event.schema,
+                data: AttestationRequestData {
+                    recipient: event.recipient,
+                    expirationTime: 0,                // No expiration
+                    revocable: true,                  // Default to revocable
+                    refUID: FixedBytes::<32>::ZERO,   // No reference UID
+                    data: event.data.to_vec().into(), // Custom attestation data
+                    value: U256::ZERO,                // No value transfer
+                },
+            };
+
+            let attest_data = attestation_request.abi_encode();
             println!("DEBUG: Encoded attest_data length: {}", attest_data.len());
             println!(
                 "DEBUG: Attest_data bytes: {:?}",
