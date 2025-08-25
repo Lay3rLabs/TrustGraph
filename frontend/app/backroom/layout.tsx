@@ -208,10 +208,10 @@ export default function BackroomLayout({
                       <div>
                         <button
                           onClick={() => toggleSubmenu(item.id)}
-                          className={`group flex items-center justify-between w-full px-3 py-2 rounded-sm transition-colors ${
+                          className={`group flex items-center justify-between w-full px-3 py-2 rounded-sm border transition-colors ${
                             isMenuItemActive(item)
-                              ? "bg-black/20 terminal-bright border border-gray-600"
-                              : "hover:bg-black/10 terminal-command hover:terminal-bright"
+                              ? "bg-black/20 terminal-bright border-gray-600"
+                              : "hover:bg-black/10 terminal-command border-transparent hover:terminal-bright"
                           }`}
                         >
                           <div className="flex items-center space-x-3">
@@ -231,10 +231,10 @@ export default function BackroomLayout({
                               <Link
                                 key={subItem.id}
                                 href={subItem.path!}
-                                className={`group flex items-center space-x-3 px-3 py-2 rounded-sm transition-colors ${
+                                className={`group flex items-center space-x-3 px-3 py-2 rounded-sm border transition-colors ${
                                   pathname === subItem.path
-                                    ? "bg-black/20 terminal-bright border border-gray-600"
-                                    : "hover:bg-black/10 terminal-command hover:terminal-bright"
+                                    ? "bg-black/20 terminal-bright border-gray-600"
+                                    : "hover:bg-black/10 terminal-command border-transparent hover:terminal-bright"
                                 }`}
                               >
                                 <span className="terminal-bright text-sm">
@@ -250,10 +250,10 @@ export default function BackroomLayout({
                       // Regular menu item
                       <Link
                         href={item.path!}
-                        className={`group flex items-center space-x-3 px-3 py-2 rounded-sm transition-colors ${
+                        className={`group flex items-center space-x-3 px-3 py-2 rounded-sm border transition-colors ${
                           pathname === item.path
-                            ? "bg-black/20 terminal-bright border border-gray-600"
-                            : "hover:bg-black/10 terminal-command hover:terminal-bright"
+                            ? "bg-black/20 terminal-bright border-gray-600"
+                            : "hover:bg-black/10 terminal-command border-transparent hover:terminal-bright"
                         }`}
                       >
                         <span className="terminal-bright text-sm">
