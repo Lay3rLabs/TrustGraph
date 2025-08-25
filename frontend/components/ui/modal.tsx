@@ -10,7 +10,13 @@ interface ModalProps {
   className?: string;
 }
 
-export function Modal({ isOpen, onClose, children, title, className }: ModalProps) {
+export function Modal({
+  isOpen,
+  onClose,
+  children,
+  title,
+  className,
+}: ModalProps) {
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -32,15 +38,14 @@ export function Modal({ isOpen, onClose, children, title, className }: ModalProp
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center animate-in fade-in-0 duration-150 backdrop-blur-sm">
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      
+      <div className="fixed inset-0 bg-black/60" onClick={onClose} />
+
       {/* Modal */}
-      <div className={`relative z-50 w-full max-w-md mx-4 bg-black/95 border border-gray-700 backdrop-blur-sm rounded-sm ${className || ""}`}>
+      <div
+        className={`relative z-50 w-full max-w-md mx-4 bg-black/95 border border-gray-700 rounded-sm ${className || ""}`}
+      >
         {/* Header */}
         {title && (
           <div className="flex items-center justify-between p-4 border-b border-gray-700">
@@ -53,11 +58,9 @@ export function Modal({ isOpen, onClose, children, title, className }: ModalProp
             </button>
           </div>
         )}
-        
+
         {/* Content */}
-        <div className="p-4">
-          {children}
-        </div>
+        <div className="p-4">{children}</div>
       </div>
     </div>
   );

@@ -42,7 +42,12 @@ interface VouchingModalProps {
   setIsOpen?: (value: boolean) => void;
 }
 
-export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, setIsOpen: externalSetIsOpen }: VouchingModalProps) {
+export function VouchingModal({
+  trigger,
+  onSuccess,
+  isOpen: externalIsOpen,
+  setIsOpen: externalSetIsOpen,
+}: VouchingModalProps) {
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
   const setIsOpen = (value: boolean) => {
@@ -56,7 +61,8 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, setI
 
   const { isConnected, chain } = useAccount();
   const { connect } = useConnect();
-  const { createAttestation, isLoading, isSuccess, error, hash } = useAttestation();
+  const { createAttestation, isLoading, isSuccess, error, hash } =
+    useAttestation();
 
   const form = useForm<AttestationFormData>({
     defaultValues: {
@@ -94,7 +100,7 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, setI
   };
 
   const selectedSchemaInfo = SCHEMA_OPTIONS.find(
-    (s) => s.uid === selectedSchema,
+    (s) => s.uid === selectedSchema
   );
 
   const getSchemaPlaceholder = (schemaInfo: typeof selectedSchemaInfo) => {
@@ -108,7 +114,7 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, setI
       case schemas.computeSchema:
         return "Enter computation result and hash";
       default:
-        return `Enter data for ${schemaInfo.name.toLowerCase()}...`;
+        return `Enter data for ${(schemaInfo as any).name.toLowerCase()}...`;
     }
   };
 
@@ -123,7 +129,7 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, setI
       case schemas.computeSchema:
         return "Provide computational verification data";
       default:
-        return `Expected fields: ${schemaInfo.fields.join(", ")}`;
+        return `Expected fields: ${(schemaInfo as any).fields.join(", ")}`;
     }
   };
 
@@ -166,183 +172,194 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, setI
                 <div className="terminal-text text-center">
                   WALLET CONNECTION REQUIRED
                 </div>
-                <Button onClick={handleConnect} className="mobile-terminal-btn !px-4 !py-2">
-                  <span className="terminal-command text-xs">CONNECT WALLET</span>
+                <Button
+                  onClick={handleConnect}
+                  className="mobile-terminal-btn !px-4 !py-2"
+                >
+                  <span className="terminal-command text-xs">
+                    CONNECT WALLET
+                  </span>
                 </Button>
               </div>
             </div>
           )}
 
-
-
           {/* Attestation Form */}
           {isConnected && (
-            <div className="space-y-4">
-              <div className="terminal-text text-sm">CREATE ATTESTATION:</div>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="recipient"
-                      rules={{
-                        required: "Recipient address is required",
-                        pattern: {
-                          value: /^0x[a-fA-F0-9]{40}$/,
-                          message: "Invalid Ethereum address",
-                        },
-                      }}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="terminal-dim text-xs">
-                            RECIPIENT ADDRESS
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              placeholder="0x..."
-                              className="border-gray-700 bg-black/10 terminal-text text-xs"
-                            />
-                          </FormControl>
-                          <FormMessage className="error-text text-xs" />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="schema"
-                      rules={{ required: "Schema selection is required" }}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="terminal-dim text-xs">
-                            SCHEMA TYPE
-                          </FormLabel>
-                          <Select
-                            onValueChange={(value) => {
-                              field.onChange(value);
-                              setSelectedSchema(value);
-                            }}
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="border-gray-700 bg-black/10 terminal-text text-xs">
-                                <SelectValue placeholder="Select schema..." />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent className="border-gray-700 bg-black terminal-text">
-                              {SCHEMA_OPTIONS.map((schema) => (
-                                <SelectItem key={schema.uid} value={schema.uid}>
-                                  {schema.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage className="error-text text-xs" />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="data"
-                    rules={{ required: "Attestation data is required" }}
+                    name="recipient"
+                    rules={{
+                      required: "Recipient address is required",
+                      pattern: {
+                        value: /^0x[a-fA-F0-9]{40}$/,
+                        message: "Invalid Ethereum address",
+                      },
+                    }}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="terminal-dim text-xs">
-                          ATTESTATION DATA
+                          RECIPIENT ADDRESS
                         </FormLabel>
                         <FormControl>
-                          <Textarea
+                          <Input
                             {...field}
-                            placeholder={getSchemaPlaceholder(selectedSchemaInfo)}
-                            className="border-gray-700 bg-black/10 terminal-text text-xs min-h-20"
+                            placeholder="0x..."
+                            className="border-gray-700 bg-black/10 terminal-text text-xs"
                           />
                         </FormControl>
                         <FormMessage className="error-text text-xs" />
-                        {selectedSchemaInfo && (
-                          <div className="terminal-dim text-xs mt-2">
-                            {getSchemaHelperText(selectedSchemaInfo)}
-                          </div>
-                        )}
                       </FormItem>
                     )}
                   />
 
-                  <div className="pt-4 border-t border-gray-700 space-y-3">
-                    <div className="flex space-x-3">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setIsOpen(false)}
-                        disabled={isLoading}
-                        className="!bg-black border-gray-700 text-gray-400 px-6 py-2 rounded-sm hover:text-gray-300 hover:border-gray-500"
-                      >
-                        <span className="text-xs">CANCEL</span>
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={isLoading}
-                        className="mobile-terminal-btn !px-6 !py-2 flex-1"
-                      >
-                        <span className="terminal-command text-xs">
-                          {isLoading ? "CREATING..." : "CREATE ATTESTATION"}
-                        </span>
-                      </Button>
-                    </div>
-
-                    {error && (
-                      <div className="error-text text-xs">
-                        {error.message.toLowerCase().includes("nonce") ? (
-                          <div className="space-y-1">
-                            <div>⚠️ Nonce Conflict Detected</div>
-                            <div className="text-xs opacity-75">
-                              Local network transaction ordering issue - retrying automatically...
-                            </div>
-                          </div>
-                        ) : error.message.toLowerCase().includes("internal json-rpc error") ||
-                          error.message.toLowerCase().includes("internal error") ? (
-                          <div className="space-y-1">
-                            <div>🔧 Anvil Node Error</div>
-                            <div className="text-xs opacity-75">
-                              Local blockchain node issue - attempting automatic recovery...
-                            </div>
-                            <div className="text-xs opacity-50 mt-1">
-                              If this persists, restart anvil with:{" "}
-                              <code className="bg-gray-800 px-1 rounded">
-                                make start-all-local
-                              </code>
-                            </div>
-                          </div>
-                        ) : (
-                          <div>Error: {error.message}</div>
-                        )}
-                      </div>
+                  <FormField
+                    control={form.control}
+                    name="schema"
+                    rules={{ required: "Schema selection is required" }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="terminal-dim text-xs">
+                          SCHEMA TYPE
+                        </FormLabel>
+                        <Select
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            setSelectedSchema(value);
+                          }}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="border-gray-700 bg-black/10 terminal-text text-xs">
+                              <SelectValue placeholder="Select schema..." />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="border-gray-700 bg-black terminal-text">
+                            {SCHEMA_OPTIONS.map((schema) => (
+                              <SelectItem key={schema.uid} value={schema.uid}>
+                                {schema.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="error-text text-xs" />
+                      </FormItem>
                     )}
+                  />
+                </div>
 
-                    {isSuccess && hash && (
-                      <div className="terminal-text text-green-400 text-xs space-y-1">
-                        <div>
-                          ✓ Attestation created! Tx: {hash.slice(0, 10)}...{hash.slice(-8)}
+                <FormField
+                  control={form.control}
+                  name="data"
+                  rules={{ required: "Attestation data is required" }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="terminal-dim text-xs">
+                        ATTESTATION DATA
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          placeholder={getSchemaPlaceholder(selectedSchemaInfo)}
+                          className="border-gray-700 bg-black/10 terminal-text text-xs min-h-20"
+                        />
+                      </FormControl>
+                      <FormMessage className="error-text text-xs" />
+                      {selectedSchemaInfo && (
+                        <div className="terminal-dim text-xs mt-2">
+                          {getSchemaHelperText(selectedSchemaInfo)}
                         </div>
-                        {chain?.id === localChain.id && (
-                          <div className="opacity-75">
-                            Local network transaction confirmed
-                          </div>
-                        )}
-                      </div>
-                    )}
+                      )}
+                    </FormItem>
+                  )}
+                />
 
-                    {isLoading && chain?.id === localChain.id && (
-                      <div className="terminal-dim text-xs">
-                        🔄 Processing on local Anvil network... Nonce conflicts auto-handled
-                      </div>
-                    )}
+                <div className="pt-4 border-t border-gray-700 space-y-3">
+                  <div className="flex space-x-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsOpen(false)}
+                      disabled={isLoading}
+                      className="!bg-black border-gray-700 text-gray-400 px-6 py-2 rounded-sm hover:text-gray-300 hover:border-gray-500"
+                    >
+                      <span className="text-xs">CANCEL</span>
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={isLoading}
+                      className="mobile-terminal-btn !px-6 !py-2 flex-1"
+                    >
+                      <span className="terminal-command text-xs">
+                        {isLoading ? "CREATING..." : "CREATE ATTESTATION"}
+                      </span>
+                    </Button>
                   </div>
-                </form>
-              </Form>
-            </div>
+
+                  {error && (
+                    <div className="error-text text-xs">
+                      {error.message.toLowerCase().includes("nonce") ? (
+                        <div className="space-y-1">
+                          <div>⚠️ Nonce Conflict Detected</div>
+                          <div className="text-xs opacity-75">
+                            Local network transaction ordering issue - retrying
+                            automatically...
+                          </div>
+                        </div>
+                      ) : error.message
+                          .toLowerCase()
+                          .includes("internal json-rpc error") ||
+                        error.message
+                          .toLowerCase()
+                          .includes("internal error") ? (
+                        <div className="space-y-1">
+                          <div>🔧 Anvil Node Error</div>
+                          <div className="text-xs opacity-75">
+                            Local blockchain node issue - attempting automatic
+                            recovery...
+                          </div>
+                          <div className="text-xs opacity-50 mt-1">
+                            If this persists, restart anvil with:{" "}
+                            <code className="bg-gray-800 px-1 rounded">
+                              make start-all-local
+                            </code>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>Error: {error.message}</div>
+                      )}
+                    </div>
+                  )}
+
+                  {isSuccess && hash && (
+                    <div className="terminal-text text-green-400 text-xs space-y-1">
+                      <div>
+                        ✓ Attestation created! Tx: {hash.slice(0, 10)}...
+                        {hash.slice(-8)}
+                      </div>
+                      {chain?.id === localChain.id && (
+                        <div className="opacity-75">
+                          Local network transaction confirmed
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {isLoading && chain?.id === localChain.id && (
+                    <div className="terminal-dim text-xs">
+                      🔄 Processing on local Anvil network... Nonce conflicts
+                      auto-handled
+                    </div>
+                  )}
+                </div>
+              </form>
+            </Form>
           )}
         </div>
       </Modal>
