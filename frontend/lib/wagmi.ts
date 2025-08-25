@@ -29,7 +29,6 @@ export const config = createConfig({
       retryCount: 3,
       timeout: 60000,
     }),
-    // [mainnet.id]: http(),
   },
 });
 

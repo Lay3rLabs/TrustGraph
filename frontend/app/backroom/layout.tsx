@@ -1,11 +1,13 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { useAccount, useConnect, useDisconnect, useSwitchChain } from "wagmi";
 import { Modal } from "../../components/ui/modal";
+import { toHex } from "viem";
+import { localChain } from "@/lib/wagmi";
 
 interface MenuItem {
   id: string;
@@ -113,7 +115,7 @@ export default function BackroomLayout({
     setExpandedMenus((prev) =>
       prev.includes(menuId)
         ? prev.filter((id) => id !== menuId)
-        : [...prev, menuId],
+        : [...prev, menuId]
     );
   };
 
@@ -129,13 +131,62 @@ export default function BackroomLayout({
     return false;
   };
 
-  const { address, isConnected } = useAccount();
+  const addLocalNetwork = async () => {
+    try {
+      await window.ethereum?.request({
+        method: "wallet_addEthereumChain",
+        params: [
+          {
+            chainId: toHex(localChain.id),
+            chainName: "Local Anvil",
+            nativeCurrency: {
+              name: "Ether",
+              symbol: "ETH",
+              decimals: 18,
+            },
+            rpcUrls: ["http://localhost:8545"],
+            blockExplorerUrls: ["http://localhost:8545"],
+          },
+        ],
+      });
+    } catch (err) {
+      console.error("Failed to add local network:", err);
+      throw err;
+    }
+  };
+
+  const { switchChain } = useSwitchChain();
+  const { address, isConnected, chain } = useAccount();
   const { connectors, connect, isPending } = useConnect();
   const { disconnect } = useDisconnect();
 
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
+
+  const handleSwitchToLocal = async () => {
+    try {
+      switchChain({ chainId: localChain.id });
+    } catch (err) {
+      console.error("Failed to switch network:", err);
+      try {
+        await addLocalNetwork();
+        switchChain({ chainId: localChain.id });
+      } catch (addErr) {
+        console.error("Failed to add and switch network:", addErr);
+      }
+    }
+  };
+
+  // Auto-switch to local network when connected to wrong chain
+  useEffect(() => {
+    if (isConnected && (!chain || chain.id !== localChain.id)) {
+      console.log(
+        `Current chain: ${chain?.id || 'unknown'}, switching to local chain: ${localChain.id}`
+      );
+      handleSwitchToLocal();
+    }
+  }, [isConnected, chain]);
 
   return (
     <div className="min-h-screen terminal-text text-xs sm:text-sm dynamic-bg">

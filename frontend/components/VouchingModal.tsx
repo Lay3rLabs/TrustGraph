@@ -54,9 +54,8 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, onCl
   };
   const [selectedSchema, setSelectedSchema] = useState<string>("");
 
-  const { address, isConnected, chain } = useAccount();
+  const { isConnected, chain } = useAccount();
   const { connect } = useConnect();
-  const { switchChain } = useSwitchChain();
   const { createAttestation, isLoading, isSuccess, error, hash } = useAttestation();
 
   const form = useForm<AttestationFormData>({
@@ -78,57 +77,11 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, onCl
     }
   }, [hash, isSuccess, onSuccess, form]);
 
-  // Auto-switch to local network when connected to wrong chain
-  useEffect(() => {
-    if (isConnected && chain && chain.id !== localChain.id) {
-      console.log(`Current chain: ${chain.id}, switching to local chain: ${localChain.id}`);
-      handleSwitchToLocal();
-    }
-  }, [isConnected, chain]);
-
   const handleConnect = () => {
     try {
       connect({ connector: injected() });
     } catch (err) {
       console.error("Failed to connect wallet:", err);
-    }
-  };
-
-  const addLocalNetwork = async () => {
-    try {
-      await window.ethereum?.request({
-        method: "wallet_addEthereumChain",
-        params: [
-          {
-            chainId: toHex(localChain.id),
-            chainName: "Local Anvil",
-            nativeCurrency: {
-              name: "Ether",
-              symbol: "ETH",
-              decimals: 18,
-            },
-            rpcUrls: ["http://localhost:8545"],
-            blockExplorerUrls: ["http://localhost:8545"],
-          },
-        ],
-      });
-    } catch (err) {
-      console.error("Failed to add local network:", err);
-      throw err;
-    }
-  };
-
-  const handleSwitchToLocal = async () => {
-    try {
-      switchChain({ chainId: localChain.id });
-    } catch (err) {
-      console.error("Failed to switch network:", err);
-      try {
-        await addLocalNetwork();
-        switchChain({ chainId: localChain.id });
-      } catch (addErr) {
-        console.error("Failed to add and switch network:", addErr);
-      }
     }
   };
 
