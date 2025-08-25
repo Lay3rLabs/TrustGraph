@@ -34,6 +34,18 @@ impl Guest for Component {
         let ref_uid = payload.uid;
         let recipient = payload.recipient;
 
+        // Get attestation schema UID from config or use the one from the request
+        let attestation_schema =
+            config_var("attestation_schema_uid").unwrap_or_else(|| schema_uid.to_string());
+
+        println!("Attestation Schema: {}", attestation_schema);
+
+        if attestation_schema != schema_uid.to_string() {
+            return Err(
+                "Attestation schema UID does not match the schema UID in the request".to_string()
+            );
+        }
+
         // Get EAS configuration
         let eas_address = config_var("eas_address").unwrap_or_else(|| {
             query::defaults::get_default_eas_address("base-sepolia")
@@ -195,8 +207,7 @@ impl Guest for Component {
             }
             .abi_encode()
             .into(),
-        }
-        .abi_encode();
+        };
 
         println!("✅ Attestation payload created successfully");
 
