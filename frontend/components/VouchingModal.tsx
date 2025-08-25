@@ -273,6 +273,15 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, onCl
                   <div className="pt-4 border-t border-gray-700 space-y-3">
                     <div className="flex space-x-3">
                       <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsOpen(false)}
+                        disabled={isLoading}
+                        className="!bg-black border-gray-700 text-gray-400 px-6 py-2 rounded-sm hover:text-gray-300 hover:border-gray-500"
+                      >
+                        <span className="text-xs">CANCEL</span>
+                      </Button>
+                      <Button
                         type="submit"
                         disabled={isLoading}
                         className="mobile-terminal-btn px-6 py-2 flex-1"
@@ -280,15 +289,6 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, onCl
                         <span className="terminal-command text-xs">
                           {isLoading ? "CREATING..." : "CREATE ATTESTATION"}
                         </span>
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setIsOpen(false)}
-                        disabled={isLoading}
-                        className="border-gray-700 text-gray-400 hover:bg-gray-900/20 px-6 py-2"
-                      >
-                        <span className="text-xs">CANCEL</span>
                       </Button>
                     </div>
 

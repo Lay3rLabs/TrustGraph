@@ -19,6 +19,14 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   { id: "points", label: "Points", path: "/backroom/points", icon: "★" },
+  { id: "vouching", label: "Vouching", path: "/backroom/vouching", icon: "♥" },
+  {
+    id: "hyperstition",
+    label: "Hyperstitions",
+    path: "/backroom/hyperstition",
+    icon: "▲",
+  },
+  { id: "rewards", label: "Rewards", path: "/backroom/rewards", icon: "$" },
   {
     id: "explorer",
     label: "Explorer",
@@ -45,29 +53,21 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
-    id: "governance",
-    label: "Governance",
-    path: "/backroom/governance",
-    icon: "◢◤",
-  },
-  {
-    id: "leaderboard",
-    label: "Leaderboard",
-    path: "/backroom/leaderboard",
-    icon: "☆",
-  },
-  { id: "rewards", label: "Rewards", path: "/backroom/rewards", icon: "$" },
-  { id: "vouching", label: "Vouching", path: "/backroom/vouching", icon: "♥" },
-  {
     id: "mocks",
     label: "WIP",
     icon: "?",
     submenu: [
       {
-        id: "hyperstition",
-        label: "Hyperstitions",
-        path: "/backroom/hyperstition",
-        icon: "▲▼",
+        id: "governance",
+        label: "Governance",
+        path: "/backroom/governance",
+        icon: "◢◤",
+      },
+      {
+        id: "leaderboard",
+        label: "Leaderboard",
+        path: "/backroom/leaderboard",
+        icon: "☆",
       },
       {
         id: "memetics",
@@ -182,7 +182,7 @@ export default function BackroomLayout({
   useEffect(() => {
     if (isConnected && (!chain || chain.id !== localChain.id)) {
       console.log(
-        `Current chain: ${chain?.id || 'unknown'}, switching to local chain: ${localChain.id}`
+        `Current chain: ${chain?.id || "unknown"}, switching to local chain: ${localChain.id}`
       );
       handleSwitchToLocal();
     }
@@ -287,18 +287,15 @@ export default function BackroomLayout({
                 <div className="lg:hidden">
                   <div className="ascii-art-title text-sm">EN0VA</div>
                 </div>
-                <div className="system-message text-xs hidden sm:block lg:hidden">
-                  ◢◤ ATTESTATION DASHBOARD ◢◤
-                </div>
               </div>
 
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
                 {/* Connect Wallet Button */}
                 <div>
                   {isConnected && address ? (
                     <button
                       onClick={() => setIsWalletModalOpen(true)}
-                      className="flex items-center space-x-2 mobile-terminal-btn px-3 py-2"
+                      className="flex items-center space-x-2 mobile-terminal-btn !px-3 !py-2"
                     >
                       <span className="terminal-bright text-xs">◉</span>
                       <span className="terminal-command text-xs">
@@ -320,7 +317,7 @@ export default function BackroomLayout({
                 {/* Mobile menu toggle */}
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="lg:hidden mobile-terminal-btn px-3 py-2"
+                  className="lg:hidden mobile-terminal-btn !text-base !px-3 !py-0"
                 >
                   {isMenuOpen ? "×" : "≡"}
                 </button>
@@ -432,7 +429,7 @@ export default function BackroomLayout({
                 disconnect();
                 setIsWalletModalOpen(false);
               }}
-              className="w-full mobile-terminal-btn px-4 py-2"
+              className="w-full mobile-terminal-btn !px-4 !py-2"
             >
               <span className="terminal-command text-xs">DISCONNECT</span>
             </button>
@@ -450,7 +447,7 @@ export default function BackroomLayout({
                       setIsWalletModalOpen(false);
                     }}
                     disabled={isPending}
-                    className="w-full mobile-terminal-btn px-4 py-2 text-left"
+                    className="w-full mobile-terminal-btn !px-4 !py-2 text-left"
                   >
                     <span className="terminal-text text-xs">
                       {connector.name}

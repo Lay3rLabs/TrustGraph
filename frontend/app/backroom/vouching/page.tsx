@@ -40,7 +40,7 @@ export default function VouchingPage() {
             {isConnected ? (
               <Button
                 onClick={() => setIsVouchingModalOpen(true)}
-                className="mobile-terminal-btn px-4 py-2"
+                className="mobile-terminal-btn !px-4 !py-2"
               >
                 <span className="terminal-command text-xs">CREATE VOUCH</span>
               </Button>
