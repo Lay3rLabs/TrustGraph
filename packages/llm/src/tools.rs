@@ -433,6 +433,8 @@ fn normalize_arguments(arguments: &str) -> Result<serde_json::Value, String> {
 
 #[cfg(test)]
 mod tests {
+    use serde_json::Value;
+
     use super::*;
     use crate::wit::exports::wavs::agent::tools::GuestToolsBuilder;
     use crate::wit::exports::wavs::agent::types::ToolCallFunction;
