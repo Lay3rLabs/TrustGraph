@@ -152,7 +152,7 @@ export default function AttestationsPage() {
       {/* Header */}
       <div className="border-b border-gray-700 pb-4">
         <div className="flex items-center justify-between mb-2">
-          <div className="ascii-art-title text-lg">ATTESTATION</div>
+          <div className="ascii-art-title text-lg">ATTESTATIONS</div>
           <VouchingModal onSuccess={handleAttestationSuccess} />
         </div>
         <div className="system-message text-sm">
