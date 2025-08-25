@@ -16,6 +16,21 @@ tasks:
           "Advanced Solidity Development Skills Verified" \
           --rpc-url {{.RPC_URL}} --broadcast
 
+  trigger-statement-attestation:
+    desc: "Trigger attestation creation via WAVS"
+    vars:
+      RPC_URL:
+        sh: task get-rpc
+    cmds:
+      - |
+        forge script script/Trigger.s.sol:EasTrigger \
+          --sig "triggerRawAttestation(string,string,string,string)" \
+          "{{.SERVICE_TRIGGER_ADDR}}" \
+          "{{.VOUCH_SCHEMA_UID}}" \
+          "{{.WALLET_ADDRESS}}" \
+          "Advanced Solidity Development Skills Verified" \
+          --rpc-url {{.RPC_URL}} --broadcast
+
   query-attestations:
     desc: "Query attestations for schema and recipient"
     vars:
