@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 /// Example struct for a person's information
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, schemars::JsonSchema)]
 struct Person {
     name: String,
     age: u32,
@@ -18,14 +18,14 @@ struct Person {
 }
 
 /// Example struct for a task list
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, schemars::JsonSchema)]
 struct TaskList {
     title: String,
     tasks: Vec<Task>,
     priority: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, schemars::JsonSchema)]
 struct Task {
     id: u32,
     description: String,
@@ -33,7 +33,7 @@ struct Task {
 }
 
 /// Example struct for sentiment analysis
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, schemars::JsonSchema)]
 struct SentimentAnalysis {
     text: String,
     sentiment: String,
@@ -45,16 +45,16 @@ fn main() -> Result<(), LlmError> {
     // Initialize the LLM client
     let client = LLMClient::new("llama2".to_string());
 
-    // Example 1: Simple JSON mode
-    println!("Example 1: JSON Mode");
-    println!("====================");
-    example_json_mode(&client)?;
+    // Example 1: Simple text completion
+    println!("Example 1: Simple Text Completion");
+    println!("==================================");
+    example_simple_completion(&client)?;
     println!();
 
-    // Example 2: Structured output with schema
-    println!("Example 2: Schema-based Structured Output");
-    println!("=========================================");
-    example_schema_output(&client)?;
+    // Example 2: Structured output with automatic schema
+    println!("Example 2: Automatic Structured Output");
+    println!("======================================");
+    example_structured_output(&client)?;
     println!();
 
     // Example 3: Complex nested structure
@@ -71,72 +71,29 @@ fn main() -> Result<(), LlmError> {
     Ok(())
 }
 
-/// Example using simple JSON mode
-fn example_json_mode(client: &LLMClient) -> Result<(), LlmError> {
-    let messages = vec![
-        Message::new_system("You are a helpful assistant that always responds in valid JSON format.".to_string()),
-        Message::new_user(
-            "List three programming languages with their main use cases. \
-             Format as JSON with 'languages' array containing objects with 'name' and 'use_case' fields."
-                .to_string(),
-        ),
-    ];
+/// Example using simple text completion
+fn example_simple_completion(client: &LLMClient) -> Result<(), LlmError> {
+    // Simple completion
+    let response = client.complete("What is the capital of France?")?;
+    println!("Simple completion: {}", response);
 
-    // Use JSON mode to ensure valid JSON output
-    let format = Some(ResponseFormat::json());
-
-    let response = client.chat_completion_with_format(messages, None, format)?;
-
-    if let Some(content) = response.content {
-        println!("Raw JSON response:");
-        println!("{}", content);
-
-        // Parse and pretty-print the JSON
-        if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&content) {
-            println!("\nParsed and formatted:");
-            println!("{}", serde_json::to_string_pretty(&parsed).unwrap());
-        }
-    }
+    // Completion with system context
+    let response = client.complete_with_system(
+        "You are a helpful geography expert",
+        "What are the three largest cities in Japan?",
+    )?;
+    println!("\nWith system context: {}", response);
 
     Ok(())
 }
 
-/// Example using schema-based structured output
-fn example_schema_output(client: &LLMClient) -> Result<(), LlmError> {
-    // Define a JSON schema for the expected output
-    let person_schema = json!({
-        "type": "object",
-        "properties": {
-            "name": {
-                "type": "string",
-                "description": "The person's full name"
-            },
-            "age": {
-                "type": "integer",
-                "description": "The person's age in years",
-                "minimum": 0,
-                "maximum": 150
-            },
-            "occupation": {
-                "type": "string",
-                "description": "The person's job or profession"
-            },
-            "city": {
-                "type": "string",
-                "description": "The city where the person lives"
-            }
-        },
-        "required": ["name", "age", "occupation", "city"]
-    });
-
-    let messages = vec![Message::new_user(
+/// Example using automatic structured output
+fn example_structured_output(client: &LLMClient) -> Result<(), LlmError> {
+    // The schema is automatically generated from the type!
+    let person: Person = client.complete_structured(
         "Generate information about a fictional software engineer named John Doe \
-             who is 28 years old and lives in San Francisco."
-            .to_string(),
-    )];
-
-    // Use the structured response method with type inference
-    let person: Person = client.chat_completion_structured(messages, None, person_schema)?;
+         who is 28 years old and lives in San Francisco.",
+    )?;
 
     println!("Structured Person Response:");
     println!("  Name: {}", person.name);
@@ -144,56 +101,29 @@ fn example_schema_output(client: &LLMClient) -> Result<(), LlmError> {
     println!("  Occupation: {}", person.occupation);
     println!("  City: {}", person.city);
 
+    // With system context
+    let person_with_context: Person = client.complete_structured_with_system(
+        "You are a creative writer who creates realistic character profiles",
+        "Create a profile for a data scientist living in London",
+    )?;
+
+    println!("\nWith System Context:");
+    println!("  Name: {}", person_with_context.name);
+    println!("  Age: {}", person_with_context.age);
+    println!("  Occupation: {}", person_with_context.occupation);
+    println!("  City: {}", person_with_context.city);
+
     Ok(())
 }
 
 /// Example with complex nested structures
 fn example_complex_structure(client: &LLMClient) -> Result<(), LlmError> {
-    let task_schema = json!({
-        "type": "object",
-        "properties": {
-            "title": {
-                "type": "string",
-                "description": "The title of the task list"
-            },
-            "tasks": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "id": {
-                            "type": "integer",
-                            "description": "Unique task identifier"
-                        },
-                        "description": {
-                            "type": "string",
-                            "description": "Description of the task"
-                        },
-                        "completed": {
-                            "type": "boolean",
-                            "description": "Whether the task is completed"
-                        }
-                    },
-                    "required": ["id", "description", "completed"]
-                }
-            },
-            "priority": {
-                "type": "string",
-                "enum": ["low", "medium", "high"],
-                "description": "Overall priority of the task list"
-            }
-        },
-        "required": ["title", "tasks", "priority"]
-    });
-
-    let messages = vec![Message::new_user(
+    // The schema is automatically inferred from the TaskList type
+    let task_list: TaskList = client.complete_structured(
         "Create a task list for building a web application. \
-             Include 3 tasks with IDs, descriptions, and completion status. \
-             Set the priority to high."
-            .to_string(),
-    )];
-
-    let task_list: TaskList = client.chat_completion_structured(messages, None, task_schema)?;
+         Include 3 tasks with IDs, descriptions, and completion status. \
+         Set the priority to high.",
+    )?;
 
     println!("Task List: {}", task_list.title);
     println!("Priority: {}", task_list.priority);
@@ -208,48 +138,14 @@ fn example_complex_structure(client: &LLMClient) -> Result<(), LlmError> {
 
 /// Example of sentiment analysis with structured output
 fn example_sentiment_analysis(client: &LLMClient) -> Result<(), LlmError> {
-    let sentiment_schema = json!({
-        "type": "object",
-        "properties": {
-            "text": {
-                "type": "string",
-                "description": "The analyzed text"
-            },
-            "sentiment": {
-                "type": "string",
-                "enum": ["positive", "negative", "neutral", "mixed"],
-                "description": "The overall sentiment"
-            },
-            "confidence": {
-                "type": "number",
-                "minimum": 0.0,
-                "maximum": 1.0,
-                "description": "Confidence score between 0 and 1"
-            },
-            "keywords": {
-                "type": "array",
-                "items": {
-                    "type": "string"
-                },
-                "description": "Key words that influenced the sentiment"
-            }
-        },
-        "required": ["text", "sentiment", "confidence", "keywords"]
-    });
-
     let text_to_analyze = "The new product launch was incredibly successful! \
                           Customers love the innovative features and the support team has been amazing.";
 
-    let messages = vec![
-        Message::new_system("You are a sentiment analysis expert.".to_string()),
-        Message::new_user(format!(
-            "Analyze the sentiment of the following text: \"{}\"",
-            text_to_analyze
-        )),
-    ];
-
-    let analysis: SentimentAnalysis =
-        client.chat_completion_structured(messages, None, sentiment_schema)?;
+    // Simple and clean - just specify the type!
+    let analysis: SentimentAnalysis = client.complete_structured_with_system(
+        "You are a sentiment analysis expert.",
+        format!("Analyze the sentiment of the following text: \"{}\"", text_to_analyze),
+    )?;
 
     println!("Sentiment Analysis Results:");
     println!("  Text: \"{}...\"", &analysis.text[..50.min(analysis.text.len())]);
@@ -263,24 +159,16 @@ fn example_sentiment_analysis(client: &LLMClient) -> Result<(), LlmError> {
 /// Example showing error handling for structured responses
 #[allow(dead_code)]
 fn example_error_handling(client: &LLMClient) -> Result<(), LlmError> {
-    let schema = json!({
-        "type": "object",
-        "properties": {
-            "value": {
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 10
-            }
-        },
-        "required": ["value"]
-    });
-
-    let messages = vec![Message::new_user("Generate a random number.".to_string())];
+    #[derive(Debug, Deserialize, schemars::JsonSchema)]
+    struct NumberResponse {
+        value: i32,
+    }
 
     // Attempt to parse the response
-    match client.chat_completion_structured::<serde_json::Value>(messages, None, schema) {
-        Ok(value) => {
-            println!("Successfully parsed: {:?}", value);
+    match client.complete_structured::<NumberResponse>("Generate a random number between 1 and 10")
+    {
+        Ok(response) => {
+            println!("Successfully parsed: {:?}", response.value);
         }
         Err(LlmError::ParseError(e)) => {
             println!("Failed to parse structured response: {}", e);

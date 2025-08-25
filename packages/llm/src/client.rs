@@ -93,6 +93,17 @@ impl ResponseFormat {
         ResponseFormat::Schema(schema)
     }
 
+    /// Create a structured format from a type that implements JsonSchema
+    pub fn from_type<T>() -> Result<Self, LlmError>
+    where
+        T: schemars::JsonSchema,
+    {
+        let schema = schemars::schema_for!(T);
+        let schema_value = serde_json::to_value(schema)
+            .map_err(|e| LlmError::ConfigError(format!("Failed to create schema: {}", e)))?;
+        Ok(ResponseFormat::Schema(schema_value))
+    }
+
     /// Convert to the format expected by Ollama API
     fn to_ollama_format(&self) -> serde_json::Value {
         match self {
@@ -287,13 +298,71 @@ impl LLMClient {
         })
     }
 
+    /// Simple completion method for text prompts
+    pub fn complete(&self, prompt: impl Into<String>) -> Result<String, LlmError> {
+        let messages = vec![Message::new_user(prompt.into())];
+        let response = self.chat_completion(messages, None)?;
+        response.content.ok_or_else(|| LlmError::ParseError("No content in response".to_string()))
+    }
+
+    /// Simple completion with system context
+    pub fn complete_with_system(
+        &self,
+        system: impl Into<String>,
+        prompt: impl Into<String>,
+    ) -> Result<String, LlmError> {
+        let messages = vec![Message::new_system(system.into()), Message::new_user(prompt.into())];
+        let response = self.chat_completion(messages, None)?;
+        response.content.ok_or_else(|| LlmError::ParseError("No content in response".to_string()))
+    }
+
+    /// Structured completion - automatically generates schema from type
+    pub fn complete_structured<T>(&self, prompt: impl Into<String>) -> Result<T, LlmError>
+    where
+        T: schemars::JsonSchema + for<'de> serde::Deserialize<'de>,
+    {
+        let format = ResponseFormat::from_type::<T>()?;
+        let messages = vec![Message::new_user(prompt.into())];
+        let response = self.chat_completion_with_format(messages, None, Some(format))?;
+
+        let content = response
+            .content
+            .ok_or_else(|| LlmError::ParseError("No content in response".to_string()))?;
+
+        serde_json::from_str(&content).map_err(|e| {
+            LlmError::ParseError(format!("Failed to parse structured response: {}", e))
+        })
+    }
+
+    /// Structured completion with system context
+    pub fn complete_structured_with_system<T>(
+        &self,
+        system: impl Into<String>,
+        prompt: impl Into<String>,
+    ) -> Result<T, LlmError>
+    where
+        T: schemars::JsonSchema + for<'de> serde::Deserialize<'de>,
+    {
+        let format = ResponseFormat::from_type::<T>()?;
+        let messages = vec![Message::new_system(system.into()), Message::new_user(prompt.into())];
+        let response = self.chat_completion_with_format(messages, None, Some(format))?;
+
+        let content = response
+            .content
+            .ok_or_else(|| LlmError::ParseError("No content in response".to_string()))?;
+
+        serde_json::from_str(&content).map_err(|e| {
+            LlmError::ParseError(format!("Failed to parse structured response: {}", e))
+        })
+    }
+
     /// Convenience method for getting text-only chat completions
     pub fn chat_completion_text(&self, messages: Vec<Message>) -> Result<String, LlmError> {
         let response = self.chat_completion(messages, None)?;
         response.content.ok_or_else(|| LlmError::ParseError("No content in response".to_string()))
     }
 
-    /// Convenience method for getting structured chat completions
+    /// Legacy structured chat completion method (for backward compatibility)
     pub fn chat_completion_structured<T>(
         &self,
         messages: Vec<Message>,
@@ -657,45 +726,22 @@ mod tests {
 
     #[test]
     #[ignore] // Run in WASI environment only
-    fn test_ollama_structured_response_with_schema() {
+    fn test_ollama_structured_response_simple_api() {
         init();
 
         let client = LLMClient::new("llama2".to_string());
 
-        // Define a schema for a person object
-        let schema = json!({
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string",
-                    "description": "The person's name"
-                },
-                "age": {
-                    "type": "integer",
-                    "description": "The person's age"
-                },
-                "city": {
-                    "type": "string",
-                    "description": "The city where the person lives"
-                }
-            },
-            "required": ["name", "age", "city"]
-        });
-
-        let messages = vec![Message::new_user(
-            "Generate information about a fictional person named Alice who is 30 years old and lives in New York."
-                .to_string(),
-        )];
-
-        // Test with the structured method
-        #[derive(Debug, Deserialize)]
+        // Test with the new simplified API
+        #[derive(Debug, Deserialize, schemars::JsonSchema)]
         struct Person {
             name: String,
             age: u32,
             city: String,
         }
 
-        match client.chat_completion_structured::<Person>(messages, None, schema) {
+        match client.complete_structured::<Person>(
+            "Generate information about a fictional person named Alice who is 30 years old and lives in New York."
+        ) {
             Ok(person) => {
                 println!("Parsed structured response: {:?}", person);
                 assert_eq!(person.name, "Alice");
@@ -706,6 +752,36 @@ mod tests {
                 println!("Structured parsing test error: {:?}", e);
                 // This might fail if Ollama doesn't strictly follow the schema
                 // In production, you'd want more robust error handling
+            }
+        }
+    }
+
+    #[test]
+    #[ignore] // Run in WASI environment only
+    fn test_simple_complete_api() {
+        init();
+
+        let client = LLMClient::new("llama2".to_string());
+
+        // Test simple completion
+        match client.complete("What is 2 + 2?") {
+            Ok(response) => {
+                println!("Simple completion response: {}", response);
+                assert!(!response.is_empty());
+            }
+            Err(e) => {
+                println!("Simple completion error: {:?}", e);
+            }
+        }
+
+        // Test completion with system context
+        match client.complete_with_system("You are a helpful math tutor", "What is 2 + 2?") {
+            Ok(response) => {
+                println!("Completion with system: {}", response);
+                assert!(!response.is_empty());
+            }
+            Err(e) => {
+                println!("Completion with system error: {:?}", e);
             }
         }
     }

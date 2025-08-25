@@ -25,6 +25,7 @@ base64 = { workspace = true }
 hex = { workspace = true }
 tiny-keccak = { workspace = true }
 thiserror = { workspace = true }
+schemars = { workspace = true }
 
 [dev-dependencies]
 mockall = { workspace = true }
