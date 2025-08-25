@@ -3,6 +3,7 @@ pragma solidity ^0.8.27;
 
 import {Test} from "forge-std/Test.sol";
 import {POAServiceManager} from "src/contracts/POAServiceManager.sol";
+import {IPOAServiceManager} from "src/interfaces/POA.sol";
 import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
@@ -77,7 +78,7 @@ contract POAServiceManagerTest is Test {
         vm.startPrank(owner);
 
         vm.expectEmit(true, false, false, true);
-        emit POAServiceManager.OperatorWhitelisted(operator1, OPERATOR_WEIGHT);
+        emit IPOAServiceManager.OperatorWhitelisted(operator1, OPERATOR_WEIGHT);
 
         poaServiceManager.whitelistOperator(operator1, OPERATOR_WEIGHT);
 
@@ -93,7 +94,7 @@ contract POAServiceManagerTest is Test {
         /* solhint-enable func-name-mixedcase */
         vm.startPrank(owner);
 
-        vm.expectRevert(POAServiceManager.InvalidOperatorAddress.selector);
+        vm.expectRevert(IPOAServiceManager.InvalidOperatorAddress.selector);
         poaServiceManager.whitelistOperator(address(0), OPERATOR_WEIGHT);
 
         vm.stopPrank();
@@ -104,7 +105,7 @@ contract POAServiceManagerTest is Test {
         /* solhint-enable func-name-mixedcase */
         vm.startPrank(owner);
 
-        vm.expectRevert(POAServiceManager.InvalidOperatorAddress.selector);
+        vm.expectRevert(IPOAServiceManager.InvalidOperatorAddress.selector);
         poaServiceManager.whitelistOperator(operator1, 0);
 
         vm.stopPrank();
@@ -117,7 +118,7 @@ contract POAServiceManagerTest is Test {
 
         poaServiceManager.whitelistOperator(operator1, OPERATOR_WEIGHT);
 
-        vm.expectRevert(POAServiceManager.OperatorAlreadyWhitelisted.selector);
+        vm.expectRevert(IPOAServiceManager.OperatorAlreadyWhitelisted.selector);
         poaServiceManager.whitelistOperator(operator1, OPERATOR_WEIGHT);
 
         vm.stopPrank();
@@ -143,7 +144,7 @@ contract POAServiceManagerTest is Test {
         assertEq(poaServiceManager.getTotalWeight(), OPERATOR_WEIGHT, "Total weight should be OPERATOR_WEIGHT");
 
         vm.expectEmit(true, false, false, true);
-        emit POAServiceManager.OperatorRemoved(operator1);
+        emit IPOAServiceManager.OperatorRemoved(operator1);
 
         poaServiceManager.removeOperator(operator1);
 
@@ -173,11 +174,11 @@ contract POAServiceManagerTest is Test {
         vm.stopPrank();
 
         // After removal, getLatestSigningKeyForOperator should revert with SingingKeyDoesNotExistForOperator
-        vm.expectRevert(POAServiceManager.SingingKeyDoesNotExistForOperator.selector);
+        vm.expectRevert(IPOAServiceManager.SingingKeyDoesNotExistForOperator.selector);
         poaServiceManager.getLatestSigningKeyForOperator(operator1);
 
         // After removal, getLatestOperatorForSigningKey should revert with OperatorDoesNotExistForSigningKey
-        vm.expectRevert(POAServiceManager.OperatorDoesNotExistForSigningKey.selector);
+        vm.expectRevert(IPOAServiceManager.OperatorDoesNotExistForSigningKey.selector);
         poaServiceManager.getLatestOperatorForSigningKey(signingKey1);
     }
 
@@ -186,7 +187,7 @@ contract POAServiceManagerTest is Test {
         /* solhint-enable func-name-mixedcase */
         vm.startPrank(owner);
 
-        vm.expectRevert(POAServiceManager.OperatorNotWhitelisted.selector);
+        vm.expectRevert(IPOAServiceManager.OperatorNotWhitelisted.selector);
         poaServiceManager.removeOperator(operator1);
 
         vm.stopPrank();
@@ -225,7 +226,7 @@ contract POAServiceManagerTest is Test {
         /* solhint-enable func-name-mixedcase */
         vm.startPrank(owner);
 
-        vm.expectRevert(POAServiceManager.OperatorNotWhitelisted.selector);
+        vm.expectRevert(IPOAServiceManager.OperatorNotWhitelisted.selector);
         poaServiceManager.updateOperatorWeight(operator1, OPERATOR_WEIGHT);
 
         vm.stopPrank();
@@ -241,7 +242,7 @@ contract POAServiceManagerTest is Test {
         vm.startPrank(operator1);
 
         vm.expectEmit(true, true, false, true);
-        emit POAServiceManager.SigningKeySet(operator1, signingKey1);
+        emit IPOAServiceManager.SigningKeySet(operator1, signingKey1);
 
         poaServiceManager.setSigningKey(signingKey1);
 
@@ -257,7 +258,7 @@ contract POAServiceManagerTest is Test {
         /* solhint-enable func-name-mixedcase */
         vm.startPrank(operator1);
 
-        vm.expectRevert(POAServiceManager.OperatorNotWhitelisted.selector);
+        vm.expectRevert(IPOAServiceManager.OperatorNotWhitelisted.selector);
         poaServiceManager.setSigningKey(signingKey1);
 
         vm.stopPrank();
@@ -272,7 +273,7 @@ contract POAServiceManagerTest is Test {
 
         vm.startPrank(operator1);
 
-        vm.expectRevert(POAServiceManager.CannotUseOperatorAsSigningKey.selector);
+        vm.expectRevert(IPOAServiceManager.CannotUseOperatorAsSigningKey.selector);
         poaServiceManager.setSigningKey(operator1);
 
         vm.stopPrank();
@@ -288,7 +289,7 @@ contract POAServiceManagerTest is Test {
         vm.startPrank(operator1);
         poaServiceManager.setSigningKey(signingKey1);
 
-        vm.expectRevert(POAServiceManager.AlreadyHasSigningKey.selector);
+        vm.expectRevert(IPOAServiceManager.AlreadyHasSigningKey.selector);
         poaServiceManager.setSigningKey(signingKey2);
 
         vm.stopPrank();
@@ -307,7 +308,7 @@ contract POAServiceManagerTest is Test {
         vm.stopPrank();
 
         vm.startPrank(operator2);
-        vm.expectRevert(POAServiceManager.SigningKeyAlreadyUsed.selector);
+        vm.expectRevert(IPOAServiceManager.SigningKeyAlreadyUsed.selector);
         poaServiceManager.setSigningKey(signingKey1);
         vm.stopPrank();
     }
@@ -315,7 +316,7 @@ contract POAServiceManagerTest is Test {
     /* solhint-disable func-name-mixedcase */
     function test_getLatestOperatorForSigningKey_revert_not_exist() public {
         /* solhint-enable func-name-mixedcase */
-        vm.expectRevert(POAServiceManager.OperatorDoesNotExistForSigningKey.selector);
+        vm.expectRevert(IPOAServiceManager.OperatorDoesNotExistForSigningKey.selector);
         poaServiceManager.getLatestOperatorForSigningKey(signingKey1);
     }
 
