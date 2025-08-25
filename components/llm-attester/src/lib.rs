@@ -1,219 +1,240 @@
-mod query;
+mod config;
 mod trigger;
-use alloy_primitives::ruint::aliases::U256;
-use alloy_primitives::{Bytes, FixedBytes};
+
+use alloy_primitives::{hex, Bytes, FixedBytes};
 use alloy_sol_types::SolValue;
-use query::{format_attestation_data, log_attestation, query_attestation, AttestationStruct};
+use config::AttesterConfig;
 use trigger::{
     decode_trigger_event, encode_trigger_output, AttestationPayload, AttestationRequest,
     AttestationRequestData, Destination, OperationType,
 };
+use wavs_eas::query::{query_attestation, QueryConfig, IEAS};
+use wavs_eas::schema::SchemaEncoder;
 use wavs_llm::traits::GuestLlmClientManager;
+use wstd::runtime::block_on;
+
 pub mod bindings;
-use crate::bindings::{export, host::config_var, Guest, TriggerAction, WasmResponse};
+use crate::bindings::{export, Guest, TriggerAction, WasmResponse};
 use alloy_primitives::Address;
 use wavs_llm::client;
-use wavs_llm::types::{Config, LlmOptions, Message};
+use wavs_llm::types::Message;
 
 struct Component;
 export!(Component with_types_in bindings);
 
-impl Guest for Component {
-    /// Generic EAS attestation component with LLM integration.
-    ///
-    /// A component that receives attestation input data, processes it with an LLM,
-    /// and creates a new EAS attestation based on the LLM response.
-    fn run(action: TriggerAction) -> std::result::Result<Option<WasmResponse>, String> {
-        println!("🚀 Starting LLM attester component execution");
+/// Encode attestation data according to the schema
+fn encode_attestation_data(data: &str, schema_type: &str) -> Result<Bytes, String> {
+    // Use SchemaEncoder for proper ABI encoding
+    SchemaEncoder::encode_by_pattern(schema_type, data).or_else(|e| {
+        println!("⚠️  Failed to encode with schema '{}': {}", schema_type, e);
+        println!("   Defaulting to simple string encoding");
+        Ok(SchemaEncoder::encode_string(data))
+    })
+}
 
-        let (payload, dest) = decode_trigger_event(action.data).map_err(|e| e.to_string())?;
+/// Format attestation data for LLM consumption
+fn format_attestation_data(data: &Bytes) -> String {
+    if data.is_empty() {
+        return "No attestation data available".to_string();
+    }
 
-        // block_on(async move {
-        // Use the Attested event data directly
-        let schema_uid = payload.schemaUID;
-        let ref_uid = payload.uid;
-        let recipient = payload.recipient;
-
-        // Get attestation schema UID from config or use the one from the request
-        let attestation_schema =
-            config_var("attestation_schema_uid").unwrap_or_else(|| schema_uid.to_string());
-
-        println!("Attestation Schema: {}", attestation_schema);
-
-        // Only run if the schema matches
-        if attestation_schema != schema_uid.to_string() {
-            println!("Schema mismatch, returning no response");
-            return Ok(None);
+    // Try to decode as UTF-8 string first
+    if let Ok(decoded) = String::from_utf8(data.to_vec()) {
+        // Check if it looks like JSON
+        if decoded.trim_start().starts_with('{') || decoded.trim_start().starts_with('[') {
+            return format!("JSON attestation data: {}", decoded);
         }
+        return format!("Text attestation data: {}", decoded);
+    }
 
-        // Get EAS configuration
-        let eas_address = config_var("eas_address").unwrap_or_else(|| {
-            query::defaults::get_default_eas_address("base-sepolia")
-                .unwrap_or(query::defaults::BASE_SEPOLIA_EAS)
-                .to_string()
-        });
-        let chain_name = config_var("chain_name").unwrap_or_else(|| "base-sepolia".to_string());
+    // Otherwise return hex representation
+    format!("Binary attestation data (hex): 0x{}", hex::encode(data))
+}
 
-        println!("📋 EAS Configuration:");
-        println!("  - EAS Address: {}", eas_address);
-        println!("  - Chain: {}", chain_name);
-        println!("  - Schema UID: {}", schema_uid);
-        println!("  - Reference UID: {}", ref_uid);
+/// Query and process attestation data
+fn fetch_attestation_data(
+    config: &AttesterConfig,
+    ref_uid: FixedBytes<32>,
+    schema_uid: FixedBytes<32>,
+    recipient: Address,
+) -> IEAS::Attestation {
+    // Parse the EAS address
+    let eas_address = config.eas_address.parse().unwrap_or_else(|_| {
+        println!("⚠️  Failed to parse EAS address: {}", config.eas_address);
+        Address::ZERO
+    });
 
-        // Query the attestation data from EAS using the refUID
-        let attestation_data = match query_attestation(&eas_address, ref_uid, &chain_name) {
-            Ok(attestation) => {
-                log_attestation(&attestation);
-                attestation
+    // Create query config from component config
+    let query_config = QueryConfig {
+        eas_address,
+        indexer_address: Address::ZERO,
+        chain_name: config.chain_name.clone(),
+    };
+
+    // Block on the async query since we're in a sync context
+    let attestation_result =
+        block_on(async move { query_attestation(ref_uid, Some(query_config)).await });
+
+    match attestation_result {
+        Ok(attestation) => {
+            println!(
+                "✅ Retrieved attestation {} from attester {} to recipient {}",
+                attestation.uid, attestation.attester, attestation.recipient
+            );
+            attestation
+        }
+        Err(e) => {
+            println!("⚠️  Failed to query attestation: {}", e);
+            println!("   Using default empty attestation data");
+
+            // Create a minimal attestation struct with the request data
+            IEAS::Attestation {
+                uid: ref_uid,
+                schema: schema_uid,
+                time: 0,
+                expirationTime: 0,
+                revocationTime: 0,
+                refUID: FixedBytes::ZERO,
+                recipient,
+                attester: Address::ZERO,
+                revocable: true,
+                data: Bytes::new(),
             }
-            Err(e) => {
-                println!("⚠️  Failed to query attestation: {}", e);
-                println!("   Using default empty attestation data");
-                // Create a minimal attestation struct with the request data
-                AttestationStruct {
-                    uid: ref_uid,
-                    schema: schema_uid,
-                    time: 0,
-                    expirationTime: 0,
-                    revocationTime: 0,
-                    refUID: FixedBytes::ZERO,
-                    recipient,
-                    attester: Address::ZERO,
-                    revocable: true, // Default to true since we don't have this from the event
-                    data: Bytes::new(), // Empty data since we don't have this from the event
-                }
-            }
-        };
+        }
+    }
+}
 
-        // Get LLM configuration from config variables with defaults
-        let model = config_var("llm_model").unwrap_or_else(|| "llama3.2".to_string());
+/// Create LLM configuration and get completion
+fn get_llm_response(config: &AttesterConfig, user_prompt: String) -> Result<String, String> {
+    // Create LLM options
+    let llm_options = config.get_llm_options();
 
-        let temperature =
-            config_var("llm_temperature").and_then(|s| s.parse::<f32>().ok()).unwrap_or(0.0);
-
-        let top_p = config_var("llm_top_p").and_then(|s| s.parse::<f32>().ok()).unwrap_or(1.0);
-
-        let seed = config_var("llm_seed").and_then(|s| s.parse::<u32>().ok()).unwrap_or(42);
-
-        let max_tokens = config_var("llm_max_tokens")
-            .and_then(|s| s.parse::<u32>().ok())
-            .map(Some)
-            .unwrap_or(Some(100));
-
-        let context_window = config_var("llm_context_window")
-            .and_then(|s| s.parse::<u32>().ok())
-            .map(Some)
-            .unwrap_or(Some(250));
-
-        // Get system message from config or use default
-        let system_message = config_var("llm_system_message").unwrap_or_else(|| {
-                "You are analyzing blockchain attestation data. The user will provide you with the raw attestation data content. \
-                 Analyze what this data represents, its purpose, and provide relevant insights. \
-                 If the data appears to be structured (JSON, encoded values, etc.), interpret its meaning. \
-                 Respond concisely with your analysis.".to_string()
-            });
-
-        // Use the attestation data directly as the user prompt
-        let user_prompt = format_attestation_data(&attestation_data.data);
-
-        // Get attestation schema UID from config or use the one from the request
-        let attestation_schema =
-            config_var("attestation_schema_uid").unwrap_or_else(|| schema_uid.to_string());
-
-        // Check if attestation should be revocable (default: true)
-        let revocable = config_var("attestation_revocable")
-            .and_then(|s| s.parse::<bool>().ok())
-            .unwrap_or(true);
-
-        // Get attestation expiration time (default: 0 for no expiration)
-        let expiration_time =
-            config_var("attestation_expiration").and_then(|s| s.parse::<u64>().ok()).unwrap_or(0);
-
-        println!("📋 LLM Configuration:");
-        println!("  - Model: {}", model);
-        println!("  - Temperature: {}", temperature);
-        println!("  - Top P: {}", top_p);
-        println!("  - Seed: {}", seed);
-        println!("  - Max Tokens: {:?}", max_tokens);
-        println!("  - Context Window: {:?}", context_window);
-        println!("  - Schema UID: {}", attestation_schema);
-        println!("  - Revocable: {}", revocable);
-        println!("  - Expiration: {}", expiration_time);
-
-        // Create LLM configuration
-        let llm_options = LlmOptions { temperature, top_p, seed, max_tokens, context_window };
-
-        // Create configuration
-        let mut config = Config {
-            model: model.clone(),
-            llm_config: llm_options,
-            messages: vec![Message {
-                role: "system".into(),
-                content: Some(system_message),
-                tool_calls: None,
-                tool_call_id: None,
-                name: None,
-            }],
-            contracts: vec![],
-            config: vec![],
-        };
-
-        // Add user message to config
-        config.messages.push(Message {
+    // Create message configuration
+    let messages = vec![
+        Message {
+            role: "system".into(),
+            content: Some(config.system_message.clone()),
+            tool_calls: None,
+            tool_call_id: None,
+            name: None,
+        },
+        Message {
             role: "user".into(),
             content: Some(user_prompt.clone()),
             tool_calls: None,
             tool_call_id: None,
             name: None,
-        });
+        },
+    ];
 
-        println!("💬 User prompt: {}", user_prompt);
+    println!("💬 User prompt: {}", user_prompt);
 
-        // Get completion from LLM
-        let llm = client::with_config(model, config.llm_config)
-            .map_err(|e| format!("Failed to create LLM client: {}", e))?;
+    // Get completion from LLM
+    let llm = client::with_config(config.model.clone(), llm_options)
+        .map_err(|e| format!("Failed to create LLM client: {}", e))?;
 
-        // TODO: upload to IPFS?
+    let result = llm
+        .chat_completion_text(messages)
+        .map_err(|e| format!("Failed to get LLM completion: {}", e))?;
 
-        let result = llm
-            .chat_completion_text(config.messages)
-            .map_err(|e| format!("Failed to get LLM completion: {}", e))?;
+    println!("🤖 LLM Response: {}", result);
 
-        println!("🤖 LLM Response: {}", result);
+    Ok(result)
+}
 
-        // Create attestation data from LLM response
-        // In a real implementation, you might want to structure this data more carefully
-        let result_bytes = Bytes::from(result.as_bytes().to_vec());
+/// Build the attestation payload
+fn build_attestation_payload(
+    config: &AttesterConfig,
+    schema_uid: FixedBytes<32>,
+    ref_uid: FixedBytes<32>,
+    recipient: Address,
+    llm_response: String,
+) -> Result<AttestationPayload, String> {
+    // Determine the schema to use
+    let attestation_schema =
+        config.schema_uid.as_ref().and_then(|s| s.parse().ok()).unwrap_or(schema_uid);
 
-        // Check if we should include a value transfer (default: 0)
-        let attestation_value = config_var("attestation_value")
-            .and_then(|s| s.parse::<u128>().ok())
-            .map(U256::from)
-            .unwrap_or(U256::ZERO);
+    // Encode the attestation data according to the schema
+    // TODO: Parse schema definition to determine proper encoding
+    // For now, assume "string statement" schema
+    let encoded_data = encode_attestation_data(&llm_response, "string statement")?;
 
-        // Create the attestation payload
-        let attestation = AttestationPayload {
-            operationType: OperationType::ATTEST,
-            data: AttestationRequest {
-                schema: attestation_schema.parse().unwrap_or(schema_uid),
-                data: AttestationRequestData {
-                    recipient,                       // The recipient of the attestation
-                    expirationTime: expiration_time, // When the attestation expires
-                    revocable,                       // Whether the attestation is revocable
-                    refUID: ref_uid,                 // The UID of the related attestation
-                    data: result_bytes,              // Custom attestation data with LLM response
-                    value: attestation_value,        // Value of funds transferred
-                },
-            }
-            .abi_encode()
-            .into(),
-        };
+    // Create the attestation request
+    let attestation_request = AttestationRequest {
+        schema: attestation_schema,
+        data: AttestationRequestData {
+            recipient,
+            expirationTime: config.expiration_time,
+            revocable: config.revocable,
+            refUID: ref_uid,
+            data: encoded_data,
+            value: config.attestation_value,
+        },
+    };
+
+    // Create the attestation payload
+    let payload = AttestationPayload {
+        operationType: OperationType::ATTEST,
+        data: attestation_request.abi_encode().into(),
+    };
+
+    Ok(payload)
+}
+
+impl Guest for Component {
+    /// Generic EAS attestation component with LLM integration.
+    ///
+    /// This component:
+    /// 1. Receives attestation event data
+    /// 2. Queries the referenced attestation from EAS
+    /// 3. Processes the attestation data with an LLM
+    /// 4. Creates a new attestation with the LLM's response
+    fn run(action: TriggerAction) -> Result<Option<WasmResponse>, String> {
+        println!("🚀 Starting LLM attester component execution");
+
+        // Decode the trigger event
+        let (payload, dest) = decode_trigger_event(action.data)
+            .map_err(|e| format!("Failed to decode trigger event: {}", e))?;
+
+        // Extract event data
+        let schema_uid = payload.schemaUID;
+        let ref_uid = payload.uid;
+        let recipient = payload.recipient;
+
+        // Load configuration
+        let config = AttesterConfig::from_env();
+        config.log();
+
+        // Check if we should process this schema
+        if !config.should_process_schema(&schema_uid.to_string()) {
+            println!("Schema filtering active, skipping schema: {}", schema_uid);
+            return Ok(None);
+        }
+
+        println!("📋 Processing attestation:");
+        println!("  - Schema UID: {}", schema_uid);
+        println!("  - Reference UID: {}", ref_uid);
+        println!("  - Recipient: {}", recipient);
+
+        // Fetch the attestation data
+        let attestation_data = fetch_attestation_data(&config, ref_uid, schema_uid, recipient);
+
+        // Format the attestation data for the LLM
+        let user_prompt = format_attestation_data(&attestation_data.data);
+
+        // Get LLM response
+        let llm_response = get_llm_response(&config, user_prompt)?;
+
+        // Build the attestation payload
+        let attestation_payload =
+            build_attestation_payload(&config, schema_uid, ref_uid, recipient, llm_response)?;
 
         println!("✅ Attestation payload created successfully");
 
-        // ABI encode the attestation payload
-        let encoded_response = attestation.abi_encode();
+        // ABI encode the complete payload
+        let encoded_response = attestation_payload.abi_encode();
 
+        // Prepare the output based on destination
         let output = match dest {
             Destination::Ethereum => {
                 println!("📤 Sending to Ethereum");

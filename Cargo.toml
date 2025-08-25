@@ -20,6 +20,7 @@ wavs-wasi-utils = "0.4.0"
 
 # WAVS
 wavs-llm = { path = "./packages/llm" }
+wavs-eas = { path = "./packages/eas" }
 
 # Other
 serde = { version = "1.0.219", features = ["derive"] }

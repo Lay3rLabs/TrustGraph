@@ -1,5 +1,5 @@
-use crate::query::*;
 use std::collections::{HashMap, HashSet};
+use wavs_eas::query::*;
 use wavs_wasi_utils::evm::alloy_primitives::{Address, FixedBytes, U256};
 
 /// Statistical information about attestations

@@ -5,8 +5,8 @@
 //! use cases from simple queries to advanced network analysis.
 
 use crate::analytics::*;
-use crate::query::*;
 use crate::solidity::{Operation, OperationType, VotingPowerPayload};
+use wavs_eas::query::*;
 use wavs_wasi_utils::evm::alloy_primitives::{Address, FixedBytes, U256};
 
 // =============================================================================
