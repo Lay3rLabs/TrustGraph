@@ -259,36 +259,6 @@ OPERATOR_NUM=1 task operator:register
 OPERATOR_NUM=1 task operator:verify
 ```
 
-```bash
-# execute againt the WAVS trigger for the deployment summary
-GYSER_ADDR=`jq -rc .geyser.trigger .docker/deployment_summary.json`
-
-# just for debugging
-IPFS_URL=$(cast call --rpc-url http://localhost:8545 $WAVS_SERVICE_MANAGER_ADDRESS "getServiceURI()(string)" | tr -d '"' | tr -d '\')
-echo "IPFS URL: ${IPFS_URL}"
-cid=$(echo $IPFS_URL | cut -d'/' -f3)
-UPDATED_CONTENT=$(curl http://127.0.0.1:8080/ipfs/${cid} | jq -rc '.workflows = {}')
-
-echo "$UPDATED_CONTENT" > .docker/service_tmp.json
-IPFS_CID=$(SERVICE_FILE=.docker/service_tmp.json make upload-to-ipfs)
-
-curl http://127.0.0.1:8080/ipfs/${IPFS_CID}
-
-# take the current owner (funded key) and transfer the ownership to the geyser handler. This way the handler can call the updateServiceUri method
-export FUNDED_KEY=`task config:funded-key`
-# change owner of the service manager -> the GYSER_ADDR, from funded key
-cast send ${WAVS_SERVICE_MANAGER_ADDRESS} 'transferOwnership(address)' "${GYSER_ADDR}" --rpc-url http://localhost:8545 --private-key $FUNDED_KEY
-
-
-# TODO: this should be a JSON blob of the component workflow stuff
-# TODO: this way we only have to append the new unique id, and not worry that they modified other things
-# For now I am just using IPFS to simulate the update rather than anything else
-
-cast send --rpc-url http://localhost:8545 --private-key $FUNDED_KEY $GYSER_ADDR "updateExample(string)" "ipfs://${IPFS_CID}"
-
-cast call --rpc-url http://localhost:8545 $WAVS_SERVICE_MANAGER_ADDRESS "getServiceURI()(string)"
-```
-
 # EAS Attestation Demo
 
 Simple demo showing how to create a schema, trigger an attestation request, and view results.
@@ -364,6 +334,37 @@ Claim:
 task forge:claim-rewards
 
 task forge:query-rewards-balance
+```
+
+## Geyser (Factory Pattern) - optional
+
+```bash
+# execute againt the WAVS trigger for the deployment summary
+GYSER_ADDR=`jq -rc .geyser.trigger .docker/deployment_summary.json`
+
+# just for debugging
+IPFS_URL=$(cast call --rpc-url http://localhost:8545 $WAVS_SERVICE_MANAGER_ADDRESS "getServiceURI()(string)" | tr -d '"' | tr -d '\')
+echo "IPFS URL: ${IPFS_URL}"
+cid=$(echo $IPFS_URL | cut -d'/' -f3)
+UPDATED_CONTENT=$(curl http://127.0.0.1:8080/ipfs/${cid} | jq -rc '.workflows = {}')
+
+echo "$UPDATED_CONTENT" > .docker/service_tmp.json
+IPFS_CID=$(SERVICE_FILE=.docker/service_tmp.json make upload-to-ipfs)
+
+curl http://127.0.0.1:8080/ipfs/${IPFS_CID}
+
+# take the current owner (funded key) and transfer the ownership to the geyser handler. This way the handler can call the updateServiceUri method
+export FUNDED_KEY=`task config:funded-key`
+# change owner of the service manager -> the GYSER_ADDR, from funded key
+cast send ${WAVS_SERVICE_MANAGER_ADDRESS} 'transferOwnership(address)' "${GYSER_ADDR}" --rpc-url http://localhost:8545 --private-key $FUNDED_KEY
+
+
+# TODO: this should be a JSON blob of the component workflow stuff
+# TODO: this way we only have to append the new unique id, and not worry that they modified other things
+# For now I am just using IPFS to simulate the update rather than anything else
+cast send --rpc-url http://localhost:8545 --private-key $FUNDED_KEY $GYSER_ADDR "updateExample(string)" "ipfs://${IPFS_CID}"
+
+cast call --rpc-url http://localhost:8545 $WAVS_SERVICE_MANAGER_ADDRESS "getServiceURI()(string)"
 ```
 
 ## AI Coding Agents
