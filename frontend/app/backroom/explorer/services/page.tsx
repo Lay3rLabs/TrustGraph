@@ -305,13 +305,13 @@ export default function ExplorerServicesPage() {
 
               {/* Actions */}
               <div className="flex space-x-2 pt-3 border-t border-gray-700">
-                <button className="mobile-terminal-btn px-4 py-2">
+                <button className="mobile-terminal-btn !px-4 !py-2">
                   <span className="text-xs terminal-command">TRIGGER</span>
                 </button>
-                <button className="mobile-terminal-btn px-4 py-2">
+                <button className="mobile-terminal-btn !px-4 !py-2">
                   <span className="text-xs terminal-command">LOGS</span>
                 </button>
-                <button className="mobile-terminal-btn px-3 py-2">
+                <button className="mobile-terminal-btn !px-3 !py-2">
                   <span className="text-xs terminal-command">CONFIG</span>
                 </button>
               </div>

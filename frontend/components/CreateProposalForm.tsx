@@ -170,7 +170,7 @@ export function CreateProposalForm({
           {canCreateProposal ? (
             <Button
               onClick={() => setIsExpanded(true)}
-              className="w-full sm:w-auto mobile-terminal-btn"
+              className="w-full sm:w-auto mobile-terminal-btn !px-4 !py-2"
             >
               <span className="terminal-command text-xs">CREATE PROPOSAL</span>
             </Button>
@@ -178,7 +178,7 @@ export function CreateProposalForm({
             <div className="space-y-2">
               <Button
                 disabled
-                className="w-full sm:w-auto mobile-terminal-btn opacity-50 cursor-not-allowed"
+                className="w-full sm:w-auto mobile-terminal-btn !px-4 !py-2 opacity-50 cursor-not-allowed"
               >
                 <span className="terminal-command text-xs">CREATE PROPOSAL</span>
               </Button>
@@ -350,7 +350,7 @@ export function CreateProposalForm({
           <Button
             type="submit"
             disabled={isSubmitting || isLoading || !canCreateProposal}
-            className="flex-1 mobile-terminal-btn"
+            className="flex-1 mobile-terminal-btn !px-4 !py-2"
           >
             <span className="terminal-command text-xs">
               {isSubmitting ? "SUBMITTING..." : "SUBMIT PROPOSAL"}

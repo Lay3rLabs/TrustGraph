@@ -438,7 +438,7 @@ export default function ICOPage() {
             <div className="flex space-x-3">
               <button
                 onClick={() => setShowPurchaseModal(false)}
-                className="flex-1 mobile-terminal-btn px-4 py-2"
+                className="flex-1 mobile-terminal-btn !px-4 !py-2"
               >
                 <span className="terminal-command text-sm">CANCEL</span>
               </button>

@@ -261,13 +261,13 @@ export default function ExplorerOperatorsPage() {
 
               {/* Actions */}
               <div className="flex space-x-2 pt-2 border-t border-gray-700">
-                <button className="mobile-terminal-btn px-3 py-1">
+                <button className="mobile-terminal-btn !px-3 !py-1">
                   <span className="text-xs terminal-command">CONTACT</span>
                 </button>
-                <button className="mobile-terminal-btn px-3 py-1">
+                <button className="mobile-terminal-btn !px-3 !py-1">
                   <span className="text-xs terminal-command">PROFILE</span>
                 </button>
-                <button className="mobile-terminal-btn px-3 py-1">
+                <button className="mobile-terminal-btn !px-3 !py-1">
                   <span className="text-xs terminal-command">HIRE</span>
                 </button>
               </div>

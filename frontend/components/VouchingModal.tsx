@@ -166,7 +166,7 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, setI
                 <div className="terminal-text text-center">
                   WALLET CONNECTION REQUIRED
                 </div>
-                <Button onClick={handleConnect} className="mobile-terminal-btn">
+                <Button onClick={handleConnect} className="mobile-terminal-btn !px-4 !py-2">
                   <span className="terminal-command text-xs">CONNECT WALLET</span>
                 </Button>
               </div>

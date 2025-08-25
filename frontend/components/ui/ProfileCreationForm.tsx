@@ -258,7 +258,7 @@ export function ProfileCreationForm({
             selectedGoals.length === 0 ||
             !agreeToParticipate
           }
-          className="mobile-terminal-btn px-8 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="mobile-terminal-btn !px-8 !py-3 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span className="terminal-command text-sm">
             {isSubmitting ? "CREATING PROFILE..." : "CREATE PROFILE"}

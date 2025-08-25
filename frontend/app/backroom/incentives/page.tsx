@@ -396,13 +396,13 @@ export default function IncentivesPage() {
 
                     {/* Actions */}
                     <div className="flex space-x-2 pt-2 border-t border-gray-700">
-                      <button className="mobile-terminal-btn px-4 py-2">
+                      <button className="mobile-terminal-btn !px-4 !py-2">
                         <span className="text-xs terminal-command">START EARNING</span>
                       </button>
-                      <button className="mobile-terminal-btn px-4 py-2">
+                      <button className="mobile-terminal-btn !px-4 !py-2">
                         <span className="text-xs terminal-command">LEARN MORE</span>
                       </button>
-                      <button className="mobile-terminal-btn px-3 py-2">
+                      <button className="mobile-terminal-btn !px-3 !py-2">
                         <span className="text-xs terminal-command">TRACK</span>
                       </button>
                     </div>
@@ -424,10 +424,10 @@ export default function IncentivesPage() {
               and rewards are distributed when targets are achieved. The more you contribute, the more you earn.
             </div>
             <div className="flex justify-center space-x-4">
-              <button className="mobile-terminal-btn px-6 py-3">
+              <button className="mobile-terminal-btn !px-6 !py-3">
                 <span className="terminal-command">VIEW MY PROGRESS</span>
               </button>
-              <button className="mobile-terminal-btn px-6 py-3">
+              <button className="mobile-terminal-btn !px-6 !py-3">
                 <span className="terminal-command">PROGRAM DETAILS</span>
               </button>
             </div>

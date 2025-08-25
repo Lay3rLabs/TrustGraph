@@ -257,13 +257,13 @@ export default function HyperstitionPage() {
 
                 {/* Action Buttons */}
                 <div className="flex space-x-2 pt-3 border-t border-gray-700">
-                  <button className="mobile-terminal-btn px-4 py-2">
+                  <button className="mobile-terminal-btn !px-4 !py-2">
                     <span className="text-xs terminal-command">AMPLIFY BELIEF</span>
                   </button>
-                  <button className="mobile-terminal-btn px-4 py-2">
+                  <button className="mobile-terminal-btn !px-4 !py-2">
                     <span className="text-xs terminal-command">CONTRIBUTE</span>
                   </button>
-                  <button className="mobile-terminal-btn px-3 py-2">
+                  <button className="mobile-terminal-btn !px-3 !py-2">
                     <span className="text-xs terminal-command">DETAILS</span>
                   </button>
                 </div>

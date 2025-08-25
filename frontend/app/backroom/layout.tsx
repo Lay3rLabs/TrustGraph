@@ -305,7 +305,7 @@ export default function BackroomLayout({
                   ) : (
                     <button
                       onClick={() => setIsWalletModalOpen(true)}
-                      className="mobile-terminal-btn px-4 py-2"
+                      className="mobile-terminal-btn !px-4 !py-2"
                     >
                       <span className="terminal-command text-xs">
                         CONNECT WALLET

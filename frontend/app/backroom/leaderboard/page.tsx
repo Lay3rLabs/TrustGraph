@@ -58,7 +58,7 @@ export default function LeaderboardPage() {
           </div>
           <Button
             onClick={handleConnect}
-            className="mobile-terminal-btn px-6 py-2"
+            className="mobile-terminal-btn !px-6 !py-2"
           >
             <span className="terminal-command text-xs">CONNECT WALLET</span>
           </Button>
@@ -81,7 +81,7 @@ export default function LeaderboardPage() {
               <div className="error-text text-sm">⚠️ {error}</div>
               <Button
                 onClick={refresh}
-                className="mt-3 mobile-terminal-btn px-4 py-2"
+                className="mt-3 mobile-terminal-btn !px-4 !py-2"
               >
                 <span className="text-xs">RETRY</span>
               </Button>
@@ -196,7 +196,7 @@ export default function LeaderboardPage() {
             <div className="flex justify-center pt-4">
               <Button
                 onClick={refresh}
-                className="mobile-terminal-btn px-6 py-2"
+                className="mobile-terminal-btn !px-6 !py-2"
                 disabled={isLoading}
               >
                 <span className="terminal-command text-xs">REFRESH LEADERBOARD</span>

@@ -83,7 +83,7 @@ export default function RewardsPage() {
           </div>
           <Button
             onClick={handleConnect}
-            className="mobile-terminal-btn px-6 py-2"
+            className="mobile-terminal-btn !px-6 !py-2"
           >
             <span className="terminal-command text-xs">CONNECT WALLET</span>
           </Button>

@@ -229,16 +229,16 @@ export default function SystemsPage() {
               Emergency system controls require administrator privileges and collective consensus.
             </div>
             <div className="flex flex-wrap gap-2">
-              <div className="mobile-terminal-btn px-4 py-2 cursor-not-allowed opacity-30">
+              <div className="mobile-terminal-btn !px-4 !py-2 cursor-not-allowed opacity-30">
                 <span className="text-xs">INITIATE FAILSAFE</span>
               </div>
-              <div className="mobile-terminal-btn px-4 py-2 cursor-not-allowed opacity-30">
+              <div className="mobile-terminal-btn !px-4 !py-2 cursor-not-allowed opacity-30">
                 <span className="text-xs">EMERGENCY SHUTDOWN</span>
               </div>
-              <div className="mobile-terminal-btn px-4 py-2 cursor-not-allowed opacity-30">
+              <div className="mobile-terminal-btn !px-4 !py-2 cursor-not-allowed opacity-30">
                 <span className="text-xs">RESET CONSENSUS</span>
               </div>
-              <div className="mobile-terminal-btn px-4 py-2 cursor-not-allowed opacity-30">
+              <div className="mobile-terminal-btn !px-4 !py-2 cursor-not-allowed opacity-30">
                 <span className="text-xs">SYSTEM RESTORE</span>
               </div>
             </div>

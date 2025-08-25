@@ -45,7 +45,7 @@ export default function VouchingPage() {
                 <span className="terminal-command text-xs">CREATE VOUCH</span>
               </Button>
             ) : (
-              <Button onClick={handleConnect} className="mobile-terminal-btn">
+              <Button onClick={handleConnect} className="mobile-terminal-btn !px-4 !py-2">
                 <span className="terminal-command text-xs">CONNECT WALLET</span>
               </Button>
             )}
@@ -58,7 +58,7 @@ export default function VouchingPage() {
         <div className="border border-gray-700 bg-black/10 p-4 rounded-sm">
           <div className="flex items-center justify-between">
             <div className="terminal-text">WALLET CONNECTION REQUIRED</div>
-            <Button onClick={handleConnect} className="mobile-terminal-btn">
+            <Button onClick={handleConnect} className="mobile-terminal-btn !px-4 !py-2">
               <span className="terminal-command text-xs">CONNECT WALLET</span>
             </Button>
           </div>

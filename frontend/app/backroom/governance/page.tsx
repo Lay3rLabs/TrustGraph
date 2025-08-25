@@ -148,7 +148,7 @@ export default function GovernancePage() {
           </div>
           <Button
             onClick={handleConnect}
-            className="mobile-terminal-btn px-6 py-2"
+            className="mobile-terminal-btn !px-6 !py-2"
           >
             <span className="terminal-command text-xs">CONNECT WALLET</span>
           </Button>
@@ -183,7 +183,7 @@ export default function GovernancePage() {
               <div className="terminal-bright text-lg">GNOSIS SAFE TREASURY</div>
               <Button
                 onClick={() => window.open(`https://app.safe.global/home?safe=eth:${safeAddress}`, '_blank')}
-                className="mobile-terminal-btn px-3 py-1 text-xs"
+                className="mobile-terminal-btn !px-3 !py-1 text-xs"
                 disabled={!safeAddress}
               >
                 <span className="terminal-command">OPEN SAFE →</span>
