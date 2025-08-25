@@ -1,0 +1,186 @@
+version: "3"
+
+tasks:
+  buy-yes:
+    desc: "Buy YES outcome tokens in the prediction market"
+    vars:
+      RPC_URL:
+        sh: task get-rpc
+      PREDICTION_MARKET_FACTORY_ADDRESS:
+        sh: jq -r '.prediction_market_contracts.factory' .docker/deployment_summary.json || echo ""
+      MARKET_MAKER_ADDRESS:
+        sh: jq -r '.prediction_market_contracts.market_maker' .docker/deployment_summary.json || echo ""
+      CONDITIONAL_TOKENS_ADDRESS:
+        sh: jq -r '.prediction_market_contracts.conditional_tokens' .docker/deployment_summary.json || echo ""
+      COLLATERAL_TOKEN_ADDRESS:
+        sh: jq -r '.prediction_market_contracts.collateral_token' .docker/deployment_summary.json || echo ""
+    preconditions:
+      - test -f .docker/deployment_summary.json
+      - test -n "{{.PREDICTION_MARKET_FACTORY_ADDRESS}}"
+      - test -n "{{.MARKET_MAKER_ADDRESS}}"
+      - test -n "{{.CONDITIONAL_TOKENS_ADDRESS}}"
+      - test -n "{{.COLLATERAL_TOKEN_ADDRESS}}"
+    cmds:
+      - |
+        echo "Buying YES tokens in prediction market..."
+        echo "Factory: {{.PREDICTION_MARKET_FACTORY_ADDRESS}}"
+        echo "Market Maker: {{.MARKET_MAKER_ADDRESS}}"
+        echo "Conditional Tokens: {{.CONDITIONAL_TOKENS_ADDRESS}}"
+        echo "Collateral Token: {{.COLLATERAL_TOKEN_ADDRESS}}"
+        forge script ./script/PredictionMarket.s.sol \
+          --sig "buyYes(string,string,string,string)" \
+          "{{.PREDICTION_MARKET_FACTORY_ADDRESS}}" \
+          "{{.MARKET_MAKER_ADDRESS}}" \
+          "{{.CONDITIONAL_TOKENS_ADDRESS}}" \
+          "{{.COLLATERAL_TOKEN_ADDRESS}}" \
+          --rpc-url {{.RPC_URL}} \
+          --broadcast -v 4
+
+  buy-no:
+    desc: "Buy NO outcome tokens in the prediction market"
+    vars:
+      RPC_URL:
+        sh: task get-rpc
+      PREDICTION_MARKET_FACTORY_ADDRESS:
+        sh: jq -r '.prediction_market_contracts.factory' .docker/deployment_summary.json || echo ""
+      MARKET_MAKER_ADDRESS:
+        sh: jq -r '.prediction_market_contracts.market_maker' .docker/deployment_summary.json || echo ""
+      CONDITIONAL_TOKENS_ADDRESS:
+        sh: jq -r '.prediction_market_contracts.conditional_tokens' .docker/deployment_summary.json || echo ""
+      COLLATERAL_TOKEN_ADDRESS:
+        sh: jq -r '.prediction_market_contracts.collateral_token' .docker/deployment_summary.json || echo ""
+    preconditions:
+      - test -f .docker/deployment_summary.json
+      - test -n "{{.PREDICTION_MARKET_FACTORY_ADDRESS}}"
+      - test -n "{{.MARKET_MAKER_ADDRESS}}"
+      - test -n "{{.CONDITIONAL_TOKENS_ADDRESS}}"
+      - test -n "{{.COLLATERAL_TOKEN_ADDRESS}}"
+    cmds:
+      - |
+        echo "Buying NO tokens in prediction market..."
+        echo "Factory: {{.PREDICTION_MARKET_FACTORY_ADDRESS}}"
+        echo "Market Maker: {{.MARKET_MAKER_ADDRESS}}"
+        echo "Conditional Tokens: {{.CONDITIONAL_TOKENS_ADDRESS}}"
+        echo "Collateral Token: {{.COLLATERAL_TOKEN_ADDRESS}}"
+        forge script ./script/PredictionMarket.s.sol \
+          --sig "buyNo(string,string,string,string)" \
+          "{{.PREDICTION_MARKET_FACTORY_ADDRESS}}" \
+          "{{.MARKET_MAKER_ADDRESS}}" \
+          "{{.CONDITIONAL_TOKENS_ADDRESS}}" \
+          "{{.COLLATERAL_TOKEN_ADDRESS}}" \
+          --rpc-url {{.RPC_URL}} \
+          --broadcast -v 4
+
+  trigger-oracle:
+    desc: "Trigger the oracle AVS to resolve the market"
+    vars:
+      RPC_URL:
+        sh: task get-rpc
+      PREDICTION_MARKET_ORACLE_CONTROLLER_ADDRESS:
+        sh: jq -r '.prediction_market_contracts.oracle_controller' .docker/deployment_summary.json || echo ""
+    preconditions:
+      - test -f .docker/deployment_summary.json
+      - test -n "{{.PREDICTION_MARKET_ORACLE_CONTROLLER_ADDRESS}}"
+    cmds:
+      - |
+        echo "Triggering oracle AVS to resolve market..."
+        echo "Oracle Controller: {{.PREDICTION_MARKET_ORACLE_CONTROLLER_ADDRESS}}"
+        forge script ./script/PredictionMarket.s.sol \
+          --sig "trigger(string)" \
+          "{{.PREDICTION_MARKET_ORACLE_CONTROLLER_ADDRESS}}" \
+          --rpc-url {{.RPC_URL}} \
+          --broadcast -vvv
+      - echo "Waiting 3 seconds for the component to execute..."
+      - sleep 3
+
+  redeem-tokens:
+    desc: "Redeem outcome tokens for collateral tokens"
+    vars:
+      RPC_URL:
+        sh: task get-rpc
+      PREDICTION_MARKET_FACTORY_ADDRESS:
+        sh: jq -r '.prediction_market_contracts.factory' .docker/deployment_summary.json || echo ""
+      COLLATERAL_TOKEN_ADDRESS:
+        sh: jq -r '.prediction_market_contracts.collateral_token' .docker/deployment_summary.json || echo ""
+      CONDITIONAL_TOKENS_ADDRESS:
+        sh: jq -r '.prediction_market_contracts.conditional_tokens' .docker/deployment_summary.json || echo ""
+    preconditions:
+      - test -f .docker/deployment_summary.json
+      - test -n "{{.PREDICTION_MARKET_FACTORY_ADDRESS}}"
+      - test -n "{{.COLLATERAL_TOKEN_ADDRESS}}"
+      - test -n "{{.CONDITIONAL_TOKENS_ADDRESS}}"
+    cmds:
+      - |
+        echo "Redeeming outcome tokens for collateral..."
+        echo "Factory: {{.PREDICTION_MARKET_FACTORY_ADDRESS}}"
+        echo "Collateral Token: {{.COLLATERAL_TOKEN_ADDRESS}}"
+        echo "Conditional Tokens: {{.CONDITIONAL_TOKENS_ADDRESS}}"
+        forge script ./script/PredictionMarket.s.sol \
+          --sig "redeem(string,string,string)" \
+          "{{.PREDICTION_MARKET_FACTORY_ADDRESS}}" \
+          "{{.COLLATERAL_TOKEN_ADDRESS}}" \
+          "{{.CONDITIONAL_TOKENS_ADDRESS}}" \
+          --rpc-url {{.RPC_URL}} \
+          --broadcast
+
+  query-market:
+    desc: "Query the current state of the prediction market"
+    vars:
+      RPC_URL:
+        sh: task get-rpc
+      PREDICTION_MARKET_FACTORY_ADDRESS:
+        sh: jq -r '.prediction_market_contracts.factory' .docker/deployment_summary.json || echo ""
+      MARKET_MAKER_ADDRESS:
+        sh: jq -r '.prediction_market_contracts.market_maker' .docker/deployment_summary.json || echo ""
+    preconditions:
+      - test -f .docker/deployment_summary.json
+      - test -n "{{.PREDICTION_MARKET_FACTORY_ADDRESS}}"
+      - test -n "{{.MARKET_MAKER_ADDRESS}}"
+    cmds:
+      - |
+        echo "Querying market state..."
+        echo "Factory: {{.PREDICTION_MARKET_FACTORY_ADDRESS}}"
+        echo "Market Maker: {{.MARKET_MAKER_ADDRESS}}"
+        forge script ./script/PredictionMarket.s.sol \
+          --sig "queryMarket(string,string)" \
+          "{{.PREDICTION_MARKET_FACTORY_ADDRESS}}" \
+          "{{.MARKET_MAKER_ADDRESS}}" \
+          --rpc-url {{.RPC_URL}}
+
+  query-balances:
+    desc: "Query token balances for the current wallet"
+    vars:
+      RPC_URL:
+        sh: task get-rpc
+      COLLATERAL_TOKEN_ADDRESS:
+        sh: jq -r '.prediction_market_contracts.collateral_token' .docker/deployment_summary.json || echo ""
+      CONDITIONAL_TOKENS_ADDRESS:
+        sh: jq -r '.prediction_market_contracts.conditional_tokens' .docker/deployment_summary.json || echo ""
+    preconditions:
+      - test -f .docker/deployment_summary.json
+      - test -n "{{.COLLATERAL_TOKEN_ADDRESS}}"
+      - test -n "{{.CONDITIONAL_TOKENS_ADDRESS}}"
+    cmds:
+      - |
+        echo "Querying token balances for: {{.WALLET_ADDRESS}}"
+        echo "Collateral Token: {{.COLLATERAL_TOKEN_ADDRESS}}"
+        echo "Conditional Tokens: {{.CONDITIONAL_TOKENS_ADDRESS}}"
+        forge script ./script/PredictionMarket.s.sol \
+          --sig "queryBalances(string,string,string)" \
+          "{{.COLLATERAL_TOKEN_ADDRESS}}" \
+          "{{.CONDITIONAL_TOKENS_ADDRESS}}" \
+          "{{.WALLET_ADDRESS}}" \
+          --rpc-url {{.RPC_URL}}
+
+  full-demo:
+    desc: "Run the complete prediction market demo flow"
+    cmds:
+      - task: query-balances
+      - echo "--- Step 1: Buying YES tokens ---"
+      - task: buy-yes
+      - echo "--- Step 2: Triggering oracle to resolve market ---"
+      - task: trigger-oracle
+      - echo "--- Step 3: Redeeming outcome tokens ---"
+      - task: redeem-tokens
+      - echo "--- Step 4: Final balance check ---"
+      - task: query-balances

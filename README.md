@@ -336,6 +336,92 @@ task forge:claim-rewards
 task forge:query-rewards-balance
 ```
 
+## LLM Attester
+
+```bash
+task forge:trigger-statement-attestation INPUT="Advanced Solidity Development Skills Verified"
+```
+
+```bash
+task forge:query-statement-attestations
+```
+
+## Prediction Market Demo
+
+### Option 1: Complete Demo Flow
+
+Run all steps automatically:
+
+```bash
+task prediction-market:full-demo
+```
+
+This will:
+1. Check initial balances
+2. Buy YES outcome tokens
+3. Trigger the oracle AVS to resolve the market
+4. Redeem outcome tokens for collateral
+5. Check final balances
+
+### Option 2: Step-by-Step Execution
+
+#### Step 1: Check Initial Balances
+
+```bash
+task prediction-market:query-balances
+```
+
+This shows your current collateral and conditional token balances.
+
+#### Step 2: Buy Outcome Tokens
+
+Buy YES tokens (betting Bitcoin price is over $1):
+```bash
+task prediction-market:buy-yes
+```
+
+Or buy NO tokens (betting Bitcoin price is not over $1):
+```bash
+task prediction-market:buy-no
+```
+
+> **Note**: You start with 1e18 collateral tokens. When buying YES shares, you'll purchase 1e18 YES shares for approximately 5.25e17 collateral tokens, leaving approximately 4.75e17 collateral tokens remaining.
+
+#### Step 3: Query Market State (Optional)
+
+Check the current market state:
+```bash
+task prediction-market:query-market
+```
+
+#### Step 4: Trigger Oracle Resolution
+
+Run the AVS service to resolve the market:
+```bash
+task prediction-market:trigger-oracle
+```
+
+This triggers the oracle AVS which will:
+- Fetch the current Bitcoin price
+- Determine if it's over $1 (it will be!)
+- Resolve the market accordingly
+
+The task automatically waits 3 seconds for the component to execute.
+
+#### Step 5: Redeem Outcome Tokens
+
+Redeem your winning outcome tokens for collateral:
+```bash
+task prediction-market:redeem-tokens
+```
+
+#### Step 6: Check Final Balances
+
+Verify your tokens were successfully redeemed:
+```bash
+task prediction-market:query-balances
+```
+
 ## Geyser (Factory Pattern) - optional
 
 ```bash

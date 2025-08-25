@@ -18,6 +18,23 @@ tasks:
           "{{.INPUT}}" \
           --rpc-url {{.RPC_URL}} --broadcast
 
+  trigger-statement-attestation:
+    desc: "Trigger attestation creation via WAVS"
+    vars:
+      RPC_URL:
+        sh: task get-rpc
+    requires:
+      vars: [INPUT]
+    cmds:
+      - |
+        forge script script/Trigger.s.sol:EasTrigger \
+          --sig "triggerRawAttestation(string,string,string,string)" \
+          "{{.SERVICE_TRIGGER_ADDR}}" \
+          "{{.STATEMENT_SCHEMA_UID}}" \
+          "{{.WALLET_ADDRESS}}" \
+          "{{.INPUT}}" \
+          --rpc-url {{.RPC_URL}} --broadcast
+
   query-attestations:
     desc: "Query attestations for schema and recipient"
     vars:
@@ -32,6 +49,22 @@ tasks:
           "{{.VOUCH_SCHEMA_UID}}" \
           "{{.WALLET_ADDRESS}}" \
           10 \
+          --rpc-url {{.RPC_URL}}
+
+  query-statement-attestations:
+    desc: "Query attestations for the statement schema and recipient"
+    vars:
+      RPC_URL:
+        sh: task get-rpc
+    cmds:
+      - |
+        forge script script/Trigger.s.sol:EasTrigger \
+          --sig "queryAttestations(string,string,string,string,uint256)" \
+          "{{.EAS_INDEXER_ADDR}}" \
+          "{{.EAS_ADDR}}" \
+          "{{.STATEMENT_SCHEMA_UID}}" \
+          "{{.WALLET_ADDRESS}}" \
+          50 \
           --rpc-url {{.RPC_URL}}
 
   query-voting-power:

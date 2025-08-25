@@ -15,6 +15,7 @@ includes:
   forge: ./taskfile/forge.yml
   governance: ./taskfile/governance.yml
   rewards: ./taskfile/rewards.yml
+  prediction-market: ./taskfile/prediction-market.yml
   services: ./taskfile/services.yml
   pagerank: ./taskfile/pagerank.yml
   operator: ./taskfile/operator.yml

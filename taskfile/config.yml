@@ -59,6 +59,18 @@ vars:
   REWARD_DISTRIBUTOR_ADDRESS:
     sh: jq -r '.reward_contracts.reward_distributor' .docker/deployment_summary.json || echo ""
 
+  # Prediction Market contract addresses (loaded from deployment summary)
+  PREDICTION_MARKET_FACTORY_ADDRESS:
+    sh: jq -r '.prediction_market_contracts.factory' .docker/deployment_summary.json || echo ""
+  MARKET_MAKER_ADDRESS:
+    sh: jq -r '.prediction_market_contracts.market_maker' .docker/deployment_summary.json || echo ""
+  CONDITIONAL_TOKENS_ADDRESS:
+    sh: jq -r '.prediction_market_contracts.conditional_tokens' .docker/deployment_summary.json || echo ""
+  COLLATERAL_TOKEN_ADDRESS:
+    sh: jq -r '.prediction_market_contracts.collateral_token' .docker/deployment_summary.json || echo ""
+  PREDICTION_MARKET_ORACLE_CONTROLLER_ADDRESS:
+    sh: jq -r '.prediction_market_contracts.oracle_controller' .docker/deployment_summary.json || echo ""
+
   # Schema UIDs (loaded from deployment summary)
   VOUCH_SCHEMA_UID:
     sh: jq -r '.eas_schemas.vouching_schema' .docker/deployment_summary.json || echo ""
