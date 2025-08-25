@@ -7,7 +7,12 @@ use alloy_sol_types::{sol, SolCall};
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::str::FromStr;
-use wavs_llm::types::{Config, Contract, LlmOptions, Message};
+use wavs_llm::{
+    client::Message,
+    config::{Config, LlmOptions},
+    contracts::Contract,
+};
+
 use wavs_wasi_utils::evm::new_evm_provider;
 use wavs_wasi_utils::http::{fetch_json, http_request_get};
 use wstd::{http::HeaderValue, runtime::block_on};

@@ -1,20 +1,30 @@
+use crate::client::Message;
+use crate::contracts::Contract;
+use crate::errors::AgentError;
+use serde::{Deserialize, Serialize};
 use std::env;
+use wavs_wasi_utils::http::{fetch_json, http_request_get};
+use wstd::http::HeaderValue;
+use wstd::runtime::block_on;
 
-use crate::wit::exports::wavs::agent::config::{self, GuestLlmOptionsFuncs};
-use crate::wit::exports::wavs::agent::errors::AgentError;
-use crate::wit::exports::wavs::agent::types::{Config, Contract, LlmOptions, Message};
+// Configuration options for LLM API requests
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LlmOptions {
+    /// Temperature controls randomness (0.0-2.0)
+    pub temperature: f32,
+    /// Top_p controls diversity (0.0-1.0)
+    pub top_p: f32,
+    /// Seed for deterministic outputs
+    pub seed: u32,
+    /// Maximum tokens to generate
+    pub max_tokens: Option<u32>,
+    /// Context window size (mainly for Ollama)
+    pub context_window: Option<u32>,
+}
 
-// Constants for default values
-const DEFAULT_MODEL: &str = "gpt-4";
-const DEFAULT_API_BASE_URL: &str = "https://api.openai.com/v1";
-const DEFAULT_MAX_TOKENS: u32 = 2048;
-
-// Implementation for LlmOptionsFuncs
-pub struct LlmOptionsFuncsImpl;
-
-impl config::GuestLlmOptionsFuncs for LlmOptionsFuncsImpl {
-    fn new(&self) -> LlmOptions {
-        LlmOptions {
+impl Default for LlmOptions {
+    fn default() -> Self {
+        Self {
             temperature: 0.0,
             top_p: 1.0,
             seed: 42,
@@ -22,182 +32,170 @@ impl config::GuestLlmOptionsFuncs for LlmOptionsFuncsImpl {
             context_window: Some(4096),
         }
     }
-
-    fn temperature(&self, temp: f32) -> LlmOptions {
-        LlmOptions { temperature: temp, ..self.new() }
-    }
-
-    fn top_p(&self, top_p: f32) -> LlmOptions {
-        LlmOptions { top_p, ..self.new() }
-    }
-
-    fn seed(&self, seed: u32) -> LlmOptions {
-        LlmOptions { seed, ..self.new() }
-    }
-
-    fn max_tokens(&self, max_tokens: Option<u32>) -> LlmOptions {
-        LlmOptions { max_tokens, ..self.new() }
-    }
-
-    fn context_window(&self, context_window: Option<u32>) -> LlmOptions {
-        LlmOptions { context_window, ..self.new() }
-    }
 }
 
-// Implementation for ConfigManager
-pub struct ConfigManagerImpl {
-    config: Option<Config>,
-    _api_key: Option<String>, // Unused but kept for structure
-    api_base_url: String,
-}
-
-impl ConfigManagerImpl {
+impl LlmOptions {
+    /// Create a new config with default values
     pub fn new() -> Self {
-        Self { config: None, _api_key: None, api_base_url: DEFAULT_API_BASE_URL.to_string() }
+        Self::default()
     }
 
-    // Create a default config for testing and development
-    pub fn default_config(&self) -> Config {
-        let default_system_prompt = r#"
-            You are an agent responsible for making and executing financial transactions.
-            
-            You have several tools available to interact with smart contracts.
-            Return nothing if no action is needed.
-        "#;
-
-        let options_funcs = LlmOptionsFuncsImpl {};
-
-        Config {
-            contracts: vec![create_default_contract()],
-            llm_config: options_funcs.new(),
-            model: DEFAULT_MODEL.into(),
-            messages: vec![Message {
-                role: "system".into(),
-                content: Some(default_system_prompt.into()),
-                tool_calls: None,
-                tool_call_id: None,
-                name: None,
-            }],
-            config: vec![],
-        }
+    /// Set temperature
+    pub fn temperature(mut self, temp: f32) -> Self {
+        self.temperature = temp;
+        self
     }
 
-    // Methods for API key handling
-    pub fn api_base_url(&self) -> &str {
-        &self.api_base_url
+    /// Set top_p
+    pub fn top_p(mut self, top_p: f32) -> Self {
+        self.top_p = top_p;
+        self
     }
 
-    pub fn set_api_key(&self, _key: String) -> Result<(), String> {
-        // For tests, we'd need interior mutability
-        // In a real implementation this would store the key
-        Ok(())
+    /// Set seed
+    pub fn seed(mut self, seed: u32) -> Self {
+        self.seed = seed;
+        self
     }
 
-    pub fn get_api_key(&self) -> Option<String> {
-        // Try to get from environment variable first
-        match std::env::var("WAVS_ENV_OPENAI_API_KEY") {
-            Ok(key) => Some(key),
-            Err(_) => None, // Just return None if not found
-        }
+    /// Set max tokens
+    pub fn max_tokens(mut self, max_tokens: Option<u32>) -> Self {
+        self.max_tokens = max_tokens;
+        self
     }
 
-    pub fn set_api_base_url(&self, _url: String) -> Result<(), String> {
-        // For tests, we'd need interior mutability
-        // In a real implementation this would store the URL
-        Ok(())
-    }
-
-    pub fn default_options(&self) -> LlmOptions {
-        LlmOptions {
-            temperature: 0.7,
-            top_p: 0.9,
-            seed: 42,
-            max_tokens: Some(DEFAULT_MAX_TOKENS),
-            context_window: Some(4096),
-        }
-    }
-
-    pub fn options(
-        &self,
-        temp: f32,
-        top_p: f32,
-        seed: u32,
-        max_tokens: Option<u32>,
-        context_window: Option<u32>,
-    ) -> LlmOptions {
-        LlmOptions { temperature: temp, top_p, seed, max_tokens, context_window }
-    }
-
-    pub fn parse_config(&self, json: String) -> Result<Config, String> {
-        // Now that Config implements Deserialize, we can directly deserialize from the JSON string
-        match serde_json::from_str::<Config>(&json) {
-            Ok(config) => Ok(config),
-            Err(e) => Err(format!("Failed to parse Config JSON: {}", e)),
-        }
+    /// Set Config window size
+    pub fn context_window(mut self, context_window: Option<u32>) -> Self {
+        self.context_window = context_window;
+        self
     }
 }
 
-impl config::GuestConfigManager for ConfigManagerImpl {
-    fn load(&self) -> Result<Config, String> {
+/// Generic Config for agent's decision making
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Config {
+    pub contracts: Vec<Contract>,
+    pub llm_config: LlmOptions,
+    pub model: String,
+    #[serde(default)]
+    pub messages: Vec<Message>,
+    /// Any global configuration values
+    #[serde(default)]
+    pub config: std::collections::HashMap<String, String>,
+}
+
+impl Config {
+    /// Load Config from environment variable CONFIG_URI or use default
+    pub fn load() -> Result<Self, String> {
         // Check if CONFIG_URI environment variable is set
         if let Ok(config_uri) = env::var("config_uri") {
             println!("Loading config from URI: {}", config_uri);
 
-            self.load_from_uri(config_uri)
+            Self::load_from_uri(&config_uri)
         } else {
             println!("No CONFIG_URI found, using default configuration");
-            Ok(self.default_config())
+            Ok(Self::default())
         }
     }
 
-    fn load_from_uri(&self, uri: String) -> Result<Config, String> {
-        // Strip any quotation marks from the URI
-        let clean_uri = uri.trim_matches('"');
+    /// Load Config from a URI
+    pub fn load_from_uri(uri: &str) -> Result<Self, String> {
+        block_on(async {
+            // Strip any quotation marks from the URI
+            let clean_uri = uri.trim_matches('"');
 
-        println!("Loading config from URI: {}", clean_uri);
+            println!("Loading config from URI: {}", clean_uri);
 
-        // Check URI scheme
-        if let Some(uri_with_scheme) = clean_uri.strip_prefix("ipfs://") {
-            // IPFS URI scheme detected
-            Err(format!("IPFS loading not implemented yet: {}", uri_with_scheme))
-        } else if clean_uri.starts_with("http://") || clean_uri.starts_with("https://") {
-            // HTTP URI scheme detected
-            Err(format!("HTTP loading not implemented yet: {}", clean_uri))
-        } else {
-            // Only support http/https and ipfs URIs
-            Err(format!("Unsupported URI scheme: {}", clean_uri))
-        }
+            // Check URI scheme
+            if let Some(uri_with_scheme) = clean_uri.strip_prefix("ipfs://") {
+                // IPFS URI scheme detected
+                Self::load_from_ipfs(uri_with_scheme)
+            } else if clean_uri.starts_with("http://") || clean_uri.starts_with("https://") {
+                // HTTP URI scheme detected
+                Self::fetch_from_uri(clean_uri)
+            } else {
+                // Only support http/https and ipfs URIs
+                Err(format!("Unsupported URI scheme: {}", clean_uri))
+            }
+        })
     }
 
-    fn from_json(&self, json: String) -> Result<Config, AgentError> {
-        let config = serde_json::from_str(&json).map_err(|e| {
+    /// Load configuration from IPFS
+    fn load_from_ipfs(cid: &str) -> Result<Self, String> {
+        block_on(async {
+            let gateway_url = std::env::var("WAVS_ENV_IPFS_GATEWAY_URL").unwrap_or_else(|_| {
+                println!("WAVS_ENV_IPFS_GATEWAY_URL not set, using default");
+                "https://gateway.lighthouse.storage/ipfs".to_string()
+            });
+
+            // Strip any quotation marks from the gateway URL
+            let clean_gateway_url = gateway_url.trim_matches('"');
+
+            // Construct HTTP URL, avoiding duplicate /ipfs in the path
+            let http_url = if clean_gateway_url.ends_with("/ipfs") {
+                format!("{}/{}", clean_gateway_url, cid)
+            } else if clean_gateway_url.ends_with("/ipfs/") {
+                format!("{}{}", clean_gateway_url, cid)
+            } else if clean_gateway_url.ends_with("/") {
+                format!("{}ipfs/{}", clean_gateway_url, cid)
+            } else {
+                format!("{}/ipfs/{}", clean_gateway_url, cid)
+            };
+
+            println!("Fetching IPFS config from: {}", http_url);
+            Self::fetch_from_uri(&http_url)
+        })
+    }
+
+    /// Fetch configuration from a HTTP/HTTPS URI
+    fn fetch_from_uri(uri: &str) -> Result<Self, String> {
+        block_on(async {
+            // Strip any quotation marks from the URI
+            let clean_uri = uri.trim_matches('"');
+
+            println!("Creating HTTP request for URI: {}", clean_uri);
+
+            // Create HTTP request
+            let mut req = http_request_get(clean_uri).map_err(|e| {
+                let error_msg = format!("Failed to create request: {}", e);
+                println!("Error: {}", error_msg);
+                error_msg
+            })?;
+
+            // Add appropriate headers for JSON content
+            req.headers_mut().insert("Accept", HeaderValue::from_static("application/json"));
+
+            println!("Sending HTTP request...");
+
+            // Execute HTTP request and parse response as JSON
+            let config: Config = fetch_json(req).await.unwrap();
+
+            println!("Successfully loaded configuration");
+            Ok(config)
+        })
+    }
+
+    /// Load Config from JSON
+    pub fn from_json(json: &str) -> Result<Self, AgentError> {
+        let config: Self = serde_json::from_str(json).map_err(|e| {
             AgentError::Configuration(format!("Failed to parse Config JSON: {}", e))
         })?;
 
-        // Validate the config
-        self.validate()?;
+        // Validate the Config
+        config.validate()?;
 
         Ok(config)
     }
 
-    fn to_json(&self) -> Result<String, String> {
-        let config = match &self.config {
-            Some(c) => c,
-            None => &self.default_config(),
-        };
-
-        serde_json::to_string_pretty(config)
+    /// Serialize the Config to a JSON string
+    pub fn to_json(&self) -> Result<String, String> {
+        serde_json::to_string_pretty(self)
             .map_err(|e| format!("Failed to serialize Config to JSON: {}", e))
     }
 
-    fn format_contract_descriptions(&self) -> String {
-        let config = match &self.config {
-            Some(c) => c,
-            None => &self.default_config(),
-        };
-
-        config
-            .contracts
+    /// Format contract descriptions for the system prompt
+    pub fn format_contract_descriptions(&self) -> String {
+        self.contracts
             .iter()
             .map(|contract| {
                 format!(
@@ -209,23 +207,15 @@ impl config::GuestConfigManager for ConfigManagerImpl {
             .join("\n\n")
     }
 
-    fn get_contract_by_name(&self, name: String) -> Option<Contract> {
-        let config = match &self.config {
-            Some(c) => c,
-            None => &self.default_config(),
-        };
-
-        config.contracts.iter().find(|c| c.name.to_lowercase() == name.to_lowercase()).cloned()
+    /// Get a smart contract by name
+    pub fn get_contract_by_name(&self, name: &str) -> Option<&Contract> {
+        self.contracts.iter().find(|c| c.name.to_lowercase() == name.to_lowercase())
     }
 
-    fn validate(&self) -> Result<(), AgentError> {
-        let config = match &self.config {
-            Some(c) => c,
-            None => &self.default_config(),
-        };
-
+    /// Validate the Config for required fields and logical consistency
+    pub fn validate(&self) -> Result<(), AgentError> {
         // Check each contract for required fields
-        for (i, contract) in config.contracts.iter().enumerate() {
+        for (i, contract) in self.contracts.iter().enumerate() {
             if contract.address.is_empty() {
                 return Err(AgentError::Configuration(format!(
                     "Contract at index {} is missing an address",
@@ -255,13 +245,34 @@ impl config::GuestConfigManager for ConfigManagerImpl {
     }
 }
 
-// Helper function to create a default contract for testing
-fn create_default_contract() -> Contract {
-    Contract {
-        name: "USDC".into(),
-        address: "0xb7278a61aa25c888815afc32ad3cc52ff24fe575".into(),
-        abi: r#"[{"type":"function","name":"transfer","inputs":[{"name":"to","type":"address","internalType":"address"},{"name":"value","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"nonpayable"}]"#.into(),
-        description: Some("USDC is a stablecoin pegged to the US Dollar".into()),
+// Default implementation for testing and development
+impl Default for Config {
+    fn default() -> Self {
+        let default_system_prompt = r#"
+            You are an agent responsible for making and executing financial transactions.
+
+            You have several tools available to interact with smart contracts.
+            Return nothing if no action is needed.
+        "#
+        .to_string();
+
+        Self {
+            contracts: vec![Contract::new_with_description(
+                "USDC",
+                "0xb7278a61aa25c888815afc32ad3cc52ff24fe575",
+                r#"[{"type":"function","name":"transfer","inputs":[{"name":"to","type":"address","internalType":"address"},{"name":"value","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"nonpayable"}]"#,
+                "USDC is a stablecoin pegged to the US Dollar",
+            )],
+            llm_config: LlmOptions::new()
+                .temperature(0.0)
+                .top_p(0.1)
+                .seed(42)
+                .max_tokens(Some(500))
+                .context_window(Some(4096)),
+            model: "llama3.2".to_string(),
+            messages: vec![Message::new_system(default_system_prompt)],
+            config: std::collections::HashMap::new(),
+        }
     }
 }
 
@@ -270,97 +281,182 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_config_manager_new() {
-        let manager = ConfigManagerImpl::new();
-        assert_eq!(manager.api_base_url(), DEFAULT_API_BASE_URL);
-    }
-
-    #[test]
-    fn test_config_manager_get_set() {
-        let manager = ConfigManagerImpl::new();
-
-        // Test set_api_key and set_api_base_url - these just return Ok
-        assert!(manager.set_api_key("test-api-key".to_string()).is_ok());
-        assert!(manager.set_api_base_url("https://test-api.example.com".to_string()).is_ok());
-
-        // We don't test get_api_key as it depends on the environment variable
-        // We don't test api_base_url since our mock doesn't actually store changes
-    }
-
-    #[test]
-    fn test_create_llm_options() {
-        let manager = ConfigManagerImpl::new();
-
-        // Test default options
-        let default_options = manager.default_options();
-        assert_eq!(default_options.temperature, 0.7);
-        assert_eq!(default_options.top_p, 0.9);
-        assert!(default_options.max_tokens.is_some());
-
-        // Test with custom values
-        let custom_options = manager.options(0.5, 0.8, 42, Some(2000), Some(4096));
-        assert_eq!(custom_options.temperature, 0.5);
-        assert_eq!(custom_options.top_p, 0.8);
-        assert_eq!(custom_options.seed, 42);
-        assert_eq!(custom_options.max_tokens, Some(2000));
-        assert_eq!(custom_options.context_window, Some(4096));
-    }
-
-    #[test]
-    fn test_create_default_config() {
-        let manager = ConfigManagerImpl::new();
-
-        // Create a default config
-        let config = manager.default_config();
-
-        // Check basic config properties
-        assert!(!config.contracts.is_empty());
-        assert_eq!(config.model, DEFAULT_MODEL);
-        assert!(!config.messages.is_empty());
-
-        // Check options
-        assert_eq!(config.llm_config.temperature, 0.0);
-        assert_eq!(config.llm_config.top_p, 1.0);
-    }
-
-    #[test]
-    fn test_parse_config_from_json() {
-        let manager = ConfigManagerImpl::new();
-
-        // Valid JSON config
-        let json_config = r#"{
-            "model": "gpt-4",
-            "temperature": 0.8,
-            "top_p": 0.95,
-            "seed": 123,
-            "max_tokens": 2048,
-            "context_window": 8192,
+    fn test_config_from_json() {
+        // Valid Config JSON
+        let json = r#"{
+            "contracts": [
+                {
+                    "name": "TestContract",
+                    "address": "0x1234567890123456789012345678901234567890",
+                    "abi": "[{\"name\":\"test\",\"type\":\"function\",\"inputs\":[],\"outputs\":[]}]",
+                    "description": "Test contract"
+                }
+            ],
+            "llm_config": {
+                "temperature": 0.7,
+                "top_p": 0.9,
+                "seed": 123,
+                "max_tokens": 500,
+                "context_window": 4096
+            },
+            "model": "test-model",
             "messages": [
                 {
                     "role": "system",
-                    "content": "You are a helpful assistant."
+                    "content": "Test system message"
                 }
-            ]
+            ],
+            "config": {
+                "test_key": "test_value"
+            }
         }"#;
 
-        let config_result = manager.parse_config(json_config.to_string());
-        assert!(config_result.is_ok());
+        let config = Config::from_json(json).unwrap();
 
-        let config = config_result.unwrap();
-        assert_eq!(config.model, "gpt-4");
-        assert_eq!(config.llm_config.temperature, 0.8);
-        assert_eq!(config.llm_config.top_p, 0.95);
+        // Verify loaded values
+        assert_eq!(config.contracts.len(), 1);
+        assert_eq!(config.contracts[0].name, "TestContract");
+        assert_eq!(config.contracts[0].address, "0x1234567890123456789012345678901234567890");
+        assert_eq!(config.model, "test-model");
+        assert_eq!(config.llm_config.temperature, 0.7);
+        assert_eq!(config.llm_config.top_p, 0.9);
         assert_eq!(config.llm_config.seed, 123);
-        assert_eq!(config.llm_config.max_tokens, Some(2048));
-        assert_eq!(config.llm_config.context_window, Some(8192));
-
+        assert_eq!(config.llm_config.max_tokens, Some(500));
+        assert_eq!(config.llm_config.context_window, Some(4096));
         assert_eq!(config.messages.len(), 1);
         assert_eq!(config.messages[0].role, "system");
-        assert_eq!(config.messages[0].content, Some("You are a helpful assistant.".to_string()));
+        assert_eq!(config.messages[0].content.as_ref().unwrap(), "Test system message");
+        assert_eq!(config.config.get("test_key").unwrap(), "test_value");
+    }
 
-        // Invalid JSON config
-        let invalid_json = "{invalid: json}";
-        let invalid_result = manager.parse_config(invalid_json.to_string());
-        assert!(invalid_result.is_err());
+    #[test]
+    fn test_config_validation() {
+        // Valid Config
+        let valid_config = Config {
+            contracts: vec![Contract::new(
+                "TestContract",
+                "0x1234567890123456789012345678901234567890",
+                "[{\"name\":\"test\",\"type\":\"function\",\"inputs\":[],\"outputs\":[]}]",
+            )],
+            llm_config: LlmOptions::default(),
+            model: "test-model".to_string(),
+            messages: vec![Message::new_system("Test system message".to_string())],
+            config: std::collections::HashMap::new(),
+        };
+
+        assert!(valid_config.validate().is_ok());
+
+        // Invalid contract address
+        let invalid_address_config = Config {
+            contracts: vec![Contract::new(
+                "TestContract",
+                "invalid-address",
+                "[{\"name\":\"test\",\"type\":\"function\",\"inputs\":[],\"outputs\":[]}]",
+            )],
+            llm_config: LlmOptions::default(),
+            model: "test-model".to_string(),
+            messages: vec![],
+            config: std::collections::HashMap::new(),
+        };
+
+        assert!(invalid_address_config.validate().is_err());
+
+        // Empty ABI
+        let empty_abi_config = Config {
+            contracts: vec![Contract::new(
+                "TestContract",
+                "0x1234567890123456789012345678901234567890",
+                "",
+            )],
+            llm_config: LlmOptions::default(),
+            model: "test-model".to_string(),
+            messages: vec![],
+            config: std::collections::HashMap::new(),
+        };
+
+        assert!(empty_abi_config.validate().is_err());
+    }
+
+    #[test]
+    fn test_get_contract_by_name() {
+        let config = Config {
+            contracts: vec![
+                Contract::new(
+                    "Contract1",
+                    "0x1111111111111111111111111111111111111111",
+                    "[{\"name\":\"test\",\"type\":\"function\",\"inputs\":[],\"outputs\":[]}]",
+                ),
+                Contract::new(
+                    "Contract2",
+                    "0x2222222222222222222222222222222222222222",
+                    "[{\"name\":\"test\",\"type\":\"function\",\"inputs\":[],\"outputs\":[]}]",
+                ),
+            ],
+            llm_config: LlmOptions::default(),
+            model: "test-model".to_string(),
+            messages: vec![],
+            config: std::collections::HashMap::new(),
+        };
+
+        // Test exact match
+        let contract = config.get_contract_by_name("Contract1");
+        assert!(contract.is_some());
+        assert_eq!(contract.unwrap().name, "Contract1");
+
+        // Test case insensitive match
+        let contract = config.get_contract_by_name("contract2");
+        assert!(contract.is_some());
+        assert_eq!(contract.unwrap().name, "Contract2");
+
+        // Test non-existent contract
+        let contract = config.get_contract_by_name("NonExistentContract");
+        assert!(contract.is_none());
+    }
+
+    #[test]
+    fn test_format_contract_descriptions() {
+        let config = Config {
+            contracts: vec![
+                Contract::new_with_description(
+                    "Contract1",
+                    "0x1111111111111111111111111111111111111111",
+                    "[{\"name\":\"test\",\"type\":\"function\",\"inputs\":[],\"outputs\":[]}]",
+                    "First test contract",
+                ),
+                Contract::new_with_description(
+                    "Contract2",
+                    "0x2222222222222222222222222222222222222222",
+                    "[{\"name\":\"test\",\"type\":\"function\",\"inputs\":[],\"outputs\":[]}]",
+                    "Second test contract",
+                ),
+            ],
+            llm_config: LlmOptions::default(),
+            model: "test-model".to_string(),
+            messages: vec![],
+            config: std::collections::HashMap::new(),
+        };
+
+        let descriptions = config.format_contract_descriptions();
+
+        // Check that the descriptions contain the contract names, addresses, and ABIs
+        assert!(descriptions.contains("Contract1"));
+        assert!(descriptions.contains("0x1111111111111111111111111111111111111111"));
+        assert!(descriptions.contains("Contract2"));
+        assert!(descriptions.contains("0x2222222222222222222222222222222222222222"));
+
+        // Check that descriptions are separated
+        assert!(descriptions.contains("\n\n"));
+    }
+
+    #[test]
+    fn test_default_config() {
+        let config = Config::default();
+
+        // Check that default Config has reasonable values
+        assert!(!config.contracts.is_empty());
+        assert_eq!(config.model, "llama3.2");
+        assert!(!config.messages.is_empty());
+        assert_eq!(config.messages[0].role, "system");
+        assert!(config.messages[0].content.is_some());
     }
 }

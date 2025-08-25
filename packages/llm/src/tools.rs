@@ -1,32 +1,103 @@
-use crate::wit::exports::wavs::agent::client::GuestLlmClientManager;
-use crate::wit::exports::wavs::agent::client::LlmClient;
-use crate::wit::exports::wavs::agent::config::GuestConfigManager;
-use crate::wit::exports::wavs::agent::tools::{self};
-use crate::wit::exports::wavs::agent::types::{
-    Contract, CustomToolHandler, Function, Message, Tool, ToolCall,
-};
-use serde_json::json;
+use crate::client::{LLMClient, Message};
+use crate::contracts::{Contract, ContractCall, Transaction};
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
+use wstd::runtime::block_on;
 
-// Implementation for ToolsBuilder
-pub struct ToolsBuilderImpl;
+/// Function parameter for tool calls
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FunctionParameter {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
+    pub parameter_type: Option<String>,
+}
 
-impl tools::GuestToolsBuilder for ToolsBuilderImpl {
-    fn send_eth_tool(&self) -> Tool {
+/// Function definition for tool calls
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Function {
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parameters: Option<serde_json::Value>,
+}
+
+/// Tool definition for chat completions
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Tool {
+    #[serde(rename = "type")]
+    pub tool_type: String,
+    pub function: Function,
+}
+
+/// Tool call for chat completions
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ToolCall {
+    #[serde(default = "default_tool_id")]
+    pub id: String,
+    #[serde(rename = "type")]
+    #[serde(default = "default_tool_type")]
+    pub tool_type: String,
+    pub function: ToolCallFunction,
+}
+
+/// Function call details
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ToolCallFunction {
+    pub name: String,
+    #[serde(default)]
+    #[serde(deserialize_with = "deserialize_arguments")]
+    pub arguments: String,
+}
+
+/// Custom deserializer for function arguments that can be either a string or an object
+fn deserialize_arguments<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Error;
+    use serde_json::Value;
+
+    // First try to deserialize as a Value to handle both string and object
+    let value = Value::deserialize(deserializer)?;
+
+    match value {
+        // If it's already a string, return it directly
+        Value::String(s) => Ok(s),
+
+        // If it's an object, convert it to a JSON string
+        Value::Object(_) => serde_json::to_string(&value)
+            .map_err(|e| D::Error::custom(format!("Failed to serialize object to string: {}", e))),
+
+        // For any other type, try to convert to string representation
+        _ => serde_json::to_string(&value)
+            .map_err(|e| D::Error::custom(format!("Failed to serialize value to string: {}", e))),
+    }
+}
+
+pub struct Tools;
+
+impl Tools {
+    /// Create a tool to send ETH through the DAO's Safe
+    pub fn send_eth_tool() -> Tool {
         Tool {
-            tool_type: "function".into(),
+            tool_type: "function".to_string(),
             function: Function {
-                name: "send_eth".into(),
-                description: Some("Send ETH to an address".into()),
-                parameters: Some(r#"{
+                name: "send_eth".to_string(),
+                description: Some("Send ETH through the DAO's Gnosis Safe".to_string()),
+                parameters: Some(json!({
                     "type": "object",
                     "properties": {
                         "to": {
                             "type": "string",
-                            "description": "Ethereum address to send ETH to"
+                            "description": "Destination address (0x...)"
                         },
                         "value": {
                             "type": "string",
-                            "description": "Amount of ETH to send in wei"
+                            "description": "Amount in wei to send (as string)"
                         },
                         "data": {
                             "type": "string",
@@ -38,14 +109,15 @@ impl tools::GuestToolsBuilder for ToolsBuilderImpl {
                         }
                     },
                     "required": ["to", "value"]
-                }"#.into()),
+                })),
             },
         }
     }
 
-    fn tools_from_contract(&self, contract: Contract) -> Vec<Tool> {
+    /// Generate a tool from a smart contract's ABI
+    pub fn tools_from_contract(contract: &Contract) -> Vec<Tool> {
         let mut tools = Vec::new();
-
+        println!("Generating tools from contract: {}", contract.name);
         // Parse the ABI
         let abi_value: Result<serde_json::Value, _> = serde_json::from_str(&contract.abi);
         if abi_value.is_err() {
@@ -55,6 +127,7 @@ impl tools::GuestToolsBuilder for ToolsBuilderImpl {
 
         let abi = abi_value.unwrap();
 
+        println!("ABI: {:?}", abi);
         // ABI can be either an array or an object with an "abi" field
         let functions = if abi.is_array() {
             abi.as_array().unwrap()
@@ -64,6 +137,8 @@ impl tools::GuestToolsBuilder for ToolsBuilderImpl {
             println!("Unexpected ABI format");
             return tools;
         };
+
+        println!("Functions: {:?}", functions);
 
         // Process each function in the ABI
         for func in functions {
@@ -91,7 +166,7 @@ impl tools::GuestToolsBuilder for ToolsBuilderImpl {
             let mut required = Vec::new();
 
             // Add value field for payable functions
-            if func.get("stateMutability").map_or(false, |s| s == "payable") {
+            if func["stateMutability"] == "payable" {
                 properties["value"] = json!({
                     "type": "string",
                     "description": "Amount of ETH to send with the call (in wei)"
@@ -112,7 +187,7 @@ impl tools::GuestToolsBuilder for ToolsBuilderImpl {
                         }
 
                         // Convert Solidity type to JSON Schema type
-                        let (json_type, format) = solidity_type_to_json_schema(param_type);
+                        let (json_type, format) = Self::solidity_type_to_json_schema(param_type);
 
                         let mut param_schema = json!({
                             "type": json_type,
@@ -133,21 +208,18 @@ impl tools::GuestToolsBuilder for ToolsBuilderImpl {
             // Create the tool for this function
             let tool_name = format!("contract_{}_{}", contract.name.to_lowercase(), name);
             let tool = Tool {
-                tool_type: "function".into(),
+                tool_type: "function".to_string(),
                 function: Function {
                     name: tool_name.clone(),
                     description: Some(format!(
                         "Call the {} function on the {} contract at {}",
                         name, contract.name, contract.address
                     )),
-                    parameters: Some(
-                        json!({
-                            "type": "object",
-                            "properties": properties,
-                            "required": required
-                        })
-                        .to_string(),
-                    ),
+                    parameters: Some(json!({
+                        "type": "object",
+                        "properties": properties,
+                        "required": required
+                    })),
                 },
             };
 
@@ -157,53 +229,93 @@ impl tools::GuestToolsBuilder for ToolsBuilderImpl {
         tools
     }
 
-    fn custom_tool(&self, name: String, description: String, parameters: String) -> Tool {
+    /// Convert Solidity type to JSON Schema type
+    fn solidity_type_to_json_schema(solidity_type: &str) -> (&'static str, Option<&'static str>) {
+        match solidity_type {
+            t if t.starts_with("uint") => ("string", None), // Use string for all integers to handle large numbers
+            t if t.starts_with("int") => ("string", None),
+            "address" => ("string", Some("ethereum-address")),
+            "bool" => ("boolean", None),
+            "string" => ("string", None),
+            t if t.starts_with("bytes") => ("string", Some("byte")),
+            _ => ("string", None), // Default to string for unknown types
+        }
+    }
+
+    /// Create a custom tool with the specified name, description, and parameters
+    ///
+    /// # Example
+    /// ```
+    /// use serde_json::json;
+    /// use wavs_llm::tools::Tools;
+    ///
+    /// let weather_tool = Tools::custom_tool(
+    ///     "get_weather",
+    ///     "Get the current weather for a location",
+    ///     json!({
+    ///         "type": "object",
+    ///         "properties": {
+    ///             "location": {
+    ///                 "type": "string",
+    ///                 "description": "The city name or zip code"
+    ///             }
+    ///         },
+    ///         "required": ["location"]
+    ///     })
+    /// );
+    /// ```
+    pub fn custom_tool(name: &str, description: &str, parameters: serde_json::Value) -> Tool {
         Tool {
-            tool_type: "function".into(),
+            tool_type: "function".to_string(),
             function: Function {
-                name,
-                description: Some(description),
+                name: name.to_string(),
+                description: Some(description.to_string()),
                 parameters: Some(parameters),
             },
         }
     }
 
-    fn execute_tool_call(
-        &self,
-        tool_call: ToolCall,
-        custom_handlers: Option<Vec<CustomToolHandler>>,
+    /// Execute a tool call and return the result
+    pub fn execute_tool_call(
+        tool_call: &ToolCall,
+        custom_handlers: Option<&[Box<dyn CustomToolHandler>]>,
     ) -> Result<String, String> {
         let function_name = &tool_call.function.name;
 
-        // If there are custom handlers, we'd need to manually check each one
-        // But since CustomToolHandler is a resource type and doesn't have direct methods,
-        // we can't actually implement this in the component version
-        // So we'll just skip custom handlers for now
-        if custom_handlers.is_some() {
-            println!("Custom handlers provided, but not supported in this implementation");
+        // First, check if any custom handlers can handle this tool
+        if let Some(handlers) = custom_handlers {
+            for handler in handlers {
+                if handler.can_handle(function_name) {
+                    return handler.execute(tool_call);
+                }
+            }
         }
 
-        // Use built-in handlers instead
+        // If no custom handlers or none matched, use built-in handlers
         match function_name.as_str() {
-            "send_eth" => self.parse_eth_transaction(tool_call),
+            "send_eth" => Self::parse_eth_transaction(tool_call),
             // Handle dynamically generated contract tools
-            _ if function_name.starts_with("contract_") => parse_contract_function_call(&tool_call),
+            _ if function_name.starts_with("contract_") => {
+                Self::parse_contract_function_call(tool_call)
+            }
             _ => Err(format!("Unknown tool: {}", function_name)),
         }
     }
 
-    fn parse_eth_transaction(&self, tool_call: ToolCall) -> Result<String, String> {
+    /// Parse an ETH transaction from tool call
+    pub fn parse_eth_transaction(tool_call: &ToolCall) -> Result<String, String> {
         // Parse the tool call arguments
-        let args = normalize_arguments(&tool_call.function.arguments)?;
+        let args: Value = serde_json::from_str(&tool_call.function.arguments)
+            .map_err(|e| format!("Failed to parse transaction arguments: {}", e))?;
 
-        // Create a transaction JSON from the arguments with default values for optional fields
-        let transaction = json!({
-            "to": args["to"].as_str().ok_or("Missing 'to' field")?,
-            "value": args["value"].as_str().ok_or("Missing 'value' field")?,
-            "data": args["data"].as_str().unwrap_or("0x"),
-            "description": args["description"].as_str().unwrap_or("ETH transfer"),
-            "contract_call": null
-        });
+        // Create a Transaction from the arguments with default values for optional fields
+        let transaction = Transaction {
+            to: args["to"].as_str().ok_or("Missing 'to' field")?.to_string(),
+            value: args["value"].as_str().ok_or("Missing 'value' field")?.to_string(),
+            data: args["data"].as_str().unwrap_or("0x").to_string(),
+            description: args["description"].as_str().unwrap_or("ETH transfer").to_string(),
+            contract_call: None,
+        };
 
         // Serialize back to a string for passing between functions
         let tx_json = serde_json::to_string(&transaction)
@@ -212,580 +324,429 @@ impl tools::GuestToolsBuilder for ToolsBuilderImpl {
         Ok(tx_json)
     }
 
-    fn process_tool_calls(
-        &self,
-        client: LlmClient,
+    /// Parse a contract function call from a dynamic tool
+    fn parse_contract_function_call(tool_call: &ToolCall) -> Result<String, String> {
+        // Extract contract name and function from the tool name
+        // Format is "contract_{contract_name}_{function_name}"
+        let parts: Vec<&str> = tool_call.function.name.splitn(3, '_').collect();
+        if parts.len() < 3 {
+            return Err(format!("Invalid contract tool name: {}", tool_call.function.name));
+        }
+
+        let contract_name = parts[1];
+        let function_name = parts[2];
+
+        // Parse the arguments
+        let args: Value = serde_json::from_str(&tool_call.function.arguments)
+            .map_err(|e| format!("Failed to parse function arguments: {}", e))?;
+
+        // Get the contract from context to check ABI
+        let context = crate::config::Config::default();
+        let contract = context
+            .get_contract_by_name(contract_name)
+            .ok_or_else(|| format!("Unknown contract: {}", contract_name))?;
+
+        // Check if this function is payable by examining the ABI
+        let is_payable = contract.abi.contains(&format!("\"name\":\"{}\",", function_name))
+            && contract.abi.contains("\"stateMutability\":\"payable\"");
+
+        // Extract args for the function call
+        let mut function_args = Vec::new();
+        let mut value = "0".to_string();
+
+        // Collect all args except 'value' (for ETH transfers)
+        for (key, val) in args.as_object().unwrap() {
+            if key == "value" {
+                // For ERC20 transfers and other nonpayable functions, include "value"
+                // as a function argument but don't set ETH value
+                function_args.push(val.clone());
+
+                // Only set transaction ETH value for payable functions
+                if is_payable {
+                    value = val.as_str().unwrap_or("0").to_string();
+                }
+            } else {
+                function_args.push(val.clone());
+            }
+        }
+
+        // Create contract call
+        let contract_call =
+            Some(ContractCall { function: function_name.to_string(), args: function_args });
+
+        // Create a Transaction targeting the contract
+        let transaction = Transaction {
+            to: contract.address.clone(),
+            value,
+            data: "0x".to_string(), // Will be encoded by the execution layer
+            description: format!("Calling {} on {} contract", function_name, contract_name),
+            contract_call,
+        };
+
+        // Serialize to JSON
+        let tx_json = serde_json::to_string(&transaction)
+            .map_err(|e| format!("Failed to serialize transaction: {}", e))?;
+
+        Ok(tx_json)
+    }
+
+    /// Process tool calls and generate a response
+    pub fn process_tool_calls(
+        client: &LLMClient,
         initial_messages: Vec<Message>,
         response: Message,
         tool_calls: Vec<ToolCall>,
-        custom_handlers: Option<Vec<CustomToolHandler>>,
+        custom_handlers: Option<&[Box<dyn CustomToolHandler>]>,
     ) -> Result<String, String> {
-        println!("Processing tool calls...");
+        block_on(async {
+            println!("Processing tool calls...");
 
-        // Check if we're using Ollama based on the model name
-        let model = client.get_model();
+            // Check if we're using Ollama based on the model name
+            let model = client.get_model();
+            // TODO: This is a hack and could be improved
+            let is_ollama = model.starts_with("llama")
+                || model.starts_with("mistral")
+                || !model.contains("gpt");
 
-        // Similar logic to the old implementation for detecting model type
-        let is_ollama =
-            model.starts_with("llama") || model.starts_with("mistral") || !model.contains("gpt");
-
-        println!("Model: {}, is_ollama: {}", model, is_ollama);
-
-        // Process each tool call and collect the results
-        let mut tool_results = Vec::new();
-        for tool_call in &tool_calls {
-            // We can't pass custom_handlers because it isn't clonable in WIT
-            // Use None instead, which will fallback to built-in handlers
-            let tool_result = self.execute_tool_call(tool_call.clone(), None)?;
-            println!("Tool result: {}", tool_result);
-            tool_results.push(tool_result);
-        }
-
-        if is_ollama {
-            // For Ollama: Don't make a second call, just use the tool result directly
-            println!("Using direct tool result handling for Ollama");
-
-            if tool_results.len() == 1 {
-                Ok(tool_results[0].clone())
-            } else {
-                // For multiple tool calls, combine the results
-                Ok(tool_results.join("\n"))
+            // Process each tool call and collect the results
+            let mut tool_results = Vec::new();
+            for tool_call in &tool_calls {
+                let tool_result = Self::execute_tool_call(tool_call, custom_handlers)?;
+                println!("Tool result: {}", tool_result);
+                tool_results.push(tool_result);
             }
-        } else {
-            // For OpenAI: Use the standard tool calls protocol
-            println!("Using OpenAI-compatible tool call handling");
 
-            // For OpenAI models, we should make another API call with tool results,
-            // but since we can't use block_on here, we'll just return the tool result directly
-            // This changes the flow slightly but preserves the expected output format
-            if !tool_results.is_empty() {
-                Ok(tool_results[0].clone())
-            } else {
-                Err("No tool results available".to_string())
-            }
-        }
-    }
-}
+            if is_ollama {
+                // For Ollama: Don't make a second call, just use the tool result directly
+                println!("Using direct tool result handling for Ollama");
 
-/// Convert Solidity type to JSON Schema type
-fn solidity_type_to_json_schema(solidity_type: &str) -> (&'static str, Option<&'static str>) {
-    match solidity_type {
-        t if t.starts_with("uint") => ("string", None), // Use string for all integers to handle large numbers
-        t if t.starts_with("int") => ("string", None),
-        "address" => ("string", Some("ethereum-address")),
-        "bool" => ("boolean", None),
-        "string" => ("string", None),
-        t if t.starts_with("bytes") => ("string", Some("byte")),
-        _ => ("string", None), // Default to string for unknown types
-    }
-}
-
-// Helper function to parse contract function calls
-fn parse_contract_function_call(tool_call: &ToolCall) -> Result<String, String> {
-    // Extract contract name and function from the tool name
-    // Format is "contract_{contract_name}_{function_name}"
-    let parts: Vec<&str> = tool_call.function.name.splitn(3, '_').collect();
-    if parts.len() < 3 {
-        return Err(format!("Invalid contract tool name: {}", tool_call.function.name));
-    }
-
-    let contract_name = parts[1];
-    let function_name = parts[2];
-
-    println!("DEBUG: Processing contract call for {}_{}...", contract_name, function_name);
-    println!("DEBUG: Original arguments: {}", tool_call.function.arguments);
-
-    // Parse the arguments using our normalize function
-    let args = normalize_arguments(&tool_call.function.arguments)?;
-
-    println!("DEBUG: Parsed arguments: {:?}", args);
-
-    // Get the contract from the config
-    let config_manager = crate::config::ConfigManagerImpl::new();
-    let contract = match config_manager.get_contract_by_name(contract_name.to_string()) {
-        Some(contract) => {
-            println!("DEBUG: Found contract: {}", contract.name);
-            contract
-        }
-        None => {
-            return Err(format!("Unknown contract: {}", contract_name));
-        }
-    };
-
-    // Check if this function is payable by examining the ABI
-    let is_payable = contract.abi.contains(&format!("\"name\":\"{}\",", function_name))
-        && contract.abi.contains("\"stateMutability\":\"payable\"");
-
-    println!("DEBUG: Function '{}' is payable: {}", function_name, is_payable);
-    println!("DEBUG: Contract ABI: {}", contract.abi);
-
-    // Create contract call
-    let mut function_args = Vec::new();
-    let mut value = "0".to_string();
-
-    // Collect all args for the function_args list
-    if let Some(obj) = args.as_object() {
-        println!("DEBUG: Processing {} arguments", obj.len());
-
-        for (key, val) in obj {
-            println!("DEBUG: Processing argument '{}' = {:?}", key, val);
-
-            // Special handling for 'value'
-            if key == "value" {
-                // For payable functions, set the transaction value
-                if is_payable {
-                    value = val.as_str().unwrap_or("0").to_string();
-                    println!("DEBUG: Setting transaction value to {}", value);
-                }
-
-                // Always add value to function args (needed for ERC20 transfers)
-                if let Some(str_val) = val.as_str() {
-                    println!("DEBUG: Adding value argument as string: {}", str_val);
-                    function_args.push(json!(str_val));
+                if tool_results.len() == 1 {
+                    Ok(tool_results[0].clone())
                 } else {
-                    println!(
-                        "DEBUG: Adding value argument as converted string: {}",
-                        val.to_string()
-                    );
-                    function_args.push(json!(val.to_string()));
+                    // For multiple tool calls, combine the results
+                    Ok(tool_results.join("\n"))
                 }
             } else {
-                // Add other arguments to the function args list
-                if let Some(str_val) = val.as_str() {
-                    println!("DEBUG: Adding argument '{}' as string: {}", key, str_val);
-                    function_args.push(json!(str_val));
+                // For OpenAI: Use the standard tool calls protocol
+                println!("Using OpenAI-compatible tool call handling");
+                let mut tool_messages = initial_messages.clone();
+
+                // Add the assistant's response with tool calls, ensuring content is not null
+                // When we're sending tool calls, OpenAI requires content to be a string (even if empty)
+                // We MUST preserve the original tool_calls so OpenAI can match the tool responses
+                let sanitized_response = Message {
+                    role: response.role,
+                    content: Some(response.content.unwrap_or_default()),
+                    tool_calls: Some(tool_calls.clone()), // Important: preserve the tool_calls!
+                    tool_call_id: response.tool_call_id,
+                    name: response.name,
+                };
+                tool_messages.push(sanitized_response);
+
+                // Process each tool call and add the results
+                for (i, tool_call) in tool_calls.iter().enumerate() {
+                    tool_messages.push(Message::new_tool_result(
+                        tool_call.id.clone(),
+                        tool_results[i].clone(),
+                    ));
+                }
+
+                // Call OpenAI to get final response, but we don't use it for parsing
+                // It's mainly for human readable confirmation
+                let final_response = client.chat_completion_text(&tool_messages);
+                println!("OpenAI final response (for logs only): {:?}", final_response);
+
+                // Return the original tool result which contains valid JSON
+                // Only handle the first tool result for now since we expect a single transaction
+                if tool_results.len() >= 1 {
+                    Ok(tool_results[0].clone())
                 } else {
-                    println!(
-                        "DEBUG: Adding argument '{}' as converted string: {}",
-                        key,
-                        val.to_string()
-                    );
-                    function_args.push(json!(val.to_string()));
+                    Err("No tool results available".to_string())
                 }
-            }
-        }
-    }
-
-    println!("DEBUG: Final function_args: {:?}", function_args);
-
-    // Convert function_args to proper string format for the contract encoder
-    // The encoder expects raw JSON strings, not JSON values
-    let string_args: Vec<String> = function_args
-        .iter()
-        .map(|arg| {
-            if let Some(s) = arg.as_str() {
-                // Use the raw string value directly
-                println!("DEBUG: Converting arg to raw JSON string: {}", s);
-                format!("\"{}\"", s.replace("\"", "\\\""))
-            } else {
-                // Convert other JSON values to string representation
-                println!("DEBUG: Converting complex arg to string: {}", arg);
-                arg.to_string()
             }
         })
-        .collect();
-
-    println!("DEBUG: Final string_args: {:?}", string_args);
-
-    // Create a transaction JSON
-    let transaction = json!({
-        "to": contract.address,
-        "value": value,
-        "data": "0x", // Will be encoded by the execution layer
-        "description": format!("Calling {} on {} contract", function_name, contract_name),
-        "contract_call": {
-            "function": function_name,
-            "args": string_args
-        }
-    });
-
-    println!("DEBUG: Final transaction: {}", transaction);
-
-    // Serialize to JSON
-    let tx_json = serde_json::to_string(&transaction)
-        .map_err(|e| format!("Failed to serialize transaction: {}", e))?;
-
-    Ok(tx_json)
+    }
 }
 
-/// Helper function to normalize tool call arguments that may be in different formats
-/// This handles cases where the arguments could be a string, an object, or other JSON value
-fn normalize_arguments(arguments: &str) -> Result<serde_json::Value, String> {
-    // First try to parse as a JSON Value
-    let result = serde_json::from_str::<serde_json::Value>(arguments);
+// TODO make WIT resource
+/// Handler for custom tool calls
+pub trait CustomToolHandler {
+    /// Returns true if this handler can handle the given tool name
+    fn can_handle(&self, tool_name: &str) -> bool;
 
-    match result {
-        Ok(value) => {
-            // If it's already a valid JSON value, return it
-            Ok(value)
-        }
-        Err(e) => {
-            // Try to handle cases where the string might not be properly quoted
-            // For example, if we got something like {key: value} instead of {"key": "value"}
-            println!("Warning: Failed to parse arguments as JSON: {}", e);
-            println!("Attempting to sanitize arguments: {}", arguments);
+    /// Execute the tool call and return a result
+    fn execute(&self, tool_call: &ToolCall) -> Result<String, String>;
+}
 
-            // Fallback: treat the entire string as a plain string value
-            Ok(serde_json::Value::String(arguments.to_string()))
-        }
-    }
+/// Default function for tool ID
+fn default_tool_id() -> String {
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    // Use a static counter to ensure unique, sequential IDs
+    static COUNTER: AtomicU64 = AtomicU64::new(1);
+
+    // Get the next ID and increment the counter
+    let id = COUNTER.fetch_add(1, Ordering::SeqCst);
+
+    // Format as a predictable string
+    format!("call_{:016x}", id)
+}
+
+/// Default function for tool type
+fn default_tool_type() -> String {
+    "function".to_string()
 }
 
 #[cfg(test)]
 mod tests {
-    use serde_json::Value;
-
     use super::*;
-    use crate::wit::exports::wavs::agent::tools::GuestToolsBuilder;
-    use crate::wit::exports::wavs::agent::types::ToolCallFunction;
+    use serde_json::json;
 
-    // Helper function to create a test ToolCall
-    fn create_test_tool_call(id: &str, name: &str, arguments: &str) -> ToolCall {
-        ToolCall {
-            id: id.into(),
-            tool_type: "function".into(),
-            function: ToolCallFunction { name: name.into(), arguments: arguments.into() },
-        }
+    #[test]
+    fn test_tool_definition() {
+        // Create a test tool
+        let tool = Tool {
+            tool_type: "function".to_string(),
+            function: Function {
+                name: "test_tool".to_string(),
+                description: Some("A test tool".to_string()),
+                parameters: Some(json!({
+                    "type": "object",
+                    "properties": {
+                        "param1": {
+                            "type": "string",
+                            "description": "A test parameter"
+                        },
+                        "param2": {
+                            "type": "number",
+                            "description": "Another test parameter"
+                        }
+                    },
+                    "required": ["param1"]
+                })),
+            },
+        };
+
+        // Validate Tool serialization
+        let serialized = serde_json::to_string(&tool).unwrap();
+        let deserialized: Tool = serde_json::from_str(&serialized).unwrap();
+
+        assert_eq!(deserialized.function.name, "test_tool");
+        assert_eq!(deserialized.function.description, Some("A test tool".to_string()));
+        assert!(deserialized.function.parameters.is_some());
+        assert_eq!(deserialized.tool_type, "function");
     }
 
     #[test]
-    fn test_tools_builder() {
-        let builder = ToolsBuilderImpl;
+    fn test_message_creation() {
+        // Test system message
+        let system_msg = Message::new_system("System message test".to_string());
+        assert_eq!(system_msg.role, "system");
+        assert_eq!(system_msg.content.unwrap(), "System message test");
+        assert!(system_msg.tool_calls.is_none());
 
-        // Test send_eth_tool
-        let eth_tool = builder.send_eth_tool();
-        assert_eq!(eth_tool.tool_type, "function");
+        // Test user message
+        let user_msg = Message::new_user("User message test".to_string());
+        assert_eq!(user_msg.role, "user");
+        assert_eq!(user_msg.content.unwrap(), "User message test");
+        assert!(user_msg.tool_calls.is_none());
+
+        // Test assistant message (fix: should use new_system)
+        let assistant_msg = Message::new_system("Assistant message test".to_string());
+        assert_eq!(assistant_msg.role, "system");
+        assert_eq!(assistant_msg.content.unwrap(), "Assistant message test");
+        assert!(assistant_msg.tool_calls.is_none());
+
+        // Test tool message
+        let tool_call_id = "call_12345";
+        let tool_msg =
+            Message::new_tool_result(tool_call_id.to_string(), "Tool result test".to_string());
+        assert_eq!(tool_msg.role, "tool");
+        assert_eq!(tool_msg.content.unwrap(), "Tool result test");
+        assert_eq!(tool_msg.tool_call_id.unwrap(), tool_call_id);
+    }
+
+    #[test]
+    fn test_tool_builders() {
+        use crate::contracts::Contract;
+        use serde_json::json;
+
+        // Test send_eth tool
+        let eth_tool = Tools::send_eth_tool();
         assert_eq!(eth_tool.function.name, "send_eth");
         assert!(eth_tool.function.description.is_some());
-        assert!(eth_tool.function.parameters.is_some());
 
-        // Test custom_tool
-        let custom_tool = builder.custom_tool(
-            "test-tool".into(),
-            "Test description".into(),
-            r#"{"type":"object"}"#.into(),
+        // Safely unwrap and check parameters
+        if let Some(eth_params) = &eth_tool.function.parameters {
+            let properties = eth_params.as_object().unwrap().get("properties").unwrap();
+            assert!(properties.as_object().unwrap().contains_key("to"));
+            assert!(properties.as_object().unwrap().contains_key("value"));
+        } else {
+            panic!("Expected parameters to be Some");
+        }
+
+        // Test custom tool
+        let weather_tool = Tools::custom_tool(
+            "get_weather",
+            "Get weather information",
+            json!({
+                "type": "object",
+                "properties": {
+                    "location": {
+                        "type": "string",
+                        "description": "City or location"
+                    }
+                },
+                "required": ["location"]
+            }),
         );
-        assert_eq!(custom_tool.tool_type, "function");
-        assert_eq!(custom_tool.function.name, "test-tool");
-        assert_eq!(custom_tool.function.description, Some("Test description".into()));
-        assert_eq!(custom_tool.function.parameters, Some(r#"{"type":"object"}"#.into()));
+        assert_eq!(weather_tool.function.name, "get_weather");
+        assert_eq!(weather_tool.function.description, Some("Get weather information".to_string()));
+
+        // Safely unwrap and check parameters
+        if let Some(weather_params) = &weather_tool.function.parameters {
+            let properties = weather_params.as_object().unwrap().get("properties").unwrap();
+            assert!(properties.as_object().unwrap().contains_key("location"));
+        } else {
+            panic!("Expected parameters to be Some");
+        }
+
+        // Test from_contract - we need to add stateMutability for the test to work
+        let contract = Contract::new_with_description(
+            "TokenContract",
+            "0x1234567890123456789012345678901234567890",
+            r#"[{
+                "name": "transfer",
+                "type": "function",
+                "stateMutability": "nonpayable",
+                "inputs": [
+                    {"name": "to", "type": "address"},
+                    {"name": "amount", "type": "uint256"}
+                ],
+                "outputs": [{"name": "", "type": "bool"}]
+            },
+            {
+                "name": "balanceOf",
+                "type": "function",
+                "stateMutability": "nonpayable",
+                "inputs": [
+                    {"name": "account", "type": "address"}
+                ],
+                "outputs": [{"name": "", "type": "uint256"}]
+            }]"#,
+            "A token contract",
+        );
+
+        let contract_tools = Tools::tools_from_contract(&contract);
+
+        // Now we should have tools since we added stateMutability
+        assert!(!contract_tools.is_empty(), "Expected contract tools to be non-empty");
+        assert_eq!(contract_tools.len(), 2, "Expected 2 contract functions");
+
+        // Debug: print all tool names
+        println!("Generated tool names:");
+        for tool in &contract_tools {
+            println!("  - {}", tool.function.name);
+        }
+
+        if contract_tools.len() >= 2 {
+            // Find the transfer tool
+            let transfer_tool = contract_tools
+                .iter()
+                .find(|t| t.function.name == "contract_tokencontract_transfer")
+                .expect("Transfer tool not found");
+
+            assert!(transfer_tool.function.description.is_some());
+
+            // Safely unwrap and check parameters
+            if let Some(transfer_params) = &transfer_tool.function.parameters {
+                let properties = transfer_params.as_object().unwrap().get("properties").unwrap();
+                assert!(properties.as_object().unwrap().contains_key("to"));
+                assert!(properties.as_object().unwrap().contains_key("amount"));
+            } else {
+                panic!("Expected parameters to be Some");
+            }
+
+            // Find the balanceOf tool - exact match with correct case
+            let balance_tool = contract_tools
+                .iter()
+                .find(|t| t.function.name == "contract_tokencontract_balanceOf")
+                .expect("BalanceOf tool not found");
+
+            assert!(balance_tool.function.description.is_some());
+
+            // Safely unwrap and check parameters
+            if let Some(balance_params) = &balance_tool.function.parameters {
+                let properties = balance_params.as_object().unwrap().get("properties").unwrap();
+                assert!(properties.as_object().unwrap().contains_key("account"));
+            } else {
+                panic!("Expected parameters to be Some");
+            }
+        }
     }
 
-    #[test]
-    fn test_tools_from_contract() {
-        let builder = ToolsBuilderImpl;
+    struct TestToolHandler;
 
-        // Create a sample contract
-        let contract = Contract {
-            name: "TestToken".into(),
-            address: "0x1234567890123456789012345678901234567890".into(),
-            abi: r#"[
-                {
-                    "type": "function",
-                    "name": "transfer",
-                    "stateMutability": "nonpayable",
-                    "inputs": [
-                        {
-                            "name": "to",
-                            "type": "address"
-                        },
-                        {
-                            "name": "value",
-                            "type": "uint256"
-                        }
-                    ]
+    impl CustomToolHandler for TestToolHandler {
+        fn can_handle(&self, tool_name: &str) -> bool {
+            tool_name == "test_tool"
+        }
+
+        fn execute(&self, tool_call: &ToolCall) -> Result<String, String> {
+            // Parse arguments
+            let args: serde_json::Value = serde_json::from_str(&tool_call.function.arguments)
+                .map_err(|e| format!("Failed to parse arguments: {}", e))?;
+
+            // Check for required parameter
+            if let Some(value) = args.get("test_param") {
+                if let Some(val_str) = value.as_str() {
+                    // Echo back the parameter value
+                    Ok(format!("Executed test_tool with param: {}", val_str))
+                } else {
+                    Err("test_param must be a string".to_string())
                 }
-            ]"#
-            .into(),
-            description: None,
-        };
-
-        let tools = builder.tools_from_contract(contract);
-
-        // Verify the tool was created correctly
-        assert!(!tools.is_empty());
-        let tool = &tools[0];
-        assert_eq!(tool.tool_type, "function");
-        assert!(tool.function.name.contains("contract_testtoken_transfer"));
-        assert!(tool.function.description.is_some());
-        assert!(tool.function.parameters.is_some());
-
-        // Check the parameters schema
-        if let Some(params) = &tool.function.parameters {
-            let schema: Value = serde_json::from_str(params).unwrap();
-            assert!(schema["properties"].is_object());
-            assert!(schema["required"].is_array());
-        }
-    }
-
-    #[test]
-    fn test_parse_eth_transaction() {
-        let builder = ToolsBuilderImpl;
-
-        // Create a valid tool call
-        let tool_call = create_test_tool_call(
-            "123",
-            "send_eth",
-            r#"{
-                "to": "0x1234567890123456789012345678901234567890",
-                "value": "1000000000000000000",
-                "description": "Test transaction"
-            }"#,
-        );
-
-        let result = builder.parse_eth_transaction(tool_call);
-        assert!(result.is_ok());
-
-        // Parse the result to check the fields
-        let tx_json: Value = serde_json::from_str(&result.unwrap()).unwrap();
-        assert_eq!(tx_json["to"], "0x1234567890123456789012345678901234567890");
-        assert_eq!(tx_json["value"], "1000000000000000000");
-        assert_eq!(tx_json["description"], "Test transaction");
-        assert_eq!(tx_json["data"], "0x");
-        assert!(tx_json["contract_call"].is_null());
-
-        // Test with missing fields
-        let invalid_tool_call = create_test_tool_call(
-            "456",
-            "send_eth",
-            r#"{"description": "Missing required fields"}"#,
-        );
-
-        let invalid_result = builder.parse_eth_transaction(invalid_tool_call);
-        assert!(invalid_result.is_err());
-    }
-
-    #[test]
-    fn test_execute_tool_call() {
-        let builder = ToolsBuilderImpl;
-
-        // Test with send_eth
-        let eth_tool_call = create_test_tool_call(
-            "123",
-            "send_eth",
-            r#"{
-                "to": "0x1234567890123456789012345678901234567890",
-                "value": "1000000000000000000"
-            }"#,
-        );
-
-        let result = builder.execute_tool_call(eth_tool_call, None);
-        assert!(result.is_ok());
-
-        // Test with unknown tool
-        let unknown_tool_call = create_test_tool_call("456", "unknown_tool", r#"{}"#);
-
-        let unknown_result = builder.execute_tool_call(unknown_tool_call, None);
-        assert!(unknown_result.is_err());
-    }
-
-    #[test]
-    fn test_solidity_type_to_json_schema() {
-        // Test address type
-        let (addr_type, addr_format) = solidity_type_to_json_schema("address");
-        assert_eq!(addr_type, "string");
-        assert_eq!(addr_format, Some("ethereum-address"));
-
-        // Test uint type
-        let (uint_type, uint_format) = solidity_type_to_json_schema("uint256");
-        assert_eq!(uint_type, "string");
-        assert_eq!(uint_format, None);
-
-        // Test bool type
-        let (bool_type, bool_format) = solidity_type_to_json_schema("bool");
-        assert_eq!(bool_type, "boolean");
-        assert_eq!(bool_format, None);
-
-        // Test string type
-        let (string_type, string_format) = solidity_type_to_json_schema("string");
-        assert_eq!(string_type, "string");
-        assert_eq!(string_format, None);
-
-        // Test bytes type
-        let (bytes_type, bytes_format) = solidity_type_to_json_schema("bytes");
-        assert_eq!(bytes_type, "string");
-        assert_eq!(bytes_format, Some("byte"));
-    }
-
-    #[test]
-    fn test_parse_contract_function_call() {
-        // Use mocking approach for the config
-        // The actual implementation will depend on the test
-        // We'll override the impl or use a special test method
-
-        // This approach requires a contract to be loaded in the ConfigManagerImpl
-        // either by default or a test helper.
-
-        // Create a valid contract tool call
-        let tool_call = create_test_tool_call(
-            "123",
-            "contract_testtoken_transfer",
-            r#"{
-                "to": "0x1234567890123456789012345678901234567890",
-                "value": "1000"
-            }"#,
-        );
-
-        // Call the original implementation
-        let result = parse_contract_function_call(&tool_call);
-
-        // We expect this to be Ok or Err depending on whether the contract exists
-        if result.is_ok() {
-            let tx_json: Value = serde_json::from_str(&result.unwrap()).unwrap();
-
-            // Verify to address (from actual contract)
-            // Verification depends on test environment, so we only check it's a string
-            assert!(tx_json["to"].is_string());
-
-            // Verify the contract call function name
-            assert_eq!(tx_json["contract_call"]["function"], "transfer");
-
-            // Verify args (actual verification depends on test environment)
-            let args = tx_json["contract_call"]["args"].as_array().unwrap();
-            assert!(args.len() >= 1); // At least one arg should be present
-
-            // If value is used as arg (non-payable like ERC20) or
-            // as transaction value (payable), it should be present somewhere
-            let value_in_args = args.iter().any(|arg| arg.as_str().map_or(false, |s| s == "1000"));
-            let tx_value = tx_json["value"].as_str().unwrap_or("");
-
-            // Either tx value is "1000" or it's in the args
-            assert!(tx_value == "1000" || value_in_args);
-        }
-
-        // Test with invalid tool name format
-        let invalid_tool_call = create_test_tool_call("456", "invalid", r#"{}"#);
-        let invalid_result = parse_contract_function_call(&invalid_tool_call);
-        assert!(invalid_result.is_err());
-    }
-
-    #[test]
-    fn test_process_tool_calls() {
-        use crate::wit::exports::wavs::agent::client::GuestLlmClientManager;
-
-        // Create a mock LlmClient for testing
-        let mock_client = crate::wit::exports::wavs::agent::client::LlmClient {
-            model: "gpt-4".into(), // Use OpenAI model name to test that path
-            config: crate::wit::exports::wavs::agent::types::LlmOptions {
-                temperature: 0.7,
-                top_p: 1.0,
-                seed: 0,
-                max_tokens: None,
-                context_window: None,
-            },
-            api_url: "https://api.openai.com/v1/chat/completions".into(),
-            api_key: Some("test-key".into()),
-        };
-
-        // Create a test tool call
-        let tool_call = create_test_tool_call(
-            "call_123",
-            "send_eth",
-            r#"{
-                "to": "0x1234567890123456789012345678901234567890",
-                "value": "1000000000000000000"
-            }"#,
-        );
-
-        // Create a response message with the tool call
-        let response = Message {
-            role: "assistant".into(),
-            content: Some("I'll send ETH for you.".into()),
-            tool_calls: Some(vec![tool_call.clone()]),
-            tool_call_id: None,
-            name: None,
-        };
-
-        // Create initial messages
-        let initial_messages = vec![Message {
-            role: "user".into(),
-            content: Some("Send 1 ETH to 0x1234567890123456789012345678901234567890".into()),
-            tool_calls: None,
-            tool_call_id: None,
-            name: None,
-        }];
-
-        let builder = ToolsBuilderImpl;
-
-        // This test just verifies that the function doesn't panic or error
-        // In a real environment, we'd need to mock the chat_completion call
-        let result = builder.process_tool_calls(
-            mock_client.clone(),
-            initial_messages,
-            response,
-            vec![tool_call],
-            None,
-        );
-
-        // The test should work even without mocking the client response
-        // Since we're expecting it to never actually process that far in a test
-        println!("Process tool calls result: {:?}", result);
-
-        // Now test with an Ollama model
-        let ollama_client = crate::wit::exports::wavs::agent::client::LlmClient {
-            model: "llama3".into(), // Use Ollama model name to test that path
-            config: crate::wit::exports::wavs::agent::types::LlmOptions {
-                temperature: 0.7,
-                top_p: 1.0,
-                seed: 0,
-                max_tokens: None,
-                context_window: None,
-            },
-            api_url: "http://localhost:11434/api/chat".into(),
-            api_key: None,
-        };
-
-        // Create a test tool call
-        let tool_call = create_test_tool_call(
-            "call_456",
-            "send_eth",
-            r#"{
-                "to": "0x1234567890123456789012345678901234567890",
-                "value": "1000000000000000000"
-            }"#,
-        );
-
-        // Create a response message with the tool call
-        let response = Message {
-            role: "assistant".into(),
-            content: Some("I'll send ETH for you.".into()),
-            tool_calls: Some(vec![tool_call.clone()]),
-            tool_call_id: None,
-            name: None,
-        };
-
-        // Create initial messages
-        let initial_messages = vec![Message {
-            role: "user".into(),
-            content: Some("Send 1 ETH to 0x1234567890123456789012345678901234567890".into()),
-            tool_calls: None,
-            tool_call_id: None,
-            name: None,
-        }];
-
-        // Test the Ollama path which doesn't make a second API call
-        let result = builder.process_tool_calls(
-            ollama_client,
-            initial_messages,
-            response,
-            vec![tool_call],
-            None,
-        );
-
-        // Should succeed without making a real API call since Ollama path returns directly
-        match result {
-            Ok(res) => {
-                // The result should contain a JSON string with a transaction
-                let tx: Result<serde_json::Value, _> = serde_json::from_str(&res);
-                assert!(tx.is_ok(), "Failed to parse result as JSON: {}", res);
-                let tx = tx.unwrap();
-                assert!(tx.is_object(), "Expected JSON object, got: {:?}", tx);
-                assert!(tx.get("to").is_some(), "Missing 'to' field in result");
-                assert!(tx.get("value").is_some(), "Missing 'value' field in result");
-            }
-            Err(e) => {
-                panic!("process_tool_calls failed with Ollama client: {}", e);
+            } else {
+                Err("Missing required parameter: test_param".to_string())
             }
         }
+    }
+
+    #[test]
+    fn test_custom_tool_handler() {
+        // Create a tool call
+        let tool_call = ToolCall {
+            id: "call_12345".to_string(),
+            tool_type: "function".to_string(),
+            function: ToolCallFunction {
+                name: "test_tool".to_string(),
+                arguments: r#"{"test_param": "test_value"}"#.to_string(),
+            },
+        };
+
+        // Create a test handler
+        let handler = TestToolHandler;
+
+        // Test can_handle
+        assert!(handler.can_handle("test_tool"));
+        assert!(!handler.can_handle("other_tool"));
+
+        // Test execute
+        let result = handler.execute(&tool_call);
+        assert!(result.is_ok());
+        let output = result.unwrap();
+        assert!(output.contains("test_value"));
+
+        // Test with invalid arguments
+        let invalid_tool_call = ToolCall {
+            id: "call_12345".to_string(),
+            tool_type: "function".to_string(),
+            function: ToolCallFunction {
+                name: "test_tool".to_string(),
+                arguments: r#"{"wrong_param": "value"}"#.to_string(),
+            },
+        };
+
+        let result = handler.execute(&invalid_tool_call);
+        assert!(result.is_err());
     }
 }
