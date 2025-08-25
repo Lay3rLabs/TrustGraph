@@ -39,15 +39,15 @@ interface VouchingModalProps {
   trigger?: React.ReactNode;
   onSuccess?: () => void;
   isOpen?: boolean;
-  onClose?: () => void;
+  setIsOpen?: (value: boolean) => void;
 }
 
-export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, onClose: externalOnClose }: VouchingModalProps) {
+export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, setIsOpen: externalSetIsOpen }: VouchingModalProps) {
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
   const setIsOpen = (value: boolean) => {
-    if (externalIsOpen !== undefined && externalOnClose) {
-      if (!value) externalOnClose();
+    if (externalIsOpen !== undefined && externalSetIsOpen) {
+      externalSetIsOpen(value);
     } else {
       setInternalIsOpen(value);
     }
@@ -129,7 +129,7 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, onCl
 
   const defaultTrigger = (
     <Button
-      className="mobile-terminal-btn px-6 py-2"
+      className="mobile-terminal-btn !px-6 !py-2"
       onClick={() => setIsOpen(true)}
     >
       <span className="terminal-command text-xs">CREATE ATTESTATION</span>
@@ -284,7 +284,7 @@ export function VouchingModal({ trigger, onSuccess, isOpen: externalIsOpen, onCl
                       <Button
                         type="submit"
                         disabled={isLoading}
-                        className="mobile-terminal-btn px-6 py-2 flex-1"
+                        className="mobile-terminal-btn !px-6 !py-2 flex-1"
                       >
                         <span className="terminal-command text-xs">
                           {isLoading ? "CREATING..." : "CREATE ATTESTATION"}

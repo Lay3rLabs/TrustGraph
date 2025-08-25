@@ -148,7 +148,7 @@ export default function VouchingPage() {
       {/* Vouching Modal */}
       <VouchingModal
         isOpen={isVouchingModalOpen}
-        onClose={() => setIsVouchingModalOpen(false)}
+        setIsOpen={setIsVouchingModalOpen}
       />
     </div>
   );
