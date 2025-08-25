@@ -19,7 +19,12 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   { id: "points", label: "Points", path: "/backroom/points", icon: "★" },
-  { id: "vouching", label: "Vouching", path: "/backroom/vouching", icon: "♥" },
+  {
+    id: "attestations",
+    label: "Attestations",
+    path: "/backroom/attestations",
+    icon: "◆",
+  },
   {
     id: "hyperstition",
     label: "Hyperstitions",
@@ -32,12 +37,6 @@ const menuItems: MenuItem[] = [
     label: "Explorer",
     icon: "◇",
     submenu: [
-      {
-        id: "explorer-attestations",
-        label: "Attestations",
-        path: "/backroom/explorer/attestations",
-        icon: "◆",
-      },
       {
         id: "explorer-operators",
         label: "Operators",
