@@ -11,7 +11,8 @@ import {
   mockUsdcAbi,
   mockUsdcAddress,
   conditionalTokensAddress, 
-  lmsrMarketMakerAddress
+  lmsrMarketMakerAddress,
+  predictionMarketFactoryAddress
 } from '@/lib/contracts';
 import { parseUnits, formatUnits } from 'viem';
 import { HyperstitionMarket } from './PredictionMarketDetail';
@@ -30,14 +31,16 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
   
   const [formData, setFormData] = useState({
     outcome: 'YES' as 'YES' | 'NO',
-    amount: '',
+    collateralAmount: '',
   });
   
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [costEstimate, setCostEstimate] = useState<string | null>(null);
+  const [tokensEstimate, setTokensEstimate] = useState<string | null>(null);
   const [yesCostEstimate, setYesCostEstimate] = useState<string | null>(null);
   const [noCostEstimate, setNoCostEstimate] = useState<string | null>(null);
+  const [yesTokenBalance, setYesTokenBalance] = useState<string | null>(null);
+  const [noTokenBalance, setNoTokenBalance] = useState<string | null>(null);
 
   // Use mock USDC for collateral balance
   const { data: collateralBalance, refetch: refetchCollateralBalance } = useBalance({
@@ -51,18 +54,49 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
   // Use the deployed market maker address
   const marketMakerAddress = market.marketMakerAddress || lmsrMarketMakerAddress;
 
-  // Calculate cost estimate when amount changes
+  // Binary search to find the exact token amount for the specified collateral
+  const [estimatedTokenAmount, setEstimatedTokenAmount] = useState<string>('0');
+  const [isCalculating, setIsCalculating] = useState<boolean>(false);
+
+  // Binary search state for iterative approach
+  const [binarySearchState, setBinarySearchState] = useState<{
+    low: bigint;
+    high: bigint;
+    bestTokenAmount: bigint;
+    targetCollateral: bigint;
+    outcome: 'YES' | 'NO';
+    iteration: number;
+    currentMid: bigint;
+    isActive: boolean;
+  } | null>(null);
+
+  // Binary search cost calculation
+  const { data: binarySearchCostData } = useReadContract({
+    address: marketMakerAddress,
+    abi: lmsrMarketMakerAbi,
+    functionName: 'calcNetCost',
+    args: binarySearchState ? [
+      binarySearchState.outcome === 'YES' 
+        ? [BigInt(0), binarySearchState.currentMid]
+        : [binarySearchState.currentMid, BigInt(0)]
+    ] : undefined,
+    query: {
+      enabled: !!binarySearchState && binarySearchState.isActive,
+    },
+  });
+
+  // Calculate cost estimate for the estimated tokens (for verification)
   const { data: netCostData } = useReadContract({
     address: marketMakerAddress,
     abi: lmsrMarketMakerAbi,
     functionName: 'calcNetCost',
-    args: formData.amount && !isNaN(Number(formData.amount)) ? [
+    args: estimatedTokenAmount && !isNaN(Number(estimatedTokenAmount)) && Number(estimatedTokenAmount) > 0 ? [
       formData.outcome === 'YES' 
-        ? [BigInt(0), parseUnits(formData.amount, 18)]
-        : [parseUnits(formData.amount, 18), BigInt(0)]
+        ? [BigInt(0), parseUnits(estimatedTokenAmount, 18)]
+        : [parseUnits(estimatedTokenAmount, 18), BigInt(0)]
     ] : undefined,
     query: {
-      enabled: !!formData.amount && !isNaN(Number(formData.amount)) && Number(formData.amount) > 0,
+      enabled: !!estimatedTokenAmount && !isNaN(Number(estimatedTokenAmount)) && Number(estimatedTokenAmount) > 0 && !binarySearchState?.isActive,
     },
   });
 
@@ -84,14 +118,104 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     query: { enabled: true, refetchInterval: 3_000 },
   });
 
-  // Update cost estimates when data changes
+  // Get the condition ID from the conditional tokens contract (same approach as PredictionRedeemForm)
+  const { data: conditionId } = useReadContract({
+    address: conditionalTokensAddress,
+    abi: conditionalTokensAbi,
+    functionName: 'getConditionId',
+    args: [
+      predictionMarketFactoryAddress, // oracle
+      "0x0000000000000000000000000000000000000000000000000000000000000000" as `0x${string}`, // questionId
+      BigInt(2) // outcomeSlotCount (YES/NO = 2 outcomes)
+    ],
+    query: { enabled: !!address },
+  });
+
+  // Get collection IDs for YES/NO positions
+  const { data: yesCollectionId } = useReadContract({
+    address: conditionalTokensAddress,
+    abi: conditionalTokensAbi,
+    functionName: 'getCollectionId',
+    args: conditionId ? [
+      "0x0000000000000000000000000000000000000000000000000000000000000000" as `0x${string}`, // parentCollectionId
+      conditionId,
+      BigInt(2) // indexSet for YES (binary 10 = decimal 2)
+    ] : undefined,
+    query: { enabled: !!conditionId },
+  });
+
+  const { data: noCollectionId } = useReadContract({
+    address: conditionalTokensAddress,
+    abi: conditionalTokensAbi,
+    functionName: 'getCollectionId',
+    args: conditionId ? [
+      "0x0000000000000000000000000000000000000000000000000000000000000000" as `0x${string}`, // parentCollectionId
+      conditionId,
+      BigInt(1) // indexSet for NO (binary 01 = decimal 1)
+    ] : undefined,
+    query: { enabled: !!conditionId },
+  });
+
+  // Get position IDs for YES/NO tokens
+  const { data: yesPositionId } = useReadContract({
+    address: conditionalTokensAddress,
+    abi: conditionalTokensAbi,
+    functionName: 'getPositionId',
+    args: yesCollectionId ? [
+      mockUsdcAddress, // collateralToken
+      yesCollectionId
+    ] : undefined,
+    query: { enabled: !!yesCollectionId },
+  });
+
+  const { data: noPositionId } = useReadContract({
+    address: conditionalTokensAddress,
+    abi: conditionalTokensAbi,
+    functionName: 'getPositionId',
+    args: noCollectionId ? [
+      mockUsdcAddress, // collateralToken
+      noCollectionId
+    ] : undefined,
+    query: { enabled: !!noCollectionId },
+  });
+
+  // Get user's token balances using the position IDs
+  const { data: yesTokenBalanceData, refetch: refetchYesTokenBalance } = useReadContract({
+    address: conditionalTokensAddress,
+    abi: conditionalTokensAbi,
+    functionName: 'balanceOf',
+    args: address && yesPositionId ? [
+      address,
+      yesPositionId
+    ] : undefined,
+    query: { 
+      enabled: !!address && !!yesPositionId,
+      refetchInterval: 3_000,
+    },
+  });
+
+  const { data: noTokenBalanceData, refetch: refetchNoTokenBalance } = useReadContract({
+    address: conditionalTokensAddress,
+    abi: conditionalTokensAbi,
+    functionName: 'balanceOf',
+    args: address && noPositionId ? [
+      address,
+      noPositionId
+    ] : undefined,
+    query: { 
+      enabled: !!address && !!noPositionId,
+      refetchInterval: 3_000,
+    },
+  });
+
+  // Update token estimates when data changes
   useEffect(() => {
     if (netCostData) {
-      setCostEstimate(formatUnits(netCostData, 18));
+      setTokensEstimate(estimatedTokenAmount);
     } else {
-      setCostEstimate(null);
+      setTokensEstimate(null);
     }
-  }, [netCostData]);
+  }, [netCostData, estimatedTokenAmount]);
 
   useEffect(() => {
     if (yesCostData) {
@@ -104,6 +228,82 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
       setNoCostEstimate(formatUnits(noCostData, 18));
     }
   }, [noCostData]);
+
+  useEffect(() => {
+    if (yesTokenBalanceData) {
+      setYesTokenBalance(formatUnits(yesTokenBalanceData, 18));
+    }
+  }, [yesTokenBalanceData]);
+
+  useEffect(() => {
+    if (noTokenBalanceData) {
+      setNoTokenBalance(formatUnits(noTokenBalanceData, 18));
+    }
+  }, [noTokenBalanceData]);
+
+  // Start binary search when collateral amount or outcome changes
+  useEffect(() => {
+    if (!formData.collateralAmount || isNaN(Number(formData.collateralAmount)) || Number(formData.collateralAmount) <= 0) {
+      setEstimatedTokenAmount('0');
+      setBinarySearchState(null);
+      setIsCalculating(false);
+      return;
+    }
+
+    const targetCollateral = parseUnits(formData.collateralAmount, 18);
+    setIsCalculating(true);
+    setBinarySearchState({
+      low: BigInt(0),
+      high: targetCollateral * BigInt(10), // Start with 10x the collateral as upper bound
+      bestTokenAmount: BigInt(0),
+      targetCollateral,
+      outcome: formData.outcome,
+      iteration: 0,
+      currentMid: targetCollateral * BigInt(5), // Start in the middle
+      isActive: true,
+    });
+  }, [formData.collateralAmount, formData.outcome]);
+
+  // Handle binary search iteration when cost data comes back
+  useEffect(() => {
+    if (!binarySearchState || !binarySearchState.isActive || !binarySearchCostData) return;
+
+    const cost = binarySearchCostData;
+    const state = binarySearchState;
+    
+    let newLow = state.low;
+    let newHigh = state.high;
+    let newBestTokenAmount = state.bestTokenAmount;
+
+    if (cost <= state.targetCollateral) {
+      // Cost is within budget, try for more tokens
+      newBestTokenAmount = state.currentMid;
+      newLow = state.currentMid + BigInt(1);
+    } else {
+      // Cost is too high, try fewer tokens
+      newHigh = state.currentMid - BigInt(1);
+    }
+
+    // Check if we should continue or finish
+    if (newHigh <= newLow || state.iteration >= 15) {
+      // Binary search complete - apply 2% safety buffer to ensure transaction success
+      const safeTokenAmount = (newBestTokenAmount * BigInt(98)) / BigInt(100);
+      setEstimatedTokenAmount(formatUnits(safeTokenAmount, 18));
+      setBinarySearchState(null);
+      setIsCalculating(false);
+    } else {
+      // Continue with next iteration
+      const newMid = (newLow + newHigh) / BigInt(2);
+      setBinarySearchState({
+        ...state,
+        low: newLow,
+        high: newHigh,
+        bestTokenAmount: newBestTokenAmount,
+        iteration: state.iteration + 1,
+        currentMid: newMid,
+      });
+    }
+  }, [binarySearchCostData, binarySearchState]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -119,8 +319,8 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
       return;
     }
 
-    if (!formData.amount || isNaN(Number(formData.amount)) || Number(formData.amount) <= 0) {
-      setError('Please enter a valid amount');
+    if (!formData.collateralAmount || isNaN(Number(formData.collateralAmount)) || Number(formData.collateralAmount) <= 0) {
+      setError('Please enter a valid collateral amount');
       return;
     }
 
@@ -128,13 +328,15 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     setSuccess(null);
     
     try {
-      const amount = parseUnits(formData.amount, 18);
+      const collateralAmount = parseUnits(formData.collateralAmount, 18);
+      // Use the estimated token amount for the trade
+      const tokenAmount = parseUnits(estimatedTokenAmount, 18);
       const outcomeTokenAmounts = formData.outcome === 'YES' 
-        ? [BigInt(0), amount]
-        : [amount, BigInt(0)];
+        ? [BigInt(0), tokenAmount]
+        : [tokenAmount, BigInt(0)];
 
-      // Calculate collateral limit (add 10% buffer)
-      const collateralLimit = netCostData ? (netCostData * BigInt(110)) / BigInt(100) : amount;
+      // Add 5% buffer to collateral limit to account for market changes and slippage
+      const collateralLimit = (collateralAmount * BigInt(105)) / BigInt(100);
 
       // Execute transactions sequentially and wait for each one
       // Approve market maker to spend collateral
@@ -153,14 +355,16 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
         args: [outcomeTokenAmounts, collateralLimit],
       });
 
-      setSuccess(`Successfully bought ${formData.amount} ${formData.outcome} tokens!`);
-      setFormData({ outcome: 'YES', amount: '' });
+      setSuccess(`Successfully spent ${formData.collateralAmount} USDC on ${formData.outcome} tokens!`);
+      setFormData({ outcome: 'YES', collateralAmount: '' });
       
       if (onSuccess) {
         onSuccess();
         refetchCollateralBalance();
         refetchYesCost();
         refetchNoCost();
+        refetchYesTokenBalance();
+        refetchNoTokenBalance();
       }
     } catch (err: any) {
       console.error('Error buying prediction tokens:', err);
@@ -168,8 +372,8 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     }
   };
 
-  const hasEnoughCollateral = collateralBalance && netCostData 
-    ? collateralBalance.value >= netCostData 
+  const hasEnoughCollateral = collateralBalance && formData.collateralAmount
+    ? collateralBalance.value >= parseUnits(formData.collateralAmount, 18)
     : true;
 
   return (
@@ -184,6 +388,26 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
           <div className="terminal-dim text-xs">COLLATERAL BALANCE</div>
           <div className="terminal-bright text-sm">
             {formatUnits(collateralBalance.value, 18)} {collateralBalance.symbol}
+          </div>
+        </div>
+      )}
+
+      {isConnected && address && (yesTokenBalance !== null || noTokenBalance !== null) && (
+        <div className="bg-black/20 border border-gray-600 p-3 rounded-sm">
+          <div className="terminal-dim text-xs">YOUR POSITION</div>
+          <div className="grid grid-cols-2 gap-4 mt-2">
+            <div className="flex flex-col items-center">
+              <div className="text-[#05df72] text-sm font-bold">
+                {yesTokenBalance ? Number(yesTokenBalance).toFixed(3) : '0.000'}
+              </div>
+              <div className="terminal-dim text-xs">YES tokens</div>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="text-[#dd70d4] text-sm font-bold">
+                {noTokenBalance ? Number(noTokenBalance).toFixed(3) : '0.000'}
+              </div>
+              <div className="terminal-dim text-xs">NO tokens</div>
+            </div>
           </div>
         </div>
       )}
@@ -249,32 +473,48 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
         </div>
 
         <div className="space-y-2">
-          <label className="terminal-dim text-xs">AMOUNT OF OUTCOME TOKENS</label>
+          <label className="terminal-dim text-xs">COLLATERAL AMOUNT TO SPEND (USDC)</label>
           <Input
             type="number"
             step="0.000001"
             min="0.000001"
-            placeholder="Enter amount..."
-            value={formData.amount}
-            onChange={(e) => handleInputChange('amount', e.target.value)}
+            placeholder="Enter USDC amount..."
+            value={formData.collateralAmount}
+            onChange={(e) => handleInputChange('collateralAmount', e.target.value)}
             className="bg-black/20 border-gray-700 terminal-text"
             required
           />
         </div>
 
-        {costEstimate && (
+        {formData.collateralAmount && (tokensEstimate || isCalculating) && (
           <div className="bg-black/20 border border-gray-600 p-3 rounded-sm">
             <div className={`terminal-dim text-xs ${!hasEnoughCollateral ? 'text-red-400' : ''}`}>
-              ESTIMATED COST
+              {isCalculating ? 'CALCULATING OPTIMAL TOKENS' : 'ESTIMATED TOKENS TO RECEIVE'}
             </div>
             <div className={`terminal-text text-sm ${!hasEnoughCollateral ? 'text-red-400' : ''}`}>
-              {costEstimate} USDC
-              {!hasEnoughCollateral && (
-                <div className="text-red-400 text-xs mt-1">Insufficient balance</div>
+              {isCalculating ? (
+                <div className="flex items-center space-x-2">
+                  <span className="terminal-bright">◉ OPTIMIZING</span>
+                  {binarySearchState && (
+                    <span className="terminal-dim text-xs">
+                      (iteration {binarySearchState.iteration + 1}/15)
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <>
+                  {tokensEstimate} {formData.outcome} tokens
+                  {!hasEnoughCollateral && (
+                    <div className="text-red-400 text-xs mt-1">Insufficient balance</div>
+                  )}
+                </>
               )}
             </div>
             <div className="terminal-dim text-xs mt-1">
-              (Actual cost may vary based on market conditions)
+              {isCalculating ? 
+                'Finding maximum tokens for your budget...' : 
+                'Optimized amount with 2% safety buffer for reliable execution'
+              }
             </div>
             
             {!hasEnoughCollateral && (
@@ -287,13 +527,13 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
 
         <Button
           type="submit"
-          disabled={!isConnected || isWriting || !formData.amount}
+          disabled={!isConnected || isWriting || !formData.collateralAmount}
           className="w-full mobile-terminal-btn"
         >
           {isWriting ? (
             <span className="terminal-dim">Processing...</span>
           ) : (
-            <span className="terminal-command">BUY {formData.outcome} TOKENS</span>
+            <span className="terminal-command">SPEND {formData.collateralAmount || '0'} USDC ON {formData.outcome}</span>
           )}
         </Button>
 
