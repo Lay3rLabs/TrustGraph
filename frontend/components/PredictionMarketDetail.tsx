@@ -17,6 +17,7 @@ import {
   CategoryScale,
   TimeScale,
   ChartData,
+  ScriptableContext,
 } from "chart.js";
 import "chartjs-adapter-luxon";
 
@@ -59,6 +60,7 @@ const historyPoints = 100;
 const historyData: {
   timestamp: number;
   value: number;
+  followers: number;
 }[] = [...Array(historyPoints)].reduce(
   (acc, _, index) => [
     ...acc,
@@ -78,11 +80,17 @@ const historyData: {
               )
             )
           : Math.random(),
+      followers:
+        index > 0
+          ? acc[acc.length - 1].followers +
+            Math.floor(Math.random() * (Math.random() > 0.2 ? 100 : -100))
+          : 0,
     },
   ],
   [] as {
     timestamp: number;
     value: number;
+    followers: number;
   }[]
 );
 
@@ -108,9 +116,31 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
     }
   };
 
+  const gradientColor = (context: ScriptableContext<"line">) => {
+    const chart = context.chart;
+    const { ctx, chartArea } = chart;
+
+    if (!chartArea) {
+      return "#dd70d4";
+    }
+
+    // Create gradient based on chart area
+    const gradient = ctx.createLinearGradient(
+      0,
+      chartArea.bottom,
+      0,
+      chartArea.top
+    );
+    gradient.addColorStop(0, "#dd70d4"); // Pink at bottom (value 0)
+    gradient.addColorStop(1, "#05df72"); // Green at top (value 1)
+
+    return gradient;
+  };
+
   const chartData: ChartData<"line"> = {
     datasets: [
       {
+        label: "Market Value",
         data: historyData.map((point) => ({
           x: point.timestamp,
           y: point.value,
@@ -119,42 +149,51 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
         pointRadius: 0,
         pointHoverRadius: 0,
         fill: false,
-        borderColor: (context) => {
-          const chart = context.chart;
-          const { ctx, chartArea } = chart;
-          
-          if (!chartArea) {
-            return '#dd70d4';
-          }
-          
-          // Create gradient based on chart area
-          const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
-          gradient.addColorStop(0, '#dd70d4'); // Pink at bottom (value 0)
-          gradient.addColorStop(1, '#05df72'); // Green at top (value 1)
-          
-          return gradient;
-        },
+        yAxisID: 'yMarket',
+        borderColor: gradientColor,
+        backgroundColor: gradientColor,
         tension: 0.1,
         segment: {
           borderColor: (ctx) => {
             // Get the current and previous data points
             const current = ctx.p1.parsed.y;
             const previous = ctx.p0.parsed.y;
-            
+
             // Calculate the average value for this segment
             const avgValue = (current + previous) / 2;
-            
+
             // Interpolate between pink and green based on average value
-            const red1 = 221, green1 = 112, blue1 = 212; // #dd70d4 (pink)
-            const red2 = 5, green2 = 223, blue2 = 114;   // #05df72 (green)
-            
+            const red1 = 221,
+              green1 = 112,
+              blue1 = 212; // #dd70d4 (pink)
+            const red2 = 5,
+              green2 = 223,
+              blue2 = 114; // #05df72 (green)
+
             const red = Math.round(red1 + (red2 - red1) * avgValue);
             const green = Math.round(green1 + (green2 - green1) * avgValue);
             const blue = Math.round(blue1 + (blue2 - blue1) * avgValue);
-            
+
             return `rgb(${red}, ${green}, ${blue})`;
-          }
+          },
         },
+      },
+      {
+        label: "Followers",
+        data: historyData.map((point) => ({
+          x: point.timestamp,
+          y: point.followers,
+        })),
+        borderWidth: 3,
+        pointRadius: 0,
+        pointHoverRadius: 0,
+        pointBackgroundColor: "#666",
+        fill: false,
+        yAxisID: 'yFollowers',
+        borderColor: "#666",
+        backgroundColor: "#666",
+        borderDash: [5, 5],
+        tension: 0.1,
       },
     ],
   };
@@ -172,12 +211,17 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
       },
       tooltip: {
         intersect: false,
+        usePointStyle: true,
         callbacks: {
           title: (context) => {
             return new Date(context[0].parsed.x).toLocaleDateString();
           },
           label: (context) => {
-            return `Value: ${(context.parsed.y * 100).toFixed(1)}%`;
+            if (context.datasetIndex === 0) {
+              return ` ${(context.parsed.y * 100).toFixed(1)}%`;
+            } else {
+              return ` Followers: ${context.parsed.y.toLocaleString()}`;
+            }
           },
         },
       },
@@ -196,19 +240,38 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
           color: "rgba(255, 255, 255, 0.7)",
         },
       },
-      y: {
-        min: -0.01,
-        max: 1.01,
+      yMarket: {
+        type: "linear",
+        display: true,
+        position: "left",
+        min: 0,
+        max: 1,
         grid: {
           color: "rgba(255, 255, 255, 0.1)",
         },
         ticks: {
           color: "rgba(255, 255, 255, 0.7)",
           stepSize: 0.1,
+          includeBounds: true,
+          callback: function (value) {
+            const numValue = Number(value);
+            return `${Math.round(numValue * 100)}%`;
+          },
+        },
+      },
+      yFollowers: {
+        type: 'linear',
+        display: true,
+        position: 'right',
+        min: 0,
+        max: 10_000,
+        grid: {
+          drawOnChartArea: false, // Only want the grid lines for one axis to show up
+        },
+        ticks: {
+          color: "#666",
           callback: function(value) {
-            // Only show ticks for values between 0 and 1
-            if (Number(value) < 0 || Number(value) > 1) return '';
-            return `${(Number(value) * 100).toFixed(0)}%`;
+            return Number(value).toLocaleString();
           },
         },
       },
@@ -261,15 +324,12 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
             {/* Chart */}
             <div className="w-full h-96 relative">
               <div className="absolute inset-0">
-                <Line 
-                  data={chartData} 
-                  options={chartOptions} 
-                />
+                <Line data={chartData} options={chartOptions} />
               </div>
             </div>
 
             {/* Progress Bar */}
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="terminal-dim">PROGRESS</span>
                 <span className="terminal-bright">
@@ -292,7 +352,7 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
                 ).toFixed(1)}
                 % Complete
               </div>
-            </div>
+            </div> */}
 
             {/* Incentive Pool */}
             <div className="bg-black/20 border border-gray-600 p-3 rounded-sm">
