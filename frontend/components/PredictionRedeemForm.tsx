@@ -10,31 +10,7 @@ import {
   mockUsdcAddress
 } from '@/lib/contracts';
 import { formatUnits } from 'viem';
-
-interface HyperstitionMarket {
-  id: string;
-  title: string;
-  description: string;
-  targetValue: number;
-  currentValue: number;
-  incentivePool: number;
-  probability: number;
-  deadline: string;
-  category: string;
-  participants: number;
-  status: "active" | "achieved" | "failed" | "pending";
-  icon: string;
-  unit: string;
-  isResolved?: boolean;
-  result?: boolean;
-  conditionId?: `0x${string}`;
-}
-
-interface MarketPosition {
-  outcome: 'YES' | 'NO';
-  amount: bigint;
-  canRedeem: boolean;
-}
+import { HyperstitionMarket } from './PredictionMarketDetail';
 
 interface PredictionRedeemFormProps {
   market: HyperstitionMarket;
@@ -169,8 +145,8 @@ const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
     address: conditionalTokensAddress,
     abi: conditionalTokensAbi,
     functionName: 'payoutDenominator',
-    args: [conditionId],
-    query: { enabled: !!market.isResolved },
+    args: conditionId ? [conditionId] : undefined,
+    query: { enabled: !!conditionId && !!market.isResolved },
   });
 
   // Get payout numerators for YES outcome (index 1)
@@ -178,8 +154,8 @@ const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
     address: conditionalTokensAddress,
     abi: conditionalTokensAbi,
     functionName: 'payoutNumerators',
-    args: [conditionId, BigInt(1)],
-    query: { enabled: !!market.isResolved },
+    args: conditionId ? [conditionId, BigInt(1)] : undefined,
+    query: { enabled: !!conditionId && !!market.isResolved },
   });
 
   // Get payout numerators for NO outcome (index 0)
@@ -187,8 +163,8 @@ const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
     address: conditionalTokensAddress,
     abi: conditionalTokensAbi,
     functionName: 'payoutNumerators',
-    args: [conditionId, BigInt(0)],
-    query: { enabled: !!market.isResolved },
+    args: conditionId ? [conditionId, BigInt(0)] : undefined,
+    query: { enabled: !!conditionId && !!market.isResolved },
   });
 
   // Calculate expected payout
@@ -270,7 +246,7 @@ const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
   // Show loading state while fetching position data
   if (!address || !isConnected) {
     return (
-      <div className="border border-gray-700 bg-card-foreground/70 p-6 rounded-sm space-y-6">
+      <div className="space-y-6">
         <div className="space-y-2">
           <h3 className="terminal-command text-lg">Redeem Your Position</h3>
           <p className="terminal-text text-sm">{market.title}</p>
@@ -285,7 +261,7 @@ const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
   // Show no position message if user has no tokens
   if (userPosition === null && yesBalance !== undefined && noBalance !== undefined) {
     return (
-      <div className="border border-gray-700 bg-card-foreground/70 p-6 rounded-sm space-y-6">
+      <div className="space-y-6">
         <div className="space-y-2">
           <h3 className="terminal-command text-lg">Redeem Your Position</h3>
           <p className="terminal-text text-sm">{market.title}</p>
@@ -302,7 +278,7 @@ const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
   // Show loading while position data is being fetched
   if (!userPosition) {
     return (
-      <div className="border border-gray-700 bg-card-foreground/70 p-6 rounded-sm space-y-6">
+      <div className="space-y-6">
         <div className="space-y-2">
           <h3 className="terminal-command text-lg">Redeem Your Position</h3>
           <p className="terminal-text text-sm">{market.title}</p>
@@ -316,7 +292,7 @@ const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
   }
 
   return (
-    <div className="border border-gray-700 bg-card-foreground/70 p-6 rounded-sm space-y-6">
+    <div className="space-y-6">
       <div className="space-y-2">
         <h3 className="terminal-command text-lg">Redeem Your Position</h3>
         <p className="terminal-text text-sm">{market.title}</p>

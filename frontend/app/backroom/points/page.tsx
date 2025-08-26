@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { ComponentType, useState } from "react";
 import { useAccount } from "wagmi";
 import clsx from "clsx";
 import { Pie } from "react-chartjs-2";
@@ -53,14 +53,15 @@ enum ActivityType {
 
 const types = Object.values(ActivityType);
 
-const ActivityTypeIcon: Record<ActivityType, React.ReactNode> = {
-  [ActivityType.Vouch]: <Hand className="w-4 h-4" />,
-  [ActivityType.Hyperstition]: <Eye className="w-4 h-4" />,
+const ActivityTypeIcon: Record<ActivityType, ComponentType<{ className?: string }>> = {
+  [ActivityType.Vouch]: Hand,
+  [ActivityType.Hyperstition]: Eye,
 };
 
 type Activity = {
   id: string;
   type: ActivityType;
+  summary: string;
   timestamp: Date;
   points: number;
 };
@@ -72,54 +73,63 @@ const activities: Activity[] = [
   {
     id: "1",
     type: ActivityType.Vouch,
+    summary: "Vouched for a contributor",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
     points: 100,
   },
   {
     id: "2",
     type: ActivityType.Vouch,
+    summary: "Vouched for a contributor",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 18),
     points: 50,
   },
   {
     id: "3",
     type: ActivityType.Hyperstition,
+    summary: "Bought YES position in a Hyperstition market",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 17),
     points: 50,
   },
   {
     id: "4",
     type: ActivityType.Vouch,
+    summary: "Vouched for a contributor",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12),
     points: 30,
   },
   {
     id: "5",
     type: ActivityType.Vouch,
+    summary: "Vouched for a contributor",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8),
     points: 10,
   },
   {
     id: "6",
     type: ActivityType.Hyperstition,
+    summary: "Bought NO position in a Hyperstition market",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6),
     points: 30,
   },
   {
     id: "7",
     type: ActivityType.Vouch,
+    summary: "Vouched for a contributor",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
     points: 10,
   },
   {
     id: "8",
     type: ActivityType.Hyperstition,
+    summary: "Redeemed YES position in a Hyperstition market",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
     points: 10,
   },
   {
     id: "9",
     type: ActivityType.Hyperstition,
+    summary: "Redeemed NO position in a Hyperstition market",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
     points: 10,
   },
@@ -395,7 +405,9 @@ export default function PointsPage() {
               (activity) =>
                 selectedType === "all" || activity.type === selectedType
             )
-            .map((activity) => (
+            .map((activity) => {
+              const Icon = ActivityTypeIcon[activity.type];
+              return (
               <div
                 key={activity.id}
                 className="flex items-center justify-between px-4 py-3 rounded-sm bg-gray-900/10 hover:bg-gray-900/20 transition-colors"
@@ -403,11 +415,14 @@ export default function PointsPage() {
                 <div className="flex items-center space-x-4">
                   <div>
                     <div className="flex items-center space-x-2">
-                      {ActivityTypeIcon[activity.type]}
+                      <Icon className="w-4 h-4" />
                       <div className="text-white font-medium text-sm">
                         {activity.type.toUpperCase()}
                       </div>
                     </div>
+                      <div className="text-xs text-gray-400 mt-1">
+                        {activity.summary}
+                      </div>
                     <div className="text-xs text-gray-400 mt-1">
                       {formatTimeAgo(activity.timestamp)}
                     </div>
@@ -420,7 +435,7 @@ export default function PointsPage() {
                   <div className="text-xs text-gray-500">points</div>
                 </div>
               </div>
-            ))}
+            )})}
         </div>
       </div>
 

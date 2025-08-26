@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+// Removed Select imports - using custom buttons instead
 import { 
   lmsrMarketMakerAbi,
   conditionalTokensAbi, 
@@ -14,25 +14,7 @@ import {
   lmsrMarketMakerAddress
 } from '@/lib/contracts';
 import { parseUnits, formatUnits } from 'viem';
-
-interface HyperstitionMarket {
-  id: string;
-  title: string;
-  description: string;
-  targetValue: number;
-  currentValue: number;
-  incentivePool: number;
-  probability: number;
-  deadline: string;
-  category: string;
-  participants: number;
-  status: "active" | "achieved" | "failed" | "pending";
-  icon: string;
-  unit: string;
-  marketMakerAddress?: `0x${string}`;
-  collateralTokenAddress?: `0x${string}`;
-  conditionId?: `0x${string}`;
-}
+import { HyperstitionMarket } from './PredictionMarketDetail';
 
 interface PredictionBuyFormProps {
   market: HyperstitionMarket;
@@ -54,11 +36,16 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [costEstimate, setCostEstimate] = useState<string | null>(null);
+  const [yesCostEstimate, setYesCostEstimate] = useState<string | null>(null);
+  const [noCostEstimate, setNoCostEstimate] = useState<string | null>(null);
 
   // Use mock USDC for collateral balance
-  const { data: collateralBalance } = useBalance({
+  const { data: collateralBalance, refetch: refetchCollateralBalance } = useBalance({
     address: address,
     token: mockUsdcAddress,
+    query: {
+      refetchInterval: 3_000,
+    }
   });
 
   // Use the deployed market maker address
@@ -79,7 +66,25 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     },
   });
 
-  // Update cost estimate when data changes
+  // Calculate YES token cost for 1 token
+  const { data: yesCostData, refetch: refetchYesCost } = useReadContract({
+    address: marketMakerAddress,
+    abi: lmsrMarketMakerAbi,
+    functionName: 'calcNetCost',
+    args: [[BigInt(0), parseUnits('1', 18)]],
+    query: { enabled: true, refetchInterval: 3_000 },
+  });
+
+  // Calculate NO token cost for 1 token
+  const { data: noCostData, refetch: refetchNoCost } = useReadContract({
+    address: marketMakerAddress,
+    abi: lmsrMarketMakerAbi,
+    functionName: 'calcNetCost',
+    args: [[parseUnits('1', 18), BigInt(0)]],
+    query: { enabled: true, refetchInterval: 3_000 },
+  });
+
+  // Update cost estimates when data changes
   useEffect(() => {
     if (netCostData) {
       setCostEstimate(formatUnits(netCostData, 18));
@@ -87,6 +92,18 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
       setCostEstimate(null);
     }
   }, [netCostData]);
+
+  useEffect(() => {
+    if (yesCostData) {
+      setYesCostEstimate(formatUnits(yesCostData, 18));
+    }
+  }, [yesCostData]);
+
+  useEffect(() => {
+    if (noCostData) {
+      setNoCostEstimate(formatUnits(noCostData, 18));
+    }
+  }, [noCostData]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -139,7 +156,12 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
       setSuccess(`Successfully bought ${formData.amount} ${formData.outcome} tokens!`);
       setFormData({ outcome: 'YES', amount: '' });
       
-      if (onSuccess) onSuccess();
+      if (onSuccess) {
+        onSuccess();
+        refetchCollateralBalance();
+        refetchYesCost();
+        refetchNoCost();
+      }
     } catch (err: any) {
       console.error('Error buying prediction tokens:', err);
       setError(err.message || 'Failed to buy prediction tokens');
@@ -151,7 +173,7 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     : true;
 
   return (
-    <div className="border border-gray-700 bg-card-foreground/70 p-6 rounded-sm space-y-6">
+    <div className="space-y-6">
       <div className="space-y-2">
         <h3 className="terminal-command text-lg">{market.title}</h3>
         <p className="terminal-text text-sm">{market.description}</p>
@@ -181,15 +203,49 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <label className="terminal-dim text-xs">PREDICTION OUTCOME</label>
-          <Select value={formData.outcome} onValueChange={(value) => handleInputChange('outcome', value)}>
-            <SelectTrigger className="bg-black/20 border-gray-700 terminal-text">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-black border-gray-700">
-              <SelectItem value="YES" className="terminal-text">YES</SelectItem>
-              <SelectItem value="NO" className="terminal-text">NO</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => handleInputChange('outcome', 'YES')}
+              className={`p-4 border rounded-sm transition-all duration-200 flex flex-col items-center space-y-2 ${
+                formData.outcome === 'YES'
+                  ? 'border-[#05df72] bg-[#05df72]/20 shadow-lg shadow-[#05df72]/20'
+                  : 'border-gray-600 bg-black/20 hover:border-[#05df72]/50 hover:bg-[#05df72]/10'
+              }`}
+            >
+              <div className={`text-lg font-bold ${
+                formData.outcome === 'YES' ? 'text-[#05df72]' : 'text-white'
+              }`}>
+                YES
+              </div>
+              {yesCostEstimate && (
+                <div className="text-xs terminal-dim">
+                  {Number(yesCostEstimate).toFixed(3)} USDC
+                </div>
+              )}
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => handleInputChange('outcome', 'NO')}
+              className={`p-4 border rounded-sm transition-all duration-200 flex flex-col items-center space-y-2 ${
+                formData.outcome === 'NO'
+                  ? 'border-[#dd70d4] bg-[#dd70d4]/20 shadow-lg shadow-[#dd70d4]/20'
+                  : 'border-gray-600 bg-black/20 hover:border-[#dd70d4]/50 hover:bg-[#dd70d4]/10'
+              }`}
+            >
+              <div className={`text-lg font-bold ${
+                formData.outcome === 'NO' ? 'text-[#dd70d4]' : 'text-white'
+              }`}>
+                NO
+              </div>
+              {noCostEstimate && (
+                <div className="text-xs terminal-dim">
+                  {Number(noCostEstimate).toFixed(3)} USDC
+                </div>
+              )}
+            </button>
+          </div>
         </div>
 
         <div className="space-y-2">
