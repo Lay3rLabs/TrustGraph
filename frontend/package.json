@@ -5,6 +5,7 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
+    "predev": "npm run contracts:update && npm run wagmi:generate",
     "lint": "next lint",
     "start": "next start",
     "contracts:update": "node scripts/update-config.js",
