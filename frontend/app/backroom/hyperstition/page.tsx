@@ -2,6 +2,9 @@
 
 import type React from "react";
 import { useState } from "react";
+import { Modal } from "@/components/ui/modal";
+import PredictionBuyForm from "@/components/PredictionBuyForm";
+import PredictionRedeemForm from "@/components/PredictionRedeemForm";
 
 interface HyperstitionMarket {
   id: string;
@@ -17,6 +20,11 @@ interface HyperstitionMarket {
   status: "active" | "achieved" | "failed" | "pending";
   icon: string;
   unit: string;
+  marketMakerAddress?: `0x${string}`;
+  collateralTokenAddress?: `0x${string}`;
+  conditionId?: `0x${string}`;
+  isResolved?: boolean;
+  result?: boolean;
 }
 
 const markets: HyperstitionMarket[] = [
@@ -114,6 +122,8 @@ const markets: HyperstitionMarket[] = [
 
 export default function HyperstitionPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedMarket, setSelectedMarket] = useState<HyperstitionMarket | null>(null);
+  const [activeTab, setActiveTab] = useState<'overview' | 'buy' | 'redeem'>('overview');
 
   const filteredMarkets = markets.filter(market => 
     selectedCategory === "all" || market.category === selectedCategory
@@ -257,13 +267,31 @@ export default function HyperstitionPage() {
 
                 {/* Action Buttons */}
                 <div className="flex space-x-2 pt-3 border-t border-gray-700">
-                  <button className="mobile-terminal-btn !px-4 !py-2">
-                    <span className="text-xs terminal-command">AMPLIFY BELIEF</span>
+                  <button 
+                    onClick={() => {
+                      setSelectedMarket(market);
+                      setActiveTab('buy');
+                    }}
+                    className="mobile-terminal-btn !px-4 !py-2"
+                  >
+                    <span className="text-xs terminal-command">BUY POSITION</span>
                   </button>
-                  <button className="mobile-terminal-btn !px-4 !py-2">
-                    <span className="text-xs terminal-command">CONTRIBUTE</span>
+                  <button 
+                    onClick={() => {
+                      setSelectedMarket(market);
+                      setActiveTab('redeem');
+                    }}
+                    className="mobile-terminal-btn !px-4 !py-2"
+                  >
+                    <span className="text-xs terminal-command">REDEEM</span>
                   </button>
-                  <button className="mobile-terminal-btn !px-3 !py-2">
+                  <button 
+                    onClick={() => {
+                      setSelectedMarket(market);
+                      setActiveTab('overview');
+                    }}
+                    className="mobile-terminal-btn !px-3 !py-2"
+                  >
                     <span className="text-xs terminal-command">DETAILS</span>
                   </button>
                 </div>
@@ -286,6 +314,123 @@ export default function HyperstitionPage() {
           </div>
         </div>
       </div>
+
+      {/* Market Interaction Modal */}
+      <Modal 
+        isOpen={!!selectedMarket} 
+        onClose={() => setSelectedMarket(null)}
+        className="max-w-4xl"
+      >
+        {selectedMarket && (
+          <div>
+            {/* Tab Navigation */}
+            <div className="border-b border-gray-700 pb-4 mb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex space-x-6">
+                  <button
+                    onClick={() => setActiveTab('overview')}
+                    className={`text-xs font-mono transition-colors ${
+                      activeTab === 'overview' ? 'terminal-command' : 'terminal-dim hover:terminal-bright'
+                    }`}
+                  >
+                    OVERVIEW
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('buy')}
+                    className={`text-xs font-mono transition-colors ${
+                      activeTab === 'buy' ? 'terminal-command' : 'terminal-dim hover:terminal-bright'
+                    }`}
+                  >
+                    BUY POSITION
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('redeem')}
+                    className={`text-xs font-mono transition-colors ${
+                      activeTab === 'redeem' ? 'terminal-command' : 'terminal-dim hover:terminal-bright'
+                    }`}
+                  >
+                    REDEEM
+                  </button>
+                </div>
+                <button
+                  onClick={() => setSelectedMarket(null)}
+                  className="terminal-dim hover:terminal-bright transition-colors text-lg"
+                  aria-label="Close modal"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div>
+              {activeTab === 'overview' && (
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <h2 className="terminal-command text-xl flex items-center space-x-2">
+                      <span>{selectedMarket.icon}</span>
+                      <span>{selectedMarket.title}</span>
+                    </h2>
+                    <p className="terminal-text">{selectedMarket.description}</p>
+                    <div className="terminal-dim text-xs">{selectedMarket.category}</div>
+                  </div>
+
+                  {/* Progress Section */}
+                  <div className="space-y-4">
+                    <div className="flex justify-between text-sm">
+                      <span className="terminal-dim">PROGRESS</span>
+                      <span className="terminal-bright">
+                        {formatNumber(selectedMarket.currentValue)} / {formatNumber(selectedMarket.targetValue)} {selectedMarket.unit}
+                      </span>
+                    </div>
+                    <div className="bg-gray-700 h-3 rounded">
+                      <div 
+                        className="bg-gradient-to-r from-gray-500 to-white h-3 rounded transition-all duration-300" 
+                        style={{ width: `${getProgressPercentage(selectedMarket.currentValue, selectedMarket.targetValue)}%` }}
+                      ></div>
+                    </div>
+                    <div className="text-xs terminal-dim">
+                      {getProgressPercentage(selectedMarket.currentValue, selectedMarket.targetValue).toFixed(1)}% Complete
+                    </div>
+                  </div>
+
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-black/20 border border-gray-600 p-3 rounded-sm">
+                      <div className="terminal-dim text-xs">INCENTIVE POOL</div>
+                      <div className="terminal-bright text-lg">{formatNumber(selectedMarket.incentivePool)} $EN0</div>
+                    </div>
+                    <div className="bg-black/20 border border-gray-600 p-3 rounded-sm">
+                      <div className="terminal-dim text-xs">BELIEF LEVEL</div>
+                      <div className="terminal-bright text-lg">{selectedMarket.probability}%</div>
+                    </div>
+                    <div className="bg-black/20 border border-gray-600 p-3 rounded-sm">
+                      <div className="terminal-dim text-xs">PARTICIPANTS</div>
+                      <div className="terminal-bright text-lg">{selectedMarket.participants}</div>
+                    </div>
+                    <div className="bg-black/20 border border-gray-600 p-3 rounded-sm">
+                      <div className="terminal-dim text-xs">DEADLINE</div>
+                      <div className="terminal-bright text-lg">{selectedMarket.deadline}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'buy' && (
+                <PredictionBuyForm
+                  market={selectedMarket}
+                />
+              )}
+
+              {activeTab === 'redeem' && (
+                <PredictionRedeemForm
+                  market={selectedMarket}
+                />
+              )}
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

@@ -13,7 +13,7 @@ import {Common} from "script/Common.s.sol";
 
 import {PredictionMarketOracleController} from "contracts/prediction_market/PredictionMarketOracleController.sol";
 import {PredictionMarketFactory} from "contracts/prediction_market/PredictionMarketFactory.sol";
-import {ERC20Mintable} from "contracts/prediction_market/ERC20Mintable.sol";
+import {MockUSDC} from "contracts/MockUSDC.sol";
 
 /// @dev Deployment script for Prediction Market contracts
 contract DeployScript is Common {
@@ -43,10 +43,10 @@ contract DeployScript is Common {
         PredictionMarketFactory factory = oracleController.factory();
 
         // Deploy collateral token for the market
-        ERC20Mintable collateralToken = new ERC20Mintable("WAVS Prediction Collateral", "WPC");
+        MockUSDC collateralToken = new MockUSDC();
 
         // Mint collateral tokens to deployer
-        collateralToken.mint(deployer, funding);
+        collateralToken.mint(deployer, funding * 10);
 
         // Approve factory to spend collateral tokens
         collateralToken.approve(address(factory), funding);
@@ -60,7 +60,7 @@ contract DeployScript is Common {
         // Log deployment info
         console.log("PredictionMarketOracleController deployed at:", address(oracleController));
         console.log("PredictionMarketFactory deployed at:", address(factory));
-        console.log("ERC20Mintable collateral token deployed at:", address(collateralToken));
+        console.log("MockUSDC collateral token deployed at:", address(collateralToken));
         console.log("ConditionalTokens deployed at:", address(conditionalTokens));
         console.log("LMSRMarketMaker deployed at:", address(lmsrMarketMaker));
         console.log("Market funded with:", funding / 1e18, "tokens");

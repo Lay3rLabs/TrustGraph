@@ -9,7 +9,7 @@ import {IERC20} from "forge-std/interfaces/IERC20.sol";
 import {ConditionalTokens} from "@lay3rlabs/conditional-tokens-contracts/ConditionalTokens.sol";
 import {LMSRMarketMaker} from "@lay3rlabs/conditional-tokens-market-makers/LMSRMarketMaker.sol";
 
-import {ERC20Mintable} from "contracts/prediction_market/ERC20Mintable.sol";
+import {MockUSDC} from "contracts/MockUSDC.sol";
 import {PredictionMarketOracleController} from "contracts/prediction_market/PredictionMarketOracleController.sol";
 import {IWavsTrigger2} from "interfaces/IWavsTrigger2.sol";
 import {ITypes} from "interfaces/ITypes.sol";
@@ -33,7 +33,7 @@ contract PredictionMarket is Common {
 
         LMSRMarketMaker marketMaker = LMSRMarketMaker(marketMakerAddress);
         ConditionalTokens conditionalTokens = ConditionalTokens(conditionalTokensAddress);
-        ERC20Mintable collateralToken = ERC20Mintable(collateralTokenAddress);
+        MockUSDC collateralToken = MockUSDC(collateralTokenAddress);
 
         // Add more detailed logging
         console.log("Factory address:", factoryAddress);
@@ -91,7 +91,7 @@ contract PredictionMarket is Common {
         address collateralTokenAddress = vm.parseAddress(collateralTokenAddr);
         address conditionalTokensAddress = vm.parseAddress(conditionalTokensAddr);
 
-        ERC20Mintable collateralToken = ERC20Mintable(collateralTokenAddress);
+        MockUSDC collateralToken = MockUSDC(collateralTokenAddress);
         ConditionalTokens conditionalTokens = ConditionalTokens(conditionalTokensAddress);
 
         // Add more detailed logging
@@ -129,7 +129,7 @@ contract PredictionMarket is Common {
         address conditionalTokensAddress = vm.parseAddress(conditionalTokensAddr);
         address walletAddress = vm.parseAddress(walletAddr);
 
-        ERC20Mintable collateralToken = ERC20Mintable(collateralTokenAddress);
+        MockUSDC collateralToken = MockUSDC(collateralTokenAddress);
         ConditionalTokens conditionalTokens = ConditionalTokens(conditionalTokensAddress);
 
         bytes32 conditionId = conditionalTokens.getConditionId(factoryAddress, bytes32(0), 2);

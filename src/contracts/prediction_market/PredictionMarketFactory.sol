@@ -9,7 +9,7 @@ import {Whitelist} from "@lay3rlabs/conditional-tokens-market-makers/Whitelist.s
 import {ConditionalTokens} from "@lay3rlabs/conditional-tokens-contracts/ConditionalTokens.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
-import {ERC20Mintable} from "./ERC20Mintable.sol";
+import {MockUSDC} from "../MockUSDC.sol";
 
 contract PredictionMarketFactory {
     event LMSRMarketMakerCreation(
@@ -37,7 +37,7 @@ contract PredictionMarketFactory {
         uint64 fee,
         uint256 funding
     ) external returns (ConditionalTokens conditionalTokens, LMSRMarketMaker lmsrMarketMaker) {
-        ERC20Mintable collateralToken = ERC20Mintable(collateralTokenAddress);
+        MockUSDC collateralToken = MockUSDC(collateralTokenAddress);
 
         conditionalTokens = new ConditionalTokens(uri);
         conditionalTokens.prepareCondition(address(this), questionId, 2);
