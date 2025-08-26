@@ -34,7 +34,7 @@ contract DeployScript is Common {
         uint64 fee = 5e16; // 5% fee
         uint256 funding = 1_000e18; // 1,000 collateral tokens
         string memory uri = "ipfs://QmXxx"; // Placeholder URI for market metadata
-        bytes32 questionId = keccak256("Will ETH price exceed $5000 by end of 2024?");
+        bytes32 questionId = bytes32(0);
 
         vm.startBroadcast(_privateKey);
 

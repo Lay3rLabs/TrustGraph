@@ -152,21 +152,26 @@ tasks:
     vars:
       RPC_URL:
         sh: task get-rpc
+      PREDICTION_MARKET_FACTORY_ADDRESS:
+        sh: jq -r '.prediction_market_contracts.factory' .docker/deployment_summary.json || echo ""
       COLLATERAL_TOKEN_ADDRESS:
         sh: jq -r '.prediction_market_contracts.collateral_token' .docker/deployment_summary.json || echo ""
       CONDITIONAL_TOKENS_ADDRESS:
         sh: jq -r '.prediction_market_contracts.conditional_tokens' .docker/deployment_summary.json || echo ""
     preconditions:
       - test -f .docker/deployment_summary.json
+      - test -n "{{.PREDICTION_MARKET_FACTORY_ADDRESS}}"
       - test -n "{{.COLLATERAL_TOKEN_ADDRESS}}"
       - test -n "{{.CONDITIONAL_TOKENS_ADDRESS}}"
     cmds:
       - |
         echo "Querying token balances for: {{.WALLET_ADDRESS}}"
+        echo "Factory: {{.PREDICTION_MARKET_FACTORY_ADDRESS}}"
         echo "Collateral Token: {{.COLLATERAL_TOKEN_ADDRESS}}"
         echo "Conditional Tokens: {{.CONDITIONAL_TOKENS_ADDRESS}}"
         forge script ./script/PredictionMarket.s.sol \
-          --sig "queryBalances(string,string,string)" \
+          --sig "queryBalances(string,string,string,string)" \
+          "{{.PREDICTION_MARKET_FACTORY_ADDRESS}}" \
           "{{.COLLATERAL_TOKEN_ADDRESS}}" \
           "{{.CONDITIONAL_TOKENS_ADDRESS}}" \
           "{{.WALLET_ADDRESS}}" \

@@ -1,6 +1,6 @@
 #[allow(warnings)]
 mod bindings;
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr};
 mod resolvers;
 
 use bindings::{export, host::config_var, Guest, TriggerAction, WasmResponse};
@@ -21,15 +21,24 @@ impl Guest for Component {
         let conditional_tokens_address = config_var("conditional_tokens")
             .ok_or_else(|| "Failed to get conditional tokens address")?;
 
+        let resolver_type =
+            config_var("resolver_type").ok_or_else(|| "Failed to get resolver type")?;
+        // Map key1=value1;key2=value2;... to JSON object {key1: value1, key2: value2, ...}
+        let resolver_config = serde_json::to_value(
+            &config_var("resolver_config")
+                .ok_or_else(|| "Failed to get resolver config")?
+                .split(';')
+                .map(|s| {
+                    let parts = s.split(':').collect::<Vec<&str>>();
+                    (parts[0], serde_json::from_str(parts[1]).unwrap())
+                })
+                .collect::<HashMap<&str, serde_json::Value>>(),
+        )
+        .map_err(|e| format!("Failed to parse resolver config: {}", e))?;
+
         let trigger_info = decode_trigger_event(action.data)?;
 
-        let resolver = ResolverRegistry::all().create_resolver(
-            "price",
-            serde_json::json!({
-                "coin_market_cap_id": 1,
-                "threshold": 1.0,
-            }),
-        )?;
+        let resolver = ResolverRegistry::all().create_resolver(&resolver_type, resolver_config)?;
 
         let result = block_on(resolver.resolve())?;
 

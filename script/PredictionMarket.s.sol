@@ -117,4 +117,26 @@ contract PredictionMarket is Common {
         console.log("Collateral balance after:", collateralToken.balanceOf(deployer));
         console.log("Outcome share balance after:", conditionalTokens.balanceOf(deployer, positionId));
     }
+
+    function queryBalances(
+        string calldata factoryAddr,
+        string calldata collateralTokenAddr,
+        string calldata conditionalTokensAddr,
+        string calldata walletAddr
+    ) public view {
+        address factoryAddress = vm.parseAddress(factoryAddr);
+        address collateralTokenAddress = vm.parseAddress(collateralTokenAddr);
+        address conditionalTokensAddress = vm.parseAddress(conditionalTokensAddr);
+        address walletAddress = vm.parseAddress(walletAddr);
+
+        ERC20Mintable collateralToken = ERC20Mintable(collateralTokenAddress);
+        ConditionalTokens conditionalTokens = ConditionalTokens(conditionalTokensAddress);
+
+        bytes32 conditionId = conditionalTokens.getConditionId(factoryAddress, bytes32(0), 2);
+        bytes32 collectionId = conditionalTokens.getCollectionId(bytes32(0), conditionId, 2);
+        uint256 positionId = conditionalTokens.getPositionId(IERC20(collateralTokenAddress), collectionId);
+
+        console.log("Collateral balance:", collateralToken.balanceOf(walletAddress));
+        console.log("Outcome share balance:", conditionalTokens.balanceOf(walletAddress, positionId));
+    }
 }

@@ -99,7 +99,9 @@
       "config_values": {
         "market_maker": "${MARKET_MAKER_ADDRESS}",
         "conditional_tokens": "${CONDITIONAL_TOKENS_ADDRESS}",
-        "chain_name": "${CHAIN_NAME}"
+        "chain_name": "${CHAIN_NAME}",
+        "resolver_type": "price",
+        "resolver_config": "coin_market_cap_id:1;threshold:1.0"
       },
       "env_variables": ["WAVS_ENV_SOME_SECRET"]
     },
