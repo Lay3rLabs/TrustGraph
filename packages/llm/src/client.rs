@@ -1,4 +1,4 @@
-use crate::config::LlmConfig;
+use crate::config::LlmOptions;
 use crate::encoding::encode_image_to_base64;
 use crate::errors::LlmError;
 use crate::tools::{Tool, ToolCall};
@@ -69,7 +69,7 @@ impl Message {
 /// The main LLM client for interacting with Ollama
 pub struct LLMClient {
     model: String,
-    config: LlmConfig,
+    config: LlmOptions,
 }
 
 /// Format specification for structured outputs
@@ -125,7 +125,7 @@ pub enum LlmResponse {
 impl LLMClient {
     /// Creates a new LLM client with the specified model
     pub fn new(model: String) -> Self {
-        Self { model, config: LlmConfig::default() }
+        Self { model, config: LlmOptions::default() }
     }
 
     /// Creates a new LLM client from JSON configuration
@@ -140,7 +140,7 @@ impl LLMClient {
             .to_string();
 
         // Parse optional config parameters
-        let mut llm_config = LlmConfig::default();
+        let mut llm_config = LlmOptions::default();
 
         if let Some(temp) = config.get("temperature").and_then(|v| v.as_f64()) {
             llm_config = llm_config.with_temperature(temp as f32);
@@ -162,7 +162,7 @@ impl LLMClient {
     }
 
     /// Creates a new LLM client with custom configuration
-    pub fn with_config(model: String, config: LlmConfig) -> Self {
+    pub fn with_config(model: String, config: LlmOptions) -> Self {
         Self { model, config }
     }
 
@@ -172,7 +172,7 @@ impl LLMClient {
     }
 
     /// Get the configuration
-    pub fn get_config(&self) -> &LlmConfig {
+    pub fn get_config(&self) -> &LlmOptions {
         &self.config
     }
 
@@ -436,12 +436,84 @@ impl LLMClient {
             Ok(LlmResponse::Text(content))
         }
     }
+
+    /// Process a prompt with a full configuration including contracts and messages
+    pub fn process_with_config(
+        &self,
+        prompt: String,
+        config: &crate::config::Config,
+    ) -> Result<LlmResponse, LlmError> {
+        // Build messages from config
+        let mut messages = config.messages.clone();
+
+        // Add the user prompt
+        messages.push(Message::new_user(prompt));
+
+        // Convert contracts to tools if they have methods
+        let tools = if !config.contracts.is_empty() {
+            let mut contract_tools = Vec::new();
+            for contract in &config.contracts {
+                // Create a tool from the contract
+                let tool = Tool {
+                    tool_type: "function".to_string(),
+                    function: crate::tools::Function {
+                        name: contract.name.clone(),
+                        description: Some(contract.description.clone().unwrap_or_else(|| {
+                            format!("Interact with {} contract", contract.name)
+                        })),
+                        parameters: Some(json!({
+                            "type": "object",
+                            "properties": {
+                                "function_name": {
+                                    "type": "string",
+                                    "description": "The function to call on the contract"
+                                },
+                                "arguments": {
+                                    "type": "object",
+                                    "description": "Arguments for the function call"
+                                }
+                            },
+                            "required": ["function_name"]
+                        })),
+                    },
+                };
+                contract_tools.push(tool);
+            }
+            Some(contract_tools)
+        } else {
+            None
+        };
+
+        // Get response from LLM
+        let response = self.chat_completion(messages, tools)?;
+        let content = response
+            .content
+            .ok_or_else(|| LlmError::ParseError("No content in response".to_string()))?;
+
+        // Try to parse as transaction struct first
+        if let Ok(transaction) = serde_json::from_str::<crate::contracts::Transaction>(&content) {
+            Ok(LlmResponse::Transaction(transaction))
+        } else {
+            // Return as plain text if not a transaction
+            Ok(LlmResponse::Text(content))
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::LlmConfigBuilder;
+    use crate::config::LlmOptionsBuilder;
+    use std::sync::Once;
+
+    static INIT: Once = Once::new();
+
+    fn init() {
+        INIT.call_once(|| {
+            env::set_var("WAVS_ENV_OLLAMA_API_URL", "http://localhost:11434");
+            println!("Integration tests require Ollama running on localhost:11434");
+        });
+    }
 
     fn setup_test_env() {
         env::set_var("WAVS_ENV_OLLAMA_API_URL", "http://localhost:11434");
@@ -495,7 +567,7 @@ mod tests {
     #[test]
     fn test_llm_client_with_config() {
         setup_test_env();
-        let config = LlmConfig::default().with_temperature(0.8).with_max_tokens(200);
+        let config = LlmOptions::default().with_temperature(0.8).with_max_tokens(200);
 
         let client = LLMClient::with_config("llama2".to_string(), config);
         assert_eq!(client.get_model(), "llama2");
@@ -506,7 +578,7 @@ mod tests {
     #[test]
     fn test_llm_config_builder() {
         let config =
-            LlmConfigBuilder::new().temperature(0.5).max_tokens(150).top_p(0.95).seed(123).build();
+            LlmOptionsBuilder::new().temperature(0.5).max_tokens(150).top_p(0.95).seed(123).build();
 
         assert_eq!(config.temperature, Some(0.5));
         assert_eq!(config.max_tokens, Some(150));
@@ -554,16 +626,6 @@ mod tests {
     #[cfg(all(feature = "integration-tests", target_arch = "wasm32"))]
     mod integration {
         use super::*;
-        use std::sync::Once;
-
-        static INIT: Once = Once::new();
-
-        fn init() {
-            INIT.call_once(|| {
-                env::set_var("WAVS_ENV_OLLAMA_API_URL", "http://localhost:11434");
-                println!("Integration tests require Ollama running on localhost:11434");
-            });
-        }
 
         #[test]
         #[ignore] // Run in WASI environment only
@@ -600,7 +662,7 @@ mod tests {
         fn test_ollama_chat_completion_with_config() {
             init();
 
-            let config = LlmConfig::default().with_temperature(0.1).with_max_tokens(50);
+            let config = LlmOptions::default().with_temperature(0.1).with_max_tokens(50);
 
             let client = LLMClient::with_config("llama2".to_string(), config);
 

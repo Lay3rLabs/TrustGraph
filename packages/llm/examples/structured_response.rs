@@ -3,10 +3,9 @@
 //! This example shows how to use the structured output features of the LLM client
 //! to get responses in specific JSON formats.
 
-use llm::client::{LLMClient, Message, ResponseFormat};
-use llm::errors::LlmError;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
+use wavs_llm::client::LLMClient;
+use wavs_llm::errors::LlmError;
 
 /// Example struct for a person's information
 #[derive(Debug, Serialize, Deserialize, schemars::JsonSchema)]

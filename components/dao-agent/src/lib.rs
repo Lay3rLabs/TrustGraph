@@ -66,13 +66,14 @@ impl Guest for Component {
         }
 
         // Create LLM client implementation using the standalone constructor
-        let llm_client =
-            client::LLMClient::with_config(&llm_context.model, llm_context.llm_config.clone())
-                .map_err(|e| e.to_string())?;
+        let llm_client = client::LLMClient::with_config(
+            llm_context.model.clone(),
+            llm_context.llm_config.clone(),
+        );
 
-        // Use the helper function to process the prompt
+        // Use the helper function to process the prompt with config
         let result = llm_client
-            .process_prompt(&prompt, &llm_context, None, None)
+            .process_with_config(prompt.clone(), &llm_context)
             .map_err(|e| e.to_string())?;
 
         // Handle the response

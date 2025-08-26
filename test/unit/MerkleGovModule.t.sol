@@ -55,7 +55,7 @@ contract MerkleGovModuleTest is Test {
     );
     event ProposalExecuted(uint256 indexed proposalId);
     event ProposalCancelled(uint256 indexed proposalId);
-    event MerkleRootUpdated(bytes32 indexed root, bytes32 ipfsHash);
+    event MerkleRootUpdated(bytes32 indexed root, bytes32 ipfsHash, string ipfsHashCid);
 
     function setUp() public {
         // Deploy Safe infrastructure
@@ -148,11 +148,11 @@ contract MerkleGovModuleTest is Test {
 
         // Execute merkle root update
         vm.expectEmit(true, false, false, true);
-        emit MerkleRootUpdated(root, ipfsHash);
+        emit MerkleRootUpdated(root, ipfsHash, avsOutput.ipfsHash);
         govModule.handleSignedEnvelope(envelope, signatureData);
     }
 
-    function test_ModuleSetup() public {
+    function test_ModuleSetup() public view {
         assertEq(govModule.avatar(), address(safe));
         assertEq(govModule.target(), address(safe));
         assertEq(govModule.owner(), owner);
@@ -523,10 +523,10 @@ contract TestTarget {
 
 // Mock WAVS Service Manager
 contract MockWavsServiceManager is IWavsServiceManager {
-    function validate(
-        IWavsServiceHandler.Envelope calldata,
-        IWavsServiceHandler.SignatureData calldata
-    ) external pure {
+    function validate(IWavsServiceHandler.Envelope calldata, IWavsServiceHandler.SignatureData calldata)
+        external
+        pure
+    {
         // Mock validation - always passes
     }
 
@@ -534,9 +534,7 @@ contract MockWavsServiceManager is IWavsServiceManager {
         return 100;
     }
 
-    function getLatestOperatorForSigningKey(
-        address
-    ) external pure returns (address) {
+    function getLatestOperatorForSigningKey(address) external pure returns (address) {
         return address(0x1234567890123456789012345678901234567890);
     }
 

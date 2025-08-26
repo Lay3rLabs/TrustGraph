@@ -158,9 +158,9 @@ impl AttesterConfig {
     /// Get LLM options for the wavs_llm client
     pub fn get_llm_options(&self) -> wavs_llm::types::LlmOptions {
         wavs_llm::types::LlmOptions {
-            temperature: self.temperature,
-            top_p: self.top_p,
-            seed: self.seed,
+            temperature: Some(self.temperature),
+            top_p: Some(self.top_p),
+            seed: Some(self.seed),
             max_tokens: self.max_tokens,
             context_window: self.context_window,
         }

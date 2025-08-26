@@ -6,3 +6,4 @@ pub mod contracts;
 pub mod encoding;
 pub mod errors;
 pub mod tools;
+pub mod types;

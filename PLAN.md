@@ -23,8 +23,8 @@
 - [ ] More realistic Hyperstition market resolver component
 - [ ] Clean up wavs-llm package (should support formatted response)
 - [ ] LLM attester should be spam filter / approver
-- [ ] Wire up new component to utilize SignerManagerModule
-- [ ] Wire up dao-agent component to utilizes WavsModule for zodiac
+- [ ] Wire up new component to utilize SignerManagerModule, respond to MerkleRootUpdated Event get IPFS CID, get top N users, sync
+- [ ] Wire up dao-agent component to utilizes WavsModule for zodiac, add test trigger
 - [ ] Figure out some way to pay for these services
 
 

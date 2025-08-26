@@ -7,11 +7,7 @@ use alloy_sol_types::{sol, SolCall};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use std::{collections::HashMap, env};
-use wavs_llm::{
-    client::Message,
-    config::{Config, LlmOptions},
-    contracts::Contract,
-};
+use wavs_llm::{client::Message, config::Config, contracts::Contract, types::LlmOptions};
 
 use wavs_wasi_utils::evm::new_evm_provider;
 use wavs_wasi_utils::http::{fetch_json, http_request_get};
@@ -324,9 +320,9 @@ impl Default for DaoContext {
     fn default() -> Self {
         // Create a default LlmOptions
         let llm_options = LlmOptions {
-            temperature: 0.0,
-            top_p: 1.0,
-            seed: 42,
+            temperature: Some(0.0),
+            top_p: Some(1.0),
+            seed: Some(42),
             max_tokens: Some(500),
             context_window: Some(4096),
         };

@@ -9,7 +9,7 @@ use wstd::runtime::block_on;
 
 /// Configuration options for Ollama LLM
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct LlmConfig {
+pub struct LlmOptions {
     /// Temperature controls randomness (0.0-2.0)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub temperature: Option<f32>,
@@ -25,17 +25,21 @@ pub struct LlmConfig {
     /// Seed for deterministic outputs
     #[serde(skip_serializing_if = "Option::is_none")]
     pub seed: Option<u32>,
+
+    /// Context window size
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub context_window: Option<u32>,
 }
 
-impl LlmConfig {
-    /// Create a new config with default values
+impl LlmOptions {
+    /// Create a new LlmOptions with default values
     pub fn new() -> Self {
         Self::default()
     }
 
     /// Set temperature
-    pub fn with_temperature(mut self, temp: f32) -> Self {
-        self.temperature = Some(temp);
+    pub fn with_temperature(mut self, temperature: f32) -> Self {
+        self.temperature = Some(temperature);
         self
     }
 
@@ -56,22 +60,28 @@ impl LlmConfig {
         self.seed = Some(seed);
         self
     }
+
+    /// Set context window
+    pub fn with_context_window(mut self, context_window: u32) -> Self {
+        self.context_window = Some(context_window);
+        self
+    }
 }
 
-/// Builder for LlmConfig
-pub struct LlmConfigBuilder {
-    config: LlmConfig,
+/// Builder for LlmOptions
+pub struct LlmOptionsBuilder {
+    config: LlmOptions,
 }
 
-impl LlmConfigBuilder {
+impl LlmOptionsBuilder {
     /// Create a new builder
     pub fn new() -> Self {
-        Self { config: LlmConfig::default() }
+        Self { config: LlmOptions::default() }
     }
 
     /// Set temperature
-    pub fn temperature(mut self, temp: f32) -> Self {
-        self.config.temperature = Some(temp);
+    pub fn temperature(mut self, temperature: f32) -> Self {
+        self.config.temperature = Some(temperature);
         self
     }
 
@@ -93,8 +103,14 @@ impl LlmConfigBuilder {
         self
     }
 
+    /// Set context window
+    pub fn context_window(mut self, context_window: u32) -> Self {
+        self.config.context_window = Some(context_window);
+        self
+    }
+
     /// Build the configuration
-    pub fn build(self) -> LlmConfig {
+    pub fn build(self) -> LlmOptions {
         self.config
     }
 }
@@ -103,7 +119,7 @@ impl LlmConfigBuilder {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     pub contracts: Vec<Contract>,
-    pub llm_config: LlmConfig,
+    pub llm_config: LlmOptions,
     pub model: String,
     #[serde(default)]
     pub messages: Vec<Message>,
@@ -288,7 +304,7 @@ impl Default for Config {
                 r#"[{"type":"function","name":"transfer","inputs":[{"name":"to","type":"address","internalType":"address"},{"name":"value","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"nonpayable"}]"#,
                 "USDC is a stablecoin pegged to the US Dollar",
             )],
-            llm_config: LlmConfig::new()
+            llm_config: LlmOptions::new()
                 .with_temperature(0.0)
                 .with_top_p(0.1)
                 .with_seed(42)
@@ -360,7 +376,7 @@ mod tests {
                 "0x1234567890123456789012345678901234567890",
                 "[{\"name\":\"test\",\"type\":\"function\",\"inputs\":[],\"outputs\":[]}]",
             )],
-            llm_config: LlmConfig::default(),
+            llm_config: LlmOptions::default(),
             model: "test-model".to_string(),
             messages: vec![Message::new_system("Test system message".to_string())],
             config: std::collections::HashMap::new(),
@@ -375,7 +391,7 @@ mod tests {
                 "invalid-address",
                 "[{\"name\":\"test\",\"type\":\"function\",\"inputs\":[],\"outputs\":[]}]",
             )],
-            llm_config: LlmConfig::default(),
+            llm_config: LlmOptions::default(),
             model: "test-model".to_string(),
             messages: vec![],
             config: std::collections::HashMap::new(),
@@ -390,7 +406,7 @@ mod tests {
                 "0x1234567890123456789012345678901234567890",
                 "",
             )],
-            llm_config: LlmConfig::default(),
+            llm_config: LlmOptions::default(),
             model: "test-model".to_string(),
             messages: vec![],
             config: std::collections::HashMap::new(),
@@ -414,7 +430,7 @@ mod tests {
                     "[{\"name\":\"test\",\"type\":\"function\",\"inputs\":[],\"outputs\":[]}]",
                 ),
             ],
-            llm_config: LlmConfig::default(),
+            llm_config: LlmOptions::default(),
             model: "test-model".to_string(),
             messages: vec![],
             config: std::collections::HashMap::new(),
@@ -452,7 +468,7 @@ mod tests {
                     "Second test contract",
                 ),
             ],
-            llm_config: LlmConfig::default(),
+            llm_config: LlmOptions::default(),
             model: "test-model".to_string(),
             messages: vec![],
             config: std::collections::HashMap::new(),
@@ -483,27 +499,33 @@ mod tests {
     }
 
     #[test]
-    fn test_llm_config_builder() {
-        let config =
-            LlmConfigBuilder::new().temperature(0.8).max_tokens(200).top_p(0.95).seed(42).build();
-
-        assert_eq!(config.temperature, Some(0.8));
-        assert_eq!(config.max_tokens, Some(200));
-        assert_eq!(config.top_p, Some(0.95));
+    fn test_llm_options_builder() {
+        let config = LlmOptionsBuilder::new()
+            .temperature(0.5)
+            .max_tokens(100)
+            .top_p(0.9)
+            .seed(42)
+            .context_window(4096)
+            .build();
+        assert_eq!(config.temperature, Some(0.5));
+        assert_eq!(config.max_tokens, Some(100));
+        assert_eq!(config.top_p, Some(0.9));
         assert_eq!(config.seed, Some(42));
+        assert_eq!(config.context_window, Some(4096));
     }
 
     #[test]
-    fn test_llm_config_fluent_api() {
-        let config = LlmConfig::new()
-            .with_temperature(0.5)
-            .with_max_tokens(150)
-            .with_top_p(0.9)
-            .with_seed(123);
-
-        assert_eq!(config.temperature, Some(0.5));
-        assert_eq!(config.max_tokens, Some(150));
-        assert_eq!(config.top_p, Some(0.9));
+    fn test_llm_options_fluent_api() {
+        let config = LlmOptions::new()
+            .with_temperature(0.8)
+            .with_max_tokens(200)
+            .with_top_p(0.95)
+            .with_seed(123)
+            .with_context_window(8192);
+        assert_eq!(config.temperature, Some(0.8));
+        assert_eq!(config.max_tokens, Some(200));
+        assert_eq!(config.top_p, Some(0.95));
         assert_eq!(config.seed, Some(123));
+        assert_eq!(config.context_window, Some(8192));
     }
 }
