@@ -231,8 +231,7 @@ task start-all-local
 This script automates the complete WAVS deployment process in a single command:
 
 ```bash
-task deploy:full
-task deploy:single-operator-poa
+task deploy:full && task deploy:single-operator-poa
 ```
 
 # EAS Attestation Demo
