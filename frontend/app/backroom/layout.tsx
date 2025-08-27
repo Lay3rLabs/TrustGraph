@@ -19,6 +19,7 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   { id: "points", label: "Points", path: "/backroom/points", icon: "★" },
+  { id: "portal", label: "Portal", path: "/backroom/portal", icon: "◎" },
   {
     id: "attestations",
     label: "Attestations",
