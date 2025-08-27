@@ -135,7 +135,7 @@ echo "📋 All configuration variables exported for component-specific substitut
 
 # wait for STATUS_FILE to contain the status COMPLETED in its content, check every 0.5 seconds for up to 60 seconds then error
 echo "Waiting for component uploads to complete..."
-timeout 120 bash -c "
+timeout 300 bash -c "
     trap 'exit 130' INT TERM
     while ! grep -q 'COMPLETED' '$STATUS_FILE' 2>/dev/null; do
         sleep 0.5

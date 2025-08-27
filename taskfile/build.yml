@@ -18,7 +18,7 @@ tasks:
       WASI_BUILD_DIR: '{{.WASI_BUILD_DIR | default ""}}'
     cmds:
       - |
-        warg reset
+        warg reset || echo "warg reset failed (warg server not started), continuing..."
         RECIPE="wasi-build"
         MAKEFILE_DIRS=$(find components/* -maxdepth 1 -name "Makefile" -o -name "makefile")
 

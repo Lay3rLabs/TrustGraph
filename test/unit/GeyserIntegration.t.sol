@@ -29,6 +29,19 @@ contract GeyserIntegrationTest is Test {
     /* solhint-disable func-name-mixedcase */
     function test_geyserOwnershipAndServiceURIUpdate() public {
         /* solhint-enable func-name-mixedcase */
+        // First set up an operator and signing key
+        address operator = address(0x789);
+        address signingKey = address(0xABC);
+
+        vm.startPrank(owner);
+        // Whitelist an operator with sufficient weight
+        poaManager.whitelistOperator(operator, 100);
+        vm.stopPrank();
+
+        // Set signing key for the operator
+        vm.prank(operator);
+        poaManager.setSigningKey(signingKey);
+
         // Transfer ownership to Geyser
         vm.prank(owner);
         poaManager.transferOwnership(address(geyser));
@@ -36,16 +49,34 @@ contract GeyserIntegrationTest is Test {
         // Verify ownership transferred
         assertEq(poaManager.owner(), address(geyser));
 
-        // Create envelope and signature data
+        // Create envelope and signature data with proper signature
         IWavsServiceHandler.Envelope memory envelope = IWavsServiceHandler.Envelope({
             eventId: bytes20(uint160(1)),
             ordering: bytes12(0),
             payload: "test123"
         });
 
+        // Create a valid signature for the envelope
+        bytes32 messageHash = keccak256(abi.encode(envelope));
+        bytes32 ethSignedMessageHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash));
+
+        // Create a mock signature - in a real test this would be signed by the signingKey
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(1, ethSignedMessageHash); // Use key #1 for signing
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        // We need to use the signing key that we set up
+        address[] memory signers = new address[](1);
+        signers[0] = vm.addr(1); // This should match the signing key
+        bytes[] memory signatures = new bytes[](1);
+        signatures[0] = signature;
+
+        // Update the operator's signing key to match what we're using
+        vm.prank(operator);
+        poaManager.setSigningKey(vm.addr(1));
+
         IWavsServiceHandler.SignatureData memory signatureData = IWavsServiceHandler.SignatureData({
-            signers: new address[](0),
-            signatures: new bytes[](0),
+            signers: signers,
+            signatures: signatures,
             referenceBlock: uint32(block.number - 1)
         });
 

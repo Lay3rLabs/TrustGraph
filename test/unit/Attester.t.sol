@@ -111,9 +111,21 @@ contract AttesterTest is Test {
         address recipient = address(0x123);
         bytes memory attestationData = abi.encode(uint256(42));
 
-        // Create attestation payload for ATTEST operation
-        // Data contains (schema, recipient, data) for the _attest internal function
-        bytes memory attestData = abi.encode(schemaId, recipient, attestationData);
+        // Create AttestationRequest structure that matches what the contract expects
+        AttestationRequest memory request = AttestationRequest({
+            schema: schemaId,
+            data: AttestationRequestData({
+                recipient: recipient,
+                expirationTime: NO_EXPIRATION_TIME,
+                revocable: true,
+                refUID: EMPTY_UID,
+                data: attestationData,
+                value: 0
+            })
+        });
+
+        // Encode the AttestationRequest as the data
+        bytes memory attestData = abi.encode(request);
         AttestationPayload memory payload = AttestationPayload({operationType: OperationType.ATTEST, data: attestData});
 
         bytes memory encodedPayload = abi.encode(payload);
@@ -178,12 +190,24 @@ contract AttesterTest is Test {
     }
 
     function testHandleSignedEnvelopeWithManualPayload() public {
-        // Use the exact same encoding as the manual test
+        // Create AttestationRequest structure that matches what the contract expects
         bytes32 schema = schemaId;
         address recipient = address(0x123);
         bytes memory attestationData = abi.encode(uint256(42));
 
-        bytes memory attestData = abi.encode(schema, recipient, attestationData);
+        AttestationRequest memory request = AttestationRequest({
+            schema: schema,
+            data: AttestationRequestData({
+                recipient: recipient,
+                expirationTime: NO_EXPIRATION_TIME,
+                revocable: true,
+                refUID: EMPTY_UID,
+                data: attestationData,
+                value: 0
+            })
+        });
+
+        bytes memory attestData = abi.encode(request);
         AttestationPayload memory payload = AttestationPayload({operationType: OperationType.ATTEST, data: attestData});
         bytes memory encodedPayload = abi.encode(payload);
 
