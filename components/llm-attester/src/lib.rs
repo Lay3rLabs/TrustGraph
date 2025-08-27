@@ -14,7 +14,7 @@ use wstd::runtime::block_on;
 
 pub mod bindings;
 use crate::bindings::{export, Guest, TriggerAction, WasmResponse};
-use alloy_primitives::Address;
+
 use wavs_llm::client::{self, Message};
 
 struct Component;
@@ -55,18 +55,13 @@ impl Guest for Component {
         println!("  - Reference UID: {}", ref_uid);
         println!("  - Recipient: {}", recipient);
 
-        // Parse the EAS address - error if not configured
-        let eas_address = config
-            .eas_address
-            .parse::<Address>()
-            .map_err(|_| format!("Failed to parse EAS address: {}", config.eas_address))?;
-
         // Create query config from component config
-        let query_config = QueryConfig {
-            eas_address,
-            indexer_address: Address::ZERO,
-            chain_name: config.chain_name.clone(),
-        };
+        let query_config = QueryConfig::from_strings(
+            &config.eas_address,
+            "0x0000000000000000000000000000000000000000", // indexer not needed for this query
+            format!("http://127.0.0.1:8545"),             // TODO: get RPC endpoint from config
+        )
+        .map_err(|e| format!("Failed to create query config: {}", e))?;
 
         // Query the attestation - error if not found
         let attestation =

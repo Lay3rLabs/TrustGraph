@@ -27,6 +27,8 @@
 - [ ] Wire up dao-agent component to utilizes WavsModule for zodiac, add test trigger
 - [ ] Figure out some way to pay for these services
 
+Fix:
+- [ ] eas-compute component not working (revert happening)
 
 # UI TODO
 - [ ] Toasts

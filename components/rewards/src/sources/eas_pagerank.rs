@@ -189,16 +189,62 @@ impl EasPageRankSource {
             for uid in uids {
                 match self.get_attestation_details(uid).await {
                     Ok((attester, recipient, data)) => {
+                        // Debug attestation data
+                        println!("🔍 Attestation UID: {:?}", uid);
+                        println!("   Attester: {}", attester);
+                        println!("   Recipient: {}", recipient);
+                        println!("   Data length: {}", data.len());
+
+                        if data.len() > 0 {
+                            println!(
+                                "   Data (hex): 0x{}",
+                                hex::encode(&data[..data.len().min(64)])
+                            );
+                        }
+
                         // Decode weight from attestation data
                         let weight = if data.len() >= 32 {
                             // Data is ABI encoded uint256
                             let mut weight_bytes = [0u8; 32];
                             weight_bytes.copy_from_slice(&data[..32]);
                             let weight_u256 = U256::from_be_bytes(weight_bytes);
-                            // Convert to f64 (weights are typically 0-100)
-                            weight_u256.to::<u64>() as f64
+
+                            println!("   Raw weight U256: {}", weight_u256);
+                            println!("   Weight hex: 0x{}", hex::encode(&weight_bytes));
+                            println!("   u64::MAX: {}", u64::MAX);
+                            println!(
+                                "   Overflow check: {} > {} = {}",
+                                weight_u256,
+                                U256::from(u64::MAX),
+                                weight_u256 > U256::from(u64::MAX)
+                            );
+
+                            // Handle potential overflow when converting U256 to u64
+                            // Cap weight at reasonable maximum or scale down large values
+                            if weight_u256 > U256::from(u64::MAX) {
+                                println!(
+                                    "⚠️  Large weight detected ({}), capping at maximum",
+                                    weight_u256
+                                );
+                                // For very large values, scale them down to a reasonable range
+                                // Use logarithmic scaling to handle extreme values
+                                let scaled_weight =
+                                    (weight_u256.to_string().len() as f64).max(1.0).min(1000.0);
+                                println!("   Scaled weight: {}", scaled_weight);
+                                scaled_weight
+                            } else if weight_u256.is_zero() {
+                                // Avoid zero weights which can cause issues in PageRank
+                                println!("   Zero weight, using default: 1.0");
+                                1.0
+                            } else {
+                                // Safe conversion for values that fit in u64
+                                let converted_weight = weight_u256.to::<u64>() as f64;
+                                println!("   Converted weight: {}", converted_weight);
+                                converted_weight
+                            }
                         } else {
                             // Default weight if data is missing or invalid
+                            println!("   Data too short, using default weight: 1.0");
                             1.0
                         };
 

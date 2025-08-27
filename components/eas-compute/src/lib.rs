@@ -47,9 +47,17 @@ impl Guest for Component {
             recipient_address, attestation.schemaUID
         );
 
+        // Create query config for local development (you can customize this)
+        let query_config = wavs_eas::query::QueryConfig::local();
+
         // Query the indexer for attestation count using the schema from the attestation event
         let attestation_count = block_on(async move {
-            query_received_attestation_count(recipient_address, attestation.schemaUID, None).await
+            query_received_attestation_count(
+                recipient_address,
+                attestation.schemaUID,
+                Some(query_config),
+            )
+            .await
         })?;
 
         println!("Attestation count: {:?}", attestation_count);

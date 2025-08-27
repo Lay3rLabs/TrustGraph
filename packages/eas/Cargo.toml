@@ -34,7 +34,3 @@ opt-level = "s"
 debug = false
 strip = true
 lto = true
-
-[package.metadata.component]
-package = "component:wavs-eas"
-target = "wavs:worker/wavs-world@0.5.1"
