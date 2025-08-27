@@ -2,10 +2,10 @@
 
 # Epochs
 - [x] WAVS zodiac modules to replace MerkleGov and MerkleVote
+- [x] Add LLM package / component (attester example?)
+- [x] WAVS-NFT contracts (just contracts)
+- [x] Wavs Service Manager if we want to go crazy
 - [-] Prediction market -> working hyperstition market
-- [-] Add LLM package / component (attester example?)
-- [ ] WAVS-NFT contracts (just contracts)
-- [ ] Wavs Service Manager if we want to go crazy
 
 # Next steps
 - [x] Deploy Prediction market
@@ -21,10 +21,14 @@
 - [ ] Get prediction market to actually work (currently partially working)
 - [ ] Make attestation on participating in prediction market
 - [ ] More realistic Hyperstition market resolver component
-- [ ] Clean up wavs-llm package
-- [ ] Automatically make attestations when participating in prediction market
-- [ ] Wire up new component to utilize SignerManagerModule
+- [ ] Clean up wavs-llm package (should support formatted response)
+- [ ] LLM attester should be spam filter / approver
+- [ ] Wire up new component to utilize SignerManagerModule, respond to MerkleRootUpdated Event get IPFS CID, get top N users, sync
+- [ ] Wire up dao-agent component to utilizes WavsModule for zodiac, add test trigger
 - [ ] Figure out some way to pay for these services
+
+Fix:
+- [ ] eas-compute component not working (revert happening)
 
 # UI TODO
 - [ ] Toasts
@@ -37,11 +41,11 @@
 
 # Project Organization and Cleanup TODO
 - [x] Sepolia
+- [x] Add config values to components-config.json (currently all components share the same config lol)
+- [x] Unnessary envrionement variables in Demo (many redundent ones)
 - [ ] Organize project better (put contracts in folders)
 - [ ] No IWavsTrigger2
 - [ ] Use better upstream WAVS patterns
-- [ ] Add config values to components-config.json (currently all components share the same config lol)
-- [ ] Unnessary envrionement variables in Demo (many redundent ones)
 
 ### Project organization (contracts)
 
@@ -72,12 +76,11 @@ Let's make a `misc` folder and move in the following contracts:
 - Trigger.sol
 
 # Misc improvements
+- [x] Vibe code Service UI from service.json (get IPFS hash)
 - [ ] Better computation of attestations (actually use attestation data?)
 - [ ] Revoking an attestation should lower voting power
 - [ ] Resolver that only let's people who have voting power attest.
-- [ ] Vibe code Service UI from service.json (get IPFS hash)
 - [ ] Make a generic weights contract?
-- [ ] Make a Zodiac module
 
 ### Zodiac Modules
 Let's use a zodiac module + safe to create a system with a nice fallback while we're experimenting with novel governance mechanisms.
@@ -89,17 +92,17 @@ Let's use a zodiac module + safe to create a system with a nice fallback while w
 - [x] Basic test scaffold
 
 2. MVP
-- [ ] Module for direct voting with Merkle Proofs (similar to MerkleGov + MerkleVote)
-- [ ] Module that syncs top N accounts as signers (similar to VotingPower.sol)
-- [ ] Add zodiac module for WAVS agent
-- [ ] Documentation of how these work
-- [ ] Wire up components and WAVS deployments
+- [x] Module for direct voting with Merkle Proofs (similar to MerkleGov + MerkleVote)
+- [x] Module that syncs top N accounts as signers (similar to VotingPower.sol)
+- [x] Add zodiac module for WAVS agent
+- [x] Documentation of how these work
+- [-] Wire up components and WAVS deployments
 
 3. Refinement
 - [ ] Implement and document the fallback mechanism for governance (this should be fairly straightforward with Zodiac hopefully)
 
 ### MVP Symbient
-- [ ] Add LLM Module
+- [x] Add LLM Module
 - [ ] People make an attestation (with payment, some funds go to operators)
 - [ ] Deterministic Agent evaluates suggestion ()
 - [ ] People attest to which suggestions they like the most
@@ -107,17 +110,6 @@ Let's use a zodiac module + safe to create a system with a nice fallback while w
 - [ ] Mint NFTs of responses and conversations
 - [ ] We're going to make a Network Spirituality Holy Text
 - [ ] Pay to submit a message to EN0VA and mint NFTs
-
-## NEXT FEATURE: Rewards
-
-Attestations are great for creating custom rewards payouts.
-
-The pipeline is simple:
-```
-ATTESTATION -> REWARDS CALCULATION SERVICE -> RewardsDistributor.sol
-```
-
-Can we make these reputation based?
 
 ## Future Service Improvements
 - [ ] Break out Indexer contract, could be modified to be multichain? EAS indexer component (indexes certain attestations without a resolver?)

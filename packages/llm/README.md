@@ -1,107 +1,329 @@
-# WAVS LLM WASM Component
+# WAVS LLM
+
+A WASI-compatible library for interacting with Ollama LLM API in WAVS components.
 
 ## Overview
 
-The WAVS LLM WASM Component is a WebAssembly component that enables AI-assisted interactions with smart contracts and blockchain networks. It provides a modular architecture for integrating large language models into applications that need to interpret user requests, execute transactions, and interact with custom tools. As a WebAssembly component, it can be used across multiple programming languages including Rust, Go, and TypeScript.
+The `wavs-llm` package provides a clean, simplified interface for interacting with Ollama language models within WASI components. This library has been refactored to focus exclusively on Ollama as the LLM backend, removing complexity and providing a more maintainable codebase.
 
 ## Features
 
-- **LLM Integration**: Connects to language models from providers like OpenAI and Ollama
-- **Smart Contract Interaction**: Automatically generates tools for smart contract functions
-- **Transaction Construction**: Creates properly formatted transaction payloads
-- **ABI Encoding**: Handles Ethereum ABI encoding for function calls
-- **Extensible Tools System**: Supports custom tools for additional functionality
-- **Configurable**: Flexible JSON configuration for customizing behavior
+- ✅ **Ollama-only support** - Simplified architecture focused on open-source models
+- ✅ **WASI-compatible** - Uses `wstd::http` for proper WASM/WASI compatibility
+- ✅ **Formatted responses** - Support for structured JSON responses and transactions
+- ✅ **Structured outputs** - JSON mode and schema-based structured responses
+- ✅ **Smart contract tools** - Automatic encoding of contracts into LLM-usable tools
+- ✅ **Clean API design** - Fluent configuration API with sensible defaults
+- ✅ **Comprehensive testing** - Unit tests and WASI-environment integration tests
 
-## Architecture
+## Installation
 
-The WAVS LLM WASM Component consists of several key modules:
+Add to your `Cargo.toml`:
 
-- **Client**: Handles communication with LLM providers, managing API requests and response processing
-- **Config**: Manages component configuration, including contract definitions and LLM settings
-- **Contracts**: Processes smart contract ABIs and handles transaction creation
-- **Encoding**: Provides ABI encoding for Ethereum function calls
-- **Tools**: Manages the tools system, including contract function calls and custom tools
-- **Serialization**: Handles serialization/deserialization of WIT types
+```toml
+[dependencies]
+wavs-llm = { workspace = true }
+```
 
 ## Usage
 
-### Rust Example
-
-Here's a basic example of using the WAVS LLM component in a Rust application:
+### Basic Completions
 
 ```rust
-use wavs_llm::types::{Config, Contract, LlmOptions, Message};
-use wavs_llm::client::completion;
+use wavs_llm::client::LLMClient;
 
-// Create LLM configuration
-let llm_options = LlmOptions {
-    temperature: 0.0,
-    top_p: 1.0,
-    seed: 42,
-    max_tokens: Some(500),
-    context_window: Some(4096),
-};
+// Create a client with default configuration
+let client = LLMClient::new("llama2".to_string());
 
-// Define system message
-let system_message = "You are an AI assistant that helps users interact with blockchain applications.";
+// Simple text completion
+let response = client.complete("What is 2+2?")?;
+println!("Response: {}", response);
 
-// Create configuration
-let config = Config {
-    model: "llama3.2".to_string(),
-    llm_config: llm_options,
-    messages: vec![Message {
-        role: "system".into(),
-        content: Some(system_message.into()),
-        tool_calls: None,
-        tool_call_id: None,
-        name: None,
-    }],
-    contracts: vec![Contract {
-        name: "USDC".into(),
-        address: "0xb7278a61aa25c888815afc32ad3cc52ff24fe575".into(),
-        abi: r#"[{"type":"function","name":"transfer","inputs":[{"name":"to","type":"address","internalType":"address"},{"name":"value","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"nonpayable"}]"#.into(),
-        description: Some("USDC is a stablecoin pegged to the US Dollar".into()),
-    }],
-    config: vec![],
-};
-
-// User prompt
-let user_prompt = "How can I transfer USDC tokens?";
-
-// Add user message to config
-config.messages.push(Message {
-    role: "user".into(),
-    content: Some(user_prompt.into()),
-    tool_calls: None,
-    tool_call_id: None,
-    name: None,
-});
-
-// Get completion
-let result = completion(&config).await.unwrap();
-println!("LLM Response: {}", result.message.content.unwrap_or_default());
+// With system context
+let response = client.complete_with_system(
+    "You are a helpful math tutor",
+    "Explain why 2+2 equals 4"
+)?;
+println!("Response: {}", response);
 ```
 
-### Real-World Usage
+### With Custom Configuration
 
-For a complete, working example of the WAVS LLM component in action, see the [DAO Agent component](../components/dao-agent) which demonstrates:
+```rust
+use wavs_llm::client::LLMClient;
+use wavs_llm::config::LlmConfig;
 
-- Loading configuration from external sources (HTTP or IPFS)
-- Dynamic balance checking for tokens
-- Smart contract interactions
-- Token transfers with proper decimal handling
-- Security measures for financial transactions
+let config = LlmConfig::new()
+    .with_temperature(0.7)
+    .with_max_tokens(500)
+    .with_top_p(0.95)
+    .with_seed(42);
+
+let client = LLMClient::with_config("llama2".to_string(), config);
+
+// All convenience methods work with custom config
+let response = client.complete("Write a haiku about coding")?;
+```
+
+### Advanced Chat Completion
+
+For more control, you can still use the full chat completion API:
+
+```rust
+use wavs_llm::client::{LLMClient, Message};
+
+let messages = vec![
+    Message::new_system("You are a helpful assistant.".to_string()),
+    Message::new_user("What is 2+2?".to_string()),
+];
+
+let response = client.chat_completion(messages, None)?;
+println!("Response: {:?}", response.content);
+```
+
+### Using Tools
+
+```rust
+use wavs_llm::tools::{Tool, Function};
+use serde_json::json;
+
+let tools = vec![
+    Tool {
+        tool_type: "function".to_string(),
+        function: Function {
+            name: "get_weather".to_string(),
+            description: Some("Get the current weather".to_string()),
+            parameters: Some(json!({
+                "type": "object",
+                "properties": {
+                    "location": {
+                        "type": "string",
+                        "description": "City and state"
+                    }
+                },
+                "required": ["location"]
+            })),
+        },
+    }
+];
+
+let response = client.chat_completion(messages, Some(tools))?;
+```
+
+### Structured Responses
+
+The LLM client provides automatic structured output with compile-time type safety:
+
+```rust
+use serde::Deserialize;
+use schemars::JsonSchema;
+
+// Define your response type with automatic schema derivation
+#[derive(Deserialize, JsonSchema)]
+struct Analysis {
+    sentiment: String,
+    score: f32,
+    keywords: Vec<String>,
+}
+
+// Get structured response with automatic schema generation
+let analysis: Analysis = client.complete_structured(
+    "Analyze: The market is looking bullish today"
+)?;
+println!("Sentiment: {}, Score: {}", analysis.sentiment, analysis.score);
+
+// With system context for better results
+let analysis: Analysis = client.complete_structured_with_system(
+    "You are a financial sentiment analyzer",
+    "Analyze: Strong earnings beat expectations"
+)?;
+```
+
+#### Complex Nested Structures
+
+```rust
+#[derive(Deserialize, JsonSchema)]
+struct TaskList {
+    title: String,
+    tasks: Vec<Task>,
+    priority: String,
+}
+
+#[derive(Deserialize, JsonSchema)]
+struct Task {
+    id: u32,
+    description: String,
+    completed: bool,
+}
+
+// Automatic schema generation handles complex nested types
+let tasks: TaskList = client.complete_structured(
+    "Create a task list for launching a new product"
+)?;
+
+for task in &tasks.tasks {
+    println!("[{}] {} - {}", 
+        task.id, 
+        task.description, 
+        if task.completed { "✓" } else { "○" }
+    );
+}
+```
+
+### Smart Contract Integration
+
+```rust
+use wavs_llm::contracts::Contract;
+use wavs_llm::tools::Tools;
+
+// Define a contract
+let contract = Contract::new(
+    "USDC",
+    "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+    r#"[{"type":"function","name":"transfer","inputs":[...],"outputs":[...]}]"#
+);
+
+// Generate tools from contract ABI
+let contract_tools = Tools::tools_from_contract(&contract);
+
+// Use with LLM
+let response = client.chat_completion(messages, Some(&contract_tools))?;
+```
+
+## Configuration Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `temperature` | `Option<f32>` | `None` | Controls randomness (0.0-2.0) |
+| `max_tokens` | `Option<u32>` | `None` | Maximum tokens to generate |
+| `top_p` | `Option<f32>` | `None` | Controls diversity (0.0-1.0) |
+| `seed` | `Option<u32>` | `None` | Seed for deterministic outputs |
 
 ## Environment Variables
 
-The WAVS LLM component uses the following environment variables:
+- `WAVS_ENV_OLLAMA_API_URL`: Ollama API endpoint (default: `http://localhost:11434`)
 
-- `WAVS_ENV_OPENAI_API_KEY`: OpenAI API key for LLM access
-- `WAVS_ENV_OPENAI_API_URL`: OpenAI API endpoint (default: "https://api.openai.com/v1/chat/completions")
-- `WAVS_ENV_OLLAMA_API_URL`: Ollama API endpoint for local LLM hosting
-- `WAVS_ENV_IPFS_GATEWAY_URL`: IPFS gateway URL for loading configurations (default: "https://gateway.lighthouse.storage")
+## Testing
+
+### Unit Tests
+
+Run unit tests (no external dependencies required):
+
+```bash
+cargo test --lib
+```
+
+### Integration Tests
+
+Integration tests require:
+1. Ollama running locally
+2. A WASI runtime environment
+
+See [docs/TESTING.md](docs/TESTING.md) for detailed testing information.
+
+**Important:** This is a library package designed to be imported by WASI components. Direct use of `cargo component test` will not work as this package doesn't export a `run` function.
+
+## Architecture
+
+### Key Components
+
+- **`client`** - Main LLM client implementation
+- **`config`** - Configuration structures and builders
+- **`tools`** - Tool definitions and contract-to-tool conversion
+- **`contracts`** - Smart contract interaction utilities
+- **`encoding`** - ABI encoding/decoding utilities
+- **`errors`** - Error types and handling
+
+### WASI Compatibility
+
+This library uses `wstd::http::Client` for HTTP requests, ensuring full compatibility with WASI environments. This means:
+- HTTP requests work correctly in WASM components
+- No native dependencies that would break WASI compatibility
+- Proper async handling with `wstd::runtime::block_on`
+
+## Migration from Previous Version
+
+### Key Changes
+
+1. **Removed OpenAI support** - Only Ollama is supported
+2. **Simplified configuration** - `LlmOptions` → `LlmConfig` with optional fields
+3. **Better error handling** - New `LlmError` type with specific error variants
+4. **Environment variables** - Changed from `OLLAMA_BASE_URL` to `WAVS_ENV_OLLAMA_API_URL`
+
+### Breaking Changes
+
+- No longer supports OpenAI models (gpt-3.5-turbo, gpt-4, etc.)
+- Configuration structure has changed
+- All configuration values are now optional
+
+## Migration Guide
+
+### Migrating to the Simplified API
+
+The new API provides a much cleaner developer experience while maintaining backward compatibility:
+
+#### Old API
+```rust
+// Manual message construction
+let messages = vec![
+    Message::new_user("What is 2+2?".to_string()),
+];
+let response = client.chat_completion(messages, None)?;
+let text = response.content.unwrap();
+
+// Structured responses with manual schema
+let schema = json!({
+    "type": "object",
+    "properties": {
+        "sentiment": {"type": "string"},
+        "score": {"type": "number"}
+    }
+});
+let response = client.chat_completion_structured::<Analysis>(messages, None, schema)?;
+```
+
+#### New API
+```rust
+// Simple completion
+let text = client.complete("What is 2+2?")?;
+
+// Structured response with automatic schema
+#[derive(Deserialize, JsonSchema)]
+struct Analysis {
+    sentiment: String,
+    score: f32,
+}
+let analysis: Analysis = client.complete_structured("Analyze: text here")?;
+```
+
+### Key Improvements
+
+1. **Automatic Schema Generation**: No need to manually write JSON schemas
+2. **Simpler Methods**: `complete()` and `complete_structured()` for common use cases
+3. **Type Safety**: Schema is derived from your Rust types at compile time
+4. **Less Boilerplate**: No manual message construction for simple prompts
+
+### Backward Compatibility
+
+All existing code continues to work. The new methods are additions, not replacements:
+- `chat_completion()` - Still available for full control
+- `chat_completion_with_format()` - Still available for custom formats
+- `chat_completion_structured()` - Still available but consider using `complete_structured()`
+
+## Requirements
+
+- Rust 1.70+
+- Ollama (for runtime)
+- WASI runtime (for deployment)
 
 ## License
 
-[MIT License](LICENSE)
+See the repository's LICENSE file for details.
+
+## Contributing
+
+Contributions are welcome! Please ensure:
+- All unit tests pass
+- Code follows existing patterns
+- Documentation is updated
+- Changes maintain WASI compatibility

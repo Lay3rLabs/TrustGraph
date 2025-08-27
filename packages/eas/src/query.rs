@@ -1,4 +1,3 @@
-use crate::bindings::host::{config_var, get_evm_chain_config};
 use alloy_network::Ethereum;
 use alloy_provider::{Provider, RootProvider};
 use alloy_rpc_types::{TransactionInput, TransactionRequest};
@@ -81,50 +80,68 @@ sol! {
 pub struct QueryConfig {
     pub eas_address: Address,
     pub indexer_address: Address,
-    pub chain_name: String,
+    pub rpc_endpoint: String,
 }
 
 impl QueryConfig {
-    /// Creates a QueryConfig from WAVS component configuration
-    pub fn from_wavs_config() -> Result<Self, String> {
-        let eas_address_str =
-            config_var("eas_address").ok_or("Missing 'eas_address' in component config")?;
-        let indexer_address_str =
-            config_var("indexer_address").ok_or("Missing 'indexer_address' in component config")?;
-        let chain_name =
-            config_var("chain_name").ok_or("Missing 'chain_name' in component config")?;
+    /// Creates a new QueryConfig with the provided parameters
+    pub fn new(eas_address: Address, indexer_address: Address, rpc_endpoint: String) -> Self {
+        Self { eas_address, indexer_address, rpc_endpoint }
+    }
 
-        let eas_address = eas_address_str
+    /// Creates a QueryConfig from string addresses
+    pub fn from_strings(
+        eas_address: &str,
+        indexer_address: &str,
+        rpc_endpoint: String,
+    ) -> Result<Self, String> {
+        let eas_address = eas_address
             .parse::<Address>()
             .map_err(|e| format!("Invalid EAS address format: {}", e))?;
-        let indexer_address = indexer_address_str
+        let indexer_address = indexer_address
             .parse::<Address>()
             .map_err(|e| format!("Invalid indexer address format: {}", e))?;
 
-        Ok(Self { eas_address, indexer_address, chain_name })
+        Ok(Self::new(eas_address, indexer_address, rpc_endpoint))
+    }
+
+    /// Creates a QueryConfig for local development
+    pub fn local() -> Self {
+        Self {
+            eas_address: Address::from([0u8; 20]),
+            indexer_address: Address::from([0u8; 20]),
+            rpc_endpoint: "http://127.0.0.1:8545".to_string(),
+        }
+    }
+
+    /// Creates a QueryConfig for Sepolia testnet
+    pub fn sepolia(eas_address: Address, indexer_address: Address) -> Self {
+        Self::new(
+            eas_address,
+            indexer_address,
+            "https://sepolia.infura.io/v3/YOUR_API_KEY".to_string(),
+        )
+    }
+
+    /// Creates a QueryConfig for Ethereum mainnet
+    pub fn mainnet(eas_address: Address, indexer_address: Address) -> Self {
+        Self::new(
+            eas_address,
+            indexer_address,
+            "https://mainnet.infura.io/v3/YOUR_API_KEY".to_string(),
+        )
     }
 }
 
 impl Default for QueryConfig {
     fn default() -> Self {
-        // Fallback to local development values if config reading fails
-        Self {
-            eas_address: Address::from([0u8; 20]),
-            indexer_address: Address::from([0u8; 20]),
-            chain_name: "local".to_string(),
-        }
+        Self::local()
     }
 }
 
 /// Creates a provider instance for EVM queries
-async fn create_provider(chain_name: &str) -> Result<RootProvider<Ethereum>, String> {
-    let chain_config = get_evm_chain_config(chain_name)
-        .ok_or(format!("Failed to get chain config for {}", chain_name))?;
-
-    let provider = new_evm_provider::<Ethereum>(
-        chain_config.http_endpoint.ok_or("No HTTP endpoint configured")?,
-    );
-
+async fn create_provider(rpc_endpoint: &str) -> Result<RootProvider<Ethereum>, String> {
+    let provider = new_evm_provider::<Ethereum>(rpc_endpoint.to_string());
     Ok(provider)
 }
 
@@ -157,9 +174,9 @@ pub async fn query_received_attestation_count(
     schema_uid: FixedBytes<32>,
     config: Option<QueryConfig>,
 ) -> Result<U256, String> {
-    let config = config.unwrap_or_else(|| QueryConfig::from_wavs_config().unwrap_or_default());
+    let config = config.unwrap_or_default();
     println!("Querying with config {:?}", config);
-    let provider = create_provider(&config.chain_name).await?;
+    let provider = create_provider(&config.rpc_endpoint).await?;
 
     let count_call =
         IIndexer::getReceivedAttestationUIDCountCall { recipient, schemaUID: schema_uid };
@@ -184,8 +201,8 @@ pub async fn query_received_attestation_uids(
     reverse_order: bool,
     config: Option<QueryConfig>,
 ) -> Result<Vec<FixedBytes<32>>, String> {
-    let config = config.unwrap_or_else(|| QueryConfig::from_wavs_config().unwrap_or_default());
-    let provider = create_provider(&config.chain_name).await?;
+    let config = config.unwrap_or_default();
+    let provider = create_provider(&config.rpc_endpoint).await?;
 
     let uids_call = IIndexer::getReceivedAttestationUIDsCall {
         recipient,
@@ -214,8 +231,8 @@ pub async fn query_sent_attestation_count(
     schema_uid: FixedBytes<32>,
     config: Option<QueryConfig>,
 ) -> Result<U256, String> {
-    let config = config.unwrap_or_else(|| QueryConfig::from_wavs_config().unwrap_or_default());
-    let provider = create_provider(&config.chain_name).await?;
+    let config = config.unwrap_or_default();
+    let provider = create_provider(&config.rpc_endpoint).await?;
 
     let count_call = IIndexer::getSentAttestationUIDCountCall { attester, schemaUID: schema_uid };
 
@@ -239,8 +256,8 @@ pub async fn query_sent_attestation_uids(
     reverse_order: bool,
     config: Option<QueryConfig>,
 ) -> Result<Vec<FixedBytes<32>>, String> {
-    let config = config.unwrap_or_else(|| QueryConfig::from_wavs_config().unwrap_or_default());
-    let provider = create_provider(&config.chain_name).await?;
+    let config = config.unwrap_or_default();
+    let provider = create_provider(&config.rpc_endpoint).await?;
 
     let uids_call = IIndexer::getSentAttestationUIDsCall {
         attester,
@@ -268,8 +285,8 @@ pub async fn query_schema_attestation_count(
     schema_uid: FixedBytes<32>,
     config: Option<QueryConfig>,
 ) -> Result<U256, String> {
-    let config = config.unwrap_or_else(|| QueryConfig::from_wavs_config().unwrap_or_default());
-    let provider = create_provider(&config.chain_name).await?;
+    let config = config.unwrap_or_default();
+    let provider = create_provider(&config.rpc_endpoint).await?;
 
     let count_call = IIndexer::getSchemaAttestationUIDCountCall { schemaUID: schema_uid };
 
@@ -289,8 +306,8 @@ pub async fn query_schema_attestation_uids(
     reverse_order: bool,
     config: Option<QueryConfig>,
 ) -> Result<Vec<FixedBytes<32>>, String> {
-    let config = config.unwrap_or_else(|| QueryConfig::from_wavs_config().unwrap_or_default());
-    let provider = create_provider(&config.chain_name).await?;
+    let config = config.unwrap_or_default();
+    let provider = create_provider(&config.rpc_endpoint).await?;
 
     let uids_call = IIndexer::getSchemaAttestationUIDsCall {
         schemaUID: schema_uid,
@@ -319,8 +336,8 @@ pub async fn query_schema_attester_recipient_count(
     recipient: Address,
     config: Option<QueryConfig>,
 ) -> Result<U256, String> {
-    let config = config.unwrap_or_else(|| QueryConfig::from_wavs_config().unwrap_or_default());
-    let provider = create_provider(&config.chain_name).await?;
+    let config = config.unwrap_or_default();
+    let provider = create_provider(&config.rpc_endpoint).await?;
 
     let count_call = IIndexer::getSchemaAttesterRecipientAttestationUIDCountCall {
         schemaUID: schema_uid,
@@ -349,8 +366,8 @@ pub async fn query_schema_attester_recipient_uids(
     reverse_order: bool,
     config: Option<QueryConfig>,
 ) -> Result<Vec<FixedBytes<32>>, String> {
-    let config = config.unwrap_or_else(|| QueryConfig::from_wavs_config().unwrap_or_default());
-    let provider = create_provider(&config.chain_name).await?;
+    let config = config.unwrap_or_default();
+    let provider = create_provider(&config.rpc_endpoint).await?;
 
     let uids_call = IIndexer::getSchemaAttesterRecipientAttestationUIDsCall {
         schemaUID: schema_uid,
@@ -386,8 +403,8 @@ pub async fn is_attestation_indexed(
     attestation_uid: FixedBytes<32>,
     config: Option<QueryConfig>,
 ) -> Result<bool, String> {
-    let config = config.unwrap_or_else(|| QueryConfig::from_wavs_config().unwrap_or_default());
-    let provider = create_provider(&config.chain_name).await?;
+    let config = config.unwrap_or_default();
+    let provider = create_provider(&config.rpc_endpoint).await?;
 
     let indexed_call = IIndexer::isAttestationIndexedCall { attestationUID: attestation_uid };
 
@@ -404,8 +421,8 @@ pub async fn query_attestation(
     attestation_uid: FixedBytes<32>,
     config: Option<QueryConfig>,
 ) -> Result<IEAS::Attestation, String> {
-    let config = config.unwrap_or_else(|| QueryConfig::from_wavs_config().unwrap_or_default());
-    let provider = create_provider(&config.chain_name).await?;
+    let config = config.unwrap_or_default();
+    let provider = create_provider(&config.rpc_endpoint).await?;
 
     let attestation_call = IEAS::getAttestationCall { uid: attestation_uid };
 
@@ -483,4 +500,65 @@ pub async fn query_recent_sent_attestations(
     .await?;
 
     query_attestations_batch(uids, config).await
+}
+
+// =============================================================================
+// Builder Pattern for Easy Configuration
+// =============================================================================
+
+/// Builder for QueryConfig to provide a fluent API
+pub struct QueryConfigBuilder {
+    eas_address: Option<Address>,
+    indexer_address: Option<Address>,
+    rpc_endpoint: Option<String>,
+}
+
+impl QueryConfigBuilder {
+    pub fn new() -> Self {
+        Self { eas_address: None, indexer_address: None, rpc_endpoint: None }
+    }
+
+    pub fn eas_address(mut self, address: Address) -> Self {
+        self.eas_address = Some(address);
+        self
+    }
+
+    pub fn eas_address_str(mut self, address: &str) -> Result<Self, String> {
+        let addr =
+            address.parse::<Address>().map_err(|e| format!("Invalid EAS address format: {}", e))?;
+        self.eas_address = Some(addr);
+        Ok(self)
+    }
+
+    pub fn indexer_address(mut self, address: Address) -> Self {
+        self.indexer_address = Some(address);
+        self
+    }
+
+    pub fn indexer_address_str(mut self, address: &str) -> Result<Self, String> {
+        let addr = address
+            .parse::<Address>()
+            .map_err(|e| format!("Invalid indexer address format: {}", e))?;
+        self.indexer_address = Some(addr);
+        Ok(self)
+    }
+
+    pub fn rpc_endpoint(mut self, endpoint: String) -> Self {
+        self.rpc_endpoint = Some(endpoint);
+        self
+    }
+
+    pub fn build(self) -> Result<QueryConfig, String> {
+        Ok(QueryConfig {
+            eas_address: self.eas_address.ok_or("EAS address is required")?,
+            indexer_address: self.indexer_address.ok_or("Indexer address is required")?,
+            rpc_endpoint: self.rpc_endpoint.ok_or("RPC endpoint is required")?,
+        })
+    }
+}
+
+impl Default for QueryConfigBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
 }

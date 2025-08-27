@@ -4,6 +4,7 @@ use crate::bindings::WasmResponse;
 use alloy_primitives::{FixedBytes, U256};
 use alloy_sol_types::SolValue;
 use anyhow::Result;
+use std::cmp::min;
 use wavs_wasi_utils::decode_event_log_data;
 
 /// Represents the destination where the trigger output should be sent
@@ -46,7 +47,7 @@ pub fn decode_trigger_event(
                 schema: event.schema,
                 data: AttestationRequestData {
                     recipient: event.recipient,
-                    expirationTime: 0,                // No expiration
+                    expirationTime: U256::ZERO,       // No expiration
                     revocable: true,                  // Default to revocable
                     refUID: FixedBytes::<32>::ZERO,   // No reference UID
                     data: event.data.to_vec().into(), // Custom attestation data
@@ -125,7 +126,7 @@ sol! {
     /// @notice A struct representing the arguments of the attestation request.
     struct AttestationRequestData {
         address recipient; // The recipient of the attestation.
-        uint64 expirationTime; // The time when the attestation expires (Unix timestamp).
+        uint256 expirationTime; // The time when the attestation expires (Unix timestamp).
         bool revocable; // Whether the attestation is revocable.
         bytes32 refUID; // The UID of the related attestation.
         bytes data; // Custom attestation data.

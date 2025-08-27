@@ -65,7 +65,7 @@ contract MerkleGovModule is Module, IWavsServiceHandler {
 
     event ProposalExecuted(uint256 indexed proposalId);
     event ProposalCancelled(uint256 indexed proposalId);
-    event MerkleRootUpdated(bytes32 indexed root, bytes32 ipfsHash);
+    event MerkleRootUpdated(bytes32 indexed root, bytes32 ipfsHash, string ipfsHashCid);
     event QuorumUpdated(uint256 newQuorum);
     event VotingDelayUpdated(uint256 newDelay);
     event VotingPeriodUpdated(uint256 newPeriod);
@@ -313,7 +313,7 @@ contract MerkleGovModule is Module, IWavsServiceHandler {
         ipfsHash = avsOutput.ipfsHashData;
         ipfsHashCid = avsOutput.ipfsHash;
 
-        emit MerkleRootUpdated(avsOutput.root, avsOutput.ipfsHashData);
+        emit MerkleRootUpdated(avsOutput.root, avsOutput.ipfsHashData, avsOutput.ipfsHash);
     }
 
     /**
