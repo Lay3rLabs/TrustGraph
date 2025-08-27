@@ -1,5 +1,3 @@
-#[allow(warnings)]
-mod bindings;
 pub mod client;
 pub mod config;
 pub mod contracts;
