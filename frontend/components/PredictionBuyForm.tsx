@@ -22,8 +22,6 @@ import {
 } from "@/lib/contracts";
 import { parseUnits, formatUnits } from "viem";
 import { HyperstitionMarket } from "./PredictionMarketDetail";
-import { waitForTransactionReceipt } from "@wagmi/core";
-import { config } from "@/lib/wagmi";
 import { writeEthContractAndWait } from "@/lib/utils";
 
 interface PredictionBuyFormProps {
@@ -36,7 +34,6 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
   onSuccess,
 }) => {
   const { address, isConnected } = useAccount();
-  const { writeContractAsync, isPending: isWriting } = useWriteContract();
 
   const [formData, setFormData] = useState({
     outcome: "YES" as "YES" | "NO",
@@ -346,6 +343,7 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     setSuccess(null);
   };
 
+  const [isBuying, setIsBuying] = useState(false);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -363,6 +361,7 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
       return;
     }
 
+    setIsBuying(true);
     setError(null);
     setSuccess(null);
 
@@ -408,6 +407,8 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     } catch (err: any) {
       console.error("Error buying prediction tokens:", err);
       setError(err.message || "Failed to buy prediction tokens");
+    } finally {
+      setIsBuying(false);
     }
   };
 
@@ -588,10 +589,10 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
 
         <Button
           type="submit"
-          disabled={!isConnected || isWriting || !formData.collateralAmount}
+          disabled={!isConnected || isBuying || !formData.collateralAmount}
           className="w-full mobile-terminal-btn"
         >
-          {isWriting ? (
+          {isBuying ? (
             <span className="terminal-dim">Processing...</span>
           ) : (
             <span className="terminal-command">
