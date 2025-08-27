@@ -13,8 +13,9 @@ contract IndexerResolver is SchemaResolver {
     Indexer public immutable indexer;
 
     /// @notice Emitted when an attestation is automatically indexed.
+    /// @param eas The EAS contract instance.
     /// @param uid The UID of the indexed attestation.
-    event AttestationIndexed(bytes32 indexed uid);
+    event AttestationIndexed(address indexed eas, bytes32 indexed uid);
 
     /// @notice Creates a new IndexerResolver instance.
     /// @param eas The EAS contract instance.
@@ -32,7 +33,7 @@ contract IndexerResolver is SchemaResolver {
 
         // Emitted so the WAVS eas-compute component can be more generic.
         emit IEAS.Attested(attestation.recipient, attestation.attester, attestation.uid, attestation.schema);
-        emit AttestationIndexed(attestation.uid);
+        emit AttestationIndexed(address(_eas), attestation.uid);
 
         return true;
     }

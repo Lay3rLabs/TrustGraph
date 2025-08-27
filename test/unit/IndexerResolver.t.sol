@@ -51,7 +51,7 @@ contract IndexerResolverTest is Test {
 
         // Expect the AttestationIndexed event to be emitted
         vm.expectEmit(false, false, false, false);
-        emit IndexerResolver.AttestationIndexed(bytes32(0)); // Check event signature only
+        emit IndexerResolver.AttestationIndexed(address(eas), bytes32(0)); // Check event signature only
 
         // Create an attestation which will trigger the resolver
         bytes32 uid = eas.attest(
@@ -90,7 +90,7 @@ contract IndexerResolverTest is Test {
         for (uint256 i = 0; i < values.length; i++) {
             // Expect the AttestationIndexed event
             vm.expectEmit(false, false, false, false);
-            emit IndexerResolver.AttestationIndexed(bytes32(0));
+            emit IndexerResolver.AttestationIndexed(address(eas), bytes32(0));
 
             uids[i] = eas.attest(
                 AttestationRequest({
@@ -269,7 +269,7 @@ contract IndexerResolverTest is Test {
 
         // Expect the AttestationIndexed event
         vm.expectEmit(false, false, false, false);
-        emit IndexerResolver.AttestationIndexed(bytes32(0));
+        emit IndexerResolver.AttestationIndexed(address(eas), bytes32(0));
 
         // Create attestation
         bytes32 uid = eas.attest(

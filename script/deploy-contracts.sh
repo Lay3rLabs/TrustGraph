@@ -76,6 +76,15 @@ forge script script/DeployZodiacSafes.s.sol:DeployZodiacSafes \
 echo "🌊 Deploying Geyser contracts..."
 forge create Geyser --json --rpc-url ${RPC_URL} --broadcast --private-key $FUNDED_KEY --constructor-args "${WAVS_SERVICE_MANAGER_ADDRESS}" > .docker/geyser_deploy.json
 
+echo "🌐 Deploying UniversalIndexer contract..."
+
+# Deploy UniversalIndexer contract using Foundry script
+forge script script/DeployUniversalIndexer.s.sol:DeployUniversalIndexer \
+    --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
+    --rpc-url "${RPC_URL}" \
+    --private-key "${FUNDED_KEY}" \
+    --broadcast
+
 # Extract deployed addresses from EAS deployment
 export EAS_REGISTRY_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("SchemaRegistry deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 export EAS_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("EAS deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
@@ -122,6 +131,9 @@ export SAFE2_SIGNER_MODULE=$(jq -r '.safe2_signer_module' .docker/zodiac_safes_d
 export SAFE_SINGLETON=$(jq -r '.safe_singleton' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
 export SAFE_FACTORY=$(jq -r '.safe_factory' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
 
+# Extract deployed addresses from UniversalIndexer deployment
+export UNIVERSAL_INDEXER_ADDR=$(jq -r '.universal_indexer' .docker/universal_indexer_deploy.json 2>/dev/null || echo "")
+
 # Use EAS Attest Trigger as the main service trigger
 export SERVICE_TRIGGER_ADDR="${EAS_ATTEST_TRIGGER_ADDR}"
 
@@ -130,6 +142,9 @@ cat > .docker/deployment_summary.json << EOF
 {
   "rpc_url": "${RPC_URL}",
   "wavs_service_manager": "${WAVS_SERVICE_MANAGER_ADDRESS}",
+  "universal_indexer": {
+    "universal_indexer": "${UNIVERSAL_INDEXER_ADDR}"
+  },
   "eas_contracts": {
     "schema_registry": "${EAS_REGISTRY_ADDR}",
     "eas": "${EAS_ADDR}",
@@ -190,6 +205,7 @@ echo ""
 echo "📋 Deployment Summary:"
 echo "   RPC_URL: ${RPC_URL}"
 echo "   WAVS_SERVICE_MANAGER_ADDRESS: ${WAVS_SERVICE_MANAGER_ADDRESS}"
+echo "   UNIVERSAL_INDEXER_ADDR: ${UNIVERSAL_INDEXER_ADDR}"
 echo ""
 echo "🏗️  EAS Contracts:"
 echo "   EAS_REGISTRY_ADDR: ${EAS_REGISTRY_ADDR}"
@@ -245,6 +261,7 @@ echo "📄 Governance deployment logs saved to .docker/governance_deploy.json"
 echo "📄 Rewards deployment details saved to .docker/rewards_deploy.json"
 echo "📄 Prediction Market deployment details saved to .docker/prediction_market_deploy.json"
 echo "📄 Zodiac Safes deployment details saved to .docker/zodiac_safes_deploy.json"
+echo "📄 UniversalIndexer deployment details saved to .docker/universal_indexer_deploy.json"
 
 # Update environment variables for other scripts
 export SERVICE_SUBMISSION_ADDR="${EAS_ATTESTER_ADDR}"  # For backwards compatibility

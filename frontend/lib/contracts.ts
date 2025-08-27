@@ -171,7 +171,7 @@ export const attesterAbi = [
 ] as const
 
 export const attesterAddress =
-  '0x1d7608DBb562F9d4bac2591D57212AE8fdC50E6D' as const
+  '0x08DD289a764cd99a5e812B9A484363F0430D4130' as const
 
 export const attesterConfig = {
   address: attesterAddress,
@@ -723,7 +723,7 @@ export const conditionalTokensAbi = [
 ] as const
 
 export const conditionalTokensAddress =
-  '0x8c2034AD0630CE1D30053B976c01c312B4e246ad' as const
+  '0xc9f272b19ecE7b232634e2fDcdc92f444631793e' as const
 
 export const conditionalTokensConfig = {
   address: conditionalTokensAddress,
@@ -1321,7 +1321,7 @@ export const easAbi = [
   { type: 'error', inputs: [], name: 'WrongSchema' },
 ] as const
 
-export const easAddress = '0xd273195a8858e276C4d4869793D0152824C56F59' as const
+export const easAddress = '0x7A88C248E42Df150d4EEb4625f7DaCB8C601da13' as const
 
 export const easConfig = { address: easAddress, abi: easAbi } as const
 
@@ -1407,7 +1407,7 @@ export const easAttestTriggerAbi = [
 ] as const
 
 export const easAttestTriggerAddress =
-  '0xd192dB635DaF6a250B4e97E528170AC32e226FEb' as const
+  '0x5552a057A5C848212Ff8950557202B6665ec9a48' as const
 
 export const easAttestTriggerConfig = {
   address: easAttestTriggerAddress,
@@ -2171,7 +2171,7 @@ export const enovaAbi = [
 ] as const
 
 export const enovaAddress =
-  '0x874413C13a0183066b2856D92613142b281778Cd' as const
+  '0x8feBfCd5dA77584b92e7b6bd121C2C92e039eD2e' as const
 
 export const enovaConfig = { address: enovaAddress, abi: enovaAbi } as const
 
@@ -2754,7 +2754,7 @@ export const gnosisSafeAbi = [
 ] as const
 
 export const gnosisSafeAddress =
-  '0xe69BF91521B0797A4C4bB4e7a6b691e057E26077' as const
+  '0xcB0DC4fb68515DD5368e35Bc96187b02f05C7a51' as const
 
 export const gnosisSafeConfig = {
   address: gnosisSafeAddress,
@@ -2775,7 +2775,7 @@ export const gnosisSafeProxyAbi = [
 ] as const
 
 export const gnosisSafeProxyAddress =
-  '0xC74b131bCd98856fe90582E86A984Ee416CC34bF' as const
+  '0x27667e350b3AD80510cedc0667684501ceb0EbA6' as const
 
 export const gnosisSafeProxyConfig = {
   address: gnosisSafeProxyAddress,
@@ -2937,7 +2937,7 @@ export const indexerAbi = [
 ] as const
 
 export const indexerAddress =
-  '0x835Ea27977A6df339543852E7d4bAfa378776874' as const
+  '0x69F78115d210b871b87836023e71d67eFBcbCcF5' as const
 
 export const indexerConfig = {
   address: indexerAddress,
@@ -3085,6 +3085,7 @@ export const indexerResolverAbi = [
     type: 'event',
     anonymous: false,
     inputs: [
+      { name: 'eas', internalType: 'address', type: 'address', indexed: true },
       { name: 'uid', internalType: 'bytes32', type: 'bytes32', indexed: true },
     ],
     name: 'AttestationIndexed',
@@ -3123,7 +3124,7 @@ export const indexerResolverAbi = [
 ] as const
 
 export const indexerResolverAddress =
-  '0x8a5B9E387e91Fe3aC14c8734C22092b1b116351D' as const
+  '0x47D764D81ecF7732F3a12255200C00f404663E6B' as const
 
 export const indexerResolverConfig = {
   address: indexerResolverAddress,
@@ -3510,7 +3511,7 @@ export const lmsrMarketMakerAbi = [
 ] as const
 
 export const lmsrMarketMakerAddress =
-  '0x83BDA76BA9e8863C5e8FA0392a6495d418B55885' as const
+  '0xDF4982D968621BDed20497E5242De7CC5a74AE87' as const
 
 export const lmsrMarketMakerConfig = {
   address: lmsrMarketMakerAddress,
@@ -4379,7 +4380,7 @@ export const merkleGovModuleAbi = [
 ] as const
 
 export const merkleGovModuleAddress =
-  '0xde6a24D869d133b342B31fA59f0C4ed08ca81273' as const
+  '0x74478615DF4F3569fFbc8f262e6A8D30F9637E71' as const
 
 export const merkleGovModuleConfig = {
   address: merkleGovModuleAddress,
@@ -4609,7 +4610,7 @@ export const mockUsdcAbi = [
 ] as const
 
 export const mockUsdcAddress =
-  '0x49bF430ce5cc828F6E6477e306d7233217b8780e' as const
+  '0x5BCd2c1BC46d34bd2CCFBa339c5DA208A1Bc9981' as const
 
 export const mockUsdcConfig = {
   address: mockUsdcAddress,
@@ -5130,7 +5131,7 @@ export const predictionMarketFactoryAbi = [
 ] as const
 
 export const predictionMarketFactoryAddress =
-  '0x73316564278814E36e0e755257cA2EE033f640EB' as const
+  '0x2c97Dd3BCA2D4B783cdc478287190d3BD5530334' as const
 
 export const predictionMarketFactoryConfig = {
   address: predictionMarketFactoryAddress,
@@ -5299,7 +5300,7 @@ export const predictionMarketOracleControllerAbi = [
 ] as const
 
 export const predictionMarketOracleControllerAddress =
-  '0xBF92F4Fb7Cb7AfBd8a0F3d5E67d05EBA61af75C6' as const
+  '0xbC539E727B2a0Ad3aa0AEC34834f853D60F3Bb76' as const
 
 export const predictionMarketOracleControllerConfig = {
   address: predictionMarketOracleControllerAddress,
@@ -5755,7 +5756,7 @@ export const rewardDistributorAbi = [
 ] as const
 
 export const rewardDistributorAddress =
-  '0x3859c1AE42AfCf6C854d436D790074467186C161' as const
+  '0x981893D30E3DfE8Acd4D76B211A097d20c4AD58a' as const
 
 export const rewardDistributorConfig = {
   address: rewardDistributorAddress,
@@ -5799,7 +5800,7 @@ export const schemaRegistrarAbi = [
 ] as const
 
 export const schemaRegistrarAddress =
-  '0x0E2d6d98738c37faE4a4aB3CE080B47007301EaF' as const
+  '0x6b5372567637057BbBf61883038f77593C1D4Aa1' as const
 
 export const schemaRegistrarConfig = {
   address: schemaRegistrarAddress,
@@ -5891,7 +5892,7 @@ export const schemaRegistryAbi = [
 ] as const
 
 export const schemaRegistryAddress =
-  '0xF2AECf4029436E82A1D8D6175420Dda745f3405F' as const
+  '0x2fe93fea97C06a9B7498918389B710147Cf774C3' as const
 
 export const schemaRegistryConfig = {
   address: schemaRegistryAddress,
@@ -6280,9 +6281,548 @@ export const signerManagerModuleAbi = [
 ] as const
 
 export const signerManagerModuleAddress =
-  '0x8618ff9481d3e7Be5D5B9D4c66A674E1239F95E3' as const
+  '0x325Cb85430Ce8AAF2c2da5Fdf6B2145D439ed112' as const
 
 export const signerManagerModuleConfig = {
   address: signerManagerModuleAddress,
   abi: signerManagerModuleAbi,
+} as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// UniversalIndexer
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const universalIndexerAbi = [
+  {
+    type: 'constructor',
+    inputs: [
+      {
+        name: 'serviceManager',
+        internalType: 'contract IWavsServiceManager',
+        type: 'address',
+      },
+    ],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: '', internalType: 'bytes32', type: 'bytes32' },
+      { name: '', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'childEvents',
+    outputs: [{ name: '', internalType: 'bytes32', type: 'bytes32' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'payload', internalType: 'bytes', type: 'bytes' }],
+    name: 'decodeIndexingPayload',
+    outputs: [
+      {
+        name: '',
+        internalType: 'struct IUniversalIndexer.IndexingPayload',
+        type: 'tuple',
+        components: [
+          {
+            name: 'operation',
+            internalType: 'enum IUniversalIndexer.IndexOperation',
+            type: 'uint8',
+          },
+          {
+            name: 'events',
+            internalType: 'struct IUniversalIndexer.UniversalEvent[]',
+            type: 'tuple[]',
+            components: [
+              { name: 'eventId', internalType: 'bytes32', type: 'bytes32' },
+              {
+                name: 'sourceContract',
+                internalType: 'address',
+                type: 'address',
+              },
+              { name: 'eventType', internalType: 'bytes32', type: 'bytes32' },
+              { name: 'eventData', internalType: 'bytes', type: 'bytes' },
+              { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
+              { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+              { name: 'tags', internalType: 'string[]', type: 'string[]' },
+              {
+                name: 'relevantAddresses',
+                internalType: 'address[]',
+                type: 'address[]',
+              },
+              { name: 'parentEvent', internalType: 'bytes32', type: 'bytes32' },
+              { name: 'data', internalType: 'bytes', type: 'bytes' },
+              { name: 'metadata', internalType: 'bytes', type: 'bytes' },
+            ],
+          },
+        ],
+      },
+    ],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'address', type: 'address' }],
+    name: 'eventCountByContract',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'bytes32', type: 'bytes32' }],
+    name: 'eventCountByType',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'bytes32', type: 'bytes32' }],
+    name: 'eventExists',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'bytes32', type: 'bytes32' }],
+    name: 'events',
+    outputs: [
+      { name: 'eventId', internalType: 'bytes32', type: 'bytes32' },
+      { name: 'sourceContract', internalType: 'address', type: 'address' },
+      { name: 'eventType', internalType: 'bytes32', type: 'bytes32' },
+      { name: 'eventData', internalType: 'bytes', type: 'bytes' },
+      { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
+      { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+      { name: 'parentEvent', internalType: 'bytes32', type: 'bytes32' },
+      { name: 'data', internalType: 'bytes', type: 'bytes' },
+      { name: 'metadata', internalType: 'bytes', type: 'bytes' },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: '', internalType: 'address', type: 'address' },
+      { name: '', internalType: 'string', type: 'string' },
+      { name: '', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'eventsByAddressAndTag',
+    outputs: [{ name: '', internalType: 'bytes32', type: 'bytes32' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: '', internalType: 'address', type: 'address' },
+      { name: '', internalType: 'bytes32', type: 'bytes32' },
+      { name: '', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'eventsByAddressAndType',
+    outputs: [{ name: '', internalType: 'bytes32', type: 'bytes32' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: '', internalType: 'address', type: 'address' },
+      { name: '', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'eventsByContract',
+    outputs: [{ name: '', internalType: 'bytes32', type: 'bytes32' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: '', internalType: 'address', type: 'address' },
+      { name: '', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'eventsByRelevantAddress',
+    outputs: [{ name: '', internalType: 'bytes32', type: 'bytes32' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: '', internalType: 'string', type: 'string' },
+      { name: '', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'eventsByTag',
+    outputs: [{ name: '', internalType: 'bytes32', type: 'bytes32' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: '', internalType: 'bytes32', type: 'bytes32' },
+      { name: '', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'eventsByType',
+    outputs: [{ name: '', internalType: 'bytes32', type: 'bytes32' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: '', internalType: 'bytes32', type: 'bytes32' },
+      { name: '', internalType: 'string', type: 'string' },
+      { name: '', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'eventsByTypeAndTag',
+    outputs: [{ name: '', internalType: 'bytes32', type: 'bytes32' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'parentEventId', internalType: 'bytes32', type: 'bytes32' },
+    ],
+    name: 'getChildEvents',
+    outputs: [
+      {
+        name: '',
+        internalType: 'struct IUniversalIndexer.UniversalEvent[]',
+        type: 'tuple[]',
+        components: [
+          { name: 'eventId', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'sourceContract', internalType: 'address', type: 'address' },
+          { name: 'eventType', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'eventData', internalType: 'bytes', type: 'bytes' },
+          { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
+          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+          { name: 'tags', internalType: 'string[]', type: 'string[]' },
+          {
+            name: 'relevantAddresses',
+            internalType: 'address[]',
+            type: 'address[]',
+          },
+          { name: 'parentEvent', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'data', internalType: 'bytes', type: 'bytes' },
+          { name: 'metadata', internalType: 'bytes', type: 'bytes' },
+        ],
+      },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'addr', internalType: 'address', type: 'address' },
+      { name: 'tag', internalType: 'string', type: 'string' },
+    ],
+    name: 'getEventCountByAddressAndTag',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'addr', internalType: 'address', type: 'address' },
+      { name: 'eventType', internalType: 'bytes32', type: 'bytes32' },
+    ],
+    name: 'getEventCountByAddressAndType',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'sourceContract', internalType: 'address', type: 'address' },
+    ],
+    name: 'getEventCountByContract',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'tag', internalType: 'string', type: 'string' }],
+    name: 'getEventCountByTag',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'relevantAddress', internalType: 'address', type: 'address' },
+      { name: 'tag', internalType: 'string', type: 'string' },
+      { name: 'start', internalType: 'uint256', type: 'uint256' },
+      { name: 'length', internalType: 'uint256', type: 'uint256' },
+      { name: 'reverseOrder', internalType: 'bool', type: 'bool' },
+    ],
+    name: 'getEventsByAddressAndTag',
+    outputs: [
+      {
+        name: '',
+        internalType: 'struct IUniversalIndexer.UniversalEvent[]',
+        type: 'tuple[]',
+        components: [
+          { name: 'eventId', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'sourceContract', internalType: 'address', type: 'address' },
+          { name: 'eventType', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'eventData', internalType: 'bytes', type: 'bytes' },
+          { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
+          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+          { name: 'tags', internalType: 'string[]', type: 'string[]' },
+          {
+            name: 'relevantAddresses',
+            internalType: 'address[]',
+            type: 'address[]',
+          },
+          { name: 'parentEvent', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'data', internalType: 'bytes', type: 'bytes' },
+          { name: 'metadata', internalType: 'bytes', type: 'bytes' },
+        ],
+      },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'relevantAddress', internalType: 'address', type: 'address' },
+      { name: 'eventType', internalType: 'bytes32', type: 'bytes32' },
+      { name: 'start', internalType: 'uint256', type: 'uint256' },
+      { name: 'length', internalType: 'uint256', type: 'uint256' },
+      { name: 'reverseOrder', internalType: 'bool', type: 'bool' },
+    ],
+    name: 'getEventsByAddressAndType',
+    outputs: [
+      {
+        name: '',
+        internalType: 'struct IUniversalIndexer.UniversalEvent[]',
+        type: 'tuple[]',
+        components: [
+          { name: 'eventId', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'sourceContract', internalType: 'address', type: 'address' },
+          { name: 'eventType', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'eventData', internalType: 'bytes', type: 'bytes' },
+          { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
+          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+          { name: 'tags', internalType: 'string[]', type: 'string[]' },
+          {
+            name: 'relevantAddresses',
+            internalType: 'address[]',
+            type: 'address[]',
+          },
+          { name: 'parentEvent', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'data', internalType: 'bytes', type: 'bytes' },
+          { name: 'metadata', internalType: 'bytes', type: 'bytes' },
+        ],
+      },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'sourceContract', internalType: 'address', type: 'address' },
+      { name: 'start', internalType: 'uint256', type: 'uint256' },
+      { name: 'length', internalType: 'uint256', type: 'uint256' },
+      { name: 'reverseOrder', internalType: 'bool', type: 'bool' },
+    ],
+    name: 'getEventsByContract',
+    outputs: [
+      {
+        name: '',
+        internalType: 'struct IUniversalIndexer.UniversalEvent[]',
+        type: 'tuple[]',
+        components: [
+          { name: 'eventId', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'sourceContract', internalType: 'address', type: 'address' },
+          { name: 'eventType', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'eventData', internalType: 'bytes', type: 'bytes' },
+          { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
+          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+          { name: 'tags', internalType: 'string[]', type: 'string[]' },
+          {
+            name: 'relevantAddresses',
+            internalType: 'address[]',
+            type: 'address[]',
+          },
+          { name: 'parentEvent', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'data', internalType: 'bytes', type: 'bytes' },
+          { name: 'metadata', internalType: 'bytes', type: 'bytes' },
+        ],
+      },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'tag', internalType: 'string', type: 'string' },
+      { name: 'start', internalType: 'uint256', type: 'uint256' },
+      { name: 'length', internalType: 'uint256', type: 'uint256' },
+      { name: 'reverseOrder', internalType: 'bool', type: 'bool' },
+    ],
+    name: 'getEventsByTag',
+    outputs: [
+      {
+        name: '',
+        internalType: 'struct IUniversalIndexer.UniversalEvent[]',
+        type: 'tuple[]',
+        components: [
+          { name: 'eventId', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'sourceContract', internalType: 'address', type: 'address' },
+          { name: 'eventType', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'eventData', internalType: 'bytes', type: 'bytes' },
+          { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
+          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+          { name: 'tags', internalType: 'string[]', type: 'string[]' },
+          {
+            name: 'relevantAddresses',
+            internalType: 'address[]',
+            type: 'address[]',
+          },
+          { name: 'parentEvent', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'data', internalType: 'bytes', type: 'bytes' },
+          { name: 'metadata', internalType: 'bytes', type: 'bytes' },
+        ],
+      },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getServiceManager',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'userAddress', internalType: 'address', type: 'address' },
+      { name: 'tags', internalType: 'string[]', type: 'string[]' },
+      { name: 'fromTimestamp', internalType: 'uint256', type: 'uint256' },
+      { name: 'toTimestamp', internalType: 'uint256', type: 'uint256' },
+      { name: 'maxEvents', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'getUserTimeline',
+    outputs: [
+      {
+        name: '',
+        internalType: 'struct IUniversalIndexer.TimelineEvent[]',
+        type: 'tuple[]',
+        components: [
+          { name: 'eventId', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+          { name: 'eventType', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'eventSummary', internalType: 'string', type: 'string' },
+          { name: 'sourceContract', internalType: 'address', type: 'address' },
+        ],
+      },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      {
+        name: 'envelope',
+        internalType: 'struct IWavsServiceHandler.Envelope',
+        type: 'tuple',
+        components: [
+          { name: 'eventId', internalType: 'bytes20', type: 'bytes20' },
+          { name: 'ordering', internalType: 'bytes12', type: 'bytes12' },
+          { name: 'payload', internalType: 'bytes', type: 'bytes' },
+        ],
+      },
+      {
+        name: 'signatureData',
+        internalType: 'struct IWavsServiceHandler.SignatureData',
+        type: 'tuple',
+        components: [
+          { name: 'signers', internalType: 'address[]', type: 'address[]' },
+          { name: 'signatures', internalType: 'bytes[]', type: 'bytes[]' },
+          { name: 'referenceBlock', internalType: 'uint32', type: 'uint32' },
+        ],
+      },
+    ],
+    name: 'handleSignedEnvelope',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'totalEvents',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'version',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'eventId',
+        internalType: 'bytes32',
+        type: 'bytes32',
+        indexed: true,
+      },
+      {
+        name: 'sourceContract',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'eventType',
+        internalType: 'bytes32',
+        type: 'bytes32',
+        indexed: true,
+      },
+      {
+        name: 'relevantAddresses',
+        internalType: 'address[]',
+        type: 'address[]',
+        indexed: false,
+      },
+      {
+        name: 'tags',
+        internalType: 'string[]',
+        type: 'string[]',
+        indexed: false,
+      },
+    ],
+    name: 'EventIndexed',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'eventId',
+        internalType: 'bytes32',
+        type: 'bytes32',
+        indexed: true,
+      },
+      {
+        name: 'updatedBy',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'EventUpdated',
+  },
+  { type: 'error', inputs: [], name: 'ExpectedEventIdZero' },
+  { type: 'error', inputs: [], name: 'InvalidEvent' },
+  { type: 'error', inputs: [], name: 'InvalidOffset' },
+  { type: 'error', inputs: [], name: 'InvalidServiceManager' },
+  { type: 'error', inputs: [], name: 'PayloadDecodingFailed' },
+] as const
+
+export const universalIndexerAddress =
+  '0x4630929F816457cCD292C2788AcABE549b04DBC5' as const
+
+export const universalIndexerConfig = {
+  address: universalIndexerAddress,
+  abi: universalIndexerAbi,
 } as const

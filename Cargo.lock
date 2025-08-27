@@ -155,6 +155,27 @@ dependencies = [
 
 [[package]]
 name = "alloy-contract"
+version = "0.15.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9668ce1176f0b87a5e5fc805b3d198954f495de2e99b70a44bed691ba2b0a9d8"
+dependencies = [
+ "alloy-consensus 0.15.11",
+ "alloy-dyn-abi",
+ "alloy-json-abi",
+ "alloy-network 0.15.11",
+ "alloy-network-primitives 0.15.11",
+ "alloy-primitives",
+ "alloy-provider 0.15.11",
+ "alloy-rpc-types-eth 0.15.11",
+ "alloy-sol-types",
+ "alloy-transport 0.15.11",
+ "futures",
+ "futures-util",
+ "thiserror 2.0.16",
+]
+
+[[package]]
+name = "alloy-contract"
 version = "1.0.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e4c36bb4173892aeeba1c6b9e4eff923fa3fe8583f6d3e07afe1cbc5a96a853a"
@@ -6876,6 +6897,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ebc1c04c71510c7f702b52b7c350734c9ff1295c464a03335b00bb84fc54f853"
 
 [[package]]
+name = "universal-indexer"
+version = "0.5.5"
+dependencies = [
+ "alloy-contract 0.15.11",
+ "alloy-network 0.15.11",
+ "alloy-primitives",
+ "alloy-provider 0.15.11",
+ "alloy-rpc-types",
+ "alloy-sol-macro",
+ "alloy-sol-types",
+ "anyhow",
+ "async-trait",
+ "hex",
+ "inventory",
+ "serde",
+ "serde_json",
+ "wavs-wasi-utils",
+ "wit-bindgen-rt 0.44.0",
+ "wstd",
+]
+
+[[package]]
 name = "unsigned-varint"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7272,7 +7315,7 @@ version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac925de5400f7fc4a163e7f577fb3d4f5621fe2c459f02365e7f60897b7bad8d"
 dependencies = [
- "alloy-contract",
+ "alloy-contract 1.0.27",
  "alloy-primitives",
  "alloy-provider 1.0.27",
  "alloy-rpc-types-eth 1.0.27",
