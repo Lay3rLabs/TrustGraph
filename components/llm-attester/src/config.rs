@@ -13,6 +13,7 @@ pub struct AttesterConfig {
     pub eas_address: String,
     pub chain_name: String,
     pub schema_uid: Option<String>,
+    pub submit_schema_uid: Option<String>,
     pub revocable: bool,
     pub expiration_time: u64,
     pub attestation_value: U256,
@@ -38,6 +39,8 @@ impl AttesterConfig {
             config_var("chain_name").unwrap_or_else(|| defaults::DEFAULT_CHAIN.to_string());
 
         let schema_uid = config_var("attestation_schema_uid");
+
+        let submit_schema_uid = config_var("submit_schema_uid");
 
         let revocable = config_var("attestation_revocable")
             .and_then(|s| s.parse::<bool>().ok())
@@ -84,6 +87,7 @@ impl AttesterConfig {
             eas_address,
             chain_name,
             schema_uid,
+            submit_schema_uid,
             revocable,
             expiration_time,
             attestation_value,
@@ -103,6 +107,7 @@ impl AttesterConfig {
         println!("  - EAS Address: {}", self.eas_address);
         println!("  - Chain: {}", self.chain_name);
         println!("  - Schema UID: {:?}", self.schema_uid);
+        println!("  - Submit Schema UID: {:?}", self.submit_schema_uid);
         println!("  - Revocable: {}", self.revocable);
         println!("  - Expiration: {}", self.expiration_time);
         println!("  - Value: {}", self.attestation_value);
@@ -136,6 +141,13 @@ impl AttesterConfig {
         if let Some(ref schema) = self.schema_uid {
             if !schema.starts_with("0x") || schema.len() != 66 {
                 return Err(format!("Invalid schema UID format: {}", schema));
+            }
+        }
+
+        // Validate submit schema UID format if provided
+        if let Some(ref schema) = self.submit_schema_uid {
+            if !schema.starts_with("0x") || schema.len() != 66 {
+                return Err(format!("Invalid submit schema UID format: {}", schema));
             }
         }
 
@@ -181,10 +193,9 @@ pub mod defaults {
     pub const DEFAULT_EAS_ADDRESS: &str = "0x4200000000000000000000000000000000000021";
 
     pub const DEFAULT_SYSTEM_MESSAGE: &str =
-        "You are analyzing blockchain attestation data. The user will provide you with the raw attestation data content. \
-         Analyze what this data represents, its purpose, and provide relevant insights. \
-         If the data appears to be structured (JSON, encoded values, etc.), interpret its meaning. \
-         Respond concisely with your analysis.";
+        "You are evaluating blockchain attestation statements to determine if you like them. \
+         Consider the content quality, truthfulness, relevance, and overall value of the statement. \
+         You will be asked to provide a like/dislike evaluation in structured JSON format.";
 }
 
 #[cfg(test)]
@@ -212,6 +223,12 @@ mod tests {
         config.schema_uid = Some("invalid".to_string());
         assert!(config.validate().is_err());
         config.schema_uid = Some("0x".to_string() + &"a".repeat(64));
+        assert!(config.validate().is_ok());
+
+        // Invalid submit schema UID
+        config.submit_schema_uid = Some("invalid".to_string());
+        assert!(config.validate().is_err());
+        config.submit_schema_uid = Some("0x".to_string() + &"a".repeat(64));
         assert!(config.validate().is_ok());
     }
 

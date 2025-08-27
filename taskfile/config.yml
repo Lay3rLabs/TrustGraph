@@ -98,3 +98,5 @@ vars:
     sh: jq -r '.eas_schemas.compute_schema' .docker/deployment_summary.json || echo ""
   STATEMENT_SCHEMA_UID:
     sh: jq -r '.eas_schemas.statement_schema' .docker/deployment_summary.json || echo ""
+  LIKE_SCHEMA_UID:
+    sh: jq -r '.eas_schemas.like_schema' .docker/deployment_summary.json || echo ""
