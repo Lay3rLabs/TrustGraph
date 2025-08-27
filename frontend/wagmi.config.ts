@@ -21,6 +21,7 @@ const ABI = {
   LMSRMarketMaker: require('../out/LMSRMarketMaker.sol/LMSRMarketMaker.json'),
   PredictionMarketFactory: require('../out/PredictionMarketFactory.sol/PredictionMarketFactory.json'),
   MockUSDC: require('../out/MockUSDC.sol/MockUSDC.json'),
+  POAServiceManager: require('../out/POAServiceManager.sol/POAServiceManager.json'),
 }
 
 export default defineConfig({
@@ -120,6 +121,11 @@ export default defineConfig({
       abi: ABI.MockUSDC.abi,
       name: 'MockUSDC',
       address: '0x49bF430ce5cc828F6E6477e306d7233217b8780e',
+    },
+    {
+      abi: ABI.POAServiceManager.abi,
+      name: 'POAServiceManager',
+      address: '0xC7F22B0b804E14eC70b8C1679a82FA5656Af6102',
     },
   ],
 })
