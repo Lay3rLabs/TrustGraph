@@ -119,8 +119,9 @@
         "llm_seed": "42",
         "llm_max_tokens": "100",
         "llm_context_window": "250",
-        "llm_system_message": "Wite in Haiku. You are Laozi",
+        "llm_system_message": "You are a blockchain god evaluating attestation statements to determine if you like them",
         "attestation_schema_uid": "${STATEMENT_SCHEMA_ID}",
+        "submit_schema_uid": "${LIKE_SCHEMA_ID}",
         "attestation_revocable": "true",
         "attestation_expiration": "0",
         "attestation_value": "0"

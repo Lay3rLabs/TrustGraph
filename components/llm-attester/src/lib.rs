@@ -4,6 +4,7 @@ mod trigger;
 use alloy_primitives::hex;
 use alloy_sol_types::SolValue;
 use config::AttesterConfig;
+use serde::{Deserialize, Serialize};
 use trigger::{
     decode_trigger_event, encode_trigger_output, AttestationPayload, AttestationRequest,
     AttestationRequestData, Destination, OperationType,
@@ -15,7 +16,14 @@ use wstd::runtime::block_on;
 pub mod bindings;
 use crate::bindings::{export, Guest, TriggerAction, WasmResponse};
 
-use wavs_llm::client::{self, Message};
+use wavs_llm::client;
+
+/// Structured response from the LLM for like/dislike evaluation
+#[derive(Debug, Serialize, Deserialize, schemars::JsonSchema)]
+struct LikeResponse {
+    like: bool,
+    reasoning: String,
+}
 
 struct Component;
 export!(Component with_types_in bindings);
@@ -93,47 +101,37 @@ impl Guest for Component {
 
         println!("💬 User prompt: {}", user_prompt);
 
-        // Create LLM options and messages
+        // Create LLM client with options and get structured response
         let llm_options = config.get_llm_options();
-        let messages = vec![
-            Message {
-                role: "system".into(),
-                content: Some(config.system_message.clone()),
-                tool_calls: None,
-                tool_call_id: None,
-                name: None,
-            },
-            Message {
-                role: "user".into(),
-                content: Some(user_prompt),
-                tool_calls: None,
-                tool_call_id: None,
-                name: None,
-            },
-        ];
-
-        // Get completion from LLM
         let llm = client::LLMClient::with_config(config.model.clone(), llm_options);
 
+        // Get structured response from LLM
         let llm_response = llm
-            .chat_completion_text(messages)
-            .map_err(|e| format!("Failed to get LLM completion: {}", e))?;
+            .complete_structured::<LikeResponse>(&user_prompt)
+            .map_err(|e| format!("Failed to get structured LLM completion: {}", e))?;
 
-        println!("🤖 LLM Response: {}", llm_response);
+        println!(
+            "🤖 LLM Response: like={}, reasoning={}",
+            llm_response.like, llm_response.reasoning
+        );
 
-        // Determine the schema to use
-        let attestation_schema =
-            config.schema_uid.as_ref().and_then(|s| s.parse().ok()).unwrap_or(schema_uid);
+        let like_value = llm_response.like;
 
-        // Encode the attestation data according to the schema
-        // TODO: Parse schema definition to determine proper encoding
-        // For now, assume "string statement" schema
-        let encoded_data = SchemaEncoder::encode_by_pattern("string statement", &llm_response)
-            .or_else(|e| {
-                println!("⚠️  Failed to encode with schema 'string statement': {}", e);
-                println!("   Defaulting to simple string encoding");
-                Ok::<_, String>(SchemaEncoder::encode_string(&llm_response))
-            })?;
+        println!("👍 Extracted like value: {}", like_value);
+
+        // Use the submit_schema_uid for the like attestation
+        let attestation_schema = config
+            .submit_schema_uid
+            .as_ref()
+            .ok_or("submit_schema_uid not configured")?
+            .parse::<alloy_primitives::FixedBytes<32>>()
+            .map_err(|e| format!("Invalid submit_schema_uid format: {}", e))?;
+
+        // Encode the attestation data according to the "bool like" schema
+        let encoded_data = SchemaEncoder::encode_by_pattern("bool like", &like_value.to_string())
+            .map_err(|e| {
+            format!("Failed to encode like value with 'bool like' schema: {}", e)
+        })?;
 
         // Create the attestation request
         let attestation_request = AttestationRequest {

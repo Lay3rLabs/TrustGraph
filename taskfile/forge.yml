@@ -62,7 +62,7 @@ tasks:
           --sig "queryAttestations(string,string,string,string,uint256)" \
           "{{.EAS_INDEXER_ADDR}}" \
           "{{.EAS_ADDR}}" \
-          "{{.STATEMENT_SCHEMA_UID}}" \
+          "{{.LIKE_SCHEMA_UID}}" \
           "{{.WALLET_ADDRESS}}" \
           50 \
           --rpc-url {{.RPC_URL}}

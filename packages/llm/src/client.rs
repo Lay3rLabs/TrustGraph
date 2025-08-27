@@ -101,13 +101,23 @@ impl ResponseFormat {
         let schema = schemars::schema_for!(T);
         let schema_value = serde_json::to_value(schema)
             .map_err(|e| LlmError::ConfigError(format!("Failed to create schema: {}", e)))?;
+
+        // Validate that the schema is properly formatted
+        if let Some(obj) = schema_value.as_object() {
+            if !obj.contains_key("type") && !obj.contains_key("$schema") {
+                return Err(LlmError::ConfigError(
+                    "Generated schema is missing required fields".to_string(),
+                ));
+            }
+        }
+
         Ok(ResponseFormat::Schema(schema_value))
     }
 
     /// Convert to the format expected by Ollama API
     fn to_ollama_format(&self) -> serde_json::Value {
         match self {
-            ResponseFormat::Json => json!("json"),
+            ResponseFormat::Json => serde_json::Value::String("json".to_string()),
             ResponseFormat::Schema(schema) => schema.clone(),
         }
     }
@@ -192,6 +202,40 @@ impl LLMClient {
         tools: Option<Vec<Tool>>,
         format: Option<ResponseFormat>,
     ) -> Result<Message, LlmError> {
+        self.chat_completion_with_format_and_retries(messages, tools, format, 3)
+    }
+
+    /// Send a chat completion request with retry logic
+    pub fn chat_completion_with_format_and_retries(
+        &self,
+        messages: Vec<Message>,
+        tools: Option<Vec<Tool>>,
+        format: Option<ResponseFormat>,
+        max_retries: u32,
+    ) -> Result<Message, LlmError> {
+        let mut last_error = None;
+
+        for _attempt in 0..=max_retries {
+            match self.try_chat_completion_with_format(&messages, &tools, &format) {
+                Ok(response) => return Ok(response),
+                Err(e) => {
+                    last_error = Some(e);
+                    // For WASM environment, we don't implement retry delays for simplicity
+                }
+            }
+        }
+
+        Err(last_error
+            .unwrap_or_else(|| LlmError::RequestError("Unknown error during retries".to_string())))
+    }
+
+    /// Internal method to attempt a single chat completion request
+    fn try_chat_completion_with_format(
+        &self,
+        messages: &[Message],
+        tools: &Option<Vec<Tool>>,
+        format: &Option<ResponseFormat>,
+    ) -> Result<Message, LlmError> {
         block_on(async {
             if messages.is_empty() {
                 return Err(LlmError::InvalidInput("Messages cannot be empty".to_string()));
@@ -252,7 +296,7 @@ impl LLMClient {
             req.headers_mut().insert("Content-Type", HeaderValue::from_static("application/json"));
             req.headers_mut().insert("Accept", HeaderValue::from_static("application/json"));
 
-            // Send request
+            // Send request with timeout
             let mut res = Client::new()
                 .send(req)
                 .await
@@ -291,7 +335,10 @@ impl LLMClient {
             }
 
             let ollama_response: OllamaResponse = serde_json::from_str(&body).map_err(|e| {
-                LlmError::ParseError(format!("Failed to parse Ollama response: {}", e))
+                LlmError::ParseError(format!(
+                    "Failed to parse Ollama response: {}. Response body: {}",
+                    e, body
+                ))
             })?;
 
             Ok(ollama_response.message)
@@ -321,16 +368,53 @@ impl LLMClient {
     where
         T: schemars::JsonSchema + for<'de> serde::Deserialize<'de>,
     {
+        self.complete_structured_with_retries(prompt, 3)
+    }
+
+    /// Structured completion with retry logic
+    pub fn complete_structured_with_retries<T>(
+        &self,
+        prompt: impl Into<String>,
+        max_retries: u32,
+    ) -> Result<T, LlmError>
+    where
+        T: schemars::JsonSchema + for<'de> serde::Deserialize<'de>,
+    {
         let format = ResponseFormat::from_type::<T>()?;
-        let messages = vec![Message::new_user(prompt.into())];
-        let response = self.chat_completion_with_format(messages, None, Some(format))?;
+
+        // Enhance the prompt to ensure JSON output
+        let original_prompt = prompt.into();
+        let enhanced_prompt = format!(
+            "{}\n\nIMPORTANT: Respond with valid JSON only. Do not include any explanatory text before or after the JSON. The response must be a complete, valid JSON object that matches the required schema.",
+            original_prompt
+        );
+
+        let messages = vec![Message::new_user(enhanced_prompt)];
+        let response = self.chat_completion_with_format_and_retries(
+            messages,
+            None,
+            Some(format),
+            max_retries,
+        )?;
 
         let content = response
             .content
             .ok_or_else(|| LlmError::ParseError("No content in response".to_string()))?;
 
-        serde_json::from_str(&content).map_err(|e| {
-            LlmError::ParseError(format!("Failed to parse structured response: {}", e))
+        // Trim whitespace and check if content is empty
+        let trimmed_content = content.trim();
+        if trimmed_content.is_empty() {
+            return Err(LlmError::ParseError("Empty content in structured response".to_string()));
+        }
+
+        // Try to extract JSON from response that might have extra text
+        let json_content = Self::extract_json_from_response(trimmed_content)?;
+
+        serde_json::from_str(&json_content).map_err(|e| {
+            LlmError::ParseError(format!(
+                "Failed to parse structured response: {}. Extracted JSON: '{}'. Original content: '{}'",
+                e, json_content, trimmed_content
+            ))
         })
     }
 
@@ -343,16 +427,62 @@ impl LLMClient {
     where
         T: schemars::JsonSchema + for<'de> serde::Deserialize<'de>,
     {
+        self.complete_structured_with_system_and_retries(system, prompt, 3)
+    }
+
+    /// Structured completion with system context and retry logic
+    pub fn complete_structured_with_system_and_retries<T>(
+        &self,
+        system: impl Into<String>,
+        prompt: impl Into<String>,
+        max_retries: u32,
+    ) -> Result<T, LlmError>
+    where
+        T: schemars::JsonSchema + for<'de> serde::Deserialize<'de>,
+    {
         let format = ResponseFormat::from_type::<T>()?;
-        let messages = vec![Message::new_system(system.into()), Message::new_user(prompt.into())];
-        let response = self.chat_completion_with_format(messages, None, Some(format))?;
+
+        // Enhance system message to emphasize JSON output
+        let original_system = system.into();
+        let enhanced_system = format!(
+            "{}\n\nYou must respond with valid JSON only. Do not include explanatory text. Ensure the JSON is complete and properly formatted.",
+            original_system
+        );
+
+        // Enhance the prompt to ensure JSON output
+        let original_prompt = prompt.into();
+        let enhanced_prompt = format!(
+            "{}\n\nRespond with valid JSON only that matches the required schema.",
+            original_prompt
+        );
+
+        let messages =
+            vec![Message::new_system(enhanced_system), Message::new_user(enhanced_prompt)];
+        let response = self.chat_completion_with_format_and_retries(
+            messages,
+            None,
+            Some(format),
+            max_retries,
+        )?;
 
         let content = response
             .content
             .ok_or_else(|| LlmError::ParseError("No content in response".to_string()))?;
 
-        serde_json::from_str(&content).map_err(|e| {
-            LlmError::ParseError(format!("Failed to parse structured response: {}", e))
+        // Trim whitespace and check if content is empty
+        let trimmed_content = content.trim();
+        if trimmed_content.is_empty() {
+            return Err(LlmError::ParseError("Empty content in structured response".to_string()));
+        }
+
+        // Try to extract JSON from response that might have extra text
+        let json_content = Self::extract_json_from_response(trimmed_content)?;
+
+        serde_json::from_str(&json_content).map_err(|e| {
+            LlmError::ParseError(format!(
+                "Failed to parse structured response: {}. Extracted JSON: '{}'. Original content: '{}'",
+                e, json_content, trimmed_content
+            ))
         })
     }
 
@@ -379,8 +509,17 @@ impl LLMClient {
             .content
             .ok_or_else(|| LlmError::ParseError("No content in response".to_string()))?;
 
-        serde_json::from_str(&content).map_err(|e| {
-            LlmError::ParseError(format!("Failed to parse structured response: {}", e))
+        // Trim whitespace and check if content is empty
+        let trimmed_content = content.trim();
+        if trimmed_content.is_empty() {
+            return Err(LlmError::ParseError("Empty content in structured response".to_string()));
+        }
+
+        serde_json::from_str(trimmed_content).map_err(|e| {
+            LlmError::ParseError(format!(
+                "Failed to parse structured response: {}. Content: '{}'",
+                e, trimmed_content
+            ))
         })
     }
 
@@ -496,6 +635,60 @@ impl LLMClient {
         } else {
             // Return as plain text if not a transaction
             Ok(LlmResponse::Text(content))
+        }
+    }
+
+    /// Helper function to extract JSON from a response that might contain extra text
+    fn extract_json_from_response(content: &str) -> Result<String, LlmError> {
+        let trimmed = content.trim();
+
+        // If the content already looks like JSON, validate it first
+        if (trimmed.starts_with('{') && trimmed.ends_with('}'))
+            || (trimmed.starts_with('[') && trimmed.ends_with(']'))
+        {
+            // Validate that it's actually valid JSON before returning
+            serde_json::from_str::<serde_json::Value>(trimmed).map_err(|e| {
+                LlmError::ParseError(format!("Content looks like JSON but is malformed: {}", e))
+            })?;
+            return Ok(trimmed.to_string());
+        }
+
+        // Try to find JSON within the text
+        let mut brace_count = 0;
+        let mut start_idx = None;
+        let mut end_idx = None;
+
+        for (i, ch) in trimmed.char_indices() {
+            match ch {
+                '{' => {
+                    if start_idx.is_none() {
+                        start_idx = Some(i);
+                    }
+                    brace_count += 1;
+                }
+                '}' => {
+                    brace_count -= 1;
+                    if brace_count == 0 && start_idx.is_some() {
+                        end_idx = Some(i + 1);
+                        break;
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        if let (Some(start), Some(end)) = (start_idx, end_idx) {
+            let json_str = &trimmed[start..end];
+            // Validate that it's actually valid JSON
+            serde_json::from_str::<serde_json::Value>(json_str).map_err(|e| {
+                LlmError::ParseError(format!("Extracted text is not valid JSON: {}", e))
+            })?;
+            Ok(json_str.to_string())
+        } else {
+            Err(LlmError::ParseError(format!(
+                "Could not extract valid JSON from response: '{}'",
+                trimmed
+            )))
         }
     }
 }
@@ -846,6 +1039,83 @@ mod tests {
                 println!("Completion with system error: {:?}", e);
             }
         }
+    }
+
+    #[test]
+    fn test_extract_json_from_response() {
+        // Test clean JSON extraction
+        let clean_json = r#"{"like": true, "confidence": 0.95}"#;
+        let result = LLMClient::extract_json_from_response(clean_json).unwrap();
+        assert_eq!(result, clean_json);
+
+        // Test JSON with extra text before and after
+        let messy_response = r#"Here's my assessment of the statement:
+
+{"like": true, "confidence": 0.95}
+
+This evaluation is based on the content analysis."#;
+        let result = LLMClient::extract_json_from_response(messy_response).unwrap();
+        assert_eq!(result, r#"{"like": true, "confidence": 0.95}"#);
+
+        // Test nested JSON
+        let nested_json =
+            r#"Some text {"outer": {"inner": {"like": false}}, "confidence": 0.8} more text"#;
+        let result = LLMClient::extract_json_from_response(nested_json).unwrap();
+        assert_eq!(result, r#"{"outer": {"inner": {"like": false}}, "confidence": 0.8}"#);
+
+        // Test malformed JSON should fail
+        let malformed = r#"{"like": true, "confidence":}"#;
+        let result = LLMClient::extract_json_from_response(malformed);
+        assert!(result.is_err(), "Malformed JSON should be rejected but was accepted");
+
+        // Test no JSON found
+        let no_json = "This is just plain text with no JSON content";
+        let result = LLMClient::extract_json_from_response(no_json);
+        assert!(result.is_err(), "Plain text should not be parsed as JSON");
+
+        // Test incomplete JSON (EOF while parsing)
+        let incomplete_json = r#"{"like": true, "confidence": 0.9"#;
+        let result = LLMClient::extract_json_from_response(incomplete_json);
+        assert!(result.is_err(), "Incomplete JSON should be rejected");
+    }
+
+    #[test]
+    fn test_structured_response_format_creation() {
+        use schemars::JsonSchema;
+        use serde::{Deserialize, Serialize};
+
+        #[derive(Serialize, Deserialize, JsonSchema)]
+        struct TestResponse {
+            like: bool,
+            confidence: f32,
+        }
+
+        let format = ResponseFormat::from_type::<TestResponse>().unwrap();
+        match format {
+            ResponseFormat::Schema(schema) => {
+                let schema_obj = schema.as_object().unwrap();
+                assert!(schema_obj.contains_key("type") || schema_obj.contains_key("$schema"));
+            }
+            ResponseFormat::Json => panic!("Expected schema format, got json"),
+        }
+    }
+
+    #[test]
+    fn test_response_format_ollama_conversion() {
+        let json_format = ResponseFormat::json();
+        let ollama_format = json_format.to_ollama_format();
+        assert_eq!(ollama_format, serde_json::Value::String("json".to_string()));
+
+        let schema_value = serde_json::json!({
+            "type": "object",
+            "properties": {
+                "like": {"type": "boolean"},
+                "confidence": {"type": "number"}
+            }
+        });
+        let schema_format = ResponseFormat::schema(schema_value.clone());
+        let ollama_format = schema_format.to_ollama_format();
+        assert_eq!(ollama_format, schema_value);
     }
 
     #[test]
