@@ -13,6 +13,7 @@ import { easAddress, easAbi } from "@/lib/contracts";
 import { encodePacked } from "viem";
 import { schemas } from "@/lib/schemas";
 import { localChain } from "@/lib/wagmi";
+import { writeEthContractAndWait } from "@/lib/utils";
 
 interface AttestationData {
   schema: string;
@@ -182,7 +183,7 @@ export function useAttestation() {
         const gasPrice = await publicClient!.getGasPrice();
 
         try {
-          writeContract({
+          await writeEthContractAndWait({
             address: easAddress as `0x${string}`,
             abi: easAbi,
             functionName: "attest",
@@ -273,7 +274,7 @@ export function useAttestation() {
               },
             };
 
-            writeContract({
+            await writeEthContractAndWait({
               address: easAddress as `0x${string}`,
               abi: easAbi,
               functionName: "attest",
@@ -323,7 +324,7 @@ export function useAttestation() {
             },
           };
 
-          writeContract({
+          await writeEthContractAndWait({
             address: easAddress as `0x${string}`,
             abi: easAbi,
             functionName: "attest",

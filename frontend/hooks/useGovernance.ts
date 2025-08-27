@@ -11,6 +11,7 @@ import {
   gnosisSafeAbi,
   gnosisSafeAddress,
 } from "@/lib/contracts";
+import { writeEthContractAndWait } from "@/lib/utils";
 
 // Types matching the MerkleGovModule contract structs
 export interface ProposalAction {
@@ -407,7 +408,7 @@ export function useGovernance() {
         console.log("Calling writeContract...");
         
         // Call writeContract and wait for it to return a hash
-        writeContract({
+        await writeEthContractAndWait({
           address: merkleGovModuleAddress,
           abi: merkleGovModuleAbi,
           functionName: "propose",
@@ -515,7 +516,7 @@ export function useGovernance() {
         const gasPrice = await publicClient.getGasPrice();
 
         // Call writeContract
-        writeContract({
+        await writeEthContractAndWait({
           address: merkleGovModuleAddress,
           abi: merkleGovModuleAbi,
           functionName: "castVote",
@@ -614,7 +615,7 @@ export function useGovernance() {
         const gasPrice = await publicClient.getGasPrice();
 
         // Call writeContract
-        writeContract({
+        await writeEthContractAndWait({
           address: merkleGovModuleAddress,
           abi: merkleGovModuleAbi,
           functionName: "execute",

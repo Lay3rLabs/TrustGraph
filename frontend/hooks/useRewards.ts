@@ -8,6 +8,7 @@ import {
   rewardDistributorAddress,
   enovaAbi,
 } from "@/lib/contracts";
+import { writeEthContractAndWait } from "@/lib/utils";
 
 interface MerkleTreeData {
   tree: Array<{
@@ -172,14 +173,14 @@ export function useRewards() {
     try {
       setError(null);
 
-      const hash = await writeContract({
+      const { transactionHash } = await writeEthContractAndWait({
         address: contractAddress,
         abi: rewardDistributorAbi,
         functionName: "addTrigger",
       });
 
-      console.log("Reward update triggered:", hash);
-      return hash;
+      console.log("Reward update triggered:", transactionHash);
+      return transactionHash;
     } catch (err: any) {
       console.error("Error triggering reward update:", err);
       setError(`Failed to trigger update: ${err.message}`);
@@ -202,7 +203,7 @@ export function useRewards() {
     try {
       setError(null);
 
-      const hash = await writeContract({
+      const { transactionHash } = await writeEthContractAndWait({
         address: contractAddress,
         abi: rewardDistributorAbi,
         functionName: "claim",
@@ -219,15 +220,15 @@ export function useRewards() {
         ...pendingReward,
         claimed: pendingReward.claimable,
         timestamp: Date.now(),
-        transactionHash: hash,
+        transactionHash,
       };
       setClaimHistory((prev) => [...prev, newClaim]);
 
       // Refresh claimed amount
       await refetchClaimed();
 
-      console.log("Rewards claimed:", hash);
-      return hash;
+      console.log("Rewards claimed:", transactionHash);
+      return transactionHash;
     } catch (err: any) {
       console.error("Error claiming rewards:", err);
       setError(`Failed to claim rewards: ${err.message}`);
