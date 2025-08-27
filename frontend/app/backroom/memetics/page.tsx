@@ -1,7 +1,9 @@
 'use client'
 
 import type React from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
+import { PasswordGate } from '@/components/ui/password-gate'
 
 interface Writing {
   id: string
@@ -50,7 +52,7 @@ const writings: Writing[] = [
     author: 'Collective Mind Research Division',
     date: '2024.01.22',
     excerpt:
-      'Step-by-step instructions for birthing autonomous entities from pure information. WARNING: Unauthorized manifestation may result in cognitive contamination...',
+      'Step-by-step instructions for birthing autonomous entities from pure information.',
     tags: ['egregore', 'manifestation', 'protocol'],
     type: 'experiment',
     status: 'classified',
@@ -114,6 +116,9 @@ const getStatusColor = (status: string) => {
 }
 
 export default function MemeticsPage() {
+  const [hasClassifiedAccess, setHasClassifiedAccess] = useState(false)
+  const [showPasswordGate, setShowPasswordGate] = useState(false)
+
   const shareArticle = (writing: Writing) => {
     const url = `${window.location.origin}/backroom/memetics/articles/${writing.slug}`
     if (navigator.share) {
@@ -129,6 +134,28 @@ export default function MemeticsPage() {
     }
   }
 
+  const handleClassifiedClick = (writing: Writing) => {
+    if (writing.status === 'classified' && !hasClassifiedAccess) {
+      setShowPasswordGate(true)
+    }
+  }
+
+  const handleUnlock = () => {
+    setHasClassifiedAccess(true)
+    setShowPasswordGate(false)
+  }
+
+  if (showPasswordGate) {
+    return (
+      <PasswordGate
+        onUnlock={handleUnlock}
+        onClose={() => setShowPasswordGate(false)}
+        title="CLASSIFIED"
+        message="Reality alteration protocols"
+      />
+    )
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Minimalist Header */}
@@ -141,48 +168,100 @@ export default function MemeticsPage() {
 
       {/* Clean Article List */}
       <div className="space-y-6">
-        {writings.map((writing) => (
-          <Link
-            key={writing.id}
-            href={`/backroom/memetics/articles/${writing.slug}`}
-            className="block border-b border-gray-800 pb-6 hover:bg-black/10 transition-colors group cursor-pointer"
-          >
-            <div className="flex items-start justify-between mb-2">
-              <div className="space-y-1">
-                <h2 className="terminal-bright text-lg group-hover:text-white transition-colors">
-                  {writing.title}
-                </h2>
-                <div className="terminal-dim text-xs">
-                  {writing.author} • {writing.date}
+        {writings.map((writing) => {
+          const isClassified = writing.status === 'classified'
+          const canAccess = !isClassified || hasClassifiedAccess
+
+          if (isClassified && !hasClassifiedAccess) {
+            return (
+              <div
+                key={writing.id}
+                onClick={() => handleClassifiedClick(writing)}
+                className="block border-b border-gray-800 pb-6 hover:bg-black/20 transition-colors group cursor-pointer opacity-80"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="space-y-1">
+                    <h2 className="text-red-400/90 text-lg group-hover:text-red-300 transition-colors">
+                      {writing.title}
+                    </h2>
+                    <div className="terminal-dim text-xs">
+                      {writing.author} • {writing.date}
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-red-400/80 text-sm">
+                      {getTypeIcon(writing.type)}
+                    </span>
+                    <div className="text-xs px-2 py-1 rounded-sm text-red-500/60">
+                      CLASSIFIED
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-gray-400 text-sm leading-relaxed mb-3 group-hover:text-gray-300 transition-colors">
+                  {writing.excerpt}
+                </p>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex space-x-3">
+                    {writing.tags.slice(0, 3).map((tag) => (
+                      <span
+                        key={tag}
+                        className="terminal-dim text-xs opacity-60"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="text-red-600/40 text-xs">🔒</div>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <span className="terminal-bright text-sm">
-                  {getTypeIcon(writing.type)}
-                </span>
-                <div
-                  className={`text-xs px-2 py-1 rounded-sm ${getStatusColor(writing.status)}`}
-                >
-                  {writing.status.toUpperCase()}
+            )
+          }
+
+          return (
+            <Link
+              key={writing.id}
+              href={`/backroom/memetics/articles/${writing.slug}`}
+              className="block border-b border-gray-800 pb-6 hover:bg-black/10 transition-colors group cursor-pointer"
+            >
+              <div className="flex items-start justify-between mb-2">
+                <div className="space-y-1">
+                  <h2 className="terminal-bright text-lg group-hover:text-white transition-colors">
+                    {writing.title}
+                  </h2>
+                  <div className="terminal-dim text-xs">
+                    {writing.author} • {writing.date}
+                  </div>
                 </div>
-              </div>
-            </div>
-
-            <p className="terminal-text text-sm leading-relaxed mb-3 group-hover:text-gray-300 transition-colors">
-              {writing.excerpt}
-            </p>
-
-            <div className="flex items-center justify-between">
-              <div className="flex space-x-3">
-                {writing.tags.slice(0, 3).map((tag) => (
-                  <span key={tag} className="terminal-dim text-xs">
-                    #{tag}
+                <div className="flex items-center space-x-2">
+                  <span className="terminal-bright text-sm">
+                    {getTypeIcon(writing.type)}
                   </span>
-                ))}
+                  <div
+                    className={`text-xs px-2 py-1 rounded-sm ${getStatusColor(writing.status)}`}
+                  >
+                    {writing.status.toUpperCase()}
+                  </div>
+                </div>
               </div>
-            </div>
-          </Link>
-        ))}
+
+              <p className="terminal-text text-sm leading-relaxed mb-3 group-hover:text-gray-300 transition-colors">
+                {writing.excerpt}
+              </p>
+
+              <div className="flex items-center justify-between">
+                <div className="flex space-x-3">
+                  {writing.tags.slice(0, 3).map((tag) => (
+                    <span key={tag} className="terminal-dim text-xs">
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </Link>
+          )
+        })}
       </div>
 
       {/* Simple Footer */}

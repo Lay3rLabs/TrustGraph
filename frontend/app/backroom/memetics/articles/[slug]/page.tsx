@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { marked } from "marked";
+import { PasswordGate } from "@/components/ui/password-gate";
 
 interface Writing {
   id: string;
@@ -754,12 +755,20 @@ export default function ArticlePage() {
   const router = useRouter();
   const [article, setArticle] = useState<Writing | null>(null);
   const [processedContent, setProcessedContent] = useState<string>("");
+  const [hasClassifiedAccess, setHasClassifiedAccess] = useState(false);
+  const [showPasswordGate, setShowPasswordGate] = useState(false);
   const slug = params.slug as string;
 
   useEffect(() => {
     if (slug && articleData[slug]) {
       const selectedArticle = articleData[slug];
       setArticle(selectedArticle);
+      
+      // Check if article is classified and user doesn't have access
+      if (selectedArticle.status === 'classified' && !hasClassifiedAccess) {
+        setShowPasswordGate(true);
+        return;
+      }
       
       // Process the markdown content with custom styling
       let htmlContent = marked(selectedArticle.content);
@@ -784,7 +793,12 @@ export default function ArticlePage() {
       // Redirect to main page if article not found
       router.push('/backroom/memetics');
     }
-  }, [slug, router]);
+  }, [slug, router, hasClassifiedAccess]);
+
+  const handleUnlock = () => {
+    setHasClassifiedAccess(true);
+    setShowPasswordGate(false);
+  };
 
   const shareArticle = (writing: Writing) => {
     const url = window.location.href;
@@ -798,6 +812,16 @@ export default function ArticlePage() {
       navigator.clipboard.writeText(`${writing.title}\n\n${writing.excerpt}\n\n${url}`);
     }
   };
+
+  if (showPasswordGate) {
+    return (
+      <PasswordGate 
+        onUnlock={handleUnlock}
+        title="CLASSIFIED DOCUMENT ACCESS"
+        message="Reality alteration protocol detected - clearance required"
+      />
+    );
+  }
 
   if (!article) {
     return (

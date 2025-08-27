@@ -25,7 +25,6 @@ const menuItems: MenuItem[] = [
     icon: '▲',
   },
   { id: 'points', label: 'Points', path: '/backroom/points', icon: '⛤' },
-  { id: 'portal', label: 'Portal', path: '/backroom/portal', icon: '◎' },
   {
     id: 'experimental',
     label: 'Experimental',
@@ -55,6 +54,7 @@ const menuItems: MenuItem[] = [
         path: '/backroom/explorer/operators',
         icon: '◉',
       },
+      { id: 'portal', label: 'Portal', path: '/backroom/portal', icon: '◎' },
       {
         id: 'explorer-services',
         label: 'Services',
