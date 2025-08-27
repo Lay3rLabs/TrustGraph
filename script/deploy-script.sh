@@ -2,19 +2,33 @@
 # set -e
 # set -x
 
-warg reset
+STATUS_FILE=".docker/component-upload-status"
 
-if [ ! -d compiled/ ] || [ -z "$(find compiled/ -name '*.wasm')" ]; then
-    echo "No WASM files found in compiled/. Building components."
-    task build:wasi
-fi
+# Store the PID of the background process
+bash script/upload-components-background.sh &
+UPLOAD_PID=$!
 
-if git status --porcelain | grep -v "bindings.rs" | grep -q "^.* components/"; then
-    echo "Found pending changes in components/* (excluding bindings.rs), building"
-    task build:wasi
-fi
+# Function to clean up on exit
+cleanup() {
+    echo "Cleaning up..."
+    # Kill the background upload process if it's still running
+    if [ -n "$UPLOAD_PID" ] && kill -0 $UPLOAD_PID 2>/dev/null; then
+        echo "Terminating background upload process (PID: $UPLOAD_PID)..."
+        kill -TERM $UPLOAD_PID 2>/dev/null
+        # Give it a moment to terminate gracefully, then force kill if needed
+        sleep 1
+        kill -9 $UPLOAD_PID 2>/dev/null || true
+    fi
+    # Clean up the status file
+    rm -f "$STATUS_FILE"
+    echo "Cleanup complete"
+    exit 1
+}
 
-### === Deploy Eigenlayer ===
+# Set up trap to handle Ctrl+C (SIGINT) and other termination signals
+trap cleanup INT TERM EXIT
+
+
 # if RPC_URL is not set, use default by calling command
 if [ -z "$RPC_URL" ]; then
     export RPC_URL=$(task get-rpc)
@@ -26,9 +40,6 @@ fi
 # local: create deployer & auto fund. testnet: create & iterate check balance
 bash ./script/create-deployer.sh
 export FUNDED_KEY=$(task config:funded-key)
-
-## Deploy Eigenlayer from Deployer
-# COMMAND=deploy task docker:middleware
 
 echo "🟢 Deploying POA Service Manager..."
 forge script script/DeployPOAServiceManager.s.sol:DeployPOAServiceManager --rpc-url ${RPC_URL} --broadcast
@@ -122,25 +133,16 @@ export PAGERANK_TRUST_BOOST="0.99"
 
 echo "📋 All configuration variables exported for component-specific substitution"
 
-# Upload components to WASI registry
-echo "Uploading components to WASI registry..."
-jq -r '.components[] | @json' "$COMPONENT_CONFIGS_FILE" | while read -r component; do
-    export COMPONENT_FILENAME=$(echo "$component" | jq -r '.filename')
-    export PKG_NAME=$(echo "$component" | jq -r '.package_name')
-    export PKG_VERSION=$(echo "$component" | jq -r '.package_version')
-
-    if [ "$(task get-deploy-status)" = "TESTNET" ]; then
-        read -p "Upload component ${COMPONENT_FILENAME} with package name (default: ${PKG_NAME}): " input_pkg_name
-        if [ -n "$input_pkg_name" ]; then
-            export PKG_NAME="$input_pkg_name"
-        fi
-    fi
-
-    echo "Uploading ${COMPONENT_FILENAME} as ${PKG_NAME}..."
-    # ** Testnet Setup: https://wa.dev/account/credentials/new -> warg login
-    task wasi:upload-to-registry PKG_NAME="${PKG_NAME}" PKG_VERSION="${PKG_VERSION}" COMPONENT_FILENAME="${COMPONENT_FILENAME}" || true
-    sleep 1
-done
+# wait for STATUS_FILE to contain the status COMPLETED in its content, check every 0.5 seconds for up to 60 seconds then error
+echo "Waiting for component uploads to complete..."
+timeout 120 bash -c "while ! grep -q 'COMPLETED' $STATUS_FILE; do sleep 0.5; done"
+if [ $? -ne 0 ]; then
+    echo "❌ Component uploads did not complete in time or failed."
+    exit 1
+fi
+echo "✅ All components uploaded successfully"
+# clear tmp file
+rm -f $STATUS_FILE
 
 # Create service with multiple workflows
 echo "Creating service with multiple component workflows..."
@@ -228,5 +230,8 @@ if [ -n "$REGISTRY" ]; then
     fi
     warg reset --registry ${PROTOCOL}://${REGISTRY} || echo "Registry reset failed (non-critical)"
 fi
+
+# Remove trap for normal exit
+trap - INT TERM EXIT
 
 echo "✅ Deployment complete!"

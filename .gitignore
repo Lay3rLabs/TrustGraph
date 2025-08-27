@@ -32,3 +32,4 @@ foundry_nightly_linux_arm64.tar.gz
 # Misc
 .DS_Store
 schema_output.log
+.docker/component-upload-status
