@@ -1,18 +1,24 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
-import { config } from "./wagmi";
-import { Abi, ContractFunctionArgs, ContractFunctionName } from "viem";
-import { waitForTransactionReceipt, WaitForTransactionReceiptReturnType, writeContract, WriteContractParameters } from "@wagmi/core";
+import {
+  WaitForTransactionReceiptReturnType,
+  WriteContractParameters,
+  waitForTransactionReceipt,
+  writeContract,
+} from '@wagmi/core'
+import { type ClassValue, clsx } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+import { Abi, ContractFunctionArgs, ContractFunctionName } from 'viem'
+
+import { config } from './wagmi'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
 export const formatNumber = (num: number): string => {
-  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-  return num.toString();
-};
+  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
+  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
+  return num.toString()
+}
 
 export const writeEthContractAndWait = async <
   cfg extends typeof config,

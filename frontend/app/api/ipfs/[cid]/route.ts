@@ -1,47 +1,47 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ cid: string }> },
+  { params }: { params: Promise<{ cid: string }> }
 ) {
   try {
-    const { cid } = await params;
+    const { cid } = await params
 
     if (!cid) {
       return NextResponse.json(
-        { error: "CID parameter is required" },
-        { status: 400 },
-      );
+        { error: 'CID parameter is required' },
+        { status: 400 }
+      )
     }
 
     // Make GET request to IPFS gateway
-    const ipfsUrl = `http://127.0.0.1:8080/ipfs/${cid}`;
+    const ipfsUrl = `http://127.0.0.1:8080/ipfs/${cid}`
 
     const response = await fetch(ipfsUrl, {
-      method: "GET",
+      method: 'GET',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
-    });
+    })
 
     if (!response.ok) {
       console.error(
-        `IPFS fetch failed: ${response.status} ${response.statusText}`,
-      );
+        `IPFS fetch failed: ${response.status} ${response.statusText}`
+      )
       return NextResponse.json(
         { error: `Failed to fetch from IPFS: ${response.status}` },
-        { status: response.status },
-      );
+        { status: response.status }
+      )
     }
 
-    const data = await response.json();
+    const data = await response.json()
 
-    return NextResponse.json(data);
+    return NextResponse.json(data)
   } catch (error: any) {
-    console.error("IPFS proxy error:", error);
+    console.error('IPFS proxy error:', error)
     return NextResponse.json(
       { error: `IPFS request failed: ${error.message}` },
-      { status: 500 },
-    );
+      { status: 500 }
+    )
   }
 }

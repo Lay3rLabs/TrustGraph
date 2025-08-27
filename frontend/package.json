@@ -6,7 +6,8 @@
     "build": "next build",
     "dev": "next dev",
     "predev": "npm run contracts:update && npm run wagmi:generate",
-    "lint": "next lint",
+    "lint": "eslint .",
+    "format": "eslint . --fix",
     "start": "next start",
     "contracts:update": "node scripts/update-config.js",
     "claude-code": "docker compose -f .claude/docker-compose.claude.yml run --rm --remove-orphans -it claude-code-sandbox bash -c 'claude; exec'",
@@ -79,12 +80,21 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.9",
     "@types/node": "^22",
+    "@types/prettier": "^2.7.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
     "@wagmi/cli": "^2.4.0",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-unused-imports": "^3.0.0",
     "postcss": "^8.5",
+    "prettier": "^2.8.0",
     "tailwindcss": "^4.1.9",
     "tw-animate-css": "1.3.3",
-    "typescript": ">=5.0.4"
+    "typescript": "5.5.4"
   }
 }

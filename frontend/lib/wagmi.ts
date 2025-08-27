@@ -1,25 +1,24 @@
-import { http, createConfig } from "wagmi";
-import { mainnet, sepolia } from "wagmi/chains";
-import { injected, metaMask } from "wagmi/connectors";
+import { createConfig, http } from 'wagmi'
+import { injected, metaMask } from 'wagmi/connectors'
 
 // Local chain configuration matching the deployment
 export const localChain = {
   id: 31337, // Anvil default chain ID
-  name: "Local Anvil",
+  name: 'Local Anvil',
   nativeCurrency: {
     decimals: 18,
-    name: "Ether",
-    symbol: "ETH",
+    name: 'Ether',
+    symbol: 'ETH',
   },
   rpcUrls: {
     default: {
-      http: ["http://localhost:8545"],
+      http: ['http://localhost:8545'],
     },
   },
   blockExplorers: {
-    default: { name: "Local", url: "http://localhost:8545" },
+    default: { name: 'Local', url: 'http://localhost:8545' },
   },
-} as const;
+} as const
 
 export const config = createConfig({
   chains: [localChain],
@@ -30,10 +29,10 @@ export const config = createConfig({
       timeout: 60000,
     }),
   },
-});
+})
 
-declare module "wagmi" {
+declare module 'wagmi' {
   interface Register {
-    config: typeof config;
+    config: typeof config
   }
 }
