@@ -174,6 +174,75 @@ pub fn delete_file(file_path: &str) -> Result<()> {
     Ok(())
 }
 
+/// Downloads content from IPFS using a CID
+pub async fn download_from_ipfs(cid: &str, ipfs_gateway_url: &str) -> Result<Vec<u8>> {
+    eprintln!("Downloading content from IPFS: {} and gateway {}", cid, ipfs_gateway_url);
+
+    // Construct the IPFS URL - check if it's an API endpoint or gateway
+    let url = if ipfs_gateway_url.contains("/api/v0") {
+        // IPFS API endpoint format
+        format!("{}/cat?arg={}", ipfs_gateway_url.trim_end_matches('/'), cid)
+    } else {
+        // IPFS gateway format
+        format!("{}/ipfs/{}", ipfs_gateway_url.trim_end_matches('/'), cid)
+    };
+
+    println!("Fetching URL: {}", url);
+
+    // Use POST for IPFS API endpoints, GET for gateways
+    let request = if ipfs_gateway_url.contains("/api/v0") {
+        Request::post(&url).body("".into_body())?
+    } else {
+        Request::get(&url).body("".into_body())?
+    };
+    let mut response = wstd::http::Client::new().send(request).await?;
+
+    if response.status().is_success() {
+        let mut body_buf = Vec::new();
+        response.body_mut().read_to_end(&mut body_buf).await?;
+
+        eprintln!("Successfully downloaded {} bytes from IPFS", body_buf.len());
+        // println!("Downloaded content: {:?}", std::str::from_utf8(&body_buf));
+
+        Ok(body_buf)
+    } else {
+        let mut body_buf = Vec::new();
+        response.body_mut().read_to_end(&mut body_buf).await?;
+        let error_body = std::str::from_utf8(&body_buf).unwrap_or("unable to read error body");
+        Err(anyhow::anyhow!(
+            "Failed to download from IPFS. Status: {:?}, Body: {}",
+            response.status(),
+            error_body
+        ))
+    }
+}
+
+/// Downloads JSON content from IPFS and parses it
+pub async fn download_json_from_ipfs<T>(cid: &str, ipfs_gateway_url: &str) -> Result<T>
+where
+    T: serde::de::DeserializeOwned,
+{
+    let content = download_from_ipfs(cid, ipfs_gateway_url).await?;
+    let json_str = std::str::from_utf8(&content)
+        .map_err(|e| anyhow::anyhow!("Failed to convert IPFS content to UTF-8: {}", e))?;
+
+    // Clean up the JSON string by trimming whitespace and null bytes
+    let cleaned_json = json_str.trim().trim_end_matches('\0');
+
+    eprintln!("Attempting to parse JSON of length: {}", cleaned_json.len());
+    eprintln!("First 200 chars: {}", &cleaned_json[..cleaned_json.len().min(200)]);
+
+    serde_json::from_str(cleaned_json)
+        .map_err(|e| anyhow::anyhow!("Failed to parse JSON from IPFS: {}", e))
+}
+
+/// Downloads text content from IPFS
+// pub async fn download_text_from_ipfs(cid: &str, ipfs_gateway_url: &str) -> Result<String> {
+//     let content = download_from_ipfs(cid, ipfs_gateway_url).await?;
+//     String::from_utf8(content)
+//         .map_err(|e| anyhow::anyhow!("Failed to convert IPFS content to UTF-8: {}", e))
+// }
+
 pub fn decode_ipfs_cid(cid_str: &str) -> Result<Cid, String> {
     // Check if the string is a v0 CID (starts with "Qm" and has length 46).
     if cid_str.starts_with("Qm") && cid_str.len() == 46 {

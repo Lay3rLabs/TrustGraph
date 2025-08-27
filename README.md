@@ -230,25 +230,6 @@ task start-all-local
 
 This script automates the complete WAVS deployment process in a single command:
 
-### What It Does
-
-1. **Build Check**: Rebuilds WebAssembly component if changes detected
-2. **Create Deployer**: Sets up and funds deployer account
-3. **Deploy Eigenlayer**: Deploys service manager contract
-4. **Deploy Contracts**: Creates trigger and submission contracts
-5. **Upload Component**: Publishes WebAssembly component to WASI registry
-6. **Build Service**: Creates service configuration
-7. **Upload to IPFS**: Stores service metadata on IPFS
-8. **Set Service URI**: Registers IPFS URI with service manager
-9. **Start Aggregator**: Launches result aggregation service
-10. **Start WAVS**: Launches operator service with readiness check
-11. **Deploy Service**: Configures WAVS to monitor trigger events
-12. **Generate Keys**: Creates operator signing keys
-13. **Register Operator**: Registers with Eigenlayer AVS (0.001 ETH stake)
-14. **Verify Registration**: Confirms operator registration
-
-**Result:** A fully operational WAVS service that monitors blockchain events, executes WebAssembly components, and submits verified results on-chain.
-
 ```bash
 task deploy:full
 task deploy:single-operator-poa
@@ -420,6 +401,17 @@ task prediction-market:query-balances
 ## Geyser (Factory Pattern) - optional
 
 ```bash
+(cd components/geyser && make wasi-build)
+# manually test geyser
+export ipfs_cid=$(SERVICE_FILE=.docker/service.json make upload-to-ipfs)
+
+# escaped like the contract was / is
+COMPONENT_WORKFLOW='{\"trigger\":{\"evm_contract_event\":{\"address\":\"0x227db69d4b5e53357c71eea4475437f82ca605c3\",\"chain_name\":\"local\",\"event_hash\":\"0x3458a6422cada5bac0a323427c37ac55fede4fae5bd976fde40536903086999e\"}},\"component\":{\"source\":{\"Registry\":{\"registry\":{\"digest\":\"daa622d209437fefac4bdfbf1f21ba036e9af22b1864156663b6aa372942f13c\",\"domain\":\"localhost:8090\",\"version\":\"0.1.0\",\"package\":\"example:geyser\"}}},\"permissions\":{\"allowed_http_hosts\":\"all\",\"file_system\":true},\"fuel_limit\":1000000000000,\"time_limit_seconds\":30,\"config\":{\"chain_name\":\"local\"},\"env_keys\":[\"WAVS_ENV_SOME_SECRET\"]},\"submit\":{\"aggregator\":{\"url\":\"http:\/\/localhost:8001\",\"component\":null,\"evm_contracts\":[{\"chain_name\":\"local\",\"address\":\"0x227db69d4b5e53357c71eea4475437f82ca605c3\",\"max_gas\":5000000}],\"cosmos_contracts\":null}}}'
+
+make wasi-exec COMPONENT_FILENAME=geyser.wasm INPUT_DATA="${ipfs_cid}___${COMPONENT_WORKFLOW}"
+```
+
+```bash
 # execute againt the WAVS trigger for the deployment summary
 GYSER_ADDR=`jq -rc .geyser.trigger .docker/deployment_summary.json`
 WAVS_SERVICE_MANAGER_ADDRESS=`task config:service-manager-address`
@@ -428,23 +420,20 @@ WAVS_SERVICE_MANAGER_ADDRESS=`task config:service-manager-address`
 IPFS_URL=$(cast call --rpc-url http://localhost:8545 $WAVS_SERVICE_MANAGER_ADDRESS "getServiceURI()(string)" | tr -d '"' | tr -d '\')
 echo "IPFS URL: ${IPFS_URL}"
 cid=$(echo $IPFS_URL | cut -d'/' -f3)
-UPDATED_CONTENT=$(curl http://127.0.0.1:8080/ipfs/${cid} | jq -rc '.workflows = {}')
-
-echo "$UPDATED_CONTENT" > .docker/service_tmp.json
-IPFS_CID=$(SERVICE_FILE=.docker/service_tmp.json make upload-to-ipfs)
-
-curl http://127.0.0.1:8080/ipfs/${IPFS_CID}
+curl http://127.0.0.1:8080/ipfs/${cid} | jq -rc '.'
 
 # take the current owner (funded key) and transfer the ownership to the geyser handler. This way the handler can call the updateServiceUri method
 export FUNDED_KEY=`task config:funded-key`
 # change owner of the service manager -> the GYSER_ADDR, from funded key
 cast send ${WAVS_SERVICE_MANAGER_ADDRESS} 'transferOwnership(address)' "${GYSER_ADDR}" --rpc-url http://localhost:8545 --private-key $FUNDED_KEY
 
+COMPONENT_WORKFLOW='{"trigger":{"evm_contract_event":{"address":"0x227db69d4b5e53357c71eea4475437f82ca605c3","chain_name":"local","event_hash":"0x3458a6422cada5bac0a323427c37ac55fede4fae5bd976fde40536903086999e"}},"component":{"source":{"Registry":{"registry":{"digest":"daa622d209437fefac4bdfbf1f21ba036e9af22b1864156663b6aa372942f13c","domain":"localhost:8090","version":"0.1.0","package":"example:geyser"}}},"permissions":{"allowed_http_hosts":"all","file_system":true},"fuel_limit":1000000000000,"time_limit_seconds":30,"config":{"chain_name":"local"},"env_keys":["WAVS_ENV_SOME_SECRET"]},"submit":{"aggregator":{"url":"http://localhost:8001","component":null,"evm_contracts":[{"chain_name":"local","address":"0x227db69d4b5e53357c71eea4475437f82ca605c3","max_gas":5000000}],"cosmos_contracts":null}}}'
+
 
 # TODO: this should be a JSON blob of the component workflow stuff
 # TODO: this way we only have to append the new unique id, and not worry that they modified other things
 # For now I am just using IPFS to simulate the update rather than anything else
-cast send --rpc-url http://localhost:8545 --private-key $FUNDED_KEY $GYSER_ADDR "updateExample(string)" "ipfs://${IPFS_CID}"
+cast send --rpc-url http://localhost:8545 --private-key $FUNDED_KEY $GYSER_ADDR "updateExample(string)" "${COMPONENT_WORKFLOW}"
 
 cast call --rpc-url http://localhost:8545 $WAVS_SERVICE_MANAGER_ADDRESS "getServiceURI()(string)"
 ```

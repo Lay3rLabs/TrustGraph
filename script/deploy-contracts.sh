@@ -7,7 +7,6 @@ set -e
 
 echo "🚀 Starting WAVS EAS contract deployment..."
 
-# Check for required WAVS service manager address
 export WAVS_SERVICE_MANAGER_ADDRESS=${WAVS_SERVICE_MANAGER_ADDRESS:-`task config:service-manager-address`}
 
 # Get RPC URL and deployer key

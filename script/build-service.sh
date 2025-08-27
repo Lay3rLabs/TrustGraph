@@ -90,6 +90,14 @@ build_env_string() {
 
 BASE_CMD="docker run --rm --network host -w /data -v $(pwd):/data ghcr.io/lay3rlabs/wavs:0.5.5 wavs-cli service --json true --home /data --file /data/${FILE_LOCATION}"
 
+if [ -z "$WAVS_SERVICE_MANAGER_ADDRESS" ]; then
+    export WAVS_SERVICE_MANAGER_ADDRESS=$(jq -r '.contract' .docker/poa_sm_deploy.json)
+    if [ -z "$WAVS_SERVICE_MANAGER_ADDRESS" ]; then
+        echo "WAVS_SERVICE_MANAGER_ADDRESS is not set. Please set it to the address of the service manager."
+        return
+    fi
+fi
+
 if [ -z "$TRIGGER_ADDRESS" ]; then
     TRIGGER_ADDRESS=`jq -r '.service_contracts.trigger' .docker/deployment_summary.json`
 fi

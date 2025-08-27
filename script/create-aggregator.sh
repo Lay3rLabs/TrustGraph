@@ -33,6 +33,13 @@ AGGREGATOR_ADDR=`cast wallet address $AGG_PK`
 
 # == infra files ==
 AGG_LOC=infra/aggregator-${AGGREGATOR_INDEX}
+
+if [ -d "${AGG_LOC}" ] && [ "$(ls -A ${AGG_LOC})" ]; then
+    echo -e "\nRemoving ${AGG_LOC}"
+    docker kill wavs-${AGG_LOC} > /dev/null 2>&1 || true
+    echo "Removing dir ${AGG_LOC} ((may prompt for password))"
+    sudo rm -rf ${AGG_LOC}
+fi
 mkdir -p ${AGG_LOC}
 
 ENV_FILENAME="${AGG_LOC}/.env"

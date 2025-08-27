@@ -27,8 +27,8 @@ bs58 = { workspace = true }
 
 ## Other
 async-trait = { workspace = true }
-merkle-tree-rs = "0.1.0"
 wavs-types = "0.5.5"
+uuid = { version = "1.18.0", features = ["v5"] }
 
 [lib]
 crate-type = ["cdylib"]

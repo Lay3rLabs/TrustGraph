@@ -1,22 +1,29 @@
 use crate::{
-    bindings::wavs::worker::input::{TriggerData, TriggerDataCron, TriggerDataEvmContractEvent},
+    bindings::wavs::worker::input::{TriggerData, TriggerDataEvmContractEvent},
     solidity,
 };
-use alloy_sol_types::SolValue;
 use anyhow::Result;
 use wavs_wasi_utils::decode_event_log_data;
 
-pub fn decode_trigger_event(trigger_data: TriggerData) -> Result<String> {
+pub enum Destination {
+    Ethereum,
+    CliOutput,
+}
+
+pub fn decode_trigger_event(trigger_data: TriggerData) -> Result<(String, u64, Destination)> {
     match trigger_data {
-        TriggerData::EvmContractEvent(TriggerDataEvmContractEvent { log, .. }) => {
+        TriggerData::EvmContractEvent(TriggerDataEvmContractEvent {
+            log, block_height, ..
+        }) => {
             let solidity::UpdateService { json } = decode_event_log_data!(log)?;
-            Ok(json)
+            Ok((json, block_height, Destination::Ethereum))
+        }
+        TriggerData::Raw(e) => {
+            let s = std::str::from_utf8(&e)
+                .map_err(|e| anyhow::anyhow!("Failed to convert raw data to string: {}", e))?;
+
+            Ok((s.to_string(), 0, Destination::CliOutput))
         }
         _ => Err(anyhow::anyhow!("Unsupported trigger data type")),
     }
-}
-
-pub fn encode_trigger_output(trigger_id: u64, output: solidity::AvsOutput) -> Vec<u8> {
-    solidity::DataWithId { triggerId: trigger_id, data: output.abi_encode().to_vec().into() }
-        .abi_encode()
 }
