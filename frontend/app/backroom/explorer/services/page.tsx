@@ -1,84 +1,113 @@
-"use client";
+'use client'
 
-import type React from "react";
-import { useState } from "react";
-
-// TODO get actual service URI from contract. Soon.
-import serviceData from "./service.json";
-
-interface Workflow {
-  id: string;
-  package: string;
-  version: string;
-  digest: string;
-  domain: string;
-  trigger_address: string;
-  trigger_event: string;
-  chain_name: string;
-  aggregator_url: string;
-  aggregator_address: string;
-  fuel_limit: number;
-  time_limit: number;
-  permissions: string[];
-  env_keys: string[];
-  config: Record<string, any>;
-}
-
-const workflows: Workflow[] = Object.entries(serviceData.workflows).map(
-  ([id, workflow]: [string, any]) => ({
-    id,
-    package: workflow.component.source.Registry.registry.package,
-    version: workflow.component.source.Registry.registry.version,
-    digest: workflow.component.source.Registry.registry.digest,
-    domain: workflow.component.source.Registry.registry.domain,
-    trigger_address: workflow.trigger.evm_contract_event.address,
-    trigger_event: workflow.trigger.evm_contract_event.event_hash,
-    chain_name: workflow.trigger.evm_contract_event.chain_name,
-    aggregator_url: workflow.submit.aggregator.url,
-    aggregator_address: workflow.aggregators[0]?.evm?.address || "N/A",
-    fuel_limit: workflow.component.fuel_limit,
-    time_limit: workflow.component.time_limit_seconds,
-    permissions: [
-      workflow.component.permissions.allowed_http_hosts === "all"
-        ? "HTTP: All hosts"
-        : `HTTP: ${workflow.component.permissions.allowed_http_hosts}`,
-      workflow.component.permissions.file_system
-        ? "File system access"
-        : "No file system",
-    ],
-    env_keys: workflow.component.env_keys || [],
-    config: workflow.component.config || {},
-  }),
-);
+import type React from 'react'
+import { useState } from 'react'
+import { useServiceData } from '@/hooks/useServiceData'
+import { useAccount } from 'wagmi'
+import { poaServiceManagerAddress } from '@/lib/contracts'
 
 export default function ExplorerServicesPage() {
-  const [selectedPackage, setSelectedPackage] = useState<string>("all");
-  const [selectedChain, setSelectedChain] = useState<string>("all");
+  const { isConnected } = useAccount()
+  const { serviceURI, serviceData, workflows, isLoading, error } =
+    useServiceData()
+  const [selectedPackage, setSelectedPackage] = useState<string>('all')
+  const [selectedChain, setSelectedChain] = useState<string>('all')
+
+  if (!isConnected) {
+    return (
+      <div className="space-y-6">
+        <div className="border border-gray-600 p-8 bg-gray-900/30 backdrop-blur-sm text-center">
+          <h1 className="text-xl font-bold text-white mb-4">
+            WAVS WORKFLOW DIRECTORY
+          </h1>
+          <div className="text-red-400 text-lg mb-4">
+            ⚠️ WALLET NOT CONNECTED
+          </div>
+          <p className="text-gray-400 mb-6">
+            Connect your wallet to view the service directory.
+          </p>
+          <div className="system-message">
+            Neural link required for service access.
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="border border-gray-600 p-8 bg-gray-900/30 backdrop-blur-sm text-center">
+          <h1 className="text-xl font-bold text-white mb-4">
+            WAVS WORKFLOW DIRECTORY
+          </h1>
+          <div className="text-blue-400 text-lg mb-4">
+            ◉ LOADING SERVICE DATA...
+          </div>
+          <div className="system-message">
+            Synchronizing with IPFS network...
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || (!serviceData && !isLoading)) {
+    return (
+      <div className="space-y-6">
+        <div className="border border-gray-600 p-8 bg-gray-900/30 backdrop-blur-sm text-center">
+          <h1 className="text-xl font-bold text-white mb-4">
+            WAVS WORKFLOW DIRECTORY
+          </h1>
+          <div className="text-red-400 text-lg mb-4">⚠️ SERVICE ERROR</div>
+          <p className="text-gray-400 mb-6">
+            {!serviceURI || serviceURI === ''
+              ? 'Service URI not set on contract. Please contact admin.'
+              : 'Failed to load service data from IPFS.'}
+          </p>
+          <div className="system-message text-xs">
+            {error?.message || 'Service URI is empty or not configured'}
+          </div>
+          <div className="text-xs text-gray-500 mt-2">
+            Service URI: {serviceURI || 'Not set'}
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            Contract: {poaServiceManagerAddress}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const filteredWorkflows = workflows.filter((workflow) => {
     const packageMatch =
-      selectedPackage === "all" || workflow.package.includes(selectedPackage);
+      selectedPackage === 'all' || workflow.package.includes(selectedPackage)
     const chainMatch =
-      selectedChain === "all" || workflow.chain_name === selectedChain;
-    return packageMatch && chainMatch;
-  });
+      selectedChain === 'all' || workflow.chain_name === selectedChain
+    return packageMatch && chainMatch
+  })
 
   const uniquePackages = [
-    ...new Set(workflows.map((w) => w.package.split(":")[1] || w.package)),
-  ];
-  const uniqueChains = [...new Set(workflows.map((w) => w.chain_name))];
+    ...new Set(workflows.map((w) => w.package.split(':')[1] || w.package)),
+  ]
+  const uniqueChains = [...new Set(workflows.map((w) => w.chain_name))]
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="border-b border-gray-700 pb-4">
         <div className="ascii-art-title text-lg mb-2">
-          WAVS WORKFLOW DIRECTORY
+          WAVS SERVICE DIRECTORY
         </div>
         <div className="system-message text-sm">
-          ◈ {serviceData.name.toUpperCase()} SERVICE • STATUS:{" "}
+          ◈ {serviceData.name.toUpperCase()} SERVICE • STATUS:{' '}
           {serviceData.status.toUpperCase()} ◈
         </div>
+        {serviceURI && (
+          <div className="text-xs text-gray-400 mt-2">
+            Service URI: {serviceURI}
+          </div>
+        )}
       </div>
 
       {/* Filters */}
@@ -129,7 +158,7 @@ export default function ExplorerServicesPage() {
           <div className="terminal-dim text-xs">WORKFLOWS</div>
         </div>
         <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
-          <div className="text-green-400 text-lg">{uniquePackages.length}</div>
+          <div className="text-lg">{uniquePackages.length}</div>
           <div className="terminal-dim text-xs">PACKAGES</div>
         </div>
         <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
@@ -138,7 +167,7 @@ export default function ExplorerServicesPage() {
         </div>
         <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
           <div className="terminal-bright text-xs font-mono break-all">
-            {serviceData.manager.evm.address}
+            {serviceData.manager?.evm?.address || 'N/A'}
           </div>
           <div className="terminal-dim text-xs">MANAGER</div>
         </div>
@@ -272,13 +301,19 @@ export default function ExplorerServicesPage() {
               {/* Environment Variables */}
               {workflow.env_keys.length > 0 && (
                 <div>
-                  <div className="terminal-dim text-xs mb-2">ENVIRONMENT VARIABLES</div>
+                  <div className="terminal-dim text-xs mb-2">
+                    ENVIRONMENT VARIABLES
+                  </div>
                   <div className="bg-black/30 border border-gray-600 rounded-sm p-3">
                     <div className="space-y-1">
                       {workflow.env_keys.map((key) => (
                         <div key={key} className="flex items-center space-x-2">
-                          <span className="terminal-text text-xs font-mono">{key}</span>
-                          <span className="terminal-dim text-xs">= [REDACTED]</span>
+                          <span className="terminal-text text-xs font-mono">
+                            {key}
+                          </span>
+                          <span className="terminal-dim text-xs">
+                            = [REDACTED]
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -294,27 +329,18 @@ export default function ExplorerServicesPage() {
                     <div className="space-y-1 max-h-32 overflow-y-auto">
                       {Object.entries(workflow.config).map(([key, value]) => (
                         <div key={key} className="flex items-start space-x-2">
-                          <span className="terminal-text text-xs font-mono min-w-0 flex-shrink-0">{key}:</span>
-                          <span className="terminal-dim text-xs font-mono break-all">{String(value)}</span>
+                          <span className="terminal-text text-xs font-mono min-w-0 flex-shrink-0">
+                            {key}:
+                          </span>
+                          <span className="terminal-dim text-xs font-mono break-all">
+                            {String(value)}
+                          </span>
                         </div>
                       ))}
                     </div>
                   </div>
                 </div>
               )}
-
-              {/* Actions */}
-              <div className="flex space-x-2 pt-3 border-t border-gray-700">
-                <button className="mobile-terminal-btn !px-4 !py-2">
-                  <span className="text-xs terminal-command">TRIGGER</span>
-                </button>
-                <button className="mobile-terminal-btn !px-4 !py-2">
-                  <span className="text-xs terminal-command">LOGS</span>
-                </button>
-                <button className="mobile-terminal-btn !px-3 !py-2">
-                  <span className="text-xs terminal-command">CONFIG</span>
-                </button>
-              </div>
             </div>
           </div>
         ))}
@@ -336,10 +362,10 @@ export default function ExplorerServicesPage() {
         <div className="system-message text-center text-sm">
           <div>∞ WAVS NETWORK ∞</div>
           <div className="font-mono text-xs mt-1 break-all">
-            MANAGER: {serviceData.manager.evm.address}
+            MANAGER: {serviceData.manager?.evm?.address || 'N/A'}
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }

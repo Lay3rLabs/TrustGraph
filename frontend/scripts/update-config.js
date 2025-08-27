@@ -53,6 +53,11 @@ try {
     }
   }
 
+  // Add WAVS service manager address
+  if (deployment.wavs_service_manager) {
+    contractAddresses.wavs_service_manager = deployment.wavs_service_manager
+  }
+
   console.log('📋 Contract addresses:', contractAddresses)
 
   // Contract name mappings from deployment keys to wagmi config names
@@ -84,6 +89,9 @@ try {
     safe_factory: 'GnosisSafeProxy',
     merkle_gov_module: 'MerkleGovModule',
     signer_module: 'SignerManagerModule',
+
+    // WAVS service manager
+    wavs_service_manager: 'POAServiceManager',
   }
 
   // Read current wagmi config

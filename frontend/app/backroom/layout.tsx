@@ -1,191 +1,192 @@
-"use client";
+'use client'
 
-import type React from "react";
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useAccount, useConnect, useDisconnect, useSwitchChain } from "wagmi";
-import { Modal } from "../../components/ui/modal";
-import { toHex } from "viem";
-import { localChain } from "@/lib/wagmi";
+import type React from 'react'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { useAccount, useConnect, useDisconnect, useSwitchChain } from 'wagmi'
+import { Modal } from '../../components/ui/modal'
+import { toHex } from 'viem'
+import { localChain } from '@/lib/wagmi'
 
 interface MenuItem {
-  id: string;
-  label: string;
-  path?: string;
-  icon: string;
-  submenu?: MenuItem[];
+  id: string
+  label: string
+  path?: string
+  icon: string
+  submenu?: MenuItem[]
 }
 
 const menuItems: MenuItem[] = [
-  { id: "points", label: "Points", path: "/backroom/points", icon: "★" },
   {
-    id: "attestations",
-    label: "Attestations",
-    path: "/backroom/attestations",
-    icon: "◆",
+    id: 'hyperstition',
+    label: 'Hyperstitions',
+    path: '/backroom/hyperstition',
+    icon: '▲',
   },
+  { id: 'points', label: 'Points', path: '/backroom/points', icon: '⛤' },
+  { id: 'portal', label: 'Portal', path: '/backroom/portal', icon: '◎' },
   {
-    id: "hyperstition",
-    label: "Hyperstitions",
-    path: "/backroom/hyperstition",
-    icon: "▲",
-  },
-  { id: "rewards", label: "Rewards", path: "/backroom/rewards", icon: "$" },
-  {
-    id: "explorer",
-    label: "Explorer",
-    icon: "◇",
+    id: 'experimental',
+    label: 'Experimental',
+    icon: 'λ',
     submenu: [
       {
-        id: "explorer-operators",
-        label: "Operators",
-        path: "/backroom/explorer/operators",
-        icon: "◉",
+        id: 'attestations',
+        label: 'Attestations',
+        path: '/backroom/attestations',
+        icon: '>',
       },
       {
-        id: "explorer-services",
-        label: "Services",
-        path: "/backroom/explorer/services",
-        icon: "◈",
+        id: 'governance',
+        label: 'Governance',
+        path: '/backroom/governance',
+        icon: '☯',
       },
+      {
+        id: 'leaderboard',
+        label: 'Leaderboard',
+        path: '/backroom/leaderboard',
+        icon: 'Ω',
+      },
+      {
+        id: 'explorer-operators',
+        label: 'Operators',
+        path: '/backroom/explorer/operators',
+        icon: '◉',
+      },
+      {
+        id: 'explorer-services',
+        label: 'Services',
+        path: '/backroom/explorer/services',
+        icon: '⚙',
+      },
+      { id: 'rewards', label: 'Rewards', path: '/backroom/rewards', icon: '$' },
     ],
   },
   {
-    id: "mocks",
-    label: "WIP",
-    icon: "?",
-    submenu: [
-      {
-        id: "governance",
-        label: "Governance",
-        path: "/backroom/governance",
-        icon: "◢◤",
-      },
-      {
-        id: "leaderboard",
-        label: "Leaderboard",
-        path: "/backroom/leaderboard",
-        icon: "☆",
-      },
-      {
-        id: "memetics",
-        label: "Memetics",
-        path: "/backroom/memetics",
-        icon: "◈",
-      },
-      { id: "profile", label: "Profile", path: "/backroom/profile", icon: "◉" },
-      { id: "en0va", label: "EN0VA", path: "/backroom/en0va", icon: "∞" },
-      {
-        id: "symbient",
-        label: "Symbient",
-        path: "/backroom/symbient",
-        icon: "◈◉",
-      },
-      { id: "ico", label: "ICO", path: "/backroom/ico", icon: "◊" },
-      {
-        id: "incentives",
-        label: "Incentives",
-        path: "/backroom/incentives",
-        icon: "◇◆",
-      },
-      {
-        id: "systems",
-        label: "Systems",
-        path: "/backroom/systems",
-        icon: "░█",
-      },
-      { id: "vault", label: "Vault", path: "/backroom/vault", icon: "◢◤" },
-    ],
+    id: 'memetics',
+    label: 'Memetics',
+    path: '/backroom/memetics',
+    icon: '✛',
   },
-];
+  // {
+  //   id: 'mocks',
+  //   label: 'WIP',
+  //   icon: '?',
+  //   submenu: [
+  //     { id: 'profile', label: 'Profile', path: '/backroom/profile', icon: '◉' },
+  //     { id: 'en0va', label: 'EN0VA', path: '/backroom/en0va', icon: '∞' },
+  //     {
+  //       id: 'symbient',
+  //       label: 'Symbient',
+  //       path: '/backroom/symbient',
+  //       icon: '◈◉',
+  //     },
+  //     { id: 'ico', label: 'ICO', path: '/backroom/ico', icon: '◊' },
+  //     {
+  //       id: 'incentives',
+  //       label: 'Incentives',
+  //       path: '/backroom/incentives',
+  //       icon: '◇◆',
+  //     },
+  //     {
+  //       id: 'systems',
+  //       label: 'Systems',
+  //       path: '/backroom/systems',
+  //       icon: '░█',
+  //     },
+  //     { id: 'vault', label: 'Vault', path: '/backroom/vault', icon: '◢◤' },
+  //   ],
+  // },
+]
 
 export default function BackroomLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
-  const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
-  const pathname = usePathname();
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false)
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([])
+  const pathname = usePathname()
 
   const toggleSubmenu = (menuId: string) => {
     setExpandedMenus((prev) =>
       prev.includes(menuId)
         ? prev.filter((id) => id !== menuId)
         : [...prev, menuId]
-    );
-  };
+    )
+  }
 
   const isSubmenuExpanded = (menuId: string) => {
-    return expandedMenus.includes(menuId);
-  };
+    return expandedMenus.includes(menuId)
+  }
 
   const isMenuItemActive = (item: MenuItem): boolean => {
-    if (item.path && pathname === item.path) return true;
+    if (item.path && pathname === item.path) return true
     if (item.submenu) {
-      return item.submenu.some((subItem) => subItem.path === pathname);
+      return item.submenu.some((subItem) => subItem.path === pathname)
     }
-    return false;
-  };
+    return false
+  }
 
   const addLocalNetwork = async () => {
     try {
       await window.ethereum?.request({
-        method: "wallet_addEthereumChain",
+        method: 'wallet_addEthereumChain',
         params: [
           {
             chainId: toHex(localChain.id),
-            chainName: "Local Anvil",
+            chainName: 'Local Anvil',
             nativeCurrency: {
-              name: "Ether",
-              symbol: "ETH",
+              name: 'Ether',
+              symbol: 'ETH',
               decimals: 18,
             },
-            rpcUrls: ["http://localhost:8545"],
-            blockExplorerUrls: ["http://localhost:8545"],
+            rpcUrls: ['http://localhost:8545'],
+            blockExplorerUrls: ['http://localhost:8545'],
           },
         ],
-      });
+      })
     } catch (err) {
-      console.error("Failed to add local network:", err);
-      throw err;
+      console.error('Failed to add local network:', err)
+      throw err
     }
-  };
+  }
 
-  const { switchChain } = useSwitchChain();
-  const { address, isConnected, chain } = useAccount();
-  const { connectors, connect, isPending } = useConnect();
-  const { disconnect } = useDisconnect();
+  const { switchChain } = useSwitchChain()
+  const { address, isConnected, chain } = useAccount()
+  const { connectors, connect, isPending } = useConnect()
+  const { disconnect } = useDisconnect()
 
   const formatAddress = (addr: string) => {
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-  };
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`
+  }
 
   const handleSwitchToLocal = async () => {
     try {
-      switchChain({ chainId: localChain.id });
+      switchChain({ chainId: localChain.id })
     } catch (err) {
-      console.error("Failed to switch network:", err);
+      console.error('Failed to switch network:', err)
       try {
-        await addLocalNetwork();
-        switchChain({ chainId: localChain.id });
+        await addLocalNetwork()
+        switchChain({ chainId: localChain.id })
       } catch (addErr) {
-        console.error("Failed to add and switch network:", addErr);
+        console.error('Failed to add and switch network:', addErr)
       }
     }
-  };
+  }
 
   // Auto-switch to local network when connected to wrong chain
   useEffect(() => {
     if (isConnected && (!chain || chain.id !== localChain.id)) {
       console.log(
-        `Current chain: ${chain?.id || "unknown"}, switching to local chain: ${localChain.id}`
-      );
-      handleSwitchToLocal();
+        `Current chain: ${chain?.id || 'unknown'}, switching to local chain: ${localChain.id}`
+      )
+      handleSwitchToLocal()
     }
-  }, [isConnected, chain]);
+  }, [isConnected, chain])
 
   return (
     <div className="min-h-screen terminal-text text-xs sm:text-sm dynamic-bg">
@@ -210,8 +211,8 @@ export default function BackroomLayout({
                           onClick={() => toggleSubmenu(item.id)}
                           className={`group flex items-center justify-between w-full px-3 py-2 rounded-sm border transition-colors ${
                             isMenuItemActive(item)
-                              ? "bg-black/20 terminal-bright border-gray-600"
-                              : "hover:bg-black/10 terminal-command border-transparent hover:terminal-bright"
+                              ? 'bg-black/20 terminal-bright border-gray-600'
+                              : 'hover:bg-black/10 terminal-command border-transparent hover:terminal-bright'
                           }`}
                         >
                           <div className="flex items-center space-x-3">
@@ -221,7 +222,7 @@ export default function BackroomLayout({
                             <span className="text-sm">{item.label}</span>
                           </div>
                           <span className="terminal-dim text-xs">
-                            {isSubmenuExpanded(item.id) ? "▼" : "▶"}
+                            {isSubmenuExpanded(item.id) ? '▼' : '▶'}
                           </span>
                         </button>
                         {/* Submenu */}
@@ -233,8 +234,8 @@ export default function BackroomLayout({
                                 href={subItem.path!}
                                 className={`group flex items-center space-x-3 px-3 py-2 rounded-sm border transition-colors ${
                                   pathname === subItem.path
-                                    ? "bg-black/20 terminal-bright border-gray-600"
-                                    : "hover:bg-black/10 terminal-command border-transparent hover:terminal-bright"
+                                    ? 'bg-black/20 terminal-bright border-gray-600'
+                                    : 'hover:bg-black/10 terminal-command border-transparent hover:terminal-bright'
                                 }`}
                               >
                                 <span className="terminal-bright text-sm">
@@ -252,8 +253,8 @@ export default function BackroomLayout({
                         href={item.path!}
                         className={`group flex items-center space-x-3 px-3 py-2 rounded-sm border transition-colors ${
                           pathname === item.path
-                            ? "bg-black/20 terminal-bright border-gray-600"
-                            : "hover:bg-black/10 terminal-command border-transparent hover:terminal-bright"
+                            ? 'bg-black/20 terminal-bright border-gray-600'
+                            : 'hover:bg-black/10 terminal-command border-transparent hover:terminal-bright'
                         }`}
                       >
                         <span className="terminal-bright text-sm">
@@ -318,14 +319,14 @@ export default function BackroomLayout({
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
                   className="lg:!hidden mobile-terminal-btn !text-base !px-3 !py-0"
                 >
-                  {isMenuOpen ? "×" : "≡"}
+                  {isMenuOpen ? '×' : '≡'}
                 </button>
               </div>
             </div>
 
             {/* Mobile Navigation */}
             <nav
-              className={`${isMenuOpen ? "block" : "hidden"} lg:hidden border-t border-gray-700`}
+              className={`${isMenuOpen ? 'block' : 'hidden'} lg:hidden border-t border-gray-700`}
             >
               <div className="p-4 space-y-2">
                 {menuItems.map((item) => (
@@ -337,8 +338,8 @@ export default function BackroomLayout({
                           onClick={() => toggleSubmenu(item.id)}
                           className={`flex items-center justify-between w-full px-3 py-2 rounded-sm transition-colors ${
                             isMenuItemActive(item)
-                              ? "bg-black/20 terminal-bright"
-                              : "terminal-command hover:terminal-bright"
+                              ? 'bg-black/20 terminal-bright'
+                              : 'terminal-command hover:terminal-bright'
                           }`}
                         >
                           <div className="flex items-center space-x-3">
@@ -348,7 +349,7 @@ export default function BackroomLayout({
                             <span className="text-sm">{item.label}</span>
                           </div>
                           <span className="terminal-dim text-xs">
-                            {isSubmenuExpanded(item.id) ? "▼" : "▶"}
+                            {isSubmenuExpanded(item.id) ? '▼' : '▶'}
                           </span>
                         </button>
                         {/* Mobile submenu */}
@@ -360,8 +361,8 @@ export default function BackroomLayout({
                                 href={subItem.path!}
                                 className={`flex items-center space-x-3 px-3 py-2 rounded-sm transition-colors ${
                                   pathname === subItem.path
-                                    ? "bg-black/20 terminal-bright"
-                                    : "terminal-command hover:terminal-bright"
+                                    ? 'bg-black/20 terminal-bright'
+                                    : 'terminal-command hover:terminal-bright'
                                 }`}
                                 onClick={() => setIsMenuOpen(false)}
                               >
@@ -380,8 +381,8 @@ export default function BackroomLayout({
                         href={item.path!}
                         className={`flex items-center space-x-3 px-3 py-2 rounded-sm transition-colors ${
                           pathname === item.path
-                            ? "bg-black/20 terminal-bright"
-                            : "terminal-command hover:terminal-bright"
+                            ? 'bg-black/20 terminal-bright'
+                            : 'terminal-command hover:terminal-bright'
                         }`}
                         onClick={() => setIsMenuOpen(false)}
                       >
@@ -413,7 +414,7 @@ export default function BackroomLayout({
       <Modal
         isOpen={isWalletModalOpen}
         onClose={() => setIsWalletModalOpen(false)}
-        title={isConnected ? "WALLET" : "CONNECT WALLET"}
+        title={isConnected ? 'WALLET' : 'CONNECT WALLET'}
       >
         {isConnected && address ? (
           <div className="space-y-4">
@@ -425,8 +426,8 @@ export default function BackroomLayout({
             </div>
             <button
               onClick={() => {
-                disconnect();
-                setIsWalletModalOpen(false);
+                disconnect()
+                setIsWalletModalOpen(false)
               }}
               className="w-full mobile-terminal-btn !px-4 !py-2"
             >
@@ -442,8 +443,8 @@ export default function BackroomLayout({
                   <button
                     key={connector.id}
                     onClick={() => {
-                      connect({ connector });
-                      setIsWalletModalOpen(false);
+                      connect({ connector })
+                      setIsWalletModalOpen(false)
                     }}
                     disabled={isPending}
                     className="w-full mobile-terminal-btn !px-4 !py-2 text-left"
@@ -461,5 +462,5 @@ export default function BackroomLayout({
         )}
       </Modal>
     </div>
-  );
+  )
 }

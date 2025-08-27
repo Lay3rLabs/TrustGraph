@@ -17,18 +17,15 @@
 - [x] Add ollama docker container?
 - [x] Make LLM attester
 - [x] Improve component configuration experience (support config values and environment variables)
+- [x] Get prediction market to actually work (currently partially working)
+- [x] Clean up wavs-llm package (should support formatted response)
+- [x] LLM attester should be spam filter / approver
 - [ ] Merkle gov module probably needs some notion of total voting power
-- [ ] Get prediction market to actually work (currently partially working)
 - [ ] Make attestation on participating in prediction market
 - [ ] More realistic Hyperstition market resolver component
-- [ ] Clean up wavs-llm package (should support formatted response)
-- [ ] LLM attester should be spam filter / approver
 - [ ] Wire up new component to utilize SignerManagerModule, respond to MerkleRootUpdated Event get IPFS CID, get top N users, sync
 - [ ] Wire up dao-agent component to utilizes WavsModule for zodiac, add test trigger
 - [ ] Figure out some way to pay for these services
-
-Fix:
-- [ ] eas-compute component not working (revert happening)
 
 # UI TODO
 - [ ] Toasts
@@ -43,9 +40,9 @@ Fix:
 - [x] Sepolia
 - [x] Add config values to components-config.json (currently all components share the same config lol)
 - [x] Unnessary envrionement variables in Demo (many redundent ones)
+- [x] Use better upstream WAVS patterns
 - [ ] Organize project better (put contracts in folders)
 - [ ] No IWavsTrigger2
-- [ ] Use better upstream WAVS patterns
 
 ### Project organization (contracts)
 
@@ -117,7 +114,6 @@ Let's use a zodiac module + safe to create a system with a nice fallback while w
 - [ ] JS example using EAS SDK?
 - [ ] Performance based Vesting
 - [ ] More EAS resolvers
-- [ ] UI for demo
 - [ ] Docs and writeup
 - [ ] review and fixup tests
 - [ ] bridge integration

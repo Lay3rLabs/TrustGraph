@@ -171,7 +171,7 @@ export const attesterAbi = [
 ] as const
 
 export const attesterAddress =
-  '0x4A292d6ab4ded92fC55881bcce8a47aC5c2C1127' as const
+  '0x1d7608DBb562F9d4bac2591D57212AE8fdC50E6D' as const
 
 export const attesterConfig = {
   address: attesterAddress,
@@ -723,7 +723,7 @@ export const conditionalTokensAbi = [
 ] as const
 
 export const conditionalTokensAddress =
-  '0x2b36ABD81ee9FeB996720875281f81a1Ce87F1D1' as const
+  '0x8c2034AD0630CE1D30053B976c01c312B4e246ad' as const
 
 export const conditionalTokensConfig = {
   address: conditionalTokensAddress,
@@ -1321,7 +1321,7 @@ export const easAbi = [
   { type: 'error', inputs: [], name: 'WrongSchema' },
 ] as const
 
-export const easAddress = '0x4E496eeB65bE4F0049821Fa087D6427Af48C6355' as const
+export const easAddress = '0xd273195a8858e276C4d4869793D0152824C56F59' as const
 
 export const easConfig = { address: easAddress, abi: easAbi } as const
 
@@ -1407,7 +1407,7 @@ export const easAttestTriggerAbi = [
 ] as const
 
 export const easAttestTriggerAddress =
-  '0xA27eF05A7125Fd25B4C70662123B77D5884044D0' as const
+  '0xd192dB635DaF6a250B4e97E528170AC32e226FEb' as const
 
 export const easAttestTriggerConfig = {
   address: easAttestTriggerAddress,
@@ -2171,7 +2171,7 @@ export const enovaAbi = [
 ] as const
 
 export const enovaAddress =
-  '0x13ccd4aedA37Ba0A54A6B01266691F8aB5B8d284' as const
+  '0x874413C13a0183066b2856D92613142b281778Cd' as const
 
 export const enovaConfig = { address: enovaAddress, abi: enovaAbi } as const
 
@@ -2754,7 +2754,7 @@ export const gnosisSafeAbi = [
 ] as const
 
 export const gnosisSafeAddress =
-  '0x3a595187dcFC3A975e8D3e55de7bCbB0D1026A2C' as const
+  '0xe69BF91521B0797A4C4bB4e7a6b691e057E26077' as const
 
 export const gnosisSafeConfig = {
   address: gnosisSafeAddress,
@@ -2775,7 +2775,7 @@ export const gnosisSafeProxyAbi = [
 ] as const
 
 export const gnosisSafeProxyAddress =
-  '0xA7C6D936BF522831B7773Eb6c1395806C6101Be6' as const
+  '0xC74b131bCd98856fe90582E86A984Ee416CC34bF' as const
 
 export const gnosisSafeProxyConfig = {
   address: gnosisSafeProxyAddress,
@@ -2937,7 +2937,7 @@ export const indexerAbi = [
 ] as const
 
 export const indexerAddress =
-  '0x02cC033911bA1571E4cb2E7B281d82F3A2fE8121' as const
+  '0x835Ea27977A6df339543852E7d4bAfa378776874' as const
 
 export const indexerConfig = {
   address: indexerAddress,
@@ -3123,7 +3123,7 @@ export const indexerResolverAbi = [
 ] as const
 
 export const indexerResolverAddress =
-  '0x696df8445C35efeE6572E9a6210E5CaB445372F9' as const
+  '0x8a5B9E387e91Fe3aC14c8734C22092b1b116351D' as const
 
 export const indexerResolverConfig = {
   address: indexerResolverAddress,
@@ -3510,7 +3510,7 @@ export const lmsrMarketMakerAbi = [
 ] as const
 
 export const lmsrMarketMakerAddress =
-  '0x05A88714da92d3657B0147F4957a7121Aea430Dd' as const
+  '0x83BDA76BA9e8863C5e8FA0392a6495d418B55885' as const
 
 export const lmsrMarketMakerConfig = {
   address: lmsrMarketMakerAddress,
@@ -4379,7 +4379,7 @@ export const merkleGovModuleAbi = [
 ] as const
 
 export const merkleGovModuleAddress =
-  '0xc85ddD0a250E8d13767fAcac836541A98e09b8cA' as const
+  '0xde6a24D869d133b342B31fA59f0C4ed08ca81273' as const
 
 export const merkleGovModuleConfig = {
   address: merkleGovModuleAddress,
@@ -4609,11 +4609,400 @@ export const mockUsdcAbi = [
 ] as const
 
 export const mockUsdcAddress =
-  '0x75be824eFf81FeC601FF71894084F31bDD67D0D7' as const
+  '0x49bF430ce5cc828F6E6477e306d7233217b8780e' as const
 
 export const mockUsdcConfig = {
   address: mockUsdcAddress,
   abi: mockUsdcAbi,
+} as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// POAServiceManager
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const poaServiceManagerAbi = [
+  { type: 'constructor', inputs: [], stateMutability: 'nonpayable' },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getAllocationManager',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getDelegationManager',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'signingKeyAddress', internalType: 'address', type: 'address' },
+    ],
+    name: 'getLatestOperatorForSigningKey',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'operatorAddress', internalType: 'address', type: 'address' },
+    ],
+    name: 'getLatestSigningKeyForOperator',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getOperatorCount',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'operatorAddress', internalType: 'address', type: 'address' },
+    ],
+    name: 'getOperatorWeight',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'start', internalType: 'uint256', type: 'uint256' },
+      { name: 'length', internalType: 'uint256', type: 'uint256' },
+      { name: 'reverseOrder', internalType: 'bool', type: 'bool' },
+    ],
+    name: 'getOperators',
+    outputs: [
+      { name: 'operators', internalType: 'address[]', type: 'address[]' },
+      { name: 'weights', internalType: 'uint256[]', type: 'uint256[]' },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getServiceURI',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getStakeRegistry',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getThresholdStake',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getTotalWeight',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'operatorAddress', internalType: 'address', type: 'address' },
+    ],
+    name: 'isOperatorWhitelisted',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'digest', internalType: 'bytes32', type: 'bytes32' },
+      { name: '_signatureData', internalType: 'bytes', type: 'bytes' },
+    ],
+    name: 'isValidSignature',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'owner',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'quorumDenominator',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'quorumNumerator',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'operator', internalType: 'address', type: 'address' }],
+    name: 'removeOperator',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'renounceOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'serviceURI',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'numerator', internalType: 'uint256', type: 'uint256' },
+      { name: 'denominator', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'setQuorumThreshold',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '_serviceURI', internalType: 'string', type: 'string' }],
+    name: 'setServiceURI',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'signingKey', internalType: 'address', type: 'address' }],
+    name: 'setSigningKey',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
+    name: 'transferOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'operator', internalType: 'address', type: 'address' },
+      { name: 'newWeight', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'updateOperatorWeight',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      {
+        name: 'envelope',
+        internalType: 'struct IWavsServiceHandler.Envelope',
+        type: 'tuple',
+        components: [
+          { name: 'eventId', internalType: 'bytes20', type: 'bytes20' },
+          { name: 'ordering', internalType: 'bytes12', type: 'bytes12' },
+          { name: 'payload', internalType: 'bytes', type: 'bytes' },
+        ],
+      },
+      {
+        name: 'signatureData',
+        internalType: 'struct IWavsServiceHandler.SignatureData',
+        type: 'tuple',
+        components: [
+          { name: 'signers', internalType: 'address[]', type: 'address[]' },
+          { name: 'signatures', internalType: 'bytes[]', type: 'bytes[]' },
+          { name: 'referenceBlock', internalType: 'uint32', type: 'uint32' },
+        ],
+      },
+    ],
+    name: 'validate',
+    outputs: [],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'operator', internalType: 'address', type: 'address' },
+      { name: 'weight', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'whitelistOperator',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'operator',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OperatorRemoved',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'operator',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'weight',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'OperatorWhitelisted',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'previousOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipTransferred',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'numerator',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: true,
+      },
+      {
+        name: 'denominator',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: true,
+      },
+    ],
+    name: 'QuorumThresholdUpdated',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'serviceURI',
+        internalType: 'string',
+        type: 'string',
+        indexed: false,
+      },
+    ],
+    name: 'ServiceURIUpdated',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'operator',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'signingKey',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'SigningKeySet',
+  },
+  { type: 'error', inputs: [], name: 'AlreadyHasSigningKey' },
+  { type: 'error', inputs: [], name: 'CannotUseOperatorAsSigningKey' },
+  {
+    type: 'error',
+    inputs: [
+      { name: 'signerWeight', internalType: 'uint256', type: 'uint256' },
+      { name: 'thresholdWeight', internalType: 'uint256', type: 'uint256' },
+      { name: 'totalWeight', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'InsufficientQuorum',
+  },
+  { type: 'error', inputs: [], name: 'InsufficientQuorumZero' },
+  { type: 'error', inputs: [], name: 'InsufficientSignedStake' },
+  { type: 'error', inputs: [], name: 'InvalidLength' },
+  { type: 'error', inputs: [], name: 'InvalidOffset' },
+  { type: 'error', inputs: [], name: 'InvalidOperatorAddress' },
+  { type: 'error', inputs: [], name: 'InvalidQuorumParameters' },
+  { type: 'error', inputs: [], name: 'InvalidSignature' },
+  { type: 'error', inputs: [], name: 'InvalidSignatureBlock' },
+  { type: 'error', inputs: [], name: 'InvalidSignatureLength' },
+  { type: 'error', inputs: [], name: 'InvalidSignatureOrder' },
+  { type: 'error', inputs: [], name: 'InvalidSignedWeight' },
+  { type: 'error', inputs: [], name: 'LengthMismatch' },
+  { type: 'error', inputs: [], name: 'NotSorted' },
+  { type: 'error', inputs: [], name: 'OperatorAlreadyWhitelisted' },
+  { type: 'error', inputs: [], name: 'OperatorDoesNotExistForSigningKey' },
+  { type: 'error', inputs: [], name: 'OperatorNotWhitelisted' },
+  {
+    type: 'error',
+    inputs: [{ name: 'owner', internalType: 'address', type: 'address' }],
+    name: 'OwnableInvalidOwner',
+  },
+  {
+    type: 'error',
+    inputs: [{ name: 'account', internalType: 'address', type: 'address' }],
+    name: 'OwnableUnauthorizedAccount',
+  },
+  { type: 'error', inputs: [], name: 'ReentrancyGuardReentrantCall' },
+  { type: 'error', inputs: [], name: 'SignerNotRegistered' },
+  { type: 'error', inputs: [], name: 'SigningKeyAlreadyUsed' },
+  { type: 'error', inputs: [], name: 'SingingKeyDoesNotExistForOperator' },
+] as const
+
+export const poaServiceManagerAddress =
+  '0xC7F22B0b804E14eC70b8C1679a82FA5656Af6102' as const
+
+export const poaServiceManagerConfig = {
+  address: poaServiceManagerAddress,
+  abi: poaServiceManagerAbi,
 } as const
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4741,7 +5130,7 @@ export const predictionMarketFactoryAbi = [
 ] as const
 
 export const predictionMarketFactoryAddress =
-  '0xbC92a52de5E4b3aFC967fd0BFb6DdFDeCE7a4fc4' as const
+  '0x73316564278814E36e0e755257cA2EE033f640EB' as const
 
 export const predictionMarketFactoryConfig = {
   address: predictionMarketFactoryAddress,
@@ -4910,7 +5299,7 @@ export const predictionMarketOracleControllerAbi = [
 ] as const
 
 export const predictionMarketOracleControllerAddress =
-  '0x69C484504Cf9bD5F6e5200cF5e2E74Ac114Bd86C' as const
+  '0xBF92F4Fb7Cb7AfBd8a0F3d5E67d05EBA61af75C6' as const
 
 export const predictionMarketOracleControllerConfig = {
   address: predictionMarketOracleControllerAddress,
@@ -5366,7 +5755,7 @@ export const rewardDistributorAbi = [
 ] as const
 
 export const rewardDistributorAddress =
-  '0xf8D5DdF6c4f5Cb08C0eaccc2ae988C55A0dae64F' as const
+  '0x3859c1AE42AfCf6C854d436D790074467186C161' as const
 
 export const rewardDistributorConfig = {
   address: rewardDistributorAddress,
@@ -5410,7 +5799,7 @@ export const schemaRegistrarAbi = [
 ] as const
 
 export const schemaRegistrarAddress =
-  '0xbbF0c55519161080f6DeD277d73080dcd00C726B' as const
+  '0x0E2d6d98738c37faE4a4aB3CE080B47007301EaF' as const
 
 export const schemaRegistrarConfig = {
   address: schemaRegistrarAddress,
@@ -5502,7 +5891,7 @@ export const schemaRegistryAbi = [
 ] as const
 
 export const schemaRegistryAddress =
-  '0x8aF960b119d062fdE7943Fb6bB6189FE75b57320' as const
+  '0xF2AECf4029436E82A1D8D6175420Dda745f3405F' as const
 
 export const schemaRegistryConfig = {
   address: schemaRegistryAddress,
@@ -5891,7 +6280,7 @@ export const signerManagerModuleAbi = [
 ] as const
 
 export const signerManagerModuleAddress =
-  '0x070E93aFFc8A82A5A6D253aaf7180260C83302D7' as const
+  '0x8618ff9481d3e7Be5D5B9D4c66A674E1239F95E3' as const
 
 export const signerManagerModuleConfig = {
   address: signerManagerModuleAddress,
