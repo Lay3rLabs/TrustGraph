@@ -106,8 +106,8 @@ impl Guest for Component {
         let llm = client::LLMClient::with_config(config.model.clone(), llm_options);
 
         // Get structured response from LLM
-        let llm_response: LikeResponse = llm
-            .complete_structured_with_system(&config.system_message, &user_prompt)
+        let llm_response = llm
+            .complete_structured::<LikeResponse>(&user_prompt)
             .map_err(|e| format!("Failed to get structured LLM completion: {}", e))?;
 
         println!(
