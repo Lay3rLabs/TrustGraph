@@ -35,14 +35,56 @@ fi
 
 log "📦 Building components if needed..."
 
-if [ ! -d compiled/ ] || [ -z "$(find compiled/ -name '*.wasm')" ]; then
-    log "Building components..."
-    task build:wasi
-fi
+# Function to get modified components from git status
+get_modified_components() {
+    git status --porcelain | grep -v "bindings.rs" | grep "^.* components/" | \
+    sed 's|^.* components/||' | cut -d'/' -f1 | sort -u
+}
 
-if git status --porcelain | grep -v "bindings.rs" | grep -q "^.* components/"; then
-    log "Changes detected, rebuilding..."
+# Function to build specific component
+build_component() {
+    local component="$1"
+    local component_dir="components/$component"
+
+    if [ -f "$component_dir/Makefile" ] && grep -q "^wasi-build:" "$component_dir/Makefile" 2>/dev/null; then
+        log "Building component: $component"
+        make -s -C "$component_dir" wasi-build
+        return $?
+    else
+        log "⚠️ No wasi-build target found for component : $component"
+        return 1
+    fi
+}
+
+# Check if compiled directory exists or is empty
+if [ ! -d compiled/ ] || [ -z "$(find compiled/ -name '*.wasm')" ]; then
+    log "Building all components (compiled/ missing or empty)..."
+    warg reset || echo "warg reset failed (warg server not started), continuing..."
     task build:wasi
+else
+    # Check for modified components
+    modified_components=$(get_modified_components)
+
+    if [ -n "$modified_components" ]; then
+        log "Changes detected in components: $(echo $modified_components | tr '\n' ' ')"
+        warg reset || echo "warg reset failed (warg server not started), continuing..."
+
+        # Build only modified components
+        build_failed=0
+        for component in $modified_components; do
+            if ! build_component "$component"; then
+                build_failed=1
+                log "❌ Failed to build component: $component"
+            fi
+        done
+
+        if [ $build_failed -eq 1 ]; then
+            log "⚠️ Some components failed to build, falling back to full build..."
+            task build:wasi
+        fi
+    else
+        log "✅ No component changes detected, skipping build"
+    fi
 fi
 
 upload_package() {
