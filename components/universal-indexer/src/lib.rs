@@ -5,7 +5,6 @@ mod transformers;
 mod trigger;
 
 use crate::bindings::{export, Guest, TriggerAction, WasmResponse};
-use crate::solidity::{IndexOperation, IndexingPayload};
 use crate::transformers::TransformerRegistry;
 use crate::trigger::{decode_trigger_event, encode_indexing_output, Destination};
 
@@ -29,15 +28,15 @@ impl Guest for Component {
             event_data.contract_address, event_data
         );
 
-        // Transform the event using appropriate transformer
-        let transformed_events = block_on(async move { process_event(event_data).await })
+        // Transform the event into a payload using appropriate transformers
+        let payload = block_on(async move { process_event(event_data).await })
             .map_err(|e| format!("Failed to process event: {}", e))?;
 
-        println!("Universal Indexer: Transformed {} events", transformed_events.len());
-
-        // Create indexing payload
-        let payload =
-            IndexingPayload { operation: IndexOperation::ADD, events: transformed_events };
+        println!(
+            "Universal Indexer: Transformed event, adding {} and deleting {}",
+            payload.toAdd.len(),
+            payload.toDelete.len()
+        );
 
         // Encode output based on destination
         let output = match dest {
@@ -57,7 +56,7 @@ impl Guest for Component {
 /// Process a single event by routing to the appropriate transformer
 async fn process_event(
     event_data: crate::trigger::EventData,
-) -> Result<Vec<crate::solidity::UniversalEvent>, String> {
+) -> Result<crate::solidity::IndexingPayload, String> {
     // Get the appropriate transformer for this event
     // Convert Vec<u8> to FixedBytes<32> for event signature
     let event_signature = if event_data.log.topics.is_empty() {

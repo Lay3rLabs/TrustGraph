@@ -39,6 +39,7 @@ interface IUniversalIndexer {
     error EventDoesNotExist();
     error EventAlreadyDeleted();
     error NoEvents();
+    error CannotCreateDeletedEvent();
 
     /// ================================================
     /// TYPES
@@ -56,18 +57,15 @@ interface IUniversalIndexer {
         string[] tags; // Searchable tags (e.g., "sender:ADDRESS", "recipient:ADDRESS", "schema:SCHEMA_ID")
         address[] relevantAddresses; // Addresses relevant to this event (users, contracts, etc.)
         bytes metadata; // Optional: additional metadata
-    }
-
-    /// @notice Operation types for indexing
-    enum IndexOperation {
-        ADD,
-        DELETE
+        bool deleted; // Whether the event has been deleted
     }
 
     /// @notice Payload structure for WAVS indexing operations
     struct IndexingPayload {
-        IndexOperation operation;
-        UniversalEvent[] events;
+        // Events to add
+        UniversalEvent[] toAdd;
+        // Event IDs to delete
+        bytes32[] toDelete;
     }
 
     /// ================================================

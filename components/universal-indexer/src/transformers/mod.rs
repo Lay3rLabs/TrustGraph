@@ -3,16 +3,10 @@ pub mod attestation;
 // pub mod erc20;
 // pub mod erc721;
 
-use crate::solidity::UniversalEvent;
+use crate::solidity::IndexingPayload;
 use crate::trigger::EventData;
-use alloy_primitives::{Address, FixedBytes, U256};
+use alloy_primitives::{FixedBytes, U256};
 use anyhow::Result;
-
-/// Result of event transformation
-pub enum TransformResult {
-    Single(UniversalEvent),
-    Multiple(Vec<UniversalEvent>),
-}
 
 /// Static transformer function type
 pub type TransformerFn = fn(&FixedBytes<32>) -> bool;
@@ -20,7 +14,7 @@ pub type TransformFn =
     fn(
         FixedBytes<32>,
         EventData,
-    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<TransformResult>>>>;
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<IndexingPayload>>>>;
 
 /// Transformer registration struct
 pub struct StaticTransformer {
@@ -42,7 +36,7 @@ pub trait EventTransformer {
     async fn transform(
         event_signature: FixedBytes<32>,
         event_data: EventData,
-    ) -> Result<TransformResult>;
+    ) -> Result<IndexingPayload>;
 
     /// Get the transformer name for debugging
     fn name() -> &'static str;
@@ -66,23 +60,29 @@ impl TransformerRegistry {
         &self,
         event_signature: &FixedBytes<32>,
         event_data: EventData,
-    ) -> Result<Vec<UniversalEvent>> {
-        let mut results = Vec::new();
+    ) -> Result<IndexingPayload> {
+        let mut payload = IndexingPayload { toAdd: Vec::new(), toDelete: Vec::new() };
 
+        let mut not_found = true;
         for transformer in &self.transformers {
             if (transformer.supports_event)(event_signature) {
+                not_found = false;
                 match (transformer.transform)(event_signature.clone(), event_data.clone()).await {
-                    Ok(TransformResult::Single(event)) => results.push(event),
-                    Ok(TransformResult::Multiple(events)) => results.extend(events),
+                    Ok(p) => {
+                        payload.toAdd.extend(p.toAdd);
+                        payload.toDelete.extend(p.toDelete);
+                    }
                     Err(e) => println!("Transformer {} failed: {}", transformer.name, e),
                 }
             }
         }
 
-        if results.is_empty() {
+        if not_found {
             Err(anyhow::anyhow!("No transformer found for event signature: {}", event_signature))
+        } else if payload.toAdd.is_empty() && payload.toDelete.is_empty() {
+            Err(anyhow::anyhow!("No index updates were applied for event: {}", event_signature))
         } else {
-            Ok(results)
+            Ok(payload)
         }
     }
 
@@ -116,6 +116,9 @@ macro_rules! register_transformer {
 
 /// Utility functions for transformers
 pub mod utils {
+    use crate::bindings::wavs::types::chain::EvmAddress;
+    use alloy_primitives::Address;
+
     use super::*;
 
     /// Get current timestamp
@@ -125,23 +128,8 @@ pub mod utils {
         )
     }
 
-    /// Convert Vec<u8> to FixedBytes<32> for event signatures/topics
-    pub fn vec_to_fixed_bytes32(data: &[u8]) -> FixedBytes<32> {
-        let mut bytes = [0u8; 32];
-        let len = data.len().min(32);
-        bytes[..len].copy_from_slice(&data[..len]);
-        FixedBytes::from(bytes)
-    }
-
-    /// Convert Vec<u8> topic to Address
-    pub fn topic_to_address(topic: &[u8]) -> Address {
-        let fixed_bytes = vec_to_fixed_bytes32(topic);
-        Address::from_word(fixed_bytes)
-    }
-
-    /// Convert Vec<u8> topic to U256
-    pub fn topic_to_u256(topic: &[u8]) -> U256 {
-        let fixed_bytes = vec_to_fixed_bytes32(topic);
-        U256::from_be_bytes(fixed_bytes.0)
+    /// Convert EvmAddress to alloy Address
+    pub fn from_evm_address(evm_address: &EvmAddress) -> Address {
+        Address::from_slice(&evm_address.raw_bytes)
     }
 }

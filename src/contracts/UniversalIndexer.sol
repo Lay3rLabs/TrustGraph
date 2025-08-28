@@ -16,7 +16,6 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
     // Core storage mappings
     mapping(bytes32 => UniversalEvent) public events;
     mapping(bytes32 => bool) public eventExists;
-    mapping(bytes32 => bool) public eventDeleted;
 
     // Multi-dimensional indexing for efficient queries
     mapping(string => bytes32[]) public eventsByChainId;
@@ -69,15 +68,16 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
             revert PayloadDecodingFailed();
         }
 
-        if (payload.events.length == 0) {
+        if (payload.toAdd.length == 0 && payload.toDelete.length == 0) {
             revert NoEvents();
         }
 
         // Process the indexing operation
-        if (payload.operation == IndexOperation.ADD) {
-            _batchIndexEvents(envelope.eventId, payload.events);
-        } else if (payload.operation == IndexOperation.DELETE) {
-            _batchDeleteEvents(payload.events);
+        if (payload.toAdd.length > 0) {
+            _batchIndexEvents(envelope.eventId, payload.toAdd);
+        }
+        if (payload.toDelete.length > 0) {
+            _batchDeleteEvents(payload.toDelete);
         }
     }
 
@@ -104,6 +104,10 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
 
         if (eventExists[eventId]) {
             revert EventAlreadyExists();
+        }
+
+        if (event_.deleted) {
+            revert CannotCreateDeletedEvent();
         }
 
         // Store the event
@@ -174,10 +178,10 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
     }
 
     /// @notice Deletes multiple events in a batch
-    /// @param events_ Array of events to delete
-    function _batchDeleteEvents(UniversalEvent[] memory events_) internal {
-        for (uint256 i = 0; i < events_.length; i = uncheckedInc(i)) {
-            _deleteEvent(events_[i].eventId);
+    /// @param eventIds_ Array of event IDs to delete
+    function _batchDeleteEvents(bytes32[] memory eventIds_) internal {
+        for (uint256 i = 0; i < eventIds_.length; i = uncheckedInc(i)) {
+            _deleteEvent(eventIds_[i]);
         }
     }
 
@@ -188,12 +192,12 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
             revert EventDoesNotExist();
         }
 
-        if (eventDeleted[eventId]) {
+        if (events[eventId].deleted) {
             revert EventAlreadyDeleted();
         }
 
         // Mark as deleted
-        eventDeleted[eventId] = true;
+        events[eventId].deleted = true;
 
         emit EventDeleted(eventId);
     }
@@ -206,7 +210,7 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
     function eventExistsAndDeleted(
         bytes32 eventId
     ) external view returns (bool) {
-        return eventExists[eventId] && eventDeleted[eventId];
+        return eventExists[eventId] && events[eventId].deleted;
     }
 
     /// @notice Gets events by chain ID

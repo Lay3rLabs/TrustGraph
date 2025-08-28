@@ -26,10 +26,10 @@ contract UniversalIndexerTest is Test {
         events[0] = _createMockEvent(0, abi.encode(123), "attestation");
         events[1] = _createMockEvent(0, abi.encode(456), "attestation");
 
-        // Create payload with ADD operation
+        // Create payload
         IUniversalIndexer.IndexingPayload memory payload = _createPayload(
-            IUniversalIndexer.IndexOperation.ADD,
-            events
+            events,
+            new bytes32[](0)
         );
 
         // Create envelope and signature data
@@ -67,16 +67,16 @@ contract UniversalIndexerTest is Test {
 
         // Verify events exist and are not deleted
         assertEq(universalIndexer.eventExists(eventId1), true);
-        assertEq(universalIndexer.eventDeleted(eventId1), false);
+        assertEq(universalIndexer.eventExistsAndDeleted(eventId1), false);
         assertEq(universalIndexer.eventExists(eventId2), true);
-        assertEq(universalIndexer.eventDeleted(eventId2), false);
+        assertEq(universalIndexer.eventExistsAndDeleted(eventId2), false);
     }
 
-    function testHandleSignedEnvelope_ShouldRevertOnAddIfNoEvent() public {
+    function testHandleSignedEnvelope_ShouldRevertIfNoEvents() public {
         // Create payload with no events
         IUniversalIndexer.IndexingPayload memory payload = _createPayload(
-            IUniversalIndexer.IndexOperation.ADD,
-            new IUniversalIndexer.UniversalEvent[](0)
+            new IUniversalIndexer.UniversalEvent[](0),
+            new bytes32[](0)
         );
 
         // Create envelope and signature data
@@ -100,10 +100,10 @@ contract UniversalIndexerTest is Test {
             memory events = new IUniversalIndexer.UniversalEvent[](1);
         events[0] = _createMockEvent(123, abi.encode(123), "attestation");
 
-        // Create payload with ADD operation
+        // Create payload
         IUniversalIndexer.IndexingPayload memory payload = _createPayload(
-            IUniversalIndexer.IndexOperation.ADD,
-            events
+            events,
+            new bytes32[](0)
         );
 
         // Create envelope and signature data
@@ -125,10 +125,10 @@ contract UniversalIndexerTest is Test {
             memory events = new IUniversalIndexer.UniversalEvent[](1);
         events[0] = _createMockEvent(0, abi.encode(123), "attestation");
 
-        // Create payload with ADD operation
+        // Create payload
         IUniversalIndexer.IndexingPayload memory payload = _createPayload(
-            IUniversalIndexer.IndexOperation.ADD,
-            events
+            events,
+            new bytes32[](0)
         );
 
         // Create envelope and signature data
@@ -145,10 +145,37 @@ contract UniversalIndexerTest is Test {
 
         // Verify event exists and is not deleted
         assertEq(universalIndexer.eventExists(eventId), true);
-        assertEq(universalIndexer.eventDeleted(eventId), false);
+        assertEq(universalIndexer.eventExistsAndDeleted(eventId), false);
 
         // Second call with same event should revert
         vm.expectRevert(IUniversalIndexer.EventAlreadyExists.selector);
+        universalIndexer.handleSignedEnvelope(envelope, signatureData);
+    }
+
+    function testHandleSignedEnvelope_ShouldRevertOnAddIfEventSetsDeleted()
+        public
+    {
+        // Create mock event
+        IUniversalIndexer.UniversalEvent[]
+            memory events = new IUniversalIndexer.UniversalEvent[](1);
+        events[0] = _createMockEvent(0, abi.encode(123), "attestation");
+        events[0].deleted = true;
+
+        // Create payload
+        IUniversalIndexer.IndexingPayload memory payload = _createPayload(
+            events,
+            new bytes32[](0)
+        );
+
+        // Create envelope and signature data
+        (
+            IWavsServiceHandler.Envelope memory envelope,
+            IWavsServiceHandler.SignatureData memory signatureData
+        ) = _createEnvelopeAndSignature(payload);
+
+        // Expect revert for deleted event
+        vm.expectRevert(IUniversalIndexer.CannotCreateDeletedEvent.selector);
+
         universalIndexer.handleSignedEnvelope(envelope, signatureData);
     }
 
@@ -160,8 +187,8 @@ contract UniversalIndexerTest is Test {
 
         // Create ADD payload and execute
         IUniversalIndexer.IndexingPayload memory addPayload = _createPayload(
-            IUniversalIndexer.IndexOperation.ADD,
-            events
+            events,
+            new bytes32[](0)
         );
 
         (
@@ -180,14 +207,14 @@ contract UniversalIndexerTest is Test {
 
         // Verify event exists and is not deleted
         assertEq(universalIndexer.eventExists(eventId), true);
-        assertEq(universalIndexer.eventDeleted(eventId), false);
         assertEq(universalIndexer.eventExistsAndDeleted(eventId), false);
 
         // Now create DELETE payload with the generated eventId
-        events[0].eventId = eventId;
+        bytes32[] memory toDelete = new bytes32[](1);
+        toDelete[0] = eventId;
         IUniversalIndexer.IndexingPayload memory deletePayload = _createPayload(
-            IUniversalIndexer.IndexOperation.DELETE,
-            events
+            new IUniversalIndexer.UniversalEvent[](0),
+            toDelete
         );
 
         // Create new envelope for delete operation
@@ -206,28 +233,7 @@ contract UniversalIndexerTest is Test {
 
         // Verify event exists but is marked as deleted
         assertEq(universalIndexer.eventExists(eventId), true);
-        assertEq(universalIndexer.eventDeleted(eventId), true);
         assertEq(universalIndexer.eventExistsAndDeleted(eventId), true);
-    }
-
-    function testHandleSignedEnvelope_ShouldRevertOnDeleteIfNoEvent() public {
-        // Create DELETE payload with no events
-        IUniversalIndexer.IndexingPayload memory payload = _createPayload(
-            IUniversalIndexer.IndexOperation.DELETE,
-            new IUniversalIndexer.UniversalEvent[](0)
-        );
-
-        // Create envelope and signature data
-        (
-            IWavsServiceHandler.Envelope memory envelope,
-            IWavsServiceHandler.SignatureData memory signatureData
-        ) = _createEnvelopeAndSignature(payload);
-
-        // Expect revert when no events provided for delete
-        vm.expectRevert(IUniversalIndexer.NoEvents.selector);
-
-        // Call handleSignedEnvelope
-        universalIndexer.handleSignedEnvelope(envelope, signatureData);
     }
 
     // ================================
@@ -248,7 +254,8 @@ contract UniversalIndexerTest is Test {
             abi.encode(123),
             new string[](0),
             new address[](0),
-            bytes("")
+            bytes(""),
+            false
         );
         events[1] = _createMockEventCustom(
             bytes32(0),
@@ -260,7 +267,8 @@ contract UniversalIndexerTest is Test {
             abi.encode(456),
             new string[](0),
             new address[](0),
-            bytes("")
+            bytes(""),
+            false
         );
         events[2] = _createMockEventCustom(
             bytes32(0),
@@ -272,12 +280,13 @@ contract UniversalIndexerTest is Test {
             abi.encode(789),
             new string[](0),
             new address[](0),
-            bytes("")
+            bytes(""),
+            false
         );
 
         IUniversalIndexer.IndexingPayload memory payload = _createPayload(
-            IUniversalIndexer.IndexOperation.ADD,
-            events
+            events,
+            new bytes32[](0)
         );
 
         (
@@ -338,7 +347,8 @@ contract UniversalIndexerTest is Test {
             abi.encode(123),
             new string[](0),
             new address[](0),
-            bytes("")
+            bytes(""),
+            false
         );
         events[1] = _createMockEventCustom(
             bytes32(0),
@@ -350,7 +360,8 @@ contract UniversalIndexerTest is Test {
             abi.encode(456),
             new string[](0),
             new address[](0),
-            bytes("")
+            bytes(""),
+            false
         );
         events[2] = _createMockEventCustom(
             bytes32(0),
@@ -362,7 +373,8 @@ contract UniversalIndexerTest is Test {
             abi.encode(789),
             new string[](0),
             new address[](0),
-            bytes("")
+            bytes(""),
+            false
         );
         events[3] = _createMockEventCustom(
             bytes32(0),
@@ -374,12 +386,13 @@ contract UniversalIndexerTest is Test {
             abi.encode(789),
             new string[](0),
             new address[](0),
-            bytes("")
+            bytes(""),
+            false
         );
 
         IUniversalIndexer.IndexingPayload memory payload = _createPayload(
-            IUniversalIndexer.IndexOperation.ADD,
-            events
+            events,
+            new bytes32[](0)
         );
 
         (
@@ -459,7 +472,8 @@ contract UniversalIndexerTest is Test {
             abi.encode(123),
             tags1,
             new address[](0),
-            bytes("")
+            bytes(""),
+            false
         );
         events[1] = _createMockEventCustom(
             bytes32(0),
@@ -471,7 +485,8 @@ contract UniversalIndexerTest is Test {
             abi.encode(456),
             tags2,
             new address[](0),
-            bytes("")
+            bytes(""),
+            false
         );
         events[2] = _createMockEventCustom(
             bytes32(0),
@@ -483,12 +498,13 @@ contract UniversalIndexerTest is Test {
             abi.encode(789),
             tags3,
             new address[](0),
-            bytes("")
+            bytes(""),
+            false
         );
 
         IUniversalIndexer.IndexingPayload memory payload = _createPayload(
-            IUniversalIndexer.IndexOperation.ADD,
-            events
+            events,
+            new bytes32[](0)
         );
 
         (
@@ -547,7 +563,8 @@ contract UniversalIndexerTest is Test {
             abi.encode(123),
             tags1,
             relevantAddresses1,
-            bytes("")
+            bytes(""),
+            false
         );
         events[1] = _createMockEventCustom(
             bytes32(0),
@@ -559,7 +576,8 @@ contract UniversalIndexerTest is Test {
             abi.encode(456),
             tags1,
             relevantAddresses1,
-            bytes("")
+            bytes(""),
+            false
         );
         events[2] = _createMockEventCustom(
             bytes32(0),
@@ -571,12 +589,13 @@ contract UniversalIndexerTest is Test {
             abi.encode(789),
             tags1,
             relevantAddresses2,
-            bytes("")
+            bytes(""),
+            false
         );
 
         IUniversalIndexer.IndexingPayload memory payload = _createPayload(
-            IUniversalIndexer.IndexOperation.ADD,
-            events
+            events,
+            new bytes32[](0)
         );
 
         (
@@ -629,7 +648,8 @@ contract UniversalIndexerTest is Test {
             abi.encode(123),
             new string[](0),
             relevantAddresses1,
-            bytes("")
+            bytes(""),
+            false
         );
         events[1] = _createMockEventCustom(
             bytes32(0),
@@ -641,7 +661,8 @@ contract UniversalIndexerTest is Test {
             abi.encode(456),
             new string[](0),
             relevantAddresses1,
-            bytes("")
+            bytes(""),
+            false
         );
         events[2] = _createMockEventCustom(
             bytes32(0),
@@ -653,12 +674,13 @@ contract UniversalIndexerTest is Test {
             abi.encode(789),
             new string[](0),
             relevantAddresses2,
-            bytes("")
+            bytes(""),
+            false
         );
 
         IUniversalIndexer.IndexingPayload memory payload = _createPayload(
-            IUniversalIndexer.IndexOperation.ADD,
-            events
+            events,
+            new bytes32[](0)
         );
 
         (
@@ -714,7 +736,8 @@ contract UniversalIndexerTest is Test {
             abi.encode(123),
             tags1,
             new address[](0),
-            bytes("")
+            bytes(""),
+            false
         );
         events[1] = _createMockEventCustom(
             bytes32(0),
@@ -726,7 +749,8 @@ contract UniversalIndexerTest is Test {
             abi.encode(456),
             tags2,
             new address[](0),
-            bytes("")
+            bytes(""),
+            false
         );
         events[3] = _createMockEventCustom(
             bytes32(0),
@@ -738,12 +762,13 @@ contract UniversalIndexerTest is Test {
             abi.encode(789),
             tags2,
             new address[](0),
-            bytes("")
+            bytes(""),
+            false
         );
 
         IUniversalIndexer.IndexingPayload memory payload = _createPayload(
-            IUniversalIndexer.IndexOperation.ADD,
-            events
+            events,
+            new bytes32[](0)
         );
 
         (
@@ -827,7 +852,8 @@ contract UniversalIndexerTest is Test {
             abi.encode(123),
             tags1,
             relevantAddresses1,
-            bytes("")
+            bytes(""),
+            false
         );
         events[1] = _createMockEventCustom(
             bytes32(0),
@@ -839,7 +865,8 @@ contract UniversalIndexerTest is Test {
             abi.encode(456),
             tags1,
             relevantAddresses1,
-            bytes("")
+            bytes(""),
+            false
         );
         events[2] = _createMockEventCustom(
             bytes32(0),
@@ -851,7 +878,8 @@ contract UniversalIndexerTest is Test {
             abi.encode(789),
             tags2,
             relevantAddresses1,
-            bytes("")
+            bytes(""),
+            false
         );
         events[3] = _createMockEventCustom(
             bytes32(0),
@@ -863,12 +891,13 @@ contract UniversalIndexerTest is Test {
             abi.encode(101112),
             tags2,
             relevantAddresses2,
-            bytes("")
+            bytes(""),
+            false
         );
 
         IUniversalIndexer.IndexingPayload memory payload = _createPayload(
-            IUniversalIndexer.IndexOperation.ADD,
-            events
+            events,
+            new bytes32[](0)
         );
 
         (
@@ -970,7 +999,8 @@ contract UniversalIndexerTest is Test {
             abi.encode(123),
             tags1,
             relevantAddresses1,
-            bytes("")
+            bytes(""),
+            false
         );
         events[1] = _createMockEventCustom(
             bytes32(0),
@@ -982,7 +1012,8 @@ contract UniversalIndexerTest is Test {
             abi.encode(456),
             tags1,
             relevantAddresses1,
-            bytes("")
+            bytes(""),
+            false
         );
         events[2] = _createMockEventCustom(
             bytes32(0),
@@ -994,7 +1025,8 @@ contract UniversalIndexerTest is Test {
             abi.encode(789),
             tags1,
             relevantAddresses1,
-            bytes("")
+            bytes(""),
+            false
         );
         events[3] = _createMockEventCustom(
             bytes32(0),
@@ -1006,7 +1038,8 @@ contract UniversalIndexerTest is Test {
             abi.encode(101112),
             new string[](0),
             new address[](0),
-            bytes("")
+            bytes(""),
+            false
         );
         events[4] = _createMockEventCustom(
             bytes32(0),
@@ -1018,12 +1051,13 @@ contract UniversalIndexerTest is Test {
             abi.encode(131415),
             new string[](0),
             new address[](0),
-            bytes("")
+            bytes(""),
+            false
         );
 
         IUniversalIndexer.IndexingPayload memory payload = _createPayload(
-            IUniversalIndexer.IndexOperation.ADD,
-            events
+            events,
+            new bytes32[](0)
         );
 
         (
@@ -1129,13 +1163,14 @@ contract UniversalIndexerTest is Test {
                 abi.encode(i),
                 new string[](0),
                 new address[](0),
-                bytes("")
+                bytes(""),
+                false
             );
         }
 
         IUniversalIndexer.IndexingPayload memory payload = _createPayload(
-            IUniversalIndexer.IndexOperation.ADD,
-            events
+            events,
+            new bytes32[](0)
         );
 
         (
@@ -1177,8 +1212,8 @@ contract UniversalIndexerTest is Test {
         events[0] = _createMockEvent(0, abi.encode(123), "attestation");
 
         IUniversalIndexer.IndexingPayload memory payload = _createPayload(
-            IUniversalIndexer.IndexOperation.ADD,
-            events
+            events,
+            new bytes32[](0)
         );
 
         (
@@ -1256,8 +1291,8 @@ contract UniversalIndexerTest is Test {
         );
 
         IUniversalIndexer.IndexingPayload memory payload = _createPayload(
-            IUniversalIndexer.IndexOperation.ADD,
-            events
+            events,
+            new bytes32[](0)
         );
 
         (
@@ -1389,7 +1424,8 @@ contract UniversalIndexerTest is Test {
                 dataValue,
                 tags,
                 relevantAddresses,
-                metadata
+                metadata,
+                false
             );
     }
 
@@ -1416,7 +1452,8 @@ contract UniversalIndexerTest is Test {
                 data,
                 tags,
                 new address[](0),
-                bytes("")
+                bytes(""),
+                false
             );
     }
 
@@ -1431,7 +1468,8 @@ contract UniversalIndexerTest is Test {
         bytes memory data,
         string[] memory tags,
         address[] memory relevantAddresses,
-        bytes memory metadata
+        bytes memory metadata,
+        bool deleted
     ) internal pure returns (IUniversalIndexer.UniversalEvent memory) {
         return
             IUniversalIndexer.UniversalEvent({
@@ -1444,7 +1482,8 @@ contract UniversalIndexerTest is Test {
                 data: data,
                 tags: tags,
                 relevantAddresses: relevantAddresses,
-                metadata: metadata
+                metadata: metadata,
+                deleted: deleted
             });
     }
 
@@ -1457,13 +1496,13 @@ contract UniversalIndexerTest is Test {
 
     // Helper function to create an indexing payload
     function _createPayload(
-        IUniversalIndexer.IndexOperation operation,
-        IUniversalIndexer.UniversalEvent[] memory events
+        IUniversalIndexer.UniversalEvent[] memory toAdd,
+        bytes32[] memory toDelete
     ) internal pure returns (IUniversalIndexer.IndexingPayload memory) {
         return
             IUniversalIndexer.IndexingPayload({
-                operation: operation,
-                events: events
+                toAdd: toAdd,
+                toDelete: toDelete
             });
     }
 
