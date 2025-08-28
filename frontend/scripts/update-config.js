@@ -73,7 +73,7 @@ try {
     attester: 'Attester',
     schema_registrar: 'SchemaRegistrar',
     indexer: 'Indexer',
-    indexer_resolver: 'IndexerResolver',
+    indexer_resolver: 'EASIndexerResolver',
 
     // Service contracts
     trigger: 'EASAttestTrigger',

@@ -13,7 +13,10 @@ impl EventTransformer for ERC721Transformer {
         *event_signature == keccak256("Transfer(address,address,uint256)")
     }
 
-    async fn transform(event_data: EventData) -> Result<TransformResult> {
+    async fn transform(
+        event_signature: &FixedBytes<32>,
+        event_data: EventData,
+    ) -> Result<TransformResult> {
         // Check if this is an NFT transfer (3 indexed topics + event signature = 4 topics total)
         if event_data.log.topics.len() == 4 {
             let from = utils::topic_to_address(&event_data.log.topics[1]);
@@ -35,8 +38,11 @@ impl EventTransformer for ERC721Transformer {
                 tags.push("burn".to_string());
             }
 
+            let chain = get_evm_chain_config(&event_data.chain_name).unwrap();
+
             let universal_event = UniversalEvent {
                 eventId: FixedBytes::ZERO,
+                chainId: chain.chain_id,
                 sourceContract: event_data.contract_address,
                 eventType: keccak256("Transfer(address,address,uint256)"),
                 eventData: (from, to, token_id).abi_encode().into(),
@@ -50,7 +56,6 @@ impl EventTransformer for ERC721Transformer {
                 } else {
                     vec![from, to] // Transfer: both parties
                 },
-                parentEvent: FixedBytes::ZERO,
                 data: format!("tokenId:{}", token_id).as_bytes().to_vec().into(),
                 metadata: Vec::new().into(),
             };

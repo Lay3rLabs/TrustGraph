@@ -17,7 +17,10 @@ impl EventTransformer for ERC20Transformer {
         *event_signature == keccak256("Transfer(address,address,uint256)")
     }
 
-    async fn transform(event_data: EventData) -> Result<TransformResult> {
+    async fn transform(
+        event_signature: &FixedBytes<32>,
+        event_data: EventData,
+    ) -> Result<TransformResult> {
         // ERC20 Transfer has 3 topics (event signature + 2 indexed parameters)
         // vs ERC721 which has 4 topics (event signature + 3 indexed parameters)
         if event_data.log.topics.len() == 3 && !event_data.log.data.is_empty() {
@@ -43,8 +46,11 @@ impl EventTransformer for ERC20Transformer {
                 tags.push("burn".to_string());
             }
 
+            let chain = get_evm_chain_config(&event_data.chain_name).unwrap();
+
             let universal_event = UniversalEvent {
                 eventId: FixedBytes::ZERO,
+                chainId: chain.chain_id,
                 sourceContract: event_data.contract_address,
                 eventType: keccak256("Transfer(address,address,uint256)"),
                 eventData: (from, to, value).abi_encode().into(),
@@ -58,7 +64,6 @@ impl EventTransformer for ERC20Transformer {
                 } else {
                     vec![from, to] // Transfer: both parties
                 },
-                parentEvent: FixedBytes::ZERO,
                 data: format!("value:{}", value).as_bytes().to_vec().into(),
                 metadata: Vec::new().into(),
             };

@@ -17,7 +17,10 @@ pub enum TransformResult {
 /// Static transformer function type
 pub type TransformerFn = fn(&FixedBytes<32>) -> bool;
 pub type TransformFn =
-    fn(EventData) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<TransformResult>>>>;
+    fn(
+        FixedBytes<32>,
+        EventData,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<TransformResult>>>>;
 
 /// Transformer registration struct
 pub struct StaticTransformer {
@@ -36,7 +39,10 @@ pub trait EventTransformer {
     fn supports_event(event_signature: &FixedBytes<32>) -> bool;
 
     /// Transform an event into a UniversalEvent.
-    async fn transform(event_data: EventData) -> Result<TransformResult>;
+    async fn transform(
+        event_signature: FixedBytes<32>,
+        event_data: EventData,
+    ) -> Result<TransformResult>;
 
     /// Get the transformer name for debugging
     fn name() -> &'static str;
@@ -65,7 +71,7 @@ impl TransformerRegistry {
 
         for transformer in &self.transformers {
             if (transformer.supports_event)(event_signature) {
-                match (transformer.transform)(event_data.clone()).await {
+                match (transformer.transform)(event_signature.clone(), event_data.clone()).await {
                     Ok(TransformResult::Single(event)) => results.push(event),
                     Ok(TransformResult::Multiple(events)) => results.extend(events),
                     Err(e) => println!("Transformer {} failed: {}", transformer.name, e),
@@ -99,7 +105,9 @@ macro_rules! register_transformer {
         inventory::submit!($crate::transformers::TransformerFactory(|| {
             $crate::transformers::StaticTransformer {
                 supports_event: <$transformer_type>::supports_event,
-                transform: |event_data| Box::pin(<$transformer_type>::transform(event_data)),
+                transform: |event_signature, event_data| {
+                    Box::pin(<$transformer_type>::transform(event_signature, event_data))
+                },
                 name: <$transformer_type>::name(),
             }
         }));

@@ -5,26 +5,63 @@ pragma solidity 0.8.27;
 /// @title IUniversalIndexer
 /// @notice Interface and types for the Universal Indexer system
 interface IUniversalIndexer {
+    /// ================================================
+    /// EVENTS
+    /// ================================================
+
+    /// @notice Emitted when an event has been indexed
+    /// @param eventId The unique identifier of the indexed event
+    /// @param relevantContract The relevant contract for the event
+    /// @param eventType The type/signature of the event
+    /// @param relevantAddresses Addresses relevant to this event
+    /// @param tags Searchable tags for this event
+    event EventIndexed(
+        bytes32 indexed eventId,
+        address indexed relevantContract,
+        string indexed eventType,
+        address[] relevantAddresses,
+        string[] tags
+    );
+
+    /// @notice Emitted when an event has been deleted
+    /// @param eventId The unique identifier of the deleted event
+    event EventDeleted(bytes32 indexed eventId);
+
+    /// ================================================
+    /// ERRORS
+    /// ================================================
+
+    error InvalidServiceManager();
+    error ExpectedEventIdZero();
+    error InvalidOffset();
+    error PayloadDecodingFailed();
+    error EventAlreadyExists();
+    error EventDoesNotExist();
+    error EventAlreadyDeleted();
+    error NoEvents();
+
+    /// ================================================
+    /// TYPES
+    /// ================================================
+
     /// @notice Represents a universally indexed event
     struct UniversalEvent {
         bytes32 eventId; // Unique identifier for this event
-        address sourceContract; // Contract that originally emitted the event
-        bytes32 eventType; // Hash of the event signature
-        bytes eventData; // ABI-encoded event data
+        string chainId; // Chain ID of the event
+        address relevantContract; // Relevant contract for the event
         uint256 blockNumber; // Block number when event was emitted
         uint256 timestamp; // Timestamp when event was processed
-        string[] tags; // Searchable tags (e.g., "attestation", "nft", "governance")
+        string eventType; // Type of the event (e.g., "attestation")
+        bytes data; // Data for the event
+        string[] tags; // Searchable tags (e.g., "sender:ADDRESS", "recipient:ADDRESS", "schema:SCHEMA_ID")
         address[] relevantAddresses; // Addresses relevant to this event (users, contracts, etc.)
-        bytes32 parentEvent; // Optional: link to parent event for relationships
-        bytes data; // Optional: data
         bytes metadata; // Optional: additional metadata
     }
 
     /// @notice Operation types for indexing
     enum IndexOperation {
         ADD,
-        DELETE,
-        BATCH_ADD
+        DELETE
     }
 
     /// @notice Payload structure for WAVS indexing operations
@@ -37,29 +74,21 @@ interface IUniversalIndexer {
     struct TimelineEvent {
         bytes32 eventId;
         uint256 timestamp;
-        bytes32 eventType;
+        string eventType;
         string eventSummary;
-        address sourceContract;
+        address relevantContract;
     }
 
-    /// @notice Emitted when an event has been indexed
-    /// @param eventId The unique identifier of the indexed event
-    /// @param sourceContract The contract that originally emitted the event
-    /// @param eventType The type/signature of the event
-    /// @param relevantAddresses Addresses relevant to this event
-    /// @param tags Searchable tags for this event
-    event EventIndexed(
-        bytes32 indexed eventId,
-        address indexed sourceContract,
-        bytes32 indexed eventType,
-        address[] relevantAddresses,
-        string[] tags
-    );
+    /// ================================================
+    /// FUNCTIONS
+    /// ================================================
 
-    /// @notice Emitted when an event is updated
-    /// @param eventId The unique identifier of the updated event
-    /// @param updatedBy The address that performed the update
-    event EventUpdated(bytes32 indexed eventId, address indexed updatedBy);
+    /// @notice Checks whether an event exists and was deleted
+    /// @param eventId The ID of the event to check
+    /// @return true if the event exists and was deleted, false otherwise
+    function eventExistsAndDeleted(
+        bytes32 eventId
+    ) external view returns (bool);
 
     /// @notice Gets events by address and tag combination
     /// @param relevantAddress The address to filter by
@@ -85,20 +114,33 @@ interface IUniversalIndexer {
     /// @return Array of UniversalEvent structs
     function getEventsByAddressAndType(
         address relevantAddress,
-        bytes32 eventType,
+        string calldata eventType,
+        uint256 start,
+        uint256 length,
+        bool reverseOrder
+    ) external view returns (UniversalEvent[] memory);
+
+    /// @notice Gets events by chain ID
+    /// @param chainId The chain ID to filter by
+    /// @param start The offset to start from
+    /// @param length The number of events to retrieve
+    /// @param reverseOrder Whether to return in reverse chronological order
+    /// @return Array of UniversalEvent structs
+    function getEventsByChainId(
+        string calldata chainId,
         uint256 start,
         uint256 length,
         bool reverseOrder
     ) external view returns (UniversalEvent[] memory);
 
     /// @notice Gets events by contract
-    /// @param sourceContract The contract to filter by
+    /// @param relevantContract The contract to filter by
     /// @param start The offset to start from
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
     /// @return Array of UniversalEvent structs
     function getEventsByContract(
-        address sourceContract,
+        address relevantContract,
         uint256 start,
         uint256 length,
         bool reverseOrder
@@ -111,17 +153,10 @@ interface IUniversalIndexer {
     /// @param reverseOrder Whether to return in reverse chronological order
     /// @return Array of UniversalEvent structs
     function getEventsByTag(
-        string memory tag,
+        string calldata tag,
         uint256 start,
         uint256 length,
         bool reverseOrder
-    ) external view returns (UniversalEvent[] memory);
-
-    /// @notice Gets child events of a parent event
-    /// @param parentEventId The parent event ID
-    /// @return Array of UniversalEvent structs representing child events
-    function getChildEvents(
-        bytes32 parentEventId
     ) external view returns (UniversalEvent[] memory);
 
     /// @notice Gets a timeline of events for a specific address across multiple tags
@@ -133,7 +168,7 @@ interface IUniversalIndexer {
     /// @return Array of TimelineEvent structs sorted by timestamp
     function getUserTimeline(
         address userAddress,
-        string[] memory tags,
+        string[] calldata tags,
         uint256 fromTimestamp,
         uint256 toTimestamp,
         uint256 maxEvents
@@ -142,22 +177,27 @@ interface IUniversalIndexer {
     /// @notice Gets total number of events for an address and tag
     function getEventCountByAddressAndTag(
         address addr,
-        string memory tag
+        string calldata tag
     ) external view returns (uint256);
 
     /// @notice Gets total number of events for an address and type
     function getEventCountByAddressAndType(
         address addr,
-        bytes32 eventType
+        string calldata eventType
+    ) external view returns (uint256);
+
+    /// @notice Gets total number of events by chain ID
+    function getEventCountByChainId(
+        string calldata chainId
     ) external view returns (uint256);
 
     /// @notice Gets total number of events by contract
     function getEventCountByContract(
-        address sourceContract
+        address relevantContract
     ) external view returns (uint256);
 
     /// @notice Gets total number of events by tag
     function getEventCountByTag(
-        string memory tag
+        string calldata tag
     ) external view returns (uint256);
 }

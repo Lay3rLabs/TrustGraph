@@ -36,14 +36,8 @@ impl Guest for Component {
         println!("Universal Indexer: Transformed {} events", transformed_events.len());
 
         // Create indexing payload
-        let payload = IndexingPayload {
-            operation: if transformed_events.len() > 1 {
-                IndexOperation::BATCH_ADD
-            } else {
-                IndexOperation::ADD
-            },
-            events: transformed_events,
-        };
+        let payload =
+            IndexingPayload { operation: IndexOperation::ADD, events: transformed_events };
 
         // Encode output based on destination
         let output = match dest {

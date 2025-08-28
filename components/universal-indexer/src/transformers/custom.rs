@@ -20,12 +20,13 @@ impl EventTransformer for CustomEventTransformer {
             || *event_signature == keccak256("UpdateService(string)")
     }
 
-    async fn transform(event_data: EventData) -> Result<TransformResult> {
+    async fn transform(
+        event_signature: &FixedBytes<32>,
+        event_data: EventData,
+    ) -> Result<TransformResult> {
         if event_data.log.topics.is_empty() {
             return Err(anyhow::anyhow!("No topics in event log"));
         }
-
-        let event_signature = utils::vec_to_fixed_bytes32(&event_data.log.topics[0]);
 
         if event_signature == keccak256("NewTrigger(bytes)") {
             Self::transform_new_trigger(event_data)
@@ -46,8 +47,11 @@ impl CustomEventTransformer {
             new_trigger._triggerInfo.len()
         );
 
+        let chain = get_evm_chain_config(&event_data.chain_name).unwrap();
+
         let universal_event = UniversalEvent {
             eventId: FixedBytes::ZERO,
+            chainId: chain.chain_id,
             sourceContract: event_data.contract_address,
             eventType: keccak256("NewTrigger(bytes)"),
             eventData: new_trigger._triggerInfo.abi_encode().into(),
@@ -55,7 +59,6 @@ impl CustomEventTransformer {
             timestamp: utils::get_current_timestamp(),
             tags: vec!["trigger".to_string(), "wavs".to_string(), "system".to_string()],
             relevantAddresses: vec![], // Could extract from trigger data if needed
-            parentEvent: FixedBytes::ZERO,
             data: Vec::new().into(),
             metadata: Vec::new().into(),
         };
@@ -71,8 +74,11 @@ impl CustomEventTransformer {
             update_service.json.len()
         );
 
+        let chain = get_evm_chain_config(&event_data.chain_name).unwrap();
+
         let universal_event = UniversalEvent {
             eventId: FixedBytes::ZERO,
+            chainId: chain.chain_id,
             sourceContract: event_data.contract_address,
             eventType: keccak256("UpdateService(string)"),
             eventData: update_service.json.abi_encode().into(),
@@ -85,7 +91,6 @@ impl CustomEventTransformer {
                 "geyser".to_string(),
             ],
             relevantAddresses: vec![], // Could extract from service JSON if needed
-            parentEvent: FixedBytes::ZERO,
             data: update_service.json.as_bytes().to_vec().into(),
             metadata: Vec::new().into(),
         };

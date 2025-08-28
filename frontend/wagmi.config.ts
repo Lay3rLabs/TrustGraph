@@ -7,7 +7,7 @@ const ABI = {
   SchemaRegistry: require('../out/SchemaRegistry.sol/SchemaRegistry.json'),
   SchemaRegistrar: require('../out/SchemaRegistrar.sol/SchemaRegistrar.json'),
   Indexer: require('../out/Indexer.sol/Indexer.json'),
-  IndexerResolver: require('../out/IndexerResolver.sol/IndexerResolver.json'),
+  EASIndexerResolver: require('../out/EASIndexerResolver.sol/EASIndexerResolver.json'),
   RewardDistributor: require('../out/RewardDistributor.sol/RewardDistributor.json'),
   EASAttestTrigger: require('../out/Trigger.sol/EASAttestTrigger.json'),
   ENOVA: require('../out/ERC20.sol/ENOVA.json'),
@@ -53,8 +53,8 @@ export default defineConfig({
       address: '0x69F78115d210b871b87836023e71d67eFBcbCcF5',
     },
     {
-      abi: ABI.IndexerResolver.abi,
-      name: 'IndexerResolver',
+      abi: ABI.EASIndexerResolver.abi,
+      name: 'EASIndexerResolver',
       address: '0x47D764D81ecF7732F3a12255200C00f404663E6B',
     },
     {

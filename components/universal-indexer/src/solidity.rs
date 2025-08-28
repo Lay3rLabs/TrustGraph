@@ -13,7 +13,8 @@ pub use IUniversalIndexer::*;
 // Common event types we'll handle
 sol! {
     // EAS events
-    event AttestationIndexed(address indexed eas, bytes32 indexed uid);
+    event AttestationAttested(address indexed eas, bytes32 indexed uid);
+    event AttestationRevoked(address indexed eas, bytes32 indexed uid);
 
     // Governance events
     event ProposalCreated(
