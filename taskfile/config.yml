@@ -13,6 +13,12 @@ tasks:
       - 'echo "{{.FUNDED_KEY}}"'
     silent: true
 
+  indexer-address:
+    desc: "Get the indexer address"
+    cmds:
+      - 'echo "{{.INDEXER_ADDR}}"'
+    silent: true
+
   service-manager-address:
     desc: "Get the WAVS Service Manager address"
     cmds:
@@ -62,9 +68,9 @@ vars:
     sh: test -f .docker/deployment_summary.json && jq -r '.eas_contracts.eas' .docker/deployment_summary.json || echo ""
   SCHEMA_REGISTRAR_ADDR:
     sh: test -f .docker/deployment_summary.json && jq -r '.eas_contracts.schema_registrar' .docker/deployment_summary.json || echo ""
-  EAS_INDEXER_ADDR:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas_contracts.indexer' .docker/deployment_summary.json || echo ""
-  INDEXER_RESOLVER_ADDR:
+  INDEXER_ADDR:
+    sh: test -f .docker/deployment_summary.json && jq -r '.universal_indexer.universal_indexer' .docker/deployment_summary.json || echo ""
+  EAS_INDEXER_RESOLVER_ADDR:
     sh: test -f .docker/deployment_summary.json && jq -r '.eas_contracts.indexer_resolver' .docker/deployment_summary.json || echo ""
   VOTING_POWER_ADDR:
     sh: test -f .docker/deployment_summary.json && jq -r '.governance_contracts.voting_power' .docker/deployment_summary.json || echo ""
@@ -100,4 +106,3 @@ vars:
     sh: test -f .docker/deployment_summary.json && jq -r '.eas_schemas.statement_schema' .docker/deployment_summary.json || echo ""
   LIKE_SCHEMA_UID:
     sh: test -f .docker/deployment_summary.json && jq -r '.eas_schemas.like_schema' .docker/deployment_summary.json || echo ""
-

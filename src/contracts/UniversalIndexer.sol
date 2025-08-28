@@ -259,6 +259,28 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
         return _getEventsByIds(eventIds);
     }
 
+    /// @notice Gets events by type
+    /// @param eventType The event type to filter by
+    /// @param start The offset to start from
+    /// @param length The number of events to retrieve
+    /// @param reverseOrder Whether to return in reverse chronological order
+    /// @return Array of UniversalEvent structs
+    function getEventsByType(
+        string calldata eventType,
+        uint256 start,
+        uint256 length,
+        bool reverseOrder
+    ) external view returns (UniversalEvent[] memory) {
+        bytes32[] memory eventIds = _sliceUIDs(
+            eventsByType[eventType],
+            start,
+            length,
+            reverseOrder
+        );
+
+        return _getEventsByIds(eventIds);
+    }
+
     /// @notice Gets events by tag
     /// @param tag The tag to filter by
     /// @param start The offset to start from
@@ -394,6 +416,13 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
         address relevantContract
     ) external view returns (uint256) {
         return eventsByChainIdAndContract[chainId][relevantContract].length;
+    }
+
+    /// @notice Gets total number of events by type
+    function getEventCountByType(
+        string calldata eventType
+    ) external view returns (uint256) {
+        return eventsByType[eventType].length;
     }
 
     /// @notice Gets total number of events by tag

@@ -448,6 +448,105 @@ contract UniversalIndexerTest is Test {
         assertEq(contract200Events2[0].eventType, "attestation");
     }
 
+    function testGetEventsByType() public {
+        // Create events with different types
+        IUniversalIndexer.UniversalEvent[]
+            memory events = new IUniversalIndexer.UniversalEvent[](4);
+        events[0] = _createMockEventCustom(
+            bytes32(0),
+            "1",
+            address(0x1),
+            1000,
+            1000,
+            "attestation",
+            abi.encode(123),
+            new string[](0),
+            new address[](0),
+            bytes(""),
+            false
+        );
+        events[1] = _createMockEventCustom(
+            bytes32(0),
+            "1",
+            address(0x2),
+            1001,
+            1001,
+            "transfer",
+            abi.encode(456),
+            new string[](0),
+            new address[](0),
+            bytes(""),
+            false
+        );
+        events[2] = _createMockEventCustom(
+            bytes32(0),
+            "1",
+            address(0x3),
+            1002,
+            1002,
+            "system",
+            abi.encode(789),
+            new string[](0),
+            new address[](0),
+            bytes(""),
+            false
+        );
+        events[3] = _createMockEventCustom(
+            bytes32(0),
+            "1",
+            address(0x4),
+            1003,
+            1003,
+            "system",
+            abi.encode(101112),
+            new string[](0),
+            new address[](0),
+            bytes(""),
+            false
+        );
+
+        IUniversalIndexer.IndexingPayload memory payload = _createPayload(
+            events,
+            new bytes32[](0)
+        );
+
+        (
+            IWavsServiceHandler.Envelope memory envelope,
+            IWavsServiceHandler.SignatureData memory signatureData
+        ) = _createEnvelopeAndSignature(payload);
+
+        universalIndexer.handleSignedEnvelope(envelope, signatureData);
+
+        // Test getting events by type "attestation"
+        IUniversalIndexer.UniversalEvent[]
+            memory attestations = universalIndexer.getEventsByType(
+                "attestation",
+                0,
+                10,
+                false
+            );
+        assertEq(attestations.length, 1);
+        assertEq(attestations[0].data, abi.encode(123));
+
+        // Test getting events by type "transfer"
+        IUniversalIndexer.UniversalEvent[] memory transfers = universalIndexer
+            .getEventsByType("transfer", 0, 10, false);
+        assertEq(transfers.length, 1);
+        assertEq(transfers[0].data, abi.encode(456));
+
+        // Test getting events by type "system"
+        IUniversalIndexer.UniversalEvent[]
+            memory systemEvents = universalIndexer.getEventsByType(
+                "system",
+                0,
+                10,
+                false
+            );
+        assertEq(systemEvents.length, 2);
+        assertEq(systemEvents[0].data, abi.encode(789));
+        assertEq(systemEvents[1].data, abi.encode(101112));
+    }
+
     function testGetEventsByTag() public {
         // Create events with different tags
         string[] memory tags1 = new string[](2);
@@ -1087,6 +1186,10 @@ contract UniversalIndexerTest is Test {
             universalIndexer.getEventCountByContract("2", address(0x200)),
             1
         );
+
+        // Test getEventCountByType
+        assertEq(universalIndexer.getEventCountByType("attestation"), 3);
+        assertEq(universalIndexer.getEventCountByType("transfer"), 2);
 
         // Test getEventCountByTag
         assertEq(universalIndexer.getEventCountByTag("important"), 3);

@@ -1,15 +1,15 @@
 "use client";
 
-import { useIndividualAttestation } from "@/hooks/useIndexer";
+import { AttestationData, useIndividualAttestation } from "@/hooks/useIndexer";
+import { SCHEMA_OPTIONS } from "@/lib/schemas";
 
 interface AttestationCardProps {
-  uid: string;
-  index: number;
+  uid: `0x${string}`;
 }
 
-export function AttestationCard({ uid, index }: AttestationCardProps) {
+export function AttestationCard({ uid }: AttestationCardProps) {
   const {
-    data: attestationData,
+    data: attestation,
     isLoading,
     error,
   } = useIndividualAttestation(uid);
@@ -29,7 +29,7 @@ export function AttestationCard({ uid, index }: AttestationCardProps) {
     return `${Math.floor(diff / 86400)} days ago`;
   };
 
-  const getAttestationStatus = (attestation: any) => {
+  const getAttestationStatus = (attestation: AttestationData) => {
     if (Number(attestation.revocationTime) > 0) {
       return { status: "revoked", color: "text-red-400" };
     }
@@ -76,7 +76,7 @@ export function AttestationCard({ uid, index }: AttestationCardProps) {
               <span className="terminal-bright text-lg">◆</span>
               <div>
                 <h3 className="terminal-bright text-base">
-                  VOUCHING ATTESTATION #{index + 1}
+                  ATTESTATION
                 </h3>
                 <div className="terminal-dim text-sm">Loading...</div>
               </div>
@@ -103,7 +103,7 @@ export function AttestationCard({ uid, index }: AttestationCardProps) {
               <span className="text-red-400 text-lg">◆</span>
               <div>
                 <h3 className="terminal-bright text-base">
-                  VOUCHING ATTESTATION #{index + 1}
+                  ATTESTATION
                 </h3>
                 <div className="terminal-dim text-sm">Failed to load</div>
               </div>
@@ -121,7 +121,7 @@ export function AttestationCard({ uid, index }: AttestationCardProps) {
     );
   }
 
-  if (!attestationData) {
+  if (!attestation) {
     return (
       <div className="border border-yellow-700 bg-yellow-900/10 p-4 rounded-sm">
         <div className="space-y-4">
@@ -130,7 +130,7 @@ export function AttestationCard({ uid, index }: AttestationCardProps) {
               <span className="text-yellow-400 text-lg">◆</span>
               <div>
                 <h3 className="terminal-bright text-base">
-                  VOUCHING ATTESTATION #{index + 1}
+                  ATTESTATION
                 </h3>
                 <div className="terminal-dim text-sm">No data found</div>
               </div>
@@ -148,9 +148,11 @@ export function AttestationCard({ uid, index }: AttestationCardProps) {
     );
   }
 
-  const attestation = attestationData as any;
-  const vouchData = parseVouchingData(attestation.data);
+  const data = parseVouchingData(attestation.data);
   const statusInfo = getAttestationStatus(attestation);
+  const schemaOptions = SCHEMA_OPTIONS.find(
+    (schema) => schema.uid === attestation.schema,
+  );
 
   return (
     <div className="border border-gray-700 bg-card-foreground/70 p-4 rounded-sm hover:bg-card-foreground/75 transition-colors">
@@ -161,10 +163,10 @@ export function AttestationCard({ uid, index }: AttestationCardProps) {
             <span className="terminal-bright text-lg">◆</span>
             <div>
               <h3 className="terminal-bright text-base">
-                VOUCHING ATTESTATION #{index + 1}
+                {schemaOptions?.name.split(' ')[0].toUpperCase()} ATTESTATION
               </h3>
               <div className="terminal-dim text-sm">
-                Vouch Weight: {vouchData.weight}
+                Vouch Weight: {data.weight}
               </div>
             </div>
           </div>

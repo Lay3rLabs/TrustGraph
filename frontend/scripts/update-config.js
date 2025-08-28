@@ -72,7 +72,6 @@ try {
     eas: 'EAS',
     attester: 'Attester',
     schema_registrar: 'SchemaRegistrar',
-    indexer: 'Indexer',
     indexer_resolver: 'EASIndexerResolver',
 
     // Service contracts

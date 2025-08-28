@@ -58,7 +58,7 @@ The deployment script automatically extracts addresses:
 ```bash
 # From deploy-script.sh
 EAS_ADDRESS=$(jq -r '.eas_contracts.eas' .docker/deployment_summary.json)
-INDEXER_ADDRESS=$(jq -r '.eas_contracts.indexer' .docker/deployment_summary.json)
+INDEXER_ADDRESS=$(jq -r '.universal_indexer.universal_indexer' .docker/deployment_summary.json)
 export CONFIG_VALUES="eas_address=${EAS_ADDRESS},indexer_address=${INDEXER_ADDRESS},chain_name=${CHAIN_NAME}"
 ```
 
