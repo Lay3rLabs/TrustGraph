@@ -20,10 +20,11 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
 
     // Multi-dimensional indexing for efficient queries
     mapping(string => bytes32[]) public eventsByChainId;
-    mapping(address => bytes32[]) public eventsByContract;
+    mapping(string => mapping(address => bytes32[]))
+        public eventsByChainIdAndContract;
     mapping(string => bytes32[]) public eventsByType;
     mapping(string => bytes32[]) public eventsByTag;
-    mapping(address => bytes32[]) public eventsByRelevantAddress;
+    mapping(address => bytes32[]) public eventsByAddress;
 
     // Combined indexing for common query patterns (gas optimization)
     mapping(address => mapping(string => bytes32[]))
@@ -31,12 +32,11 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
     mapping(address => mapping(string => bytes32[]))
         public eventsByAddressAndType;
     mapping(string => mapping(string => bytes32[])) public eventsByTypeAndTag;
+    mapping(address => mapping(string => mapping(string => bytes32[])))
+        public eventsByAddressAndTypeAndTag;
 
     // Global counters
     uint256 public totalEvents;
-    mapping(string => uint256) public eventCountByChainId;
-    mapping(address => uint256) public eventCountByContract;
-    mapping(string => uint256) public eventCountByType;
 
     // WAVS service manager
     IWavsServiceManager private _serviceManager;
@@ -111,16 +111,12 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
         eventExists[eventId] = true;
         totalEvents++;
 
-        // Update counters
-        eventCountByChainId[event_.chainId]++;
-        eventCountByContract[event_.relevantContract]++;
-        eventCountByType[event_.eventType]++;
-
         // Index by chain ID
         eventsByChainId[event_.chainId].push(eventId);
 
         // Index by relevant contract
-        eventsByContract[event_.relevantContract].push(eventId);
+        eventsByChainIdAndContract[event_.chainId][event_.relevantContract]
+            .push(eventId);
 
         // Index by event type
         eventsByType[event_.eventType].push(eventId);
@@ -139,12 +135,15 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
             i = uncheckedInc(i)
         ) {
             address addr = event_.relevantAddresses[i];
-            eventsByRelevantAddress[addr].push(eventId);
+            eventsByAddress[addr].push(eventId);
             eventsByAddressAndType[addr][event_.eventType].push(eventId);
 
             // Cross-index with tags for efficient combined queries
             for (uint256 j = 0; j < event_.tags.length; j = uncheckedInc(j)) {
                 eventsByAddressAndTag[addr][event_.tags[j]].push(eventId);
+                eventsByAddressAndTypeAndTag[addr][event_.eventType][
+                    event_.tags[j]
+                ].push(eventId);
             }
         }
 
@@ -210,6 +209,74 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
         return eventExists[eventId] && eventDeleted[eventId];
     }
 
+    /// @notice Gets events by chain ID
+    /// @param chainId The chain ID to filter by
+    /// @param start The offset to start from
+    /// @param length The number of events to retrieve
+    /// @param reverseOrder Whether to return in reverse chronological order
+    /// @return Array of UniversalEvent structs
+    function getEventsByChainId(
+        string calldata chainId,
+        uint256 start,
+        uint256 length,
+        bool reverseOrder
+    ) external view returns (UniversalEvent[] memory) {
+        bytes32[] memory eventIds = _sliceUIDs(
+            eventsByChainId[chainId],
+            start,
+            length,
+            reverseOrder
+        );
+
+        return _getEventsByIds(eventIds);
+    }
+
+    /// @notice Gets events by contract
+    /// @param chainId The chain ID of the contract to filter by
+    /// @param relevantContract The contract to filter by
+    /// @param start The offset to start from
+    /// @param length The number of events to retrieve
+    /// @param reverseOrder Whether to return in reverse chronological order
+    /// @return Array of UniversalEvent structs
+    function getEventsByContract(
+        string calldata chainId,
+        address relevantContract,
+        uint256 start,
+        uint256 length,
+        bool reverseOrder
+    ) external view returns (UniversalEvent[] memory) {
+        bytes32[] memory eventIds = _sliceUIDs(
+            eventsByChainIdAndContract[chainId][relevantContract],
+            start,
+            length,
+            reverseOrder
+        );
+
+        return _getEventsByIds(eventIds);
+    }
+
+    /// @notice Gets events by tag
+    /// @param tag The tag to filter by
+    /// @param start The offset to start from
+    /// @param length The number of events to retrieve
+    /// @param reverseOrder Whether to return in reverse chronological order
+    /// @return Array of UniversalEvent structs
+    function getEventsByTag(
+        string calldata tag,
+        uint256 start,
+        uint256 length,
+        bool reverseOrder
+    ) external view returns (UniversalEvent[] memory) {
+        bytes32[] memory eventIds = _sliceUIDs(
+            eventsByTag[tag],
+            start,
+            length,
+            reverseOrder
+        );
+
+        return _getEventsByIds(eventIds);
+    }
+
     /// @notice Gets events by address and tag combination
     /// @param relevantAddress The address to filter by
     /// @param tag The tag to filter by
@@ -258,64 +325,22 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
         return _getEventsByIds(eventIds);
     }
 
-    /// @notice Gets events by chain ID
-    /// @param chainId The chain ID to filter by
-    /// @param start The offset to start from
-    /// @param length The number of events to retrieve
-    /// @param reverseOrder Whether to return in reverse chronological order
-    /// @return Array of UniversalEvent structs
-    function getEventsByChainId(
-        string calldata chainId,
-        uint256 start,
-        uint256 length,
-        bool reverseOrder
-    ) external view returns (UniversalEvent[] memory) {
-        bytes32[] memory eventIds = _sliceUIDs(
-            eventsByChainId[chainId],
-            start,
-            length,
-            reverseOrder
-        );
-
-        return _getEventsByIds(eventIds);
-    }
-
-    /// @notice Gets events by contract
-    /// @param relevantContract The contract to filter by
-    /// @param start The offset to start from
-    /// @param length The number of events to retrieve
-    /// @param reverseOrder Whether to return in reverse chronological order
-    /// @return Array of UniversalEvent structs
-    function getEventsByContract(
-        address relevantContract,
-        uint256 start,
-        uint256 length,
-        bool reverseOrder
-    ) external view returns (UniversalEvent[] memory) {
-        bytes32[] memory eventIds = _sliceUIDs(
-            eventsByContract[relevantContract],
-            start,
-            length,
-            reverseOrder
-        );
-
-        return _getEventsByIds(eventIds);
-    }
-
-    /// @notice Gets events by tag
+    /// @notice Gets events by type and tag combination
+    /// @param eventType The event type to filter by
     /// @param tag The tag to filter by
     /// @param start The offset to start from
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
     /// @return Array of UniversalEvent structs
-    function getEventsByTag(
+    function getEventsByTypeAndTag(
+        string calldata eventType,
         string calldata tag,
         uint256 start,
         uint256 length,
         bool reverseOrder
     ) external view returns (UniversalEvent[] memory) {
         bytes32[] memory eventIds = _sliceUIDs(
-            eventsByTag[tag],
+            eventsByTypeAndTag[eventType][tag],
             start,
             length,
             reverseOrder
@@ -324,67 +349,55 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
         return _getEventsByIds(eventIds);
     }
 
-    /// @notice Gets a timeline of events for a specific address across multiple tags
-    /// @param userAddress The address to get timeline for
-    /// @param tags Array of tags to include in timeline
-    /// @param fromTimestamp Start timestamp for timeline
-    /// @param toTimestamp End timestamp for timeline
-    /// @param maxEvents Maximum number of events to return
-    /// @return Array of TimelineEvent structs sorted by timestamp
-    function getUserTimeline(
-        address userAddress,
-        string[] calldata tags,
-        uint256 fromTimestamp,
-        uint256 toTimestamp,
-        uint256 maxEvents
-    ) external view returns (TimelineEvent[] memory) {
-        TimelineEvent[] memory timeline = new TimelineEvent[](maxEvents);
-        uint256 timelineCount = 0;
+    /// @notice Gets events by address, type, and tag combination
+    /// @param relevantAddress The address to filter by
+    /// @param eventType The event type to filter by
+    /// @param tag The tag to filter by
+    /// @param start The offset to start from
+    /// @param length The number of events to retrieve
+    /// @param reverseOrder Whether to return in reverse chronological order
+    /// @return Array of UniversalEvent structs
+    function getEventsByAddressAndTypeAndTag(
+        address relevantAddress,
+        string calldata eventType,
+        string calldata tag,
+        uint256 start,
+        uint256 length,
+        bool reverseOrder
+    ) external view returns (UniversalEvent[] memory) {
+        bytes32[] memory eventIds = _sliceUIDs(
+            eventsByAddressAndTypeAndTag[relevantAddress][eventType][tag],
+            start,
+            length,
+            reverseOrder
+        );
 
-        // Collect events from all specified tags
-        for (
-            uint256 i = 0;
-            i < tags.length && timelineCount < maxEvents;
-            i = uncheckedInc(i)
-        ) {
-            bytes32[] memory eventIds = eventsByAddressAndTag[userAddress][
-                tags[i]
-            ];
-
-            for (
-                uint256 j = 0;
-                j < eventIds.length && timelineCount < maxEvents;
-                j = uncheckedInc(j)
-            ) {
-                UniversalEvent memory event_ = events[eventIds[j]];
-
-                // Filter by timestamp range
-                if (
-                    event_.timestamp >= fromTimestamp &&
-                    event_.timestamp <= toTimestamp
-                ) {
-                    timeline[timelineCount] = TimelineEvent({
-                        eventId: eventIds[j],
-                        timestamp: event_.timestamp,
-                        eventType: event_.eventType,
-                        eventSummary: _generateEventSummary(event_),
-                        relevantContract: event_.relevantContract
-                    });
-                    timelineCount++;
-                }
-            }
-        }
-
-        // Resize array to actual count
-        TimelineEvent[] memory result = new TimelineEvent[](timelineCount);
-        for (uint256 i = 0; i < timelineCount; i = uncheckedInc(i)) {
-            result[i] = timeline[i];
-        }
-
-        return result;
+        return _getEventsByIds(eventIds);
     }
 
     // ============ COUNT FUNCTIONS ============
+
+    /// @notice Gets total number of events by chain ID
+    function getEventCountByChainId(
+        string calldata chainId
+    ) external view returns (uint256) {
+        return eventsByChainId[chainId].length;
+    }
+
+    /// @notice Gets total number of events by contract
+    function getEventCountByContract(
+        string calldata chainId,
+        address relevantContract
+    ) external view returns (uint256) {
+        return eventsByChainIdAndContract[chainId][relevantContract].length;
+    }
+
+    /// @notice Gets total number of events by tag
+    function getEventCountByTag(
+        string calldata tag
+    ) external view returns (uint256) {
+        return eventsByTag[tag].length;
+    }
 
     /// @notice Gets total number of events for an address and tag
     function getEventCountByAddressAndTag(
@@ -402,25 +415,21 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
         return eventsByAddressAndType[addr][eventType].length;
     }
 
-    /// @notice Gets total number of events by chain ID
-    function getEventCountByChainId(
-        string calldata chainId
-    ) external view returns (uint256) {
-        return eventsByChainId[chainId].length;
-    }
-
-    /// @notice Gets total number of events by contract
-    function getEventCountByContract(
-        address relevantContract
-    ) external view returns (uint256) {
-        return eventsByContract[relevantContract].length;
-    }
-
-    /// @notice Gets total number of events by tag
-    function getEventCountByTag(
+    /// @notice Gets total number of events for a type and tag
+    function getEventCountByTypeAndTag(
+        string calldata eventType,
         string calldata tag
     ) external view returns (uint256) {
-        return eventsByTag[tag].length;
+        return eventsByTypeAndTag[eventType][tag].length;
+    }
+
+    /// @notice Gets total number of events for an address, type, and tag
+    function getEventCountByAddressAndTypeAndTag(
+        address addr,
+        string calldata eventType,
+        string calldata tag
+    ) external view returns (uint256) {
+        return eventsByAddressAndTypeAndTag[addr][eventType][tag].length;
     }
 
     // ============ INTERNAL HELPER FUNCTIONS ============
