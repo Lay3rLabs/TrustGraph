@@ -117,6 +117,7 @@ export default function AttestationsPage() {
     }
 
     // Sort by newest/oldest (UIDs are typically ordered by creation time already)
+    // TODO: fix sort order make it sort by timestamp
     return sortOrder === "newest" ? uids : uids.reverse();
   }, [
     basicSchema.attestationUIDs,
@@ -264,7 +265,7 @@ export default function AttestationsPage() {
       <div className="space-y-4">
         {!isLoading &&
           filteredAttestationUIDs.map((item, index) => (
-            <AttestationCard key={item.uid} uid={item.uid} index={index} />
+            <AttestationCard key={item.uid} uid={item.uid} />
           ))}
       </div>
 

@@ -133,19 +133,6 @@ impl EasSource {
         Ok(provider)
     }
 
-    async fn execute_call(&self, call_data: Vec<u8>) -> Result<Vec<u8>> {
-        let provider = self.create_provider().await?;
-
-        let tx = alloy_rpc_types::eth::TransactionRequest {
-            to: Some(TxKind::Call(self.indexer_address)),
-            input: TransactionInput { input: Some(call_data.into()), data: None },
-            ..Default::default()
-        };
-
-        let result = provider.call(tx).await?;
-        Ok(result.to_vec())
-    }
-
     fn parse_schema_uid(&self, schema_uid: &str) -> Result<FixedBytes<32>> {
         let schema_bytes = hex::decode(schema_uid.strip_prefix("0x").unwrap_or(schema_uid))?;
         if schema_bytes.len() != 32 {
