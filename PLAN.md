@@ -26,14 +26,23 @@
 - [ ] Wire up new component to utilize SignerManagerModule, respond to MerkleRootUpdated Event get IPFS CID, get top N users, sync
 - [ ] Wire up dao-agent component to utilizes WavsModule for zodiac, add test trigger
 - [ ] Figure out some way to pay for these services
+- [ ] Schema to agree to Experiment Terms
+
+# Landing page
+
+
+- [ ] Faster text on screen
+- [ ] Clickable options (clicking on the option inserts text into command prompt and shows next step)
+- [ ] Make the text on the page selectable (currently can't select text)
+- [ ] Remove unused help text that isn't part of the main flow
+- [ ] At the end, when signing the oath, connect wallet and make an attestation to join the experiment
+
+Ask questions if you need to clarify requirements or need extra context.
 
 # UI TODO
 - [ ] Toasts
 - [ ] Utilize react-query
-- [ ] Get prediction market to work with UI
 - [ ] For vouching page let's figure out how to visualize connections
-- [ ] Smarter for for creating attestations
-- [ ] EAS support (makes leader board more fun, etc.)
 - [ ] Figure out something that will scale (currently just fetching entire MerkleTree)
 
 # Project Organization and Cleanup TODO

@@ -18,13 +18,13 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
+  { id: 'points', label: 'Points', path: '/backroom/points', icon: '⛤' },
   {
     id: 'hyperstition',
     label: 'Hyperstitions',
     path: '/backroom/hyperstition',
     icon: '▲',
   },
-  { id: 'points', label: 'Points', path: '/backroom/points', icon: '⛤' },
   {
     id: 'experimental',
     label: 'Experimental',

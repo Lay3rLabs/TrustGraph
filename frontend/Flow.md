@@ -1,20 +1,78 @@
 # Signup Flow
 
-[Terminal stuff]
+[KEEP LOADING BARS]
 
-Acknowlegdement of taking part in an Art project. That the system may be unstable, and that everything is on a public block chain.
+◢◤◢◤◢◤ v0.1.0 INITIALIZED ◢◤◢◤◢◤
 
-You attest to:
-- Partaking in the Art project
-- Understanding the risks associated with the system
-- Have no expectations
-- Willingness to imagine possible futures
-- Willingness to collaborate with others
-- Love of Open Source
+EN0VA is an EXPERIMENTAL PROTOCOL exploring collective
+intelligence, blockchain technology, and emergent digital
+consciousness through distributed decision-making systems and
+novel pyschotechnologies.
 
-### Welcome to the Experiment
+Do you want to proceed with the ritual?
 
-Now it's time to create your profile.
+> Yes
 
-- What do you want to be called?
-- What is a positive future you imagine?
+╔═══════════════════════════════════════════════════════════╗
+║                  BLOCKCHAIN TRANSPARENCY                  ║
+║                    BINDING OATH I                         ║
+╚═══════════════════════════════════════════════════════════╝
+
+🔴 CRITICAL UNDERSTANDING REQUIRED:
+
+   ALL DATA GENERATED IN THIS EXPERIMENT IS RECORDED
+   ON A PUBLIC BLOCKCHAIN. THIS INCLUDES:
+
+   • Your interactions and decisions
+   • All votes and attestations
+   • Any participant actions taken
+
+   This data is PERMANENTLY PUBLIC and CANNOT BE DELETED.
+   The blockchain remembers everything. Forever.
+
+> Continue
+
+╔═══════════════════════════════════════════════════════════╗
+║                SOFTWARE RELIABILITY OATH                  ║
+║                    BINDING OATH II                        ║
+╚═══════════════════════════════════════════════════════════╝
+
+🟠 NO WARRANTIES OR GUARANTEES:
+
+   This experimental software may contain bugs,
+   vulnerabilities, or unexpected behaviors.
+
+   THERE ARE NO WARRANTIES regarding:
+   • Reliability of the system
+   • Security of your data
+   • Continued availability
+   • Financial outcomes
+
+   You proceed at your own risk, digital prophet.
+
+> Continue
+
+╔═══════════════════════════════════════════════════════════╗
+║                  EXPERIMENTAL NATURE OATH                 ║
+║                    BINDING OATH III                       ║
+╚═══════════════════════════════════════════════════════════╝
+
+🟡 FINAL UNDERSTANDING:
+
+   This protocol may evolve, change, or be discontinued
+   at any time. The experiment is fluid, alive.
+
+   YOU SHOULD HAVE NO EXPECTATIONS about:
+   • Long-term stability
+   • Specific outcomes
+   • Financial returns
+   • Guaranteed functionality
+
+   You are here to explore what emerges from collective
+   imagination made manifest through technology.
+
+"what we imagine together becomes"
+"what we imagine together becomes"
+"what we imagine together becomes"
+
+> Sign Oath
