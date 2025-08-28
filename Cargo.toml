@@ -21,6 +21,7 @@ wavs-wasi-utils = "0.4.0"
 # WAVS
 wavs-llm = { path = "./packages/llm" }
 wavs-eas = { path = "./packages/eas" }
+wavs-indexer-api = { path = "./packages/indexer-api" }
 
 # Other
 schemars = "1.0.4"
@@ -58,6 +59,7 @@ base64 = "0.22.1"
 mockall = "0.11"
 thiserror = "1.0.47"
 tiny-keccak = { version = "2.0", features = ["keccak"] }
+tokio = { version = "1.47.1", features = ["full"] }
 
 [profile.release]
 codegen-units = 1

@@ -30,8 +30,8 @@ try {
   const contractAddresses = {}
 
   // Add all contract addresses from different sections
-  if (deployment.universal_indexer) {
-    Object.assign(contractAddresses, deployment.universal_indexer)
+  if (deployment.wavs_indexer) {
+    Object.assign(contractAddresses, deployment.wavs_indexer)
   }
   if (deployment.eas_contracts) {
     Object.assign(contractAddresses, deployment.eas_contracts)
@@ -65,7 +65,7 @@ try {
 
   // Contract name mappings from deployment keys to wagmi config names
   const contractNameMapping = {
-    universal_indexer: 'UniversalIndexer',
+    wavs_indexer: 'WavsIndexer',
 
     // EAS contracts
     schema_registry: 'SchemaRegistry',

@@ -2,6 +2,7 @@ use alloy_network::Ethereum;
 use alloy_provider::{Provider, RootProvider};
 use alloy_rpc_types::{TransactionInput, TransactionRequest};
 use alloy_sol_types::{sol, SolCall};
+use wavs_indexer_api::WavsIndexerQuerier;
 use wavs_wasi_utils::evm::{
     alloy_primitives::{Address, FixedBytes, U256},
     new_evm_provider,
@@ -24,54 +25,6 @@ sol! {
         }
 
         function getAttestation(bytes32 uid) external view returns (Attestation memory);
-    }
-
-    interface IIndexer {
-        function getReceivedAttestationUIDs(
-            address recipient,
-            bytes32 schemaUID,
-            uint256 start,
-            uint256 length,
-            bool reverseOrder
-        ) external view returns (bytes32[] memory);
-
-        function getReceivedAttestationUIDCount(address recipient, bytes32 schemaUID) external view returns (uint256);
-
-        function getSentAttestationUIDs(
-            address attester,
-            bytes32 schemaUID,
-            uint256 start,
-            uint256 length,
-            bool reverseOrder
-        ) external view returns (bytes32[] memory);
-
-        function getSentAttestationUIDCount(address attester, bytes32 schemaUID) external view returns (uint256);
-
-        function getSchemaAttesterRecipientAttestationUIDs(
-            bytes32 schemaUID,
-            address attester,
-            address recipient,
-            uint256 start,
-            uint256 length,
-            bool reverseOrder
-        ) external view returns (bytes32[] memory);
-
-        function getSchemaAttesterRecipientAttestationUIDCount(
-            bytes32 schemaUID,
-            address attester,
-            address recipient
-        ) external view returns (uint256);
-
-        function getSchemaAttestationUIDs(
-            bytes32 schemaUID,
-            uint256 start,
-            uint256 length,
-            bool reverseOrder
-        ) external view returns (bytes32[] memory);
-
-        function getSchemaAttestationUIDCount(bytes32 schemaUID) external view returns (uint256);
-
-        function isAttestationIndexed(bytes32 attestationUID) external view returns (bool);
     }
 }
 
@@ -131,6 +84,10 @@ impl QueryConfig {
             "https://mainnet.infura.io/v3/YOUR_API_KEY".to_string(),
         )
     }
+
+    pub async fn indexer_querier(&self) -> Result<WavsIndexerQuerier, String> {
+        WavsIndexerQuerier::new(self.indexer_address, self.rpc_endpoint.clone()).await
+    }
 }
 
 impl Default for QueryConfig {
@@ -176,13 +133,10 @@ pub async fn query_received_attestation_count(
 ) -> Result<U256, String> {
     let config = config.unwrap_or_default();
     println!("Querying with config {:?}", config);
-    let provider = create_provider(&config.rpc_endpoint).await?;
-
-    let count_call =
-        IIndexer::getReceivedAttestationUIDCountCall { recipient, schemaUID: schema_uid };
-
-    let result = execute_call(&provider, config.indexer_address, count_call.abi_encode()).await?;
-    let attestation_count = U256::from_be_slice(&result);
+    let indexer_querier = config.indexer_querier().await?;
+    let attestation_count = indexer_querier
+        .get_attestation_count_by_schema_and_recipient(schema_uid, recipient)
+        .await?;
 
     println!(
         "Found {} received attestations for recipient {} and schema {}",
@@ -202,23 +156,20 @@ pub async fn query_received_attestation_uids(
     config: Option<QueryConfig>,
 ) -> Result<Vec<FixedBytes<32>>, String> {
     let config = config.unwrap_or_default();
-    let provider = create_provider(&config.rpc_endpoint).await?;
+    let indexer_querier = config.indexer_querier().await?;
+    let uids = indexer_querier
+        .get_attestation_uids_by_schema_and_recipient(
+            schema_uid,
+            recipient,
+            start,
+            length,
+            reverse_order,
+        )
+        .await?;
 
-    let uids_call = IIndexer::getReceivedAttestationUIDsCall {
-        recipient,
-        schemaUID: schema_uid,
-        start,
-        length,
-        reverseOrder: reverse_order,
-    };
+    println!("Retrieved {} received attestation UIDs for recipient {}", uids.len(), recipient);
 
-    let result = execute_call(&provider, config.indexer_address, uids_call.abi_encode()).await?;
-    let decoded = IIndexer::getReceivedAttestationUIDsCall::abi_decode_returns(&result)
-        .map_err(|e| format!("Failed to decode UIDs result: {}", e))?;
-
-    println!("Retrieved {} received attestation UIDs for recipient {}", decoded.len(), recipient);
-
-    Ok(decoded)
+    Ok(uids)
 }
 
 // =============================================================================
@@ -232,12 +183,9 @@ pub async fn query_sent_attestation_count(
     config: Option<QueryConfig>,
 ) -> Result<U256, String> {
     let config = config.unwrap_or_default();
-    let provider = create_provider(&config.rpc_endpoint).await?;
-
-    let count_call = IIndexer::getSentAttestationUIDCountCall { attester, schemaUID: schema_uid };
-
-    let result = execute_call(&provider, config.indexer_address, count_call.abi_encode()).await?;
-    let attestation_count = U256::from_be_slice(&result);
+    let indexer_querier = config.indexer_querier().await?;
+    let attestation_count =
+        indexer_querier.get_attestation_count_by_schema_and_attester(schema_uid, attester).await?;
 
     println!(
         "Found {} sent attestations for attester {} and schema {}",
@@ -257,23 +205,20 @@ pub async fn query_sent_attestation_uids(
     config: Option<QueryConfig>,
 ) -> Result<Vec<FixedBytes<32>>, String> {
     let config = config.unwrap_or_default();
-    let provider = create_provider(&config.rpc_endpoint).await?;
+    let indexer_querier = config.indexer_querier().await?;
+    let uids = indexer_querier
+        .get_attestation_uids_by_schema_and_attester(
+            schema_uid,
+            attester,
+            start,
+            length,
+            reverse_order,
+        )
+        .await?;
 
-    let uids_call = IIndexer::getSentAttestationUIDsCall {
-        attester,
-        schemaUID: schema_uid,
-        start,
-        length,
-        reverseOrder: reverse_order,
-    };
+    println!("Retrieved {} sent attestation UIDs for attester {}", uids.len(), attester);
 
-    let result = execute_call(&provider, config.indexer_address, uids_call.abi_encode()).await?;
-    let decoded = IIndexer::getSentAttestationUIDsCall::abi_decode_returns(&result)
-        .map_err(|e| format!("Failed to decode UIDs result: {}", e))?;
-
-    println!("Retrieved {} sent attestation UIDs for attester {}", decoded.len(), attester);
-
-    Ok(decoded)
+    Ok(uids)
 }
 
 // =============================================================================
@@ -286,12 +231,8 @@ pub async fn query_schema_attestation_count(
     config: Option<QueryConfig>,
 ) -> Result<U256, String> {
     let config = config.unwrap_or_default();
-    let provider = create_provider(&config.rpc_endpoint).await?;
-
-    let count_call = IIndexer::getSchemaAttestationUIDCountCall { schemaUID: schema_uid };
-
-    let result = execute_call(&provider, config.indexer_address, count_call.abi_encode()).await?;
-    let attestation_count = U256::from_be_slice(&result);
+    let indexer_querier = config.indexer_querier().await?;
+    let attestation_count = indexer_querier.get_attestation_count_by_schema(schema_uid).await?;
 
     println!("Found {} total attestations for schema {}", attestation_count, schema_uid);
 
@@ -307,22 +248,14 @@ pub async fn query_schema_attestation_uids(
     config: Option<QueryConfig>,
 ) -> Result<Vec<FixedBytes<32>>, String> {
     let config = config.unwrap_or_default();
-    let provider = create_provider(&config.rpc_endpoint).await?;
+    let indexer_querier = config.indexer_querier().await?;
+    let uids = indexer_querier
+        .get_attestation_uids_by_schema(schema_uid, start, length, reverse_order)
+        .await?;
 
-    let uids_call = IIndexer::getSchemaAttestationUIDsCall {
-        schemaUID: schema_uid,
-        start,
-        length,
-        reverseOrder: reverse_order,
-    };
+    println!("Retrieved {} attestation UIDs for schema {}", uids.len(), schema_uid);
 
-    let result = execute_call(&provider, config.indexer_address, uids_call.abi_encode()).await?;
-    let decoded = IIndexer::getSchemaAttestationUIDsCall::abi_decode_returns(&result)
-        .map_err(|e| format!("Failed to decode UIDs result: {}", e))?;
-
-    println!("Retrieved {} attestation UIDs for schema {}", decoded.len(), schema_uid);
-
-    Ok(decoded)
+    Ok(uids)
 }
 
 // =============================================================================
@@ -337,16 +270,10 @@ pub async fn query_schema_attester_recipient_count(
     config: Option<QueryConfig>,
 ) -> Result<U256, String> {
     let config = config.unwrap_or_default();
-    let provider = create_provider(&config.rpc_endpoint).await?;
-
-    let count_call = IIndexer::getSchemaAttesterRecipientAttestationUIDCountCall {
-        schemaUID: schema_uid,
-        attester,
-        recipient,
-    };
-
-    let result = execute_call(&provider, config.indexer_address, count_call.abi_encode()).await?;
-    let attestation_count = U256::from_be_slice(&result);
+    let indexer_querier = config.indexer_querier().await?;
+    let attestation_count = indexer_querier
+        .get_attestation_count_by_schema_and_attester_and_recipient(schema_uid, attester, recipient)
+        .await?;
 
     println!(
         "Found {} attestations for schema {} from attester {} to recipient {}",
@@ -367,31 +294,27 @@ pub async fn query_schema_attester_recipient_uids(
     config: Option<QueryConfig>,
 ) -> Result<Vec<FixedBytes<32>>, String> {
     let config = config.unwrap_or_default();
-    let provider = create_provider(&config.rpc_endpoint).await?;
-
-    let uids_call = IIndexer::getSchemaAttesterRecipientAttestationUIDsCall {
-        schemaUID: schema_uid,
-        attester,
-        recipient,
-        start,
-        length,
-        reverseOrder: reverse_order,
-    };
-
-    let result = execute_call(&provider, config.indexer_address, uids_call.abi_encode()).await?;
-    let decoded =
-        IIndexer::getSchemaAttesterRecipientAttestationUIDsCall::abi_decode_returns(&result)
-            .map_err(|e| format!("Failed to decode UIDs result: {}", e))?;
+    let indexer_querier = config.indexer_querier().await?;
+    let uids = indexer_querier
+        .get_attestation_uids_by_schema_and_attester_and_recipient(
+            schema_uid,
+            attester,
+            recipient,
+            start,
+            length,
+            reverse_order,
+        )
+        .await?;
 
     println!(
         "Retrieved {} attestation UIDs for schema {} from attester {} to recipient {}",
-        decoded.len(),
+        uids.len(),
         schema_uid,
         attester,
         recipient
     );
 
-    Ok(decoded)
+    Ok(uids)
 }
 
 // =============================================================================
@@ -404,12 +327,8 @@ pub async fn is_attestation_indexed(
     config: Option<QueryConfig>,
 ) -> Result<bool, String> {
     let config = config.unwrap_or_default();
-    let provider = create_provider(&config.rpc_endpoint).await?;
-
-    let indexed_call = IIndexer::isAttestationIndexedCall { attestationUID: attestation_uid };
-
-    let result = execute_call(&provider, config.indexer_address, indexed_call.abi_encode()).await?;
-    let is_indexed = result[31] != 0; // Boolean is stored as the last byte
+    let indexer_querier = config.indexer_querier().await?;
+    let is_indexed = indexer_querier.is_attestation_indexed(attestation_uid).await?;
 
     println!("Attestation {} is {}indexed", attestation_uid, if is_indexed { "" } else { "not " });
 

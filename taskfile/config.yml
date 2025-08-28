@@ -69,7 +69,7 @@ vars:
   SCHEMA_REGISTRAR_ADDR:
     sh: test -f .docker/deployment_summary.json && jq -r '.eas_contracts.schema_registrar' .docker/deployment_summary.json || echo ""
   INDEXER_ADDR:
-    sh: test -f .docker/deployment_summary.json && jq -r '.universal_indexer.universal_indexer' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.wavs_indexer.wavs_indexer' .docker/deployment_summary.json || echo ""
   EAS_INDEXER_RESOLVER_ADDR:
     sh: test -f .docker/deployment_summary.json && jq -r '.eas_contracts.indexer_resolver' .docker/deployment_summary.json || echo ""
   VOTING_POWER_ADDR:

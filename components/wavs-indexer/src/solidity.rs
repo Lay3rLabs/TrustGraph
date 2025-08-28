@@ -1,13 +1,13 @@
 use alloy_sol_macro::sol;
 
-// Universal Indexer contract types - import from the interface
+// WAVS Indexer contract types - import from the interface
 sol!(
     #![sol(extra_derives(serde::Serialize, serde::Deserialize))]
-    "../../src/interfaces/IUniversalIndexer.sol"
+    "../../src/interfaces/IWavsIndexer.sol"
 );
 
 // Re-export the types for convenience
-pub use IUniversalIndexer::*;
+pub use IWavsIndexer::*;
 
 // TODO: move these to interfaces or import from each place or what? maybe each transformer defines its own events?
 // Common event types we'll handle

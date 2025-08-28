@@ -171,7 +171,7 @@ export const attesterAbi = [
 ] as const
 
 export const attesterAddress =
-  '0xB41cd41D389E00544b414b9252C01964D3aA6c83' as const
+  '0x9380bE8586C856D749Bc45d54bBBB3c46cF4713d' as const
 
 export const attesterConfig = {
   address: attesterAddress,
@@ -723,7 +723,7 @@ export const conditionalTokensAbi = [
 ] as const
 
 export const conditionalTokensAddress =
-  '0x068Ce29D261Ea04DF6DF29E37dE200e1a9407dBF' as const
+  '0x91C60e5d390E2747C8A3A32c547CeeDd6cF4fF82' as const
 
 export const conditionalTokensConfig = {
   address: conditionalTokensAddress,
@@ -1321,7 +1321,7 @@ export const easAbi = [
   { type: 'error', inputs: [], name: 'WrongSchema' },
 ] as const
 
-export const easAddress = '0xefaa0372DA9363460c07D58DDbf35a547aDF8245' as const
+export const easAddress = '0xa9786e32447Baa91D39d68F9207aa47391cC09A4' as const
 
 export const easConfig = { address: easAddress, abi: easAbi } as const
 
@@ -1407,7 +1407,7 @@ export const easAttestTriggerAbi = [
 ] as const
 
 export const easAttestTriggerAddress =
-  '0xA8E651Af44A43cF59d5E4747983CC56A4F80A39A' as const
+  '0x8DB39eC6898bEC66C7a6c9dd4b2912B32B1aB78B' as const
 
 export const easAttestTriggerConfig = {
   address: easAttestTriggerAddress,
@@ -1593,7 +1593,7 @@ export const easIndexerResolverAbi = [
 ] as const
 
 export const easIndexerResolverAddress =
-  '0xf69Af318B8f4fEF3E3bB21d1645aC44A2AE2eD67' as const
+  '0x8748d721E4f6F14eEba0D84ccB85B2e5DDAA7ea3' as const
 
 export const easIndexerResolverConfig = {
   address: easIndexerResolverAddress,
@@ -2357,7 +2357,7 @@ export const enovaAbi = [
 ] as const
 
 export const enovaAddress =
-  '0x4B9f1099e7Aaf0e91Dbc98b1Da497C60320054E6' as const
+  '0xBFa35c29f85b0CB7D18800639781B15B791D3AB2' as const
 
 export const enovaConfig = { address: enovaAddress, abi: enovaAbi } as const
 
@@ -2940,7 +2940,7 @@ export const gnosisSafeAbi = [
 ] as const
 
 export const gnosisSafeAddress =
-  '0xCc6bB95cBc87DF1D768fcd2E3e212e5aef435b91' as const
+  '0xbC80Ee8d83B7aA47e1E611637664857cFd26b57b' as const
 
 export const gnosisSafeConfig = {
   address: gnosisSafeAddress,
@@ -2961,173 +2961,11 @@ export const gnosisSafeProxyAbi = [
 ] as const
 
 export const gnosisSafeProxyAddress =
-  '0x9Cbcf8A1EBc7eBeAAecF407ce0123b75126ff2B2' as const
+  '0x170e9570F0663DC95488F25E2334e9B3Eeb52aE8' as const
 
 export const gnosisSafeProxyConfig = {
   address: gnosisSafeProxyAddress,
   abi: gnosisSafeProxyAbi,
-} as const
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Indexer
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-export const indexerAbi = [
-  {
-    type: 'constructor',
-    inputs: [{ name: 'eas', internalType: 'contract IEAS', type: 'address' }],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'getEAS',
-    outputs: [{ name: '', internalType: 'contract IEAS', type: 'address' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: 'recipient', internalType: 'address', type: 'address' },
-      { name: 'schemaUID', internalType: 'bytes32', type: 'bytes32' },
-    ],
-    name: 'getReceivedAttestationUIDCount',
-    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: 'recipient', internalType: 'address', type: 'address' },
-      { name: 'schemaUID', internalType: 'bytes32', type: 'bytes32' },
-      { name: 'start', internalType: 'uint256', type: 'uint256' },
-      { name: 'length', internalType: 'uint256', type: 'uint256' },
-      { name: 'reverseOrder', internalType: 'bool', type: 'bool' },
-    ],
-    name: 'getReceivedAttestationUIDs',
-    outputs: [{ name: '', internalType: 'bytes32[]', type: 'bytes32[]' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [{ name: 'schemaUID', internalType: 'bytes32', type: 'bytes32' }],
-    name: 'getSchemaAttestationUIDCount',
-    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: 'schemaUID', internalType: 'bytes32', type: 'bytes32' },
-      { name: 'start', internalType: 'uint256', type: 'uint256' },
-      { name: 'length', internalType: 'uint256', type: 'uint256' },
-      { name: 'reverseOrder', internalType: 'bool', type: 'bool' },
-    ],
-    name: 'getSchemaAttestationUIDs',
-    outputs: [{ name: '', internalType: 'bytes32[]', type: 'bytes32[]' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: 'schemaUID', internalType: 'bytes32', type: 'bytes32' },
-      { name: 'attester', internalType: 'address', type: 'address' },
-      { name: 'recipient', internalType: 'address', type: 'address' },
-    ],
-    name: 'getSchemaAttesterRecipientAttestationUIDCount',
-    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: 'schemaUID', internalType: 'bytes32', type: 'bytes32' },
-      { name: 'attester', internalType: 'address', type: 'address' },
-      { name: 'recipient', internalType: 'address', type: 'address' },
-      { name: 'start', internalType: 'uint256', type: 'uint256' },
-      { name: 'length', internalType: 'uint256', type: 'uint256' },
-      { name: 'reverseOrder', internalType: 'bool', type: 'bool' },
-    ],
-    name: 'getSchemaAttesterRecipientAttestationUIDs',
-    outputs: [{ name: '', internalType: 'bytes32[]', type: 'bytes32[]' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: 'attester', internalType: 'address', type: 'address' },
-      { name: 'schemaUID', internalType: 'bytes32', type: 'bytes32' },
-    ],
-    name: 'getSentAttestationUIDCount',
-    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: 'attester', internalType: 'address', type: 'address' },
-      { name: 'schemaUID', internalType: 'bytes32', type: 'bytes32' },
-      { name: 'start', internalType: 'uint256', type: 'uint256' },
-      { name: 'length', internalType: 'uint256', type: 'uint256' },
-      { name: 'reverseOrder', internalType: 'bool', type: 'bool' },
-    ],
-    name: 'getSentAttestationUIDs',
-    outputs: [{ name: '', internalType: 'bytes32[]', type: 'bytes32[]' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: 'attestationUID', internalType: 'bytes32', type: 'bytes32' },
-    ],
-    name: 'indexAttestation',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: 'attestationUIDs', internalType: 'bytes32[]', type: 'bytes32[]' },
-    ],
-    name: 'indexAttestations',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: 'attestationUID', internalType: 'bytes32', type: 'bytes32' },
-    ],
-    name: 'isAttestationIndexed',
-    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'version',
-    outputs: [{ name: '', internalType: 'string', type: 'string' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      { name: 'uid', internalType: 'bytes32', type: 'bytes32', indexed: true },
-    ],
-    name: 'Indexed',
-  },
-  { type: 'error', inputs: [], name: 'InvalidAttestation' },
-  { type: 'error', inputs: [], name: 'InvalidEAS' },
-  { type: 'error', inputs: [], name: 'InvalidOffset' },
-] as const
-
-export const indexerAddress =
-  '0x69F78115d210b871b87836023e71d67eFBcbCcF5' as const
-
-export const indexerConfig = {
-  address: indexerAddress,
-  abi: indexerAbi,
 } as const
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3510,7 +3348,7 @@ export const lmsrMarketMakerAbi = [
 ] as const
 
 export const lmsrMarketMakerAddress =
-  '0xd8019e9Aa9e7D76f2c8F75eE033fD57bDED7E26B' as const
+  '0x2966190E96eC71b632Bdac05a8eA65ae0C637604' as const
 
 export const lmsrMarketMakerConfig = {
   address: lmsrMarketMakerAddress,
@@ -4379,7 +4217,7 @@ export const merkleGovModuleAbi = [
 ] as const
 
 export const merkleGovModuleAddress =
-  '0xc3E0e358CdBE2113E49d5FF82AC0Ed6e472693B8' as const
+  '0xfC519F4AEd1009319D442fd9d4e40Cdf344827f3' as const
 
 export const merkleGovModuleConfig = {
   address: merkleGovModuleAddress,
@@ -4609,7 +4447,7 @@ export const mockUsdcAbi = [
 ] as const
 
 export const mockUsdcAddress =
-  '0x957E09724dcd9515530eB76368B28cfAF094350C' as const
+  '0x349Bef4E082044E5f379577889398c7f6Bad259c' as const
 
 export const mockUsdcConfig = {
   address: mockUsdcAddress,
@@ -5130,7 +4968,7 @@ export const predictionMarketFactoryAbi = [
 ] as const
 
 export const predictionMarketFactoryAddress =
-  '0x6183fd8Aac3fce781c96e08962B6e86B3Bf93AF7' as const
+  '0x07B424f40fd923Dc677704a2079F4F4755504947' as const
 
 export const predictionMarketFactoryConfig = {
   address: predictionMarketFactoryAddress,
@@ -5299,7 +5137,7 @@ export const predictionMarketOracleControllerAbi = [
 ] as const
 
 export const predictionMarketOracleControllerAddress =
-  '0xa1F6B9a72C4003BdED5Cd3C76D05eEa02d54FE20' as const
+  '0x693116FD918eF4eFCAEDC91743bc5c436966b964' as const
 
 export const predictionMarketOracleControllerConfig = {
   address: predictionMarketOracleControllerAddress,
@@ -5755,7 +5593,7 @@ export const rewardDistributorAbi = [
 ] as const
 
 export const rewardDistributorAddress =
-  '0x648dBd59a81379d4DA2E845f4061a74Fb17f77Db' as const
+  '0xa9fD39C384784f79F8f448fDfd6b350E312ce52D' as const
 
 export const rewardDistributorConfig = {
   address: rewardDistributorAddress,
@@ -5799,7 +5637,7 @@ export const schemaRegistrarAbi = [
 ] as const
 
 export const schemaRegistrarAddress =
-  '0x0DE88b0749AB7304289BA11AA547A0a52b752959' as const
+  '0xa9859Bf1A38cb7447cFdCaA89A21D91298782317' as const
 
 export const schemaRegistrarConfig = {
   address: schemaRegistrarAddress,
@@ -5891,7 +5729,7 @@ export const schemaRegistryAbi = [
 ] as const
 
 export const schemaRegistryAddress =
-  '0x09f220Af691A157afCB4b8a00682381537dA0275' as const
+  '0x22B68e4f00b775FA5d05e6ab41edf8a616aF1CD9' as const
 
 export const schemaRegistryConfig = {
   address: schemaRegistryAddress,
@@ -6280,7 +6118,7 @@ export const signerManagerModuleAbi = [
 ] as const
 
 export const signerManagerModuleAddress =
-  '0x26cbd0d562FedCC9bb2a71D083114beC5fdF0C06' as const
+  '0xE2c422924Df1FF284284B4c3D18746aAbB47c8B9' as const
 
 export const signerManagerModuleConfig = {
   address: signerManagerModuleAddress,
@@ -6288,10 +6126,10 @@ export const signerManagerModuleConfig = {
 } as const
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// UniversalIndexer
+// WavsIndexer
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-export const universalIndexerAbi = [
+export const wavsIndexerAbi = [
   {
     type: 'constructor',
     inputs: [
@@ -6310,12 +6148,12 @@ export const universalIndexerAbi = [
     outputs: [
       {
         name: '',
-        internalType: 'struct IUniversalIndexer.IndexingPayload',
+        internalType: 'struct IWavsIndexer.IndexingPayload',
         type: 'tuple',
         components: [
           {
             name: 'toAdd',
-            internalType: 'struct IUniversalIndexer.UniversalEvent[]',
+            internalType: 'struct IWavsIndexer.IndexedEvent[]',
             type: 'tuple[]',
             components: [
               { name: 'eventId', internalType: 'bytes32', type: 'bytes32' },
@@ -6557,7 +6395,7 @@ export const universalIndexerAbi = [
     outputs: [
       {
         name: '',
-        internalType: 'struct IUniversalIndexer.UniversalEvent[]',
+        internalType: 'struct IWavsIndexer.IndexedEvent[]',
         type: 'tuple[]',
         components: [
           { name: 'eventId', internalType: 'bytes32', type: 'bytes32' },
@@ -6597,7 +6435,7 @@ export const universalIndexerAbi = [
     outputs: [
       {
         name: '',
-        internalType: 'struct IUniversalIndexer.UniversalEvent[]',
+        internalType: 'struct IWavsIndexer.IndexedEvent[]',
         type: 'tuple[]',
         components: [
           { name: 'eventId', internalType: 'bytes32', type: 'bytes32' },
@@ -6638,7 +6476,7 @@ export const universalIndexerAbi = [
     outputs: [
       {
         name: '',
-        internalType: 'struct IUniversalIndexer.UniversalEvent[]',
+        internalType: 'struct IWavsIndexer.IndexedEvent[]',
         type: 'tuple[]',
         components: [
           { name: 'eventId', internalType: 'bytes32', type: 'bytes32' },
@@ -6677,7 +6515,7 @@ export const universalIndexerAbi = [
     outputs: [
       {
         name: '',
-        internalType: 'struct IUniversalIndexer.UniversalEvent[]',
+        internalType: 'struct IWavsIndexer.IndexedEvent[]',
         type: 'tuple[]',
         components: [
           { name: 'eventId', internalType: 'bytes32', type: 'bytes32' },
@@ -6717,7 +6555,7 @@ export const universalIndexerAbi = [
     outputs: [
       {
         name: '',
-        internalType: 'struct IUniversalIndexer.UniversalEvent[]',
+        internalType: 'struct IWavsIndexer.IndexedEvent[]',
         type: 'tuple[]',
         components: [
           { name: 'eventId', internalType: 'bytes32', type: 'bytes32' },
@@ -6756,7 +6594,7 @@ export const universalIndexerAbi = [
     outputs: [
       {
         name: '',
-        internalType: 'struct IUniversalIndexer.UniversalEvent[]',
+        internalType: 'struct IWavsIndexer.IndexedEvent[]',
         type: 'tuple[]',
         components: [
           { name: 'eventId', internalType: 'bytes32', type: 'bytes32' },
@@ -6795,7 +6633,7 @@ export const universalIndexerAbi = [
     outputs: [
       {
         name: '',
-        internalType: 'struct IUniversalIndexer.UniversalEvent[]',
+        internalType: 'struct IWavsIndexer.IndexedEvent[]',
         type: 'tuple[]',
         components: [
           { name: 'eventId', internalType: 'bytes32', type: 'bytes32' },
@@ -6835,7 +6673,7 @@ export const universalIndexerAbi = [
     outputs: [
       {
         name: '',
-        internalType: 'struct IUniversalIndexer.UniversalEvent[]',
+        internalType: 'struct IWavsIndexer.IndexedEvent[]',
         type: 'tuple[]',
         components: [
           { name: 'eventId', internalType: 'bytes32', type: 'bytes32' },
@@ -6972,10 +6810,10 @@ export const universalIndexerAbi = [
   { type: 'error', inputs: [], name: 'PayloadDecodingFailed' },
 ] as const
 
-export const universalIndexerAddress =
-  '0x09B9A097911a3500469e9D7c23B8F72608FFE756' as const
+export const wavsIndexerAddress =
+  '0xcdd81bD76e71b7530Ea7684Ed43C092CB12445C7' as const
 
-export const universalIndexerConfig = {
-  address: universalIndexerAddress,
-  abi: universalIndexerAbi,
+export const wavsIndexerConfig = {
+  address: wavsIndexerAddress,
+  abi: wavsIndexerAbi,
 } as const

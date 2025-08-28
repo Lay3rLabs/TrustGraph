@@ -16,29 +16,29 @@ import {EASAttestTrigger} from "../src/contracts/Trigger.sol";
 import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 import {ITypes} from "../src/interfaces/ITypes.sol";
-import {UniversalIndexer} from "../src/contracts/UniversalIndexer.sol";
+import {WavsIndexer} from "../src/contracts/WavsIndexer.sol";
 
 import {Common} from "./Common.s.sol";
 
-/// @title DeployUniversalIndexer
-/// @notice Deployment script for UniversalIndexer contracts and WAVS integration
-contract DeployUniversalIndexer is Common {
+/// @title DeployWavsIndexer
+/// @notice Deployment script for WavsIndexer contracts and WAVS integration
+contract DeployWavsIndexer is Common {
     using stdJson for string;
 
     string public root = vm.projectRoot();
     string public script_output_path =
-        string.concat(root, "/.docker/universal_indexer_deploy.json");
+        string.concat(root, "/.docker/wavs_indexer_deploy.json");
 
-    struct UniversalIndexerDeployment {
-        address universalIndexer;
+    struct WavsIndexerDeployment {
+        address wavsIndexer;
     }
 
-    /// @notice Deploy UniversalIndexer contract and WAVS integration
+    /// @notice Deploy WavsIndexer contract and WAVS integration
     /// @param wavsServiceManagerAddr The WAVS service manager address
     /// @return deployment The deployed contract addresses
     function run(
         string calldata wavsServiceManagerAddr
-    ) public returns (UniversalIndexerDeployment memory deployment) {
+    ) public returns (WavsIndexerDeployment memory deployment) {
         vm.startBroadcast(_privateKey);
 
         address serviceManager = vm.parseAddress(wavsServiceManagerAddr);
@@ -47,29 +47,26 @@ contract DeployUniversalIndexer is Common {
             "Invalid service manager address"
         );
 
-        console.log("Deploying UniversalIndexer contract...");
+        console.log("Deploying WavsIndexer contract...");
 
-        // 1. Deploy UniversalIndexer
-        UniversalIndexer universalIndexer = new UniversalIndexer(
+        // 1. Deploy WavsIndexer
+        WavsIndexer wavsIndexer = new WavsIndexer(
             IWavsServiceManager(serviceManager)
         );
-        deployment.universalIndexer = address(universalIndexer);
-        console.log(
-            "UniversalIndexer deployed at:",
-            deployment.universalIndexer
-        );
+        deployment.wavsIndexer = address(wavsIndexer);
+        console.log("WavsIndexer deployed at:", deployment.wavsIndexer);
 
         vm.stopBroadcast();
 
         // Log deployment summary
-        console.log("\n=== UniversalIndexer Deployment Summary ===");
-        console.log("UniversalIndexer:", deployment.universalIndexer);
+        console.log("\n=== WavsIndexer Deployment Summary ===");
+        console.log("WavsIndexer:", deployment.wavsIndexer);
 
         // Write to file
         string memory _json = "json";
         string memory finalJson = _json.serialize(
-            "universal_indexer",
-            Strings.toChecksumHexString(address(universalIndexer))
+            "wavs_indexer",
+            Strings.toChecksumHexString(address(wavsIndexer))
         );
         vm.writeFile(script_output_path, finalJson);
     }

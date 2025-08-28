@@ -37,7 +37,7 @@ contract EASIndexerResolver is SchemaResolver {
             attestation.schema
         );
 
-        // Emit the attestation indexed event for the UniversalIndexer
+        // Emit the attestation indexed event for the WavsIndexer
         emit AttestationAttested(address(_eas), attestation.uid);
 
         return true;
@@ -49,7 +49,7 @@ contract EASIndexerResolver is SchemaResolver {
         Attestation calldata attestation,
         uint256 /*value*/
     ) internal override returns (bool) {
-        // Emit the attestation revoked event for the UniversalIndexer
+        // Emit the attestation revoked event for the WavsIndexer
         emit AttestationRevoked(address(_eas), attestation.uid);
         return true;
     }

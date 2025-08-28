@@ -5385,6 +5385,7 @@ dependencies = [
  "multihash 0.18.1",
  "serde",
  "serde_json",
+ "wavs-indexer-api",
  "wavs-wasi-utils",
  "wit-bindgen-rt 0.44.0",
  "wstd",
@@ -6124,6 +6125,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
 
 [[package]]
+name = "signal-hook-registry"
+version = "1.4.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b2a4719bff48cee6b39d12c020eeb490953ad2443b7055bd0b21fca26bd8c28b"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "signature"
 version = "1.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6614,7 +6624,9 @@ dependencies = [
  "io-uring",
  "libc",
  "mio",
+ "parking_lot 0.12.4",
  "pin-project-lite",
+ "signal-hook-registry",
  "slab",
  "socket2 0.6.0",
  "tokio-macros",
@@ -6895,28 +6907,6 @@ name = "unicode-xid"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ebc1c04c71510c7f702b52b7c350734c9ff1295c464a03335b00bb84fc54f853"
-
-[[package]]
-name = "universal-indexer"
-version = "0.5.5"
-dependencies = [
- "alloy-contract 0.15.11",
- "alloy-network 0.15.11",
- "alloy-primitives",
- "alloy-provider 0.15.11",
- "alloy-rpc-types",
- "alloy-sol-macro",
- "alloy-sol-types",
- "anyhow",
- "async-trait",
- "hex",
- "inventory",
- "serde",
- "serde_json",
- "wavs-wasi-utils",
- "wit-bindgen-rt 0.44.0",
- "wstd",
-]
 
 [[package]]
 name = "unsigned-varint"
@@ -7241,6 +7231,8 @@ dependencies = [
  "serde_json",
  "thiserror 1.0.69",
  "tiny-keccak",
+ "tokio",
+ "wavs-indexer-api",
  "wavs-wasi-utils",
  "wit-bindgen",
  "wit-bindgen-rt 0.44.0",
@@ -7279,6 +7271,54 @@ dependencies = [
  "serde_json",
  "wavs-eas",
  "wavs-wasi-utils",
+ "wit-bindgen-rt 0.44.0",
+ "wstd",
+]
+
+[[package]]
+name = "wavs-indexer"
+version = "0.5.5"
+dependencies = [
+ "alloy-contract 0.15.11",
+ "alloy-network 0.15.11",
+ "alloy-primitives",
+ "alloy-provider 0.15.11",
+ "alloy-rpc-types",
+ "alloy-sol-macro",
+ "alloy-sol-types",
+ "anyhow",
+ "async-trait",
+ "hex",
+ "inventory",
+ "serde",
+ "serde_json",
+ "wavs-indexer-api",
+ "wavs-wasi-utils",
+ "wit-bindgen-rt 0.44.0",
+ "wstd",
+]
+
+[[package]]
+name = "wavs-indexer-api"
+version = "0.5.5"
+dependencies = [
+ "alloy-contract 0.15.11",
+ "alloy-dyn-abi",
+ "alloy-json-abi",
+ "alloy-network 0.15.11",
+ "alloy-primitives",
+ "alloy-provider 0.15.11",
+ "alloy-rpc-types",
+ "alloy-sol-macro",
+ "alloy-sol-types",
+ "anyhow",
+ "hex",
+ "mockall",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "wavs-wasi-utils",
+ "wit-bindgen",
  "wit-bindgen-rt 0.44.0",
  "wstd",
 ]

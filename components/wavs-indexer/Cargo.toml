@@ -1,5 +1,5 @@
 [package]
-name = "universal-indexer"
+name = "wavs-indexer"
 edition.workspace = true
 version.workspace = true
 authors.workspace = true
@@ -23,10 +23,11 @@ alloy-contract = { workspace = true }
 hex = { workspace = true }
 async-trait = { workspace = true }
 inventory = { workspace = true }
+wavs-indexer-api = { workspace = true }
 
 [lib]
 crate-type = ["cdylib"]
 
 [package.metadata.component]
-package = "component:universal-indexer"
+package = "component:wavs-indexer"
 target = "wavs:worker/wavs-world@0.5.1"

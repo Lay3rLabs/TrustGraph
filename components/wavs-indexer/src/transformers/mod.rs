@@ -32,7 +32,7 @@ pub trait EventTransformer {
     /// Check if the transformer supports an event signature.
     fn supports_event(event_signature: &FixedBytes<32>) -> bool;
 
-    /// Transform an event into a UniversalEvent.
+    /// Transform an event into a IndexedEvent.
     async fn transform(
         event_signature: FixedBytes<32>,
         event_data: EventData,

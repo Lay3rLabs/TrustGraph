@@ -17,14 +17,14 @@ export!(Component with_types_in bindings);
 
 impl Guest for Component {
     fn run(action: TriggerAction) -> std::result::Result<Option<WasmResponse>, String> {
-        println!("Universal Indexer: Processing trigger action");
+        println!("WAVS Indexer: Processing trigger action");
 
         // Decode the trigger event
         let (event_data, dest) = decode_trigger_event(action.data)
             .map_err(|e| format!("Failed to decode trigger event: {}", e))?;
 
         println!(
-            "Universal Indexer: Event from contract {}: {:?}",
+            "WAVS Indexer: Event from contract {}: {:?}",
             event_data.contract_address, event_data
         );
 
@@ -33,7 +33,7 @@ impl Guest for Component {
             .map_err(|e| format!("Failed to process event: {}", e))?;
 
         println!(
-            "Universal Indexer: Transformed event, adding {} and deleting {}",
+            "WAVS Indexer: Transformed event, adding {} and deleting {}",
             payload.toAdd.len(),
             payload.toDelete.len()
         );
@@ -48,7 +48,7 @@ impl Guest for Component {
             }
         };
 
-        println!("Universal Indexer: Successfully processed and encoded output");
+        println!("WAVS Indexer: Successfully processed and encoded output");
         Ok(output)
     }
 }

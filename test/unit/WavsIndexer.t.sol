@@ -3,31 +3,31 @@ pragma solidity 0.8.27;
 
 import {Test} from "forge-std/Test.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {UniversalIndexer} from "../../src/contracts/UniversalIndexer.sol";
-import {IUniversalIndexer} from "../../src/interfaces/IUniversalIndexer.sol";
+import {WavsIndexer} from "../../src/contracts/WavsIndexer.sol";
+import {IWavsIndexer} from "../../src/interfaces/IWavsIndexer.sol";
 
 // WAVS interfaces
 import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 
-contract UniversalIndexerTest is Test {
-    UniversalIndexer public universalIndexer;
+contract WavsIndexerTest is Test {
+    WavsIndexer public wavsIndexer;
     MockWavsServiceManager public mockServiceManager;
 
     function setUp() public {
         mockServiceManager = new MockWavsServiceManager();
-        universalIndexer = new UniversalIndexer(mockServiceManager);
+        wavsIndexer = new WavsIndexer(mockServiceManager);
     }
 
     function testHandleSignedEnvelope_ShouldNotRevertOnAdd() public {
         // Create mock events
-        IUniversalIndexer.UniversalEvent[]
-            memory events = new IUniversalIndexer.UniversalEvent[](2);
+        IWavsIndexer.IndexedEvent[]
+            memory events = new IWavsIndexer.IndexedEvent[](2);
         events[0] = _createMockEvent(0, abi.encode(123), "attestation");
         events[1] = _createMockEvent(0, abi.encode(456), "attestation");
 
         // Create payload
-        IUniversalIndexer.IndexingPayload memory payload = _createPayload(
+        IWavsIndexer.IndexingPayload memory payload = _createPayload(
             events,
             new bytes32[](0)
         );
@@ -42,19 +42,19 @@ contract UniversalIndexerTest is Test {
         bytes32 eventId1 = _generateEventId(1, 0);
         bytes32 eventId2 = _generateEventId(1, 1);
 
-        assertEq(universalIndexer.eventExists(eventId1), false);
-        assertEq(universalIndexer.eventExists(eventId2), false);
+        assertEq(wavsIndexer.eventExists(eventId1), false);
+        assertEq(wavsIndexer.eventExists(eventId2), false);
 
         // Expect events to be emitted
         vm.expectEmit(true, true, true, true);
-        emit IUniversalIndexer.EventIndexed(
+        emit IWavsIndexer.EventIndexed(
             eventId1,
             events[0].relevantContract,
             events[0].eventType,
             events[0].relevantAddresses,
             events[0].tags
         );
-        emit IUniversalIndexer.EventIndexed(
+        emit IWavsIndexer.EventIndexed(
             eventId2,
             events[1].relevantContract,
             events[1].eventType,
@@ -63,19 +63,19 @@ contract UniversalIndexerTest is Test {
         );
 
         // Call handleSignedEnvelope
-        universalIndexer.handleSignedEnvelope(envelope, signatureData);
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
 
         // Verify events exist and are not deleted
-        assertEq(universalIndexer.eventExists(eventId1), true);
-        assertEq(universalIndexer.eventExistsAndDeleted(eventId1), false);
-        assertEq(universalIndexer.eventExists(eventId2), true);
-        assertEq(universalIndexer.eventExistsAndDeleted(eventId2), false);
+        assertEq(wavsIndexer.eventExists(eventId1), true);
+        assertEq(wavsIndexer.eventExistsAndDeleted(eventId1), false);
+        assertEq(wavsIndexer.eventExists(eventId2), true);
+        assertEq(wavsIndexer.eventExistsAndDeleted(eventId2), false);
     }
 
     function testHandleSignedEnvelope_ShouldRevertIfNoEvents() public {
         // Create payload with no events
-        IUniversalIndexer.IndexingPayload memory payload = _createPayload(
-            new IUniversalIndexer.UniversalEvent[](0),
+        IWavsIndexer.IndexingPayload memory payload = _createPayload(
+            new IWavsIndexer.IndexedEvent[](0),
             new bytes32[](0)
         );
 
@@ -86,22 +86,22 @@ contract UniversalIndexerTest is Test {
         ) = _createEnvelopeAndSignature(payload);
 
         // Expect revert when no events provided
-        vm.expectRevert(IUniversalIndexer.NoEvents.selector);
+        vm.expectRevert(IWavsIndexer.NoEvents.selector);
 
         // Call handleSignedEnvelope
-        universalIndexer.handleSignedEnvelope(envelope, signatureData);
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
     }
 
     function testHandleSignedEnvelope_ShouldRevertOnAddIfNonZeroEventId()
         public
     {
         // Create event with non-zero eventId (should be zero for ADD operations)
-        IUniversalIndexer.UniversalEvent[]
-            memory events = new IUniversalIndexer.UniversalEvent[](1);
+        IWavsIndexer.IndexedEvent[]
+            memory events = new IWavsIndexer.IndexedEvent[](1);
         events[0] = _createMockEvent(123, abi.encode(123), "attestation");
 
         // Create payload
-        IUniversalIndexer.IndexingPayload memory payload = _createPayload(
+        IWavsIndexer.IndexingPayload memory payload = _createPayload(
             events,
             new bytes32[](0)
         );
@@ -113,20 +113,20 @@ contract UniversalIndexerTest is Test {
         ) = _createEnvelopeAndSignature(payload);
 
         // Expect revert for non-zero eventId in ADD operation
-        vm.expectRevert(IUniversalIndexer.ExpectedEventIdZero.selector);
+        vm.expectRevert(IWavsIndexer.ExpectedEventIdZero.selector);
 
         // Call handleSignedEnvelope
-        universalIndexer.handleSignedEnvelope(envelope, signatureData);
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
     }
 
     function testHandleSignedEnvelope_ShouldRevertOnAddIfEventExists() public {
         // Create mock event
-        IUniversalIndexer.UniversalEvent[]
-            memory events = new IUniversalIndexer.UniversalEvent[](1);
+        IWavsIndexer.IndexedEvent[]
+            memory events = new IWavsIndexer.IndexedEvent[](1);
         events[0] = _createMockEvent(0, abi.encode(123), "attestation");
 
         // Create payload
-        IUniversalIndexer.IndexingPayload memory payload = _createPayload(
+        IWavsIndexer.IndexingPayload memory payload = _createPayload(
             events,
             new bytes32[](0)
         );
@@ -138,31 +138,31 @@ contract UniversalIndexerTest is Test {
         ) = _createEnvelopeAndSignature(payload);
 
         // First call should succeed
-        universalIndexer.handleSignedEnvelope(envelope, signatureData);
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
 
         // Generate event ID to verify it exists
         bytes32 eventId = _generateEventId(1, 0);
 
         // Verify event exists and is not deleted
-        assertEq(universalIndexer.eventExists(eventId), true);
-        assertEq(universalIndexer.eventExistsAndDeleted(eventId), false);
+        assertEq(wavsIndexer.eventExists(eventId), true);
+        assertEq(wavsIndexer.eventExistsAndDeleted(eventId), false);
 
         // Second call with same event should revert
-        vm.expectRevert(IUniversalIndexer.EventAlreadyExists.selector);
-        universalIndexer.handleSignedEnvelope(envelope, signatureData);
+        vm.expectRevert(IWavsIndexer.EventAlreadyExists.selector);
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
     }
 
     function testHandleSignedEnvelope_ShouldRevertOnAddIfEventSetsDeleted()
         public
     {
         // Create mock event
-        IUniversalIndexer.UniversalEvent[]
-            memory events = new IUniversalIndexer.UniversalEvent[](1);
+        IWavsIndexer.IndexedEvent[]
+            memory events = new IWavsIndexer.IndexedEvent[](1);
         events[0] = _createMockEvent(0, abi.encode(123), "attestation");
         events[0].deleted = true;
 
         // Create payload
-        IUniversalIndexer.IndexingPayload memory payload = _createPayload(
+        IWavsIndexer.IndexingPayload memory payload = _createPayload(
             events,
             new bytes32[](0)
         );
@@ -174,19 +174,19 @@ contract UniversalIndexerTest is Test {
         ) = _createEnvelopeAndSignature(payload);
 
         // Expect revert for deleted event
-        vm.expectRevert(IUniversalIndexer.CannotCreateDeletedEvent.selector);
+        vm.expectRevert(IWavsIndexer.CannotCreateDeletedEvent.selector);
 
-        universalIndexer.handleSignedEnvelope(envelope, signatureData);
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
     }
 
     function testHandleSignedEnvelope_ShouldNotRevertOnDelete() public {
         // Create mock event and add it first
-        IUniversalIndexer.UniversalEvent[]
-            memory events = new IUniversalIndexer.UniversalEvent[](1);
+        IWavsIndexer.IndexedEvent[]
+            memory events = new IWavsIndexer.IndexedEvent[](1);
         events[0] = _createMockEvent(0, abi.encode(123), "attestation");
 
         // Create ADD payload and execute
-        IUniversalIndexer.IndexingPayload memory addPayload = _createPayload(
+        IWavsIndexer.IndexingPayload memory addPayload = _createPayload(
             events,
             new bytes32[](0)
         );
@@ -199,21 +199,21 @@ contract UniversalIndexerTest is Test {
         // Generate event ID
         bytes32 eventId = _generateEventId(1, 0);
 
-        assertEq(universalIndexer.eventExists(eventId), false);
-        assertEq(universalIndexer.eventExistsAndDeleted(eventId), false);
+        assertEq(wavsIndexer.eventExists(eventId), false);
+        assertEq(wavsIndexer.eventExistsAndDeleted(eventId), false);
 
         // Add the event first
-        universalIndexer.handleSignedEnvelope(envelope, signatureData);
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
 
         // Verify event exists and is not deleted
-        assertEq(universalIndexer.eventExists(eventId), true);
-        assertEq(universalIndexer.eventExistsAndDeleted(eventId), false);
+        assertEq(wavsIndexer.eventExists(eventId), true);
+        assertEq(wavsIndexer.eventExistsAndDeleted(eventId), false);
 
         // Now create DELETE payload with the generated eventId
         bytes32[] memory toDelete = new bytes32[](1);
         toDelete[0] = eventId;
-        IUniversalIndexer.IndexingPayload memory deletePayload = _createPayload(
-            new IUniversalIndexer.UniversalEvent[](0),
+        IWavsIndexer.IndexingPayload memory deletePayload = _createPayload(
+            new IWavsIndexer.IndexedEvent[](0),
             toDelete
         );
 
@@ -226,14 +226,14 @@ contract UniversalIndexerTest is Test {
 
         // Expect delete event emission
         vm.expectEmit(true, true, true, true);
-        emit IUniversalIndexer.EventDeleted(eventId);
+        emit IWavsIndexer.EventDeleted(eventId);
 
         // Call handleSignedEnvelope for delete
-        universalIndexer.handleSignedEnvelope(envelope, signatureData);
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
 
         // Verify event exists but is marked as deleted
-        assertEq(universalIndexer.eventExists(eventId), true);
-        assertEq(universalIndexer.eventExistsAndDeleted(eventId), true);
+        assertEq(wavsIndexer.eventExists(eventId), true);
+        assertEq(wavsIndexer.eventExistsAndDeleted(eventId), true);
     }
 
     // ================================
@@ -242,8 +242,8 @@ contract UniversalIndexerTest is Test {
 
     function testGetEventsByChainId() public {
         // Create events for different chains
-        IUniversalIndexer.UniversalEvent[]
-            memory events = new IUniversalIndexer.UniversalEvent[](3);
+        IWavsIndexer.IndexedEvent[]
+            memory events = new IWavsIndexer.IndexedEvent[](3);
         events[0] = _createMockEventCustom(
             bytes32(0),
             "1",
@@ -284,7 +284,7 @@ contract UniversalIndexerTest is Test {
             false
         );
 
-        IUniversalIndexer.IndexingPayload memory payload = _createPayload(
+        IWavsIndexer.IndexingPayload memory payload = _createPayload(
             events,
             new bytes32[](0)
         );
@@ -294,39 +294,24 @@ contract UniversalIndexerTest is Test {
             IWavsServiceHandler.SignatureData memory signatureData
         ) = _createEnvelopeAndSignature(payload);
 
-        universalIndexer.handleSignedEnvelope(envelope, signatureData);
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
 
         // Test getting events by chain ID "1"
-        IUniversalIndexer.UniversalEvent[]
-            memory chain1Events = universalIndexer.getEventsByChainId(
-                "1",
-                0,
-                10,
-                false
-            );
+        IWavsIndexer.IndexedEvent[] memory chain1Events = wavsIndexer
+            .getEventsByChainId("1", 0, 10, false);
         assertEq(chain1Events.length, 2);
         assertEq(chain1Events[0].chainId, "1");
         assertEq(chain1Events[1].chainId, "1");
 
         // Test getting events by chain ID "2"
-        IUniversalIndexer.UniversalEvent[]
-            memory chain2Events = universalIndexer.getEventsByChainId(
-                "2",
-                0,
-                10,
-                false
-            );
+        IWavsIndexer.IndexedEvent[] memory chain2Events = wavsIndexer
+            .getEventsByChainId("2", 0, 10, false);
         assertEq(chain2Events.length, 1);
         assertEq(chain2Events[0].chainId, "2");
 
         // Test reverse order
-        IUniversalIndexer.UniversalEvent[]
-            memory chain1Reverse = universalIndexer.getEventsByChainId(
-                "1",
-                0,
-                10,
-                true
-            );
+        IWavsIndexer.IndexedEvent[] memory chain1Reverse = wavsIndexer
+            .getEventsByChainId("1", 0, 10, true);
         assertEq(chain1Reverse.length, 2);
         // In reverse order, second event should come first
         assertEq(chain1Reverse[0].relevantContract, address(0x2));
@@ -335,8 +320,8 @@ contract UniversalIndexerTest is Test {
 
     function testGetEventsByContract() public {
         // Create events for different contracts
-        IUniversalIndexer.UniversalEvent[]
-            memory events = new IUniversalIndexer.UniversalEvent[](4);
+        IWavsIndexer.IndexedEvent[]
+            memory events = new IWavsIndexer.IndexedEvent[](4);
         events[0] = _createMockEventCustom(
             bytes32(0),
             "1",
@@ -390,7 +375,7 @@ contract UniversalIndexerTest is Test {
             false
         );
 
-        IUniversalIndexer.IndexingPayload memory payload = _createPayload(
+        IWavsIndexer.IndexingPayload memory payload = _createPayload(
             events,
             new bytes32[](0)
         );
@@ -400,17 +385,11 @@ contract UniversalIndexerTest is Test {
             IWavsServiceHandler.SignatureData memory signatureData
         ) = _createEnvelopeAndSignature(payload);
 
-        universalIndexer.handleSignedEnvelope(envelope, signatureData);
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
 
         // Test getting events by contract 0x100
-        IUniversalIndexer.UniversalEvent[]
-            memory contract100Events = universalIndexer.getEventsByContract(
-                "1",
-                address(0x100),
-                0,
-                10,
-                false
-            );
+        IWavsIndexer.IndexedEvent[] memory contract100Events = wavsIndexer
+            .getEventsByContract("1", address(0x100), 0, 10, false);
         assertEq(contract100Events.length, 2);
         assertEq(contract100Events[0].relevantContract, address(0x100));
         assertEq(contract100Events[0].eventId, _generateEventId(1, 0));
@@ -420,28 +399,16 @@ contract UniversalIndexerTest is Test {
         assertEq(contract100Events[1].eventType, "transfer");
 
         // Test getting events by contract 0x200
-        IUniversalIndexer.UniversalEvent[]
-            memory contract200Events = universalIndexer.getEventsByContract(
-                "1",
-                address(0x200),
-                0,
-                10,
-                false
-            );
+        IWavsIndexer.IndexedEvent[] memory contract200Events = wavsIndexer
+            .getEventsByContract("1", address(0x200), 0, 10, false);
         assertEq(contract200Events.length, 1);
         assertEq(contract200Events[0].relevantContract, address(0x200));
         assertEq(contract200Events[0].eventId, _generateEventId(1, 2));
         assertEq(contract200Events[0].eventType, "attestation");
 
         // Test getting events by contract 0x200 on chain 2
-        IUniversalIndexer.UniversalEvent[]
-            memory contract200Events2 = universalIndexer.getEventsByContract(
-                "2",
-                address(0x200),
-                0,
-                10,
-                false
-            );
+        IWavsIndexer.IndexedEvent[] memory contract200Events2 = wavsIndexer
+            .getEventsByContract("2", address(0x200), 0, 10, false);
         assertEq(contract200Events2.length, 1);
         assertEq(contract200Events2[0].relevantContract, address(0x200));
         assertEq(contract200Events2[0].eventId, _generateEventId(1, 3));
@@ -450,8 +417,8 @@ contract UniversalIndexerTest is Test {
 
     function testGetEventsByType() public {
         // Create events with different types
-        IUniversalIndexer.UniversalEvent[]
-            memory events = new IUniversalIndexer.UniversalEvent[](4);
+        IWavsIndexer.IndexedEvent[]
+            memory events = new IWavsIndexer.IndexedEvent[](4);
         events[0] = _createMockEventCustom(
             bytes32(0),
             "1",
@@ -505,7 +472,7 @@ contract UniversalIndexerTest is Test {
             false
         );
 
-        IUniversalIndexer.IndexingPayload memory payload = _createPayload(
+        IWavsIndexer.IndexingPayload memory payload = _createPayload(
             events,
             new bytes32[](0)
         );
@@ -515,33 +482,23 @@ contract UniversalIndexerTest is Test {
             IWavsServiceHandler.SignatureData memory signatureData
         ) = _createEnvelopeAndSignature(payload);
 
-        universalIndexer.handleSignedEnvelope(envelope, signatureData);
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
 
         // Test getting events by type "attestation"
-        IUniversalIndexer.UniversalEvent[]
-            memory attestations = universalIndexer.getEventsByType(
-                "attestation",
-                0,
-                10,
-                false
-            );
+        IWavsIndexer.IndexedEvent[] memory attestations = wavsIndexer
+            .getEventsByType("attestation", 0, 10, false);
         assertEq(attestations.length, 1);
         assertEq(attestations[0].data, abi.encode(123));
 
         // Test getting events by type "transfer"
-        IUniversalIndexer.UniversalEvent[] memory transfers = universalIndexer
+        IWavsIndexer.IndexedEvent[] memory transfers = wavsIndexer
             .getEventsByType("transfer", 0, 10, false);
         assertEq(transfers.length, 1);
         assertEq(transfers[0].data, abi.encode(456));
 
         // Test getting events by type "system"
-        IUniversalIndexer.UniversalEvent[]
-            memory systemEvents = universalIndexer.getEventsByType(
-                "system",
-                0,
-                10,
-                false
-            );
+        IWavsIndexer.IndexedEvent[] memory systemEvents = wavsIndexer
+            .getEventsByType("system", 0, 10, false);
         assertEq(systemEvents.length, 2);
         assertEq(systemEvents[0].data, abi.encode(789));
         assertEq(systemEvents[1].data, abi.encode(101112));
@@ -559,8 +516,8 @@ contract UniversalIndexerTest is Test {
         string[] memory tags3 = new string[](1);
         tags3[0] = "system";
 
-        IUniversalIndexer.UniversalEvent[]
-            memory events = new IUniversalIndexer.UniversalEvent[](3);
+        IWavsIndexer.IndexedEvent[]
+            memory events = new IWavsIndexer.IndexedEvent[](3);
         events[0] = _createMockEventCustom(
             bytes32(0),
             "1",
@@ -601,7 +558,7 @@ contract UniversalIndexerTest is Test {
             false
         );
 
-        IUniversalIndexer.IndexingPayload memory payload = _createPayload(
+        IWavsIndexer.IndexingPayload memory payload = _createPayload(
             events,
             new bytes32[](0)
         );
@@ -611,31 +568,21 @@ contract UniversalIndexerTest is Test {
             IWavsServiceHandler.SignatureData memory signatureData
         ) = _createEnvelopeAndSignature(payload);
 
-        universalIndexer.handleSignedEnvelope(envelope, signatureData);
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
 
         // Test getting events by tag "user"
-        IUniversalIndexer.UniversalEvent[] memory userEvents = universalIndexer
+        IWavsIndexer.IndexedEvent[] memory userEvents = wavsIndexer
             .getEventsByTag("user", 0, 10, false);
         assertEq(userEvents.length, 2);
 
         // Test getting events by tag "important"
-        IUniversalIndexer.UniversalEvent[]
-            memory importantEvents = universalIndexer.getEventsByTag(
-                "important",
-                0,
-                10,
-                false
-            );
+        IWavsIndexer.IndexedEvent[] memory importantEvents = wavsIndexer
+            .getEventsByTag("important", 0, 10, false);
         assertEq(importantEvents.length, 1);
 
         // Test getting events by tag "system"
-        IUniversalIndexer.UniversalEvent[]
-            memory systemEvents = universalIndexer.getEventsByTag(
-                "system",
-                0,
-                10,
-                false
-            );
+        IWavsIndexer.IndexedEvent[] memory systemEvents = wavsIndexer
+            .getEventsByTag("system", 0, 10, false);
         assertEq(systemEvents.length, 1);
     }
 
@@ -650,8 +597,8 @@ contract UniversalIndexerTest is Test {
         address[] memory relevantAddresses2 = new address[](1);
         relevantAddresses2[0] = address(0x2000);
 
-        IUniversalIndexer.UniversalEvent[]
-            memory events = new IUniversalIndexer.UniversalEvent[](3);
+        IWavsIndexer.IndexedEvent[]
+            memory events = new IWavsIndexer.IndexedEvent[](3);
         events[0] = _createMockEventCustom(
             bytes32(0),
             "1",
@@ -692,7 +639,7 @@ contract UniversalIndexerTest is Test {
             false
         );
 
-        IUniversalIndexer.IndexingPayload memory payload = _createPayload(
+        IWavsIndexer.IndexingPayload memory payload = _createPayload(
             events,
             new bytes32[](0)
         );
@@ -702,10 +649,10 @@ contract UniversalIndexerTest is Test {
             IWavsServiceHandler.SignatureData memory signatureData
         ) = _createEnvelopeAndSignature(payload);
 
-        universalIndexer.handleSignedEnvelope(envelope, signatureData);
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
 
         // Test getting events by address 0x1000 and tag "important"
-        IUniversalIndexer.UniversalEvent[] memory addr1Events = universalIndexer
+        IWavsIndexer.IndexedEvent[] memory addr1Events = wavsIndexer
             .getEventsByAddressAndTag(
                 address(0x1000),
                 "important",
@@ -716,7 +663,7 @@ contract UniversalIndexerTest is Test {
         assertEq(addr1Events.length, 2);
 
         // Test getting events by address 0x2000 and tag "important"
-        IUniversalIndexer.UniversalEvent[] memory addr2Events = universalIndexer
+        IWavsIndexer.IndexedEvent[] memory addr2Events = wavsIndexer
             .getEventsByAddressAndTag(
                 address(0x2000),
                 "important",
@@ -735,8 +682,8 @@ contract UniversalIndexerTest is Test {
         address[] memory relevantAddresses2 = new address[](1);
         relevantAddresses2[0] = address(0x2000);
 
-        IUniversalIndexer.UniversalEvent[]
-            memory events = new IUniversalIndexer.UniversalEvent[](3);
+        IWavsIndexer.IndexedEvent[]
+            memory events = new IWavsIndexer.IndexedEvent[](3);
         events[0] = _createMockEventCustom(
             bytes32(0),
             "1",
@@ -777,7 +724,7 @@ contract UniversalIndexerTest is Test {
             false
         );
 
-        IUniversalIndexer.IndexingPayload memory payload = _createPayload(
+        IWavsIndexer.IndexingPayload memory payload = _createPayload(
             events,
             new bytes32[](0)
         );
@@ -787,23 +734,22 @@ contract UniversalIndexerTest is Test {
             IWavsServiceHandler.SignatureData memory signatureData
         ) = _createEnvelopeAndSignature(payload);
 
-        universalIndexer.handleSignedEnvelope(envelope, signatureData);
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
 
         // Test getting events by address 0x1000 and type "attestation"
-        IUniversalIndexer.UniversalEvent[]
-            memory addr1Attestations = universalIndexer
-                .getEventsByAddressAndType(
-                    address(0x1000),
-                    "attestation",
-                    0,
-                    10,
-                    false
-                );
+        IWavsIndexer.IndexedEvent[] memory addr1Attestations = wavsIndexer
+            .getEventsByAddressAndType(
+                address(0x1000),
+                "attestation",
+                0,
+                10,
+                false
+            );
         assertEq(addr1Attestations.length, 2);
 
         // Test getting events by address 0x2000 and type "transfer"
-        IUniversalIndexer.UniversalEvent[]
-            memory addr2Transfers = universalIndexer.getEventsByAddressAndType(
+        IWavsIndexer.IndexedEvent[] memory addr2Transfers = wavsIndexer
+            .getEventsByAddressAndType(
                 address(0x2000),
                 "transfer",
                 0,
@@ -823,8 +769,8 @@ contract UniversalIndexerTest is Test {
         tags2[0] = "schema:0x456";
         tags2[1] = "attester:0x456";
 
-        IUniversalIndexer.UniversalEvent[]
-            memory events = new IUniversalIndexer.UniversalEvent[](4);
+        IWavsIndexer.IndexedEvent[]
+            memory events = new IWavsIndexer.IndexedEvent[](4);
         events[0] = _createMockEventCustom(
             bytes32(0),
             "1",
@@ -865,7 +811,7 @@ contract UniversalIndexerTest is Test {
             false
         );
 
-        IUniversalIndexer.IndexingPayload memory payload = _createPayload(
+        IWavsIndexer.IndexingPayload memory payload = _createPayload(
             events,
             new bytes32[](0)
         );
@@ -875,17 +821,11 @@ contract UniversalIndexerTest is Test {
             IWavsServiceHandler.SignatureData memory signatureData
         ) = _createEnvelopeAndSignature(payload);
 
-        universalIndexer.handleSignedEnvelope(envelope, signatureData);
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
 
         // Test getting events by type "attestation" and tag "schema:0x123"
-        IUniversalIndexer.UniversalEvent[]
-            memory attestations = universalIndexer.getEventsByTypeAndTag(
-                "attestation",
-                "schema:0x123",
-                0,
-                10,
-                false
-            );
+        IWavsIndexer.IndexedEvent[] memory attestations = wavsIndexer
+            .getEventsByTypeAndTag("attestation", "schema:0x123", 0, 10, false);
         assertEq(attestations.length, 1);
         assertEq(attestations[0].eventId, _generateEventId(1, 0));
         assertEq(attestations[0].eventType, "attestation");
@@ -893,14 +833,8 @@ contract UniversalIndexerTest is Test {
         assertEq(attestations[0].tags[1], "attester:0x123");
 
         // Test getting events by type "attestation" and tag "schema:0x456"
-        IUniversalIndexer.UniversalEvent[]
-            memory attestations2 = universalIndexer.getEventsByTypeAndTag(
-                "attestation",
-                "schema:0x456",
-                0,
-                10,
-                false
-            );
+        IWavsIndexer.IndexedEvent[] memory attestations2 = wavsIndexer
+            .getEventsByTypeAndTag("attestation", "schema:0x456", 0, 10, false);
         assertEq(attestations2.length, 1);
         assertEq(attestations2[0].eventId, _generateEventId(1, 1));
         assertEq(attestations2[0].eventType, "attestation");
@@ -908,8 +842,8 @@ contract UniversalIndexerTest is Test {
         assertEq(attestations2[0].tags[1], "attester:0x456");
 
         // Test getting events by type "attestation" and tag "attester:0x456"
-        IUniversalIndexer.UniversalEvent[]
-            memory attestations3 = universalIndexer.getEventsByTypeAndTag(
+        IWavsIndexer.IndexedEvent[] memory attestations3 = wavsIndexer
+            .getEventsByTypeAndTag(
                 "attestation",
                 "attester:0x456",
                 0,
@@ -939,8 +873,8 @@ contract UniversalIndexerTest is Test {
         tags2[0] = "schema:0x456";
         tags2[1] = _addressTag("attester", address(0x2));
 
-        IUniversalIndexer.UniversalEvent[]
-            memory events = new IUniversalIndexer.UniversalEvent[](4);
+        IWavsIndexer.IndexedEvent[]
+            memory events = new IWavsIndexer.IndexedEvent[](4);
         events[0] = _createMockEventCustom(
             bytes32(0),
             "1",
@@ -994,7 +928,7 @@ contract UniversalIndexerTest is Test {
             false
         );
 
-        IUniversalIndexer.IndexingPayload memory payload = _createPayload(
+        IWavsIndexer.IndexingPayload memory payload = _createPayload(
             events,
             new bytes32[](0)
         );
@@ -1004,19 +938,18 @@ contract UniversalIndexerTest is Test {
             IWavsServiceHandler.SignatureData memory signatureData
         ) = _createEnvelopeAndSignature(payload);
 
-        universalIndexer.handleSignedEnvelope(envelope, signatureData);
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
 
         // Test getting events by address 0x1, type "attestation", and tag "schema:0x123"
-        IUniversalIndexer.UniversalEvent[]
-            memory attestations = universalIndexer
-                .getEventsByAddressAndTypeAndTag(
-                    address(0x1),
-                    "attestation",
-                    "schema:0x123",
-                    0,
-                    10,
-                    false
-                );
+        IWavsIndexer.IndexedEvent[] memory attestations = wavsIndexer
+            .getEventsByAddressAndTypeAndTag(
+                address(0x1),
+                "attestation",
+                "schema:0x123",
+                0,
+                10,
+                false
+            );
         assertEq(attestations.length, 2);
         assertEq(attestations[0].eventId, _generateEventId(1, 0));
         assertEq(attestations[0].eventType, "attestation");
@@ -1036,16 +969,15 @@ contract UniversalIndexerTest is Test {
         assertEq(attestations[1].data, abi.encode(456));
 
         // Test getting events by address 0x1, type "attestation", and tag "schema:0x456"
-        IUniversalIndexer.UniversalEvent[]
-            memory attestations2 = universalIndexer
-                .getEventsByAddressAndTypeAndTag(
-                    address(0x1),
-                    "attestation",
-                    "schema:0x456",
-                    0,
-                    10,
-                    false
-                );
+        IWavsIndexer.IndexedEvent[] memory attestations2 = wavsIndexer
+            .getEventsByAddressAndTypeAndTag(
+                address(0x1),
+                "attestation",
+                "schema:0x456",
+                0,
+                10,
+                false
+            );
         assertEq(attestations2.length, 1);
         assertEq(attestations2[0].eventId, _generateEventId(1, 2));
         assertEq(attestations2[0].eventType, "attestation");
@@ -1057,16 +989,15 @@ contract UniversalIndexerTest is Test {
         assertEq(attestations2[0].data, abi.encode(789));
 
         // Test getting events by address 0x2, type "attestation", and tag "attester:0x456"
-        IUniversalIndexer.UniversalEvent[]
-            memory attestations3 = universalIndexer
-                .getEventsByAddressAndTypeAndTag(
-                    address(0x2),
-                    "attestation",
-                    _addressTag("attester", address(0x2)),
-                    0,
-                    10,
-                    false
-                );
+        IWavsIndexer.IndexedEvent[] memory attestations3 = wavsIndexer
+            .getEventsByAddressAndTypeAndTag(
+                address(0x2),
+                "attestation",
+                _addressTag("attester", address(0x2)),
+                0,
+                10,
+                false
+            );
         assertEq(attestations3.length, 1);
         assertEq(attestations3[0].eventId, _generateEventId(1, 3));
         assertEq(attestations3[0].eventType, "attestation");
@@ -1086,8 +1017,8 @@ contract UniversalIndexerTest is Test {
         address[] memory relevantAddresses1 = new address[](1);
         relevantAddresses1[0] = address(0x1000);
 
-        IUniversalIndexer.UniversalEvent[]
-            memory events = new IUniversalIndexer.UniversalEvent[](5);
+        IWavsIndexer.IndexedEvent[]
+            memory events = new IWavsIndexer.IndexedEvent[](5);
         events[0] = _createMockEventCustom(
             bytes32(0),
             "1",
@@ -1154,7 +1085,7 @@ contract UniversalIndexerTest is Test {
             false
         );
 
-        IUniversalIndexer.IndexingPayload memory payload = _createPayload(
+        IWavsIndexer.IndexingPayload memory payload = _createPayload(
             events,
             new bytes32[](0)
         );
@@ -1164,39 +1095,39 @@ contract UniversalIndexerTest is Test {
             IWavsServiceHandler.SignatureData memory signatureData
         ) = _createEnvelopeAndSignature(payload);
 
-        universalIndexer.handleSignedEnvelope(envelope, signatureData);
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
 
         // Test count functions
-        assertEq(universalIndexer.totalEvents(), 5);
+        assertEq(wavsIndexer.totalEvents(), 5);
 
         // Test getEventCountByChainId
-        assertEq(universalIndexer.getEventCountByChainId("1"), 4);
-        assertEq(universalIndexer.getEventCountByChainId("2"), 1);
+        assertEq(wavsIndexer.getEventCountByChainId("1"), 4);
+        assertEq(wavsIndexer.getEventCountByChainId("2"), 1);
 
         // Test getEventCountByContract
         assertEq(
-            universalIndexer.getEventCountByContract("1", address(0x100)),
+            wavsIndexer.getEventCountByContract("1", address(0x100)),
             3
         );
         assertEq(
-            universalIndexer.getEventCountByContract("1", address(0x200)),
+            wavsIndexer.getEventCountByContract("1", address(0x200)),
             1
         );
         assertEq(
-            universalIndexer.getEventCountByContract("2", address(0x200)),
+            wavsIndexer.getEventCountByContract("2", address(0x200)),
             1
         );
 
         // Test getEventCountByType
-        assertEq(universalIndexer.getEventCountByType("attestation"), 3);
-        assertEq(universalIndexer.getEventCountByType("transfer"), 2);
+        assertEq(wavsIndexer.getEventCountByType("attestation"), 3);
+        assertEq(wavsIndexer.getEventCountByType("transfer"), 2);
 
         // Test getEventCountByTag
-        assertEq(universalIndexer.getEventCountByTag("important"), 3);
+        assertEq(wavsIndexer.getEventCountByTag("important"), 3);
 
         // Test getEventCountByAddressAndTag
         assertEq(
-            universalIndexer.getEventCountByAddressAndTag(
+            wavsIndexer.getEventCountByAddressAndTag(
                 address(0x1000),
                 "important"
             ),
@@ -1205,14 +1136,14 @@ contract UniversalIndexerTest is Test {
 
         // Test getEventCountByAddressAndType
         assertEq(
-            universalIndexer.getEventCountByAddressAndType(
+            wavsIndexer.getEventCountByAddressAndType(
                 address(0x1000),
                 "attestation"
             ),
             2
         );
         assertEq(
-            universalIndexer.getEventCountByAddressAndType(
+            wavsIndexer.getEventCountByAddressAndType(
                 address(0x1000),
                 "transfer"
             ),
@@ -1221,20 +1152,20 @@ contract UniversalIndexerTest is Test {
 
         // Test getEventCountByTypeAndTag
         assertEq(
-            universalIndexer.getEventCountByTypeAndTag(
+            wavsIndexer.getEventCountByTypeAndTag(
                 "attestation",
                 "important"
             ),
             2
         );
         assertEq(
-            universalIndexer.getEventCountByTypeAndTag("transfer", "important"),
+            wavsIndexer.getEventCountByTypeAndTag("transfer", "important"),
             1
         );
 
         // Test getEventCountByAddressAndTypeAndTag
         assertEq(
-            universalIndexer.getEventCountByAddressAndTypeAndTag(
+            wavsIndexer.getEventCountByAddressAndTypeAndTag(
                 address(0x1000),
                 "attestation",
                 "important"
@@ -1242,7 +1173,7 @@ contract UniversalIndexerTest is Test {
             2
         );
         assertEq(
-            universalIndexer.getEventCountByAddressAndTypeAndTag(
+            wavsIndexer.getEventCountByAddressAndTypeAndTag(
                 address(0x1000),
                 "transfer",
                 "important"
@@ -1253,8 +1184,8 @@ contract UniversalIndexerTest is Test {
 
     function testPagination() public {
         // Create multiple events for pagination testing
-        IUniversalIndexer.UniversalEvent[]
-            memory events = new IUniversalIndexer.UniversalEvent[](10);
+        IWavsIndexer.IndexedEvent[]
+            memory events = new IWavsIndexer.IndexedEvent[](10);
         for (uint256 i = 0; i < 10; i++) {
             events[i] = _createMockEventCustom(
                 bytes32(0),
@@ -1271,7 +1202,7 @@ contract UniversalIndexerTest is Test {
             );
         }
 
-        IUniversalIndexer.IndexingPayload memory payload = _createPayload(
+        IWavsIndexer.IndexingPayload memory payload = _createPayload(
             events,
             new bytes32[](0)
         );
@@ -1281,10 +1212,10 @@ contract UniversalIndexerTest is Test {
             IWavsServiceHandler.SignatureData memory signatureData
         ) = _createEnvelopeAndSignature(payload);
 
-        universalIndexer.handleSignedEnvelope(envelope, signatureData);
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
 
         // Test pagination - get first 3 events
-        IUniversalIndexer.UniversalEvent[] memory page1 = universalIndexer
+        IWavsIndexer.IndexedEvent[] memory page1 = wavsIndexer
             .getEventsByChainId("1", 0, 3, false);
         assertEq(page1.length, 3);
         assertEq(page1[0].blockNumber, 1000);
@@ -1292,7 +1223,7 @@ contract UniversalIndexerTest is Test {
         assertEq(page1[2].blockNumber, 1002);
 
         // Test pagination - get next 3 events
-        IUniversalIndexer.UniversalEvent[] memory page2 = universalIndexer
+        IWavsIndexer.IndexedEvent[] memory page2 = wavsIndexer
             .getEventsByChainId("1", 3, 3, false);
         assertEq(page2.length, 3);
         assertEq(page2[0].blockNumber, 1003);
@@ -1300,7 +1231,7 @@ contract UniversalIndexerTest is Test {
         assertEq(page2[2].blockNumber, 1005);
 
         // Test reverse order pagination
-        IUniversalIndexer.UniversalEvent[] memory reversePage = universalIndexer
+        IWavsIndexer.IndexedEvent[] memory reversePage = wavsIndexer
             .getEventsByChainId("1", 0, 3, true);
         assertEq(reversePage.length, 3);
         assertEq(reversePage[0].blockNumber, 1009); // Last event first
@@ -1310,11 +1241,11 @@ contract UniversalIndexerTest is Test {
 
     function testInvalidOffsetRevert() public {
         // Create one event
-        IUniversalIndexer.UniversalEvent[]
-            memory events = new IUniversalIndexer.UniversalEvent[](1);
+        IWavsIndexer.IndexedEvent[]
+            memory events = new IWavsIndexer.IndexedEvent[](1);
         events[0] = _createMockEvent(0, abi.encode(123), "attestation");
 
-        IUniversalIndexer.IndexingPayload memory payload = _createPayload(
+        IWavsIndexer.IndexingPayload memory payload = _createPayload(
             events,
             new bytes32[](0)
         );
@@ -1324,15 +1255,15 @@ contract UniversalIndexerTest is Test {
             IWavsServiceHandler.SignatureData memory signatureData
         ) = _createEnvelopeAndSignature(payload);
 
-        universalIndexer.handleSignedEnvelope(envelope, signatureData);
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
 
         // Test invalid offset (should revert)
-        vm.expectRevert(IUniversalIndexer.InvalidOffset.selector);
-        universalIndexer.getEventsByChainId("1", 10, 1, false); // offset 10 but only 1 event exists
+        vm.expectRevert(IWavsIndexer.InvalidOffset.selector);
+        wavsIndexer.getEventsByChainId("1", 10, 1, false); // offset 10 but only 1 event exists
     }
 
     function testGetServiceManager() public view {
-        address serviceManagerAddress = universalIndexer.getServiceManager();
+        address serviceManagerAddress = wavsIndexer.getServiceManager();
         assertEq(serviceManagerAddress, address(mockServiceManager));
     }
 
@@ -1355,8 +1286,8 @@ contract UniversalIndexerTest is Test {
         // user3 -> user1 -> schema1
         // user3 -> user2 -> schema2
 
-        IUniversalIndexer.UniversalEvent[]
-            memory events = new IUniversalIndexer.UniversalEvent[](5);
+        IWavsIndexer.IndexedEvent[]
+            memory events = new IWavsIndexer.IndexedEvent[](5);
         events[0] = _createMockAttestationEvent(
             1000,
             schema1,
@@ -1393,7 +1324,7 @@ contract UniversalIndexerTest is Test {
             abi.encode(4)
         );
 
-        IUniversalIndexer.IndexingPayload memory payload = _createPayload(
+        IWavsIndexer.IndexingPayload memory payload = _createPayload(
             events,
             new bytes32[](0)
         );
@@ -1403,11 +1334,11 @@ contract UniversalIndexerTest is Test {
             IWavsServiceHandler.SignatureData memory signatureData
         ) = _createEnvelopeAndSignature(payload);
 
-        universalIndexer.handleSignedEnvelope(envelope, signatureData);
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
 
         // Test getting attestations by schema
-        IUniversalIndexer.UniversalEvent[]
-            memory attestationEvents = universalIndexer.getEventsByTypeAndTag(
+        IWavsIndexer.IndexedEvent[] memory attestationEvents = wavsIndexer
+            .getEventsByTypeAndTag(
                 "attestation",
                 string.concat("schema:", schema1),
                 0,
@@ -1432,8 +1363,8 @@ contract UniversalIndexerTest is Test {
         assertEq(attestationEvents[2].tags[2], _addressTag("recipient", user1));
 
         // Test getting attestations by attester
-        IUniversalIndexer.UniversalEvent[]
-            memory attestationsBySender = universalIndexer
+        IWavsIndexer.IndexedEvent[]
+            memory attestationsBySender = wavsIndexer
                 .getEventsByTypeAndTag(
                     "attestation",
                     _addressTag("attester", user3),
@@ -1466,8 +1397,8 @@ contract UniversalIndexerTest is Test {
         );
 
         // Test getting attestations by recipient
-        IUniversalIndexer.UniversalEvent[]
-            memory attestationsByRecipient = universalIndexer
+        IWavsIndexer.IndexedEvent[]
+            memory attestationsByRecipient = wavsIndexer
                 .getEventsByTypeAndTag(
                     "attestation",
                     _addressTag("recipient", user2),
@@ -1504,12 +1435,12 @@ contract UniversalIndexerTest is Test {
     // Helper functions
     // ================================
 
-    // Helper function to create a mock universal event
+    // Helper function to create a mock indexed event
     function _createMockEvent(
         uint256 eventId,
         bytes memory dataValue,
         string memory eventType
-    ) internal pure returns (IUniversalIndexer.UniversalEvent memory) {
+    ) internal pure returns (IWavsIndexer.IndexedEvent memory) {
         string[] memory tags = new string[](1);
         tags[0] = "tag";
         address[] memory relevantAddresses = new address[](1);
@@ -1539,7 +1470,7 @@ contract UniversalIndexerTest is Test {
         address attester,
         address recipient,
         bytes memory data
-    ) internal pure returns (IUniversalIndexer.UniversalEvent memory) {
+    ) internal pure returns (IWavsIndexer.IndexedEvent memory) {
         string[] memory tags = new string[](3);
         tags[0] = string.concat("schema:", schema);
         tags[1] = _addressTag("attester", attester);
@@ -1560,7 +1491,7 @@ contract UniversalIndexerTest is Test {
             );
     }
 
-    // Helper function to create a mock universal event with custom parameters
+    // Helper function to create a mock indexed event with custom parameters
     function _createMockEventCustom(
         bytes32 eventId,
         string memory chainId,
@@ -1573,9 +1504,9 @@ contract UniversalIndexerTest is Test {
         address[] memory relevantAddresses,
         bytes memory metadata,
         bool deleted
-    ) internal pure returns (IUniversalIndexer.UniversalEvent memory) {
+    ) internal pure returns (IWavsIndexer.IndexedEvent memory) {
         return
-            IUniversalIndexer.UniversalEvent({
+            IWavsIndexer.IndexedEvent({
                 eventId: eventId,
                 chainId: chainId,
                 relevantContract: relevantContract,
@@ -1599,14 +1530,10 @@ contract UniversalIndexerTest is Test {
 
     // Helper function to create an indexing payload
     function _createPayload(
-        IUniversalIndexer.UniversalEvent[] memory toAdd,
+        IWavsIndexer.IndexedEvent[] memory toAdd,
         bytes32[] memory toDelete
-    ) internal pure returns (IUniversalIndexer.IndexingPayload memory) {
-        return
-            IUniversalIndexer.IndexingPayload({
-                toAdd: toAdd,
-                toDelete: toDelete
-            });
+    ) internal pure returns (IWavsIndexer.IndexingPayload memory) {
+        return IWavsIndexer.IndexingPayload({toAdd: toAdd, toDelete: toDelete});
     }
 
     // Helper function to create mock signature data
@@ -1632,7 +1559,7 @@ contract UniversalIndexerTest is Test {
     function _createEnvelope(
         bytes20 eventId,
         bytes12 ordering,
-        IUniversalIndexer.IndexingPayload memory payload
+        IWavsIndexer.IndexingPayload memory payload
     ) internal pure returns (IWavsServiceHandler.Envelope memory) {
         bytes memory encodedPayload = abi.encode(payload);
 
@@ -1646,7 +1573,7 @@ contract UniversalIndexerTest is Test {
 
     // Helper function to create envelope and signature data from payload
     function _createEnvelopeAndSignature(
-        IUniversalIndexer.IndexingPayload memory payload
+        IWavsIndexer.IndexingPayload memory payload
     )
         internal
         pure

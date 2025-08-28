@@ -5,6 +5,7 @@ This guide explains how Ethereum Attestation Service (EAS) addresses are automat
 ## Overview
 
 The EAS compute component requires three configuration parameters:
+
 - **`eas_address`**: The main EAS contract address
 - **`indexer_address`**: The EAS indexer contract address
 - **`chain_name`**: The blockchain network name (must match `wavs.toml` configuration)
@@ -23,6 +24,7 @@ When you run the deployment script, EAS addresses are automatically configured:
 ```
 
 The deployment process:
+
 1. Deploys EAS contracts and saves addresses to `.docker/deployment_summary.json`
 2. Extracts EAS and indexer addresses from the deployment summary
 3. Determines chain name based on deployment environment (local/testnet)
@@ -58,7 +60,7 @@ The deployment script automatically extracts addresses:
 ```bash
 # From deploy-script.sh
 EAS_ADDRESS=$(jq -r '.eas_contracts.eas' .docker/deployment_summary.json)
-INDEXER_ADDRESS=$(jq -r '.universal_indexer.universal_indexer' .docker/deployment_summary.json)
+INDEXER_ADDRESS=$(jq -r '.wavs_indexer.wavs_indexer' .docker/deployment_summary.json)
 export CONFIG_VALUES="eas_address=${EAS_ADDRESS},indexer_address=${INDEXER_ADDRESS},chain_name=${CHAIN_NAME}"
 ```
 
@@ -108,6 +110,7 @@ export CONFIG_VALUES="eas_address=0x...,indexer_address=0x...,chain_name=local"
 **Problem**: Components use zero addresses despite deployment.
 
 **Check**:
+
 1. Verify addresses exist in deployment summary:
    ```bash
    cat .docker/deployment_summary.json | jq '.eas_contracts'
@@ -122,6 +125,7 @@ export CONFIG_VALUES="eas_address=0x...,indexer_address=0x...,chain_name=local"
 **Problem**: "Failed to get chain config" error.
 
 **Solution**: Ensure chain name in configuration matches `wavs.toml`:
+
 ```bash
 grep -A5 "\[.*local\]" wavs.toml
 ```
@@ -131,17 +135,18 @@ grep -A5 "\[.*local\]" wavs.toml
 **Problem**: Address validation fails.
 
 **Check**: Verify deployment completed successfully:
+
 ```bash
 cat .docker/deployment_summary.json | jq '.eas_contracts | keys'
 ```
 
 ## Network Support
 
-| Environment | Chain Name | Configuration Source |
-|-------------|------------|----------------------|
-| Local | `local` | deployment_summary.json |
-| Testnet | `sepolia` | deployment_summary.json |
-| Custom | Set manually | Manual CONFIG_VALUES |
+| Environment | Chain Name   | Configuration Source    |
+| ----------- | ------------ | ----------------------- |
+| Local       | `local`      | deployment_summary.json |
+| Testnet     | `sepolia`    | deployment_summary.json |
+| Custom      | Set manually | Manual CONFIG_VALUES    |
 
 ## Development Workflow
 

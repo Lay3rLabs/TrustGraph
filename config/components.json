@@ -1,20 +1,20 @@
 {
   "components": [
     {
-      "filename": "universal_indexer.wasm",
-      "package_name": "universal-indexer",
+      "filename": "wavs_indexer.wasm",
+      "package_name": "wavs-indexer",
       "package_version": "0.1.0",
       "trigger_event": "AttestationAttested(address,bytes32)",
       "trigger_json_path": "eas_contracts.indexer_resolver",
-      "submit_json_path": "universal_indexer.universal_indexer"
+      "submit_json_path": "wavs_indexer.wavs_indexer"
     },
     {
-      "filename": "universal_indexer.wasm",
-      "package_name": "universal-indexer",
+      "filename": "wavs_indexer.wasm",
+      "package_name": "wavs-indexer",
       "package_version": "0.1.0",
       "trigger_event": "AttestationRevoked(address,bytes32)",
       "trigger_json_path": "eas_contracts.indexer_resolver",
-      "submit_json_path": "universal_indexer.universal_indexer"
+      "submit_json_path": "wavs_indexer.wavs_indexer"
     },
     {
       "filename": "geyser.wasm",

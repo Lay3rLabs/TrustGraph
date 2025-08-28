@@ -2,9 +2,9 @@
 
 pragma solidity 0.8.27;
 
-/// @title IUniversalIndexer
-/// @notice Interface and types for the Universal Indexer system
-interface IUniversalIndexer {
+/// @title IWavsIndexer
+/// @notice Interface and types for the WAVS Indexer system
+interface IWavsIndexer {
     /// ================================================
     /// EVENTS
     /// ================================================
@@ -46,7 +46,7 @@ interface IUniversalIndexer {
     /// ================================================
 
     /// @notice Represents a universally indexed event
-    struct UniversalEvent {
+    struct IndexedEvent {
         bytes32 eventId; // Unique identifier for this event
         string chainId; // Chain ID of the event
         address relevantContract; // Relevant contract for the event
@@ -63,7 +63,7 @@ interface IUniversalIndexer {
     /// @notice Payload structure for WAVS indexing operations
     struct IndexingPayload {
         // Events to add
-        UniversalEvent[] toAdd;
+        IndexedEvent[] toAdd;
         // Event IDs to delete
         bytes32[] toDelete;
     }
@@ -84,13 +84,13 @@ interface IUniversalIndexer {
     /// @param start The offset to start from
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
-    /// @return Array of UniversalEvent structs
+    /// @return Array of IndexedEvent structs
     function getEventsByChainId(
         string calldata chainId,
         uint256 start,
         uint256 length,
         bool reverseOrder
-    ) external view returns (UniversalEvent[] memory);
+    ) external view returns (IndexedEvent[] memory);
 
     /// @notice Gets events by contract
     /// @param chainId The chain ID of the contract to filter by
@@ -98,40 +98,40 @@ interface IUniversalIndexer {
     /// @param start The offset to start from
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
-    /// @return Array of UniversalEvent structs
+    /// @return Array of IndexedEvent structs
     function getEventsByContract(
         string calldata chainId,
         address relevantContract,
         uint256 start,
         uint256 length,
         bool reverseOrder
-    ) external view returns (UniversalEvent[] memory);
+    ) external view returns (IndexedEvent[] memory);
 
     /// @notice Gets events by type
     /// @param eventType The event type to filter by
     /// @param start The offset to start from
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
-    /// @return Array of UniversalEvent structs
+    /// @return Array of IndexedEvent structs
     function getEventsByType(
         string calldata eventType,
         uint256 start,
         uint256 length,
         bool reverseOrder
-    ) external view returns (UniversalEvent[] memory);
+    ) external view returns (IndexedEvent[] memory);
 
     /// @notice Gets events by tag
     /// @param tag The tag to filter by
     /// @param start The offset to start from
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
-    /// @return Array of UniversalEvent structs
+    /// @return Array of IndexedEvent structs
     function getEventsByTag(
         string calldata tag,
         uint256 start,
         uint256 length,
         bool reverseOrder
-    ) external view returns (UniversalEvent[] memory);
+    ) external view returns (IndexedEvent[] memory);
 
     /// @notice Gets events by address and tag combination
     /// @param relevantAddress The address to filter by
@@ -139,14 +139,14 @@ interface IUniversalIndexer {
     /// @param start The offset to start from
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
-    /// @return Array of UniversalEvent structs
+    /// @return Array of IndexedEvent structs
     function getEventsByAddressAndTag(
         address relevantAddress,
         string memory tag,
         uint256 start,
         uint256 length,
         bool reverseOrder
-    ) external view returns (UniversalEvent[] memory);
+    ) external view returns (IndexedEvent[] memory);
 
     /// @notice Gets events by address and type combination
     /// @param relevantAddress The address to filter by
@@ -154,14 +154,14 @@ interface IUniversalIndexer {
     /// @param start The offset to start from
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
-    /// @return Array of UniversalEvent structs
+    /// @return Array of IndexedEvent structs
     function getEventsByAddressAndType(
         address relevantAddress,
         string calldata eventType,
         uint256 start,
         uint256 length,
         bool reverseOrder
-    ) external view returns (UniversalEvent[] memory);
+    ) external view returns (IndexedEvent[] memory);
 
     /// @notice Gets events by type and tag combination
     /// @param eventType The event type to filter by
@@ -169,14 +169,14 @@ interface IUniversalIndexer {
     /// @param start The offset to start from
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
-    /// @return Array of UniversalEvent structs
+    /// @return Array of IndexedEvent structs
     function getEventsByTypeAndTag(
         string calldata eventType,
         string calldata tag,
         uint256 start,
         uint256 length,
         bool reverseOrder
-    ) external view returns (UniversalEvent[] memory);
+    ) external view returns (IndexedEvent[] memory);
 
     /// @notice Gets events by address, type, and tag combination
     /// @param relevantAddress The address to filter by
@@ -185,7 +185,7 @@ interface IUniversalIndexer {
     /// @param start The offset to start from
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
-    /// @return Array of UniversalEvent structs
+    /// @return Array of IndexedEvent structs
     function getEventsByAddressAndTypeAndTag(
         address relevantAddress,
         string calldata eventType,
@@ -193,7 +193,7 @@ interface IUniversalIndexer {
         uint256 start,
         uint256 length,
         bool reverseOrder
-    ) external view returns (UniversalEvent[] memory);
+    ) external view returns (IndexedEvent[] memory);
 
     // ============ COUNT FUNCTIONS ============
 

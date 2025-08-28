@@ -7,10 +7,11 @@ use crate::{bindings::host::get_evm_chain_config, solidity::IndexingPayload};
 use alloy_network::Ethereum;
 use alloy_primitives::{keccak256, FixedBytes, U256};
 use anyhow::Result;
+use wavs_indexer_api::query::WavsIndexerQuerier;
 use wavs_wasi_utils::decode_event_log_data;
 use wavs_wasi_utils::evm::new_evm_provider;
 
-use crate::solidity::{AttestationAttested, AttestationRevoked, UniversalEvent};
+use crate::solidity::{AttestationAttested, AttestationRevoked, IndexedEvent};
 
 pub struct AttestationTransformer;
 register_transformer!(AttestationTransformer);
@@ -58,8 +59,8 @@ impl AttestationTransformer {
         let eas = solidity::EAS::new(attested.eas, &provider);
         let attestation = eas.getAttestation(attested.uid).call().await?;
 
-        // Create UniversalEvent
-        let universal_event = UniversalEvent {
+        // Create IndexedEvent
+        let indexed_event = IndexedEvent {
             eventId: FixedBytes::ZERO,
             chainId: chain.chain_id,
             relevantContract: attested.eas,
@@ -69,9 +70,15 @@ impl AttestationTransformer {
             tags: vec![
                 format!("eas:{}", attested.eas),
                 format!("uid:{}", attested.uid),
+                format!("schema:{}", attestation.schema),
                 format!("attester:{}", attestation.attester),
                 format!("recipient:{}", attestation.recipient),
-                format!("schema:{}", attestation.schema),
+                format!("schema:{}/attester:{}", attestation.schema, attestation.attester),
+                format!("schema:{}/recipient:{}", attestation.schema, attestation.recipient),
+                format!(
+                    "schema:{}/attester:{}/recipient:{}",
+                    attestation.schema, attestation.attester, attestation.recipient
+                ),
             ],
             relevantAddresses: vec![attestation.attester, attestation.recipient],
             data: attestation.data,
@@ -79,7 +86,7 @@ impl AttestationTransformer {
             deleted: false,
         };
 
-        Ok(IndexingPayload { toAdd: vec![universal_event], toDelete: Vec::new() })
+        Ok(IndexingPayload { toAdd: vec![indexed_event], toDelete: Vec::new() })
     }
 
     async fn transform_revocation(event_data: EventData) -> Result<IndexingPayload> {
@@ -88,10 +95,7 @@ impl AttestationTransformer {
 
         println!("Transforming AttestationRevoked event: eas={}, uid={}", revoked.eas, revoked.uid);
 
-        let chain = get_evm_chain_config(&event_data.chain_name).unwrap();
-        let provider = new_evm_provider::<Ethereum>(chain.http_endpoint.unwrap());
-
-        let universal_indexer_address = match host::get_workflow().workflow.submit {
+        let wavs_indexer_address = match host::get_workflow().workflow.submit {
             Submit::Aggregator(AggregatorSubmit { evm_contracts, .. }) => utils::from_evm_address(
                 &evm_contracts
                     .ok_or(anyhow::anyhow!("EVM submission contracts not found"))?
@@ -99,12 +103,17 @@ impl AttestationTransformer {
                     .ok_or(anyhow::anyhow!("EVM submission contract not found"))?
                     .address,
             ),
-            _ => return Err(anyhow::anyhow!("UniversalIndexer address not found")),
+            _ => return Err(anyhow::anyhow!("WavsIndexer address not found")),
         };
-        let universal_indexer =
-            solidity::UniversalIndexer::new(universal_indexer_address, &provider);
 
-        let events = universal_indexer
+        let chain: crate::bindings::wavs::types::chain::EvmChainConfig =
+            get_evm_chain_config(&event_data.chain_name).unwrap();
+        let indexer_querier =
+            WavsIndexerQuerier::new(wavs_indexer_address, chain.http_endpoint.unwrap())
+                .await
+                .map_err(|e| anyhow::anyhow!("Failed to create indexer querier: {}", e))?;
+
+        let events = indexer_querier
             .getEventsByTypeAndTag(
                 "attestation".to_string(),
                 format!("uid:{}", revoked.uid),
@@ -146,38 +155,6 @@ mod solidity {
         #[sol(rpc)]
         contract EAS {
             function getAttestation(bytes32 uid) external view returns (Attestation memory);
-        }
-
-        struct UniversalEvent {
-            bytes32 eventId; // Unique identifier for this event
-            string chainId; // Chain ID of the event
-            address relevantContract; // Relevant contract for the event
-            uint256 blockNumber; // Block number when event was emitted
-            uint256 timestamp; // Timestamp when event was processed
-            string eventType; // Type of the event (e.g., "attestation")
-            bytes data; // Data for the event
-            string[] tags; // Searchable tags (e.g., "sender:ADDRESS", "recipient:ADDRESS", "schema:SCHEMA_ID")
-            address[] relevantAddresses; // Addresses relevant to this event (users, contracts, etc.)
-            bytes metadata; // Optional: additional metadata
-            bool deleted; // Whether the event has been deleted
-        }
-
-        #[sol(rpc)]
-        contract UniversalIndexer {
-            /// @notice Gets events by type and tag combination
-            /// @param eventType The event type to filter by
-            /// @param tag The tag to filter by
-            /// @param start The offset to start from
-            /// @param length The number of events to retrieve
-            /// @param reverseOrder Whether to return in reverse chronological order
-            /// @return Array of UniversalEvent structs
-            function getEventsByTypeAndTag(
-                string calldata eventType,
-                string calldata tag,
-                uint256 start,
-                uint256 length,
-                bool reverseOrder
-            ) external view returns (UniversalEvent[] memory);
         }
     }
 }

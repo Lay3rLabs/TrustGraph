@@ -79,7 +79,7 @@ if [ "$(task get-deploy-status)" = "TESTNET" ]; then
     export SUBMIT_CHAIN=sepolia
 fi
 
-export INDEXER_ADDRESS=$(jq -r '.universal_indexer.universal_indexer' .docker/deployment_summary.json)
+export INDEXER_ADDRESS=$(jq -r '.wavs_indexer.wavs_indexer' .docker/deployment_summary.json)
 
 # Configure EAS addresses from deployment summary
 echo "Configuring EAS addresses from deployment summary..."

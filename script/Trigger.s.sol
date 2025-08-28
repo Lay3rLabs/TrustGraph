@@ -2,7 +2,7 @@
 pragma solidity 0.8.27;
 
 import {EASAttestTrigger} from "contracts/Trigger.sol";
-import {IUniversalIndexer} from "interfaces/IUniversalIndexer.sol";
+import {IWavsIndexer} from "interfaces/IWavsIndexer.sol";
 import {IEAS} from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/contracts/Common.sol";
 import {ITypes} from "interfaces/ITypes.sol";
@@ -92,9 +92,7 @@ contract EasTrigger is Common {
         string calldata recipient,
         uint256 maxResults
     ) public view {
-        IUniversalIndexer indexer = IUniversalIndexer(
-            vm.parseAddress(indexerAddr)
-        );
+        IWavsIndexer indexer = IWavsIndexer(vm.parseAddress(indexerAddr));
         IEAS eas = IEAS(vm.parseAddress(easAddr));
         address recipientAddr = vm.parseAddress(recipient);
 
@@ -119,7 +117,7 @@ contract EasTrigger is Common {
             console.log("Total attestations for schema:", totalCount);
 
             if (totalCount > 0) {
-                IUniversalIndexer.UniversalEvent[] memory events = indexer
+                IWavsIndexer.IndexedEvent[] memory events = indexer
                     .getEventsByTypeAndTag(
                         "attestation",
                         string.concat("schema:", schemaId),
@@ -149,38 +147,29 @@ contract EasTrigger is Common {
             );
 
             if (totalCount > 0) {
-                IUniversalIndexer.UniversalEvent[] memory events = indexer
+                IWavsIndexer.IndexedEvent[] memory events = indexer
                     .getEventsByTypeAndTag(
                         "attestation",
-                        string.concat("recipient:", recipient),
+                        string.concat(
+                            "schema:",
+                            schemaId,
+                            "/recipient:",
+                            recipient
+                        ),
                         0, // start from beginning
-                        totalCount,
+                        maxResults > totalCount ? totalCount : maxResults,
                         true // reverse order (newest first)
                     );
-                attestationUIDs = new bytes32[](maxResults);
-                totalCount = 0;
+                attestationUIDs = new bytes32[](events.length);
                 for (uint256 i = 0; i < events.length; i++) {
-                    // Check that schema tag matches
-                    string memory eventSchema = _substring(
-                        events[i].tags[4],
-                        7,
-                        7 + 66
-                    );
-                    if (Strings.equal(eventSchema, schemaId)) {
-                        // Second tag is UID. Cut off the "uid:" prefix, and get 64-byte UID with 0x prefix
-                        attestationUIDs[totalCount] = (
-                            bytes32(
-                                Strings.parseHexUint(
-                                    _substring(events[i].tags[1], 4, 4 + 66)
-                                )
+                    // Second tag is UID. Cut off the "uid:" prefix, and get 64-byte UID with 0x prefix
+                    attestationUIDs[i] = (
+                        bytes32(
+                            Strings.parseHexUint(
+                                _substring(events[i].tags[1], 4, 4 + 66)
                             )
-                        );
-                        totalCount++;
-                    }
-
-                    if (totalCount >= maxResults) {
-                        break;
-                    }
+                        )
+                    );
                 }
                 console.log(
                     "Total attestations received by recipient for schema:",
@@ -229,9 +218,7 @@ contract EasTrigger is Common {
         string calldata attester,
         uint256 maxResults
     ) public view {
-        IUniversalIndexer indexer = IUniversalIndexer(
-            vm.parseAddress(indexerAddr)
-        );
+        IWavsIndexer indexer = IWavsIndexer(vm.parseAddress(indexerAddr));
         IEAS eas = IEAS(vm.parseAddress(easAddr));
 
         console.log("Querying EAS attestations by attester via Indexer:");
@@ -251,38 +238,24 @@ contract EasTrigger is Common {
 
         bytes32[] memory attestationUIDs;
         if (totalCount > 0) {
-            IUniversalIndexer.UniversalEvent[] memory events = indexer
+            IWavsIndexer.IndexedEvent[] memory events = indexer
                 .getEventsByTypeAndTag(
                     "attestation",
-                    string.concat("attester:", attester),
+                    string.concat("schema:", schemaId, "/attester:", attester),
                     0, // start from beginning
-                    totalCount,
+                    maxResults > totalCount ? totalCount : maxResults,
                     true // reverse order (newest first)
                 );
             attestationUIDs = new bytes32[](maxResults);
-            totalCount = 0;
             for (uint256 i = 0; i < events.length; i++) {
-                // Check that schema tag matches
-                string memory eventSchema = _substring(
-                    events[i].tags[4],
-                    7,
-                    7 + 66
-                );
-                if (Strings.equal(eventSchema, schemaId)) {
-                    // Second tag is UID. Cut off the "uid:" prefix, and get 64-byte UID with 0x prefix
-                    attestationUIDs[totalCount] = (
-                        bytes32(
-                            Strings.parseHexUint(
-                                _substring(events[i].tags[1], 4, 4 + 66)
-                            )
+                // Second tag is UID. Cut off the "uid:" prefix, and get 64-byte UID with 0x prefix
+                attestationUIDs[i] = (
+                    bytes32(
+                        Strings.parseHexUint(
+                            _substring(events[i].tags[1], 4, 4 + 66)
                         )
-                    );
-                    totalCount++;
-                }
-
-                if (totalCount >= maxResults) {
-                    break;
-                }
+                    )
+                );
             }
             console.log(
                 "Total attestations sent by attester for schema:",
@@ -292,7 +265,7 @@ contract EasTrigger is Common {
 
         // Display attestation details
         if (attestationUIDs.length > 0) {
-            console.log("Found", totalCount, "attestation(s):");
+            console.log("Found", attestationUIDs.length, "attestation(s):");
             console.log("");
 
             for (uint256 i = 0; i < attestationUIDs.length; i++) {

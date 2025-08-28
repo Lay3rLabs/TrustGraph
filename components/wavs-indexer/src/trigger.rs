@@ -61,7 +61,7 @@ pub fn decode_trigger_event(trigger_data: TriggerData) -> Result<(EventData, Des
     }
 }
 
-/// Encodes the indexing output for submission to the Universal Indexer contract
+/// Encodes the indexing output for submission to the WAVS Indexer contract
 pub fn encode_indexing_output(payload: IndexingPayload) -> WasmResponse {
     WasmResponse { payload: payload.abi_encode(), ordering: None }
 }

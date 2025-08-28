@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useReadContract } from 'wagmi'
 
-import { easConfig, universalIndexerConfig } from '@/lib/contracts'
+import { easConfig, wavsIndexerConfig } from '@/lib/contracts'
 import { schemas } from '@/lib/schemas'
 
 export interface AttestationData {
@@ -39,7 +39,7 @@ function useSchemaAttestationCount(schemaUID: `0x${string}`) {
     error,
     isLoading,
   } = useReadContract({
-    ...universalIndexerConfig,
+    ...wavsIndexerConfig,
     functionName: 'getEventCountByTypeAndTag',
     args: ['attestation', `schema:${schemaUID}`],
     query: {
@@ -67,7 +67,7 @@ function useSchemaAttestationUIDs(
     error,
     isLoading,
   } = useReadContract({
-    ...universalIndexerConfig,
+    ...wavsIndexerConfig,
     functionName: 'getEventsByTypeAndTag',
     args: [
       'attestation',

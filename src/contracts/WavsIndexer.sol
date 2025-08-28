@@ -5,16 +5,16 @@ pragma solidity 0.8.27;
 import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 import {ITypes} from "../interfaces/ITypes.sol";
-import {IUniversalIndexer} from "../interfaces/IUniversalIndexer.sol";
+import {IWavsIndexer} from "../interfaces/IWavsIndexer.sol";
 import {Semver} from "@ethereum-attestation-service/eas-contracts/contracts/Semver.sol";
 import {EMPTY_UID, uncheckedInc} from "@ethereum-attestation-service/eas-contracts/contracts/Common.sol";
 
-/// @title UniversalIndexer
-/// @notice A universal indexing service for arbitrary blockchain events and data
+/// @title WavsIndexer
+/// @notice An indexing service for arbitrary blockchain events and data running on WAVS
 /// @dev Integrates with WAVS to receive indexed data from off-chain components
-contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
+contract WavsIndexer is IWavsServiceHandler, IWavsIndexer, Semver {
     // Core storage mappings
-    mapping(bytes32 => UniversalEvent) public events;
+    mapping(bytes32 => IndexedEvent) public events;
     mapping(bytes32 => bool) public eventExists;
 
     // Multi-dimensional indexing for efficient queries
@@ -40,7 +40,7 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
     // WAVS service manager
     IWavsServiceManager private _serviceManager;
 
-    /// @notice Creates a new UniversalIndexer instance
+    /// @notice Creates a new WavsIndexer instance
     /// @param serviceManager The WAVS service manager contract
     constructor(IWavsServiceManager serviceManager) Semver(1, 0, 0) {
         if (address(serviceManager) == address(0)) {
@@ -52,8 +52,8 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
     /// @inheritdoc IWavsServiceHandler
     /// @notice Handles signed envelope from WAVS containing indexing data
     function handleSignedEnvelope(
-        Envelope calldata envelope,
-        SignatureData calldata signatureData
+        IWavsServiceHandler.Envelope calldata envelope,
+        IWavsServiceHandler.SignatureData calldata signatureData
     ) external override {
         // Validate envelope through service manager
         _serviceManager.validate(envelope, signatureData);
@@ -90,10 +90,7 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
 
     /// @notice Indexes a single event
     /// @param event_ The event to index
-    function _indexEvent(
-        bytes32 eventId,
-        UniversalEvent memory event_
-    ) internal {
+    function _indexEvent(bytes32 eventId, IndexedEvent memory event_) internal {
         // validate that the eventId is not already set, since it should only be set by this contract
         if (event_.eventId != bytes32(0)) {
             revert ExpectedEventIdZero();
@@ -164,7 +161,7 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
     /// @param events_ Array of events to index
     function _batchIndexEvents(
         bytes20 baseEventId,
-        UniversalEvent[] memory events_
+        IndexedEvent[] memory events_
     ) internal {
         for (uint256 i = 0; i < events_.length; i = uncheckedInc(i)) {
             // concat 20-byte eventId with 12-byte index
@@ -218,13 +215,13 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
     /// @param start The offset to start from
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
-    /// @return Array of UniversalEvent structs
+    /// @return Array of IndexedEvent structs
     function getEventsByChainId(
         string calldata chainId,
         uint256 start,
         uint256 length,
         bool reverseOrder
-    ) external view returns (UniversalEvent[] memory) {
+    ) external view returns (IndexedEvent[] memory) {
         bytes32[] memory eventIds = _sliceUIDs(
             eventsByChainId[chainId],
             start,
@@ -241,14 +238,14 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
     /// @param start The offset to start from
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
-    /// @return Array of UniversalEvent structs
+    /// @return Array of IndexedEvent structs
     function getEventsByContract(
         string calldata chainId,
         address relevantContract,
         uint256 start,
         uint256 length,
         bool reverseOrder
-    ) external view returns (UniversalEvent[] memory) {
+    ) external view returns (IndexedEvent[] memory) {
         bytes32[] memory eventIds = _sliceUIDs(
             eventsByChainIdAndContract[chainId][relevantContract],
             start,
@@ -264,13 +261,13 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
     /// @param start The offset to start from
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
-    /// @return Array of UniversalEvent structs
+    /// @return Array of IndexedEvent structs
     function getEventsByType(
         string calldata eventType,
         uint256 start,
         uint256 length,
         bool reverseOrder
-    ) external view returns (UniversalEvent[] memory) {
+    ) external view returns (IndexedEvent[] memory) {
         bytes32[] memory eventIds = _sliceUIDs(
             eventsByType[eventType],
             start,
@@ -286,13 +283,13 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
     /// @param start The offset to start from
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
-    /// @return Array of UniversalEvent structs
+    /// @return Array of IndexedEvent structs
     function getEventsByTag(
         string calldata tag,
         uint256 start,
         uint256 length,
         bool reverseOrder
-    ) external view returns (UniversalEvent[] memory) {
+    ) external view returns (IndexedEvent[] memory) {
         bytes32[] memory eventIds = _sliceUIDs(
             eventsByTag[tag],
             start,
@@ -309,14 +306,14 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
     /// @param start The offset to start from
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
-    /// @return Array of UniversalEvent structs
+    /// @return Array of IndexedEvent structs
     function getEventsByAddressAndTag(
         address relevantAddress,
         string memory tag,
         uint256 start,
         uint256 length,
         bool reverseOrder
-    ) external view returns (UniversalEvent[] memory) {
+    ) external view returns (IndexedEvent[] memory) {
         bytes32[] memory eventIds = _sliceUIDs(
             eventsByAddressAndTag[relevantAddress][tag],
             start,
@@ -333,14 +330,14 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
     /// @param start The offset to start from
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
-    /// @return Array of UniversalEvent structs
+    /// @return Array of IndexedEvent structs
     function getEventsByAddressAndType(
         address relevantAddress,
         string calldata eventType,
         uint256 start,
         uint256 length,
         bool reverseOrder
-    ) external view returns (UniversalEvent[] memory) {
+    ) external view returns (IndexedEvent[] memory) {
         bytes32[] memory eventIds = _sliceUIDs(
             eventsByAddressAndType[relevantAddress][eventType],
             start,
@@ -357,14 +354,14 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
     /// @param start The offset to start from
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
-    /// @return Array of UniversalEvent structs
+    /// @return Array of IndexedEvent structs
     function getEventsByTypeAndTag(
         string calldata eventType,
         string calldata tag,
         uint256 start,
         uint256 length,
         bool reverseOrder
-    ) external view returns (UniversalEvent[] memory) {
+    ) external view returns (IndexedEvent[] memory) {
         bytes32[] memory eventIds = _sliceUIDs(
             eventsByTypeAndTag[eventType][tag],
             start,
@@ -382,7 +379,7 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
     /// @param start The offset to start from
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
-    /// @return Array of UniversalEvent structs
+    /// @return Array of IndexedEvent structs
     function getEventsByAddressAndTypeAndTag(
         address relevantAddress,
         string calldata eventType,
@@ -390,7 +387,7 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
         uint256 start,
         uint256 length,
         bool reverseOrder
-    ) external view returns (UniversalEvent[] memory) {
+    ) external view returns (IndexedEvent[] memory) {
         bytes32[] memory eventIds = _sliceUIDs(
             eventsByAddressAndTypeAndTag[relevantAddress][eventType][tag],
             start,
@@ -504,8 +501,8 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
     /// @notice Helper function to get events by their IDs
     function _getEventsByIds(
         bytes32[] memory eventIds
-    ) internal view returns (UniversalEvent[] memory) {
-        UniversalEvent[] memory result = new UniversalEvent[](eventIds.length);
+    ) internal view returns (IndexedEvent[] memory) {
+        IndexedEvent[] memory result = new IndexedEvent[](eventIds.length);
 
         for (uint256 i = 0; i < eventIds.length; i = uncheckedInc(i)) {
             result[i] = events[eventIds[i]];
@@ -516,7 +513,7 @@ contract UniversalIndexer is IWavsServiceHandler, IUniversalIndexer, Semver {
 
     /// @notice Helper function to generate event summary for timeline
     function _generateEventSummary(
-        UniversalEvent memory event_
+        IndexedEvent memory event_
     ) internal pure returns (string memory) {
         // Simple summary generation - could be enhanced
         if (event_.tags.length > 0) {
