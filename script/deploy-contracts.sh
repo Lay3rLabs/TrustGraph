@@ -150,7 +150,6 @@ cat > .docker/deployment_summary.json << EOF
     "eas": "${EAS_ADDR}",
     "attester": "${EAS_ATTESTER_ADDR}",
     "schema_registrar": "${EAS_SCHEMA_REGISTRAR_ADDR}",
-    "indexer": "${EAS_INDEXER_ADDR}",
     "indexer_resolver": "${EAS_INDEXER_RESOLVER_ADDR}"
   },
   "eas_schemas": {
