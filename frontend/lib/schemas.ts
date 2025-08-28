@@ -32,6 +32,12 @@ export const SCHEMA_OPTIONS = [
     fields: ['result', 'computation_hash'],
   },
   {
+    name: 'Statement Schema',
+    uid: schemas.statementSchema,
+    description: 'Statement',
+    fields: ['statement'],
+  },
+  {
     name: 'Vouching Schema',
     uid: schemas.vouchingSchema,
     description: 'Vouching',

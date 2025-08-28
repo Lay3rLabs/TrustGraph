@@ -14,62 +14,26 @@ Do you want to proceed with the ritual?
 > Yes
 
 ╔═══════════════════════════════════════════════════════════╗
-║                  BLOCKCHAIN TRANSPARENCY                  ║
-║                    BINDING OATH I                         ║
+║                    BINDING OATH                           ║
+║               EXPERIMENTAL PARTICIPATION                  ║
 ╚═══════════════════════════════════════════════════════════╝
 
-🔴 CRITICAL UNDERSTANDING REQUIRED:
-
-   ALL DATA GENERATED IN THIS EXPERIMENT IS RECORDED
-   ON A PUBLIC BLOCKCHAIN. THIS INCLUDES:
-
-   • Your interactions and decisions
-   • All votes and attestations
-   • Any participant actions taken
-
-   This data is PERMANENTLY PUBLIC and CANNOT BE DELETED.
-   The blockchain remembers everything. Forever.
-
-> Continue
-
-╔═══════════════════════════════════════════════════════════╗
-║                SOFTWARE RELIABILITY OATH                  ║
-║                    BINDING OATH II                        ║
-╚═══════════════════════════════════════════════════════════╝
+🔴 BLOCKCHAIN TRANSPARENCY:
+   ALL DATA IS RECORDED ON A PUBLIC BLOCKCHAIN
+   • Your interactions, decisions, votes, and attestations
+   • This data is PERMANENTLY PUBLIC and CANNOT BE DELETED
 
 🟠 NO WARRANTIES OR GUARANTEES:
+   This experimental software may contain bugs or unexpected behaviors
+   • No guarantees regarding reliability, security, or availability
+   • You proceed at your own risk, digital prophet
 
-   This experimental software may contain bugs,
-   vulnerabilities, or unexpected behaviors.
+🟡 EXPERIMENTAL NATURE:
+   This protocol may evolve, change, or discontinue at any time
+   • No expectations of stability, specific outcomes, or returns
+   • You are here to explore collective imagination made manifest
 
-   THERE ARE NO WARRANTIES regarding:
-   • Reliability of the system
-   • Security of your data
-   • Continued availability
-   • Financial outcomes
-
-   You proceed at your own risk, digital prophet.
-
-> Continue
-
-╔═══════════════════════════════════════════════════════════╗
-║                  EXPERIMENTAL NATURE OATH                 ║
-║                    BINDING OATH III                       ║
-╚═══════════════════════════════════════════════════════════╝
-
-🟡 FINAL UNDERSTANDING:
-
-   This protocol may evolve, change, or be discontinued
-   at any time. The experiment is fluid, alive.
-
-   YOU SHOULD HAVE NO EXPECTATIONS about:
-   • Long-term stability
-   • Specific outcomes
-   • Financial returns
-   • Guaranteed functionality
-
-   You are here to explore what emerges from collective
-   imagination made manifest through technology.
+By signing, you acknowledge these terms and join the experiment.
 
 "what we imagine together becomes"
 "what we imagine together becomes"
