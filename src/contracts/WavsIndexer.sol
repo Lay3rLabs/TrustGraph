@@ -21,18 +21,26 @@ contract WavsIndexer is IWavsServiceHandler, IWavsIndexer, Semver {
     mapping(string => bytes32[]) public eventsByChainId;
     mapping(string => mapping(address => bytes32[]))
         public eventsByChainIdAndContract;
+    mapping(address => bytes32[]) public eventsByAddress;
     mapping(string => bytes32[]) public eventsByType;
     mapping(string => bytes32[]) public eventsByTag;
-    mapping(address => bytes32[]) public eventsByAddress;
 
     // Combined indexing for common query patterns (gas optimization)
-    mapping(address => mapping(string => bytes32[]))
-        public eventsByAddressAndTag;
+    mapping(string => mapping(address => mapping(address => bytes32[])))
+        public eventsByChainIdAndContractAndAddress;
+    mapping(string => mapping(string => bytes32[])) public eventsByTypeAndTag;
     mapping(address => mapping(string => bytes32[]))
         public eventsByAddressAndType;
-    mapping(string => mapping(string => bytes32[])) public eventsByTypeAndTag;
+    mapping(address => mapping(string => bytes32[]))
+        public eventsByAddressAndTag;
+    mapping(string => mapping(address => mapping(string => bytes32[])))
+        public eventsByChainIdAndContractAndType;
+    mapping(string => mapping(address => mapping(string => bytes32[])))
+        public eventsByChainIdAndContractAndTag;
     mapping(address => mapping(string => mapping(string => bytes32[])))
         public eventsByAddressAndTypeAndTag;
+    mapping(string => mapping(address => mapping(string => mapping(string => bytes32[]))))
+        public eventsByChainIdAndContractAndTypeAndTag;
 
     // Global counters
     uint256 public totalEvents;
@@ -112,21 +120,25 @@ contract WavsIndexer is IWavsServiceHandler, IWavsIndexer, Semver {
         eventExists[eventId] = true;
         totalEvents++;
 
-        // Index by chain ID
         eventsByChainId[event_.chainId].push(eventId);
-
-        // Index by relevant contract
         eventsByChainIdAndContract[event_.chainId][event_.relevantContract]
             .push(eventId);
-
-        // Index by event type
         eventsByType[event_.eventType].push(eventId);
+        eventsByChainIdAndContractAndType[event_.chainId][
+            event_.relevantContract
+        ][event_.eventType].push(eventId);
 
         // Index by tags
         for (uint256 i = 0; i < event_.tags.length; i = uncheckedInc(i)) {
             string memory tag = event_.tags[i];
             eventsByTag[tag].push(eventId);
             eventsByTypeAndTag[event_.eventType][tag].push(eventId);
+            eventsByChainIdAndContractAndTag[event_.chainId][
+                event_.relevantContract
+            ][tag].push(eventId);
+            eventsByChainIdAndContractAndTypeAndTag[event_.chainId][
+                event_.relevantContract
+            ][event_.eventType][tag].push(eventId);
         }
 
         // Index by relevant addresses
@@ -138,6 +150,9 @@ contract WavsIndexer is IWavsServiceHandler, IWavsIndexer, Semver {
             address addr = event_.relevantAddresses[i];
             eventsByAddress[addr].push(eventId);
             eventsByAddressAndType[addr][event_.eventType].push(eventId);
+            eventsByChainIdAndContractAndAddress[event_.chainId][
+                event_.relevantContract
+            ][addr].push(eventId);
 
             // Cross-index with tags for efficient combined queries
             for (uint256 j = 0; j < event_.tags.length; j = uncheckedInc(j)) {
@@ -234,20 +249,42 @@ contract WavsIndexer is IWavsServiceHandler, IWavsIndexer, Semver {
 
     /// @notice Gets events by contract
     /// @param chainId The chain ID of the contract to filter by
-    /// @param relevantContract The contract to filter by
+    /// @param contract_ The contract to filter by
     /// @param start The offset to start from
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
     /// @return Array of IndexedEvent structs
     function getEventsByContract(
         string calldata chainId,
-        address relevantContract,
+        address contract_,
         uint256 start,
         uint256 length,
         bool reverseOrder
     ) external view returns (IndexedEvent[] memory) {
         bytes32[] memory eventIds = _sliceUIDs(
-            eventsByChainIdAndContract[chainId][relevantContract],
+            eventsByChainIdAndContract[chainId][contract_],
+            start,
+            length,
+            reverseOrder
+        );
+
+        return _getEventsByIds(eventIds);
+    }
+
+    /// @notice Gets events by address
+    /// @param addr The address to filter by
+    /// @param start The offset to start from
+    /// @param length The number of events to retrieve
+    /// @param reverseOrder Whether to return in reverse chronological order
+    /// @return Array of IndexedEvent structs
+    function getEventsByAddress(
+        address addr,
+        uint256 start,
+        uint256 length,
+        bool reverseOrder
+    ) external view returns (IndexedEvent[] memory) {
+        bytes32[] memory eventIds = _sliceUIDs(
+            eventsByAddress[addr],
             start,
             length,
             reverseOrder
@@ -300,46 +337,24 @@ contract WavsIndexer is IWavsServiceHandler, IWavsIndexer, Semver {
         return _getEventsByIds(eventIds);
     }
 
-    /// @notice Gets events by address and tag combination
-    /// @param relevantAddress The address to filter by
-    /// @param tag The tag to filter by
+    /// @notice Gets events by contract and address combination
+    /// @param chainId The chain ID of the contract to filter by
+    /// @param contract_ The contract to filter by
+    /// @param addr The address to filter by
     /// @param start The offset to start from
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
     /// @return Array of IndexedEvent structs
-    function getEventsByAddressAndTag(
-        address relevantAddress,
-        string memory tag,
+    function getEventsByContractAndAddress(
+        string calldata chainId,
+        address contract_,
+        address addr,
         uint256 start,
         uint256 length,
         bool reverseOrder
     ) external view returns (IndexedEvent[] memory) {
         bytes32[] memory eventIds = _sliceUIDs(
-            eventsByAddressAndTag[relevantAddress][tag],
-            start,
-            length,
-            reverseOrder
-        );
-
-        return _getEventsByIds(eventIds);
-    }
-
-    /// @notice Gets events by address and type combination
-    /// @param relevantAddress The address to filter by
-    /// @param eventType The event type to filter by
-    /// @param start The offset to start from
-    /// @param length The number of events to retrieve
-    /// @param reverseOrder Whether to return in reverse chronological order
-    /// @return Array of IndexedEvent structs
-    function getEventsByAddressAndType(
-        address relevantAddress,
-        string calldata eventType,
-        uint256 start,
-        uint256 length,
-        bool reverseOrder
-    ) external view returns (IndexedEvent[] memory) {
-        bytes32[] memory eventIds = _sliceUIDs(
-            eventsByAddressAndType[relevantAddress][eventType],
+            eventsByChainIdAndContractAndAddress[chainId][contract_][addr],
             start,
             length,
             reverseOrder
@@ -372,8 +387,108 @@ contract WavsIndexer is IWavsServiceHandler, IWavsIndexer, Semver {
         return _getEventsByIds(eventIds);
     }
 
+    /// @notice Gets events by address and type combination
+    /// @param addr The address to filter by
+    /// @param eventType The event type to filter by
+    /// @param start The offset to start from
+    /// @param length The number of events to retrieve
+    /// @param reverseOrder Whether to return in reverse chronological order
+    /// @return Array of IndexedEvent structs
+    function getEventsByAddressAndType(
+        address addr,
+        string calldata eventType,
+        uint256 start,
+        uint256 length,
+        bool reverseOrder
+    ) external view returns (IndexedEvent[] memory) {
+        bytes32[] memory eventIds = _sliceUIDs(
+            eventsByAddressAndType[addr][eventType],
+            start,
+            length,
+            reverseOrder
+        );
+
+        return _getEventsByIds(eventIds);
+    }
+
+    /// @notice Gets events by address and tag combination
+    /// @param addr The address to filter by
+    /// @param tag The tag to filter by
+    /// @param start The offset to start from
+    /// @param length The number of events to retrieve
+    /// @param reverseOrder Whether to return in reverse chronological order
+    /// @return Array of IndexedEvent structs
+    function getEventsByAddressAndTag(
+        address addr,
+        string memory tag,
+        uint256 start,
+        uint256 length,
+        bool reverseOrder
+    ) external view returns (IndexedEvent[] memory) {
+        bytes32[] memory eventIds = _sliceUIDs(
+            eventsByAddressAndTag[addr][tag],
+            start,
+            length,
+            reverseOrder
+        );
+
+        return _getEventsByIds(eventIds);
+    }
+
+    /// @notice Gets events by contract and type combination
+    /// @param chainId The chain ID of the contract to filter by
+    /// @param contract_ The contract to filter by
+    /// @param eventType The event type to filter by
+    /// @param start The offset to start from
+    /// @param length The number of events to retrieve
+    /// @param reverseOrder Whether to return in reverse chronological order
+    /// @return Array of IndexedEvent structs
+    function getEventsByContractAndType(
+        string calldata chainId,
+        address contract_,
+        string calldata eventType,
+        uint256 start,
+        uint256 length,
+        bool reverseOrder
+    ) external view returns (IndexedEvent[] memory) {
+        bytes32[] memory eventIds = _sliceUIDs(
+            eventsByChainIdAndContractAndType[chainId][contract_][eventType],
+            start,
+            length,
+            reverseOrder
+        );
+
+        return _getEventsByIds(eventIds);
+    }
+
+    /// @notice Gets events by contract and tag combination
+    /// @param chainId The chain ID of the contract to filter by
+    /// @param contract_ The contract to filter by
+    /// @param tag The tag to filter by
+    /// @param start The offset to start from
+    /// @param length The number of events to retrieve
+    /// @param reverseOrder Whether to return in reverse chronological order
+    /// @return Array of IndexedEvent structs
+    function getEventsByContractAndTag(
+        string calldata chainId,
+        address contract_,
+        string calldata tag,
+        uint256 start,
+        uint256 length,
+        bool reverseOrder
+    ) external view returns (IndexedEvent[] memory) {
+        bytes32[] memory eventIds = _sliceUIDs(
+            eventsByChainIdAndContractAndTag[chainId][contract_][tag],
+            start,
+            length,
+            reverseOrder
+        );
+
+        return _getEventsByIds(eventIds);
+    }
+
     /// @notice Gets events by address, type, and tag combination
-    /// @param relevantAddress The address to filter by
+    /// @param addr The address to filter by
     /// @param eventType The event type to filter by
     /// @param tag The tag to filter by
     /// @param start The offset to start from
@@ -381,7 +496,7 @@ contract WavsIndexer is IWavsServiceHandler, IWavsIndexer, Semver {
     /// @param reverseOrder Whether to return in reverse chronological order
     /// @return Array of IndexedEvent structs
     function getEventsByAddressAndTypeAndTag(
-        address relevantAddress,
+        address addr,
         string calldata eventType,
         string calldata tag,
         uint256 start,
@@ -389,7 +504,37 @@ contract WavsIndexer is IWavsServiceHandler, IWavsIndexer, Semver {
         bool reverseOrder
     ) external view returns (IndexedEvent[] memory) {
         bytes32[] memory eventIds = _sliceUIDs(
-            eventsByAddressAndTypeAndTag[relevantAddress][eventType][tag],
+            eventsByAddressAndTypeAndTag[addr][eventType][tag],
+            start,
+            length,
+            reverseOrder
+        );
+
+        return _getEventsByIds(eventIds);
+    }
+
+    /// @notice Gets events by contract, type, and tag combination
+    /// @param chainId The chain ID of the contract to filter by
+    /// @param contract_ The contract to filter by
+    /// @param eventType The event type to filter by
+    /// @param tag The tag to filter by
+    /// @param start The offset to start from
+    /// @param length The number of events to retrieve
+    /// @param reverseOrder Whether to return in reverse chronological order
+    /// @return Array of IndexedEvent structs
+    function getEventsByContractAndTypeAndTag(
+        string calldata chainId,
+        address contract_,
+        string calldata eventType,
+        string calldata tag,
+        uint256 start,
+        uint256 length,
+        bool reverseOrder
+    ) external view returns (IndexedEvent[] memory) {
+        bytes32[] memory eventIds = _sliceUIDs(
+            eventsByChainIdAndContractAndTypeAndTag[chainId][contract_][
+                eventType
+            ][tag],
             start,
             length,
             reverseOrder
@@ -410,9 +555,16 @@ contract WavsIndexer is IWavsServiceHandler, IWavsIndexer, Semver {
     /// @notice Gets total number of events by contract
     function getEventCountByContract(
         string calldata chainId,
-        address relevantContract
+        address contract_
     ) external view returns (uint256) {
-        return eventsByChainIdAndContract[chainId][relevantContract].length;
+        return eventsByChainIdAndContract[chainId][contract_].length;
+    }
+
+    /// @notice Gets total number of events by contract
+    function getEventCountByAddress(
+        address addr
+    ) external view returns (uint256) {
+        return eventsByAddress[addr].length;
     }
 
     /// @notice Gets total number of events by type
@@ -429,20 +581,15 @@ contract WavsIndexer is IWavsServiceHandler, IWavsIndexer, Semver {
         return eventsByTag[tag].length;
     }
 
-    /// @notice Gets total number of events for an address and tag
-    function getEventCountByAddressAndTag(
-        address addr,
-        string calldata tag
+    /// @notice Gets total number of events for a contract and address
+    function getEventCountByContractAndAddress(
+        string calldata chainId,
+        address contract_,
+        address addr
     ) external view returns (uint256) {
-        return eventsByAddressAndTag[addr][tag].length;
-    }
-
-    /// @notice Gets total number of events for an address and type
-    function getEventCountByAddressAndType(
-        address addr,
-        string calldata eventType
-    ) external view returns (uint256) {
-        return eventsByAddressAndType[addr][eventType].length;
+        return
+            eventsByChainIdAndContractAndAddress[chainId][contract_][addr]
+                .length;
     }
 
     /// @notice Gets total number of events for a type and tag
@@ -453,6 +600,42 @@ contract WavsIndexer is IWavsServiceHandler, IWavsIndexer, Semver {
         return eventsByTypeAndTag[eventType][tag].length;
     }
 
+    /// @notice Gets total number of events for an address and type
+    function getEventCountByAddressAndType(
+        address addr,
+        string calldata eventType
+    ) external view returns (uint256) {
+        return eventsByAddressAndType[addr][eventType].length;
+    }
+
+    /// @notice Gets total number of events for an address and tag
+    function getEventCountByAddressAndTag(
+        address addr,
+        string calldata tag
+    ) external view returns (uint256) {
+        return eventsByAddressAndTag[addr][tag].length;
+    }
+
+    /// @notice Gets total number of events for a contract and type
+    function getEventCountByContractAndType(
+        string calldata chainId,
+        address contract_,
+        string calldata eventType
+    ) external view returns (uint256) {
+        return
+            eventsByChainIdAndContractAndType[chainId][contract_][eventType]
+                .length;
+    }
+
+    /// @notice Gets total number of events for a contract and tag
+    function getEventCountByContractAndTag(
+        string calldata chainId,
+        address contract_,
+        string calldata tag
+    ) external view returns (uint256) {
+        return eventsByChainIdAndContractAndTag[chainId][contract_][tag].length;
+    }
+
     /// @notice Gets total number of events for an address, type, and tag
     function getEventCountByAddressAndTypeAndTag(
         address addr,
@@ -460,6 +643,19 @@ contract WavsIndexer is IWavsServiceHandler, IWavsIndexer, Semver {
         string calldata tag
     ) external view returns (uint256) {
         return eventsByAddressAndTypeAndTag[addr][eventType][tag].length;
+    }
+
+    /// @notice Gets total number of events for a contract, type, and tag
+    function getEventCountByContractAndTypeAndTag(
+        string calldata chainId,
+        address contract_,
+        string calldata eventType,
+        string calldata tag
+    ) external view returns (uint256) {
+        return
+            eventsByChainIdAndContractAndTypeAndTag[chainId][contract_][
+                eventType
+            ][tag].length;
     }
 
     // ============ INTERNAL HELPER FUNCTIONS ============

@@ -94,14 +94,27 @@ interface IWavsIndexer {
 
     /// @notice Gets events by contract
     /// @param chainId The chain ID of the contract to filter by
-    /// @param relevantContract The contract to filter by
+    /// @param contract_ The contract to filter by
     /// @param start The offset to start from
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
     /// @return Array of IndexedEvent structs
     function getEventsByContract(
         string calldata chainId,
-        address relevantContract,
+        address contract_,
+        uint256 start,
+        uint256 length,
+        bool reverseOrder
+    ) external view returns (IndexedEvent[] memory);
+
+    /// @notice Gets events by address
+    /// @param addr The address to filter by
+    /// @param start The offset to start from
+    /// @param length The number of events to retrieve
+    /// @param reverseOrder Whether to return in reverse chronological order
+    /// @return Array of IndexedEvent structs
+    function getEventsByAddress(
+        address addr,
         uint256 start,
         uint256 length,
         bool reverseOrder
@@ -133,31 +146,18 @@ interface IWavsIndexer {
         bool reverseOrder
     ) external view returns (IndexedEvent[] memory);
 
-    /// @notice Gets events by address and tag combination
-    /// @param relevantAddress The address to filter by
-    /// @param tag The tag to filter by
+    /// @notice Gets events by contract and address combination
+    /// @param chainId The chain ID of the contract to filter by
+    /// @param contract_ The contract to filter by
+    /// @param addr The address to filter by
     /// @param start The offset to start from
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
     /// @return Array of IndexedEvent structs
-    function getEventsByAddressAndTag(
-        address relevantAddress,
-        string memory tag,
-        uint256 start,
-        uint256 length,
-        bool reverseOrder
-    ) external view returns (IndexedEvent[] memory);
-
-    /// @notice Gets events by address and type combination
-    /// @param relevantAddress The address to filter by
-    /// @param eventType The event type to filter by
-    /// @param start The offset to start from
-    /// @param length The number of events to retrieve
-    /// @param reverseOrder Whether to return in reverse chronological order
-    /// @return Array of IndexedEvent structs
-    function getEventsByAddressAndType(
-        address relevantAddress,
-        string calldata eventType,
+    function getEventsByContractAndAddress(
+        string calldata chainId,
+        address contract_,
+        address addr,
         uint256 start,
         uint256 length,
         bool reverseOrder
@@ -178,8 +178,72 @@ interface IWavsIndexer {
         bool reverseOrder
     ) external view returns (IndexedEvent[] memory);
 
+    /// @notice Gets events by address and type combination
+    /// @param addr The address to filter by
+    /// @param eventType The event type to filter by
+    /// @param start The offset to start from
+    /// @param length The number of events to retrieve
+    /// @param reverseOrder Whether to return in reverse chronological order
+    /// @return Array of IndexedEvent structs
+    function getEventsByAddressAndType(
+        address addr,
+        string calldata eventType,
+        uint256 start,
+        uint256 length,
+        bool reverseOrder
+    ) external view returns (IndexedEvent[] memory);
+
+    /// @notice Gets events by address and tag combination
+    /// @param addr The address to filter by
+    /// @param tag The tag to filter by
+    /// @param start The offset to start from
+    /// @param length The number of events to retrieve
+    /// @param reverseOrder Whether to return in reverse chronological order
+    /// @return Array of IndexedEvent structs
+    function getEventsByAddressAndTag(
+        address addr,
+        string calldata tag,
+        uint256 start,
+        uint256 length,
+        bool reverseOrder
+    ) external view returns (IndexedEvent[] memory);
+
+    /// @notice Gets events by contract and type combination
+    /// @param chainId The chain ID of the contract to filter by
+    /// @param contract_ The contract to filter by
+    /// @param eventType The event type to filter by
+    /// @param start The offset to start from
+    /// @param length The number of events to retrieve
+    /// @param reverseOrder Whether to return in reverse chronological order
+    /// @return Array of IndexedEvent structs
+    function getEventsByContractAndType(
+        string calldata chainId,
+        address contract_,
+        string calldata eventType,
+        uint256 start,
+        uint256 length,
+        bool reverseOrder
+    ) external view returns (IndexedEvent[] memory);
+
+    /// @notice Gets events by contract and tag combination
+    /// @param chainId The chain ID of the contract to filter by
+    /// @param contract_ The contract to filter by
+    /// @param tag The tag to filter by
+    /// @param start The offset to start from
+    /// @param length The number of events to retrieve
+    /// @param reverseOrder Whether to return in reverse chronological order
+    /// @return Array of IndexedEvent structs
+    function getEventsByContractAndTag(
+        string calldata chainId,
+        address contract_,
+        string calldata tag,
+        uint256 start,
+        uint256 length,
+        bool reverseOrder
+    ) external view returns (IndexedEvent[] memory);
+
     /// @notice Gets events by address, type, and tag combination
-    /// @param relevantAddress The address to filter by
+    /// @param addr The address to filter by
     /// @param eventType The event type to filter by
     /// @param tag The tag to filter by
     /// @param start The offset to start from
@@ -187,7 +251,26 @@ interface IWavsIndexer {
     /// @param reverseOrder Whether to return in reverse chronological order
     /// @return Array of IndexedEvent structs
     function getEventsByAddressAndTypeAndTag(
-        address relevantAddress,
+        address addr,
+        string calldata eventType,
+        string calldata tag,
+        uint256 start,
+        uint256 length,
+        bool reverseOrder
+    ) external view returns (IndexedEvent[] memory);
+
+    /// @notice Gets events by contract, type, and tag combination
+    /// @param chainId The chain ID of the contract to filter by
+    /// @param contract_ The contract to filter by
+    /// @param eventType The event type to filter by
+    /// @param tag The tag to filter by
+    /// @param start The offset to start from
+    /// @param length The number of events to retrieve
+    /// @param reverseOrder Whether to return in reverse chronological order
+    /// @return Array of IndexedEvent structs
+    function getEventsByContractAndTypeAndTag(
+        string calldata chainId,
+        address contract_,
         string calldata eventType,
         string calldata tag,
         uint256 start,
@@ -205,7 +288,7 @@ interface IWavsIndexer {
     /// @notice Gets total number of events by contract
     function getEventCountByContract(
         string calldata chainId,
-        address relevantContract
+        address contract_
     ) external view returns (uint256);
 
     /// @notice Gets total number of events by type
@@ -218,9 +301,16 @@ interface IWavsIndexer {
         string calldata tag
     ) external view returns (uint256);
 
-    /// @notice Gets total number of events for an address and tag
-    function getEventCountByAddressAndTag(
-        address addr,
+    /// @notice Gets total number of events for a contract and address
+    function getEventCountByContractAndAddress(
+        string calldata chainId,
+        address contract_,
+        address addr
+    ) external view returns (uint256);
+
+    /// @notice Gets total number of events for a type and tag
+    function getEventCountByTypeAndTag(
+        string calldata eventType,
         string calldata tag
     ) external view returns (uint256);
 
@@ -230,15 +320,37 @@ interface IWavsIndexer {
         string calldata eventType
     ) external view returns (uint256);
 
-    /// @notice Gets total number of events for a type and tag
-    function getEventCountByTypeAndTag(
-        string calldata eventType,
+    /// @notice Gets total number of events for an address and tag
+    function getEventCountByAddressAndTag(
+        address addr,
+        string calldata tag
+    ) external view returns (uint256);
+
+    /// @notice Gets total number of events for a contract and type
+    function getEventCountByContractAndType(
+        string calldata chainId,
+        address contract_,
+        string calldata eventType
+    ) external view returns (uint256);
+
+    /// @notice Gets total number of events for a contract and tag
+    function getEventCountByContractAndTag(
+        string calldata chainId,
+        address contract_,
         string calldata tag
     ) external view returns (uint256);
 
     /// @notice Gets total number of events for an address, type, and tag
     function getEventCountByAddressAndTypeAndTag(
         address addr,
+        string calldata eventType,
+        string calldata tag
+    ) external view returns (uint256);
+
+    /// @notice Gets total number of events for a contract, type, and tag
+    function getEventCountByContractAndTypeAndTag(
+        string calldata chainId,
+        address contract_,
         string calldata eventType,
         string calldata tag
     ) external view returns (uint256);

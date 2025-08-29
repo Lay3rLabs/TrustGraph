@@ -415,6 +415,96 @@ contract WavsIndexerTest is Test {
         assertEq(contract200Events2[0].eventType, "attestation");
     }
 
+    function testGetEventsByAddress() public {
+        address[] memory relevantAddresses1 = new address[](1);
+        relevantAddresses1[0] = address(0x100);
+
+        address[] memory relevantAddresses2 = new address[](1);
+        relevantAddresses2[0] = address(0x200);
+
+        // Create events for different addresses
+        IWavsIndexer.IndexedEvent[]
+            memory events = new IWavsIndexer.IndexedEvent[](4);
+        events[0] = _createMockEventCustom(
+            bytes32(0),
+            "1",
+            address(0x100),
+            1000,
+            1000,
+            "attestation",
+            abi.encode(123),
+            new string[](0),
+            relevantAddresses1,
+            bytes(""),
+            false
+        );
+        events[1] = _createMockEventCustom(
+            bytes32(0),
+            "1",
+            address(0x100),
+            1001,
+            1001,
+            "transfer",
+            abi.encode(456),
+            new string[](0),
+            relevantAddresses1,
+            bytes(""),
+            false
+        );
+        events[2] = _createMockEventCustom(
+            bytes32(0),
+            "1",
+            address(0x200),
+            1002,
+            1002,
+            "attestation",
+            abi.encode(789),
+            new string[](0),
+            relevantAddresses2,
+            bytes(""),
+            false
+        );
+        events[3] = _createMockEventCustom(
+            bytes32(0),
+            "1",
+            address(0x200),
+            1003,
+            1003,
+            "attestation",
+            abi.encode(789),
+            new string[](0),
+            relevantAddresses2,
+            bytes(""),
+            false
+        );
+
+        IWavsIndexer.IndexingPayload memory payload = _createPayload(
+            events,
+            new bytes32[](0)
+        );
+
+        (
+            IWavsServiceHandler.Envelope memory envelope,
+            IWavsServiceHandler.SignatureData memory signatureData
+        ) = _createEnvelopeAndSignature(payload);
+
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
+
+        // Test getting events by address 0x100
+        IWavsIndexer.IndexedEvent[] memory addr100Events = wavsIndexer
+            .getEventsByAddress(address(0x100), 0, 10, false);
+        assertEq(addr100Events.length, 2);
+        assertEq(addr100Events[0].blockNumber, 1000);
+        assertEq(addr100Events[1].blockNumber, 1001);
+
+        // Test getting events by address 0x200
+        IWavsIndexer.IndexedEvent[] memory addr200Events = wavsIndexer
+            .getEventsByAddress(address(0x200), 0, 10, false);
+        assertEq(addr200Events.length, 2);
+        assertEq(addr200Events[0].blockNumber, 1002);
+        assertEq(addr200Events[1].blockNumber, 1003);
+    }
+
     function testGetEventsByType() public {
         // Create events with different types
         IWavsIndexer.IndexedEvent[]
@@ -586,95 +676,7 @@ contract WavsIndexerTest is Test {
         assertEq(systemEvents.length, 1);
     }
 
-    function testGetEventsByAddressAndTag() public {
-        // Create events with different relevant addresses and tags
-        string[] memory tags1 = new string[](1);
-        tags1[0] = "important";
-
-        address[] memory relevantAddresses1 = new address[](1);
-        relevantAddresses1[0] = address(0x1000);
-
-        address[] memory relevantAddresses2 = new address[](1);
-        relevantAddresses2[0] = address(0x2000);
-
-        IWavsIndexer.IndexedEvent[]
-            memory events = new IWavsIndexer.IndexedEvent[](3);
-        events[0] = _createMockEventCustom(
-            bytes32(0),
-            "1",
-            address(0x1),
-            1000,
-            1000,
-            "attestation",
-            abi.encode(123),
-            tags1,
-            relevantAddresses1,
-            bytes(""),
-            false
-        );
-        events[1] = _createMockEventCustom(
-            bytes32(0),
-            "1",
-            address(0x2),
-            1001,
-            1001,
-            "transfer",
-            abi.encode(456),
-            tags1,
-            relevantAddresses1,
-            bytes(""),
-            false
-        );
-        events[2] = _createMockEventCustom(
-            bytes32(0),
-            "1",
-            address(0x3),
-            1002,
-            1002,
-            "system",
-            abi.encode(789),
-            tags1,
-            relevantAddresses2,
-            bytes(""),
-            false
-        );
-
-        IWavsIndexer.IndexingPayload memory payload = _createPayload(
-            events,
-            new bytes32[](0)
-        );
-
-        (
-            IWavsServiceHandler.Envelope memory envelope,
-            IWavsServiceHandler.SignatureData memory signatureData
-        ) = _createEnvelopeAndSignature(payload);
-
-        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
-
-        // Test getting events by address 0x1000 and tag "important"
-        IWavsIndexer.IndexedEvent[] memory addr1Events = wavsIndexer
-            .getEventsByAddressAndTag(
-                address(0x1000),
-                "important",
-                0,
-                10,
-                false
-            );
-        assertEq(addr1Events.length, 2);
-
-        // Test getting events by address 0x2000 and tag "important"
-        IWavsIndexer.IndexedEvent[] memory addr2Events = wavsIndexer
-            .getEventsByAddressAndTag(
-                address(0x2000),
-                "important",
-                0,
-                10,
-                false
-            );
-        assertEq(addr2Events.length, 1);
-    }
-
-    function testGetEventsByAddressAndType() public {
+    function testGetEventsByContractAndAddress() public {
         // Create events with different relevant addresses and types
         address[] memory relevantAddresses1 = new address[](1);
         relevantAddresses1[0] = address(0x1000);
@@ -699,8 +701,8 @@ contract WavsIndexerTest is Test {
         );
         events[1] = _createMockEventCustom(
             bytes32(0),
-            "1",
-            address(0x2),
+            "2",
+            address(0x1),
             1001,
             1001,
             "attestation",
@@ -716,7 +718,7 @@ contract WavsIndexerTest is Test {
             address(0x3),
             1002,
             1002,
-            "transfer",
+            "attestation",
             abi.encode(789),
             new string[](0),
             relevantAddresses2,
@@ -736,27 +738,44 @@ contract WavsIndexerTest is Test {
 
         wavsIndexer.handleSignedEnvelope(envelope, signatureData);
 
-        // Test getting events by address 0x1000 and type "attestation"
+        // Test getting events by chain ID 1, contract 0x1 and address 0x1000
         IWavsIndexer.IndexedEvent[] memory addr1Attestations = wavsIndexer
-            .getEventsByAddressAndType(
+            .getEventsByContractAndAddress(
+                "1",
+                address(0x1),
                 address(0x1000),
-                "attestation",
                 0,
                 10,
                 false
             );
-        assertEq(addr1Attestations.length, 2);
+        assertEq(addr1Attestations.length, 1);
+        assertEq(addr1Attestations[0].blockNumber, 1000);
 
-        // Test getting events by address 0x2000 and type "transfer"
-        IWavsIndexer.IndexedEvent[] memory addr2Transfers = wavsIndexer
-            .getEventsByAddressAndType(
-                address(0x2000),
-                "transfer",
+        // Test getting events by chain ID 2, contract 0x1 and address 0x1000
+        IWavsIndexer.IndexedEvent[] memory addr2Attestations = wavsIndexer
+            .getEventsByContractAndAddress(
+                "2",
+                address(0x1),
+                address(0x1000),
                 0,
                 10,
                 false
             );
-        assertEq(addr2Transfers.length, 1);
+        assertEq(addr2Attestations.length, 1);
+        assertEq(addr2Attestations[0].blockNumber, 1001);
+
+        // Test getting events by chain ID 1, contract 0x3, and address 0x2000
+        IWavsIndexer.IndexedEvent[] memory addr3Attestations = wavsIndexer
+            .getEventsByContractAndAddress(
+                "1",
+                address(0x3),
+                address(0x2000),
+                0,
+                10,
+                false
+            );
+        assertEq(addr3Attestations.length, 1);
+        assertEq(addr3Attestations[0].blockNumber, 1002);
     }
 
     function testGetEventsByTypeAndTag() public {
@@ -855,6 +874,399 @@ contract WavsIndexerTest is Test {
         assertEq(attestations3[0].eventType, "attestation");
         assertEq(attestations3[0].tags[0], "schema:0x456");
         assertEq(attestations3[0].tags[1], "attester:0x456");
+    }
+
+    function testGetEventsByAddressAndType() public {
+        // Create events with different relevant addresses and types
+        address[] memory relevantAddresses1 = new address[](1);
+        relevantAddresses1[0] = address(0x1000);
+
+        address[] memory relevantAddresses2 = new address[](1);
+        relevantAddresses2[0] = address(0x2000);
+
+        IWavsIndexer.IndexedEvent[]
+            memory events = new IWavsIndexer.IndexedEvent[](3);
+        events[0] = _createMockEventCustom(
+            bytes32(0),
+            "1",
+            address(0x1),
+            1000,
+            1000,
+            "attestation",
+            abi.encode(123),
+            new string[](0),
+            relevantAddresses1,
+            bytes(""),
+            false
+        );
+        events[1] = _createMockEventCustom(
+            bytes32(0),
+            "1",
+            address(0x2),
+            1001,
+            1001,
+            "attestation",
+            abi.encode(456),
+            new string[](0),
+            relevantAddresses1,
+            bytes(""),
+            false
+        );
+        events[2] = _createMockEventCustom(
+            bytes32(0),
+            "1",
+            address(0x3),
+            1002,
+            1002,
+            "transfer",
+            abi.encode(789),
+            new string[](0),
+            relevantAddresses2,
+            bytes(""),
+            false
+        );
+
+        IWavsIndexer.IndexingPayload memory payload = _createPayload(
+            events,
+            new bytes32[](0)
+        );
+
+        (
+            IWavsServiceHandler.Envelope memory envelope,
+            IWavsServiceHandler.SignatureData memory signatureData
+        ) = _createEnvelopeAndSignature(payload);
+
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
+
+        // Test getting events by address 0x1000 and type "attestation"
+        IWavsIndexer.IndexedEvent[] memory addr1Attestations = wavsIndexer
+            .getEventsByAddressAndType(
+                address(0x1000),
+                "attestation",
+                0,
+                10,
+                false
+            );
+        assertEq(addr1Attestations.length, 2);
+
+        // Test getting events by address 0x2000 and type "transfer"
+        IWavsIndexer.IndexedEvent[] memory addr2Transfers = wavsIndexer
+            .getEventsByAddressAndType(
+                address(0x2000),
+                "transfer",
+                0,
+                10,
+                false
+            );
+        assertEq(addr2Transfers.length, 1);
+    }
+
+    function testGetEventsByAddressAndTag() public {
+        // Create events with different relevant addresses and tags
+        string[] memory tags1 = new string[](1);
+        tags1[0] = "important";
+
+        address[] memory relevantAddresses1 = new address[](1);
+        relevantAddresses1[0] = address(0x1000);
+
+        address[] memory relevantAddresses2 = new address[](1);
+        relevantAddresses2[0] = address(0x2000);
+
+        IWavsIndexer.IndexedEvent[]
+            memory events = new IWavsIndexer.IndexedEvent[](3);
+        events[0] = _createMockEventCustom(
+            bytes32(0),
+            "1",
+            address(0x1),
+            1000,
+            1000,
+            "attestation",
+            abi.encode(123),
+            tags1,
+            relevantAddresses1,
+            bytes(""),
+            false
+        );
+        events[1] = _createMockEventCustom(
+            bytes32(0),
+            "1",
+            address(0x2),
+            1001,
+            1001,
+            "transfer",
+            abi.encode(456),
+            tags1,
+            relevantAddresses1,
+            bytes(""),
+            false
+        );
+        events[2] = _createMockEventCustom(
+            bytes32(0),
+            "1",
+            address(0x3),
+            1002,
+            1002,
+            "system",
+            abi.encode(789),
+            tags1,
+            relevantAddresses2,
+            bytes(""),
+            false
+        );
+
+        IWavsIndexer.IndexingPayload memory payload = _createPayload(
+            events,
+            new bytes32[](0)
+        );
+
+        (
+            IWavsServiceHandler.Envelope memory envelope,
+            IWavsServiceHandler.SignatureData memory signatureData
+        ) = _createEnvelopeAndSignature(payload);
+
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
+
+        // Test getting events by address 0x1000 and tag "important"
+        IWavsIndexer.IndexedEvent[] memory addr1Events = wavsIndexer
+            .getEventsByAddressAndTag(
+                address(0x1000),
+                "important",
+                0,
+                10,
+                false
+            );
+        assertEq(addr1Events.length, 2);
+
+        // Test getting events by address 0x2000 and tag "important"
+        IWavsIndexer.IndexedEvent[] memory addr2Events = wavsIndexer
+            .getEventsByAddressAndTag(
+                address(0x2000),
+                "important",
+                0,
+                10,
+                false
+            );
+        assertEq(addr2Events.length, 1);
+    }
+
+    function testGetEventsByContractAndType() public {
+        IWavsIndexer.IndexedEvent[]
+            memory events = new IWavsIndexer.IndexedEvent[](4);
+        events[0] = _createMockEventCustom(
+            bytes32(0),
+            "1",
+            address(0x1),
+            1000,
+            1000,
+            "attestation",
+            abi.encode(123),
+            new string[](0),
+            new address[](0),
+            bytes(""),
+            false
+        );
+        events[1] = _createMockEventCustom(
+            bytes32(0),
+            "1",
+            address(0x1),
+            1001,
+            1001,
+            "attestation",
+            abi.encode(456),
+            new string[](0),
+            new address[](0),
+            bytes(""),
+            false
+        );
+        events[2] = _createMockEventCustom(
+            bytes32(0),
+            "1",
+            address(0x2),
+            1002,
+            1002,
+            "transfer",
+            abi.encode(789),
+            new string[](0),
+            new address[](0),
+            bytes(""),
+            false
+        );
+        events[3] = _createMockEventCustom(
+            bytes32(0),
+            "2",
+            address(0x1),
+            1003,
+            1003,
+            "transfer",
+            abi.encode(101112),
+            new string[](0),
+            new address[](0),
+            bytes(""),
+            false
+        );
+
+        IWavsIndexer.IndexingPayload memory payload = _createPayload(
+            events,
+            new bytes32[](0)
+        );
+
+        (
+            IWavsServiceHandler.Envelope memory envelope,
+            IWavsServiceHandler.SignatureData memory signatureData
+        ) = _createEnvelopeAndSignature(payload);
+
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
+
+        // Test getting events by chain ID 1, contract 0x1, and type "attestation"
+        IWavsIndexer.IndexedEvent[] memory addr1Attestations = wavsIndexer
+            .getEventsByContractAndType(
+                "1",
+                address(0x1),
+                "attestation",
+                0,
+                10,
+                false
+            );
+        assertEq(addr1Attestations.length, 2);
+        assertEq(addr1Attestations[0].blockNumber, 1000);
+        assertEq(addr1Attestations[1].blockNumber, 1001);
+
+        // Test getting events by chain ID 1, contract 0x2, and type "transfer"
+        IWavsIndexer.IndexedEvent[] memory addr2Transfers = wavsIndexer
+            .getEventsByContractAndType(
+                "1",
+                address(0x2),
+                "transfer",
+                0,
+                10,
+                false
+            );
+        assertEq(addr2Transfers.length, 1);
+        assertEq(addr2Transfers[0].blockNumber, 1002);
+
+        // Test getting events by chain ID 1, contract 0x2, and type "transfer"
+        IWavsIndexer.IndexedEvent[] memory addr3Transfers = wavsIndexer
+            .getEventsByContractAndType(
+                "2",
+                address(0x1),
+                "transfer",
+                0,
+                10,
+                false
+            );
+        assertEq(addr3Transfers.length, 1);
+        assertEq(addr3Transfers[0].blockNumber, 1003);
+
+        // Test getting events by chain ID 2, contract 0x1, and type "unknown"
+        IWavsIndexer.IndexedEvent[] memory addr4Unknown = wavsIndexer
+            .getEventsByContractAndType(
+                "2",
+                address(0x1),
+                "unknown",
+                0,
+                10,
+                false
+            );
+        assertEq(addr4Unknown.length, 0);
+    }
+
+    function testGetEventsByContractAndTag() public {
+        // Create events with different relevant addresses and tags
+        string[] memory tags1 = new string[](1);
+        tags1[0] = "important";
+
+        IWavsIndexer.IndexedEvent[]
+            memory events = new IWavsIndexer.IndexedEvent[](3);
+        events[0] = _createMockEventCustom(
+            bytes32(0),
+            "1",
+            address(0x1),
+            1000,
+            1000,
+            "attestation",
+            abi.encode(123),
+            tags1,
+            new address[](0),
+            bytes(""),
+            false
+        );
+        events[1] = _createMockEventCustom(
+            bytes32(0),
+            "1",
+            address(0x2),
+            1001,
+            1001,
+            "transfer",
+            abi.encode(456),
+            tags1,
+            new address[](0),
+            bytes(""),
+            false
+        );
+        events[2] = _createMockEventCustom(
+            bytes32(0),
+            "2",
+            address(0x1),
+            1002,
+            1002,
+            "system",
+            abi.encode(789),
+            tags1,
+            new address[](0),
+            bytes(""),
+            false
+        );
+
+        IWavsIndexer.IndexingPayload memory payload = _createPayload(
+            events,
+            new bytes32[](0)
+        );
+
+        (
+            IWavsServiceHandler.Envelope memory envelope,
+            IWavsServiceHandler.SignatureData memory signatureData
+        ) = _createEnvelopeAndSignature(payload);
+
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
+
+        // Test getting events by chain ID 1, contract 0x1, and tag "important"
+        IWavsIndexer.IndexedEvent[] memory addr1Events = wavsIndexer
+            .getEventsByContractAndTag(
+                "1",
+                address(0x1),
+                "important",
+                0,
+                10,
+                false
+            );
+        assertEq(addr1Events.length, 1);
+        assertEq(addr1Events[0].blockNumber, 1000);
+
+        // Test getting events by chain ID 1, contract 0x2, and tag "important"
+        IWavsIndexer.IndexedEvent[] memory addr2Events = wavsIndexer
+            .getEventsByContractAndTag(
+                "1",
+                address(0x2),
+                "important",
+                0,
+                10,
+                false
+            );
+        assertEq(addr2Events.length, 1);
+        assertEq(addr2Events[0].blockNumber, 1001);
+
+        // Test getting events by chain ID 2, contract 0x1, and tag "important"
+        IWavsIndexer.IndexedEvent[] memory addr3Events = wavsIndexer
+            .getEventsByContractAndTag(
+                "2",
+                address(0x1),
+                "important",
+                0,
+                10,
+                false
+            );
+        assertEq(addr3Events.length, 1);
+        assertEq(addr3Events[0].blockNumber, 1002);
     }
 
     function testGetEventsByAddressAndTypeAndTag() public {
@@ -1009,6 +1421,169 @@ contract WavsIndexerTest is Test {
         assertEq(attestations3[0].data, abi.encode(101112));
     }
 
+    function testGetEventsByContractAndTypeAndTag() public {
+        // Create events with different relevant addresses and tags
+        string[] memory tags1 = new string[](2);
+        tags1[0] = "schema:0x123";
+        tags1[1] = _addressTag("attester", address(0x1));
+
+        string[] memory tags2 = new string[](2);
+        tags2[0] = "schema:0x456";
+        tags2[1] = _addressTag("attester", address(0x2));
+
+        IWavsIndexer.IndexedEvent[]
+            memory events = new IWavsIndexer.IndexedEvent[](6);
+        events[0] = _createMockEventCustom(
+            bytes32(0),
+            "1",
+            address(0x1),
+            1000,
+            1000,
+            "attestation",
+            abi.encode(123),
+            tags1,
+            new address[](0),
+            bytes(""),
+            false
+        );
+        events[1] = _createMockEventCustom(
+            bytes32(0),
+            "1",
+            address(0x1),
+            1001,
+            1001,
+            "attestation",
+            abi.encode(456),
+            tags1,
+            new address[](0),
+            bytes(""),
+            false
+        );
+        events[2] = _createMockEventCustom(
+            bytes32(0),
+            "1",
+            address(0x1),
+            1002,
+            1002,
+            "attestation",
+            abi.encode(789),
+            tags2,
+            new address[](0),
+            bytes(""),
+            false
+        );
+        events[3] = _createMockEventCustom(
+            bytes32(0),
+            "1",
+            address(0x1),
+            1003,
+            1003,
+            "attestation",
+            abi.encode(101112),
+            tags2,
+            new address[](0),
+            bytes(""),
+            false
+        );
+        events[4] = _createMockEventCustom(
+            bytes32(0),
+            "1",
+            address(0x1),
+            1004,
+            1004,
+            "attestation",
+            abi.encode(131415),
+            new string[](0),
+            new address[](0),
+            bytes(""),
+            false
+        );
+        events[5] = _createMockEventCustom(
+            bytes32(0),
+            "2",
+            address(0x1),
+            1005,
+            1005,
+            "attestation",
+            abi.encode(161718),
+            tags2,
+            new address[](0),
+            bytes(""),
+            false
+        );
+
+        IWavsIndexer.IndexingPayload memory payload = _createPayload(
+            events,
+            new bytes32[](0)
+        );
+
+        (
+            IWavsServiceHandler.Envelope memory envelope,
+            IWavsServiceHandler.SignatureData memory signatureData
+        ) = _createEnvelopeAndSignature(payload);
+
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
+
+        // Test getting events by chain ID 1, contract 0x1, type "attestation", and tag "schema:0x123"
+        IWavsIndexer.IndexedEvent[] memory attestations = wavsIndexer
+            .getEventsByContractAndTypeAndTag(
+                "1",
+                address(0x1),
+                "attestation",
+                "schema:0x123",
+                0,
+                10,
+                false
+            );
+        assertEq(attestations.length, 2);
+        assertEq(attestations[0].blockNumber, 1000);
+        assertEq(attestations[1].blockNumber, 1001);
+
+        // Test getting events by chain ID 1, contract 0x1, type "attestation", and tag "schema:0x456"
+        IWavsIndexer.IndexedEvent[] memory attestations2 = wavsIndexer
+            .getEventsByContractAndTypeAndTag(
+                "1",
+                address(0x1),
+                "attestation",
+                "schema:0x456",
+                0,
+                10,
+                false
+            );
+        assertEq(attestations2.length, 2);
+        assertEq(attestations2[0].blockNumber, 1002);
+        assertEq(attestations2[1].blockNumber, 1003);
+
+        // Test getting events by chain ID 1, contract 0x1, type "attestation", and tag "attester:0x456"
+        IWavsIndexer.IndexedEvent[] memory attestations3 = wavsIndexer
+            .getEventsByContractAndTypeAndTag(
+                "1",
+                address(0x1),
+                "attestation",
+                _addressTag("attester", address(0x2)),
+                0,
+                10,
+                false
+            );
+        assertEq(attestations3.length, 2);
+        assertEq(attestations3[0].blockNumber, 1002);
+        assertEq(attestations3[1].blockNumber, 1003);
+
+        // Test getting events by chain ID 2, contract 0x1, type "attestation", and tag "attester:0x456"
+        IWavsIndexer.IndexedEvent[] memory attestations4 = wavsIndexer
+            .getEventsByContractAndTypeAndTag(
+                "2",
+                address(0x1),
+                "attestation",
+                _addressTag("attester", address(0x2)),
+                0,
+                10,
+                false
+            );
+        assertEq(attestations4.length, 1);
+        assertEq(attestations4[0].blockNumber, 1005);
+    }
+
     function testCountFunctions() public {
         // Create diverse events for count testing
         string[] memory tags1 = new string[](1);
@@ -1105,18 +1680,13 @@ contract WavsIndexerTest is Test {
         assertEq(wavsIndexer.getEventCountByChainId("2"), 1);
 
         // Test getEventCountByContract
-        assertEq(
-            wavsIndexer.getEventCountByContract("1", address(0x100)),
-            3
-        );
-        assertEq(
-            wavsIndexer.getEventCountByContract("1", address(0x200)),
-            1
-        );
-        assertEq(
-            wavsIndexer.getEventCountByContract("2", address(0x200)),
-            1
-        );
+        assertEq(wavsIndexer.getEventCountByContract("1", address(0x100)), 3);
+        assertEq(wavsIndexer.getEventCountByContract("1", address(0x200)), 1);
+        assertEq(wavsIndexer.getEventCountByContract("2", address(0x200)), 1);
+
+        // Test getEventCountByAddress
+        assertEq(wavsIndexer.getEventCountByAddress(address(0x1000)), 3);
+        assertEq(wavsIndexer.getEventCountByAddress(address(0x2000)), 0);
 
         // Test getEventCountByType
         assertEq(wavsIndexer.getEventCountByType("attestation"), 3);
@@ -1125,13 +1695,48 @@ contract WavsIndexerTest is Test {
         // Test getEventCountByTag
         assertEq(wavsIndexer.getEventCountByTag("important"), 3);
 
-        // Test getEventCountByAddressAndTag
+        // Test getEventCountByContractAndAddress
         assertEq(
-            wavsIndexer.getEventCountByAddressAndTag(
-                address(0x1000),
-                "important"
+            wavsIndexer.getEventCountByContractAndAddress(
+                "1",
+                address(0x100),
+                address(0x1000)
             ),
-            3
+            2
+        );
+        assertEq(
+            wavsIndexer.getEventCountByContractAndAddress(
+                "2",
+                address(0x200),
+                address(0x1000)
+            ),
+            1
+        );
+        assertEq(
+            wavsIndexer.getEventCountByContractAndAddress(
+                "2",
+                address(0x200),
+                address(0x2000)
+            ),
+            0
+        );
+        assertEq(
+            wavsIndexer.getEventCountByContractAndAddress(
+                "1",
+                address(0x200),
+                address(0x1000)
+            ),
+            0
+        );
+
+        // Test getEventCountByTypeAndTag
+        assertEq(
+            wavsIndexer.getEventCountByTypeAndTag("attestation", "important"),
+            2
+        );
+        assertEq(
+            wavsIndexer.getEventCountByTypeAndTag("transfer", "important"),
+            1
         );
 
         // Test getEventCountByAddressAndType
@@ -1150,16 +1755,64 @@ contract WavsIndexerTest is Test {
             1
         );
 
-        // Test getEventCountByTypeAndTag
+        // Test getEventCountByAddressAndTag
         assertEq(
-            wavsIndexer.getEventCountByTypeAndTag(
-                "attestation",
+            wavsIndexer.getEventCountByAddressAndTag(
+                address(0x1000),
+                "important"
+            ),
+            3
+        );
+
+        // Test getEventCountByContractAndType
+        assertEq(
+            wavsIndexer.getEventCountByContractAndType(
+                "1",
+                address(0x100),
+                "attestation"
+            ),
+            2
+        );
+        assertEq(
+            wavsIndexer.getEventCountByContractAndType(
+                "1",
+                address(0x100),
+                "transfer"
+            ),
+            1
+        );
+        assertEq(
+            wavsIndexer.getEventCountByContractAndType(
+                "2",
+                address(0x100),
+                "transfer"
+            ),
+            0
+        );
+        assertEq(
+            wavsIndexer.getEventCountByContractAndType(
+                "1",
+                address(0x200),
+                "transfer"
+            ),
+            1
+        );
+
+        // Test getEventCountByContractAndTag
+        assertEq(
+            wavsIndexer.getEventCountByContractAndTag(
+                "1",
+                address(0x100),
                 "important"
             ),
             2
         );
         assertEq(
-            wavsIndexer.getEventCountByTypeAndTag("transfer", "important"),
+            wavsIndexer.getEventCountByContractAndTag(
+                "2",
+                address(0x200),
+                "important"
+            ),
             1
         );
 
@@ -1179,6 +1832,44 @@ contract WavsIndexerTest is Test {
                 "important"
             ),
             1
+        );
+
+        // Test getEventCountByContractAndTypeAndTag
+        assertEq(
+            wavsIndexer.getEventCountByContractAndTypeAndTag(
+                "1",
+                address(0x100),
+                "attestation",
+                "important"
+            ),
+            1
+        );
+        assertEq(
+            wavsIndexer.getEventCountByContractAndTypeAndTag(
+                "1",
+                address(0x100),
+                "transfer",
+                "important"
+            ),
+            1
+        );
+        assertEq(
+            wavsIndexer.getEventCountByContractAndTypeAndTag(
+                "2",
+                address(0x200),
+                "attestation",
+                "important"
+            ),
+            1
+        );
+        assertEq(
+            wavsIndexer.getEventCountByContractAndTypeAndTag(
+                "1",
+                address(0x200),
+                "attestation",
+                "important"
+            ),
+            0
         );
     }
 
@@ -1363,15 +2054,14 @@ contract WavsIndexerTest is Test {
         assertEq(attestationEvents[2].tags[2], _addressTag("recipient", user1));
 
         // Test getting attestations by attester
-        IWavsIndexer.IndexedEvent[]
-            memory attestationsBySender = wavsIndexer
-                .getEventsByTypeAndTag(
-                    "attestation",
-                    _addressTag("attester", user3),
-                    0,
-                    10,
-                    false
-                );
+        IWavsIndexer.IndexedEvent[] memory attestationsBySender = wavsIndexer
+            .getEventsByTypeAndTag(
+                "attestation",
+                _addressTag("attester", user3),
+                0,
+                10,
+                false
+            );
         assertEq(attestationsBySender.length, 2);
         assertEq(attestationsBySender[0].eventId, _generateEventId(1, 3));
         assertEq(attestationsBySender[0].eventType, "attestation");
@@ -1397,15 +2087,14 @@ contract WavsIndexerTest is Test {
         );
 
         // Test getting attestations by recipient
-        IWavsIndexer.IndexedEvent[]
-            memory attestationsByRecipient = wavsIndexer
-                .getEventsByTypeAndTag(
-                    "attestation",
-                    _addressTag("recipient", user2),
-                    0,
-                    10,
-                    false
-                );
+        IWavsIndexer.IndexedEvent[] memory attestationsByRecipient = wavsIndexer
+            .getEventsByTypeAndTag(
+                "attestation",
+                _addressTag("recipient", user2),
+                0,
+                10,
+                false
+            );
         assertEq(attestationsByRecipient.length, 2);
         assertEq(attestationsByRecipient[0].eventId, _generateEventId(1, 0));
         assertEq(attestationsByRecipient[0].eventType, "attestation");
