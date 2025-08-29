@@ -8,6 +8,7 @@ import {SchemaRegistry} from "@ethereum-attestation-service/eas-contracts/contra
 import {IEAS, AttestationRequest, AttestationRequestData, RevocationRequest, RevocationRequestData} from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
 import {ISchemaRegistry} from "@ethereum-attestation-service/eas-contracts/contracts/ISchemaRegistry.sol";
 import {NO_EXPIRATION_TIME, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/contracts/Common.sol";
+import {AttestationAttested, AttestationRevoked} from "../../src/interfaces/IIndexedEvents.sol";
 
 contract EASIndexerResolverTest is Test {
     EASIndexerResolver public resolver;
@@ -41,7 +42,7 @@ contract EASIndexerResolverTest is Test {
 
         // Expect the AttestationAttested event to be emitted
         vm.expectEmit(false, false, false, false);
-        emit EASIndexerResolver.AttestationAttested(address(eas), bytes32(0)); // Check event signature only
+        emit AttestationAttested(address(eas), bytes32(0)); // Check event signature only
 
         // Create an attestation which will trigger the resolver
         eas.attest(
@@ -70,10 +71,7 @@ contract EASIndexerResolverTest is Test {
         for (uint256 i = 0; i < values.length; i++) {
             // Expect the AttestationAttested event
             vm.expectEmit(false, false, false, false);
-            emit EASIndexerResolver.AttestationAttested(
-                address(eas),
-                bytes32(0)
-            );
+            emit AttestationAttested(address(eas), bytes32(0));
 
             uids[i] = eas.attest(
                 AttestationRequest({
@@ -114,7 +112,7 @@ contract EASIndexerResolverTest is Test {
 
         // Expect the AttestationRevoked event
         vm.expectEmit(false, false, false, false);
-        emit EASIndexerResolver.AttestationRevoked(address(eas), bytes32(0)); // Check event signature only
+        emit AttestationRevoked(address(eas), bytes32(0)); // Check event signature only
 
         // Revoke the attestation - should succeed
         eas.revoke(
@@ -153,10 +151,7 @@ contract EASIndexerResolverTest is Test {
         for (uint256 i = 0; i < values.length; i++) {
             // Expect the AttestationRevoked event
             vm.expectEmit(false, false, false, false);
-            emit EASIndexerResolver.AttestationRevoked(
-                address(eas),
-                bytes32(0)
-            ); // Check event signature only
+            emit AttestationRevoked(address(eas), bytes32(0)); // Check event signature only
 
             eas.revoke(
                 RevocationRequest({

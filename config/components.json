@@ -1,22 +1,6 @@
 {
   "components": [
     {
-      "filename": "wavs_indexer.wasm",
-      "package_name": "wavs-indexer",
-      "package_version": "0.1.0",
-      "trigger_event": "AttestationAttested(address,bytes32)",
-      "trigger_json_path": "eas_contracts.indexer_resolver",
-      "submit_json_path": "wavs_indexer.wavs_indexer"
-    },
-    {
-      "filename": "wavs_indexer.wasm",
-      "package_name": "wavs-indexer",
-      "package_version": "0.1.0",
-      "trigger_event": "AttestationRevoked(address,bytes32)",
-      "trigger_json_path": "eas_contracts.indexer_resolver",
-      "submit_json_path": "wavs_indexer.wavs_indexer"
-    },
-    {
       "filename": "geyser.wasm",
       "package_name": "geyser",
       "package_version": "0.1.0",
@@ -145,6 +129,38 @@
         "attestation_value": "0"
       },
       "env_variables": []
+    },
+    {
+      "filename": "wavs_indexer.wasm",
+      "package_name": "wavs-indexer",
+      "package_version": "0.1.0",
+      "trigger_event": "AttestationAttested(address,bytes32)",
+      "trigger_json_path": "eas_contracts.indexer_resolver",
+      "submit_json_path": "wavs_indexer.wavs_indexer"
+    },
+    {
+      "filename": "wavs_indexer.wasm",
+      "package_name": "wavs-indexer",
+      "package_version": "0.1.0",
+      "trigger_event": "AttestationRevoked(address,bytes32)",
+      "trigger_json_path": "eas_contracts.indexer_resolver",
+      "submit_json_path": "wavs_indexer.wavs_indexer"
+    },
+    {
+      "filename": "wavs_indexer.wasm",
+      "package_name": "wavs-indexer",
+      "package_version": "0.1.0",
+      "trigger_event": "Interaction(address,string,string[],bytes)",
+      "trigger_json_path": "prediction_market_contracts.conditional_tokens",
+      "submit_json_path": "wavs_indexer.wavs_indexer"
+    },
+    {
+      "filename": "wavs_indexer.wasm",
+      "package_name": "wavs-indexer",
+      "package_version": "0.1.0",
+      "trigger_event": "Interaction(address,string,string[],bytes)",
+      "trigger_json_path": "prediction_market_contracts.market_maker",
+      "submit_json_path": "wavs_indexer.wavs_indexer"
     }
   ]
 }

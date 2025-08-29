@@ -1,7 +1,5 @@
 pub mod attestation;
-// pub mod custom;
-// pub mod erc20;
-// pub mod erc721;
+pub mod interaction;
 
 use crate::solidity::IndexingPayload;
 use crate::trigger::EventData;

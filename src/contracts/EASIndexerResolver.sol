@@ -4,20 +4,11 @@ pragma solidity 0.8.27;
 
 import {IEAS, Attestation} from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
 import {SchemaResolver} from "@ethereum-attestation-service/eas-contracts/contracts/resolver/SchemaResolver.sol";
+import {AttestationAttested, AttestationRevoked} from "../interfaces/IIndexedEvents.sol";
 
 /// @title EASIndexerResolver
 /// @notice A schema resolver that automatically indexes attestations upon creation.
 contract EASIndexerResolver is SchemaResolver {
-    /// @notice Emitted when an attestation is attested.
-    /// @param eas The EAS contract instance.
-    /// @param uid The UID of the attested attestation.
-    event AttestationAttested(address indexed eas, bytes32 indexed uid);
-
-    /// @notice Emitted when an attestation is revoked.
-    /// @param eas The EAS contract instance.
-    /// @param uid The UID of the revoked attestation.
-    event AttestationRevoked(address indexed eas, bytes32 indexed uid);
-
     /// @notice Creates a new EASIndexerResolver instance.
     /// @param eas The EAS contract instance.
     constructor(IEAS eas) SchemaResolver(eas) {}

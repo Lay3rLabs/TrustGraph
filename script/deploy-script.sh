@@ -150,8 +150,8 @@ echo "✅ All components uploaded successfully"
 # clear tmp file
 rm -f $STATUS_FILE
 
-echo "Waiting for 3 seconds for registry to update..."
-sleep 3
+echo "Waiting for 5 seconds for registry to update..."
+sleep 5
 
 # Create service with multiple workflows
 echo "Creating service with multiple component workflows..."

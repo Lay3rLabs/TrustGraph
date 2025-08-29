@@ -19,6 +19,12 @@ tasks:
       - 'echo "{{.INDEXER_ADDR}}"'
     silent: true
 
+  collateral-token-address:
+    desc: "Get the prediction market collateral token address"
+    cmds:
+      - 'echo "{{.COLLATERAL_TOKEN_ADDR}}"'
+    silent: true
+
   service-manager-address:
     desc: "Get the WAVS Service Manager address"
     cmds:
@@ -70,6 +76,8 @@ vars:
     sh: test -f .docker/deployment_summary.json && jq -r '.eas_contracts.schema_registrar' .docker/deployment_summary.json || echo ""
   INDEXER_ADDR:
     sh: test -f .docker/deployment_summary.json && jq -r '.wavs_indexer.wavs_indexer' .docker/deployment_summary.json || echo ""
+  COLLATERAL_TOKEN_ADDR:
+    sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market_contracts.collateral_token' .docker/deployment_summary.json || echo ""
   EAS_INDEXER_RESOLVER_ADDR:
     sh: test -f .docker/deployment_summary.json && jq -r '.eas_contracts.indexer_resolver' .docker/deployment_summary.json || echo ""
   VOTING_POWER_ADDR:

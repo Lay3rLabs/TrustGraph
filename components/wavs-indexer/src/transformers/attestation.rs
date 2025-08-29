@@ -5,19 +5,16 @@ use crate::register_transformer;
 use crate::trigger::EventData;
 use crate::{bindings::host::get_evm_chain_config, solidity::IndexingPayload};
 use alloy_network::Ethereum;
-use alloy_primitives::{keccak256, FixedBytes, U256};
+use alloy_primitives::{FixedBytes, U256};
+use alloy_sol_types::SolEvent;
 use anyhow::Result;
 use wavs_indexer_api::query::WavsIndexerQuerier;
-use wavs_wasi_utils::decode_event_log_data;
-use wavs_wasi_utils::evm::new_evm_provider;
+use wavs_wasi_utils::{decode_event_log_data, evm::new_evm_provider};
 
 use crate::solidity::{AttestationAttested, AttestationRevoked, IndexedEvent};
 
 pub struct AttestationTransformer;
 register_transformer!(AttestationTransformer);
-
-const ATTESTATION_EVENT_SIGNATURE: &str = "AttestationAttested(address,bytes32)";
-const REVOCATION_EVENT_SIGNATURE: &str = "AttestationRevoked(address,bytes32)";
 
 impl EventTransformer for AttestationTransformer {
     fn name() -> &'static str {
@@ -25,17 +22,17 @@ impl EventTransformer for AttestationTransformer {
     }
 
     fn supports_event(event_signature: &FixedBytes<32>) -> bool {
-        *event_signature == keccak256(ATTESTATION_EVENT_SIGNATURE)
-            || *event_signature == keccak256(REVOCATION_EVENT_SIGNATURE)
+        *event_signature == AttestationAttested::SIGNATURE_HASH
+            || *event_signature == AttestationRevoked::SIGNATURE_HASH
     }
 
     async fn transform(
         event_signature: FixedBytes<32>,
         event_data: EventData,
     ) -> Result<IndexingPayload> {
-        if event_signature == keccak256(ATTESTATION_EVENT_SIGNATURE) {
+        if event_signature == AttestationAttested::SIGNATURE_HASH {
             Self::transform_attestation(event_data).await
-        } else if event_signature == keccak256(REVOCATION_EVENT_SIGNATURE) {
+        } else if event_signature == AttestationRevoked::SIGNATURE_HASH {
             Self::transform_revocation(event_data).await
         } else {
             Err(anyhow::anyhow!("Unsupported attestation event"))
