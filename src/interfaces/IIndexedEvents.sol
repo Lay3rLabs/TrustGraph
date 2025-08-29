@@ -15,7 +15,7 @@ event AttestationRevoked(address indexed eas, bytes32 indexed uid);
 /// @param data Arbitrary data associated with the interaction.
 event Interaction(
     address indexed addr,
-    string indexed interactionType,
+    string interactionType,
     string[] tags,
     bytes data
 );
