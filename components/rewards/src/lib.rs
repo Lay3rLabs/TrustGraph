@@ -32,14 +32,14 @@ impl Guest for Component {
 
         // EAS-related configuration
         let eas_address = config_var("eas_address").ok_or_else(|| "Failed to get EAS address")?;
-        let eas_indexer_address =
-            config_var("indexer_address").ok_or_else(|| "Failed to get EAS indexer address")?;
+        let indexer_address =
+            config_var("indexer_address").ok_or_else(|| "Failed to get indexer address")?;
         let chain_name = config_var("chain_name").unwrap_or_else(|| "local".to_string());
 
         println!("📋 Configuration loaded:");
         println!("  - Reward token: {}", reward_token_address);
         println!("  - EAS address: {}", eas_address);
-        println!("  - EAS indexer: {}", eas_indexer_address);
+        println!("  - Indexer: {}", indexer_address);
         println!("  - Chain: {}", chain_name);
 
         // Try to use Pinata first, fallback to local IPFS if API key is not available
@@ -76,7 +76,7 @@ impl Guest for Component {
         // Reward users for received attestations - 5e17 rewards per attestation
         registry.add_source(sources::eas::EasSource::new(
             &eas_address,
-            &eas_indexer_address,
+            &indexer_address,
             &chain_name,
             sources::eas::EasRewardType::ReceivedAttestations(schema_uid.clone()),
             U256::from(5e17),
@@ -190,7 +190,7 @@ impl Guest for Component {
             let has_trust = pagerank_source_config.has_trust_enabled();
             match sources::eas_pagerank::EasPageRankSource::new(
                 &eas_address,
-                &eas_indexer_address,
+                &indexer_address,
                 &chain_name,
                 pagerank_source_config,
             ) {

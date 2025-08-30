@@ -294,7 +294,7 @@ async fn calculate_user_voting_power(
         query_received_attestation_count(user_address, governance_schema, Some(config.clone()))
             .await?;
 
-    let count_u64 = attestation_count.as_u64();
+    let count_u64 = attestation_count.to::<u64>();
 
     // Calculate voting tokens (1 attestation = 1 token)
     let tokens = count_u64;

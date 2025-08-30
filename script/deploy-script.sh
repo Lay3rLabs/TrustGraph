@@ -79,10 +79,11 @@ if [ "$(task get-deploy-status)" = "TESTNET" ]; then
     export SUBMIT_CHAIN=sepolia
 fi
 
+export INDEXER_ADDRESS=$(jq -r '.wavs_indexer.wavs_indexer' .docker/deployment_summary.json)
+
 # Configure EAS addresses from deployment summary
 echo "Configuring EAS addresses from deployment summary..."
 export EAS_ADDRESS=$(jq -r '.eas_contracts.eas' .docker/deployment_summary.json)
-export INDEXER_ADDRESS=$(jq -r '.eas_contracts.indexer' .docker/deployment_summary.json)
 export VOUCHING_SCHEMA_ID=$(jq -r '.eas_schemas.vouching_schema' .docker/deployment_summary.json)
 
 # Determine chain name based on deployment environment
@@ -148,6 +149,9 @@ fi
 echo "✅ All components uploaded successfully"
 # clear tmp file
 rm -f $STATUS_FILE
+
+echo "Waiting for 5 seconds for registry to update..."
+sleep 5
 
 # Create service with multiple workflows
 echo "Creating service with multiple component workflows..."

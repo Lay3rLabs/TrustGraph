@@ -76,13 +76,22 @@ forge script script/DeployZodiacSafes.s.sol:DeployZodiacSafes \
 echo "🌊 Deploying Geyser contracts..."
 forge create Geyser --json --rpc-url ${RPC_URL} --broadcast --private-key $FUNDED_KEY --constructor-args "${WAVS_SERVICE_MANAGER_ADDRESS}" > .docker/geyser_deploy.json
 
+echo "🌐 Deploying WavsIndexer contract..."
+
+# Deploy WavsIndexer contract using Foundry script
+forge script script/DeployWavsIndexer.s.sol:DeployWavsIndexer \
+    --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
+    --rpc-url "${RPC_URL}" \
+    --private-key "${FUNDED_KEY}" \
+    --broadcast
+
 # Extract deployed addresses from EAS deployment
 export EAS_REGISTRY_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("SchemaRegistry deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 export EAS_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("EAS deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 export EAS_ATTESTER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("Attester deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 export EAS_SCHEMA_REGISTRAR_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("SchemaRegistrar deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 export EAS_INDEXER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("Indexer deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
-export EAS_INDEXER_RESOLVER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("IndexerResolver deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
+export EAS_INDEXER_RESOLVER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("EASIndexerResolver deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 export EAS_ATTEST_TRIGGER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("EASAttestTrigger deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 
 # Extract schema IDs
@@ -122,6 +131,9 @@ export SAFE2_SIGNER_MODULE=$(jq -r '.safe2_signer_module' .docker/zodiac_safes_d
 export SAFE_SINGLETON=$(jq -r '.safe_singleton' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
 export SAFE_FACTORY=$(jq -r '.safe_factory' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
 
+# Extract deployed addresses from WavsIndexer deployment
+export wavs_indexer_ADDR=$(jq -r '.wavs_indexer' .docker/wavs_indexer_deploy.json 2>/dev/null || echo "")
+
 # Use EAS Attest Trigger as the main service trigger
 export SERVICE_TRIGGER_ADDR="${EAS_ATTEST_TRIGGER_ADDR}"
 
@@ -130,12 +142,14 @@ cat > .docker/deployment_summary.json << EOF
 {
   "rpc_url": "${RPC_URL}",
   "wavs_service_manager": "${WAVS_SERVICE_MANAGER_ADDRESS}",
+  "wavs_indexer": {
+    "wavs_indexer": "${wavs_indexer_ADDR}"
+  },
   "eas_contracts": {
     "schema_registry": "${EAS_REGISTRY_ADDR}",
     "eas": "${EAS_ADDR}",
     "attester": "${EAS_ATTESTER_ADDR}",
     "schema_registrar": "${EAS_SCHEMA_REGISTRAR_ADDR}",
-    "indexer": "${EAS_INDEXER_ADDR}",
     "indexer_resolver": "${EAS_INDEXER_RESOLVER_ADDR}"
   },
   "eas_schemas": {
@@ -190,6 +204,7 @@ echo ""
 echo "📋 Deployment Summary:"
 echo "   RPC_URL: ${RPC_URL}"
 echo "   WAVS_SERVICE_MANAGER_ADDRESS: ${WAVS_SERVICE_MANAGER_ADDRESS}"
+echo "   wavs_indexer_ADDR: ${wavs_indexer_ADDR}"
 echo ""
 echo "🏗️  EAS Contracts:"
 echo "   EAS_REGISTRY_ADDR: ${EAS_REGISTRY_ADDR}"
@@ -245,6 +260,7 @@ echo "📄 Governance deployment logs saved to .docker/governance_deploy.json"
 echo "📄 Rewards deployment details saved to .docker/rewards_deploy.json"
 echo "📄 Prediction Market deployment details saved to .docker/prediction_market_deploy.json"
 echo "📄 Zodiac Safes deployment details saved to .docker/zodiac_safes_deploy.json"
+echo "📄 WavsIndexer deployment details saved to .docker/wavs_indexer_deploy.json"
 
 # Update environment variables for other scripts
 export SERVICE_SUBMISSION_ADDR="${EAS_ATTESTER_ADDR}"  # For backwards compatibility

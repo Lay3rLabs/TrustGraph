@@ -8,6 +8,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use std::collections::HashMap;
 use std::str::FromStr;
+use wavs_indexer_api::WavsIndexerQuerier;
 use wavs_wasi_utils::evm::{
     alloy_primitives::{hex, Address, FixedBytes, TxKind, U256},
     new_evm_provider,
@@ -80,6 +81,16 @@ impl EasPageRankSource {
         })
     }
 
+    async fn indexer_querier(&self) -> Result<WavsIndexerQuerier> {
+        let chain_config = get_evm_chain_config(&self.chain_name)
+            .ok_or_else(|| anyhow::anyhow!("Failed to get chain config for {}", self.chain_name))?;
+        let indexer_querier =
+            WavsIndexerQuerier::new(self.indexer_address, chain_config.http_endpoint.unwrap())
+                .await
+                .map_err(|e| anyhow::anyhow!("Failed to create indexer querier: {}", e))?;
+        Ok(indexer_querier)
+    }
+
     async fn create_provider(&self) -> Result<RootProvider<Ethereum>> {
         let chain_config = get_evm_chain_config(&self.chain_name)
             .ok_or_else(|| anyhow::anyhow!("Failed to get chain config for {}", self.chain_name))?;
@@ -89,19 +100,6 @@ impl EasPageRankSource {
                 .ok_or_else(|| anyhow::anyhow!("No HTTP endpoint configured"))?,
         );
         Ok(provider)
-    }
-
-    async fn execute_call(&self, call_data: Vec<u8>) -> Result<Vec<u8>> {
-        let provider = self.create_provider().await?;
-
-        let tx = alloy_rpc_types::eth::TransactionRequest {
-            to: Some(TxKind::Call(self.indexer_address)),
-            input: TransactionInput { input: Some(call_data.into()), data: None },
-            ..Default::default()
-        };
-
-        let result = provider.call(tx).await?;
-        Ok(result.to_vec())
     }
 
     fn parse_schema_uid(&self, schema_uid: &str) -> Result<FixedBytes<32>> {
@@ -116,11 +114,12 @@ impl EasPageRankSource {
 
     async fn get_total_schema_attestations(&self, schema_uid: &str) -> Result<u64> {
         let schema = self.parse_schema_uid(schema_uid)?;
-        let call = IEASIndexer::getSchemaAttestationUIDCountCall { schemaUID: schema };
-        let result = self.execute_call(call.abi_encode()).await?;
-        let decoded = IEASIndexer::getSchemaAttestationUIDCountCall::abi_decode_returns(&result)
-            .map_err(|e| anyhow::anyhow!("Failed to decode schema attestation count: {}", e))?;
-        Ok(decoded.to::<u64>())
+        let indexer_querier = self.indexer_querier().await?;
+        let count = indexer_querier
+            .get_attestation_count_by_schema(schema)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get schema attestation count: {}", e))?;
+        Ok(count.to::<u64>())
     }
 
     async fn get_attestation_uids(
@@ -130,16 +129,12 @@ impl EasPageRankSource {
         length: u64,
     ) -> Result<Vec<FixedBytes<32>>> {
         let schema = self.parse_schema_uid(schema_uid)?;
-        let call = IEASIndexer::getSchemaAttestationUIDsCall {
-            schemaUID: schema,
-            start: U256::from(start),
-            length: U256::from(length),
-            reverseOrder: false,
-        };
-        let result = self.execute_call(call.abi_encode()).await?;
-        let decoded = IEASIndexer::getSchemaAttestationUIDsCall::abi_decode_returns(&result)
-            .map_err(|e| anyhow::anyhow!("Failed to decode schema attestation UIDs: {}", e))?;
-        Ok(decoded)
+        let indexer_querier = self.indexer_querier().await?;
+        let uids = indexer_querier
+            .get_attestation_uids_by_schema(schema, U256::from(start), U256::from(length), false)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get schema attestation UIDs: {}", e))?;
+        Ok(uids)
     }
 
     async fn get_attestation_details(
@@ -492,15 +487,6 @@ sol! {
         address attester;
         bool revocable;
         bytes data;
-    }
-
-    interface IEASIndexer {
-        function getReceivedAttestationUIDs(address recipient, bytes32 schemaUID, uint256 start, uint256 length, bool reverseOrder) external view returns (bytes32[] memory);
-        function getReceivedAttestationUIDCount(address recipient, bytes32 schemaUID) external view returns (uint256);
-        function getSentAttestationUIDs(address attester, bytes32 schemaUID, uint256 start, uint256 length, bool reverseOrder) external view returns (bytes32[] memory);
-        function getSentAttestationUIDCount(address attester, bytes32 schemaUID) external view returns (uint256);
-        function getSchemaAttestationUIDs(bytes32 schemaUID, uint256 start, uint256 length, bool reverseOrder) external view returns (bytes32[] memory);
-        function getSchemaAttestationUIDCount(bytes32 schemaUID) external view returns (uint256);
     }
 
     interface IEAS {

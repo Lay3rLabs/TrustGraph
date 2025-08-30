@@ -1,5 +1,5 @@
 [package]
-name = "wavs-eas"
+name = "wavs-indexer-api"
 edition.workspace = true
 version.workspace = true
 authors.workspace = true
@@ -14,6 +14,7 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 anyhow = { workspace = true }
 wit-bindgen-rt = { workspace = true, features = ["bitflags"] }
+alloy-sol-macro = { workspace = true }
 alloy-sol-types = { workspace = true }
 alloy-primitives = { workspace = true, features = ["serde"] }
 alloy-json-abi = { workspace = true }
@@ -21,14 +22,12 @@ alloy-dyn-abi = { workspace = true }
 alloy-network = { workspace = true }
 alloy-provider = { workspace = true }
 alloy-rpc-types = { workspace = true }
+alloy-contract = { workspace = true }
 hex = { workspace = true }
-tiny-keccak = { workspace = true }
 thiserror = { workspace = true }
-wavs-indexer-api = { workspace = true }
 
 [dev-dependencies]
 mockall = { workspace = true }
-tokio = { workspace = true }
 
 [profile.release]
 codegen-units = 1

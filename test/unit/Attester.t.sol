@@ -4,15 +4,10 @@ pragma solidity 0.8.27;
 import {Test} from "forge-std/Test.sol";
 import {console} from "forge-std/console.sol";
 import {Attester} from "../../src/contracts/Attester.sol";
-import {IndexerResolver} from "../../src/contracts/IndexerResolver.sol";
-import {Indexer} from "../../src/contracts/Indexer.sol";
+import {EASIndexerResolver} from "../../src/contracts/EASIndexerResolver.sol";
 import {EAS} from "@ethereum-attestation-service/eas-contracts/contracts/EAS.sol";
 import {SchemaRegistry} from "@ethereum-attestation-service/eas-contracts/contracts/SchemaRegistry.sol";
-import {
-    IEAS,
-    AttestationRequest,
-    AttestationRequestData
-} from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
+import {IEAS, AttestationRequest, AttestationRequestData} from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
 import {ISchemaRegistry} from "@ethereum-attestation-service/eas-contracts/contracts/ISchemaRegistry.sol";
 import {NO_EXPIRATION_TIME, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/contracts/Common.sol";
 import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
@@ -55,8 +50,7 @@ contract MockWavsServiceManager is IWavsServiceManager {
 
 contract AttesterTest is Test {
     Attester public attester;
-    IndexerResolver public resolver;
-    Indexer public indexer;
+    EASIndexerResolver public resolver;
     EAS public eas;
     SchemaRegistry public schemaRegistry;
     MockWavsServiceManager public serviceManager;
@@ -72,10 +66,12 @@ contract AttesterTest is Test {
         // Deploy contracts
         schemaRegistry = new SchemaRegistry();
         eas = new EAS(ISchemaRegistry(address(schemaRegistry)));
-        indexer = new Indexer(IEAS(address(eas)));
-        resolver = new IndexerResolver(IEAS(address(eas)), indexer);
+        resolver = new EASIndexerResolver(IEAS(address(eas)));
         serviceManager = new MockWavsServiceManager();
-        attester = new Attester(IEAS(address(eas)), IWavsServiceManager(address(serviceManager)));
+        attester = new Attester(
+            IEAS(address(eas)),
+            IWavsServiceManager(address(serviceManager))
+        );
 
         // Register schemas
         schemaId = schemaRegistry.register(SCHEMA, resolver, true);
@@ -84,7 +80,10 @@ contract AttesterTest is Test {
 
     function testConstruction_ShouldRevertWithInvalidEAS() public {
         vm.expectRevert(Attester.InvalidEAS.selector);
-        new Attester(IEAS(ZERO_ADDRESS), IWavsServiceManager(address(serviceManager)));
+        new Attester(
+            IEAS(ZERO_ADDRESS),
+            IWavsServiceManager(address(serviceManager))
+        );
     }
 
     function testConstruction_ShouldRevertWithInvalidServiceManager() public {
@@ -126,16 +125,20 @@ contract AttesterTest is Test {
 
         // Encode the AttestationRequest as the data
         bytes memory attestData = abi.encode(request);
-        AttestationPayload memory payload = AttestationPayload({operationType: OperationType.ATTEST, data: attestData});
+        AttestationPayload memory payload = AttestationPayload({
+            operationType: OperationType.ATTEST,
+            data: attestData
+        });
 
         bytes memory encodedPayload = abi.encode(payload);
 
         // Create envelope
-        IWavsServiceHandler.Envelope memory envelope = IWavsServiceHandler.Envelope({
-            eventId: bytes20(uint160(0x1)),
-            ordering: bytes12(uint96(0)),
-            payload: encodedPayload
-        });
+        IWavsServiceHandler.Envelope memory envelope = IWavsServiceHandler
+            .Envelope({
+                eventId: bytes20(uint160(0x1)),
+                ordering: bytes12(uint96(0)),
+                payload: encodedPayload
+            });
 
         // Create signature data
         address[] memory signers = new address[](1);
@@ -143,8 +146,12 @@ contract AttesterTest is Test {
         bytes[] memory signatures = new bytes[](1);
         signatures[0] = abi.encodePacked("mock_signature");
 
-        IWavsServiceHandler.SignatureData memory signatureData =
-            IWavsServiceHandler.SignatureData({signers: signers, signatures: signatures, referenceBlock: 1000});
+        IWavsServiceHandler.SignatureData
+            memory signatureData = IWavsServiceHandler.SignatureData({
+                signers: signers,
+                signatures: signatures,
+                referenceBlock: 1000
+            });
 
         // Call handleSignedEnvelope
         attester.handleSignedEnvelope(envelope, signatureData);
@@ -161,10 +168,17 @@ contract AttesterTest is Test {
         bytes memory attestationData = abi.encode(uint256(42));
 
         // Step 1: Encode attest data (schema, recipient, data) - what component does
-        bytes memory attestData = abi.encode(schema, recipient, attestationData);
+        bytes memory attestData = abi.encode(
+            schema,
+            recipient,
+            attestationData
+        );
 
         // Step 2: Create AttestationPayload - what component does
-        AttestationPayload memory payload = AttestationPayload({operationType: OperationType.ATTEST, data: attestData});
+        AttestationPayload memory payload = AttestationPayload({
+            operationType: OperationType.ATTEST,
+            data: attestData
+        });
 
         // Step 3: Encode the full payload - what component sends
         bytes memory encodedPayload = abi.encode(payload);
@@ -172,14 +186,23 @@ contract AttesterTest is Test {
         console.log("Encoded payload length:", encodedPayload.length);
 
         // Step 4: Test decoding - what contract receives
-        AttestationPayload memory decodedPayload = abi.decode(encodedPayload, (AttestationPayload));
+        AttestationPayload memory decodedPayload = abi.decode(
+            encodedPayload,
+            (AttestationPayload)
+        );
 
         // Verify operation type
-        assertEq(uint8(decodedPayload.operationType), uint8(OperationType.ATTEST));
+        assertEq(
+            uint8(decodedPayload.operationType),
+            uint8(OperationType.ATTEST)
+        );
 
         // Step 5: Test inner data decoding - what contract does internally
-        (bytes32 decodedSchema, address decodedRecipient, bytes memory decodedData) =
-            abi.decode(decodedPayload.data, (bytes32, address, bytes));
+        (
+            bytes32 decodedSchema,
+            address decodedRecipient,
+            bytes memory decodedData
+        ) = abi.decode(decodedPayload.data, (bytes32, address, bytes));
 
         // Verify all components
         assertEq(decodedSchema, schema);
@@ -208,15 +231,19 @@ contract AttesterTest is Test {
         });
 
         bytes memory attestData = abi.encode(request);
-        AttestationPayload memory payload = AttestationPayload({operationType: OperationType.ATTEST, data: attestData});
+        AttestationPayload memory payload = AttestationPayload({
+            operationType: OperationType.ATTEST,
+            data: attestData
+        });
         bytes memory encodedPayload = abi.encode(payload);
 
         // Create envelope
-        IWavsServiceHandler.Envelope memory envelope = IWavsServiceHandler.Envelope({
-            eventId: bytes20(uint160(0x1)),
-            ordering: bytes12(uint96(0)),
-            payload: encodedPayload
-        });
+        IWavsServiceHandler.Envelope memory envelope = IWavsServiceHandler
+            .Envelope({
+                eventId: bytes20(uint160(0x1)),
+                ordering: bytes12(uint96(0)),
+                payload: encodedPayload
+            });
 
         // Create signature data
         address[] memory signers = new address[](1);
@@ -224,14 +251,23 @@ contract AttesterTest is Test {
         bytes[] memory signatures = new bytes[](1);
         signatures[0] = abi.encodePacked("mock_signature");
 
-        IWavsServiceHandler.SignatureData memory signatureData =
-            IWavsServiceHandler.SignatureData({signers: signers, signatures: signatures, referenceBlock: 1000});
+        IWavsServiceHandler.SignatureData
+            memory signatureData = IWavsServiceHandler.SignatureData({
+                signers: signers,
+                signatures: signatures,
+                referenceBlock: 1000
+            });
 
         // This should work without reverting
         attester.handleSignedEnvelope(envelope, signatureData);
     }
 
-    event AttestationRequested(address indexed creator, bytes32 indexed schema, address indexed recipient, bytes data);
+    event AttestationRequested(
+        address indexed creator,
+        bytes32 indexed schema,
+        address indexed recipient,
+        bytes data
+    );
 
     function testAttestationRequestedEventFormat() public {
         // Emit the exact event that would trigger our WAVS component
@@ -240,7 +276,12 @@ contract AttesterTest is Test {
         bytes memory attestationData = abi.encode(uint256(42));
 
         // Emit the event (simulating what would happen on-chain)
-        emit AttestationRequested(msg.sender, schema, recipient, attestationData);
+        emit AttestationRequested(
+            msg.sender,
+            schema,
+            recipient,
+            attestationData
+        );
 
         // Now simulate what the WAVS component does:
         // 1. Decode event data (this would happen in the component)
@@ -248,26 +289,49 @@ contract AttesterTest is Test {
         // 3. Test that it matches our expected format
 
         // Convert event data to what component would encode
-        bytes memory componentAttestData = abi.encode(schema, recipient, attestationData);
-        AttestationPayload memory componentPayload =
-            AttestationPayload({operationType: OperationType.ATTEST, data: componentAttestData});
+        bytes memory componentAttestData = abi.encode(
+            schema,
+            recipient,
+            attestationData
+        );
+        AttestationPayload memory componentPayload = AttestationPayload({
+            operationType: OperationType.ATTEST,
+            data: componentAttestData
+        });
         bytes memory componentEncodedPayload = abi.encode(componentPayload);
 
         console.log("Event attestationData length:", attestationData.length);
-        console.log("Component attest_data length:", componentAttestData.length);
-        console.log("Component full payload length:", componentEncodedPayload.length);
+        console.log(
+            "Component attest_data length:",
+            componentAttestData.length
+        );
+        console.log(
+            "Component full payload length:",
+            componentEncodedPayload.length
+        );
 
         // Test that our contract can decode this
-        AttestationPayload memory decodedPayload = abi.decode(componentEncodedPayload, (AttestationPayload));
-        assertEq(uint8(decodedPayload.operationType), uint8(OperationType.ATTEST));
+        AttestationPayload memory decodedPayload = abi.decode(
+            componentEncodedPayload,
+            (AttestationPayload)
+        );
+        assertEq(
+            uint8(decodedPayload.operationType),
+            uint8(OperationType.ATTEST)
+        );
 
-        (bytes32 decodedSchema, address decodedRecipient, bytes memory decodedData) =
-            abi.decode(decodedPayload.data, (bytes32, address, bytes));
+        (
+            bytes32 decodedSchema,
+            address decodedRecipient,
+            bytes memory decodedData
+        ) = abi.decode(decodedPayload.data, (bytes32, address, bytes));
 
         assertEq(decodedSchema, schema);
         assertEq(decodedRecipient, recipient);
         assertEq(decodedData, attestationData);
 
-        console.log("Event format test passed - contract can decode component payload");
+        console.log(
+            "Event format test passed - contract can decode component payload"
+        );
     }
 }

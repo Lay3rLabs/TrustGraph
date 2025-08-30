@@ -15,7 +15,7 @@ function AttestationWithStatus({
   uid,
   onStatusReady,
 }: {
-  uid: string;
+  uid: `0x${string}`;
   onStatusReady: (uid: string, status: string) => void;
 }) {
   const { data: attestationData } = useIndividualAttestation(uid);
@@ -94,7 +94,11 @@ export default function AttestationsPage() {
 
   // Combine all attestations
   const allAttestationUIDs = useMemo(() => {
-    const uids: Array<{ uid: string; schema: string; timestamp?: number }> = [];
+    const uids: Array<{
+      uid: `0x${string}`;
+      schema: `0x${string}`;
+      timestamp?: number;
+    }> = [];
 
     if (selectedSchema === "all" || selectedSchema === schemas.basicSchema) {
       basicSchema.attestationUIDs?.forEach((uid) =>
@@ -113,6 +117,7 @@ export default function AttestationsPage() {
     }
 
     // Sort by newest/oldest (UIDs are typically ordered by creation time already)
+    // TODO: fix sort order make it sort by timestamp
     return sortOrder === "newest" ? uids : uids.reverse();
   }, [
     basicSchema.attestationUIDs,
@@ -260,7 +265,7 @@ export default function AttestationsPage() {
       <div className="space-y-4">
         {!isLoading &&
           filteredAttestationUIDs.map((item, index) => (
-            <AttestationCard key={item.uid} uid={item.uid} index={index} />
+            <AttestationCard key={item.uid} uid={item.uid} />
           ))}
       </div>
 

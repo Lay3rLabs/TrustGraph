@@ -3,16 +3,16 @@
 import { useQuery } from '@tanstack/react-query'
 import { useReadContract } from 'wagmi'
 
-import { easConfig, indexerConfig } from '@/lib/contracts'
+import { easConfig, wavsIndexerConfig } from '@/lib/contracts'
 import { schemas } from '@/lib/schemas'
 
 export interface AttestationData {
   uid: string
   attester: string
   recipient: string
-  time: number
-  expirationTime: number
-  revocationTime: number
+  time: bigint
+  expirationTime: bigint
+  revocationTime: bigint
   refUID: string
   data: string
   schema: string
@@ -22,26 +22,26 @@ export interface AttestationData {
 export const attestationKeys = {
   all: ['attestations'] as const,
   schemas: () => [...attestationKeys.all, 'schemas'] as const,
-  schema: (schemaUID: string) =>
+  schema: (schemaUID: `0x${string}`) =>
     [...attestationKeys.schemas(), schemaUID] as const,
-  schemaCount: (schemaUID: string) =>
+  schemaCount: (schemaUID: `0x${string}`) =>
     [...attestationKeys.schema(schemaUID), 'count'] as const,
-  schemaUIDs: (schemaUID: string, limit: number) =>
+  schemaUIDs: (schemaUID: `0x${string}`, limit: number) =>
     [...attestationKeys.schema(schemaUID), 'uids', limit] as const,
   attestation: (uid: string) =>
     [...attestationKeys.all, 'attestation', uid] as const,
 }
 
 // Hook to get schema attestation count with React Query
-function useSchemaAttestationCount(schemaUID: string) {
+function useSchemaAttestationCount(schemaUID: `0x${string}`) {
   const {
     data: rawCount,
     error,
     isLoading,
   } = useReadContract({
-    ...indexerConfig,
-    functionName: 'getSchemaAttestationUIDCount',
-    args: [schemaUID],
+    ...wavsIndexerConfig,
+    functionName: 'getEventCountByTypeAndTag',
+    args: ['attestation', `schema:${schemaUID}`],
     query: {
       enabled: !!schemaUID,
     },
@@ -58,22 +58,23 @@ function useSchemaAttestationCount(schemaUID: string) {
 
 // Hook to get schema attestation UIDs with React Query
 function useSchemaAttestationUIDs(
-  schemaUID: string,
+  schemaUID: `0x${string}`,
   limit = 10,
   totalCount?: number
 ) {
   const {
-    data: rawUIDs,
+    data: indexedAttestations,
     error,
     isLoading,
   } = useReadContract({
-    ...indexerConfig,
-    functionName: 'getSchemaAttestationUIDs',
+    ...wavsIndexerConfig,
+    functionName: 'getEventsByTypeAndTag',
     args: [
-      schemaUID,
+      'attestation',
+      `schema:${schemaUID}`,
       BigInt(0), // start
       BigInt(limit), // length
-      true, // reverseOrder - newest first
+      false, // reverseOrder - newest first
     ],
     query: {
       enabled: !!schemaUID && !!totalCount && totalCount > 0,
@@ -82,15 +83,21 @@ function useSchemaAttestationUIDs(
 
   return useQuery({
     queryKey: attestationKeys.schemaUIDs(schemaUID, limit),
-    queryFn: () => (rawUIDs as string[]) || [],
-    enabled: !!rawUIDs && !error && !isLoading,
+    queryFn: () =>
+      indexedAttestations?.flatMap(
+        (attestation) =>
+          (attestation.tags
+            .find((tag) => tag.startsWith('uid:'))
+            ?.split(':')[1] as `0x${string}`) || []
+      ) || [],
+    enabled: !!indexedAttestations && !error && !isLoading,
     staleTime: 30 * 1000, // UIDs change more frequently
     gcTime: 5 * 60 * 1000, // Cache for 5 minutes
   })
 }
 
 // Hook to get individual attestation data with React Query
-export function useIndividualAttestation(uid: string) {
+export function useIndividualAttestation(uid: `0x${string}`) {
   const {
     data: rawData,
     error,
@@ -114,7 +121,7 @@ export function useIndividualAttestation(uid: string) {
 }
 
 // Convenience hook that combines count and UIDs fetching
-export function useSchemaAttestations(schemaUID: string, limit = 10) {
+export function useSchemaAttestations(schemaUID: `0x${string}`, limit = 10) {
   const {
     data: totalCount = 0,
     isLoading: isLoadingCount,
@@ -138,5 +145,5 @@ export function useSchemaAttestations(schemaUID: string, limit = 10) {
 
 // Vouching-specific hook
 export function useVouchingAttestations(limit = 10) {
-  return useSchemaAttestations(schemas.vouchingSchema, limit)
+  return useSchemaAttestationUIDs(schemas.vouchingSchema, limit)
 }
