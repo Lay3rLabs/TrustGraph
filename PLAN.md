@@ -34,13 +34,17 @@
 - [ ] No IWavsTrigger2
 
 #### Project organization (contracts)
-Let's reorganize our src/contracts folder as we've added new contracts.
+Let's reorganize our src/contracts folder as we've added many contracts.
 
 Let's make a new `eas` folder and move in the following contracts:
 - Attester.sol
 - EASIndexerResolver.sol
 - OffchainAttestationVerifier.sol
 - SchemaRegistrar.sol
+
+Let's make a new `governance` folder and move in the following contracts:
+- Governor.sol
+- VotingPower.sol
 
 Let's make a new `rewards` folder and move in the following contracts:
 - RewardDistributor.sol
@@ -57,6 +61,8 @@ Let's make a `wavs` folder and move in the following contracts:
 - WavsIndexer.sol
 - POAServiceManager.sol
 - Geyser.sol
+
+We'll also need to update our deployment scripts and tests to make sure everything builds. Don't worry about testing deployment, as I will handle that.
 
 ## MVP Symbient
 - [x] Add LLM Module

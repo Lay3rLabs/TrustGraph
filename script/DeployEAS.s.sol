@@ -3,14 +3,16 @@ pragma solidity ^0.8.27;
 
 import {Script} from "forge-std/Script.sol";
 import {console} from "forge-std/console.sol";
-import {ISchemaRegistry, SchemaRegistry} from "@ethereum-attestation-service/eas-contracts/contracts/SchemaRegistry.sol";
+import {
+    ISchemaRegistry, SchemaRegistry
+} from "@ethereum-attestation-service/eas-contracts/contracts/SchemaRegistry.sol";
 import {IEAS, EAS} from "@ethereum-attestation-service/eas-contracts/contracts/EAS.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/contracts/resolver/ISchemaResolver.sol";
-import {Attester} from "../src/contracts/Attester.sol";
-import {SchemaRegistrar} from "../src/contracts/SchemaRegistrar.sol";
+import {Attester} from "../src/contracts/eas/Attester.sol";
+import {SchemaRegistrar} from "../src/contracts/eas/SchemaRegistrar.sol";
 
-import {EASIndexerResolver} from "../src/contracts/EASIndexerResolver.sol";
-import {EASAttestTrigger} from "../src/contracts/Trigger.sol";
+import {EASIndexerResolver} from "../src/contracts/eas/EASIndexerResolver.sol";
+import {EASAttestTrigger} from "../src/contracts/misc/Trigger.sol";
 import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 import {ITypes} from "../src/interfaces/ITypes.sol";
@@ -38,16 +40,11 @@ contract DeployEAS is Common {
     /// @notice Deploy EAS contracts and WAVS integration
     /// @param wavsServiceManagerAddr The WAVS service manager address
     /// @return deployment The deployed contract addresses
-    function run(
-        string calldata wavsServiceManagerAddr
-    ) public returns (EASDeployment memory deployment) {
+    function run(string calldata wavsServiceManagerAddr) public returns (EASDeployment memory deployment) {
         vm.startBroadcast(_privateKey);
 
         address serviceManager = vm.parseAddress(wavsServiceManagerAddr);
-        require(
-            serviceManager != address(0),
-            "Invalid service manager address"
-        );
+        require(serviceManager != address(0), "Invalid service manager address");
 
         console.log("Deploying EAS contracts...");
 
@@ -62,37 +59,24 @@ contract DeployEAS is Common {
         console.log("EAS deployed at:", deployment.eas);
 
         // 3. Deploy EASIndexerResolver
-        EASIndexerResolver indexerResolver = new EASIndexerResolver(
-            IEAS(deployment.eas)
-        );
+        EASIndexerResolver indexerResolver = new EASIndexerResolver(IEAS(deployment.eas));
         deployment.indexerResolver = address(indexerResolver);
-        console.log(
-            "EASIndexerResolver deployed at:",
-            deployment.indexerResolver
-        );
+        console.log("EASIndexerResolver deployed at:", deployment.indexerResolver);
 
         // 5. Deploy SchemaRegistrar
-        SchemaRegistrar schemaRegistrar = new SchemaRegistrar(
-            ISchemaRegistry(deployment.schemaRegistry)
-        );
+        SchemaRegistrar schemaRegistrar = new SchemaRegistrar(ISchemaRegistry(deployment.schemaRegistry));
         deployment.schemaRegistrar = address(schemaRegistrar);
         console.log("SchemaRegistrar deployed at:", deployment.schemaRegistrar);
 
         // 6. Deploy Attester (main WAVS integration contract)
-        Attester attester = new Attester(
-            IEAS(deployment.eas),
-            IWavsServiceManager(serviceManager)
-        );
+        Attester attester = new Attester(IEAS(deployment.eas), IWavsServiceManager(serviceManager));
         deployment.attester = address(attester);
         console.log("Attester deployed at:", deployment.attester);
 
         // 7. Deploy EASAttestTrigger
         EASAttestTrigger easAttestTrigger = new EASAttestTrigger();
         deployment.easAttestTrigger = address(easAttestTrigger);
-        console.log(
-            "EASAttestTrigger deployed at:",
-            deployment.easAttestTrigger
-        );
+        console.log("EASAttestTrigger deployed at:", deployment.easAttestTrigger);
 
         // 8. Register basic schemas
         console.log("Registering schemas...");
@@ -111,10 +95,7 @@ contract DeployEAS is Common {
             ISchemaResolver(deployment.indexerResolver),
             true // revocable
         );
-        console.log(
-            "Compute Schema ID:",
-            vm.toString(deployment.computeSchema)
-        );
+        console.log("Compute Schema ID:", vm.toString(deployment.computeSchema));
 
         // Statement schema for simple text statements
         deployment.statementSchema = schemaRegistrar.register(
@@ -122,10 +103,7 @@ contract DeployEAS is Common {
             ISchemaResolver(deployment.indexerResolver),
             true // revocable
         );
-        console.log(
-            "Statement Schema ID:",
-            vm.toString(deployment.statementSchema)
-        );
+        console.log("Statement Schema ID:", vm.toString(deployment.statementSchema));
 
         // IsTrue schema for boolean truth assertions
         deployment.isTrueSchema = schemaRegistrar.register(
@@ -149,10 +127,7 @@ contract DeployEAS is Common {
             ISchemaResolver(deployment.indexerResolver),
             true // revocable
         );
-        console.log(
-            "Vouching Schema ID:",
-            vm.toString(deployment.vouchingSchema)
-        );
+        console.log("Vouching Schema ID:", vm.toString(deployment.vouchingSchema));
 
         vm.stopBroadcast();
 

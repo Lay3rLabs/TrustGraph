@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 import {Script} from "forge-std/Script.sol";
 import {console2} from "forge-std/console2.sol";
-import {POAServiceManager} from "../src/contracts/POAServiceManager.sol";
+import {POAServiceManager} from "../src/contracts/wavs/POAServiceManager.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 /**
@@ -23,10 +23,8 @@ contract DeployPOAServiceManager is Script {
 
     function run() external {
         // Get the private key from environment or use default anvil key
-        uint256 deployerPrivateKey = vm.envOr(
-            "FUNDED_KEY",
-            uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80)
-        );
+        uint256 deployerPrivateKey =
+            vm.envOr("FUNDED_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80));
 
         // Get deployer address
         address deployer = vm.addr(deployerPrivateKey);

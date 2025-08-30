@@ -8,7 +8,7 @@ import {EMPTY_UID, Signature} from "@ethereum-attestation-service/eas-contracts/
 
 import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 
-import {EIP712Verifier} from "./eip712/EIP712Verifier.sol";
+import {EIP712Verifier} from "../eip712/EIP712Verifier.sol";
 
 /// @title OffchainAttestationVerifier
 /// @notice Offchain Attestation Verifier - Example

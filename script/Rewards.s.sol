@@ -6,8 +6,8 @@ import {console} from "forge-std/console.sol";
 
 import {Common} from "script/Common.s.sol";
 
-import {RewardDistributor} from "contracts/RewardDistributor.sol";
-import {ENOVA} from "contracts/ERC20.sol";
+import {RewardDistributor} from "contracts/rewards/RewardDistributor.sol";
+import {ENOVA} from "contracts/tokens/ERC20.sol";
 import {ITypes} from "interfaces/ITypes.sol";
 
 /// @dev Combined script to update and claim rewards

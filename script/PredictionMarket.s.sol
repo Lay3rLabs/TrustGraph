@@ -9,7 +9,7 @@ import {IERC20} from "forge-std/interfaces/IERC20.sol";
 import {ConditionalTokens} from "@lay3rlabs/conditional-tokens-contracts/ConditionalTokens.sol";
 import {LMSRMarketMaker} from "@lay3rlabs/conditional-tokens-market-makers/LMSRMarketMaker.sol";
 
-import {MockUSDC} from "contracts/MockUSDC.sol";
+import {MockUSDC} from "contracts/tokens/MockUSDC.sol";
 import {PredictionMarketOracleController} from "contracts/prediction_market/PredictionMarketOracleController.sol";
 import {IWavsTrigger2} from "interfaces/IWavsTrigger2.sol";
 import {ITypes} from "interfaces/ITypes.sol";

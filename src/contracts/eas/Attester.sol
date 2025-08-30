@@ -14,7 +14,7 @@ import {
 import {NO_EXPIRATION_TIME, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/contracts/Common.sol";
 import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
-import {ITypes} from "../interfaces/ITypes.sol";
+import {ITypes} from "../../interfaces/ITypes.sol";
 
 /// @title Attester
 /// @notice Ethereum Attestation Service - Example that integrates with WAVS

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import {Test} from "forge-std/Test.sol";
-import {POAServiceManager} from "src/contracts/POAServiceManager.sol";
+import {POAServiceManager} from "src/contracts/wavs/POAServiceManager.sol";
 import {IPOAServiceManager} from "src/interfaces/POA.sol";
 import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
@@ -167,7 +167,11 @@ contract POAServiceManagerTest is Test {
         vm.stopPrank();
 
         assertEq(poaServiceManager.getLatestSigningKeyForOperator(operator1), signingKey1, "Signing key should be set");
-        assertEq(poaServiceManager.getLatestOperatorForSigningKey(signingKey1), operator1, "Operator should be mapped to signing key");
+        assertEq(
+            poaServiceManager.getLatestOperatorForSigningKey(signingKey1),
+            operator1,
+            "Operator should be mapped to signing key"
+        );
 
         vm.startPrank(owner);
         poaServiceManager.removeOperator(operator1);
@@ -247,8 +251,14 @@ contract POAServiceManagerTest is Test {
         poaServiceManager.setSigningKey(signingKey1);
 
         assertEq(poaServiceManager.getLatestSigningKeyForOperator(operator1), signingKey1, "Signing key should be set");
-        assertEq(poaServiceManager.getLatestOperatorForSigningKey(signingKey1), operator1, "Operator should be mapped to signing key");
-        assertEq(poaServiceManager.getLatestOperatorForSigningKey(signingKey1), operator1, "Latest operator should match");
+        assertEq(
+            poaServiceManager.getLatestOperatorForSigningKey(signingKey1),
+            operator1,
+            "Operator should be mapped to signing key"
+        );
+        assertEq(
+            poaServiceManager.getLatestOperatorForSigningKey(signingKey1), operator1, "Latest operator should match"
+        );
 
         vm.stopPrank();
     }
@@ -290,20 +300,38 @@ contract POAServiceManagerTest is Test {
         poaServiceManager.setSigningKey(signingKey1);
 
         // Verify initial signing key is set
-        assertEq(poaServiceManager.getLatestSigningKeyForOperator(operator1), signingKey1, "Initial signing key should be set");
-        assertEq(poaServiceManager.getLatestOperatorForSigningKey(signingKey1), operator1, "Operator should be mapped to initial signing key");
+        assertEq(
+            poaServiceManager.getLatestSigningKeyForOperator(operator1),
+            signingKey1,
+            "Initial signing key should be set"
+        );
+        assertEq(
+            poaServiceManager.getLatestOperatorForSigningKey(signingKey1),
+            operator1,
+            "Operator should be mapped to initial signing key"
+        );
 
         // Update to new signing key (this should succeed per the commented-out code in the contract)
         poaServiceManager.setSigningKey(signingKey2);
 
         // Verify signing key was updated
-        assertEq(poaServiceManager.getLatestSigningKeyForOperator(operator1), signingKey2, "Signing key should be updated");
-        assertEq(poaServiceManager.getLatestOperatorForSigningKey(signingKey2), operator1, "Operator should be mapped to new signing key");
+        assertEq(
+            poaServiceManager.getLatestSigningKeyForOperator(operator1), signingKey2, "Signing key should be updated"
+        );
+        assertEq(
+            poaServiceManager.getLatestOperatorForSigningKey(signingKey2),
+            operator1,
+            "Operator should be mapped to new signing key"
+        );
 
         // Note: The old signing key mapping is NOT cleaned up in the current implementation
         // This is potentially a bug in the contract, but we test the current behavior
         // The old signing key still points to the operator even though the operator points to the new key
-        assertEq(poaServiceManager.getLatestOperatorForSigningKey(signingKey1), operator1, "Old signing key still maps to operator (implementation detail)");
+        assertEq(
+            poaServiceManager.getLatestOperatorForSigningKey(signingKey1),
+            operator1,
+            "Old signing key still maps to operator (implementation detail)"
+        );
 
         vm.stopPrank();
     }
@@ -413,11 +441,8 @@ contract POAServiceManagerTest is Test {
     /* solhint-disable func-name-mixedcase */
     function test_validate_revert_empty_signers() public {
         /* solhint-enable func-name-mixedcase */
-        IWavsServiceHandler.Envelope memory envelope = IWavsServiceHandler.Envelope({
-            eventId: bytes20(0),
-            ordering: bytes12(0),
-            payload: ""
-        });
+        IWavsServiceHandler.Envelope memory envelope =
+            IWavsServiceHandler.Envelope({eventId: bytes20(0), ordering: bytes12(0), payload: ""});
 
         address[] memory emptySigners = new address[](0);
         bytes[] memory emptySignatures = new bytes[](0);
@@ -435,11 +460,8 @@ contract POAServiceManagerTest is Test {
     /* solhint-disable func-name-mixedcase */
     function test_validate_revert_length_mismatch() public {
         /* solhint-enable func-name-mixedcase */
-        IWavsServiceHandler.Envelope memory envelope = IWavsServiceHandler.Envelope({
-            eventId: bytes20(0),
-            ordering: bytes12(0),
-            payload: ""
-        });
+        IWavsServiceHandler.Envelope memory envelope =
+            IWavsServiceHandler.Envelope({eventId: bytes20(0), ordering: bytes12(0), payload: ""});
 
         address[] memory signers = new address[](1);
         bytes[] memory signatures = new bytes[](2);
@@ -460,11 +482,8 @@ contract POAServiceManagerTest is Test {
     /* solhint-disable func-name-mixedcase */
     function test_validate_revert_invalid_reference_block() public {
         /* solhint-enable func-name-mixedcase */
-        IWavsServiceHandler.Envelope memory envelope = IWavsServiceHandler.Envelope({
-            eventId: bytes20(0),
-            ordering: bytes12(0),
-            payload: ""
-        });
+        IWavsServiceHandler.Envelope memory envelope =
+            IWavsServiceHandler.Envelope({eventId: bytes20(0), ordering: bytes12(0), payload: ""});
 
         address[] memory signers = new address[](1);
         bytes[] memory signatures = new bytes[](1);
@@ -486,11 +505,8 @@ contract POAServiceManagerTest is Test {
         /* solhint-enable func-name-mixedcase */
         _setupOperatorsWithSigningKeys();
 
-        IWavsServiceHandler.Envelope memory envelope = IWavsServiceHandler.Envelope({
-            eventId: bytes20(0),
-            ordering: bytes12(0),
-            payload: ""
-        });
+        IWavsServiceHandler.Envelope memory envelope =
+            IWavsServiceHandler.Envelope({eventId: bytes20(0), ordering: bytes12(0), payload: ""});
 
         address[] memory signers = new address[](1);
         bytes[] memory signatures = new bytes[](1);
@@ -529,11 +545,8 @@ contract POAServiceManagerTest is Test {
         /* solhint-enable func-name-mixedcase */
         _setupOperatorsWithSigningKeys();
 
-        IWavsServiceHandler.Envelope memory envelope = IWavsServiceHandler.Envelope({
-            eventId: bytes20(uint160(1)),
-            ordering: bytes12(0),
-            payload: "test message"
-        });
+        IWavsServiceHandler.Envelope memory envelope =
+            IWavsServiceHandler.Envelope({eventId: bytes20(uint160(1)), ordering: bytes12(0), payload: "test message"});
 
         // Create signature data with 2 operators (2/3 >= 2/3 == success)
         IWavsServiceHandler.SignatureData memory signatureData = _createSignatureData(envelope, 2, 0);
@@ -607,10 +620,7 @@ contract POAServiceManagerTest is Test {
      * @param digest The message hash to sign
      * @return The signature in bytes format ready for validation
      */
-    function _generateSignature(
-        uint256 privateKey,
-        bytes32 digest
-    ) internal pure returns (bytes memory) {
+    function _generateSignature(uint256 privateKey, bytes32 digest) internal pure returns (bytes memory) {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
         return abi.encodePacked(r, s, v);
     }
@@ -621,10 +631,7 @@ contract POAServiceManagerTest is Test {
      * @param signers Array of signer addresses
      * @param signatures Array of signatures that correspond to signers at the same index
      */
-    function _sortSignersAndSignatures(
-        address[] memory signers,
-        bytes[] memory signatures
-    ) internal pure {
+    function _sortSignersAndSignatures(address[] memory signers, bytes[] memory signatures) internal pure {
         // Simple bubble sort since we're working with small arrays
         uint256 length = signers.length;
         for (uint256 i = 0; i < length - 1; ++i) {
@@ -650,11 +657,7 @@ contract POAServiceManagerTest is Test {
      * @param signers Array of signer addresses (should be sorted)
      * @param signatures Array of signatures corresponding to signers
      */
-    function _verifySignatures(
-        bytes32 digest,
-        address[] memory signers,
-        bytes[] memory signatures
-    ) internal pure {
+    function _verifySignatures(bytes32 digest, address[] memory signers, bytes[] memory signatures) internal pure {
         if (signers.length != signatures.length) {
             revert POAServiceManagerTest__ArraysLengthMismatch();
         }

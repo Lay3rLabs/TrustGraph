@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import {AttestationGovernor} from "contracts/Governor.sol";
-import {VotingPower} from "contracts/VotingPower.sol";
+import {AttestationGovernor} from "contracts/governance/Governor.sol";
+import {VotingPower} from "contracts/governance/VotingPower.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 import {IGovernor} from "@openzeppelin/contracts/governance/IGovernor.sol";
 import {Common} from "script/Common.s.sol";
