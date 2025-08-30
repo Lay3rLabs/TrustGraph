@@ -110,7 +110,7 @@
       "package_name": "llm-attester",
       "package_version": "0.1.0",
       "trigger_event": "Attested(address,address,bytes32,bytes32)",
-      "trigger_json_path": "eas_contracts.indexer_resolver",
+      "trigger_json_path": "eas_contracts.payable_indexer_resolver",
       "submit_json_path": "eas_contracts.attester",
       "config_values": {
         "eas_address": "${EAS_ADDRESS}",
@@ -144,6 +144,38 @@
       "package_version": "0.1.0",
       "trigger_event": "AttestationRevoked(address,bytes32)",
       "trigger_json_path": "eas_contracts.indexer_resolver",
+      "submit_json_path": "wavs_indexer.wavs_indexer"
+    },
+    {
+      "filename": "wavs_indexer.wasm",
+      "package_name": "wavs-indexer",
+      "package_version": "0.1.0",
+      "trigger_event": "AttestationAttested(address,bytes32)",
+      "trigger_json_path": "eas_contracts.payable_indexer_resolver",
+      "submit_json_path": "wavs_indexer.wavs_indexer"
+    },
+    {
+      "filename": "wavs_indexer.wasm",
+      "package_name": "wavs-indexer",
+      "package_version": "0.1.0",
+      "trigger_event": "AttestationRevoked(address,bytes32)",
+      "trigger_json_path": "eas_contracts.payable_indexer_resolver",
+      "submit_json_path": "wavs_indexer.wavs_indexer"
+    },
+    {
+      "filename": "wavs_indexer.wasm",
+      "package_name": "wavs-indexer",
+      "package_version": "0.1.0",
+      "trigger_event": "AttestationAttested(address,bytes32)",
+      "trigger_json_path": "eas_contracts.attester_indexer_resolver",
+      "submit_json_path": "wavs_indexer.wavs_indexer"
+    },
+    {
+      "filename": "wavs_indexer.wasm",
+      "package_name": "wavs-indexer",
+      "package_version": "0.1.0",
+      "trigger_event": "AttestationRevoked(address,bytes32)",
+      "trigger_json_path": "eas_contracts.attester_indexer_resolver",
       "submit_json_path": "wavs_indexer.wavs_indexer"
     },
     {

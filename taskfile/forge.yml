@@ -19,7 +19,7 @@ tasks:
           --rpc-url {{.RPC_URL}} --broadcast
 
   trigger-statement-attestation:
-    desc: "Trigger attestation creation via WAVS"
+    desc: "Create direct EAS attestation with 0.001 ETH payment"
     vars:
       RPC_URL:
         sh: task get-rpc
@@ -27,12 +27,13 @@ tasks:
       vars: [INPUT]
     cmds:
       - |
-        forge script script/Trigger.s.sol:EasTrigger \
-          --sig "triggerRawAttestation(string,string,string,string)" \
-          "{{.SERVICE_TRIGGER_ADDR}}" \
+        forge script script/EasAttest.s.sol:EasAttest \
+          --sig "attestWithMilliEth(string,string,string,string,uint256)" \
+          "{{.EAS_ADDR}}" \
           "{{.STATEMENT_SCHEMA_UID}}" \
           "{{.WALLET_ADDRESS}}" \
           "{{.INPUT}}" \
+          1 \
           --rpc-url {{.RPC_URL}} --broadcast
 
   query-attestations:

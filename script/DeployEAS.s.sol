@@ -120,9 +120,10 @@ contract DeployEAS is Common {
         console.log("Compute Schema ID:", vm.toString(deployment.computeSchema));
 
         // Statement schema for simple text statements
+        // This resolver requires payment
         deployment.statementSchema = schemaRegistrar.register(
             "string statement",
-            ISchemaResolver(deployment.indexerResolver),
+            ISchemaResolver(deployment.payableIndexerResolver),
             true // revocable
         );
         console.log("Statement Schema ID:", vm.toString(deployment.statementSchema));
@@ -136,9 +137,10 @@ contract DeployEAS is Common {
         console.log("IsTrue Schema ID:", vm.toString(deployment.isTrueSchema));
 
         // Like schema for simple like/dislike attestations
+        // Only the WavsAttester can attest to this schema
         deployment.likeSchema = schemaRegistrar.register(
             "bool like",
-            ISchemaResolver(deployment.indexerResolver),
+            ISchemaResolver(deployment.attesterIndexerResolver),
             true // revocable
         );
         console.log("Like Schema ID:", vm.toString(deployment.likeSchema));
