@@ -4,7 +4,7 @@ pragma solidity ^0.8.22;
 import {Test} from "forge-std/Test.sol";
 import {PredictionMarketOracleController} from "contracts/prediction_market/PredictionMarketOracleController.sol";
 import {ITypes} from "interfaces/ITypes.sol";
-import {IWavsTrigger2} from "interfaces/IWavsTrigger2.sol";
+import {IWavsTrigger} from "interfaces/IWavsTrigger.sol";
 import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 
 contract PredictionMarketOracleControllerTest is Test {
@@ -18,7 +18,7 @@ contract PredictionMarketOracleControllerTest is Test {
         controller.addTrigger();
 
         ITypes.TriggerId triggerId = ITypes.TriggerId.wrap(1);
-        IWavsTrigger2.TriggerInfo memory trigger = controller.getTrigger(triggerId);
+        IWavsTrigger.TriggerInfo memory trigger = controller.getTrigger(triggerId);
 
         // assertEq(trigger.creator, address(this));
         assertEq(trigger.data, bytes(""));
