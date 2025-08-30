@@ -45,7 +45,7 @@ tasks:
       - |
         forge script script/Trigger.s.sol:EasTrigger \
           --sig "queryAttestations(string,string,string,string,uint256)" \
-          "{{.EAS_INDEXER_ADDR}}" \
+          "{{.INDEXER_ADDR}}" \
           "{{.EAS_ADDR}}" \
           "{{.VOUCH_SCHEMA_UID}}" \
           "{{.WALLET_ADDRESS}}" \
@@ -61,7 +61,7 @@ tasks:
       - |
         forge script script/Trigger.s.sol:EasTrigger \
           --sig "queryAttestations(string,string,string,string,uint256)" \
-          "{{.EAS_INDEXER_ADDR}}" \
+          "{{.INDEXER_ADDR}}" \
           "{{.EAS_ADDR}}" \
           "{{.LIKE_SCHEMA_UID}}" \
           "{{.WALLET_ADDRESS}}" \
