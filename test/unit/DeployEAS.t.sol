@@ -7,7 +7,7 @@ import {IEAS} from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.s
 import {
     ISchemaRegistry, SchemaRecord
 } from "@ethereum-attestation-service/eas-contracts/contracts/ISchemaRegistry.sol";
-import {EASIndexerResolver} from "../../src/contracts/eas/EASIndexerResolver.sol";
+import {EASIndexerResolver} from "../../src/contracts/eas/resolvers/EASIndexerResolver.sol";
 
 import {WavsAttester} from "../../src/contracts/eas/WavsAttester.sol";
 import {SchemaRegistrar} from "../../src/contracts/eas/SchemaRegistrar.sol";

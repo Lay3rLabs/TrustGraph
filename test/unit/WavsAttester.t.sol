@@ -4,7 +4,7 @@ pragma solidity 0.8.27;
 import {Test} from "forge-std/Test.sol";
 import {console} from "forge-std/console.sol";
 import {WavsAttester} from "../../src/contracts/eas/WavsAttester.sol";
-import {EASIndexerResolver} from "../../src/contracts/eas/EASIndexerResolver.sol";
+import {EASIndexerResolver} from "../../src/contracts/eas/resolvers/EASIndexerResolver.sol";
 import {EAS} from "@ethereum-attestation-service/eas-contracts/contracts/EAS.sol";
 import {SchemaRegistry} from "@ethereum-attestation-service/eas-contracts/contracts/SchemaRegistry.sol";
 import {

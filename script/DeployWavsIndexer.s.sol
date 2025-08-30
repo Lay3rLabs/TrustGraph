@@ -13,7 +13,7 @@ import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/contr
 import {WavsAttester} from "../src/contracts/eas/WavsAttester.sol";
 import {SchemaRegistrar} from "../src/contracts/eas/SchemaRegistrar.sol";
 
-import {EASIndexerResolver} from "../src/contracts/eas/EASIndexerResolver.sol";
+import {EASIndexerResolver} from "../src/contracts/eas/resolvers/EASIndexerResolver.sol";
 import {EASAttestTrigger} from "../src/contracts/misc/Trigger.sol";
 import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";

@@ -92,6 +92,8 @@ export EAS_ATTESTER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswi
 export EAS_SCHEMA_REGISTRAR_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("SchemaRegistrar deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 export EAS_INDEXER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("Indexer deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 export EAS_INDEXER_RESOLVER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("EASIndexerResolver deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
+export EAS_PAYABLE_INDEXER_RESOLVER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("PayableEASIndexerResolver deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
+export EAS_ATTESTER_INDEXER_RESOLVER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("AttesterEASIndexerResolver deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 export EAS_ATTEST_TRIGGER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("EASAttestTrigger deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
 
 # Extract schema IDs
@@ -150,7 +152,9 @@ cat > .docker/deployment_summary.json << EOF
     "eas": "${EAS_ADDR}",
     "attester": "${EAS_ATTESTER_ADDR}",
     "schema_registrar": "${EAS_SCHEMA_REGISTRAR_ADDR}",
-    "indexer_resolver": "${EAS_INDEXER_RESOLVER_ADDR}"
+    "indexer_resolver": "${EAS_INDEXER_RESOLVER_ADDR}",
+    "attester_indexer_resolver": "${EAS_ATTESTER_INDEXER_RESOLVER_ADDR}",
+    "payable_indexer_resolver": "${EAS_PAYABLE_INDEXER_RESOLVER_ADDR}"
   },
   "eas_schemas": {
     "basic_schema": "${BASIC_SCHEMA_ID}",
@@ -213,6 +217,8 @@ echo "   EAS_ATTESTER_ADDR: ${EAS_ATTESTER_ADDR}"
 echo "   EAS_SCHEMA_REGISTRAR_ADDR: ${EAS_SCHEMA_REGISTRAR_ADDR}"
 echo "   EAS_INDEXER_ADDR: ${EAS_INDEXER_ADDR}"
 echo "   EAS_INDEXER_RESOLVER_ADDR: ${EAS_INDEXER_RESOLVER_ADDR}"
+echo "   EAS_PAYABLE_INDEXER_RESOLVER_ADDR: ${EAS_PAYABLE_INDEXER_RESOLVER_ADDR}"
+echo "   EAS_ATTESTER_INDEXER_RESOLVER_ADDR: ${EAS_ATTESTER_INDEXER_RESOLVER_ADDR}"
 echo "   EAS_ATTEST_TRIGGER_ADDR: ${EAS_ATTEST_TRIGGER_ADDR}"
 echo ""
 echo "📋 EAS Schemas:"

@@ -4,7 +4,7 @@ pragma solidity 0.8.27;
 
 import {IEAS, Attestation} from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
 import {SchemaResolver} from "@ethereum-attestation-service/eas-contracts/contracts/resolver/SchemaResolver.sol";
-import {AttestationAttested, AttestationRevoked} from "../../interfaces/IIndexedEvents.sol";
+import {AttestationAttested, AttestationRevoked} from "../../../interfaces/IIndexedEvents.sol";
 
 /// @title EASIndexerResolver
 /// @notice A schema resolver that automatically indexes attestations upon creation.
