@@ -4,8 +4,8 @@ pragma solidity ^0.8.27;
 import {Script} from "forge-std/Script.sol";
 import {console} from "forge-std/console.sol";
 import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
-import {VotingPower} from "../src/contracts/VotingPower.sol";
-import {AttestationGovernor} from "../src/contracts/Governor.sol";
+import {VotingPower} from "../src/contracts/governance/VotingPower.sol";
+import {AttestationGovernor} from "../src/contracts/governance/Governor.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 import {Common} from "./Common.s.sol";
 

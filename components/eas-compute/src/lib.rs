@@ -8,6 +8,7 @@ mod analytics;
 mod examples;
 mod solidity;
 mod trigger;
+use bindings::host::config_var;
 use trigger::{decode_trigger_event, encode_trigger_output, Destination};
 use wavs_eas::query::query_received_attestation_count;
 pub mod bindings;
@@ -48,7 +49,11 @@ impl Guest for Component {
         );
 
         // Create query config for local development (you can customize this)
-        let query_config = wavs_eas::query::QueryConfig::local();
+        let query_config = wavs_eas::query::QueryConfig::from_strings(
+            &config_var("eas_address").unwrap(),
+            &config_var("indexer_address").unwrap(),
+            "http://127.0.0.1:8545".to_string(),
+        )?;
 
         // Query the indexer for attestation count using the schema from the attestation event
         let attestation_count = block_on(async move {

@@ -20,7 +20,7 @@ interface IWavsTrigger is ITypes {
     /**
      * @notice Add a new trigger
      */
-    function addTrigger() external;
+    function addTrigger() external returns (TriggerId triggerId);
 
     /**
      * @notice Get a single trigger by triggerId

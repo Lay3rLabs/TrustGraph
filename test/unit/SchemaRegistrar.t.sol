@@ -2,12 +2,14 @@
 pragma solidity 0.8.27;
 
 import {Test} from "forge-std/Test.sol";
-import {SchemaRegistrar} from "../../src/contracts/SchemaRegistrar.sol";
-import {EASIndexerResolver} from "../../src/contracts/EASIndexerResolver.sol";
+import {SchemaRegistrar} from "../../src/contracts/eas/SchemaRegistrar.sol";
+import {EASIndexerResolver} from "../../src/contracts/eas/resolvers/EASIndexerResolver.sol";
 import {EAS} from "@ethereum-attestation-service/eas-contracts/contracts/EAS.sol";
 import {SchemaRegistry} from "@ethereum-attestation-service/eas-contracts/contracts/SchemaRegistry.sol";
 import {IEAS} from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
-import {ISchemaRegistry, SchemaRecord} from "@ethereum-attestation-service/eas-contracts/contracts/ISchemaRegistry.sol";
+import {
+    ISchemaRegistry, SchemaRecord
+} from "@ethereum-attestation-service/eas-contracts/contracts/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/contracts/resolver/ISchemaResolver.sol";
 
 contract SchemaRegistrarTest is Test {
@@ -25,9 +27,7 @@ contract SchemaRegistrarTest is Test {
         schemaRegistry = new SchemaRegistry();
         eas = new EAS(ISchemaRegistry(address(schemaRegistry)));
         resolver = new EASIndexerResolver(IEAS(address(eas)));
-        registrar = new SchemaRegistrar(
-            ISchemaRegistry(address(schemaRegistry))
-        );
+        registrar = new SchemaRegistrar(ISchemaRegistry(address(schemaRegistry)));
     }
 
     function testConstruction_ShouldInitializeCorrectly() public {
@@ -42,11 +42,7 @@ contract SchemaRegistrarTest is Test {
     }
 
     function testRegister_ShouldRegisterValidSchema() public {
-        bytes32 schemaId = registrar.register(
-            VALID_SCHEMA,
-            ISchemaResolver(address(resolver)),
-            true
-        );
+        bytes32 schemaId = registrar.register(VALID_SCHEMA, ISchemaResolver(address(resolver)), true);
 
         // Verify the schema was registered
         assertTrue(schemaId != bytes32(0));
@@ -61,11 +57,7 @@ contract SchemaRegistrarTest is Test {
     }
 
     function testRegister_ShouldRegisterNonRevocableSchema() public {
-        bytes32 schemaId = registrar.register(
-            VALID_SCHEMA,
-            ISchemaResolver(address(resolver)),
-            false
-        );
+        bytes32 schemaId = registrar.register(VALID_SCHEMA, ISchemaResolver(address(resolver)), false);
 
         // Verify the schema was registered with correct revocable flag
         SchemaRecord memory schemaRecord = schemaRegistry.getSchema(schemaId);
@@ -85,19 +77,13 @@ contract SchemaRegistrarTest is Test {
         bytes32[] memory schemaIds = new bytes32[](3);
 
         for (uint256 i = 0; i < schemas.length; i++) {
-            schemaIds[i] = registrar.register(
-                schemas[i],
-                ISchemaResolver(address(resolver)),
-                true
-            );
+            schemaIds[i] = registrar.register(schemas[i], ISchemaResolver(address(resolver)), true);
 
             // Verify each schema is unique
             assertTrue(schemaIds[i] != bytes32(0));
 
             // Verify schema details
-            SchemaRecord memory schemaRecord = schemaRegistry.getSchema(
-                schemaIds[i]
-            );
+            SchemaRecord memory schemaRecord = schemaRegistry.getSchema(schemaIds[i]);
 
             assertEq(schemaRecord.uid, schemaIds[i]);
             assertEq(address(schemaRecord.resolver), address(resolver));
@@ -115,22 +101,13 @@ contract SchemaRegistrarTest is Test {
 
     function testRegister_ShouldRevertWithEmptySchema() public {
         vm.expectRevert(SchemaRegistrar.InvalidSchema.selector);
-        registrar.register(
-            EMPTY_SCHEMA,
-            ISchemaResolver(address(resolver)),
-            true
-        );
+        registrar.register(EMPTY_SCHEMA, ISchemaResolver(address(resolver)), true);
     }
 
     function testRegister_ShouldHandleComplexSchemas() public {
-        string
-            memory complexSchema = "uint256 id,string name,bool active,bytes32 hash,address owner,uint64 timestamp";
+        string memory complexSchema = "uint256 id,string name,bool active,bytes32 hash,address owner,uint64 timestamp";
 
-        bytes32 schemaId = registrar.register(
-            complexSchema,
-            ISchemaResolver(address(resolver)),
-            true
-        );
+        bytes32 schemaId = registrar.register(complexSchema, ISchemaResolver(address(resolver)), true);
 
         // Verify the complex schema was registered correctly
         SchemaRecord memory schemaRecord = schemaRegistry.getSchema(schemaId);
@@ -143,14 +120,10 @@ contract SchemaRegistrarTest is Test {
 
     function testRegister_ShouldHandleVeryLongSchema() public {
         // Create a very long schema string
-        string
-            memory longSchema = "uint256 field1,uint256 field2,uint256 field3,uint256 field4,uint256 field5,uint256 field6,uint256 field7,uint256 field8,uint256 field9,uint256 field10,string veryLongFieldName,bytes32 anotherLongFieldName,address yetAnotherLongFieldName";
+        string memory longSchema =
+            "uint256 field1,uint256 field2,uint256 field3,uint256 field4,uint256 field5,uint256 field6,uint256 field7,uint256 field8,uint256 field9,uint256 field10,string veryLongFieldName,bytes32 anotherLongFieldName,address yetAnotherLongFieldName";
 
-        bytes32 schemaId = registrar.register(
-            longSchema,
-            ISchemaResolver(address(resolver)),
-            false
-        );
+        bytes32 schemaId = registrar.register(longSchema, ISchemaResolver(address(resolver)), false);
 
         // Verify the long schema was registered correctly
         SchemaRecord memory schemaRecord = schemaRegistry.getSchema(schemaId);
@@ -162,17 +135,9 @@ contract SchemaRegistrarTest is Test {
     }
 
     function testRegister_ShouldReturnUniqueIdsForDifferentSchemas() public {
-        bytes32 schemaId1 = registrar.register(
-            "uint256 value",
-            ISchemaResolver(address(resolver)),
-            true
-        );
+        bytes32 schemaId1 = registrar.register("uint256 value", ISchemaResolver(address(resolver)), true);
 
-        bytes32 schemaId2 = registrar.register(
-            "string name",
-            ISchemaResolver(address(resolver)),
-            true
-        );
+        bytes32 schemaId2 = registrar.register("string name", ISchemaResolver(address(resolver)), true);
 
         // Schema IDs should be different
         assertTrue(schemaId1 != schemaId2);
@@ -182,21 +147,11 @@ contract SchemaRegistrarTest is Test {
 
     function testRegister_ShouldAllowSameSchemaWithDifferentResolvers() public {
         // Create another resolver for testing
-        EASIndexerResolver resolver2 = new EASIndexerResolver(
-            IEAS(address(eas))
-        );
+        EASIndexerResolver resolver2 = new EASIndexerResolver(IEAS(address(eas)));
 
-        bytes32 schemaId1 = registrar.register(
-            VALID_SCHEMA,
-            ISchemaResolver(address(resolver)),
-            true
-        );
+        bytes32 schemaId1 = registrar.register(VALID_SCHEMA, ISchemaResolver(address(resolver)), true);
 
-        bytes32 schemaId2 = registrar.register(
-            VALID_SCHEMA,
-            ISchemaResolver(address(resolver2)),
-            true
-        );
+        bytes32 schemaId2 = registrar.register(VALID_SCHEMA, ISchemaResolver(address(resolver2)), true);
 
         // Should create different schema IDs even with same schema string
         assertTrue(schemaId1 != schemaId2);

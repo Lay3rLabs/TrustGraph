@@ -2,7 +2,7 @@
 pragma solidity ^0.8.22;
 
 import "forge-std/Test.sol";
-import "../src/contracts/Daico.sol";
+import "../src/contracts/misc/Daico.sol";
 
 contract DaicoTest is Test {
     Daico public daico;

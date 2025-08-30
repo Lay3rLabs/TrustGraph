@@ -3,8 +3,8 @@ pragma solidity ^0.8.27;
 
 import {Test} from "forge-std/Test.sol";
 import {console} from "forge-std/console.sol";
-import {VotingPower} from "../src/contracts/VotingPower.sol";
-import {AttestationGovernor} from "../src/contracts/Governor.sol";
+import {VotingPower} from "../src/contracts/governance/VotingPower.sol";
+import {AttestationGovernor} from "../src/contracts/governance/Governor.sol";
 import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {IGovernor} from "@openzeppelin/contracts/governance/IGovernor.sol";

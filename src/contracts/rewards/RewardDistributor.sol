@@ -43,7 +43,7 @@ contract RewardDistributor is IWavsTrigger, IWavsServiceHandler, UniversalReward
         _serviceManager = serviceManager;
     }
 
-    function addTrigger() external {
+    function addTrigger() external returns (TriggerId triggerId) {
         // Get the next trigger id
         nextTriggerId = TriggerId.wrap(TriggerId.unwrap(nextTriggerId) + 1);
         TriggerId _triggerId = nextTriggerId;
@@ -56,6 +56,8 @@ contract RewardDistributor is IWavsTrigger, IWavsServiceHandler, UniversalReward
         _triggerIdsByCreator[msg.sender].push(_triggerId);
 
         emit WavsRewardsTrigger(TriggerId.unwrap(_triggerId));
+
+        return _triggerId;
     }
 
     /// @inheritdoc IWavsTrigger

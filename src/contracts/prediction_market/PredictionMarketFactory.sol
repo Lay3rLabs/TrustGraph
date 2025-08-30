@@ -9,7 +9,7 @@ import {Whitelist} from "@lay3rlabs/conditional-tokens-market-makers/Whitelist.s
 import {ConditionalTokens} from "@lay3rlabs/conditional-tokens-contracts/ConditionalTokens.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
-import {MockUSDC} from "../MockUSDC.sol";
+import {MockUSDC} from "../tokens/MockUSDC.sol";
 
 contract PredictionMarketFactory {
     event LMSRMarketMakerCreation(

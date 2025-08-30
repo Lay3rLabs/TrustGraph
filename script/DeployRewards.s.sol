@@ -8,8 +8,8 @@ import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsSe
 
 import {Common} from "script/Common.s.sol";
 
-import {RewardDistributor} from "contracts/RewardDistributor.sol";
-import {ENOVA} from "contracts/ERC20.sol";
+import {RewardDistributor} from "contracts/rewards/RewardDistributor.sol";
+import {ENOVA} from "contracts/tokens/ERC20.sol";
 
 /// @dev Deployment script for RewardDistributor contract
 contract DeployScript is Common {

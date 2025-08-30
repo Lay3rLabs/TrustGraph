@@ -1,10 +1,9 @@
 # The Plan
 
 ## Epochs
-- [ ] Hyperstition markets
+- [-] Hyperstition markets
 - [ ] Working points UI
 - [ ] Figure out some way to pay for these services
-- [ ] Pay to attest
 
 ## UI TODO
 - [ ] Toasts
@@ -14,8 +13,8 @@
 - [ ] Make the text on the landing page selectable (currently can't select text in "terminal")
 
 ## Hyperstition Markets
-- [ ] More realistic Hyperstition market resolver component (i.e. Twitter follower count)
-- [ ] Make attestation on participating in prediction market
+- [x] Make attestation on participating in prediction market
+- [-] More realistic Hyperstition market resolver component (i.e. Twitter follower count)
 
 ## WAVS Zodiac Modules
 - [ ] Merkle gov module probably needs some notion of total voting power
@@ -25,38 +24,10 @@
 - [ ] Clean out old Governor example contract
 
 ## Attestations
-- [] Attest to social media post (and verify)
-- [] Attest to GitHub Contributions (could just be a GitHub workflow we run)
-- [] Add helpful [resolvers](https://github.com/ethereum-attestation-service/eas-contracts/tree/master/contracts/resolver/examples) like payment, etc.
-
-## Project Organization and Cleanup
-- [ ] Organize project better (put contracts in folders)
-- [ ] No IWavsTrigger2
-
-#### Project organization (contracts)
-Let's reorganize our src/contracts folder as we've added new contracts.
-
-Let's make a new `eas` folder and move in the following contracts:
-- Attester.sol
-- EASIndexerResolver.sol
-- OffchainAttestationVerifier.sol
-- SchemaRegistrar.sol
-
-Let's make a new `rewards` folder and move in the following contracts:
-- RewardDistributor.sol
-
-Let's make a new `tokens` folder and move in the following contracts:
-- ERC20.sol
-- MockUSDC.sol
-
-Let's make a `misc` folder and move in the following contracts:
-- Daico.sol
-- Trigger.sol
-
-Let's make a `wavs` folder and move in the following contracts:
-- WavsIndexer.sol
-- POAServiceManager.sol
-- Geyser.sol
+- [x] Add helpful like payment, etc.
+- [x] Rename Attester.sol to WavsAttester.sol
+- [ ] Attest to social media post (and verify)
+- [ ] Attest to GitHub Contributions (could just be a GitHub workflow we run)
 
 ## MVP Symbient
 - [x] Add LLM Module

@@ -2,7 +2,7 @@
 pragma solidity 0.8.27;
 
 import {Test} from "forge-std/Test.sol";
-import {OffchainAttestationVerifier} from "../../src/contracts/OffchainAttestationVerifier.sol";
+import {OffchainAttestationVerifier} from "../../src/contracts/eas/OffchainAttestationVerifier.sol";
 import {EAS} from "@ethereum-attestation-service/eas-contracts/contracts/EAS.sol";
 import {SchemaRegistry} from "@ethereum-attestation-service/eas-contracts/contracts/SchemaRegistry.sol";
 import {IEAS} from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";

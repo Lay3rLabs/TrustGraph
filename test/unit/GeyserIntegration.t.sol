@@ -2,8 +2,8 @@
 pragma solidity ^0.8.27;
 
 import {Test} from "forge-std/Test.sol";
-import {POAServiceManager} from "src/contracts/POAServiceManager.sol";
-import {Geyser} from "src/contracts/Geyser.sol";
+import {POAServiceManager} from "src/contracts/wavs/POAServiceManager.sol";
+import {Geyser} from "src/contracts/wavs/Geyser.sol";
 import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 
@@ -50,11 +50,8 @@ contract GeyserIntegrationTest is Test {
         assertEq(poaManager.owner(), address(geyser));
 
         // Create envelope and signature data with proper signature
-        IWavsServiceHandler.Envelope memory envelope = IWavsServiceHandler.Envelope({
-            eventId: bytes20(uint160(1)),
-            ordering: bytes12(0),
-            payload: "test123"
-        });
+        IWavsServiceHandler.Envelope memory envelope =
+            IWavsServiceHandler.Envelope({eventId: bytes20(uint160(1)), ordering: bytes12(0), payload: "test123"});
 
         // Create a valid signature for the envelope
         bytes32 messageHash = keccak256(abi.encode(envelope));

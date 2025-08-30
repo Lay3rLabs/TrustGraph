@@ -13,7 +13,7 @@ import {Common} from "script/Common.s.sol";
 
 import {PredictionMarketOracleController} from "contracts/prediction_market/PredictionMarketOracleController.sol";
 import {PredictionMarketFactory} from "contracts/prediction_market/PredictionMarketFactory.sol";
-import {MockUSDC} from "contracts/MockUSDC.sol";
+import {MockUSDC} from "contracts/tokens/MockUSDC.sol";
 
 /// @dev Deployment script for Prediction Market contracts
 contract DeployScript is Common {

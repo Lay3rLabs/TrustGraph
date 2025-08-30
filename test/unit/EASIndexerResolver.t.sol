@@ -2,10 +2,16 @@
 pragma solidity 0.8.27;
 
 import {Test} from "forge-std/Test.sol";
-import {EASIndexerResolver} from "../../src/contracts/EASIndexerResolver.sol";
+import {EASIndexerResolver} from "../../src/contracts/eas/resolvers/EASIndexerResolver.sol";
 import {EAS} from "@ethereum-attestation-service/eas-contracts/contracts/EAS.sol";
 import {SchemaRegistry} from "@ethereum-attestation-service/eas-contracts/contracts/SchemaRegistry.sol";
-import {IEAS, AttestationRequest, AttestationRequestData, RevocationRequest, RevocationRequestData} from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
+import {
+    IEAS,
+    AttestationRequest,
+    AttestationRequestData,
+    RevocationRequest,
+    RevocationRequestData
+} from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
 import {ISchemaRegistry} from "@ethereum-attestation-service/eas-contracts/contracts/ISchemaRegistry.sol";
 import {NO_EXPIRATION_TIME, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/contracts/Common.sol";
 import {AttestationAttested, AttestationRevoked} from "../../src/interfaces/IIndexedEvents.sol";
@@ -115,12 +121,7 @@ contract EASIndexerResolverTest is Test {
         emit AttestationRevoked(address(eas), bytes32(0)); // Check event signature only
 
         // Revoke the attestation - should succeed
-        eas.revoke(
-            RevocationRequest({
-                schema: schemaId,
-                data: RevocationRequestData({uid: uid, value: 0})
-            })
-        );
+        eas.revoke(RevocationRequest({schema: schemaId, data: RevocationRequestData({uid: uid, value: 0})}));
     }
 
     function testOnRevoke_ShouldEmitEventOnMultipleRevocations() public {
@@ -153,12 +154,7 @@ contract EASIndexerResolverTest is Test {
             vm.expectEmit(false, false, false, false);
             emit AttestationRevoked(address(eas), bytes32(0)); // Check event signature only
 
-            eas.revoke(
-                RevocationRequest({
-                    schema: schemaId,
-                    data: RevocationRequestData({uid: uids[i], value: 0})
-                })
-            );
+            eas.revoke(RevocationRequest({schema: schemaId, data: RevocationRequestData({uid: uids[i], value: 0})}));
         }
     }
 }

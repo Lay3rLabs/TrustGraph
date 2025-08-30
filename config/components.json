@@ -9,8 +9,7 @@
       "submit_json_path": "geyser.trigger",
       "config_values": {
         "chain_name": "${CHAIN_NAME}"
-      },
-      "env_variables": ["WAVS_ENV_SOME_SECRET"]
+      }
     },
     {
       "filename": "wavs_eas_attest.wasm",
@@ -23,8 +22,7 @@
         "eas_address": "${EAS_ADDRESS}",
         "indexer_address": "${INDEXER_ADDRESS}",
         "chain_name": "${CHAIN_NAME}"
-      },
-      "env_variables": ["WAVS_ENV_SOME_SECRET"]
+      }
     },
     {
       "filename": "wavs_eas_compute.wasm",
@@ -36,10 +34,8 @@
       "config_values": {
         "eas_address": "${EAS_ADDRESS}",
         "indexer_address": "${INDEXER_ADDRESS}",
-        "chain_name": "${CHAIN_NAME}",
-        "reward_schema_uid": "${VOUCHING_SCHEMA_ID}"
-      },
-      "env_variables": ["WAVS_ENV_SOME_SECRET"]
+        "chain_name": "${CHAIN_NAME}"
+      }
     },
     {
       "filename": "rewards.wasm",
@@ -59,11 +55,7 @@
         "pagerank_trust_multiplier": "10.5",
         "pagerank_trust_boost": "0.99"
       },
-      "env_variables": [
-        "WAVS_ENV_SOME_SECRET",
-        "WAVS_ENV_PINATA_API_URL",
-        "WAVS_ENV_PINATA_API_KEY"
-      ]
+      "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
     },
     {
       "filename": "rewards.wasm",
@@ -83,11 +75,7 @@
         "pagerank_trust_multiplier": "10.5",
         "pagerank_trust_boost": "0.99"
       },
-      "env_variables": [
-        "WAVS_ENV_SOME_SECRET",
-        "WAVS_ENV_PINATA_API_URL",
-        "WAVS_ENV_PINATA_API_KEY"
-      ]
+      "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
     },
     {
       "filename": "prediction_market_oracle.wasm",
@@ -102,15 +90,14 @@
         "chain_name": "${CHAIN_NAME}",
         "resolver_type": "price",
         "resolver_config": "coin_market_cap_id:1;threshold:1.0"
-      },
-      "env_variables": ["WAVS_ENV_SOME_SECRET"]
+      }
     },
     {
       "filename": "llm_attester.wasm",
       "package_name": "llm-attester",
       "package_version": "0.1.0",
       "trigger_event": "Attested(address,address,bytes32,bytes32)",
-      "trigger_json_path": "eas_contracts.indexer_resolver",
+      "trigger_json_path": "eas_contracts.payable_indexer_resolver",
       "submit_json_path": "eas_contracts.attester",
       "config_values": {
         "eas_address": "${EAS_ADDRESS}",
@@ -144,6 +131,38 @@
       "package_version": "0.1.0",
       "trigger_event": "AttestationRevoked(address,bytes32)",
       "trigger_json_path": "eas_contracts.indexer_resolver",
+      "submit_json_path": "wavs_indexer.wavs_indexer"
+    },
+    {
+      "filename": "wavs_indexer.wasm",
+      "package_name": "wavs-indexer",
+      "package_version": "0.1.0",
+      "trigger_event": "AttestationAttested(address,bytes32)",
+      "trigger_json_path": "eas_contracts.payable_indexer_resolver",
+      "submit_json_path": "wavs_indexer.wavs_indexer"
+    },
+    {
+      "filename": "wavs_indexer.wasm",
+      "package_name": "wavs-indexer",
+      "package_version": "0.1.0",
+      "trigger_event": "AttestationRevoked(address,bytes32)",
+      "trigger_json_path": "eas_contracts.payable_indexer_resolver",
+      "submit_json_path": "wavs_indexer.wavs_indexer"
+    },
+    {
+      "filename": "wavs_indexer.wasm",
+      "package_name": "wavs-indexer",
+      "package_version": "0.1.0",
+      "trigger_event": "AttestationAttested(address,bytes32)",
+      "trigger_json_path": "eas_contracts.attester_indexer_resolver",
+      "submit_json_path": "wavs_indexer.wavs_indexer"
+    },
+    {
+      "filename": "wavs_indexer.wasm",
+      "package_name": "wavs-indexer",
+      "package_version": "0.1.0",
+      "trigger_event": "AttestationRevoked(address,bytes32)",
+      "trigger_json_path": "eas_contracts.attester_indexer_resolver",
       "submit_json_path": "wavs_indexer.wavs_indexer"
     },
     {
