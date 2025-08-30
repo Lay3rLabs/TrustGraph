@@ -1,77 +1,49 @@
 # The Plan
 
-# Epochs
-- [x] WAVS zodiac modules to replace MerkleGov and MerkleVote
-- [x] Add LLM package / component (attester example?)
-- [x] WAVS-NFT contracts (just contracts)
-- [x] Wavs Service Manager if we want to go crazy
-- [-] Prediction market -> working hyperstition market
-
-# Next steps
-- [x] Deploy Prediction market
-- [x] Fix up Zodiac modules
-- [x] Fund safe when setting up zodiac modules
-- [x] Add IPFS CID to merkle gov module to fix ui
-- [x] Redo governance UI to work with new zodiac modules + safe
-- [x] Modify dao-agent component to work with a zodiac module
-- [x] Add ollama docker container?
-- [x] Make LLM attester
-- [x] Improve component configuration experience (support config values and environment variables)
-- [x] Get prediction market to actually work (currently partially working)
-- [x] Clean up wavs-llm package (should support formatted response)
-- [x] LLM attester should be spam filter / approver
-- [ ] Merkle gov module probably needs some notion of total voting power
-- [ ] Make attestation on participating in prediction market
-- [ ] More realistic Hyperstition market resolver component
-- [ ] Wire up new component to utilize SignerManagerModule, respond to MerkleRootUpdated Event get IPFS CID, get top N users, sync
-- [ ] Wire up dao-agent component to utilizes WavsModule for zodiac, add test trigger
+## Epochs
+- [ ] Hyperstition markets
+- [ ] Working points UI
 - [ ] Figure out some way to pay for these services
-- [ ] Schema to agree to Experiment Terms
+- [ ] Pay to attest
 
-# Landing page
-
-
-- [ ] Faster text on screen
-- [ ] Clickable options (clicking on the option inserts text into command prompt and shows next step)
-- [ ] Make the text on the page selectable (currently can't select text)
-- [ ] Remove unused help text that isn't part of the main flow
-- [ ] At the end, when signing the oath, connect wallet and make an attestation to join the experiment
-
-Ask questions if you need to clarify requirements or need extra context.
-
-# UI TODO
+## UI TODO
 - [ ] Toasts
 - [ ] Utilize react-query
 - [ ] For vouching page let's figure out how to visualize connections
 - [ ] Figure out something that will scale (currently just fetching entire MerkleTree)
+- [ ] Make the text on the landing page selectable (currently can't select text in "terminal")
 
-# Project Organization and Cleanup TODO
-- [x] Sepolia
-- [x] Add config values to components-config.json (currently all components share the same config lol)
-- [x] Unnessary envrionement variables in Demo (many redundent ones)
-- [x] Use better upstream WAVS patterns
+## Hyperstition Markets
+- [ ] More realistic Hyperstition market resolver component (i.e. Twitter follower count)
+- [ ] Make attestation on participating in prediction market
+
+## WAVS Zodiac Modules
+- [ ] Merkle gov module probably needs some notion of total voting power
+- [ ] Wire up dao-agent component to utilizes WavsModule for zodiac, add test trigger
+- [ ] Wire up new component to utilize SignerManagerModule, respond to MerkleRootUpdated Event get IPFS CID, get top N users, sync
+- [ ] Implement and document the fallback mechanism for governance (this should be fairly straightforward with Zodiac hopefully)
+- [ ] Clean out old Governor example contract
+
+## Attestations
+- [] Attest to social media post (and verify)
+- [] Attest to GitHub Contributions (could just be a GitHub workflow we run)
+- [] Add helpful [resolvers](https://github.com/ethereum-attestation-service/eas-contracts/tree/master/contracts/resolver/examples) like payment, etc.
+
+## Project Organization and Cleanup
 - [ ] Organize project better (put contracts in folders)
 - [ ] No IWavsTrigger2
 
-### Project organization (contracts)
-
+#### Project organization (contracts)
 Let's reorganize our src/contracts folder as we've added new contracts.
 
 Let's make a new `eas` folder and move in the following contracts:
 - Attester.sol
-- Indexer.sol
-- IndexerResolver.sol
+- EASIndexerResolver.sol
 - OffchainAttestationVerifier.sol
 - SchemaRegistrar.sol
 
 Let's make a new `rewards` folder and move in the following contracts:
 - RewardDistributor.sol
-
-Let's make a new `governance` folder and move in the following contracts:
-- Governor.sol
-- MerkleGov.sol
-- MerkleVote.sol
-- VotingPower.sol
 
 Let's make a new `tokens` folder and move in the following contracts:
 - ERC20.sol
@@ -81,33 +53,12 @@ Let's make a `misc` folder and move in the following contracts:
 - Daico.sol
 - Trigger.sol
 
-# Misc improvements
-- [x] Vibe code Service UI from service.json (get IPFS hash)
-- [ ] Better computation of attestations (actually use attestation data?)
-- [ ] Revoking an attestation should lower voting power
-- [ ] Resolver that only let's people who have voting power attest.
-- [ ] Make a generic weights contract?
+Let's make a `wavs` folder and move in the following contracts:
+- WavsIndexer.sol
+- POAServiceManager.sol
+- Geyser.sol
 
-### Zodiac Modules
-Let's use a zodiac module + safe to create a system with a nice fallback while we're experimenting with novel governance mechanisms.
-
-1. Basic Setup:
-- [x] Create a basic Zodiac module
-- [x] Create a basic Zodiac module that is able to update signers on a safe
-- [x] Create a deploy script that deploys two Safes with each of the custom zodiac modules
-- [x] Basic test scaffold
-
-2. MVP
-- [x] Module for direct voting with Merkle Proofs (similar to MerkleGov + MerkleVote)
-- [x] Module that syncs top N accounts as signers (similar to VotingPower.sol)
-- [x] Add zodiac module for WAVS agent
-- [x] Documentation of how these work
-- [-] Wire up components and WAVS deployments
-
-3. Refinement
-- [ ] Implement and document the fallback mechanism for governance (this should be fairly straightforward with Zodiac hopefully)
-
-### MVP Symbient
+## MVP Symbient
 - [x] Add LLM Module
 - [ ] People make an attestation (with payment, some funds go to operators)
 - [ ] Deterministic Agent evaluates suggestion ()
@@ -116,25 +67,3 @@ Let's use a zodiac module + safe to create a system with a nice fallback while w
 - [ ] Mint NFTs of responses and conversations
 - [ ] We're going to make a Network Spirituality Holy Text
 - [ ] Pay to submit a message to EN0VA and mint NFTs
-
-## Future Service Improvements
-- [ ] Break out Indexer contract, could be modified to be multichain? EAS indexer component (indexes certain attestations without a resolver?)
-- [ ] Add eas-indexer sidecar to docker compose?
-- [ ] JS example using EAS SDK?
-- [ ] Performance based Vesting
-- [ ] More EAS resolvers
-- [ ] Docs and writeup
-- [ ] review and fixup tests
-- [ ] bridge integration
-
-# Idea space
-### Attestation Components
-There could be a whole folder of them!
-
-- [] Attest to social media post
-- [] Verification of an Offchain Attestation
-- [] Attest to how you feel
-
-### Resolvers
-- [] Only if member
-- [] Payment / token gating
