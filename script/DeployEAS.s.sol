@@ -8,7 +8,7 @@ import {
 } from "@ethereum-attestation-service/eas-contracts/contracts/SchemaRegistry.sol";
 import {IEAS, EAS} from "@ethereum-attestation-service/eas-contracts/contracts/EAS.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/contracts/resolver/ISchemaResolver.sol";
-import {Attester} from "../src/contracts/eas/Attester.sol";
+import {WavsAttester} from "../src/contracts/eas/WavsAttester.sol";
 import {SchemaRegistrar} from "../src/contracts/eas/SchemaRegistrar.sol";
 
 import {EASIndexerResolver} from "../src/contracts/eas/EASIndexerResolver.sol";
@@ -68,10 +68,10 @@ contract DeployEAS is Common {
         deployment.schemaRegistrar = address(schemaRegistrar);
         console.log("SchemaRegistrar deployed at:", deployment.schemaRegistrar);
 
-        // 6. Deploy Attester (main WAVS integration contract)
-        Attester attester = new Attester(IEAS(deployment.eas), IWavsServiceManager(serviceManager));
+        // 6. Deploy WavsAttester (main WAVS integration contract)
+        WavsAttester attester = new WavsAttester(IEAS(deployment.eas), IWavsServiceManager(serviceManager));
         deployment.attester = address(attester);
-        console.log("Attester deployed at:", deployment.attester);
+        console.log("WavsAttester deployed at:", deployment.attester);
 
         // 7. Deploy EASAttestTrigger
         EASAttestTrigger easAttestTrigger = new EASAttestTrigger();
@@ -135,7 +135,7 @@ contract DeployEAS is Common {
         console.log("\n=== EAS Deployment Summary ===");
         console.log("SchemaRegistry:", deployment.schemaRegistry);
         console.log("EAS:", deployment.eas);
-        console.log("Attester:", deployment.attester);
+        console.log("WavsAttester:", deployment.attester);
         console.log("SchemaRegistrar:", deployment.schemaRegistrar);
         console.log("EASIndexerResolver:", deployment.indexerResolver);
         console.log("EASAttestTrigger:", deployment.easAttestTrigger);

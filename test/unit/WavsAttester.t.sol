@@ -3,7 +3,7 @@ pragma solidity 0.8.27;
 
 import {Test} from "forge-std/Test.sol";
 import {console} from "forge-std/console.sol";
-import {Attester} from "../../src/contracts/eas/Attester.sol";
+import {WavsAttester} from "../../src/contracts/eas/WavsAttester.sol";
 import {EASIndexerResolver} from "../../src/contracts/eas/EASIndexerResolver.sol";
 import {EAS} from "@ethereum-attestation-service/eas-contracts/contracts/EAS.sol";
 import {SchemaRegistry} from "@ethereum-attestation-service/eas-contracts/contracts/SchemaRegistry.sol";
@@ -50,8 +50,8 @@ contract MockWavsServiceManager is IWavsServiceManager {
     function getStakeRegistry() external view override returns (address) {}
 }
 
-contract AttesterTest is Test {
-    Attester public attester;
+contract WavsAttesterTest is Test {
+    WavsAttester public attester;
     EASIndexerResolver public resolver;
     EAS public eas;
     SchemaRegistry public schemaRegistry;
@@ -70,7 +70,7 @@ contract AttesterTest is Test {
         eas = new EAS(ISchemaRegistry(address(schemaRegistry)));
         resolver = new EASIndexerResolver(IEAS(address(eas)));
         serviceManager = new MockWavsServiceManager();
-        attester = new Attester(IEAS(address(eas)), IWavsServiceManager(address(serviceManager)));
+        attester = new WavsAttester(IEAS(address(eas)), IWavsServiceManager(address(serviceManager)));
 
         // Register schemas
         schemaId = schemaRegistry.register(SCHEMA, resolver, true);
@@ -78,13 +78,13 @@ contract AttesterTest is Test {
     }
 
     function testConstruction_ShouldRevertWithInvalidEAS() public {
-        vm.expectRevert(Attester.InvalidEAS.selector);
-        new Attester(IEAS(ZERO_ADDRESS), IWavsServiceManager(address(serviceManager)));
+        vm.expectRevert(WavsAttester.InvalidEAS.selector);
+        new WavsAttester(IEAS(ZERO_ADDRESS), IWavsServiceManager(address(serviceManager)));
     }
 
     function testConstruction_ShouldRevertWithInvalidServiceManager() public {
-        vm.expectRevert(Attester.InvalidServiceManager.selector);
-        new Attester(IEAS(address(eas)), IWavsServiceManager(ZERO_ADDRESS));
+        vm.expectRevert(WavsAttester.InvalidServiceManager.selector);
+        new WavsAttester(IEAS(address(eas)), IWavsServiceManager(ZERO_ADDRESS));
     }
 
     // Enum for operation types matching the contract

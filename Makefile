@@ -106,7 +106,7 @@ get-trigger-from-deploy:
 
 ## get-submit-from-deploy: getting the submit address from the script deploy
 get-submit-from-deploy:
-	@jq -r '.logs[] | select(type == "string" and startswith("Attester deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo ""
+	@jq -r '.logs[] | select(type == "string" and startswith("WavsAttester deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo ""
 ## wavs-cli: running wavs-cli in docker
 wavs-cli:
 	@$(WAVS_CMD) $(filter-out $@,$(MAKECMDGOALS))

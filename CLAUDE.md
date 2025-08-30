@@ -51,7 +51,7 @@ Three main components that handle different aspects of the attestation workflow:
 - `rewards/`: Calculates and distributes rewards based on attestation activity
 
 #### Smart Contracts (`src/contracts/`)
-- `Attester.sol`: Main attestation request handler
+- `WavsAttester.sol`: Main attestation request handler
 - `VotingPower.sol`: Manages voting power based on attestations
 - `RewardDistributor.sol`: Handles reward distribution logic
 - `Trigger.sol`: Event emission for off-chain component triggers

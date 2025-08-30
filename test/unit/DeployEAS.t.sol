@@ -9,7 +9,7 @@ import {
 } from "@ethereum-attestation-service/eas-contracts/contracts/ISchemaRegistry.sol";
 import {EASIndexerResolver} from "../../src/contracts/eas/EASIndexerResolver.sol";
 
-import {Attester} from "../../src/contracts/eas/Attester.sol";
+import {WavsAttester} from "../../src/contracts/eas/WavsAttester.sol";
 import {SchemaRegistrar} from "../../src/contracts/eas/SchemaRegistrar.sol";
 import {EASAttestTrigger} from "../../src/contracts/misc/Trigger.sol";
 
@@ -89,12 +89,12 @@ contract DeployEASTest is Test {
 
         DeployEAS.EASDeployment memory deployment = deployer.run(serviceManagerAddr);
 
-        // Verify Attester is properly configured
-        Attester attester = Attester(payable(deployment.attester));
+        // Verify WavsAttester is properly configured
+        WavsAttester attester = WavsAttester(payable(deployment.attester));
 
-        // Check EAS reference (this might require a getter function in Attester)
+        // Check EAS reference (this might require a getter function in WavsAttester)
         // For now, we just verify the contract was deployed and is not zero address
-        assertTrue(deployment.attester != address(0), "Attester should be deployed");
+        assertTrue(deployment.attester != address(0), "WavsAttester should be deployed");
     }
 
     function testDeployEAS_ShouldRevertWithInvalidServiceManager() public {

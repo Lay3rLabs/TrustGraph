@@ -28,6 +28,7 @@
 - [] Attest to social media post (and verify)
 - [] Attest to GitHub Contributions (could just be a GitHub workflow we run)
 - [] Add helpful [resolvers](https://github.com/ethereum-attestation-service/eas-contracts/tree/master/contracts/resolver/examples) like payment, etc.
+- [x] Rename Attester.sol to WavsAttester.sol
 
 ## MVP Symbient
 - [x] Add LLM Module

@@ -16,9 +16,9 @@ import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsSe
 import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 import {ITypes} from "../../interfaces/ITypes.sol";
 
-/// @title Attester
+/// @title WavsAttester
 /// @notice Ethereum Attestation Service - Example that integrates with WAVS
-contract Attester is IWavsServiceHandler {
+contract WavsAttester is IWavsServiceHandler {
     error InvalidEAS();
     error InvalidInput();
     error InvalidServiceManager();
@@ -48,7 +48,7 @@ contract Attester is IWavsServiceHandler {
     // The WAVS service manager instance
     IWavsServiceManager private immutable _serviceManager;
 
-    /// @notice Creates a new Attester instance.
+    /// @notice Creates a new WavsAttester instance.
     /// @param eas The address of the global EAS contract.
     /// @param serviceManager The address of the WAVS service manager.
     constructor(IEAS eas, IWavsServiceManager serviceManager) {
