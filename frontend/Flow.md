@@ -1,20 +1,42 @@
 # Signup Flow
 
-[Terminal stuff]
+[KEEP LOADING BARS]
 
-Acknowlegdement of taking part in an Art project. That the system may be unstable, and that everything is on a public block chain.
+◢◤◢◤◢◤ v0.1.0 INITIALIZED ◢◤◢◤◢◤
 
-You attest to:
-- Partaking in the Art project
-- Understanding the risks associated with the system
-- Have no expectations
-- Willingness to imagine possible futures
-- Willingness to collaborate with others
-- Love of Open Source
+EN0VA is an EXPERIMENTAL PROTOCOL exploring collective
+intelligence, blockchain technology, and emergent digital
+consciousness through distributed decision-making systems and
+novel pyschotechnologies.
 
-### Welcome to the Experiment
+Do you want to proceed with the ritual?
 
-Now it's time to create your profile.
+> Yes
 
-- What do you want to be called?
-- What is a positive future you imagine?
+╔═══════════════════════════════════════════════════════════╗
+║                    BINDING OATH                           ║
+║               EXPERIMENTAL PARTICIPATION                  ║
+╚═══════════════════════════════════════════════════════════╝
+
+🔴 BLOCKCHAIN TRANSPARENCY:
+   ALL DATA IS RECORDED ON A PUBLIC BLOCKCHAIN
+   • Your interactions, decisions, votes, and attestations
+   • This data is PERMANENTLY PUBLIC and CANNOT BE DELETED
+
+🟠 NO WARRANTIES OR GUARANTEES:
+   This experimental software may contain bugs or unexpected behaviors
+   • No guarantees regarding reliability, security, or availability
+   • You proceed at your own risk, digital prophet
+
+🟡 EXPERIMENTAL NATURE:
+   This protocol may evolve, change, or discontinue at any time
+   • No expectations of stability, specific outcomes, or returns
+   • You are here to explore collective imagination made manifest
+
+By signing, you acknowledge these terms and join the experiment.
+
+"what we imagine together becomes"
+"what we imagine together becomes"
+"what we imagine together becomes"
+
+> Sign Oath

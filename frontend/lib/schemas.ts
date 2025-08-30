@@ -3,18 +3,18 @@
 
 export const schemas = {
   basicSchema:
-    '0x8b36fd1a57b0039bf29d3d8f95927f10c7b6d48c879bacf0894a65882963b7ed',
+    '0x8baaedd77c5f8061341057a07f25f4001ca4aec2161d605227de48340b92a373',
   computeSchema:
-    '0x74f8dd1a009b7b50d7777dcf3cf23e442981444d8df2fc6ab17e299998663be8',
+    '0x3d8eb381b748532728fc6dce99ee0f11e7afe816389798072c290afba099e563',
 
   statementSchema:
-    '0x37d2dcb0d7779aeddfee906e64fff6f80bb2249e25898df323b1079095320054',
+    '0x59ebe58a14ec7b665d291b68914a1c6337f2729514180183604e678eb25bcf73',
   isTrueSchema:
-    '0x1c643fc31f51ced1ea76f7ebe114d06661d3f302266f6a6ed721fed2a4f70ced',
+    '0x177e428e1d7d2b5e86f73aa53f26d0f859f0d862a6276a4e393ac841f1427c90',
   likeSchema:
-    '0x725f3888abae2d79cbef3fbdefc519271c33ab61968177e8b3b821160493e566',
+    '0xf10c411a56ca7ad67a6382d20f15d50f52c10ca16c2bf30d68692000b3388563',
   vouchingSchema:
-    '0xefe873dcd5e56533daa49d16bded8d693a683326d206d6400daa5bafba9b9f25',
+    '0x9030b8a8bd235d4f63fd7d4abd94e6b79e6ff2b650f5ff50000627a891e76674',
 } as const
 
 // Schema definitions with metadata for UI
@@ -30,6 +30,12 @@ export const SCHEMA_OPTIONS = [
     uid: schemas.computeSchema,
     description: 'Computational verification',
     fields: ['result', 'computation_hash'],
+  },
+  {
+    name: 'Statement Schema',
+    uid: schemas.statementSchema,
+    description: 'Statement',
+    fields: ['statement'],
   },
   {
     name: 'Vouching Schema',

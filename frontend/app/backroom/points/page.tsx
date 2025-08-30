@@ -1,10 +1,10 @@
-"use client";
+'use client'
 
-import type React from "react";
-import { ComponentType, useState } from "react";
-import { useAccount } from "wagmi";
-import clsx from "clsx";
-import { Pie } from "react-chartjs-2";
+import type React from 'react'
+import { ComponentType, useState } from 'react'
+import { useAccount } from 'wagmi'
+import clsx from 'clsx'
+import { Pie } from 'react-chartjs-2'
 import {
   Chart as ChartJS,
   ArcElement,
@@ -17,9 +17,9 @@ import {
   CategoryScale,
   TimeScale,
   ChartData,
-} from "chart.js";
-import { ChevronLeft, Eye, Hand } from "lucide-react";
-import "chartjs-adapter-luxon";
+} from 'chart.js'
+import { ChevronLeft, Eye, Hand, FlaskConical } from 'lucide-react'
+import 'chartjs-adapter-luxon'
 
 ChartJS.register(
   ArcElement,
@@ -30,110 +30,115 @@ ChartJS.register(
   LinearScale,
   CategoryScale,
   TimeScale
-);
+)
 
 type PieLevel = {
-  title: string;
+  title: string
   values: {
-    title: string;
-    value: number;
-    color: string;
-    subPie?: Omit<PieLevel, "title"> & { title?: string };
-  }[];
+    title: string
+    value: number
+    color: string
+    subPie?: Omit<PieLevel, 'title'> & { title?: string }
+  }[]
   /**
    * Set when entering a sub-pie. Used to reset to parent pie when leaving.
    */
-  parent?: PieLevel;
-};
-
-enum ActivityType {
-  Vouch = "vouch",
-  Hyperstition = "hyperstition",
+  parent?: PieLevel
 }
 
-const types = Object.values(ActivityType);
+enum ActivityType {
+  Vouch = 'vouch',
+  Hyperstition = 'hyperstition',
+  Joined = 'joined',
+}
 
-const ActivityTypeIcon: Record<ActivityType, ComponentType<{ className?: string }>> = {
+const types = Object.values(ActivityType)
+
+const ActivityTypeIcon: Record<
+  ActivityType,
+  ComponentType<{ className?: string }>
+> = {
   [ActivityType.Vouch]: Hand,
   [ActivityType.Hyperstition]: Eye,
-};
+  [ActivityType.Joined]: FlaskConical,
+}
 
 type Activity = {
-  id: string;
-  type: ActivityType;
-  summary: string;
-  timestamp: Date;
-  points: number;
-};
+  id: string
+  type: ActivityType
+  summary: string
+  timestamp: Date
+  points: number
+}
 
-const rank = 87;
-const numRanks = 1000;
+const rank = 1000
+const numRanks = 1000
 
 const activities: Activity[] = [
   {
-    id: "1",
-    type: ActivityType.Vouch,
-    summary: "Vouched for a contributor",
+    id: '1',
+    type: ActivityType.Joined,
+    summary: 'Joined the Experiment',
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    points: 100,
+    points: 1,
   },
-  {
-    id: "2",
-    type: ActivityType.Vouch,
-    summary: "Vouched for a contributor",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 18),
-    points: 50,
-  },
-  {
-    id: "3",
-    type: ActivityType.Hyperstition,
-    summary: "Bought YES position in a Hyperstition market",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 17),
-    points: 50,
-  },
-  {
-    id: "4",
-    type: ActivityType.Vouch,
-    summary: "Vouched for a contributor",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12),
-    points: 30,
-  },
-  {
-    id: "5",
-    type: ActivityType.Vouch,
-    summary: "Vouched for a contributor",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8),
-    points: 10,
-  },
-  {
-    id: "6",
-    type: ActivityType.Hyperstition,
-    summary: "Bought NO position in a Hyperstition market",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6),
-    points: 30,
-  },
-  {
-    id: "7",
-    type: ActivityType.Vouch,
-    summary: "Vouched for a contributor",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-    points: 10,
-  },
-  {
-    id: "8",
-    type: ActivityType.Hyperstition,
-    summary: "Redeemed YES position in a Hyperstition market",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-    points: 10,
-  },
-  {
-    id: "9",
-    type: ActivityType.Hyperstition,
-    summary: "Redeemed NO position in a Hyperstition market",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-    points: 10,
-  },
-];
+  // {
+  //   id: '2',
+  //   type: ActivityType.Vouch,
+  //   summary: 'Vouched for a contributor',
+  //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 18),
+  //   points: 50,
+  // },
+  // {
+  //   id: '3',
+  //   type: ActivityType.Hyperstition,
+  //   summary: 'Bought YES position in a Hyperstition market',
+  //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 17),
+  //   points: 50,
+  // },
+  // {
+  //   id: '4',
+  //   type: ActivityType.Vouch,
+  //   summary: 'Vouched for a contributor',
+  //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12),
+  //   points: 30,
+  // },
+  // {
+  //   id: '5',
+  //   type: ActivityType.Vouch,
+  //   summary: 'Vouched for a contributor',
+  //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8),
+  //   points: 10,
+  // },
+  // {
+  //   id: '6',
+  //   type: ActivityType.Hyperstition,
+  //   summary: 'Bought NO position in a Hyperstition market',
+  //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6),
+  //   points: 30,
+  // },
+  // {
+  //   id: '7',
+  //   type: ActivityType.Vouch,
+  //   summary: 'Vouched for a contributor',
+  //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
+  //   points: 10,
+  // },
+  // {
+  //   id: '8',
+  //   type: ActivityType.Hyperstition,
+  //   summary: 'Redeemed YES position in a Hyperstition market',
+  //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
+  //   points: 10,
+  // },
+  // {
+  //   id: '9',
+  //   type: ActivityType.Hyperstition,
+  //   summary: 'Redeemed NO position in a Hyperstition market',
+  //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
+  //   points: 10,
+  // },
+]
 
 const cumulativePoints = activities.reduce(
   (acc, activity, index) => [
@@ -147,58 +152,58 @@ const cumulativePoints = activities.reduce(
     },
   ],
   [] as {
-    timestamp: number;
-    points: number;
+    timestamp: number
+    points: number
   }[]
-);
+)
 
-const totalPoints = cumulativePoints[cumulativePoints.length - 1].points;
-const otherPoints = totalPoints + 100;
+const totalPoints = cumulativePoints[cumulativePoints.length - 1].points
+const otherPoints = 999
 
 const rootPieLevel: PieLevel = {
-  title: "All Phases",
+  title: 'All Phases',
   values: [
     {
-      title: "Phase 1",
+      title: 'Phase 1',
       value: 1,
-      color: "rgb(36, 36, 36)",
+      color: 'rgb(36, 36, 36)',
       subPie: {
         values: [
-          { title: "Your points", value: totalPoints, color: "#dd70d4" },
+          { title: 'Your points', value: totalPoints, color: '#dd70d4' },
           {
             title: "Others' points",
             value: otherPoints,
-            color: "rgb(24, 24, 24)",
+            color: 'rgb(24, 24, 24)',
           },
         ],
       },
     },
     {
-      title: "Remaining phases",
+      title: 'Remaining phases',
       value: 99,
-      color: "rgb(24, 24, 24)",
+      color: 'rgb(24, 24, 24)',
     },
   ],
-};
+}
 
 export default function PointsPage() {
-  const { address, isConnected } = useAccount();
-  const [selectedType, setSelectedType] = useState<ActivityType | "all">("all");
+  const { address, isConnected } = useAccount()
+  const [selectedType, setSelectedType] = useState<ActivityType | 'all'>('all')
 
   const formatTimeAgo = (timestamp: Date) => {
-    const now = new Date();
+    const now = new Date()
     const diffInMinutes = Math.floor(
       (now.getTime() - timestamp.getTime()) / (1000 * 60)
-    );
+    )
 
     if (diffInMinutes < 60) {
-      return `${diffInMinutes}m ago`;
+      return `${diffInMinutes}m ago`
     } else if (diffInMinutes < 1440) {
-      return `${Math.floor(diffInMinutes / 60)}h ago`;
+      return `${Math.floor(diffInMinutes / 60)}h ago`
     } else {
-      return `${Math.floor(diffInMinutes / 1440)}d ago`;
+      return `${Math.floor(diffInMinutes / 1440)}d ago`
     }
-  };
+  }
 
   if (!isConnected) {
     return (
@@ -217,27 +222,27 @@ export default function PointsPage() {
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   const getSelectedPieLevel = (
     currentLevel: PieLevel,
     index: number
   ): PieLevel => {
-    const pieLevel = currentLevel.values[index].subPie as PieLevel | undefined;
+    const pieLevel = currentLevel.values[index].subPie as PieLevel | undefined
     if (!pieLevel) {
-      return currentLevel;
+      return currentLevel
     }
 
-    pieLevel.title = currentLevel.values[index].title;
-    pieLevel.parent = currentLevel;
+    pieLevel.title = currentLevel.values[index].title
+    pieLevel.parent = currentLevel
 
-    return pieLevel;
-  };
+    return pieLevel
+  }
 
   const [activePieLevel, setActivePieLevel] = useState(() =>
     getSelectedPieLevel(rootPieLevel, 0)
-  );
+  )
 
   const pieChartData = {
     labels: activePieLevel.values.map((entry) => entry.title),
@@ -248,9 +253,9 @@ export default function PointsPage() {
         borderWidth: 0,
       },
     ],
-  };
+  }
 
-  const pieChartOptions: ChartOptions<"pie"> = {
+  const pieChartOptions: ChartOptions<'pie'> = {
     // cutout: 32,
     responsive: true,
     maintainAspectRatio: false,
@@ -264,10 +269,10 @@ export default function PointsPage() {
       tooltip: {
         callbacks: {
           label: (context) => {
-            const value = context.parsed;
+            const value = context.parsed
             return activePieLevel === rootPieLevel
               ? `${value.toLocaleString()}%`
-              : `${value.toLocaleString()} points`;
+              : `${value.toLocaleString()} points`
           },
         },
       },
@@ -279,34 +284,34 @@ export default function PointsPage() {
       if (elements.length > 0) {
         setActivePieLevel(
           getSelectedPieLevel(activePieLevel, elements[0].index)
-        );
+        )
       }
     },
     onHover: (_, elements, chart) => {
       if (elements.length > 0) {
-        const hoveredData = activePieLevel.values[elements[0].index];
-        chart.canvas.style.cursor = hoveredData.subPie ? "pointer" : "default";
+        const hoveredData = activePieLevel.values[elements[0].index]
+        chart.canvas.style.cursor = hoveredData.subPie ? 'pointer' : 'default'
       } else {
-        chart.canvas.style.cursor = "default";
+        chart.canvas.style.cursor = 'default'
       }
     },
-  };
+  }
 
-  const pointsBreakdownChartData: ChartData<"line"> = {
+  const pointsBreakdownChartData: ChartData<'line'> = {
     labels: cumulativePoints.map((point) => point.timestamp),
     datasets: [
       {
         data: cumulativePoints.map((point) => point.points),
-        backgroundColor: "#dd70d4",
+        backgroundColor: '#dd70d4',
         borderWidth: 4,
         pointRadius: 1,
         fill: false,
-        borderColor: "#dd70d4",
+        borderColor: '#dd70d4',
       },
     ],
-  };
+  }
 
-  const pointsBreakdownChartOptions: ChartOptions<"line"> = {
+  const pointsBreakdownChartOptions: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -322,15 +327,15 @@ export default function PointsPage() {
     },
     scales: {
       x: {
-        type: "time",
+        type: 'time',
         time: {
-          unit: "day",
-          tooltipFormat: "DD T",
+          unit: 'day',
+          tooltipFormat: 'DD T',
         },
       },
     },
     spanGaps: true,
-  };
+  }
 
   return (
     <div className="space-y-6">
@@ -343,7 +348,7 @@ export default function PointsPage() {
                   setActivePieLevel(activePieLevel.parent || rootPieLevel)
                 }
                 className={clsx(
-                  "absolute -left-[1.75rem] text-sm text-gray-400 hover:text-gray-200 cursor-pointer"
+                  'absolute -left-[1.75rem] text-sm text-gray-400 hover:text-gray-200 cursor-pointer'
                 )}
               >
                 <ChevronLeft className="w-5 h-5" />
@@ -403,39 +408,40 @@ export default function PointsPage() {
           {activities
             .filter(
               (activity) =>
-                selectedType === "all" || activity.type === selectedType
+                selectedType === 'all' || activity.type === selectedType
             )
             .map((activity) => {
-              const Icon = ActivityTypeIcon[activity.type];
+              const Icon = ActivityTypeIcon[activity.type]
               return (
-              <div
-                key={activity.id}
-                className="flex items-center justify-between px-4 py-3 rounded-sm bg-gray-900/10 hover:bg-gray-900/20 transition-colors"
-              >
-                <div className="flex items-center space-x-4">
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <Icon className="w-4 h-4" />
-                      <div className="text-white font-medium text-sm">
-                        {activity.type.toUpperCase()}
+                <div
+                  key={activity.id}
+                  className="flex items-center justify-between px-4 py-3 rounded-sm bg-gray-900/10 hover:bg-gray-900/20 transition-colors"
+                >
+                  <div className="flex items-center space-x-4">
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <Icon className="w-4 h-4" />
+                        <div className="text-white font-medium text-sm">
+                          {activity.type.toUpperCase()}
+                        </div>
                       </div>
-                    </div>
                       <div className="text-xs text-gray-400 mt-1">
                         {activity.summary}
                       </div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      {formatTimeAgo(activity.timestamp)}
+                      <div className="text-xs text-gray-400 mt-1">
+                        {formatTimeAgo(activity.timestamp)}
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-green-400 font-bold">
-                    +{activity.points}
+                  <div className="text-right">
+                    <div className="text-green-400 font-bold">
+                      +{activity.points}
+                    </div>
+                    <div className="text-xs text-gray-500">points</div>
                   </div>
-                  <div className="text-xs text-gray-500">points</div>
                 </div>
-              </div>
-            )})}
+              )
+            })}
         </div>
       </div>
 
@@ -547,5 +553,5 @@ export default function PointsPage() {
         </div>
       </div> */}
     </div>
-  );
+  )
 }
