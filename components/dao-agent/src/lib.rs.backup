@@ -15,8 +15,8 @@ use bindings::{
 use context::DaoContext;
 use sol_interfaces::{Operation, Transaction};
 use std::str::FromStr;
+use wavs_llm::client::{LlmResponse, Message};
 use wavs_llm::{client, errors::AgentError};
-use wavs_llm::{LlmResponse, Message};
 
 struct Component;
 
@@ -56,7 +56,13 @@ impl Guest for Component {
             }
         } else {
             // If no system message exists, create one with the DAO state
-            llm_context.messages.push(Message::system(dao_state));
+            llm_context.messages.push(Message {
+                role: "system".into(),
+                content: Some(dao_state),
+                tool_calls: None,
+                tool_call_id: None,
+                name: None,
+            });
         }
 
         // Create LLM client implementation using the standalone constructor
@@ -66,28 +72,9 @@ impl Guest for Component {
         );
 
         // Use the helper function to process the prompt with config
-        let result = {
-            // First try to get the response with potential tool calls
-            let response = llm_client
-                .chat(prompt.clone())
-                .with_config(&llm_context)
-                .send()
-                .map_err(|e| e.to_string())?;
-
-            // Check if there's content to parse
-            if let Some(content) = response.content {
-                // Try to parse as transaction first
-                if let Ok(tx) = serde_json::from_str::<wavs_llm::contracts::Transaction>(&content) {
-                    LlmResponse::Transaction(tx)
-                } else {
-                    // Otherwise return as text
-                    LlmResponse::Text(content)
-                }
-            } else {
-                // No content, return empty text
-                LlmResponse::Text(String::new())
-            }
-        };
+        let result = llm_client
+            .process_with_config(prompt.clone(), &llm_context)
+            .map_err(|e| e.to_string())?;
 
         // Handle the response
         match result {

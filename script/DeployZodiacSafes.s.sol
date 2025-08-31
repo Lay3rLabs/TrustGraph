@@ -15,6 +15,7 @@ import {GnosisSafeProxyFactory} from "@gnosis.pm/safe-contracts/proxies/GnosisSa
 // Our modules
 import {MerkleGovModule} from "contracts/zodiac/MerkleGovModule.sol";
 import {SignerManagerModule} from "contracts/zodiac/SignerManagerModule.sol";
+import {WavsModule} from "contracts/zodiac/WavsModule.sol";
 
 // WAVS interfaces
 import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
@@ -30,6 +31,7 @@ contract DeployZodiacSafes is Common {
         address safe;
         address merkleGovModule;
         address signerModule;
+        address wavsModule;
         address[] initialSigners;
         uint256 threshold;
         bool modulesEnabled;
@@ -38,8 +40,7 @@ contract DeployZodiacSafes is Common {
 
     /**
      * @dev Deploys two Safes with Zodiac modules and auto-enables them
-     * @notice Safes are deployed with single signer (deployer) for easy module enablement
-     *         Additional signers can be added later using the SignerManagerModule
+     * @notice Safe 1 gets SignerManagerModule and MerkleGovModule, Safe 2 gets WavsModule
      * @param serviceManagerAddr The address of the WAVS service manager
      */
     function run(string calldata serviceManagerAddr) public {
@@ -54,13 +55,13 @@ contract DeployZodiacSafes is Common {
         GnosisSafe safeSingleton = new GnosisSafe();
         GnosisSafeProxyFactory safeFactory = new GnosisSafeProxyFactory();
 
-        // Deploy first Safe with single signer for easy module enablement
+        // Deploy first Safe with SignerManagerModule and MerkleGovModule
         SafeDeployment memory safe1 =
-            deployAndConfigureZodiacSafe(safeSingleton, safeFactory, deployer, serviceManager, "Safe1");
+            deployZodiacSafeWithSignerAndMerkle(safeSingleton, safeFactory, deployer, serviceManager, "Safe1");
 
-        // Deploy second Safe with single signer for easy module enablement
+        // Deploy second Safe with WavsModule
         SafeDeployment memory safe2 =
-            deployAndConfigureZodiacSafe(safeSingleton, safeFactory, deployer, serviceManager, "Safe2");
+            deployZodiacSafeWithWavs(safeSingleton, safeFactory, deployer, serviceManager, "Safe2");
 
         vm.stopBroadcast();
 
@@ -68,7 +69,7 @@ contract DeployZodiacSafes is Common {
         writeDeploymentResults(safe1, safe2, address(safeSingleton), address(safeFactory));
     }
 
-    function deployAndConfigureZodiacSafe(
+    function deployZodiacSafeWithSignerAndMerkle(
         GnosisSafe safeSingleton,
         GnosisSafeProxyFactory safeFactory,
         address deployer,
@@ -156,6 +157,7 @@ contract DeployZodiacSafes is Common {
             safe: safeProxy,
             merkleGovModule: address(merkleGovModule),
             signerModule: address(signerModule),
+            wavsModule: address(0), // No WavsModule for Safe 1
             initialSigners: initialSigners,
             threshold: threshold,
             modulesEnabled: success1 && success2,
@@ -164,7 +166,96 @@ contract DeployZodiacSafes is Common {
 
         // Log the deployment and enablement status
         if (deployment.modulesEnabled) {
-            emit ModulesEnabled(safeProxy, address(merkleGovModule), address(signerModule));
+            emit Safe1ModulesEnabled(safeProxy, address(merkleGovModule), address(signerModule));
+        }
+
+        return deployment;
+    }
+
+    function deployZodiacSafeWithWavs(
+        GnosisSafe safeSingleton,
+        GnosisSafeProxyFactory safeFactory,
+        address deployer,
+        IWavsServiceManager serviceManager,
+        string memory safeName
+    ) internal returns (SafeDeployment memory deployment) {
+        // Setup with single signer (deployer) and threshold of 1 for easy module enablement
+        address[] memory initialSigners = new address[](1);
+        initialSigners[0] = deployer;
+        uint256 threshold = 1;
+
+        // Create Safe setup data
+        bytes memory setupData = abi.encodeWithSignature(
+            "setup(address[],uint256,address,bytes,address,address,uint256,address)",
+            initialSigners,
+            threshold,
+            address(0), // to (for optional delegate call)
+            "", // data (for optional delegate call)
+            address(0), // fallback handler
+            address(0), // payment token
+            0, // payment
+            address(0) // payment receiver
+        );
+
+        // Deploy Safe proxy with unique nonce
+        address safeProxy = address(
+            safeFactory.createProxyWithNonce(
+                address(safeSingleton), setupData, uint256(keccak256(abi.encodePacked(safeName, block.timestamp)))
+            )
+        );
+
+        // Deploy WAVS Module
+        // Parameters: owner, avatar, target, serviceManager, strictNonceOrdering
+        WavsModule wavsModule = new WavsModule(
+            deployer, // owner
+            safeProxy, // avatar (the Safe)
+            safeProxy, // target (the Safe)
+            serviceManager, // WAVS service manager
+            false // strictNonceOrdering (false for flexibility)
+        );
+
+        // Enable the WavsModule on the Safe
+        GnosisSafe safe = GnosisSafe(payable(safeProxy));
+
+        // Prepare module enablement transaction
+        bytes memory enableWavsModuleData = abi.encodeWithSignature("enableModule(address)", address(wavsModule));
+
+        // Execute module enablement as the Safe (threshold is 1, deployer can execute)
+        bytes memory signature = generateSignature(deployer, safe, address(safe), enableWavsModuleData);
+
+        // Enable WAVS Module
+        bool success = safe.execTransaction(
+            address(safe), // to
+            0, // value
+            enableWavsModuleData, // data
+            Enum.Operation.Call, // operation
+            0, // safeTxGas
+            0, // baseGas
+            0, // gasPrice
+            address(0), // gasToken
+            payable(0), // refundReceiver
+            signature // signatures
+        );
+
+        // Fund the Safe with ETH
+        uint256 fundingAmount = 2 ether;
+        (bool fundingSuccess,) = safeProxy.call{value: fundingAmount}("");
+        require(fundingSuccess, "Failed to fund Safe");
+
+        deployment = SafeDeployment({
+            safe: safeProxy,
+            merkleGovModule: address(0), // No MerkleGovModule for Safe 2
+            signerModule: address(0), // No SignerModule for Safe 2
+            wavsModule: address(wavsModule),
+            initialSigners: initialSigners,
+            threshold: threshold,
+            modulesEnabled: success,
+            fundingAmount: fundingAmount
+        });
+
+        // Log the deployment and enablement status
+        if (deployment.modulesEnabled) {
+            emit Safe2ModulesEnabled(safeProxy, address(wavsModule));
         }
 
         return deployment;
@@ -215,7 +306,7 @@ contract DeployZodiacSafes is Common {
         vm.serializeString(
             jsonKey,
             "deployment_note",
-            "Safes deployed with single signer for easy setup. Use SignerManagerModule to add more signers."
+            "Safe 1 has SignerManagerModule and MerkleGovModule. Safe 2 has WavsModule. Both deployed with single signer for easy setup."
         );
 
         // Safe 1 data
@@ -228,8 +319,7 @@ contract DeployZodiacSafes is Common {
 
         // Safe 2 data
         vm.serializeString(jsonKey, "safe2_address", Strings.toHexString(safe2.safe));
-        vm.serializeString(jsonKey, "safe2_merkle_gov_module", Strings.toHexString(safe2.merkleGovModule));
-        vm.serializeString(jsonKey, "safe2_signer_module", Strings.toHexString(safe2.signerModule));
+        vm.serializeString(jsonKey, "safe2_wavs_module", Strings.toHexString(safe2.wavsModule));
         vm.serializeUint(jsonKey, "safe2_threshold", safe2.threshold);
         vm.serializeBool(jsonKey, "safe2_modules_enabled", safe2.modulesEnabled);
         vm.serializeUint(jsonKey, "safe2_funding_amount", safe2.fundingAmount);
@@ -246,28 +336,36 @@ contract DeployZodiacSafes is Common {
         console.log("ZODIAC SAFES DEPLOYED AND CONFIGURED");
         console.log("================================================================================");
         console.log("");
-        console.log("Safe 1:");
+        console.log("Safe 1 (SignerManager + MerkleGov):");
         console.log("  Address:", safe1.safe);
         console.log("  Balance:", safe1.fundingAmount / 1 ether, "ETH");
         console.log("  Merkle Gov Module:", safe1.merkleGovModule, safe1.modulesEnabled ? "(ENABLED)" : "(NOT ENABLED)");
         console.log("  Signer Module:", safe1.signerModule, safe1.modulesEnabled ? "(ENABLED)" : "(NOT ENABLED)");
         console.log("");
-        console.log("Safe 2:");
+        console.log("Safe 2 (WAVS Module):");
         console.log("  Address:", safe2.safe);
         console.log("  Balance:", safe2.fundingAmount / 1 ether, "ETH");
-        console.log("  Merkle Gov Module:", safe2.merkleGovModule, safe2.modulesEnabled ? "(ENABLED)" : "(NOT ENABLED)");
-        console.log("  Signer Module:", safe2.signerModule, safe2.modulesEnabled ? "(ENABLED)" : "(NOT ENABLED)");
+        console.log("  WAVS Module:", safe2.wavsModule, safe2.modulesEnabled ? "(ENABLED)" : "(NOT ENABLED)");
+        console.log("");
+        console.log("Module Capabilities:");
+        console.log("- Safe 1: Can add/remove signers and execute governance proposals via Merkle proofs");
+        console.log("- Safe 2: Can execute arbitrary transactions received through the WAVS service");
         console.log("");
         console.log("Next Steps:");
-        console.log("1. Each Safe has been funded with 10 ETH and modules are enabled!");
-        console.log("2. Use SignerManagerModule.addSigner() to add more signers");
-        console.log("3. Use SignerManagerModule.changeThreshold() to update threshold");
+        console.log("1. Each Safe has been funded with 2 ETH and modules are enabled!");
+        console.log("2. For Safe 1: Use SignerManagerModule.addSigner() to add more signers");
+        console.log("3. For Safe 1: Use SignerManagerModule.changeThreshold() to update threshold");
+        console.log("4. For Safe 2: Submit transaction payloads through WAVS service for execution");
         console.log("");
-        console.log("Example: Add a new signer with threshold 2:");
+        console.log("Example: Add a new signer to Safe 1 with threshold 2:");
         console.log("  signerModule.addSigner(newSignerAddress, 2);");
+        console.log("");
+        console.log("Example: Execute transactions on Safe 2 via WAVS:");
+        console.log("  Submit TransactionPayload to WAVS service with proper signatures");
         console.log("================================================================================");
     }
 
     // Events for logging
-    event ModulesEnabled(address indexed safe, address indexed merkleGovModule, address indexed signerModule);
+    event Safe1ModulesEnabled(address indexed safe, address indexed merkleGovModule, address indexed signerModule);
+    event Safe2ModulesEnabled(address indexed safe, address indexed wavsModule);
 }

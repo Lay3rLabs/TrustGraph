@@ -36,6 +36,21 @@ tasks:
           1 \
           --rpc-url {{.RPC_URL}} --broadcast
 
+  agent-trigger:
+    desc: "Trigger agent event with string data"
+    vars:
+      RPC_URL:
+        sh: task get-rpc
+    requires:
+      vars: [INPUT]
+    cmds:
+      - |
+        forge script script/Trigger.s.sol:EasTrigger \
+          --sig "addAgentTrigger(string,string)" \
+          "{{.SERVICE_TRIGGER_ADDR}}" \
+          "{{.INPUT}}" \
+          --rpc-url {{.RPC_URL}} --broadcast
+
   query-attestations:
     desc: "Query attestations for schema and recipient"
     vars:

@@ -93,6 +93,16 @@
       "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
     },
     {
+      "filename": "dao_agent.wasm",
+      "package_name": "dao-agent",
+      "package_version": "0.1.0",
+      "trigger_event": "NewTrigger(bytes)",
+      "trigger_json_path": "service_contracts.trigger",
+      "submit_json_path": "zodiac_safes.safe2.wavs_module",
+      "config_values": {},
+      "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
+    },
+    {
       "filename": "prediction_market_oracle.wasm",
       "package_name": "predictionmarketoracle",
       "package_version": "0.1.0",

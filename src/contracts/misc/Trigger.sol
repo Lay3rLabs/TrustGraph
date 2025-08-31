@@ -15,6 +15,10 @@ contract EASAttestTrigger {
     /// @param data Attestation data
     event AttestationRequested(address indexed creator, bytes32 indexed schema, address indexed recipient, bytes data);
 
+    /// @notice Event for new agent triggers
+    /// @param data Agent trigger data as bytes
+    event NewTrigger(bytes data);
+
     /// @notice Creates an attestation trigger with JSON data
     /// @param schema The schema UID for the attestation
     /// @param recipient The recipient address (use zero address for no specific recipient)
@@ -29,5 +33,12 @@ contract EASAttestTrigger {
     function triggerRequestRawAttestation(bytes32 schema, address recipient, bytes calldata data) external {
         // Emit AttestedEvent with default values for raw data
         emit AttestationRequested(msg.sender, schema, recipient, data);
+    }
+
+    /// @notice Creates an agent trigger with string data
+    /// @param data The agent trigger data as string
+    function addAgentTrigger(string calldata data) external {
+        // Emit NewTrigger event with the string data as bytes
+        emit NewTrigger(bytes(data));
     }
 }
