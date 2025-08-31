@@ -101,7 +101,10 @@ impl Guest for Component {
 
         // Find top N signers from merkle tree
         let top_signers = find_top_signers(&merkle_tree, top_n)?;
-        println!("🎯 Identified top {} signers", top_signers.len());
+        println!("🎯 Identified top {} signers from merkle tree:", top_signers.len());
+        for (i, signer) in top_signers.iter().enumerate() {
+            println!("  [{}] {}", i, signer);
+        }
 
         // Get module address from config
         let module_address = config_var("signer_module_address")
@@ -109,6 +112,9 @@ impl Guest for Component {
 
         let current_signers = block_on(query_current_signers(&module_address))?;
         println!("📋 Current signers: {} addresses", current_signers.len());
+        for (i, signer) in current_signers.iter().enumerate() {
+            println!("  [{}] {}", i, signer);
+        }
 
         // Calculate the operations needed
         let operations = calculate_signer_operations(
@@ -117,7 +123,32 @@ impl Guest for Component {
             min_threshold.min(top_signers.len()),
         )?;
 
-        println!("🔧 Generated {} signer operations", operations.len());
+        println!("🔧 Generated {} signer operations:", operations.len());
+        for (i, op) in operations.iter().enumerate() {
+            match op.operationType {
+                OperationType::ADD_SIGNER => {
+                    println!("  [{}] ADD_SIGNER: {} (threshold: {})", i, op.signer, op.threshold);
+                }
+                OperationType::REMOVE_SIGNER => {
+                    println!(
+                        "  [{}] REMOVE_SIGNER: {} (prev: {}, threshold: {})",
+                        i, op.signer, op.prevSigner, op.threshold
+                    );
+                }
+                OperationType::SWAP_SIGNER => {
+                    println!(
+                        "  [{}] SWAP_SIGNER: {} -> {} (prev: {})",
+                        i, op.signer, op.newSigner, op.prevSigner
+                    );
+                }
+                OperationType::CHANGE_THRESHOLD => {
+                    println!("  [{}] CHANGE_THRESHOLD: {}", i, op.threshold);
+                }
+                _ => {
+                    println!("  [{}] UNKNOWN OPERATION", i);
+                }
+            }
+        }
 
         // Create the payload with the operations
         let signer_payload = SignerManagerPayload { operations };
@@ -260,11 +291,19 @@ fn find_top_signers(
     top_n: usize,
 ) -> Result<Vec<Address>, String> {
     let mut scored_accounts: Vec<(Address, U256)> = Vec::new();
+    let sentinel_address =
+        Address::from([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]);
 
     for entry in &merkle_tree.tree {
         // Parse the address
         let address = Address::from_str(&entry.account)
             .map_err(|e| format!("Invalid address {}: {}", entry.account, e))?;
+
+        // Skip zero address and sentinel address
+        if address == Address::ZERO || address == sentinel_address {
+            println!("  ⚠️ Skipping invalid address in merkle tree: {}", address);
+            continue;
+        }
 
         // Parse the claimable amount as the score
         let score = U256::from_str(&entry.claimable).unwrap_or(U256::ZERO);
@@ -275,9 +314,13 @@ fn find_top_signers(
     // Sort by score in descending order
     scored_accounts.sort_by(|a, b| b.1.cmp(&a.1));
 
-    // Take top N
+    // Take top N valid addresses
     let top_signers: Vec<Address> =
         scored_accounts.into_iter().take(top_n).map(|(addr, _)| addr).collect();
+
+    if top_signers.is_empty() {
+        return Err("No valid signers found in merkle tree".to_string());
+    }
 
     Ok(top_signers)
 }
@@ -330,13 +373,44 @@ fn calculate_signer_operations(
         current_signers.iter().filter(|addr| !desired_set.contains(*addr)).cloned().collect();
 
     // Find signers to add
-    let to_add: Vec<Address> =
-        desired_signers.iter().filter(|addr| !current_set.contains(*addr)).cloned().collect();
+    // Define sentinel address used by Safe's linked list
+    let sentinel_address =
+        Address::from([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]);
+
+    // Filter out invalid addresses (zero address and sentinel) and addresses already present
+    let to_add: Vec<Address> = desired_signers
+        .iter()
+        .filter(|addr| {
+            **addr != Address::ZERO && **addr != sentinel_address && !current_set.contains(*addr)
+        })
+        .cloned()
+        .collect();
+
+    // Validate that we're not trying to remove or add invalid addresses
+    if to_add.iter().any(|addr| *addr == Address::ZERO || *addr == sentinel_address) {
+        return Err("Cannot add zero address or sentinel address as signer".to_string());
+    }
 
     // Strategy: First swap existing signers if possible, then add/remove the rest
     let swaps = to_remove.len().min(to_add.len());
 
-    // Perform swaps
+    println!("📊 Signer diff analysis:");
+    println!("  Current signers: {}", current_signers.len());
+    println!("  Desired signers: {}", desired_signers.len());
+    println!("  To remove: {} signers", to_remove.len());
+    for addr in &to_remove {
+        println!("    - {}", addr);
+    }
+    println!("  To add: {} signers", to_add.len());
+    for addr in &to_add {
+        println!("    + {}", addr);
+    }
+    println!("  Will perform {} swaps", swaps);
+
+    // Track the current number of signers as we go
+    let mut current_signer_count = current_signers.len();
+
+    // Perform swaps (doesn't change signer count)
     for i in 0..swaps {
         let old_signer = to_remove[i];
         let new_signer = to_add[i];
@@ -353,40 +427,93 @@ fn calculate_signer_operations(
         });
     }
 
-    // Add remaining signers
+    // Add remaining signers - use a safe threshold for each addition
     for i in swaps..to_add.len() {
+        current_signer_count += 1;
+        // Threshold must be <= number of signers, so use the minimum
+        let safe_threshold = new_threshold.min(current_signer_count);
+
+        println!(
+            "  Adding signer {}: current count will be {}, using threshold {}",
+            to_add[i], current_signer_count, safe_threshold
+        );
+
+        // Validate the address one more time before adding
+        if to_add[i] == Address::ZERO || to_add[i] == sentinel_address {
+            println!("  ⚠️ Skipping invalid address: {}", to_add[i]);
+            current_signer_count -= 1; // Revert the count increment
+            continue;
+        }
+
         operations.push(SignerOperation {
             operationType: OperationType::ADD_SIGNER,
             prevSigner: Address::ZERO,
             signer: to_add[i],
             newSigner: Address::ZERO,
-            threshold: U256::from(new_threshold),
+            threshold: U256::from(safe_threshold),
         });
     }
 
-    // Remove remaining signers
+    // Remove remaining signers - adjust threshold if needed
     for i in swaps..to_remove.len() {
         let signer = to_remove[i];
         let prev_signer = find_previous_signer(&current_signers, signer);
+
+        current_signer_count = current_signer_count.saturating_sub(1);
+        // Ensure threshold is valid after removal
+        let safe_threshold = new_threshold.min(current_signer_count.max(1));
 
         operations.push(SignerOperation {
             operationType: OperationType::REMOVE_SIGNER,
             prevSigner: prev_signer,
             signer,
             newSigner: Address::ZERO,
-            threshold: U256::from(new_threshold),
+            threshold: U256::from(safe_threshold),
         });
     }
 
-    // If only threshold needs to change
-    if operations.is_empty() && current_signers.len() > 0 {
-        operations.push(SignerOperation {
-            operationType: OperationType::CHANGE_THRESHOLD,
-            prevSigner: Address::ZERO,
-            signer: Address::ZERO,
-            newSigner: Address::ZERO,
-            threshold: U256::from(new_threshold),
-        });
+    // After all signers are added/removed, check if we need to adjust the threshold
+    // to reach the final desired threshold
+    let final_signer_count = current_signers.len() + to_add.len() - swaps - to_remove.len() + swaps;
+    let final_safe_threshold = new_threshold.min(final_signer_count.max(1));
+
+    println!("📈 Final state calculation:");
+    println!("  Final signer count: {}", final_signer_count);
+    println!("  Desired threshold: {}", new_threshold);
+    println!("  Safe threshold: {}", final_safe_threshold);
+
+    // If we haven't set the correct threshold yet, add a CHANGE_THRESHOLD operation
+    if operations.len() > 0 {
+        // Check if the last operation already set the correct threshold
+        let last_op = &operations[operations.len() - 1];
+        let last_threshold_set = match last_op.operationType {
+            OperationType::ADD_SIGNER
+            | OperationType::REMOVE_SIGNER
+            | OperationType::CHANGE_THRESHOLD => last_op.threshold,
+            _ => U256::ZERO,
+        };
+
+        if last_threshold_set != U256::from(final_safe_threshold) && final_signer_count > 0 {
+            operations.push(SignerOperation {
+                operationType: OperationType::CHANGE_THRESHOLD,
+                prevSigner: Address::ZERO,
+                signer: Address::ZERO,
+                newSigner: Address::ZERO,
+                threshold: U256::from(final_safe_threshold),
+            });
+        }
+    } else if current_signers.len() > 0 {
+        // No other operations, but threshold might need to change
+        let current_threshold = 1; // We'd need to query this, but for now assume 1
+        if current_threshold != final_safe_threshold {
+            operations.push(SignerOperation {
+                operationType: OperationType::CHANGE_THRESHOLD,
+                prevSigner: Address::ZERO,
+                signer: Address::ZERO,
+                newSigner: Address::ZERO,
+                threshold: U256::from(final_safe_threshold),
+            });
+        }
     }
 
     Ok(operations)
