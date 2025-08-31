@@ -132,6 +132,9 @@ export PAGERANK_TRUSTED_SEEDS="0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
 export PAGERANK_TRUST_MULTIPLIER="10.5"
 export PAGERANK_TRUST_BOOST="0.99"
 
+# Zodiac Module Configuration values
+export SIGNER_MANAGER_ZODIAC_MODULE=`jq -r '.zodiac_safes.safe1.signer_module' "./.docker/deployment_summary.json"`
+
 echo "📋 All configuration variables exported for component-specific substitution"
 
 # wait for STATUS_FILE to contain the status COMPLETED in its content, check every 0.5 seconds for up to 60 seconds then error

@@ -78,6 +78,21 @@
       "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
     },
     {
+      "filename": "wavs_safe_signer_sync.wasm",
+      "package_name": "wavs-safe-signer-sync",
+      "package_version": "0.1.0",
+      "trigger_event": "MerkleRootUpdated(bytes32,bytes32,string)",
+      "trigger_json_path": "zodiac_safes.safe1.merkle_gov_module",
+      "submit_json_path": "zodiac_safes.safe1.signer_module",
+      "config_values": {
+        "top_n_signers": "5",
+        "min_threshold": "3",
+        "signer_module_address": "${SIGNER_MANAGER_ZODIAC_MODULE}",
+        "chain_name": "${CHAIN_NAME}"
+      },
+      "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
+    },
+    {
       "filename": "prediction_market_oracle.wasm",
       "package_name": "predictionmarketoracle",
       "package_version": "0.1.0",

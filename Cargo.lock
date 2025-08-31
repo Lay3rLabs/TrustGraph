@@ -7350,6 +7350,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "wavs-safe-signer-sync"
+version = "0.5.5"
+dependencies = [
+ "alloy-network 0.15.11",
+ "alloy-primitives",
+ "alloy-provider 0.15.11",
+ "alloy-rpc-types",
+ "alloy-sol-macro",
+ "alloy-sol-types",
+ "anyhow",
+ "hex",
+ "serde",
+ "serde_json",
+ "wavs-eas",
+ "wavs-wasi-utils",
+ "wit-bindgen-rt 0.44.0",
+ "wstd",
+]
+
+[[package]]
 name = "wavs-types"
 version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
