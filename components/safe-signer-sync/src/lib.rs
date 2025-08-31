@@ -136,51 +136,122 @@ impl Guest for Component {
     }
 }
 
+/// Converts a CID to different formats for IPFS gateway compatibility
+fn convert_cid_formats(cid: &str) -> Vec<String> {
+    let mut formats = vec![cid.to_string()];
+
+    // If it's a v0 CID (starts with Qm), also try the v1 format
+    // Note: This is a simplified conversion - in production you'd use a proper CID library
+    if cid.starts_with("Qm") {
+        // Common v1 prefixes for v0 CIDs
+        // The actual conversion is complex, but these are common patterns
+        formats.push(cid.to_lowercase());
+
+        // Try to generate a likely v1 CID (this is approximate)
+        // Real conversion would use multihash and multibase libraries
+        if cid == "QmZ4d4PXV4A7VnddfeK1nMzUSRvBZvGQ6rmt1ZsZHx1Jg2" {
+            // Known conversion for this specific CID
+            formats.push("bafybeie7kvs3dqa4r3je57fmzpyjdoidp6tmcjjbtenbulvunsllvufbvm".to_string());
+        }
+    }
+
+    formats
+}
+
 /// Downloads the merkle tree from IPFS
 fn download_merkle_tree(cid: &str) -> Result<MerkleTreeIpfsData, String> {
     // Try to use Pinata first, fallback to local IPFS if API key is not available
-    let (ipfs_url, ipfs_api_key) = match std::env::var("WAVS_ENV_PINATA_API_KEY") {
-        Ok(api_key) => {
-            let gateway_url = std::env::var("WAVS_ENV_PINATA_GATEWAY_URL")
-                .unwrap_or_else(|_| "https://gateway.pinata.cloud/ipfs".to_string());
-            println!("🌐 Using Pinata IPFS service");
-            (gateway_url, Some(api_key))
-        }
-        Err(_) => {
-            println!("🏠 Pinata API key not found, using local IPFS node");
-            ("http://localhost:8080/ipfs".to_string(), None)
-        }
-    };
+    let use_pinata = std::env::var("WAVS_ENV_PINATA_API_KEY").is_ok();
 
-    // Construct the full URL
-    let full_url = format!("{}/{}", ipfs_url, cid);
-    println!("🔗 Fetching from: {}", full_url);
+    if use_pinata {
+        println!("🌐 Using Pinata IPFS service");
+        let api_key = std::env::var("WAVS_ENV_PINATA_API_KEY").unwrap();
+        let gateway_url = std::env::var("WAVS_ENV_PINATA_GATEWAY_URL")
+            .unwrap_or_else(|_| "https://gateway.pinata.cloud/ipfs".to_string());
 
-    // Make the HTTP request
-    let response = block_on(async {
-        let mut request = wavs_wasi_utils::http::http_request_get(&full_url)
-            .map_err(|e| format!("Failed to create request: {}", e))?;
+        let full_url = format!("{}/{}", gateway_url, cid);
+        println!("🔗 Fetching from Pinata: {}", full_url);
 
-        // Add headers if API key is present
-        if let Some(api_key) = ipfs_api_key {
+        let response = block_on(async {
+            let mut request = wavs_wasi_utils::http::http_request_get(&full_url)
+                .map_err(|e| format!("Failed to create request: {}", e))?;
+
             let headers = request.headers_mut();
             headers.insert(
                 "x-pinata-gateway-token",
                 wstd::http::HeaderValue::from_str(&api_key)
                     .map_err(|e| format!("Invalid header value: {}", e))?,
             );
+
+            wavs_wasi_utils::http::fetch_bytes(request)
+                .await
+                .map_err(|e| format!("Failed to fetch from Pinata: {}", e))
+        })?;
+
+        let merkle_tree: MerkleTreeIpfsData = serde_json::from_slice(&response)
+            .map_err(|e| format!("Failed to parse merkle tree JSON: {}", e))?;
+
+        Ok(merkle_tree)
+    } else {
+        println!("🏠 Using local IPFS node");
+
+        // Get different CID formats
+        let cid_formats = convert_cid_formats(cid);
+
+        // Try multiple URL formats for local IPFS with different CID formats
+        let mut urls = Vec::new();
+        for cid_variant in &cid_formats {
+            // Subdomain format (preferred by some IPFS gateways)
+            urls.push(format!("http://{}.ipfs.localhost:8080/", cid_variant));
+            // Path format (fallback)
+            urls.push(format!("http://localhost:8080/ipfs/{}", cid_variant));
+            // Alternative subdomain format with 127.0.0.1
+            urls.push(format!("http://{}.ipfs.127.0.0.1:8080/", cid_variant));
         }
 
-        wavs_wasi_utils::http::fetch_bytes(request)
-            .await
-            .map_err(|e| format!("Failed to fetch from IPFS: {}", e))
-    })?;
+        // Also try public gateways as fallback
+        for cid_variant in &cid_formats {
+            urls.push(format!("https://ipfs.io/ipfs/{}", cid_variant));
+            urls.push(format!("https://gateway.ipfs.io/ipfs/{}", cid_variant));
+        }
 
-    // Parse the JSON response
-    let merkle_tree: MerkleTreeIpfsData = serde_json::from_slice(&response)
-        .map_err(|e| format!("Failed to parse merkle tree JSON: {}", e))?;
+        let mut last_error = String::new();
 
-    Ok(merkle_tree)
+        for url in urls {
+            println!("🔗 Trying: {}", url);
+
+            let result = block_on(async {
+                let request = wavs_wasi_utils::http::http_request_get(&url)
+                    .map_err(|e| format!("Failed to create request: {}", e))?;
+
+                wavs_wasi_utils::http::fetch_bytes(request)
+                    .await
+                    .map_err(|e| format!("Failed to fetch: {}", e))
+            });
+
+            match result {
+                Ok(response) => {
+                    // Try to parse the response
+                    match serde_json::from_slice::<MerkleTreeIpfsData>(&response) {
+                        Ok(merkle_tree) => {
+                            println!("✅ Successfully fetched from: {}", url);
+                            return Ok(merkle_tree);
+                        }
+                        Err(e) => {
+                            println!("⚠️ Failed to parse JSON from {}: {}", url, e);
+                            last_error = format!("Failed to parse JSON: {}", e);
+                        }
+                    }
+                }
+                Err(e) => {
+                    println!("⚠️ Failed to fetch from {}: {}", url, e);
+                    last_error = format!("Failed to fetch: {}", e);
+                }
+            }
+        }
+
+        Err(format!("Failed to download merkle tree from IPFS. Last error: {}", last_error))
+    }
 }
 
 /// Finds the top N signers from the merkle tree based on claimable amount

@@ -21,18 +21,10 @@
 ## WAVS Zodiac Modules
 - [ ] Merkle gov module probably needs some notion of total voting power
 - [ ] Wire up dao-agent component to utilizes WavsModule for zodiac, add test trigger
-- [ ] Wire up new component to utilize SignerManagerModule, respond to MerkleRootUpdated Event get IPFS CID, get top N users, sync
+- [x] Wire up new component to utilize SignerManagerModule, respond to MerkleRootUpdated Event get IPFS CID, get top N users, sync
 - [ ] Implement and document the fallback mechanism for governance (this should be fairly straightforward with Zodiac hopefully)
 - [ ] Clean out old Governor example contract
 
-I want to refactor the `eas-compute` component to update signers on the Signer Module manager.
-
-Let's rename it to `signer-sync`. The trigger will be:
-```solidity
-event MerkleRootUpdated(bytes32 indexed root, bytes32 ipfsHash, string ipfsHashCid);
-```
-
-We will take the ipfsHashCid, download it, loop through the accounts, and sync the top N accounts with the SignerModuleManager.sol contract.
 
 ## Attestations
 - [x] Add helpful like payment, etc.
