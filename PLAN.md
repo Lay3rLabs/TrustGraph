@@ -19,12 +19,12 @@
 - [-] More realistic Hyperstition market resolver component (i.e. Twitter follower count)
 
 ## WAVS Zodiac Modules
+- [x] Wire up new component to utilize SignerManagerModule, respond to MerkleRootUpdated Event get IPFS CID, get top N users, sync
 - [ ] Merkle gov module probably needs some notion of total voting power
 - [ ] Wire up dao-agent component to utilizes WavsModule for zodiac, add test trigger
-- [x] Wire up new component to utilize SignerManagerModule, respond to MerkleRootUpdated Event get IPFS CID, get top N users, sync
 - [ ] Implement and document the fallback mechanism for governance (this should be fairly straightforward with Zodiac hopefully)
 - [ ] Clean out old Governor example contract
-
+- [ ] Gnosis Safe Module helper scripts (query signers, proposals, etc.)
 
 ## Attestations
 - [x] Add helpful like payment, etc.
