@@ -313,12 +313,28 @@ task forge:query-rewards-balance
 
 ## LLM Attester
 
+Make a statement attestation to be reviewed by the `llm-attester` component:
 ```bash
 task forge:trigger-statement-attestation INPUT="Advanced Solidity Development Skills Verified"
 ```
 
+Query latest attestations from AI:
 ```bash
 task forge:query-statement-attestations
+```
+
+## WAVS Safe Zodiac Module (DAO Agent)
+
+Trigger the DAO agent with some input:
+```bash
+task forge:agent-trigger INPUT="To save the rainforest, send 1 ETH to 0xDf3679681B87fAE75CE185e4f01d98b64Ddb64a3"
+```
+
+Wait a bit for the component to run.
+
+Verify funds were sent:
+```bash
+cast balance 0xDf3679681B87fAE75CE185e4f01d98b64Ddb64a3 --rpc-url http://localhost:8545
 ```
 
 ## Prediction Market Demo

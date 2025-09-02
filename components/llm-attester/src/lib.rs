@@ -16,7 +16,7 @@ use wstd::runtime::block_on;
 pub mod bindings;
 use crate::bindings::{export, Guest, TriggerAction, WasmResponse};
 
-use wavs_llm::client;
+use wavs_llm::LLMClient;
 
 /// Structured response from the LLM for like/dislike evaluation
 #[derive(Debug, Serialize, Deserialize, schemars::JsonSchema)]
@@ -103,11 +103,12 @@ impl Guest for Component {
 
         // Create LLM client with options and get structured response
         let llm_options = config.get_llm_options();
-        let llm = client::LLMClient::with_config(config.model.clone(), llm_options);
+        let llm = LLMClient::with_config(config.model.clone(), llm_options);
 
         // Get structured response from LLM
         let llm_response = llm
-            .complete_structured::<LikeResponse>(&user_prompt)
+            .chat_structured::<LikeResponse>(user_prompt.as_str())
+            .send()
             .map_err(|e| format!("Failed to get structured LLM completion: {}", e))?;
 
         println!(

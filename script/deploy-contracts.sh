@@ -128,8 +128,7 @@ export SAFE1_ADDR=$(jq -r '.safe1_address' .docker/zodiac_safes_deploy.json 2>/d
 export SAFE1_MERKLE_GOV_MODULE=$(jq -r '.safe1_merkle_gov_module' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
 export SAFE1_SIGNER_MODULE=$(jq -r '.safe1_signer_module' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
 export SAFE2_ADDR=$(jq -r '.safe2_address' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
-export SAFE2_MERKLE_GOV_MODULE=$(jq -r '.safe2_merkle_gov_module' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
-export SAFE2_SIGNER_MODULE=$(jq -r '.safe2_signer_module' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
+export SAFE2_WAVS_MODULE=$(jq -r '.safe2_wavs_module' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
 export SAFE_SINGLETON=$(jq -r '.safe_singleton' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
 export SAFE_FACTORY=$(jq -r '.safe_factory' .docker/zodiac_safes_deploy.json 2>/dev/null || echo "")
 
@@ -196,8 +195,7 @@ cat > .docker/deployment_summary.json << EOF
     },
     "safe2": {
       "address": "${SAFE2_ADDR}",
-      "merkle_gov_module": "${SAFE2_MERKLE_GOV_MODULE}",
-      "signer_module": "${SAFE2_SIGNER_MODULE}"
+      "wavs_module": "${SAFE2_WAVS_MODULE}"
     }
   }
 }
@@ -251,14 +249,13 @@ echo ""
 echo "🔐 Zodiac Safes:"
 echo "   SAFE_SINGLETON: ${SAFE_SINGLETON}"
 echo "   SAFE_FACTORY: ${SAFE_FACTORY}"
-echo "   Safe 1:"
+echo "   Safe 1 (SignerManager + MerkleGov):"
 echo "     Address: ${SAFE1_ADDR}"
 echo "     Merkle Gov Module: ${SAFE1_MERKLE_GOV_MODULE}"
 echo "     Signer Module: ${SAFE1_SIGNER_MODULE}"
-echo "   Safe 2:"
+echo "   Safe 2 (WAVS Module):"
 echo "     Address: ${SAFE2_ADDR}"
-echo "     Merkle Gov Module: ${SAFE2_MERKLE_GOV_MODULE}"
-echo "     Signer Module: ${SAFE2_SIGNER_MODULE}"
+echo "     WAVS Module: ${SAFE2_WAVS_MODULE}"
 echo ""
 echo "📄 Deployment details saved to .docker/deployment_summary.json"
 echo "📄 EAS deployment logs saved to .docker/eas_deploy.json"

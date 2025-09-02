@@ -4,16 +4,17 @@ A WASI-compatible library for interacting with Ollama LLM API in WAVS components
 
 ## Overview
 
-The `wavs-llm` package provides a clean, simplified interface for interacting with Ollama language models within WASI components. This library has been refactored to focus exclusively on Ollama as the LLM backend, removing complexity and providing a more maintainable codebase.
+The `wavs-llm` package provides a clean, simplified interface for interacting with Ollama language models within WASI components. This library has been refactored to focus exclusively on Ollama as the LLM backend, with a streamlined builder pattern API that reduces complexity while maintaining full functionality.
 
 ## Features
 
 - ✅ **Ollama-only support** - Simplified architecture focused on open-source models
 - ✅ **WASI-compatible** - Uses `wstd::http` for proper WASM/WASI compatibility
-- ✅ **Formatted responses** - Support for structured JSON responses and transactions
-- ✅ **Structured outputs** - JSON mode and schema-based structured responses
+- ✅ **Simplified API** - Just 2 core methods with fluent builder pattern
+- ✅ **Structured outputs** - JSON mode and schema-based structured responses with automatic schema generation
 - ✅ **Smart contract tools** - Automatic encoding of contracts into LLM-usable tools
-- ✅ **Clean API design** - Fluent configuration API with sensible defaults
+- ✅ **Tool execution** - Automatic tool call processing and chaining
+- ✅ **Builder pattern** - Fluent configuration API with method chaining
 - ✅ **Comprehensive testing** - Unit tests and WASI-environment integration tests
 
 ## Installation
@@ -25,60 +26,133 @@ Add to your `Cargo.toml`:
 wavs-llm = { workspace = true }
 ```
 
+## API Overview
+
+The new API consists of just 2 core methods:
+
+- **`chat(messages)`** - For text responses with builder pattern
+- **`chat_structured::<T>(messages)`** - For typed/structured responses
+
+All configuration is done through method chaining on the returned builder.
+
 ## Usage
 
-### Basic Completions
+### Basic Text Completion
 
 ```rust
-use wavs_llm::client::LLMClient;
+use wavs_llm::{LLMClient, Message};
 
 // Create a client with default configuration
-let client = LLMClient::new("llama2".to_string());
+let client = LLMClient::new("llama3.2");
 
 // Simple text completion
-let response = client.complete("What is 2+2?")?;
+let response = client.chat("What is 2+2?").text()?;
 println!("Response: {}", response);
 
-// With system context
-let response = client.complete_with_system(
-    "You are a helpful math tutor",
-    "Explain why 2+2 equals 4"
-)?;
+// Multi-message conversation
+let messages = vec![
+    Message::system("You are a helpful math tutor"),
+    Message::user("Explain why 2+2 equals 4")
+];
+let response = client.chat(messages).text()?;
 println!("Response: {}", response);
+
+// Get full Message object (for tool calls, etc.)
+let message = client.chat("Hello").send()?;
+println!("Role: {}, Content: {:?}", message.role, message.content);
 ```
 
-### With Custom Configuration
+### Custom Configuration
 
 ```rust
-use wavs_llm::client::LLMClient;
-use wavs_llm::config::LlmConfig;
+use wavs_llm::{LLMClient, LlmOptions};
 
-let config = LlmConfig::new()
+let config = LlmOptions::new()
     .with_temperature(0.7)
     .with_max_tokens(500)
     .with_top_p(0.95)
     .with_seed(42);
 
-let client = LLMClient::with_config("llama2".to_string(), config);
+let client = LLMClient::with_config("llama3.2", config);
 
-// All convenience methods work with custom config
-let response = client.complete("Write a haiku about coding")?;
+// Configuration applies to all requests from this client
+let response = client.chat("Write a haiku about coding").text()?;
 ```
 
-### Advanced Chat Completion
-
-For more control, you can still use the full chat completion API:
+### From JSON Configuration
 
 ```rust
-use wavs_llm::client::{LLMClient, Message};
+let json_config = r#"{
+    "model": "llama3.2",
+    "temperature": 0.8,
+    "max_tokens": 200,
+    "seed": 42
+}"#;
 
+let client = LLMClient::from_json(json_config)?;
+let response = client.chat("Hello").text()?;
+```
+
+### Structured Responses
+
+The LLM client provides automatic structured output with compile-time type safety:
+
+```rust
+use serde::Deserialize;
+use schemars::JsonSchema;
+
+// Define your response type with automatic schema derivation
+#[derive(Deserialize, JsonSchema)]
+struct Analysis {
+    sentiment: String,
+    score: f32,
+    keywords: Vec<String>,
+}
+
+// Get structured response with automatic schema generation
+let analysis: Analysis = client
+    .chat_structured("Analyze: The market is looking bullish today")
+    .send()?;
+
+println!("Sentiment: {}, Score: {}", analysis.sentiment, analysis.score);
+
+// With system context for better results
 let messages = vec![
-    Message::new_system("You are a helpful assistant.".to_string()),
-    Message::new_user("What is 2+2?".to_string()),
+    Message::system("You are a financial sentiment analyzer"),
+    Message::user("Analyze: Strong earnings beat expectations")
 ];
+let analysis: Analysis = client.chat_structured(messages).send()?;
+```
 
-let response = client.chat_completion(messages, None)?;
-println!("Response: {:?}", response.content);
+#### Complex Nested Structures
+
+```rust
+#[derive(Deserialize, JsonSchema)]
+struct TaskList {
+    title: String,
+    tasks: Vec<Task>,
+    priority: String,
+}
+
+#[derive(Deserialize, JsonSchema)]
+struct Task {
+    id: u32,
+    description: String,
+    completed: bool,
+}
+
+// Automatic schema generation handles complex nested types
+let tasks: TaskList = client
+    .chat_structured("Create a task list for launching a new product")
+    .send()?;
+
+for task in &tasks.tasks {
+    println!("[{}] {} - {}", 
+        task.id, 
+        task.description, 
+        if task.completed { "✓" } else { "○" }
+    );
+}
 ```
 
 ### Using Tools
@@ -107,74 +181,16 @@ let tools = vec![
     }
 ];
 
-let response = client.chat_completion(messages, Some(tools))?;
-```
-
-### Structured Responses
-
-The LLM client provides automatic structured output with compile-time type safety:
-
-```rust
-use serde::Deserialize;
-use schemars::JsonSchema;
-
-// Define your response type with automatic schema derivation
-#[derive(Deserialize, JsonSchema)]
-struct Analysis {
-    sentiment: String,
-    score: f32,
-    keywords: Vec<String>,
-}
-
-// Get structured response with automatic schema generation
-let analysis: Analysis = client.complete_structured(
-    "Analyze: The market is looking bullish today"
-)?;
-println!("Sentiment: {}, Score: {}", analysis.sentiment, analysis.score);
-
-// With system context for better results
-let analysis: Analysis = client.complete_structured_with_system(
-    "You are a financial sentiment analyzer",
-    "Analyze: Strong earnings beat expectations"
-)?;
-```
-
-#### Complex Nested Structures
-
-```rust
-#[derive(Deserialize, JsonSchema)]
-struct TaskList {
-    title: String,
-    tasks: Vec<Task>,
-    priority: String,
-}
-
-#[derive(Deserialize, JsonSchema)]
-struct Task {
-    id: u32,
-    description: String,
-    completed: bool,
-}
-
-// Automatic schema generation handles complex nested types
-let tasks: TaskList = client.complete_structured(
-    "Create a task list for launching a new product"
-)?;
-
-for task in &tasks.tasks {
-    println!("[{}] {} - {}", 
-        task.id, 
-        task.description, 
-        if task.completed { "✓" } else { "○" }
-    );
-}
+let response = client
+    .chat("What's the weather in San Francisco?")
+    .with_tools(tools)
+    .send()?;
 ```
 
 ### Smart Contract Integration
 
 ```rust
 use wavs_llm::contracts::Contract;
-use wavs_llm::tools::Tools;
 
 // Define a contract
 let contract = Contract::new(
@@ -183,11 +199,61 @@ let contract = Contract::new(
     r#"[{"type":"function","name":"transfer","inputs":[...],"outputs":[...]}]"#
 );
 
-// Generate tools from contract ABI
-let contract_tools = Tools::tools_from_contract(&contract);
+// Generate tools from contract ABI automatically
+let response = client
+    .chat("Transfer 100 USDC to Alice")
+    .with_contract_tools(&[contract])
+    .send()?;
+```
 
-// Use with LLM
-let response = client.chat_completion(messages, Some(&contract_tools))?;
+### Automatic Tool Execution
+
+For scenarios where you want the LLM to automatically execute tool calls:
+
+```rust
+// This will automatically handle tool calls and return the final result
+let final_result = client
+    .chat("What's the weather and send 1 ETH to Alice")
+    .with_tools(tools)
+    .execute_tools()?;
+
+println!("Final result: {}", final_result);
+```
+
+### Builder Pattern Configuration
+
+All options can be chained together:
+
+```rust
+let response = client
+    .chat("Analyze the market and execute trades")
+    .with_contract_tools(&contracts)
+    .with_tools(custom_tools)
+    .with_retries(3)
+    .text()?;
+
+// For structured responses
+let analysis: Analysis = client
+    .chat_structured("Analyze this data")
+    .with_retries(5)
+    .send()?;
+```
+
+### Using Config Objects
+
+For complex configurations, use the Config object:
+
+```rust
+use wavs_llm::config::Config;
+
+let mut config = Config::default();
+config.messages = vec![Message::system("You are a trading expert")];
+config.contracts = vec![usdc_contract, eth_contract];
+
+let response = client
+    .chat("What should I trade today?")
+    .with_config(&config)
+    .text()?;
 ```
 
 ## Configuration Options
@@ -198,6 +264,39 @@ let response = client.chat_completion(messages, Some(&contract_tools))?;
 | `max_tokens` | `Option<u32>` | `None` | Maximum tokens to generate |
 | `top_p` | `Option<f32>` | `None` | Controls diversity (0.0-1.0) |
 | `seed` | `Option<u32>` | `None` | Seed for deterministic outputs |
+
+## Message Types
+
+```rust
+// Create messages with convenience methods
+let messages = vec![
+    Message::system("You are helpful"),
+    Message::user("Hello"),
+    Message::assistant("Hi there!"),
+    Message::tool_result("call_123", "weather", "Sunny, 75°F"),
+];
+
+// Auto-conversion from strings
+let response = client.chat("Hello").text()?;  // Converts to Message::user("Hello")
+```
+
+## Builder Methods Reference
+
+### ChatRequest Methods
+- `.with_tools(tools: Vec<Tool>)` - Add custom tools
+- `.with_contract_tools(contracts: &[Contract])` - Add tools from smart contracts
+- `.with_config(config: &Config)` - Add full configuration
+- `.with_retries(retries: u32)` - Set retry count
+- `.send() -> Result<Message, LlmError>` - Execute and get full response
+- `.text() -> Result<String, LlmError>` - Execute and get text content
+- `.execute_tools() -> Result<String, LlmError>` - Execute with automatic tool handling
+
+### StructuredChatRequest Methods
+- `.with_tools(tools: Vec<Tool>)` - Add custom tools
+- `.with_contract_tools(contracts: &[Contract])` - Add tools from smart contracts
+- `.with_config(config: &Config)` - Add full configuration
+- `.with_retries(retries: u32)` - Set retry count
+- `.send() -> Result<T, LlmError>` - Execute and get parsed response
 
 ## Environment Variables
 
@@ -210,6 +309,7 @@ let response = client.chat_completion(messages, Some(&contract_tools))?;
 Run unit tests (no external dependencies required):
 
 ```bash
+cd packages/llm
 cargo test --lib
 ```
 
@@ -219,15 +319,13 @@ Integration tests require:
 1. Ollama running locally
 2. A WASI runtime environment
 
-See [docs/TESTING.md](docs/TESTING.md) for detailed testing information.
-
 **Important:** This is a library package designed to be imported by WASI components. Direct use of `cargo component test` will not work as this package doesn't export a `run` function.
 
 ## Architecture
 
 ### Key Components
 
-- **`client`** - Main LLM client implementation
+- **`client`** - Main LLM client with simplified builder API
 - **`config`** - Configuration structures and builders
 - **`tools`** - Tool definitions and contract-to-tool conversion
 - **`contracts`** - Smart contract interaction utilities
@@ -243,72 +341,51 @@ This library uses `wstd::http::Client` for HTTP requests, ensuring full compatib
 
 ## Migration from Previous Version
 
+The API has been significantly simplified while maintaining all functionality:
+
 ### Key Changes
 
-1. **Removed OpenAI support** - Only Ollama is supported
-2. **Simplified configuration** - `LlmOptions` → `LlmConfig` with optional fields
-3. **Better error handling** - New `LlmError` type with specific error variants
-4. **Environment variables** - Changed from `OLLAMA_BASE_URL` to `WAVS_ENV_OLLAMA_API_URL`
+1. **Simplified API** - From 13+ methods down to just 2 core methods
+2. **Builder Pattern** - All configuration through method chaining
+3. **Better Type Safety** - Automatic schema generation for structured responses
+4. **Cleaner Message API** - Convenient constructors for common message types
 
-### Breaking Changes
+### Migration Examples
 
-- No longer supports OpenAI models (gpt-3.5-turbo, gpt-4, etc.)
-- Configuration structure has changed
-- All configuration values are now optional
-
-## Migration Guide
-
-### Migrating to the Simplified API
-
-The new API provides a much cleaner developer experience while maintaining backward compatibility:
-
-#### Old API
+**Old API:**
 ```rust
-// Manual message construction
-let messages = vec![
-    Message::new_user("What is 2+2?".to_string()),
-];
-let response = client.chat_completion(messages, None)?;
-let text = response.content.unwrap();
-
-// Structured responses with manual schema
-let schema = json!({
-    "type": "object",
-    "properties": {
-        "sentiment": {"type": "string"},
-        "score": {"type": "number"}
-    }
-});
-let response = client.chat_completion_structured::<Analysis>(messages, None, schema)?;
+// Multiple different methods
+let response = client.complete("What is 2+2?")?;
+let response = client.complete_with_system("Be helpful", "What is 2+2?")?;
+let result = client.complete_structured::<Analysis>("Analyze this")?;
 ```
 
-#### New API
+**New API:**
 ```rust
-// Simple completion
-let text = client.complete("What is 2+2?")?;
+// Everything is a chat with builder pattern
+let response = client.chat("What is 2+2?").text()?;
+let response = client.chat(vec![
+    Message::system("Be helpful"),
+    Message::user("What is 2+2?")
+]).text()?;
+let result: Analysis = client.chat_structured("Analyze this").send()?;
+```
 
-// Structured response with automatic schema
-#[derive(Deserialize, JsonSchema)]
-struct Analysis {
-    sentiment: String,
-    score: f32,
+See [MIGRATION_GUIDE.md](docs/MIGRATION_GUIDE.md) for complete migration details.
+
+## Error Handling
+
+```rust
+use wavs_llm::errors::LlmError;
+
+match client.chat("Hello").text() {
+    Ok(response) => println!("Success: {}", response),
+    Err(LlmError::ApiError(msg)) => eprintln!("API Error: {}", msg),
+    Err(LlmError::ParseError(msg)) => eprintln!("Parse Error: {}", msg),
+    Err(LlmError::RequestError(msg)) => eprintln!("Request Error: {}", msg),
+    Err(e) => eprintln!("Other Error: {}", e),
 }
-let analysis: Analysis = client.complete_structured("Analyze: text here")?;
 ```
-
-### Key Improvements
-
-1. **Automatic Schema Generation**: No need to manually write JSON schemas
-2. **Simpler Methods**: `complete()` and `complete_structured()` for common use cases
-3. **Type Safety**: Schema is derived from your Rust types at compile time
-4. **Less Boilerplate**: No manual message construction for simple prompts
-
-### Backward Compatibility
-
-All existing code continues to work. The new methods are additions, not replacements:
-- `chat_completion()` - Still available for full control
-- `chat_completion_with_format()` - Still available for custom formats
-- `chat_completion_structured()` - Still available but consider using `complete_structured()`
 
 ## Requirements
 
@@ -327,3 +404,5 @@ Contributions are welcome! Please ensure:
 - Code follows existing patterns
 - Documentation is updated
 - Changes maintain WASI compatibility
+
+The simplified API design makes the codebase more maintainable and easier to extend with new features.

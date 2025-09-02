@@ -445,7 +445,7 @@ impl Tools {
 
                 // Process each tool call and add the results
                 for (i, tool_call) in tool_calls.iter().enumerate() {
-                    tool_messages.push(Message::new_tool_result(
+                    tool_messages.push(Message::tool_result(
                         tool_call.id.clone(),
                         tool_call.function.name.clone(),
                         tool_results[i].clone(),
@@ -454,7 +454,7 @@ impl Tools {
 
                 // Call OpenAI to get final response, but we don't use it for parsing
                 // It's mainly for human readable confirmation
-                let final_response = client.chat_completion_text(tool_messages.clone());
+                let final_response = client.chat(tool_messages.clone()).text();
                 println!("OpenAI final response (for logs only): {:?}", final_response);
 
                 // Return the original tool result which contains valid JSON
@@ -541,26 +541,26 @@ mod tests {
     #[test]
     fn test_message_creation() {
         // Test system message
-        let system_msg = Message::new_system("System message test".to_string());
+        let system_msg = Message::system("System message test".to_string());
         assert_eq!(system_msg.role, "system");
         assert_eq!(system_msg.content.unwrap(), "System message test");
         assert!(system_msg.tool_calls.is_none());
 
         // Test user message
-        let user_msg = Message::new_user("User message test".to_string());
+        let user_msg = Message::user("User message test".to_string());
         assert_eq!(user_msg.role, "user");
         assert_eq!(user_msg.content.unwrap(), "User message test");
         assert!(user_msg.tool_calls.is_none());
 
-        // Test assistant message (fix: should use new_system)
-        let assistant_msg = Message::new_system("Assistant message test".to_string());
-        assert_eq!(assistant_msg.role, "system");
+        // Test assistant message
+        let assistant_msg = Message::assistant("Assistant message test".to_string());
+        assert_eq!(assistant_msg.role, "assistant");
         assert_eq!(assistant_msg.content.unwrap(), "Assistant message test");
         assert!(assistant_msg.tool_calls.is_none());
 
         // Test tool message
         let tool_call_id = "call_12345";
-        let tool_msg = Message::new_tool_result(
+        let tool_msg = Message::tool_result(
             tool_call_id.to_string(),
             "test_tool".to_string(),
             "Tool result test".to_string(),

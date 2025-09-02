@@ -67,6 +67,24 @@ contract EasTrigger is Common {
         vm.stopBroadcast();
     }
 
+    /// @notice Trigger agent event with string data
+    /// @param triggerAddr Address of the EAS attest trigger contract
+    /// @param data Agent trigger data as string
+    function addAgentTrigger(string calldata triggerAddr, string calldata data) public {
+        vm.startBroadcast(_privateKey);
+
+        EASAttestTrigger trigger = EASAttestTrigger(vm.parseAddress(triggerAddr));
+
+        console.log("Creating agent trigger:");
+        console.log("Trigger Address:", triggerAddr);
+        console.log("Data:", data);
+
+        // Call the contract function which will encode string to bytes internally
+        trigger.addAgentTrigger(data);
+
+        vm.stopBroadcast();
+    }
+
     // ============================================================
     // QUERY FUNCTIONS
     // ============================================================

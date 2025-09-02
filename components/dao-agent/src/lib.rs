@@ -15,10 +15,104 @@ use bindings::{
 use context::DaoContext;
 use sol_interfaces::{Operation, Transaction};
 use std::str::FromStr;
-use wavs_llm::client::{LlmResponse, Message};
-use wavs_llm::{client, errors::AgentError};
+use wavs_llm::{client, errors::AgentError, ToolCall};
+use wavs_llm::{LlmResponse, Message};
 
 struct Component;
+
+impl Component {
+    /// Handle a tool call from JSON content (when LLM returns tool call as JSON in content)
+    fn handle_tool_call_json(
+        name: &str,
+        parameters: &serde_json::Value,
+        llm_context: &wavs_llm::config::Config,
+    ) -> Result<LlmResponse, String> {
+        println!("Processing tool call: {} with parameters: {}", name, parameters);
+
+        match name {
+            "send_eth" => {
+                let to = parameters
+                    .get("to")
+                    .and_then(|v| v.as_str())
+                    .ok_or("Missing 'to' parameter in send_eth tool call")?;
+                let value = parameters
+                    .get("value")
+                    .and_then(|v| v.as_str())
+                    .ok_or("Missing 'value' parameter in send_eth tool call")?;
+
+                let tx = wavs_llm::contracts::Transaction {
+                    to: to.to_string(),
+                    value: value.to_string(),
+                    contract_call: None,
+                    data: String::new(), // Will be populated later
+                    description: format!("Send {} wei to {}", value, to),
+                };
+
+                println!("Created ETH transaction: to={}, value={}", to, value);
+                Ok(LlmResponse::Transaction(tx))
+            }
+            // Handle contract function calls (like "contract_usdc_transfer")
+            name if name.starts_with("contract_") => {
+                // Extract contract name and function from tool name
+                let parts: Vec<&str> = name.split('_').collect();
+                if parts.len() < 3 {
+                    return Err(format!("Invalid contract tool call format: {}", name));
+                }
+
+                let contract_name = parts[1]; // e.g., "usdc"
+                let function_name = parts[2..].join("_"); // e.g., "transfer"
+
+                // Find the contract in the config
+                let contract = llm_context
+                    .contracts
+                    .iter()
+                    .find(|c| c.name.to_lowercase() == contract_name.to_lowercase())
+                    .ok_or_else(|| {
+                        format!("Contract '{}' not found in configuration", contract_name)
+                    })?;
+
+                // Convert parameters to function arguments
+                let mut function_args = Vec::new();
+                if let Some(obj) = parameters.as_object() {
+                    for (_key, value) in obj {
+                        function_args.push(value.clone());
+                    }
+                }
+
+                let contract_call = wavs_llm::contracts::ContractCall {
+                    function: function_name.clone(),
+                    args: function_args.clone(),
+                };
+
+                let tx = wavs_llm::contracts::Transaction {
+                    to: contract.address.clone(),
+                    value: "0".to_string(), // Contract calls typically don't send ETH
+                    contract_call: Some(contract_call),
+                    data: String::new(), // Will be populated later
+                    description: format!("Call {} on contract {}", function_name, contract_name),
+                };
+
+                println!(
+                    "Created contract transaction: to={}, function={}, args={:?}",
+                    contract.address, function_name, function_args
+                );
+                Ok(LlmResponse::Transaction(tx))
+            }
+            _ => Err(format!("Unknown tool call: {}", name)),
+        }
+    }
+
+    /// Convert a ToolCall to a transaction (for actual tool_calls field)
+    fn convert_tool_call_to_transaction(
+        tool_call: &ToolCall,
+        llm_context: &wavs_llm::config::Config,
+    ) -> Result<LlmResponse, String> {
+        let args: serde_json::Value = serde_json::from_str(&tool_call.function.arguments)
+            .map_err(|e| format!("Failed to parse tool call arguments: {}", e))?;
+
+        Self::handle_tool_call_json(&tool_call.function.name, &args, llm_context)
+    }
+}
 
 impl Guest for Component {
     fn run(trigger_action: TriggerAction) -> std::result::Result<Option<WasmResponse>, String> {
@@ -40,6 +134,8 @@ impl Guest for Component {
             _ => Err("Unsupported trigger data".to_string()),
         }?;
 
+        println!("Processing prompt: {}", prompt);
+
         // Get the DAO context with all our configuration
         let context = DaoContext::load()?;
         let mut llm_context = context.llm_context.clone();
@@ -56,13 +152,7 @@ impl Guest for Component {
             }
         } else {
             // If no system message exists, create one with the DAO state
-            llm_context.messages.push(Message {
-                role: "system".into(),
-                content: Some(dao_state),
-                tool_calls: None,
-                tool_call_id: None,
-                name: None,
-            });
+            llm_context.messages.push(Message::system(dao_state));
         }
 
         // Create LLM client implementation using the standalone constructor
@@ -71,10 +161,33 @@ impl Guest for Component {
             llm_context.llm_config.clone(),
         );
 
-        // Use the helper function to process the prompt with config
-        let result = llm_client
-            .process_with_config(prompt.clone(), &llm_context)
-            .map_err(|e| e.to_string())?;
+        // Get the response from the LLM and handle tool calls properly
+        let result = {
+            let response = llm_client
+                .chat(prompt.clone())
+                .with_config(&llm_context)
+                .send()
+                .map_err(|e| e.to_string())?;
+
+            println!(
+                "LLM response received. Content: {:?}, Tool calls: {:?}",
+                response.content, response.tool_calls
+            );
+
+            // Handle tool calls first (if they exist in the tool_calls field)
+            if let Some(tool_calls) = &response.tool_calls {
+                if !tool_calls.is_empty() {
+                    let tool_call = &tool_calls[0];
+                    Self::convert_tool_call_to_transaction(tool_call, &llm_context)?
+                } else {
+                    // No tool calls, check content
+                    Self::parse_response_content(&response, &llm_context)?
+                }
+            } else {
+                // No tool_calls field, check content for tool call JSON or other formats
+                Self::parse_response_content(&response, &llm_context)?
+            }
+        };
 
         // Handle the response
         match result {
@@ -103,15 +216,16 @@ impl Guest for Component {
                                 "Cannot find contract at address {}",
                                 tx.to
                             ))
-                        })
-                        .unwrap();
+                        })?;
 
                     contract
                         .encode_function_call(&contract_call.function, &contract_call.args)
-                        .unwrap()
+                        .map_err(|e| format!("Failed to encode contract call: {}", e))?
                 } else {
                     Bytes::default()
                 };
+
+                println!("Encoded transaction data: 0x{}", hex::encode(&data));
 
                 Ok(Some(WasmResponse {
                     payload: TransactionPayload {
@@ -122,16 +236,51 @@ impl Guest for Component {
                             value,
                             operation: Operation::Call,
                         }],
-                        description: "".to_string(),
+                        description: "DAO Agent Transaction".to_string(),
                     }
                     .abi_encode(),
                     ordering: None,
                 }))
             }
             LlmResponse::Text(text) => {
-                println!("LLM response: {}", text);
+                println!("LLM response text (no transaction): {}", text);
                 Ok(None)
             }
+        }
+    }
+}
+
+impl Component {
+    /// Parse response content for different formats
+    fn parse_response_content(
+        response: &Message,
+        llm_context: &wavs_llm::config::Config,
+    ) -> Result<LlmResponse, String> {
+        if let Some(content) = &response.content {
+            // Try to parse as tool call JSON first
+            if let Ok(tool_call_json) = serde_json::from_str::<serde_json::Value>(content) {
+                // Check if it looks like a tool call with "name" and "parameters" fields
+                if let (Some(name), Some(parameters)) = (
+                    tool_call_json.get("name").and_then(|v| v.as_str()),
+                    tool_call_json.get("parameters"),
+                ) {
+                    println!(
+                        "Detected tool call JSON in content: name={}, parameters={}",
+                        name, parameters
+                    );
+                    return Self::handle_tool_call_json(name, parameters, llm_context);
+                }
+            }
+
+            // Try to parse as transaction directly
+            if let Ok(tx) = serde_json::from_str::<wavs_llm::contracts::Transaction>(content) {
+                return Ok(LlmResponse::Transaction(tx));
+            }
+
+            // Otherwise, return as text
+            Ok(LlmResponse::Text(content.clone()))
+        } else {
+            Ok(LlmResponse::Text(String::new()))
         }
     }
 }

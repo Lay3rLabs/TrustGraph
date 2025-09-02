@@ -5,9 +5,7 @@
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use wavs_llm::client::LLMClient;
-use wavs_llm::config::LlmOptions;
-use wavs_llm::errors::LlmError;
+use wavs_llm::{LLMClient, LlmError, LlmOptions, Message};
 
 /// Simple like/dislike response for statement evaluation
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
@@ -73,7 +71,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_max_tokens(200) // Reasonable limit
         .with_top_p(0.9); // Focused sampling
 
-    let client = LLMClient::with_config("llama3.2".to_string(), config);
+    let client = LLMClient::with_config("llama3.2", config);
 
     // Example 1: Basic Like/Dislike Evaluation
     println!("📝 Example 1: Basic Like/Dislike Evaluation");
@@ -116,8 +114,8 @@ fn basic_like_evaluation(client: &LLMClient) -> Result<(), LlmError> {
             statement
         );
 
-        // Use the improved structured completion with automatic retry
-        match client.complete_structured::<LikeResponse>(prompt) {
+        // Use the new simplified API with structured response
+        match client.chat_structured::<LikeResponse>(prompt).send() {
             Ok(response) => {
                 println!(
                     "    ✅ Like: {}, Confidence: {:.2}",
@@ -148,7 +146,10 @@ fn detailed_evaluation(client: &LLMClient) -> Result<(), LlmError> {
         statement
     );
 
-    match client.complete_structured_with_system::<DetailedEvaluation>(system_prompt, user_prompt) {
+    // Use the new API with system message
+    let messages = vec![Message::system(system_prompt), Message::user(user_prompt)];
+
+    match client.chat_structured::<DetailedEvaluation>(messages).send() {
         Ok(response) => {
             println!("    ✅ Detailed Evaluation:");
             println!("       Like: {}", response.like);
@@ -183,8 +184,8 @@ fn sentiment_analysis(client: &LLMClient) -> Result<(), LlmError> {
             text
         );
 
-        // Use retry logic with custom attempt count for more complex analysis
-        match client.complete_structured_with_retries::<SentimentAnalysis>(prompt, 5) {
+        // Use the new API with retry logic
+        match client.chat_structured::<SentimentAnalysis>(prompt).with_retries(5).send() {
             Ok(response) => {
                 println!(
                     "    ✅ Sentiment: {:?}, Confidence: {:.2}",
@@ -210,7 +211,7 @@ fn error_handling_examples(client: &LLMClient) -> Result<(), LlmError> {
 
     println!("  Attempting potentially problematic request...");
 
-    match client.complete_structured_with_retries::<LikeResponse>(tricky_prompt, 3) {
+    match client.chat_structured::<LikeResponse>(tricky_prompt).with_retries(3).send() {
         Ok(response) => {
             println!("    ✅ Successfully handled complex prompt");
             println!(
@@ -226,7 +227,7 @@ fn error_handling_examples(client: &LLMClient) -> Result<(), LlmError> {
             println!("  Trying simplified approach...");
             let simple_prompt = "Evaluate this statement briefly: Is it good or bad?";
 
-            match client.complete_structured::<LikeResponse>(simple_prompt) {
+            match client.chat_structured::<LikeResponse>(simple_prompt).send() {
                 Ok(response) => {
                     println!("    ✅ Fallback successful: like={}", response.like);
                 }
@@ -262,7 +263,7 @@ fn batch_evaluation(client: &LLMClient) -> Result<(), LlmError> {
             statement
         );
 
-        match client.complete_structured::<LikeResponse>(prompt) {
+        match client.chat_structured::<LikeResponse>(prompt).send() {
             Ok(response) => {
                 results.push((statement, response));
                 println!("    ✅ Processed successfully");

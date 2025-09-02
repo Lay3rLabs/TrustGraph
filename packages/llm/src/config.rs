@@ -310,7 +310,7 @@ impl Default for Config {
                 .with_seed(42)
                 .with_max_tokens(500),
             model: "llama3.2".to_string(),
-            messages: vec![Message::new_system(default_system_prompt)],
+            messages: vec![Message::system(default_system_prompt)],
             config: std::collections::HashMap::new(),
         }
     }
@@ -378,7 +378,7 @@ mod tests {
             )],
             llm_config: LlmOptions::default(),
             model: "test-model".to_string(),
-            messages: vec![Message::new_system("Test system message".to_string())],
+            messages: vec![Message::system("Test system message".to_string())],
             config: std::collections::HashMap::new(),
         };
 
