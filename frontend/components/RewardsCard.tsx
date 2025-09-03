@@ -48,10 +48,6 @@ export function RewardsCard({
     return formatted.toFixed(6);
   };
 
-  const formatAddress = (address: string) => {
-    return address; // Show full address without truncation
-  };
-
   const hasClaimableRewards =
     pendingReward && Number(pendingReward.claimable) > Number(claimedAmount);
 

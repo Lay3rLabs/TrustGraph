@@ -50,7 +50,7 @@ export default function RewardsPage() {
     setSuccessMessage(null);
     const hash = await triggerUpdate();
     if (hash) {
-      setSuccessMessage(`Update triggered! Transaction: ${hash}`);
+      setSuccessMessage(`Update triggered! Check back in a few minutes to see if there are any updates. Transaction: ${hash}`);
       setTimeout(() => setSuccessMessage(null), 5000);
     }
   }, [triggerUpdate]);

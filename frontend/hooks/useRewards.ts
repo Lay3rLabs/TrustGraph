@@ -63,7 +63,10 @@ export function useRewards() {
     address: contractAddress,
     abi: rewardDistributorAbi,
     functionName: 'root',
-    query: { enabled: !!contractAddress },
+    query: {
+      enabled: !!contractAddress,
+      refetchInterval: 60_000,
+    },
   })
 
   // Read IPFS hash CID from contract
@@ -71,7 +74,10 @@ export function useRewards() {
     address: contractAddress,
     abi: rewardDistributorAbi,
     functionName: 'ipfsHashCid',
-    query: { enabled: !!contractAddress },
+    query: {
+      enabled: !!contractAddress,
+      refetchInterval: 60_000,
+    },
   })
 
   // Read claimed amount for connected user
