@@ -61,12 +61,6 @@ impl Guest for Component {
 
         let mut registry = SourceRegistry::new();
 
-        // // Add NFT source - 1e18 rewards per NFT held
-        // registry.add_source(sources::erc721::Erc721Source::new(
-        //     &reward_source_nft_address,
-        //     U256::from(1e18),
-        // ));
-
         // Add EAS sources - requires schema UID for attestations
         let schema_uid = config_var("reward_schema_uid")
             .ok_or_else(|| "Failed to get reward_schema_uid - this is required for EAS rewards")?;
@@ -91,6 +85,22 @@ impl Guest for Component {
         //     sources::eas::EasRewardType::SentAttestations,
         //     U256::from(3e17),
         // ));
+
+        // Reward users for prediction market interactions (1e18 rewards per type+contract interacted with, so 2e18 if user trades and also redeems on same market, and 1e18 if only trades but no redeem)
+        registry.add_source(sources::interactions::InteractionsSource::new(
+            &chain_name,
+            &indexer_address,
+            "prediction_market_trade",
+            U256::from(1e18),
+            true,
+        ));
+        registry.add_source(sources::interactions::InteractionsSource::new(
+            &chain_name,
+            &indexer_address,
+            "prediction_market_redeem",
+            U256::from(1e18),
+            true,
+        ));
 
         // Add PageRank-based EAS rewards if configured
         if let Some(pagerank_pool_str) = config_var("pagerank_reward_pool") {

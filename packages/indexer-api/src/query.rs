@@ -49,7 +49,7 @@ impl WavsIndexerQuerier {
 }
 
 // =============================================================================
-// Indexer Queries
+// Attestation Queries
 // =============================================================================
 
 impl WavsIndexerQuerier {
@@ -274,13 +274,7 @@ impl WavsIndexerQuerier {
         .map(|event| self.get_attestation_uid(event))
         .collect::<Result<Vec<_>, _>>()
     }
-}
 
-// =============================================================================
-// Helpers
-// =============================================================================
-
-impl WavsIndexerQuerier {
     fn get_attestation_uid(&self, event: &IndexedEvent) -> Result<FixedBytes<32>, String> {
         event
             .tags
@@ -292,5 +286,83 @@ impl WavsIndexerQuerier {
             .ok_or(format!("No `uid` found in tags for event with ID {:?}", event.eventId))?
             .parse::<FixedBytes<32>>()
             .map_err(|e| format!("Failed to parse uid: {}", e))
+    }
+}
+
+// =============================================================================
+// Interaction Queries
+// =============================================================================
+
+impl WavsIndexerQuerier {
+    pub async fn get_interaction_count_by_type(
+        &self,
+        interaction_type: &str,
+    ) -> Result<u64, String> {
+        Ok(self
+            .getEventCountByTypeAndTag(
+                "interaction".to_string(),
+                format!("type:{}", interaction_type),
+            )
+            .call()
+            .await
+            .map_err(|e| format!("Failed to get interaction count by type: {}", e))?
+            .to::<u64>())
+    }
+
+    pub async fn get_interactions_by_type(
+        &self,
+        interaction_type: &str,
+        start: u64,
+        length: u64,
+        reverse_order: bool,
+    ) -> Result<Vec<IndexedEvent>, String> {
+        self.getEventsByTypeAndTag(
+            "interaction".to_string(),
+            format!("type:{}", interaction_type),
+            U256::from(start),
+            U256::from(length),
+            reverse_order,
+        )
+        .call()
+        .await
+        .map_err(|e| format!("Failed to get interactions by type: {}", e))
+    }
+
+    pub async fn get_interaction_count_by_type_and_address(
+        &self,
+        interaction_type: &str,
+        address: Address,
+    ) -> Result<u64, String> {
+        Ok(self
+            .getEventCountByAddressAndTypeAndTag(
+                address,
+                "interaction".to_string(),
+                format!("type:{}", interaction_type),
+            )
+            .call()
+            .await
+            .map_err(|e| format!("Failed to get interaction count by type and address: {}", e))?
+            .to::<u64>())
+    }
+
+    pub async fn get_interactions_by_type_and_address(
+        &self,
+        interaction_type: &str,
+        address: Address,
+        start: u64,
+        length: u64,
+        reverse_order: bool,
+    ) -> Result<Vec<IndexedEvent>, String> {
+        self.getEventsByAddressAndTypeAndTag(
+            address,
+            "interaction".to_string(),
+            format!("type:{}", interaction_type),
+            U256::from(start),
+            U256::from(length),
+            reverse_order,
+        )
+        .call()
+        .await
+        .map_err(|e| format!("Failed to get interactions by type and address: {}", e))
     }
 }

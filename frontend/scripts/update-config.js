@@ -70,7 +70,7 @@ try {
     // EAS contracts
     schema_registry: 'SchemaRegistry',
     eas: 'EAS',
-    attester: 'Attester',
+    attester: 'WavsAttester',
     schema_registrar: 'SchemaRegistrar',
     indexer_resolver: 'EASIndexerResolver',
 

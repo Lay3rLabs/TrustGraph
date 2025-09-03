@@ -1,184 +1,4 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Attester
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-export const attesterAbi = [
-  {
-    type: 'constructor',
-    inputs: [
-      { name: 'eas', internalType: 'contract IEAS', type: 'address' },
-      {
-        name: 'serviceManager',
-        internalType: 'contract IWavsServiceManager',
-        type: 'address',
-      },
-    ],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [{ name: 'data', internalType: 'bytes', type: 'bytes' }],
-    name: 'decodeAttestData',
-    outputs: [
-      {
-        name: '',
-        internalType: 'struct AttestationRequest',
-        type: 'tuple',
-        components: [
-          { name: 'schema', internalType: 'bytes32', type: 'bytes32' },
-          {
-            name: 'data',
-            internalType: 'struct AttestationRequestData',
-            type: 'tuple',
-            components: [
-              { name: 'recipient', internalType: 'address', type: 'address' },
-              {
-                name: 'expirationTime',
-                internalType: 'uint64',
-                type: 'uint64',
-              },
-              { name: 'revocable', internalType: 'bool', type: 'bool' },
-              { name: 'refUID', internalType: 'bytes32', type: 'bytes32' },
-              { name: 'data', internalType: 'bytes', type: 'bytes' },
-              { name: 'value', internalType: 'uint256', type: 'uint256' },
-            ],
-          },
-        ],
-      },
-    ],
-    stateMutability: 'pure',
-  },
-  {
-    type: 'function',
-    inputs: [{ name: 'payload', internalType: 'bytes', type: 'bytes' }],
-    name: 'decodeAttestationPayload',
-    outputs: [
-      {
-        name: '',
-        internalType: 'struct Attester.AttestationPayload',
-        type: 'tuple',
-        components: [
-          {
-            name: 'operationType',
-            internalType: 'enum Attester.OperationType',
-            type: 'uint8',
-          },
-          { name: 'data', internalType: 'bytes', type: 'bytes' },
-        ],
-      },
-    ],
-    stateMutability: 'pure',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'getServiceManager',
-    outputs: [{ name: '', internalType: 'address', type: 'address' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [
-      {
-        name: 'envelope',
-        internalType: 'struct IWavsServiceHandler.Envelope',
-        type: 'tuple',
-        components: [
-          { name: 'eventId', internalType: 'bytes20', type: 'bytes20' },
-          { name: 'ordering', internalType: 'bytes12', type: 'bytes12' },
-          { name: 'payload', internalType: 'bytes', type: 'bytes' },
-        ],
-      },
-      {
-        name: 'signatureData',
-        internalType: 'struct IWavsServiceHandler.SignatureData',
-        type: 'tuple',
-        components: [
-          { name: 'signers', internalType: 'address[]', type: 'address[]' },
-          { name: 'signatures', internalType: 'bytes[]', type: 'bytes[]' },
-          { name: 'referenceBlock', internalType: 'uint32', type: 'uint32' },
-        ],
-      },
-    ],
-    name: 'handleSignedEnvelope',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'schema',
-        internalType: 'bytes32',
-        type: 'bytes32',
-        indexed: false,
-      },
-      {
-        name: 'recipient',
-        internalType: 'address',
-        type: 'address',
-        indexed: false,
-      },
-      {
-        name: 'dataLength',
-        internalType: 'uint256',
-        type: 'uint256',
-        indexed: false,
-      },
-    ],
-    name: 'DebuggingAttestCalled',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      { name: 'payload', internalType: 'bytes', type: 'bytes', indexed: false },
-      {
-        name: 'payloadLength',
-        internalType: 'uint256',
-        type: 'uint256',
-        indexed: false,
-      },
-    ],
-    name: 'DebuggingEnvelopeReceived',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'operationType',
-        internalType: 'uint8',
-        type: 'uint8',
-        indexed: false,
-      },
-      {
-        name: 'dataLength',
-        internalType: 'uint256',
-        type: 'uint256',
-        indexed: false,
-      },
-    ],
-    name: 'DebuggingPayloadDecoded',
-  },
-  { type: 'error', inputs: [], name: 'DataDecodingFailed' },
-  { type: 'error', inputs: [], name: 'InvalidEAS' },
-  { type: 'error', inputs: [], name: 'InvalidInput' },
-  { type: 'error', inputs: [], name: 'InvalidOperationType' },
-  { type: 'error', inputs: [], name: 'InvalidServiceManager' },
-  { type: 'error', inputs: [], name: 'PayloadDecodingFailed' },
-] as const
-
-export const attesterAddress =
-  '0xce7EfFf09c46db4e6a51619492edAce74D866ad7' as const
-
-export const attesterConfig = {
-  address: attesterAddress,
-  abi: attesterAbi,
-} as const
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ConditionalTokens
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -491,6 +311,27 @@ export const conditionalTokensAbi = [
     type: 'event',
     anonymous: false,
     inputs: [
+      { name: 'addr', internalType: 'address', type: 'address', indexed: true },
+      {
+        name: 'interactionType',
+        internalType: 'string',
+        type: 'string',
+        indexed: false,
+      },
+      {
+        name: 'tags',
+        internalType: 'string[]',
+        type: 'string[]',
+        indexed: false,
+      },
+      { name: 'data', internalType: 'bytes', type: 'bytes', indexed: false },
+    ],
+    name: 'Interaction',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
       {
         name: 'redeemer',
         internalType: 'address',
@@ -720,10 +561,18 @@ export const conditionalTokensAbi = [
     ],
     name: 'ERC1155MissingApprovalForAll',
   },
+  {
+    type: 'error',
+    inputs: [
+      { name: 'value', internalType: 'uint256', type: 'uint256' },
+      { name: 'length', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'StringsInsufficientHexLength',
+  },
 ] as const
 
 export const conditionalTokensAddress =
-  '0x610CAC87aC087E0e1173D163D1982BCb15850Fa9' as const
+  '0x3674434f08c1D81639365eA8E4c703271De86382' as const
 
 export const conditionalTokensConfig = {
   address: conditionalTokensAddress,
@@ -1321,7 +1170,7 @@ export const easAbi = [
   { type: 'error', inputs: [], name: 'WrongSchema' },
 ] as const
 
-export const easAddress = '0x4f4E2B6b5579919Ef98c35b27d14E43fa1002bc2' as const
+export const easAddress = '0xA29138e31094d32b4E5A915819C6A2CE63A958C7' as const
 
 export const easConfig = { address: easAddress, abi: easAbi } as const
 
@@ -1330,6 +1179,13 @@ export const easConfig = { address: easAddress, abi: easAbi } as const
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 export const easAttestTriggerAbi = [
+  {
+    type: 'function',
+    inputs: [{ name: 'data', internalType: 'string', type: 'string' }],
+    name: 'addAgentTrigger',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
   {
     type: 'function',
     inputs: [
@@ -1404,10 +1260,18 @@ export const easAttestTriggerAbi = [
     ],
     name: 'AttestedEvent',
   },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      { name: 'data', internalType: 'bytes', type: 'bytes', indexed: false },
+    ],
+    name: 'NewTrigger',
+  },
 ] as const
 
 export const easAttestTriggerAddress =
-  '0xc1f0AED7fFC79E94D5eEd3e1fDA799a9D58a1551' as const
+  '0x30eBcaE5339051CAbf9e1a460E36e0901631988C' as const
 
 export const easAttestTriggerConfig = {
   address: easAttestTriggerAddress,
@@ -1593,7 +1457,7 @@ export const easIndexerResolverAbi = [
 ] as const
 
 export const easIndexerResolverAddress =
-  '0x469F0BE1649F99DEFDbd6E5D346Ec89de588f298' as const
+  '0x8DD41455E5130CbA52f7F2F41cC030fB84BcC160' as const
 
 export const easIndexerResolverConfig = {
   address: easIndexerResolverAddress,
@@ -2357,7 +2221,7 @@ export const enovaAbi = [
 ] as const
 
 export const enovaAddress =
-  '0x876aD9F6CEFd00080D82d26200a225Fda7f1dc54' as const
+  '0xC65875550Cd4e0A4AE654eF65888Fea6E14ab957' as const
 
 export const enovaConfig = { address: enovaAddress, abi: enovaAbi } as const
 
@@ -2940,7 +2804,7 @@ export const gnosisSafeAbi = [
 ] as const
 
 export const gnosisSafeAddress =
-  '0x9189c1dA9ACA140C961683423C458491Eb79a182' as const
+  '0x8B3ED4D2Fe5d2E71CdbC271b6Cfc2A89060e34c9' as const
 
 export const gnosisSafeConfig = {
   address: gnosisSafeAddress,
@@ -2961,7 +2825,7 @@ export const gnosisSafeProxyAbi = [
 ] as const
 
 export const gnosisSafeProxyAddress =
-  '0x1cf1dF3E9E4ffC60A42d0D79202a3C92faEb0163' as const
+  '0xddd2073e7ed1975798807F67642dA2928626A369' as const
 
 export const gnosisSafeProxyConfig = {
   address: gnosisSafeProxyAddress,
@@ -3318,6 +3182,27 @@ export const lmsrMarketMakerAbi = [
     type: 'event',
     anonymous: false,
     inputs: [
+      { name: 'addr', internalType: 'address', type: 'address', indexed: true },
+      {
+        name: 'interactionType',
+        internalType: 'string',
+        type: 'string',
+        indexed: false,
+      },
+      {
+        name: 'tags',
+        internalType: 'string[]',
+        type: 'string[]',
+        indexed: false,
+      },
+      { name: 'data', internalType: 'bytes', type: 'bytes', indexed: false },
+    ],
+    name: 'Interaction',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
       {
         name: 'previousOwner',
         internalType: 'address',
@@ -3345,10 +3230,18 @@ export const lmsrMarketMakerAbi = [
     inputs: [{ name: 'account', internalType: 'address', type: 'address' }],
     name: 'OwnableUnauthorizedAccount',
   },
+  {
+    type: 'error',
+    inputs: [
+      { name: 'value', internalType: 'uint256', type: 'uint256' },
+      { name: 'length', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'StringsInsufficientHexLength',
+  },
 ] as const
 
 export const lmsrMarketMakerAddress =
-  '0x7B8319EAcebcAe6b0b5d857e80136333212B9062' as const
+  '0x558F04FF496f9622B8f55154Fe09ba0cb63B6e49' as const
 
 export const lmsrMarketMakerConfig = {
   address: lmsrMarketMakerAddress,
@@ -3651,6 +3544,27 @@ export const marketMakerAbi = [
     type: 'event',
     anonymous: false,
     inputs: [
+      { name: 'addr', internalType: 'address', type: 'address', indexed: true },
+      {
+        name: 'interactionType',
+        internalType: 'string',
+        type: 'string',
+        indexed: false,
+      },
+      {
+        name: 'tags',
+        internalType: 'string[]',
+        type: 'string[]',
+        indexed: false,
+      },
+      { name: 'data', internalType: 'bytes', type: 'bytes', indexed: false },
+    ],
+    name: 'Interaction',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
       {
         name: 'previousOwner',
         internalType: 'address',
@@ -3675,6 +3589,14 @@ export const marketMakerAbi = [
     type: 'error',
     inputs: [{ name: 'account', internalType: 'address', type: 'address' }],
     name: 'OwnableUnauthorizedAccount',
+  },
+  {
+    type: 'error',
+    inputs: [
+      { name: 'value', internalType: 'uint256', type: 'uint256' },
+      { name: 'length', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'StringsInsufficientHexLength',
   },
 ] as const
 
@@ -4217,7 +4139,7 @@ export const merkleGovModuleAbi = [
 ] as const
 
 export const merkleGovModuleAddress =
-  '0x9C01c09FB0A647606f97fAc9141290532E0FbC33' as const
+  '0x8829eA7489D9F394b5A92418b9D8bDc8A38Fb0dE' as const
 
 export const merkleGovModuleConfig = {
   address: merkleGovModuleAddress,
@@ -4447,7 +4369,7 @@ export const mockUsdcAbi = [
 ] as const
 
 export const mockUsdcAddress =
-  '0xAc29EeE8f2EEA6Ef38686D21275CB13B6B6Ad13D' as const
+  '0xbFeE8C96dD47f87f8885c71fF33332747542B80D' as const
 
 export const mockUsdcConfig = {
   address: mockUsdcAddress,
@@ -4579,7 +4501,7 @@ export const predictionMarketFactoryAbi = [
 ] as const
 
 export const predictionMarketFactoryAddress =
-  '0xDae6404a03Fa9E6c2dF9B38B6e619321631eF898' as const
+  '0xC960b1A96F64B500Ed96bA5903BCa817eD91A61E' as const
 
 export const predictionMarketFactoryConfig = {
   address: predictionMarketFactoryAddress,
@@ -4701,6 +4623,19 @@ export const predictionMarketOracleControllerAbi = [
   },
   {
     type: 'function',
+    inputs: [{ name: '_creator', internalType: 'address', type: 'address' }],
+    name: 'triggerIdsByCreator',
+    outputs: [
+      {
+        name: '_triggerIds',
+        internalType: 'ITypes.TriggerId[]',
+        type: 'uint64[]',
+      },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
     inputs: [
       { name: '_triggerId', internalType: 'ITypes.TriggerId', type: 'uint64' },
     ],
@@ -4748,7 +4683,7 @@ export const predictionMarketOracleControllerAbi = [
 ] as const
 
 export const predictionMarketOracleControllerAddress =
-  '0xc1971Fc57986169f8CE00c5d0AcC6fAE85BA7c7e' as const
+  '0x4aE3df4393EA538E29BC1b211eEF5DA7e0f0ebC7' as const
 
 export const predictionMarketOracleControllerConfig = {
   address: predictionMarketOracleControllerAddress,
@@ -4782,7 +4717,9 @@ export const rewardDistributorAbi = [
     type: 'function',
     inputs: [],
     name: 'addTrigger',
-    outputs: [],
+    outputs: [
+      { name: 'triggerId', internalType: 'ITypes.TriggerId', type: 'uint64' },
+    ],
     stateMutability: 'nonpayable',
   },
   {
@@ -5204,7 +5141,7 @@ export const rewardDistributorAbi = [
 ] as const
 
 export const rewardDistributorAddress =
-  '0x96C08A459659A3Ab335e2Eb4F2dBbEBfE748a433' as const
+  '0x443e8D34f0A3Ca0bC01f5666ee590Ce04D6C1C4A' as const
 
 export const rewardDistributorConfig = {
   address: rewardDistributorAddress,
@@ -5248,7 +5185,7 @@ export const schemaRegistrarAbi = [
 ] as const
 
 export const schemaRegistrarAddress =
-  '0x71914A72d5DcAaaFD74CB02C22DaE9DD79A88D37' as const
+  '0xB62E8D0235C29aA24723147E6fAAB721e51Ff350' as const
 
 export const schemaRegistrarConfig = {
   address: schemaRegistrarAddress,
@@ -5340,7 +5277,7 @@ export const schemaRegistryAbi = [
 ] as const
 
 export const schemaRegistryAddress =
-  '0xf48e5cbe0f6F414c282c4DB08218DCA1A8Cf6dA6' as const
+  '0x5DF644Af410dC5af3aBcA34269e1fA147171A335' as const
 
 export const schemaRegistryConfig = {
   address: schemaRegistryAddress,
@@ -5729,11 +5666,191 @@ export const signerManagerModuleAbi = [
 ] as const
 
 export const signerManagerModuleAddress =
-  '0x7968370f2A5d8FA8f830eAFDe1320fe27608B6e7' as const
+  '0x39EC3C454e1c41454941E74e43E8790f3A0F68DF' as const
 
 export const signerManagerModuleConfig = {
   address: signerManagerModuleAddress,
   abi: signerManagerModuleAbi,
+} as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// WavsAttester
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const wavsAttesterAbi = [
+  {
+    type: 'constructor',
+    inputs: [
+      { name: 'eas', internalType: 'contract IEAS', type: 'address' },
+      {
+        name: 'serviceManager',
+        internalType: 'contract IWavsServiceManager',
+        type: 'address',
+      },
+    ],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'data', internalType: 'bytes', type: 'bytes' }],
+    name: 'decodeAttestData',
+    outputs: [
+      {
+        name: '',
+        internalType: 'struct AttestationRequest',
+        type: 'tuple',
+        components: [
+          { name: 'schema', internalType: 'bytes32', type: 'bytes32' },
+          {
+            name: 'data',
+            internalType: 'struct AttestationRequestData',
+            type: 'tuple',
+            components: [
+              { name: 'recipient', internalType: 'address', type: 'address' },
+              {
+                name: 'expirationTime',
+                internalType: 'uint64',
+                type: 'uint64',
+              },
+              { name: 'revocable', internalType: 'bool', type: 'bool' },
+              { name: 'refUID', internalType: 'bytes32', type: 'bytes32' },
+              { name: 'data', internalType: 'bytes', type: 'bytes' },
+              { name: 'value', internalType: 'uint256', type: 'uint256' },
+            ],
+          },
+        ],
+      },
+    ],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'payload', internalType: 'bytes', type: 'bytes' }],
+    name: 'decodeAttestationPayload',
+    outputs: [
+      {
+        name: '',
+        internalType: 'struct WavsAttester.AttestationPayload',
+        type: 'tuple',
+        components: [
+          {
+            name: 'operationType',
+            internalType: 'enum WavsAttester.OperationType',
+            type: 'uint8',
+          },
+          { name: 'data', internalType: 'bytes', type: 'bytes' },
+        ],
+      },
+    ],
+    stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getServiceManager',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      {
+        name: 'envelope',
+        internalType: 'struct IWavsServiceHandler.Envelope',
+        type: 'tuple',
+        components: [
+          { name: 'eventId', internalType: 'bytes20', type: 'bytes20' },
+          { name: 'ordering', internalType: 'bytes12', type: 'bytes12' },
+          { name: 'payload', internalType: 'bytes', type: 'bytes' },
+        ],
+      },
+      {
+        name: 'signatureData',
+        internalType: 'struct IWavsServiceHandler.SignatureData',
+        type: 'tuple',
+        components: [
+          { name: 'signers', internalType: 'address[]', type: 'address[]' },
+          { name: 'signatures', internalType: 'bytes[]', type: 'bytes[]' },
+          { name: 'referenceBlock', internalType: 'uint32', type: 'uint32' },
+        ],
+      },
+    ],
+    name: 'handleSignedEnvelope',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'schema',
+        internalType: 'bytes32',
+        type: 'bytes32',
+        indexed: false,
+      },
+      {
+        name: 'recipient',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+      {
+        name: 'dataLength',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'DebuggingAttestCalled',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      { name: 'payload', internalType: 'bytes', type: 'bytes', indexed: false },
+      {
+        name: 'payloadLength',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'DebuggingEnvelopeReceived',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'operationType',
+        internalType: 'uint8',
+        type: 'uint8',
+        indexed: false,
+      },
+      {
+        name: 'dataLength',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'DebuggingPayloadDecoded',
+  },
+  { type: 'error', inputs: [], name: 'DataDecodingFailed' },
+  { type: 'error', inputs: [], name: 'InvalidEAS' },
+  { type: 'error', inputs: [], name: 'InvalidInput' },
+  { type: 'error', inputs: [], name: 'InvalidOperationType' },
+  { type: 'error', inputs: [], name: 'InvalidServiceManager' },
+  { type: 'error', inputs: [], name: 'PayloadDecodingFailed' },
+] as const
+
+export const wavsAttesterAddress =
+  '0xaaBFb4E7BAcdD82Acb10fBBe400431c30c2B41d6' as const
+
+export const wavsAttesterConfig = {
+  address: wavsAttesterAddress,
+  abi: wavsAttesterAbi,
 } as const
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -6727,7 +6844,7 @@ export const wavsIndexerAbi = [
 ] as const
 
 export const wavsIndexerAddress =
-  '0xA22dF78A7B33f5942Dc2EF3B99970eFB5d1dC3D9' as const
+  '0xAFabD93fC6e666c0da32Da517CE3229E82B517fb' as const
 
 export const wavsIndexerConfig = {
   address: wavsIndexerAddress,

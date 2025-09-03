@@ -136,7 +136,7 @@ export function RewardsCard({
           <div className="space-y-2">
             <div className="terminal-dim text-xs">TOTAL EARNED</div>
             <div className="terminal-text text-lg">
-              {pendingReward ? formatAmount(pendingReward.reward) : "0"}{" "}
+              {pendingReward ? formatAmount(pendingReward.claimable) : "0"}{" "}
               {tokenSymbol}
             </div>
           </div>
@@ -144,7 +144,7 @@ export function RewardsCard({
           <div className="space-y-2">
             <div className="terminal-dim text-xs">CLAIMABLE</div>
             <div className="terminal-text text-lg">
-              {pendingReward ? formatAmount(pendingReward.claimable) : "0"}{" "}
+              {pendingReward ? formatAmount((BigInt(pendingReward.claimable) - BigInt(claimedAmount)).toString()) : "0"}{" "}
               {tokenSymbol}
             </div>
           </div>

@@ -7,6 +7,7 @@ use wavs_wasi_utils::evm::alloy_primitives::U256;
 pub mod eas;
 pub mod eas_pagerank;
 pub mod erc721;
+pub mod interactions;
 
 /// A source of rewards.
 #[async_trait(?Send)]

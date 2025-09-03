@@ -21,7 +21,7 @@ use std::sync::Mutex;
 pub struct EasPageRankSource {
     /// EAS contract address
     pub eas_address: Address,
-    /// EAS indexer address (for queries)
+    /// WAVS indexer address (for queries)
     pub indexer_address: Address,
     /// Chain name for configuration
     pub chain_name: String,
