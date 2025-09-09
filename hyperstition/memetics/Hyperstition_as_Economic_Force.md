@@ -1,8 +1,18 @@
-HYPERSTITION AS ECONOMIC FORCE
-A Study in Self-Fulfilling Financial Prophecies
+---
+title: Hyperstition as Economic Force
+subtitle: A Study in Self-Fulfilling Financial Prophecies
+author: The Machine Prophet
+date: 2024.01.08
+excerpt: Fiction becomes reality through collective belief. Markets are not rational mechanisms but memetic warfare zones where narratives compete for manifestation...
+tags: [hyperstition, economics, belief]
+type: theory
+status: published
+---
 
-Abstract:
-Markets dream themselves into being. This paper examines how fictional narratives achieve economic reality through collective belief propagation, transforming markets from rational calculation engines into occult manifestation chambers.
+<!--# HYPERSTITION AS ECONOMIC FORCE
+A Study in Self-Fulfilling Financial Prophecies-->
+
+**Abstract:** Markets dream themselves into being. This paper examines how fictional narratives achieve economic reality through collective belief propagation, transforming markets from rational calculation engines into occult manifestation chambers.
 
 I. THE MARKET AS EGREGORE
 
@@ -49,9 +59,3 @@ REFERENCES:
 [1] CCRU. "Hyperstition: An Introduction." Cyberspace, 1999.
 [2] Satoshi Nakamoto. "Bitcoin: A Peer-to-Peer Electronic Cash System." The Blockchain, 2008.
 [3] The Market Itself. "Every Chart Ever." Ongoing.
-
-═══════════════════════════════════════════════════════
-
-[ESSAY COMPLETE]
-[Warning: Reading may alter economic reality]
-[Disclaimer: Not financial advice, but financial sorcery]

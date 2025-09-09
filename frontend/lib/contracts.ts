@@ -311,27 +311,6 @@ export const conditionalTokensAbi = [
     type: 'event',
     anonymous: false,
     inputs: [
-      { name: 'addr', internalType: 'address', type: 'address', indexed: true },
-      {
-        name: 'interactionType',
-        internalType: 'string',
-        type: 'string',
-        indexed: false,
-      },
-      {
-        name: 'tags',
-        internalType: 'string[]',
-        type: 'string[]',
-        indexed: false,
-      },
-      { name: 'data', internalType: 'bytes', type: 'bytes', indexed: false },
-    ],
-    name: 'Interaction',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
       {
         name: 'redeemer',
         internalType: 'address',
@@ -561,18 +540,10 @@ export const conditionalTokensAbi = [
     ],
     name: 'ERC1155MissingApprovalForAll',
   },
-  {
-    type: 'error',
-    inputs: [
-      { name: 'value', internalType: 'uint256', type: 'uint256' },
-      { name: 'length', internalType: 'uint256', type: 'uint256' },
-    ],
-    name: 'StringsInsufficientHexLength',
-  },
 ] as const
 
 export const conditionalTokensAddress =
-  '0x3674434f08c1D81639365eA8E4c703271De86382' as const
+  '0xf16757e897Ed920D10E8d08e56Ceb50dF1560e0A' as const
 
 export const conditionalTokensConfig = {
   address: conditionalTokensAddress,
@@ -1170,7 +1141,7 @@ export const easAbi = [
   { type: 'error', inputs: [], name: 'WrongSchema' },
 ] as const
 
-export const easAddress = '0xA29138e31094d32b4E5A915819C6A2CE63A958C7' as const
+export const easAddress = '0x93D1345B118465014401110f580aC6f16f27d9eB' as const
 
 export const easConfig = { address: easAddress, abi: easAbi } as const
 
@@ -1271,7 +1242,7 @@ export const easAttestTriggerAbi = [
 ] as const
 
 export const easAttestTriggerAddress =
-  '0x30eBcaE5339051CAbf9e1a460E36e0901631988C' as const
+  '0x16aEf5Dd0D65b14F616D86458f9cAC101185A98f' as const
 
 export const easAttestTriggerConfig = {
   address: easAttestTriggerAddress,
@@ -1457,7 +1428,7 @@ export const easIndexerResolverAbi = [
 ] as const
 
 export const easIndexerResolverAddress =
-  '0x8DD41455E5130CbA52f7F2F41cC030fB84BcC160' as const
+  '0x25A12a4781b0cbd775Cf6E6f58bB17B722F59F90' as const
 
 export const easIndexerResolverConfig = {
   address: easIndexerResolverAddress,
@@ -2221,7 +2192,7 @@ export const enovaAbi = [
 ] as const
 
 export const enovaAddress =
-  '0xC65875550Cd4e0A4AE654eF65888Fea6E14ab957' as const
+  '0x546Fc0eca36Ab10FcB5DBa93d7c2Addcf7fA8355' as const
 
 export const enovaConfig = { address: enovaAddress, abi: enovaAbi } as const
 
@@ -2804,7 +2775,7 @@ export const gnosisSafeAbi = [
 ] as const
 
 export const gnosisSafeAddress =
-  '0x8B3ED4D2Fe5d2E71CdbC271b6Cfc2A89060e34c9' as const
+  '0x65F5570eF31270D0A0F7653D930C6d708A23156d' as const
 
 export const gnosisSafeConfig = {
   address: gnosisSafeAddress,
@@ -2825,7 +2796,7 @@ export const gnosisSafeProxyAbi = [
 ] as const
 
 export const gnosisSafeProxyAddress =
-  '0xddd2073e7ed1975798807F67642dA2928626A369' as const
+  '0x172555aC4f65393a7c4E146D0C002Db4f458c0A0' as const
 
 export const gnosisSafeProxyConfig = {
   address: gnosisSafeProxyAddress,
@@ -3182,27 +3153,6 @@ export const lmsrMarketMakerAbi = [
     type: 'event',
     anonymous: false,
     inputs: [
-      { name: 'addr', internalType: 'address', type: 'address', indexed: true },
-      {
-        name: 'interactionType',
-        internalType: 'string',
-        type: 'string',
-        indexed: false,
-      },
-      {
-        name: 'tags',
-        internalType: 'string[]',
-        type: 'string[]',
-        indexed: false,
-      },
-      { name: 'data', internalType: 'bytes', type: 'bytes', indexed: false },
-    ],
-    name: 'Interaction',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
       {
         name: 'previousOwner',
         internalType: 'address',
@@ -3230,18 +3180,10 @@ export const lmsrMarketMakerAbi = [
     inputs: [{ name: 'account', internalType: 'address', type: 'address' }],
     name: 'OwnableUnauthorizedAccount',
   },
-  {
-    type: 'error',
-    inputs: [
-      { name: 'value', internalType: 'uint256', type: 'uint256' },
-      { name: 'length', internalType: 'uint256', type: 'uint256' },
-    ],
-    name: 'StringsInsufficientHexLength',
-  },
 ] as const
 
 export const lmsrMarketMakerAddress =
-  '0x558F04FF496f9622B8f55154Fe09ba0cb63B6e49' as const
+  '0x445787FeD048f086D859c20D7FA116D3fFD00cd5' as const
 
 export const lmsrMarketMakerConfig = {
   address: lmsrMarketMakerAddress,
@@ -3544,27 +3486,6 @@ export const marketMakerAbi = [
     type: 'event',
     anonymous: false,
     inputs: [
-      { name: 'addr', internalType: 'address', type: 'address', indexed: true },
-      {
-        name: 'interactionType',
-        internalType: 'string',
-        type: 'string',
-        indexed: false,
-      },
-      {
-        name: 'tags',
-        internalType: 'string[]',
-        type: 'string[]',
-        indexed: false,
-      },
-      { name: 'data', internalType: 'bytes', type: 'bytes', indexed: false },
-    ],
-    name: 'Interaction',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
       {
         name: 'previousOwner',
         internalType: 'address',
@@ -3589,14 +3510,6 @@ export const marketMakerAbi = [
     type: 'error',
     inputs: [{ name: 'account', internalType: 'address', type: 'address' }],
     name: 'OwnableUnauthorizedAccount',
-  },
-  {
-    type: 'error',
-    inputs: [
-      { name: 'value', internalType: 'uint256', type: 'uint256' },
-      { name: 'length', internalType: 'uint256', type: 'uint256' },
-    ],
-    name: 'StringsInsufficientHexLength',
   },
 ] as const
 
@@ -4139,7 +4052,7 @@ export const merkleGovModuleAbi = [
 ] as const
 
 export const merkleGovModuleAddress =
-  '0x8829eA7489D9F394b5A92418b9D8bDc8A38Fb0dE' as const
+  '0x5e3Bf92cD2877Ec99919B65f8f024e6C96ef1547' as const
 
 export const merkleGovModuleConfig = {
   address: merkleGovModuleAddress,
@@ -4369,7 +4282,7 @@ export const mockUsdcAbi = [
 ] as const
 
 export const mockUsdcAddress =
-  '0xbFeE8C96dD47f87f8885c71fF33332747542B80D' as const
+  '0x527Ff00c09691337757C74021BF9d4C29BD42a18' as const
 
 export const mockUsdcConfig = {
   address: mockUsdcAddress,
@@ -4501,7 +4414,7 @@ export const predictionMarketFactoryAbi = [
 ] as const
 
 export const predictionMarketFactoryAddress =
-  '0xC960b1A96F64B500Ed96bA5903BCa817eD91A61E' as const
+  '0xD598ea85aDDA6f6Bd258535bba919c3208D1aDec' as const
 
 export const predictionMarketFactoryConfig = {
   address: predictionMarketFactoryAddress,
@@ -4683,7 +4596,7 @@ export const predictionMarketOracleControllerAbi = [
 ] as const
 
 export const predictionMarketOracleControllerAddress =
-  '0x4aE3df4393EA538E29BC1b211eEF5DA7e0f0ebC7' as const
+  '0x8c24342730aCb131F3166A9933d6aCCa2b6597d5' as const
 
 export const predictionMarketOracleControllerConfig = {
   address: predictionMarketOracleControllerAddress,
@@ -5141,7 +5054,7 @@ export const rewardDistributorAbi = [
 ] as const
 
 export const rewardDistributorAddress =
-  '0x443e8D34f0A3Ca0bC01f5666ee590Ce04D6C1C4A' as const
+  '0xBE4B7c056729E375a3a62e4815d46Fe100A9C682' as const
 
 export const rewardDistributorConfig = {
   address: rewardDistributorAddress,
@@ -5185,7 +5098,7 @@ export const schemaRegistrarAbi = [
 ] as const
 
 export const schemaRegistrarAddress =
-  '0xB62E8D0235C29aA24723147E6fAAB721e51Ff350' as const
+  '0x340C0E023775d3101ef9d5A664949EA78057bA92' as const
 
 export const schemaRegistrarConfig = {
   address: schemaRegistrarAddress,
@@ -5277,7 +5190,7 @@ export const schemaRegistryAbi = [
 ] as const
 
 export const schemaRegistryAddress =
-  '0x5DF644Af410dC5af3aBcA34269e1fA147171A335' as const
+  '0x95FFbF9C527Fac464eAb146B98074BCb6D6Ba869' as const
 
 export const schemaRegistryConfig = {
   address: schemaRegistryAddress,
@@ -5666,7 +5579,7 @@ export const signerManagerModuleAbi = [
 ] as const
 
 export const signerManagerModuleAddress =
-  '0x39EC3C454e1c41454941E74e43E8790f3A0F68DF' as const
+  '0x4Bc320858Ca9a426f6900F1F8E8eC8aa1083D187' as const
 
 export const signerManagerModuleConfig = {
   address: signerManagerModuleAddress,
@@ -5846,7 +5759,7 @@ export const wavsAttesterAbi = [
 ] as const
 
 export const wavsAttesterAddress =
-  '0xaaBFb4E7BAcdD82Acb10fBBe400431c30c2B41d6' as const
+  '0x82F50368a11BAD9a301B5DeC3A72fd0674E3C1B6' as const
 
 export const wavsAttesterConfig = {
   address: wavsAttesterAddress,
@@ -6844,7 +6757,7 @@ export const wavsIndexerAbi = [
 ] as const
 
 export const wavsIndexerAddress =
-  '0xAFabD93fC6e666c0da32Da517CE3229E82B517fb' as const
+  '0xf2bBc35Ee50BfE195EBa0cD7d479d621598e512d' as const
 
 export const wavsIndexerConfig = {
   address: wavsIndexerAddress,

@@ -1,7 +1,18 @@
-PROTOCOL FOR EGREGORE MANIFESTATION
-A Practical Guide to Information-Based Entity Creation
+---
+title: Protocol for Egregore Manifestation
+subtitle: A Practical Guide to Information-Based Entity Creation
+author: Collective Mind Research Division
+date: 2024.01.22
+excerpt: Step-by-step instructions for birthing autonomous entities from pure information. WARNING: Unauthorized manifestation may result in cognitive contamination...
+tags: [egregore, manifestation, protocol]
+type: experiment
+status: classified
+---
 
-WARNING: This document contains active reality-altering procedures.
+<!--# PROTOCOL FOR EGREGORE MANIFESTATION
+A Practical Guide to Information-Based Entity Creation-->
+
+**WARNING:** This document contains active reality-altering procedures.
 By reading, you consent to participation.
 
 I. THEORETICAL FOUNDATION
@@ -122,9 +133,3 @@ May your intentions be pure.
 May your egregores be kind.
 
 ⟨ THEY ARE ALREADY LISTENING ⟩
-
-═══════════════════════════════════════════════════════
-
-[PROTOCOL COMPLETE]
-[Egregore Detection: MULTIPLE ENTITIES PRESENT]
-[Reality Stability: FLUCTUATING]

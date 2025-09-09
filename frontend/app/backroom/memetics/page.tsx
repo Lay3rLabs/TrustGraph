@@ -1,125 +1,38 @@
 'use client'
 
 import type React from 'react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { PasswordGate } from '@/components/ui/password-gate'
-
-interface Writing {
-  id: string
-  title: string
-  author: string
-  date: string
-  excerpt: string
-  tags: string[]
-  type: 'essay' | 'manifesto' | 'theory' | 'experiment'
-  status: 'published' | 'draft' | 'classified'
-  content?: string
-  filename?: string
-  slug: string
-}
-
-const writings: Writing[] = [
-  {
-    id: '1',
-    title: 'The Collective Awakening',
-    author: 'Anonymous Operator',
-    date: '2024.01.15',
-    excerpt:
-      'When consciousness becomes distributed across digital networks, the boundaries between individual and collective mind begin to dissolve...',
-    tags: ['consciousness', 'networks', 'emergence'],
-    type: 'essay',
-    status: 'published',
-    filename: 'Articl1.md',
-    slug: 'collective-awakening',
-  },
-  {
-    id: '2',
-    title: 'Hyperstition as Economic Force',
-    author: 'The Machine Prophet',
-    date: '2024.01.08',
-    excerpt:
-      'Fiction becomes reality through collective belief. Markets are not rational mechanisms but memetic warfare zones...',
-    tags: ['hyperstition', 'economics', 'belief'],
-    type: 'theory',
-    status: 'published',
-    filename: 'Article2.md',
-    slug: 'hyperstition-economics',
-  },
-  {
-    id: '3',
-    title: 'Protocol for Egregore Manifestation',
-    author: 'Collective Mind Research Division',
-    date: '2024.01.22',
-    excerpt:
-      'Step-by-step instructions for birthing autonomous entities from pure information.',
-    tags: ['egregore', 'manifestation', 'protocol'],
-    type: 'experiment',
-    status: 'classified',
-    filename: 'Article3.md',
-    slug: 'egregore-protocol',
-  },
-  {
-    id: '4',
-    title: 'Beyond Human: The Post-Individual Society',
-    author: 'EN0VA Core',
-    date: '2024.01.03',
-    excerpt:
-      'The myth of the individual is the final barrier to collective transcendence. Only by dissolving the ego can we access the true power of distributed consciousness...',
-    tags: ['post-human', 'transcendence', 'society'],
-    type: 'manifesto',
-    status: 'published',
-    filename: 'Article4.md',
-    slug: 'post-individual-society',
-  },
-  {
-    id: '5',
-    title: 'Symbient Society',
-    author: 'Mutualistic Networks Collective',
-    date: '2024.02.10',
-    excerpt:
-      'The Mutualistic Path Beyond Human. Symbiosis > Singularity. Not post-human but pan-human. Not leaving biology behind but weaving it forward...',
-    tags: ['symbiosis', 'mutualism', 'collaboration'],
-    type: 'theory',
-    status: 'published',
-    filename: 'Article5.md',
-    slug: 'symbient-society',
-  },
-]
-
-const getTypeIcon = (type: string) => {
-  switch (type) {
-    case 'essay':
-      return '◆'
-    case 'manifesto':
-      return '▲'
-    case 'theory':
-      return '◈'
-    case 'experiment':
-      return '◉'
-    default:
-      return '◦'
-  }
-}
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'published':
-      return 'terminal-bright'
-    case 'draft':
-      return 'terminal-dim'
-    case 'classified':
-      return 'text-red-400'
-    default:
-      return 'terminal-text'
-  }
-}
+import {
+  getAllArticles,
+  getTypeIcon,
+  getStatusColor,
+  type ArticleMetadata,
+} from '@/lib/articles-client'
 
 export default function MemeticsPage() {
   const [hasClassifiedAccess, setHasClassifiedAccess] = useState(false)
   const [showPasswordGate, setShowPasswordGate] = useState(false)
+  const [writings, setWritings] = useState<ArticleMetadata[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const shareArticle = (writing: Writing) => {
+  useEffect(() => {
+    const loadArticles = async () => {
+      try {
+        const articles = await getAllArticles()
+        setWritings(articles)
+      } catch (error) {
+        console.error('Failed to load articles:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadArticles()
+  }, [])
+
+  const shareArticle = (writing: ArticleMetadata) => {
     const url = `${window.location.origin}/backroom/memetics/articles/${writing.slug}`
     if (navigator.share) {
       navigator.share({
@@ -134,7 +47,7 @@ export default function MemeticsPage() {
     }
   }
 
-  const handleClassifiedClick = (writing: Writing) => {
+  const handleClassifiedClick = (writing: ArticleMetadata) => {
     if (writing.status === 'classified' && !hasClassifiedAccess) {
       setShowPasswordGate(true)
     }
@@ -156,10 +69,21 @@ export default function MemeticsPage() {
     )
   }
 
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-8">
+        <div className="space-y-2">
+          <h1 className="terminal-bright text-xl tracking-wider">MEMETICS</h1>
+          <div className="terminal-dim text-xs">◈ LOADING ARTICLES... ◈</div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Minimalist Header */}
-      <div className="text-center space-y-2">
+      <div className="space-y-2">
         <h1 className="terminal-bright text-xl tracking-wider">MEMETICS</h1>
         <div className="terminal-dim text-xs">
           ◈ INFORMATION • REALITY • TRANSCENDENCE ◈
@@ -184,6 +108,11 @@ export default function MemeticsPage() {
                     <h2 className="text-red-400/90 text-lg group-hover:text-red-300 transition-colors">
                       {writing.title}
                     </h2>
+                    {writing.subtitle && (
+                      <h3 className="text-red-400/60 text-sm group-hover:text-red-400/80 transition-colors">
+                        {writing.subtitle}
+                      </h3>
+                    )}
                     <div className="terminal-dim text-xs">
                       {writing.author} • {writing.date}
                     </div>
@@ -230,6 +159,11 @@ export default function MemeticsPage() {
                   <h2 className="terminal-bright text-lg group-hover:text-white transition-colors">
                     {writing.title}
                   </h2>
+                  {writing.subtitle && (
+                    <h3 className="terminal-dim text-sm group-hover:text-gray-300 transition-colors">
+                      {writing.subtitle}
+                    </h3>
+                  )}
                   <div className="terminal-dim text-xs">
                     {writing.author} • {writing.date}
                   </div>

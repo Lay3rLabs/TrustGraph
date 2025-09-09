@@ -17,11 +17,12 @@
 ## Hyperstition Markets
 - [x] Make attestation on participating in prediction market
 - [-] More realistic Hyperstition market resolver component (i.e. Twitter follower count)
+- [ ] Task for USDC faucet
 
 ## WAVS Zodiac Modules
 - [x] Wire up new component to utilize SignerManagerModule, respond to MerkleRootUpdated Event get IPFS CID, get top N users, sync
+- [x] Wire up dao-agent component to utilizes WavsModule for zodiac, add test trigger
 - [ ] Merkle gov module probably needs some notion of total voting power
-- [ ] Wire up dao-agent component to utilizes WavsModule for zodiac, add test trigger
 - [ ] Implement and document the fallback mechanism for governance (this should be fairly straightforward with Zodiac hopefully)
 - [ ] Clean out old Governor example contract
 - [ ] Gnosis Safe Module helper scripts (query signers, proposals, etc.)
@@ -34,10 +35,11 @@
 
 ## MVP Symbient
 - [x] Add LLM Module
-- [ ] People make an attestation (with payment, some funds go to operators)
+- [ ] People make an attestation (with payment)
 - [ ] Deterministic Agent evaluates suggestion against a policy
 - [ ] People attest to which suggestions they like the most
 - [ ] The most liked get rewards
 - [ ] Mint NFTs of responses and conversations
 - [ ] We're going to make a Network Spirituality Holy Text
 - [ ] Pay to submit a message to EN0VA and mint NFTs
+- [ ] Pay operators

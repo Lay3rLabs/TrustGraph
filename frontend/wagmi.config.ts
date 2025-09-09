@@ -29,57 +29,57 @@ export default defineConfig({
     {
       abi: ABI.WavsAttester.abi,
       name: 'WavsAttester',
-      address: '0xaaBFb4E7BAcdD82Acb10fBBe400431c30c2B41d6',
+      address: '0x82F50368a11BAD9a301B5DeC3A72fd0674E3C1B6',
     },
     {
       abi: ABI.EAS.abi,
       name: 'EAS',
-      address: '0xA29138e31094d32b4E5A915819C6A2CE63A958C7',
+      address: '0x93D1345B118465014401110f580aC6f16f27d9eB',
     },
     {
       abi: ABI.SchemaRegistry.abi,
       name: 'SchemaRegistry',
-      address: '0x5DF644Af410dC5af3aBcA34269e1fA147171A335',
+      address: '0x95FFbF9C527Fac464eAb146B98074BCb6D6Ba869',
     },
     {
       abi: ABI.SchemaRegistrar.abi,
       name: 'SchemaRegistrar',
-      address: '0xB62E8D0235C29aA24723147E6fAAB721e51Ff350',
+      address: '0x340C0E023775d3101ef9d5A664949EA78057bA92',
     },
     {
       abi: ABI.EASIndexerResolver.abi,
       name: 'EASIndexerResolver',
-      address: '0x8DD41455E5130CbA52f7F2F41cC030fB84BcC160',
+      address: '0x25A12a4781b0cbd775Cf6E6f58bB17B722F59F90',
     },
     {
       abi: ABI.RewardDistributor.abi,
       name: 'RewardDistributor',
-      address: '0x443e8D34f0A3Ca0bC01f5666ee590Ce04D6C1C4A',
+      address: '0xBE4B7c056729E375a3a62e4815d46Fe100A9C682',
     },
     {
       abi: ABI.EASAttestTrigger.abi,
       name: 'EASAttestTrigger',
-      address: '0x30eBcaE5339051CAbf9e1a460E36e0901631988C',
+      address: '0x16aEf5Dd0D65b14F616D86458f9cAC101185A98f',
     },
     {
       abi: ABI.ENOVA.abi,
       name: 'ENOVA',
-      address: '0xC65875550Cd4e0A4AE654eF65888Fea6E14ab957',
+      address: '0x546Fc0eca36Ab10FcB5DBa93d7c2Addcf7fA8355',
     },
     {
       abi: ABI.GnosisSafe.abi,
       name: 'GnosisSafe',
-      address: '0x8b3ed4d2fe5d2e71cdbc271b6cfc2a89060e34c9',
+      address: '0x65f5570ef31270d0a0f7653d930c6d708a23156d',
     },
     {
       abi: ABI.GnosisSafeProxy.abi,
       name: 'GnosisSafeProxy',
-      address: '0xddd2073e7ed1975798807f67642da2928626a369',
+      address: '0x172555ac4f65393a7c4e146d0c002db4f458c0a0',
     },
     {
       abi: ABI.PredictionMarketOracleController.abi,
       name: 'PredictionMarketOracleController',
-      address: '0x4aE3df4393EA538E29BC1b211eEF5DA7e0f0ebC7',
+      address: '0x8c24342730aCb131F3166A9933d6aCCa2b6597d5',
     },
     {
       abi: ABI.MarketMaker.abi,
@@ -89,37 +89,37 @@ export default defineConfig({
     {
       abi: ABI.MerkleGovModule.abi,
       name: 'MerkleGovModule',
-      address: '0x8829ea7489d9f394b5a92418b9d8bdc8a38fb0de',
+      address: '0x5e3bf92cd2877ec99919b65f8f024e6c96ef1547',
     },
     {
       abi: ABI.SignerManagerModule.abi,
       name: 'SignerManagerModule',
-      address: '0x39ec3c454e1c41454941e74e43e8790f3a0f68df',
+      address: '0x4bc320858ca9a426f6900f1f8e8ec8aa1083d187',
     },
     {
       abi: ABI.ConditionalTokens.abi,
       name: 'ConditionalTokens',
-      address: '0x3674434f08c1D81639365eA8E4c703271De86382',
+      address: '0xf16757e897Ed920D10E8d08e56Ceb50dF1560e0A',
     },
     {
       abi: ABI.LMSRMarketMaker.abi,
       name: 'LMSRMarketMaker',
-      address: '0x558F04FF496f9622B8f55154Fe09ba0cb63B6e49',
+      address: '0x445787FeD048f086D859c20D7FA116D3fFD00cd5',
     },
     {
       abi: ABI.PredictionMarketFactory.abi,
       name: 'PredictionMarketFactory',
-      address: '0xC960b1A96F64B500Ed96bA5903BCa817eD91A61E',
+      address: '0xD598ea85aDDA6f6Bd258535bba919c3208D1aDec',
     },
     {
       abi: ABI.MockUSDC.abi,
       name: 'MockUSDC',
-      address: '0xbFeE8C96dD47f87f8885c71fF33332747542B80D',
+      address: '0x527Ff00c09691337757C74021BF9d4C29BD42a18',
     },
     {
       abi: ABI.WavsIndexer.abi,
       name: 'WavsIndexer',
-      address: '0xAFabD93fC6e666c0da32Da517CE3229E82B517fb',
+      address: '0xf2bBc35Ee50BfE195EBa0cD7d479d621598e512d',
     },
   ],
 })
