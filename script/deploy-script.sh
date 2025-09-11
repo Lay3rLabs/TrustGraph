@@ -42,7 +42,12 @@ bash ./script/create-deployer.sh
 export FUNDED_KEY=$(task config:funded-key)
 
 echo "🟢 Deploying POA Service Manager..."
-forge script script/DeployPOAServiceManager.s.sol:DeployPOAServiceManager --rpc-url ${RPC_URL} --broadcast
+POA_MIDDLEWARE="docker run --rm --network host -v ./.nodes:/root/.nodes --env-file .env ghcr.io/lay3rlabs/poa-middleware:0.2.1"
+$POA_MIDDLEWARE deploy
+$POA_MIDDLEWARE owner_operation updateStakeThreshold 100
+$POA_MIDDLEWARE owner_operation updateQuorum 2 3
+cast rpc anvil_mine --rpc-url $(task get-rpc) 2&> /dev/null # required for the checkpoint stuff, ref: aurtur / https://github.com/Lay3rLabs/EN0VA/pull/31/commits/d205e9c65f91fb5b0b5bca672d8d28d6c7f672f9#diff-e3d8246ec3421fa3a204fe7a8f0586acfad4888ae82f5b8c6d130cb907705c80R75-R78
+
 WAVS_SERVICE_MANAGER_ADDRESS=`task config:service-manager-address`
 echo "ℹ️ Using WAVS Service Manager address: ${WAVS_SERVICE_MANAGER_ADDRESS}"
 
@@ -154,7 +159,7 @@ echo "✅ All components uploaded successfully"
 rm -f $STATUS_FILE
 
 echo "Waiting for 5 seconds for registry to update..."
-sleep 5
+sleep 7
 
 # Create service with multiple workflows
 echo "Creating service with multiple component workflows..."

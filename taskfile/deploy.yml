@@ -90,9 +90,18 @@ tasks:
       - |
         echo "Deploying single operator with POA..."
 
-        PRIVATE_KEY=`task config:funded-key` OPERATOR_NUM=1 OPERATOR_WEIGHT=10 task operator:whitelist
+        # Register operator with initial weight using owner operation
+        PRIVATE_KEY=`task config:funded-key` OPERATOR_NUM=1 OPERATOR_WEIGHT=100 task operator:register
 
-        OPERATOR_NUM=1 task operator:register
+        # Update signing key for the operator
+        OPERATOR_NUM=1 task operator:update-signing-key
+
+        # Verify the registration
         OPERATOR_NUM=1 task operator:verify
+
+        if [ "$(task get-deploy-status)" = "LOCAL" ]; then
+          echo "Mining 1 block on local network..."
+          cast rpc anvil_mine --rpc-url $(task get-rpc) 2&> /dev/null
+        fi
 
         echo "✅ Single operator with POA deployed successfully"

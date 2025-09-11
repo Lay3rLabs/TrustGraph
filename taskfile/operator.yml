@@ -28,8 +28,8 @@ vars:
     WAVS_SIGNING_KEY=$(cast wallet address --mnemonic "$WAVS_SUBMISSION_MNEMONIC" --mnemonic-index 1)
 
 tasks:
-  whitelist:
-    desc: "Whitelist an operator with WAVS Service Manager"
+  register:
+    desc: "Register an operator with WAVS Service Manager"
     cmds:
       - |
         {{.VALIDATE_INPUTS}}
@@ -43,8 +43,8 @@ tasks:
           cast rpc anvil_setBalance ${OPERATOR_ADDRESS} $(cast to-hex 100000000000000000) --rpc-url {{.RPC_URL}}
         fi
 
-        echo "📝 Whitelisting operator in WAVS Service Manager..."
-        cast send {{.WAVS_SERVICE_MANAGER_ADDRESS}} "whitelistOperator(address,uint256)" ${OPERATOR_ADDRESS} {{.OPERATOR_WEIGHT}} \
+        echo "📝 Registering operator in WAVS Service Manager..."
+        cast send {{.WAVS_SERVICE_MANAGER_ADDRESS}} "registerOperator(address,uint256)" ${OPERATOR_ADDRESS} {{.OPERATOR_WEIGHT}} \
           --private-key ${PRIVATE_KEY} \
           --rpc-url {{.RPC_URL}}
 
@@ -52,24 +52,24 @@ tasks:
         cast call {{.WAVS_SERVICE_MANAGER_ADDRESS}} "getOperatorWeight(address)" ${OPERATOR_ADDRESS} \
           --rpc-url {{.RPC_URL}}
 
-        echo "✅ Whitelisting complete!"
+        echo "✅ Registration complete!"
 
-  register:
-    desc: "Register an operator with WAVS Service Manager"
+  update-signing-key:
+    desc: "Update operator's signing key with WAVS Service Manager"
     cmds:
       - |
         {{.VALIDATE_INPUTS}}
         {{.LOAD_ENV_AND_KEYS}}
 
         echo "🔑 Operator Address: ${OPERATOR_ADDRESS}"
-        echo "🔑 Signing Key: ${WAVS_SIGNING_KEY}"
+        echo "🔑 New Signing Key: ${WAVS_SIGNING_KEY}"
 
-        echo "🔐 Setting signing key..."
-        cast send {{.WAVS_SERVICE_MANAGER_ADDRESS}} "setSigningKey(address)" ${WAVS_SIGNING_KEY} \
+        echo "🔐 Updating signing key..."
+        cast send {{.WAVS_SERVICE_MANAGER_ADDRESS}} "updateOperatorSigningKey(address)" ${WAVS_SIGNING_KEY} \
           --private-key ${OPERATOR_KEY} \
           --rpc-url {{.RPC_URL}}
 
-        echo "✅ Registration complete!"
+        echo "✅ Signing key update complete!"
 
   verify:
     desc: "Verify operator registration status"
@@ -84,7 +84,7 @@ tasks:
         echo "Operator Address: ${OPERATOR_ADDRESS}"
 
         echo -n "Operator Signing Key: "
-        cast call {{.WAVS_SERVICE_MANAGER_ADDRESS}} "getLatestSigningKeyForOperator(address)" ${OPERATOR_ADDRESS} \
+        cast call {{.WAVS_SERVICE_MANAGER_ADDRESS}} "getLatestOperatorSigningKey(address)" ${OPERATOR_ADDRESS} \
           --rpc-url {{.RPC_URL}}
 
         echo -n "Signing Key -> Operator: "

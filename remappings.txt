@@ -8,6 +8,7 @@
 @lay3rlabs/conditional-tokens-market-makers=node_modules/@lay3rlabs/conditional-tokens-market-makers/contracts
 forge-std=node_modules/forge-std/src
 @wavs=node_modules/@wavs/solidity/contracts
+@lay3rlabs/poa-middleware=node_modules/@lay3rlabs/poa-middleware/contracts
 contracts/=src/contracts
 common/=src/common
 interfaces/=src/interfaces
