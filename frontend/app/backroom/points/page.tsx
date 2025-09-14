@@ -400,49 +400,63 @@ export default function PointsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col-reverse md:flex-row justify-center items-center gap-12 my-8 md:gap-42 md:my-20">
-        <div className="flex flex-col items-center gap-4">
-          <div className="relative flex flex-row justify-center items-center">
-            {activePieLevel !== rootPieLevel && (
-              <button
-                onClick={() =>
-                  setActivePieLevel(activePieLevel.parent || rootPieLevel)
-                }
-                className={clsx(
-                  'absolute -left-[1.75rem] text-sm text-gray-400 hover:text-gray-200 cursor-pointer'
-                )}
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-            )}
-
-            <h1 className="text-base">{activePieLevel.title}</h1>
-          </div>
-          <div className="flex items-center justify-center gap-4">
-            <div className="w-56 h-56">
-              <Pie data={pieChartData} options={pieChartOptions} />
-            </div>
-          </div>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="space-y-2 border border-gray-700 bg-card-foreground/70 p-6 rounded-sm hover:bg-card-foreground/75 transition-colors">
+        <div className="terminal-command text-lg">POINTS</div>
+        <div className="system-message">
+          ⛤ Unlock incentives by contributing to the collective ⛤
         </div>
-
-        <div className="text-center space-y-3">
-          <h1 className="text-lg">YOUR POINTS</h1>
-          <div className="terminal-bright text-8xl font-bold">
-            {cumulativePoints.length > 0
-              ? cumulativePoints[
-                  cumulativePoints.length - 1
-                ].points.toLocaleString()
-              : 0}
-          </div>
-          {/* <div className="text-lg terminal-dim">
-            RANK #{rank} / {numRanks}
-          </div> */}
+        <div className="terminal-text text-sm">
+          Track your contributions and influence within the EN0VA collective intelligence network.
         </div>
       </div>
 
-      <div className="flex flex-col items-stretch p-4 max-w-3xl mx-auto">
-        {/* <div className="flex flex-col items-center gap-4">
+      <div className="flex flex-col lg:flex-row gap-y-4 gap-x-8 items-stretch">
+        {/* Main content */}
+        <div className="space-y-6 grow">
+          <div className="flex flex-col-reverse md:flex-row justify-center items-center gap-12 my-4 md:gap-42 md:my-10">
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative flex flex-row justify-center items-center">
+                {activePieLevel !== rootPieLevel && (
+                  <button
+                    onClick={() =>
+                      setActivePieLevel(activePieLevel.parent || rootPieLevel)
+                    }
+                    className={clsx(
+                      'absolute -left-[1.75rem] text-sm text-gray-400 hover:text-gray-200 cursor-pointer'
+                    )}
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                )}
+
+                <h1 className="text-base">{activePieLevel.title}</h1>
+              </div>
+              <div className="flex items-center justify-center gap-4">
+                <div className="w-56 h-56">
+                  <Pie data={pieChartData} options={pieChartOptions} />
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center space-y-3">
+              <h1 className="text-lg">YOUR POINTS</h1>
+              <div className="terminal-bright text-8xl font-bold">
+                {cumulativePoints.length > 0
+                  ? cumulativePoints[
+                      cumulativePoints.length - 1
+                    ].points.toLocaleString()
+                  : 0}
+              </div>
+              {/* <div className="text-lg terminal-dim">
+            RANK #{rank} / {numRanks}
+          </div> */}
+            </div>
+          </div>
+
+          <div className="flex flex-col items-stretch p-4 max-w-5xl mx-auto">
+            {/* <div className="flex flex-col items-center gap-4">
           <h1 className="text-xl">Points Breakdown</h1>
           <div className="w-156 h-96">
             <Line
@@ -452,67 +466,69 @@ export default function PointsPage() {
           </div>
         </div> */}
 
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-bold text-white">RECENT ACTIVITIES</h2>
-          <select
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-            className="bg-gray-900/30 text-white font-mono text-xs px-3 py-2 focus:border-blue-400 focus:outline-none cursor-pointer"
-          >
-            <option value="ALL">All</option>
-            {types.map((type) => (
-              <option key={type} value={type}>
-                {type.toUpperCase()}
-              </option>
-            ))}
-          </select>
-        </div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold text-white">
+                RECENT ACTIVITIES
+              </h2>
+              <select
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
+                className="bg-gray-900/30 text-white font-mono text-xs px-3 py-2 focus:border-blue-400 focus:outline-none cursor-pointer"
+              >
+                <option value="ALL">All</option>
+                {types.map((type) => (
+                  <option key={type} value={type}>
+                    {type.toUpperCase()}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        <div className="space-y-2">
-          {activities
-            .filter(
-              (activity) =>
-                selectedType === 'ALL' || activity.type === selectedType
-            )
-            .map((activity) => {
-              const Icon = ActivityTypeIcon[activity.type]
-              return (
-                <div
-                  key={activity.id}
-                  className="flex items-center justify-between px-4 py-3 rounded-sm bg-gray-900/10 hover:bg-gray-900/20 transition-colors"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        {Icon && <Icon className="w-4 h-4" />}
-                        <div className="text-white font-medium text-sm">
-                          {activity.type.toUpperCase()}
+            <div className="space-y-2">
+              {activities
+                .filter(
+                  (activity) =>
+                    selectedType === 'ALL' || activity.type === selectedType
+                )
+                .map((activity) => {
+                  const Icon = ActivityTypeIcon[activity.type]
+                  return (
+                    <div
+                      key={activity.id}
+                      className="flex items-center justify-between px-4 py-3 rounded-sm bg-gray-900/10 hover:bg-gray-900/20 transition-colors"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            {Icon && <Icon className="w-4 h-4" />}
+                            <div className="text-white font-medium text-sm">
+                              {activity.type.toUpperCase()}
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-400 mt-1">
+                            {activity.summary}
+                          </div>
+                          {activity.timestamp && (
+                            <div className="text-xs text-gray-400 mt-1">
+                              {formatTimeAgo(activity.timestamp)}
+                            </div>
+                          )}
                         </div>
                       </div>
-                      <div className="text-xs text-gray-400 mt-1">
-                        {activity.summary}
-                      </div>
-                      {activity.timestamp && (
-                        <div className="text-xs text-gray-400 mt-1">
-                          {formatTimeAgo(activity.timestamp)}
+                      <div className="text-right">
+                        <div className="text-green-400 font-bold">
+                          +{activity.points}
                         </div>
-                      )}
+                        <div className="text-xs text-gray-500">points</div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-green-400 font-bold">
-                      +{activity.points}
-                    </div>
-                    <div className="text-xs text-gray-500">points</div>
-                  </div>
-                </div>
-              )
-            })}
-        </div>
-      </div>
+                  )
+                })}
+            </div>
+          </div>
 
-      {/* Points Multipliers */}
-      {/* <div className="border border-yellow-600 p-6 bg-yellow-900/10 backdrop-blur-sm">
+          {/* Points Multipliers */}
+          {/* <div className="border border-yellow-600 p-6 bg-yellow-900/10 backdrop-blur-sm">
         <h3 className="text-lg font-bold text-yellow-400 mb-4">
           ◈ ACTIVE MULTIPLIERS
         </h3>
@@ -549,8 +565,8 @@ export default function PointsPage() {
         </div>
       </div> */}
 
-      {/* How to Earn Points */}
-      {/* <div className="border border-blue-600 p-6 bg-blue-900/10 backdrop-blur-sm">
+          {/* How to Earn Points */}
+          {/* <div className="border border-blue-600 p-6 bg-blue-900/10 backdrop-blur-sm">
         <h3 className="text-lg font-bold text-blue-400 mb-4">
           ◇ HOW TO EARN POINTS
         </h3>
@@ -618,6 +634,84 @@ export default function PointsPage() {
           </div>
         </div>
       </div> */}
+        </div>
+
+        {/* Points Earning Guide Card */}
+        <div className="border border-gray-700 bg-card-foreground/70 p-6 rounded-sm sticky top-4 max-w-full lg:max-w-sm grow">
+          <div className="space-y-4">
+            <div className="terminal-command text-base text-center">
+              EARN MORE POINTS
+            </div>
+
+            <div className="space-y-3">
+              <div className="terminal-text text-sm">
+                <div className="system-message mb-2">
+                  ◉ HYPERSTITION MARKETS
+                </div>
+                <div className="terminal-dim text-xs pl-3">
+                  • Buy positions in active markets
+                  <br />
+                  • Redeem winning predictions
+                  <br />• Participate in collective manifestation
+                </div>
+              </div>
+
+              <div className="terminal-text text-sm">
+                <div className="system-message mb-2">◆ ATTESTATIONS</div>
+                <div className="terminal-dim text-xs pl-3">
+                  • Verify truth statements
+                  <br />
+                  • Validate data integrity
+                  <br />• Create trust networks
+                </div>
+              </div>
+
+              <div className="terminal-text text-sm">
+                <div className="system-message mb-2">◢◤ GOVERNANCE</div>
+                <div className="terminal-dim text-xs pl-3">
+                  • Vote on collective decisions
+                  <br />
+                  • Propose network changes
+                  <br />• Shape the future direction
+                </div>
+              </div>
+
+              <div className="terminal-text text-sm">
+                <div className="system-message mb-2">
+                  ▲ SOCIAL AMPLIFICATION
+                </div>
+                <div className="terminal-dim text-xs pl-3">
+                  • Share EN0VA content
+                  <br />
+                  • Refer new members
+                  <br />• Boost network effects
+                </div>
+              </div>
+
+              <div className="terminal-text text-sm">
+                <div className="system-message mb-2">∞ CONSENSUS BUILDING</div>
+                <div className="terminal-dim text-xs pl-3">
+                  • Contribute to collective intelligence
+                  <br />
+                  • Maintain network consensus
+                  <br />• Build trust relationships
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-700 pt-4">
+              <div className="text-center">
+                <div className="terminal-bright text-lg mb-1">
+                  MAXIMIZE CONTRIBUTION
+                </div>
+                <div className="terminal-dim text-xs">
+                  Every action amplifies the collective
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
