@@ -1,31 +1,29 @@
 'use client'
 
+import { useQuery } from '@tanstack/react-query'
+import {
+  CategoryScale,
+  ChartData,
+  Chart as ChartJS,
+  ChartOptions,
+  Legend,
+  LineElement,
+  LinearScale,
+  PointElement,
+  TimeScale,
+  Tooltip,
+} from 'chart.js'
+import { DollarSign, Eye, FlaskConical, Hand } from 'lucide-react'
 import type React from 'react'
 import { ComponentType, useMemo, useState } from 'react'
-import { useAccount } from 'wagmi'
-import clsx from 'clsx'
-import { Pie } from 'react-chartjs-2'
-import {
-  Chart as ChartJS,
-  ArcElement,
-  Tooltip,
-  Legend,
-  ChartOptions,
-  LineElement,
-  PointElement,
-  LinearScale,
-  CategoryScale,
-  TimeScale,
-  ChartData,
-} from 'chart.js'
-import { ChevronLeft, Eye, Hand, FlaskConical } from 'lucide-react'
-import 'chartjs-adapter-luxon'
-import { useQuery } from '@tanstack/react-query'
 import { hexToNumber } from 'viem'
+import { useAccount } from 'wagmi'
+
 import { wavsServiceId } from '@/lib/config'
 
+import 'chartjs-adapter-luxon'
+
 ChartJS.register(
-  ArcElement,
   Tooltip,
   Legend,
   LineElement,
@@ -35,111 +33,34 @@ ChartJS.register(
   TimeScale
 )
 
-type PieLevel = {
-  title: string
-  values: {
-    title: string
-    value: number
-    color: string
-    subPie?: Omit<PieLevel, 'title'> & { title?: string }
-  }[]
-  /**
-   * Set when entering a sub-pie. Used to reset to parent pie when leaving.
-   */
-  parent?: PieLevel
+const ActivityLabel: Record<string, string> = {
+  joined: 'Joined',
+  attestation: 'Attested',
+  prediction_market_trade: 'Hyperstition',
+  prediction_market_redeem: 'Hyperstition Redemption',
 }
 
-const ActivityTypeIcon: Record<
-  string,
-  ComponentType<{ className?: string }>
-> = {
-  vouch: Hand,
-  hyperstition: Eye,
+const ActivityIcon: Record<string, ComponentType<{ className?: string }>> = {
   joined: FlaskConical,
+  attestation: Hand,
+  prediction_market_trade: Eye,
+  prediction_market_redeem: DollarSign,
 }
 
 const ActivitySummary: Record<string, string> = {
-  vouch: 'Vouched for a contributor',
-  hyperstition: 'Bought YES position in a Hyperstition market',
-  joined: 'Joined the Experiment',
+  joined: 'Joined the experiment',
+  attested: 'Attested to something',
+  prediction_market_trade: 'Participated in a collective Hyperstition',
+  prediction_market_redeem: 'Redeemed successful Hyperstition',
 }
 
 type Activity = {
   id: string
   type: string
-  summary: string
   timestamp?: Date
   points: number
+  metadata?: Record<string, any>
 }
-
-const rank = 1000
-const numRanks = 1000
-
-// const activities: Activity[] = [
-//   {
-//     id: '1',
-//     type: ActivityType.Joined,
-//     summary: 'Joined the Experiment',
-//     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-//     points: 1,
-//   },
-//   // {
-//   //   id: '2',
-//   //   type: ActivityType.Vouch,
-//   //   summary: 'Vouched for a contributor',
-//   //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 18),
-//   //   points: 50,
-//   // },
-//   // {
-//   //   id: '3',
-//   //   type: ActivityType.Hyperstition,
-//   //   summary: 'Bought YES position in a Hyperstition market',
-//   //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 17),
-//   //   points: 50,
-//   // },
-//   // {
-//   //   id: '4',
-//   //   type: ActivityType.Vouch,
-//   //   summary: 'Vouched for a contributor',
-//   //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12),
-//   //   points: 30,
-//   // },
-//   // {
-//   //   id: '5',
-//   //   type: ActivityType.Vouch,
-//   //   summary: 'Vouched for a contributor',
-//   //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8),
-//   //   points: 10,
-//   // },
-//   // {
-//   //   id: '6',
-//   //   type: ActivityType.Hyperstition,
-//   //   summary: 'Bought NO position in a Hyperstition market',
-//   //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6),
-//   //   points: 30,
-//   // },
-//   // {
-//   //   id: '7',
-//   //   type: ActivityType.Vouch,
-//   //   summary: 'Vouched for a contributor',
-//   //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-//   //   points: 10,
-//   // },
-//   // {
-//   //   id: '8',
-//   //   type: ActivityType.Hyperstition,
-//   //   summary: 'Redeemed YES position in a Hyperstition market',
-//   //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-//   //   points: 10,
-//   // },
-//   // {
-//   //   id: '9',
-//   //   type: ActivityType.Hyperstition,
-//   //   summary: 'Redeemed NO position in a Hyperstition market',
-//   //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-//   //   points: 10,
-//   // },
-// ]
 
 export default function PointsPage() {
   const { address, isConnected } = useAccount()
@@ -178,11 +99,11 @@ export default function PointsPage() {
           (event, index): Activity => ({
             id: index.toString(),
             type: event.type,
-            summary: ActivitySummary[event.type] || '',
             timestamp: event.timestamp ? new Date(event.timestamp) : undefined,
             points: event.value.startsWith('0x')
               ? hexToNumber(event.value as `0x${string}`)
               : Number(event.value),
+            metadata: event.metadata,
           })
         )
       }
@@ -193,7 +114,7 @@ export default function PointsPage() {
     refetchInterval: 30_000,
   })
 
-  const { types, cumulativePoints, rootPieLevel } = useMemo(() => {
+  const { types, cumulativePoints } = useMemo(() => {
     const types = [...new Set(activities.map((activity) => activity.type))]
 
     const cumulativePoints = [...activities]
@@ -232,39 +153,7 @@ export default function PointsPage() {
       })
     }
 
-    const totalPoints =
-      cumulativePoints.length > 0
-        ? cumulativePoints[cumulativePoints.length - 1].points
-        : 0
-    const otherPoints = 999
-
-    const rootPieLevel: PieLevel = {
-      title: 'All Phases',
-      values: [
-        {
-          title: 'Phase 1',
-          value: 1,
-          color: 'rgb(36, 36, 36)',
-          subPie: {
-            values: [
-              { title: 'Your points', value: totalPoints, color: '#dd70d4' },
-              {
-                title: "Others' points",
-                value: otherPoints,
-                color: 'rgb(24, 24, 24)',
-              },
-            ],
-          },
-        },
-        {
-          title: 'Remaining phases',
-          value: 99,
-          color: 'rgb(24, 24, 24)',
-        },
-      ],
-    }
-
-    return { types, cumulativePoints, rootPieLevel }
+    return { types, cumulativePoints }
   }, [activities])
 
   if (!isConnected) {
@@ -285,78 +174,6 @@ export default function PointsPage() {
         </div>
       </div>
     )
-  }
-
-  const getSelectedPieLevel = (
-    currentLevel: PieLevel,
-    index: number
-  ): PieLevel => {
-    const pieLevel = currentLevel.values[index].subPie as PieLevel | undefined
-    if (!pieLevel) {
-      return currentLevel
-    }
-
-    pieLevel.title = currentLevel.values[index].title
-    pieLevel.parent = currentLevel
-
-    return pieLevel
-  }
-
-  const [activePieLevel, setActivePieLevel] = useState(() =>
-    getSelectedPieLevel(rootPieLevel, 0)
-  )
-
-  const pieChartData = {
-    labels: activePieLevel.values.map((entry) => entry.title),
-    datasets: [
-      {
-        data: activePieLevel.values.map((entry) => entry.value),
-        backgroundColor: activePieLevel.values.map((entry) => entry.color),
-        borderWidth: 0,
-      },
-    ],
-  }
-
-  const pieChartOptions: ChartOptions<'pie'> = {
-    // cutout: 32,
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-      title: {
-        display: false,
-      },
-      tooltip: {
-        callbacks: {
-          label: (context) => {
-            const value = context.parsed
-            return activePieLevel === rootPieLevel
-              ? `${value.toLocaleString()}%`
-              : `${value.toLocaleString()} points`
-          },
-        },
-      },
-    },
-    animation: {
-      animateRotate: true,
-    },
-    onClick: (_, elements) => {
-      if (elements.length > 0) {
-        setActivePieLevel(
-          getSelectedPieLevel(activePieLevel, elements[0].index)
-        )
-      }
-    },
-    onHover: (_, elements, chart) => {
-      if (elements.length > 0) {
-        const hoveredData = activePieLevel.values[elements[0].index]
-        chart.canvas.style.cursor = hoveredData.subPie ? 'pointer' : 'default'
-      } else {
-        chart.canvas.style.cursor = 'default'
-      }
-    },
   }
 
   const pointsBreakdownChartData: ChartData<'line'> = {
@@ -402,44 +219,21 @@ export default function PointsPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="space-y-2 border border-gray-700 bg-card-foreground/70 p-6 rounded-sm hover:bg-card-foreground/75 transition-colors">
+      {/* <div className="space-y-2 border border-gray-700 bg-card-foreground/70 p-6 rounded-sm hover:bg-card-foreground/75 transition-colors">
         <div className="terminal-command text-lg">POINTS</div>
         <div className="system-message">
           ⛤ Unlock incentives by contributing to the collective ⛤
         </div>
         <div className="terminal-text text-sm">
-          Track your contributions and influence within the EN0VA collective intelligence network.
+          Track your contributions and influence within the EN0VA collective
+          intelligence network.
         </div>
-      </div>
+      </div> */}
 
       <div className="flex flex-col lg:flex-row gap-y-4 gap-x-8 items-stretch">
         {/* Main content */}
         <div className="space-y-6 grow">
-          <div className="flex flex-col-reverse md:flex-row justify-center items-center gap-12 my-4 md:gap-42 md:my-10">
-            <div className="flex flex-col items-center gap-4">
-              <div className="relative flex flex-row justify-center items-center">
-                {activePieLevel !== rootPieLevel && (
-                  <button
-                    onClick={() =>
-                      setActivePieLevel(activePieLevel.parent || rootPieLevel)
-                    }
-                    className={clsx(
-                      'absolute -left-[1.75rem] text-sm text-gray-400 hover:text-gray-200 cursor-pointer'
-                    )}
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                )}
-
-                <h1 className="text-base">{activePieLevel.title}</h1>
-              </div>
-              <div className="flex items-center justify-center gap-4">
-                <div className="w-56 h-56">
-                  <Pie data={pieChartData} options={pieChartOptions} />
-                </div>
-              </div>
-            </div>
-
+          <div className="flex flex-col justify-center items-center my-4 md:my-18">
             <div className="text-center space-y-3">
               <h1 className="text-lg">YOUR POINTS</h1>
               <div className="terminal-bright text-8xl font-bold">
@@ -449,24 +243,21 @@ export default function PointsPage() {
                     ].points.toLocaleString()
                   : 0}
               </div>
-              {/* <div className="text-lg terminal-dim">
-            RANK #{rank} / {numRanks}
-          </div> */}
             </div>
           </div>
 
-          <div className="flex flex-col items-stretch p-4 max-w-5xl mx-auto">
+          <div className="flex flex-col items-stretch p-4 max-w-7xl gap-6 mx-auto">
             {/* <div className="flex flex-col items-center gap-4">
-          <h1 className="text-xl">Points Breakdown</h1>
-          <div className="w-156 h-96">
-            <Line
-              data={pointsBreakdownChartData}
-              options={pointsBreakdownChartOptions}
-            />
-          </div>
-        </div> */}
+              <h1 className="text-xl">Points Breakdown</h1>
+              <div className="w-156 h-96">
+                <Line
+                  data={pointsBreakdownChartData}
+                  options={pointsBreakdownChartOptions}
+                />
+              </div>
+            </div> */}
 
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-white">
                 RECENT ACTIVITIES
               </h2>
@@ -491,7 +282,10 @@ export default function PointsPage() {
                     selectedType === 'ALL' || activity.type === selectedType
                 )
                 .map((activity) => {
-                  const Icon = ActivityTypeIcon[activity.type]
+                  const Icon = ActivityIcon[activity.type]
+                  const label = ActivityLabel[activity.type] || activity.type
+                  const summary =
+                    activity.metadata?.summary || ActivitySummary[activity.type]
                   return (
                     <div
                       key={activity.id}
@@ -502,12 +296,14 @@ export default function PointsPage() {
                           <div className="flex items-center space-x-2">
                             {Icon && <Icon className="w-4 h-4" />}
                             <div className="text-white font-medium text-sm">
-                              {activity.type.toUpperCase()}
+                              {label.toUpperCase()}
                             </div>
                           </div>
-                          <div className="text-xs text-gray-400 mt-1">
-                            {activity.summary}
-                          </div>
+                          {summary && (
+                            <div className="text-xs text-gray-400 mt-1">
+                              {summary}
+                            </div>
+                          )}
                           {activity.timestamp && (
                             <div className="text-xs text-gray-400 mt-1">
                               {formatTimeAgo(activity.timestamp)}
@@ -525,188 +321,85 @@ export default function PointsPage() {
                   )
                 })}
             </div>
-          </div>
 
-          {/* Points Multipliers */}
-          {/* <div className="border border-yellow-600 p-6 bg-yellow-900/10 backdrop-blur-sm">
-        <h3 className="text-lg font-bold text-yellow-400 mb-4">
-          ◈ ACTIVE MULTIPLIERS
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="flex items-center justify-between p-3 border border-yellow-700 bg-yellow-900/20">
-            <div>
-              <div className="text-white font-medium text-sm">
-                Early Adopter
-              </div>
-              <div className="text-xs text-yellow-300">First 100 nodes</div>
-            </div>
-            <div className="text-yellow-400 font-bold">2.5x</div>
-          </div>
-
-          <div className="flex items-center justify-between p-3 border border-yellow-700 bg-yellow-900/20">
-            <div>
-              <div className="text-white font-medium text-sm">
-                Consistency Bonus
-              </div>
-              <div className="text-xs text-yellow-300">7+ day streak</div>
-            </div>
-            <div className="text-yellow-400 font-bold">1.8x</div>
-          </div>
-
-          <div className="flex items-center justify-between p-3 border border-yellow-700 bg-yellow-900/20">
-            <div>
-              <div className="text-white font-medium text-sm">
-                Network Effect
-              </div>
-              <div className="text-xs text-yellow-300">High consensus rate</div>
-            </div>
-            <div className="text-yellow-400 font-bold">1.3x</div>
-          </div>
-        </div>
-      </div> */}
-
-          {/* How to Earn Points */}
-          {/* <div className="border border-blue-600 p-6 bg-blue-900/10 backdrop-blur-sm">
-        <h3 className="text-lg font-bold text-blue-400 mb-4">
-          ◇ HOW TO EARN POINTS
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          <div className="space-y-3">
-            <div className="flex items-start space-x-3">
-              <span className="text-blue-400 mt-1">◆</span>
-              <div>
-                <div className="text-white font-medium">
-                  Create Attestations
-                </div>
-                <div className="text-gray-400">
-                  Verify truth statements and data integrity
-                </div>
-                <div className="text-blue-300 text-xs">
-                  +50-200 points per attestation
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <span className="text-purple-400 mt-1">◢◤</span>
-              <div>
-                <div className="text-white font-medium">
-                  Participate in Governance
-                </div>
-                <div className="text-gray-400">
-                  Vote on collective decisions
-                </div>
-                <div className="text-blue-300 text-xs">
-                  +25-100 points per vote
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-start space-x-3">
-              <span className="text-yellow-400 mt-1">▲▼</span>
-              <div>
-                <div className="text-white font-medium">
-                  Hyperstition Markets
-                </div>
-                <div className="text-gray-400">
-                  Create and trade prediction markets
-                </div>
-                <div className="text-blue-300 text-xs">
-                  +75-300 points per market
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <span className="text-cyan-400 mt-1">∞</span>
-              <div>
-                <div className="text-white font-medium">Network Consensus</div>
-                <div className="text-gray-400">
-                  Contribute to collective intelligence
-                </div>
-                <div className="text-blue-300 text-xs">
-                  +10-50 points per contribution
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div> */}
-        </div>
-
-        {/* Points Earning Guide Card */}
-        <div className="border border-gray-700 bg-card-foreground/70 p-6 rounded-sm sticky top-4 max-w-full lg:max-w-sm grow">
-          <div className="space-y-4">
-            <div className="terminal-command text-base text-center">
+            {/* Points Earning Guide Card */}
+            <h2 className="text-lg font-bold text-white mt-8">
               EARN MORE POINTS
-            </div>
+            </h2>
+            <div className="border border-gray-700 bg-card-foreground/40 p-6 rounded-sm sticky top-4 max-w-full grow">
+              <div className="space-y-4">
+                {/* <div className="terminal-command text-base text-center">
+                  EARN MORE POINTS
+                </div> */}
 
-            <div className="space-y-3">
-              <div className="terminal-text text-sm">
-                <div className="system-message mb-2">
-                  ◉ HYPERSTITION MARKETS
-                </div>
-                <div className="terminal-dim text-xs pl-3">
-                  • Buy positions in active markets
-                  <br />
-                  • Redeem winning predictions
-                  <br />• Participate in collective manifestation
-                </div>
-              </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-10">
+                  <div className="terminal-text text-sm">
+                    <div className="system-message mb-2">
+                      ◉ HYPERSTITION MARKETS
+                    </div>
+                    <div className="terminal-dim text-xs pl-3">
+                      • Buy positions in active markets
+                      <br />
+                      • Redeem winning predictions
+                      <br />• Participate in collective manifestation
+                    </div>
+                  </div>
 
-              <div className="terminal-text text-sm">
-                <div className="system-message mb-2">◆ ATTESTATIONS</div>
-                <div className="terminal-dim text-xs pl-3">
-                  • Verify truth statements
-                  <br />
-                  • Validate data integrity
-                  <br />• Create trust networks
-                </div>
-              </div>
+                  <div className="terminal-text text-sm">
+                    <div className="system-message mb-2">◆ ATTESTATIONS</div>
+                    <div className="terminal-dim text-xs pl-3">
+                      • Verify truth statements
+                      <br />
+                      • Validate data integrity
+                      <br />• Create trust networks
+                    </div>
+                  </div>
 
-              <div className="terminal-text text-sm">
-                <div className="system-message mb-2">◢◤ GOVERNANCE</div>
-                <div className="terminal-dim text-xs pl-3">
-                  • Vote on collective decisions
-                  <br />
-                  • Propose network changes
-                  <br />• Shape the future direction
-                </div>
-              </div>
+                  <div className="terminal-text text-sm">
+                    <div className="system-message mb-2">◢◤ GOVERNANCE</div>
+                    <div className="terminal-dim text-xs pl-3">
+                      • Vote on collective decisions
+                      <br />
+                      • Propose network changes
+                      <br />• Shape the future direction
+                    </div>
+                  </div>
 
-              <div className="terminal-text text-sm">
-                <div className="system-message mb-2">
-                  ▲ SOCIAL AMPLIFICATION
-                </div>
-                <div className="terminal-dim text-xs pl-3">
-                  • Share EN0VA content
-                  <br />
-                  • Refer new members
-                  <br />• Boost network effects
-                </div>
-              </div>
+                  <div className="terminal-text text-sm">
+                    <div className="system-message mb-2">
+                      ▲ SOCIAL AMPLIFICATION
+                    </div>
+                    <div className="terminal-dim text-xs pl-3">
+                      • Share EN0VA content
+                      <br />
+                      • Refer new members
+                      <br />• Boost network effects
+                    </div>
+                  </div>
 
-              <div className="terminal-text text-sm">
-                <div className="system-message mb-2">∞ CONSENSUS BUILDING</div>
-                <div className="terminal-dim text-xs pl-3">
-                  • Contribute to collective intelligence
-                  <br />
-                  • Maintain network consensus
-                  <br />• Build trust relationships
+                  <div className="terminal-text text-sm">
+                    <div className="system-message mb-2">
+                      ∞ CONSENSUS BUILDING
+                    </div>
+                    <div className="terminal-dim text-xs pl-3">
+                      • Contribute to collective intelligence
+                      <br />
+                      • Maintain network consensus
+                      <br />• Build trust relationships
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="border-t border-gray-700 pt-4">
-              <div className="text-center">
-                <div className="terminal-bright text-lg mb-1">
-                  MAXIMIZE CONTRIBUTION
-                </div>
-                <div className="terminal-dim text-xs">
-                  Every action amplifies the collective
-                </div>
+                {/* <div className="border-t border-gray-700 pt-4">
+                  <div className="text-center">
+                    <div className="terminal-bright text-lg mb-1">
+                      MAXIMIZE CONTRIBUTION
+                    </div>
+                    <div className="terminal-dim text-xs">
+                      Every action amplifies the collective
+                    </div>
+                  </div>
+                </div> */}
               </div>
             </div>
           </div>
