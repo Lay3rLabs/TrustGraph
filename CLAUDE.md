@@ -45,10 +45,11 @@ This is a WAVS (WASI AVS) project that provides Ethereum Attestation Service (EA
 ### Key Architectural Elements
 
 #### WASI Components (`components/`)
+
 Three main components that handle different aspects of the attestation workflow:
 - `eas-attest/`: Creates EAS attestations based on trigger events
 - `eas-compute/`: Computes voting power and updates based on attestation data
-- `rewards/`: Calculates and distributes rewards based on attestation activity
+- `merkler/`: Calculates a merkle tree based on attestation activity
 
 #### Smart Contracts (`src/contracts/`)
 - `WavsAttester.sol`: Main attestation request handler

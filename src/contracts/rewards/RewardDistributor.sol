@@ -5,27 +5,22 @@ pragma solidity ^0.8.19;
  Note: having stupid version issues with this contract's dependencies so it's disabled for now.
 */
 
-import {IWavsTrigger} from "interfaces/IWavsTrigger.sol";
 import {ITypes} from "interfaces/ITypes.sol";
+import {IMerkler} from "interfaces/IMerkler.sol";
 import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 import {UniversalRewardsDistributor} from "@morpho-org/universal-rewards-distributor/UniversalRewardsDistributor.sol";
 
-contract RewardDistributor is IWavsTrigger, IWavsServiceHandler, UniversalRewardsDistributor {
-    /// @inheritdoc IWavsTrigger
-    TriggerId public nextTriggerId;
-
-    /// @inheritdoc IWavsTrigger
-    mapping(TriggerId _triggerId => Trigger _trigger) public triggersById;
-    /// @notice See IWavsTrigger.triggerIdsByCreator
-    mapping(address _creator => TriggerId[] _triggerIds) internal _triggerIdsByCreator;
+contract RewardDistributor is IWavsServiceHandler, UniversalRewardsDistributor, IMerkler {
+    /// @notice The last trigger ID seen
+    uint64 public lastTriggerId;
 
     /// @notice Mapping of valid triggers
-    mapping(TriggerId _triggerId => bool _isValid) internal _validTriggers;
+    mapping(uint64 _triggerId => bool _isValid) internal _validTriggers;
     /// @notice Mapping of trigger data
-    mapping(TriggerId _triggerId => bytes _data) internal _datas;
+    mapping(uint64 _triggerId => bytes _data) internal _datas;
     /// @notice Mapping of trigger signatures
-    mapping(TriggerId _triggerId => SignatureData _signature) internal _signatures;
+    mapping(uint64 _triggerId => SignatureData _signature) internal _signatures;
 
     /// @notice Service manager instance
     IWavsServiceManager private _serviceManager;
@@ -43,61 +38,34 @@ contract RewardDistributor is IWavsTrigger, IWavsServiceHandler, UniversalReward
         _serviceManager = serviceManager;
     }
 
-    function addTrigger() external returns (TriggerId triggerId) {
-        // Get the next trigger id
-        nextTriggerId = TriggerId.wrap(TriggerId.unwrap(nextTriggerId) + 1);
-        TriggerId _triggerId = nextTriggerId;
-
-        // Create the trigger
-        Trigger memory _trigger = Trigger({creator: msg.sender, data: abi.encodePacked(_triggerId)});
-
-        // Update storages
-        triggersById[_triggerId] = _trigger;
-        _triggerIdsByCreator[msg.sender].push(_triggerId);
-
-        emit WavsRewardsTrigger(TriggerId.unwrap(_triggerId));
-
-        return _triggerId;
-    }
-
-    /// @inheritdoc IWavsTrigger
-    function getTrigger(TriggerId triggerId) external view override returns (TriggerInfo memory _triggerInfo) {
-        Trigger storage _trigger = triggersById[triggerId];
-        _triggerInfo = TriggerInfo({triggerId: triggerId, creator: _trigger.creator, data: _trigger.data});
-    }
-
-    /// @inheritdoc IWavsTrigger
-    function triggerIdsByCreator(address _creator) external view returns (TriggerId[] memory _triggerIds) {
-        _triggerIds = _triggerIdsByCreator[_creator];
-    }
-
     /// @inheritdoc IWavsServiceHandler
     function handleSignedEnvelope(Envelope calldata envelope, SignatureData calldata signatureData) external {
         _serviceManager.validate(envelope, signatureData);
 
-        DataWithId memory dataWithId = abi.decode(envelope.payload, (DataWithId));
+        MerklerAvsOutput memory avsOutput = abi.decode(envelope.payload, (MerklerAvsOutput));
 
-        _signatures[dataWithId.triggerId] = signatureData;
-        _datas[dataWithId.triggerId] = dataWithId.data;
-        _validTriggers[dataWithId.triggerId] = true;
+        _signatures[avsOutput.triggerId] = signatureData;
+        _datas[avsOutput.triggerId] = envelope.payload;
+        _validTriggers[avsOutput.triggerId] = true;
+        if (avsOutput.triggerId > lastTriggerId) {
+            lastTriggerId = avsOutput.triggerId;
+        }
 
         // Update distributor
 
-        ITypes.AvsOutput memory avsOutput = abi.decode(dataWithId.data, (ITypes.AvsOutput));
-
-        _setRoot(avsOutput.root, avsOutput.ipfsHashData);
-        ipfsHashCid = avsOutput.ipfsHash;
+        _setRoot(avsOutput.root, avsOutput.ipfsHash);
+        ipfsHashCid = avsOutput.ipfsHashCid;
     }
 
-    function isValidTriggerId(TriggerId _triggerId) external view returns (bool _isValid) {
+    function isValidTriggerId(uint64 _triggerId) external view returns (bool _isValid) {
         _isValid = _validTriggers[_triggerId];
     }
 
-    function getSignature(TriggerId _triggerId) external view returns (SignatureData memory _signature) {
+    function getSignature(uint64 _triggerId) external view returns (SignatureData memory _signature) {
         _signature = _signatures[_triggerId];
     }
 
-    function getData(TriggerId _triggerId) external view returns (bytes memory _data) {
+    function getData(uint64 _triggerId) external view returns (bytes memory _data) {
         _data = _datas[_triggerId];
     }
 

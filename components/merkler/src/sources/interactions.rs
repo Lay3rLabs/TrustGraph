@@ -8,7 +8,7 @@ use wavs_wasi_utils::evm::alloy_primitives::{Address, U256};
 
 use super::Source;
 
-/// Compute rewards from indexed interactions.
+/// Compute points from indexed interactions.
 pub struct InteractionsSource {
     /// Chain name for configuration.
     pub chain_name: String,
@@ -16,8 +16,8 @@ pub struct InteractionsSource {
     pub indexer_address: Address,
     /// Interaction type.
     pub interaction_type: String,
-    /// Rewards per interaction.
-    pub rewards_per_interaction: U256,
+    /// Points per interaction.
+    pub points_per_interaction: U256,
     /// Whether or not to count all interactions or just one-per-contract.
     pub one_per_contract: bool,
 }
@@ -27,7 +27,7 @@ impl InteractionsSource {
         chain_name: &str,
         indexer_address: &str,
         interaction_type: &str,
-        rewards_per_interaction: U256,
+        points_per_interaction: U256,
         one_per_contract: bool,
     ) -> Self {
         let indexer_addr = Address::from_str(indexer_address).unwrap();
@@ -36,7 +36,7 @@ impl InteractionsSource {
             indexer_address: indexer_addr,
             chain_name: chain_name.to_string(),
             interaction_type: interaction_type.to_string(),
-            rewards_per_interaction,
+            points_per_interaction,
             one_per_contract,
         }
     }
@@ -113,7 +113,7 @@ impl Source for InteractionsSource {
         Ok(result)
     }
 
-    async fn get_rewards(&self, account: &str) -> Result<U256> {
+    async fn get_value(&self, account: &str) -> Result<U256> {
         let address = Address::from_str(account)?;
         let indexer_querier = self.indexer_querier().await?;
         let mut interaction_count = indexer_querier
@@ -157,7 +157,7 @@ impl Source for InteractionsSource {
             interaction_count = contracts.len() as u64;
         }
 
-        Ok(self.rewards_per_interaction * U256::from(interaction_count))
+        Ok(self.points_per_interaction * U256::from(interaction_count))
     }
 
     async fn get_metadata(&self) -> Result<serde_json::Value> {
@@ -165,7 +165,7 @@ impl Source for InteractionsSource {
             "indexer_address": self.indexer_address.to_string(),
             "chain_name": self.chain_name,
             "interaction_type": self.interaction_type,
-            "rewards_per_interaction": self.rewards_per_interaction.to_string(),
+            "points_per_interaction": self.points_per_interaction.to_string(),
             "one_per_contract": self.one_per_contract,
         }))
     }

@@ -24,11 +24,10 @@ tasks:
 
         for makefile_path in $MAKEFILE_DIRS; do
             if grep -q "^${RECIPE}:" "$makefile_path" 2>/dev/null; then
-                if [ "{{.WASI_BUILD_DIR}}" != "" ] && [[ "$makefile_path" != *"{{.WASI_BUILD_DIR}}"* ]]; then
-                    continue
+                if [ "{{.WASI_BUILD_DIR}}" == "" ] || [[ "$makefile_path" == *"{{.WASI_BUILD_DIR}}"* ]]; then
+                    parent_dir=$(dirname "$makefile_path")
+                    make -s -C "$parent_dir" $RECIPE
                 fi
-                parent_dir=$(dirname "$makefile_path")
-                make -s -C "$parent_dir" $RECIPE
             else
                 echo "Recipe '$RECIPE' not found in $makefile_path"
             fi

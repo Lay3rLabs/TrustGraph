@@ -14,11 +14,11 @@ import {Operation} from "@gnosis-guild/zodiac-core/core/Operation.sol";
 // WAVS interfaces
 import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
-import {ITypes} from "interfaces/ITypes.sol";
 
 // Our contracts
 import {MerkleGovModule} from "../../src/contracts/zodiac/MerkleGovModule.sol";
 import {MerkleTreeHelper} from "../merkle-governance/MerkleTreeHelper.sol";
+import {IMerkler} from "interfaces/IMerkler.sol";
 
 contract MerkleGovModuleTest is Test {
     // Core contracts
@@ -132,23 +132,20 @@ contract MerkleGovModuleTest is Test {
 
     function _updateMerkleRootViaWAVS(bytes32 root, bytes32 ipfsHash) internal {
         // Create WAVS payload
-        ITypes.AvsOutput memory avsOutput =
-            ITypes.AvsOutput({root: root, ipfsHash: "ipfs://test", ipfsHashData: ipfsHash});
-
-        ITypes.DataWithId memory dataWithId =
-            ITypes.DataWithId({triggerId: ITypes.TriggerId.wrap(1), data: abi.encode(avsOutput)});
+        IMerkler.MerklerAvsOutput memory avsOutput =
+            IMerkler.MerklerAvsOutput({triggerId: 1, cronNanos: 0, root: root, ipfsHash: ipfsHash, ipfsHashCid: "ipfs://test" });
 
         IWavsServiceHandler.Envelope memory envelope = IWavsServiceHandler.Envelope({
             eventId: bytes20(uint160(0x1)),
             ordering: bytes12(uint96(0)),
-            payload: abi.encode(dataWithId)
+            payload: abi.encode(avsOutput)
         });
 
         IWavsServiceHandler.SignatureData memory signatureData;
 
         // Execute merkle root update
         vm.expectEmit(true, false, false, true);
-        emit MerkleRootUpdated(root, ipfsHash, avsOutput.ipfsHash);
+        emit MerkleRootUpdated(root, ipfsHash, avsOutput.ipfsHashCid);
         govModule.handleSignedEnvelope(envelope, signatureData);
     }
 

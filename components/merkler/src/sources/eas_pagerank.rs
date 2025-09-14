@@ -17,7 +17,7 @@ use wavs_wasi_utils::evm::{
 use super::Source;
 use std::sync::Mutex;
 
-/// EAS PageRank reward source that calculates rewards based on PageRank algorithm
+/// EAS PageRank points source that calculates points based on PageRank algorithm
 pub struct EasPageRankSource {
     /// EAS contract address
     pub eas_address: Address,
@@ -25,10 +25,10 @@ pub struct EasPageRankSource {
     pub indexer_address: Address,
     /// Chain name for configuration
     pub chain_name: String,
-    /// PageRank reward configuration
+    /// PageRank points configuration
     pub pagerank_config: PageRankRewardSource,
-    /// Cached rewards to avoid recalculation
-    cached_rewards: Mutex<Option<HashMap<Address, U256>>>,
+    /// Cached points to avoid recalculation
+    cached_points: Mutex<Option<HashMap<Address, U256>>>,
 }
 
 impl EasPageRankSource {
@@ -43,18 +43,18 @@ impl EasPageRankSource {
         let indexer_addr = Address::from_str(indexer_address)
             .map_err(|e| anyhow::anyhow!("Invalid indexer address: {}", e))?;
 
-        // Validate reward pool size to prevent excessive distributions
+        // Validate points pool size to prevent excessive distributions
         let max_pool_size = U256::from(10000000000000000000000000u128); // 10M tokens max
-        if pagerank_config.total_reward_pool > max_pool_size {
+        if pagerank_config.total_pool > max_pool_size {
             return Err(anyhow::anyhow!(
-                "PageRank reward pool too large: {} (max allowed: {})",
-                pagerank_config.total_reward_pool,
+                "PageRank points pool too large: {} (max allowed: {})",
+                pagerank_config.total_pool,
                 max_pool_size
             ));
         }
 
-        if pagerank_config.total_reward_pool.is_zero() {
-            return Err(anyhow::anyhow!("PageRank reward pool cannot be zero"));
+        if pagerank_config.total_pool.is_zero() {
+            return Err(anyhow::anyhow!("PageRank points pool cannot be zero"));
         }
 
         // Validate trust configuration if enabled
@@ -77,7 +77,7 @@ impl EasPageRankSource {
             indexer_address: indexer_addr,
             chain_name: chain_name.to_string(),
             pagerank_config,
-            cached_rewards: Mutex::new(None),
+            cached_points: Mutex::new(None),
         })
     }
 
@@ -279,8 +279,8 @@ impl EasPageRankSource {
         Ok(graph)
     }
 
-    /// Calculate PageRank scores and rewards
-    async fn calculate_pagerank_rewards(&self) -> Result<HashMap<Address, U256>> {
+    /// Calculate PageRank scores and points
+    async fn calculate_pagerank_points(&self) -> Result<HashMap<Address, U256>> {
         let graph = self.build_attestation_graph().await?;
         let scores = graph.calculate_pagerank(&self.pagerank_config.config);
 
@@ -291,12 +291,12 @@ impl EasPageRankSource {
             println!("   {}. {}: {:.6}", i + 1, addr, score);
         }
 
-        let mut rewards = HashMap::new();
-        let total_pool = self.pagerank_config.total_reward_pool;
+        let mut points_map = HashMap::new();
+        let total_pool = self.pagerank_config.total_pool;
 
-        println!("\n🎯 Distributing {} total rewards based on PageRank scores", total_pool);
+        println!("\n🎯 Distributing {} total points based on PageRank scores", total_pool);
 
-        // Filter out accounts below minimum threshold and calculate rewards
+        // Filter out accounts below minimum threshold and calculate points
         let total_accounts = scores.len();
         let filtered_scores: HashMap<Address, f64> = scores
             .into_iter()
@@ -312,7 +312,7 @@ impl EasPageRankSource {
 
         if filtered_scores.is_empty() {
             println!("⚠️  No accounts meet minimum PageRank threshold");
-            return Ok(rewards);
+            return Ok(points_map);
         }
 
         // Use high precision scale factor to convert f64 scores to U256
@@ -333,8 +333,8 @@ impl EasPageRankSource {
 
         // Avoid division by zero
         if total_scaled_score.is_zero() {
-            println!("⚠️  Total scaled score is zero, no rewards to distribute");
-            return Ok(rewards);
+            println!("⚠️  Total scaled score is zero, no points to assign");
+            return Ok(points_map);
         }
 
         // Sort addresses by score (descending) for deterministic processing
@@ -344,29 +344,29 @@ impl EasPageRankSource {
         let mut total_distributed = U256::ZERO;
         let mut remaining_pool = total_pool;
 
-        // Calculate rewards using pure U256 integer arithmetic with strict pool enforcement
+        // Calculate points using pure U256 integer arithmetic with strict pool enforcement
         for (i, (address, scaled_score)) in sorted_scores.iter().enumerate() {
-            let reward = if i == sorted_scores.len() - 1 {
+            let points = if i == sorted_scores.len() - 1 {
                 // For the last address, give all remaining pool (ensures no over-distribution)
                 remaining_pool
             } else {
-                // Calculate proportional reward: (scaled_score * total_pool) / total_scaled_score
-                let proportional_reward = (*scaled_score * total_pool) / total_scaled_score;
+                // Calculate proportional points: (scaled_score * total_pool) / total_scaled_score
+                let proportional_points = (*scaled_score * total_pool) / total_scaled_score;
                 // Ensure we don't exceed remaining pool
-                if proportional_reward > remaining_pool {
+                if proportional_points > remaining_pool {
                     remaining_pool
                 } else {
-                    proportional_reward
+                    proportional_points
                 }
             };
 
             // Double-check we don't distribute more than available
-            let actual_reward = if reward > remaining_pool { remaining_pool } else { reward };
+            let actual_points = if points > remaining_pool { remaining_pool } else { points };
 
-            if !actual_reward.is_zero() {
-                total_distributed += actual_reward;
-                remaining_pool -= actual_reward;
-                rewards.insert(*address, actual_reward);
+            if !actual_points.is_zero() {
+                total_distributed += actual_points;
+                remaining_pool -= actual_points;
+                points_map.insert(*address, actual_points);
             }
 
             // Break early if pool is exhausted
@@ -375,43 +375,43 @@ impl EasPageRankSource {
             }
         }
 
-        println!("\n💰 Calculated rewards for {} addresses", rewards.len());
+        println!("\n💰 Calculated points for {} addresses", points_map.len());
 
-        // Debug: Show if all rewards are the same
-        let reward_values: std::collections::HashSet<_> = rewards.values().collect();
-        if reward_values.len() == 1 {
-            println!("⚠️  WARNING: All addresses received the same reward amount!");
+        // Debug: Show if all points are the same
+        let points_values: std::collections::HashSet<_> = points_map.values().collect();
+        if points_values.len() == 1 {
+            println!("⚠️  WARNING: All addresses received the same points amount!");
         }
 
         // Verify total distributed does not exceed pool
-        let actual_total_distributed: U256 = rewards.values().sum();
-        println!("\n🔍 Reward pool verification:");
+        let actual_total: U256 = points_map.values().sum();
+        println!("\n🔍 Points pool verification:");
         println!("  Total pool: {}", total_pool);
-        println!("  Actually distributed: {}", actual_total_distributed);
-        println!("  Remaining in pool: {}", total_pool - actual_total_distributed);
+        println!("  Actual total: {}", actual_total);
+        println!("  Remaining in pool: {}", total_pool - actual_total);
 
         // Critical check: ensure we never over-distribute
-        if actual_total_distributed > total_pool {
+        if actual_total > total_pool {
             return Err(anyhow::anyhow!(
-                "CRITICAL ERROR: Over-distributed rewards! Distributed: {}, Pool: {}",
-                actual_total_distributed,
+                "CRITICAL ERROR: Over-assigned points! Assigned: {}, Pool: {}",
+                actual_total,
                 total_pool
             ));
         }
 
-        println!("✅ Reward distribution completed without over-spending");
+        println!("✅ Points assignment completed without over-spending");
 
-        // Print top rewards for debugging
-        let mut sorted_rewards: Vec<_> = rewards.iter().collect();
-        sorted_rewards.sort_by(|a, b| b.1.cmp(a.1));
-        println!("\n🏆 Top 10 rewards:");
-        for (i, (addr, reward)) in sorted_rewards.iter().take(10).enumerate() {
+        // Print top points for debugging
+        let mut sorted_points: Vec<_> = points_map.iter().collect();
+        sorted_points.sort_by(|a, b| b.1.cmp(a.1));
+        println!("\n🏆 Top 10 points earned:");
+        for (i, (addr, points)) in sorted_points.iter().take(10).enumerate() {
             // Find corresponding PageRank score
             let score = filtered_scores.get(*addr).unwrap_or(&0.0);
-            println!("  {}. {}: {} tokens (PageRank: {:.6})", i + 1, addr, reward, score);
+            println!("  {}. {}: {} tokens (PageRank: {:.6})", i + 1, addr, points, score);
         }
 
-        Ok(rewards)
+        Ok(points_map)
     }
 }
 
@@ -426,14 +426,14 @@ impl Source for EasPageRankSource {
     }
 
     async fn get_accounts(&self) -> Result<Vec<String>> {
-        let rewards = self.calculate_pagerank_rewards().await?;
-        Ok(rewards.keys().map(|addr| addr.to_string()).collect())
+        let points = self.calculate_pagerank_points().await?;
+        Ok(points.keys().map(|addr| addr.to_string()).collect())
     }
 
-    async fn get_rewards(&self, account: &str) -> Result<U256> {
+    async fn get_value(&self, account: &str) -> Result<U256> {
         let address = Address::from_str(account)?;
-        let rewards = self.calculate_pagerank_rewards().await?;
-        Ok(rewards.get(&address).copied().unwrap_or(U256::ZERO))
+        let points = self.calculate_pagerank_points().await?;
+        Ok(points.get(&address).copied().unwrap_or(U256::ZERO))
     }
 
     async fn get_metadata(&self) -> Result<serde_json::Value> {
@@ -456,13 +456,13 @@ impl Source for EasPageRankSource {
             "eas_address": self.eas_address.to_string(),
             "indexer_address": self.indexer_address.to_string(),
             "chain_name": self.chain_name,
-            "reward_type": if self.pagerank_config.config.has_trust_enabled() {
+            "type": if self.pagerank_config.config.has_trust_enabled() {
                 "trust_aware_pagerank_attestations"
             } else {
                 "pagerank_attestations"
             },
             "schema_uid": self.pagerank_config.schema_uid,
-            "total_reward_pool": self.pagerank_config.total_reward_pool.to_string(),
+            "total_pool": self.pagerank_config.total_pool.to_string(),
             "pagerank_config": {
                 "damping_factor": self.pagerank_config.config.damping_factor,
                 "max_iterations": self.pagerank_config.config.max_iterations,

@@ -9,10 +9,12 @@ PageRank rewards distribute tokens based on the authority and influence of parti
 ## How PageRank Works
 
 1. **Graph Construction**: Builds a directed graph where:
+
    - Nodes = Ethereum addresses (attesters and recipients)
    - Edges = Attestations (attester → recipient with weight 1.0)
 
 2. **Authority Calculation**: Uses the PageRank algorithm to calculate authority scores based on:
+
    - Incoming attestations from high-authority users have more weight
    - Authority flows through the network via the damping factor
    - Scores converge through iterative calculation
@@ -44,21 +46,25 @@ export WAVS_ENV_PAGERANK_MIN_THRESHOLD="0.0001"       # Default: 0.0001 (minimum
 ## Parameter Explanation
 
 ### Damping Factor (0.0 - 1.0)
+
 - **0.85 (recommended)**: 85% of authority flows through attestation links, 15% is distributed equally
 - **Higher values (0.9+)**: More emphasis on network connections, slower convergence
 - **Lower values (0.7-)**: Less emphasis on connections, faster convergence but less network effect
 
 ### Max Iterations
+
 - **100 (default)**: Usually sufficient for convergence
 - **Increase if**: Large networks or high precision requirements
 - **Decrease if**: Performance concerns or smaller networks
 
 ### Tolerance
+
 - **1e-6 (default)**: Good balance of precision and performance
 - **Smaller values**: Higher precision but slower convergence
 - **Larger values**: Faster convergence but less precision
 
 ### Minimum Threshold
+
 - **0.0001 (default)**: Only addresses with >0.01% of total authority receive rewards
 - **Higher values**: Fewer recipients, more concentrated rewards
 - **Lower values**: More recipients, more distributed rewards
@@ -66,18 +72,21 @@ export WAVS_ENV_PAGERANK_MIN_THRESHOLD="0.0001"       # Default: 0.0001 (minimum
 ## Example Configurations
 
 ### High Network Effect (Favor Influential Users)
+
 ```bash
 export WAVS_ENV_PAGERANK_DAMPING_FACTOR="0.9"
 export WAVS_ENV_PAGERANK_MIN_THRESHOLD="0.001"        # Top 1% get rewards
 ```
 
 ### Balanced Distribution
+
 ```bash
 export WAVS_ENV_PAGERANK_DAMPING_FACTOR="0.85"
 export WAVS_ENV_PAGERANK_MIN_THRESHOLD="0.0001"       # Top 10% get rewards
 ```
 
 ### Wide Distribution (Include More Users)
+
 ```bash
 export WAVS_ENV_PAGERANK_DAMPING_FACTOR="0.8"
 export WAVS_ENV_PAGERANK_MIN_THRESHOLD="0.00001"      # Top 50% get rewards
@@ -85,11 +94,11 @@ export WAVS_ENV_PAGERANK_MIN_THRESHOLD="0.00001"      # Top 50% get rewards
 
 ## Usage in Code
 
-The PageRank source is automatically added if the `pagerank_reward_pool` configuration is present:
+The PageRank source is automatically added if the `pagerank_points_pool` configuration is present:
 
 ```rust
 // Automatically configured in lib.rs
-if let Some(pagerank_pool_str) = config_var("pagerank_reward_pool") {
+if let Some(pagerank_pool_str) = config_var("pagerank_points_pool") {
     // Creates PageRank source with specified configuration
 }
 ```
@@ -97,11 +106,13 @@ if let Some(pagerank_pool_str) = config_var("pagerank_reward_pool") {
 ## Network Analysis
 
 ### What PageRank Rewards Measure
+
 - **Authority**: Users who receive attestations from other influential users
 - **Trust Centrality**: Users who are important connection points in the trust network
 - **Network Position**: Users who are well-connected within the attestation ecosystem
 
 ### Sybil Resistance
+
 - **Costly to Game**: Requires building a large, interconnected network of real attestations
 - **Network Effects**: Fake attestations from low-authority accounts have minimal impact
 - **Authority Propagation**: Only attestations from trusted sources significantly boost scores
@@ -145,6 +156,7 @@ Total rewards = Count-based rewards + PageRank rewards + Other sources
 - **Network Calls**: Multiple RPC calls to fetch attestation details
 
 For large networks (>10,000 attestations), consider:
+
 - Increasing batch sizes
 - Reducing precision requirements
 - Implementing caching strategies

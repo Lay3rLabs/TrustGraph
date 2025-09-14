@@ -1,5 +1,5 @@
 [package]
-name = "rewards"
+name = "merkler"
 edition.workspace = true
 version.workspace = true
 authors.workspace = true
@@ -41,5 +41,5 @@ strip = true
 lto = true
 
 [package.metadata.component]
-package = "component:rewards"
+package = "component:merkler"
 target = "wavs:worker/wavs-world@0.5.1"

@@ -232,7 +232,7 @@ tasks:
         echo ""
         echo "🔨 Build and test PageRank component:"
         echo "   task build:wasi"
-        echo "   task wasi:exec COMPONENT_FILENAME=rewards.wasm INPUT_DATA=\"test-pagerank\""
+        echo "   task wasi:exec COMPONENT_FILENAME=merkler.wasm INPUT_DATA=\"test-pagerank\""
         echo ""
         echo "📊 Expected Results:"
         echo "   • Alice should have highest PageRank (authority)"

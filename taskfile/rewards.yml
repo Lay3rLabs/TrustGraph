@@ -2,32 +2,32 @@ version: "3"
 
 tasks:
   update:
-    desc: "Trigger rewards update"
+    desc: "Trigger merkle tree / rewards distribution update"
     vars:
-      REWARD_DISTRIBUTOR_ADDRESS: '{{.REWARD_DISTRIBUTOR_ADDRESS}}'
+      MERKLE_SNAPSHOT_ADDR: "{{.MERKLE_SNAPSHOT_ADDR}}"
       RPC_URL:
         sh: task get-rpc
     preconditions:
-      - test -n "{{.REWARD_DISTRIBUTOR_ADDRESS}}"
+      - test -n "{{.MERKLE_SNAPSHOT_ADDR}}"
     cmds:
       - |
-        forge script script/Rewards.s.sol:Rewards \
-          --sig "updateRewards(string)" \
-          "{{.REWARD_DISTRIBUTOR_ADDRESS}}" \
+        forge script script/Merkler.s.sol:Merkler \
+          --sig "updateMerkle(string)" \
+          "{{.MERKLE_SNAPSHOT_ADDR}}" \
           --rpc-url {{.RPC_URL}} \
           --broadcast
 
   query:
     desc: "Query rewards contract state"
     vars:
-      REWARD_DISTRIBUTOR_ADDRESS: '{{.REWARD_DISTRIBUTOR_ADDRESS}}'
+      REWARD_DISTRIBUTOR_ADDRESS: "{{.REWARD_DISTRIBUTOR_ADDRESS}}"
       RPC_URL:
         sh: task get-rpc
     preconditions:
       - test -n "{{.REWARD_DISTRIBUTOR_ADDRESS}}"
     cmds:
       - |
-        forge script script/Rewards.s.sol:Rewards \
+        forge script script/Merkler.s.sol:Merkler \
           --sig "queryContractState(string)" \
           "{{.REWARD_DISTRIBUTOR_ADDRESS}}" \
           --rpc-url {{.RPC_URL}}
@@ -35,8 +35,8 @@ tasks:
   claim:
     desc: "Claim rewards"
     vars:
-      REWARD_DISTRIBUTOR_ADDRESS: '{{.REWARD_DISTRIBUTOR_ADDRESS}}'
-      REWARD_TOKEN_ADDRESS: '{{.REWARD_TOKEN_ADDRESS}}'
+      REWARD_DISTRIBUTOR_ADDRESS: "{{.REWARD_DISTRIBUTOR_ADDRESS}}"
+      REWARD_TOKEN_ADDRESS: "{{.REWARD_TOKEN_ADDRESS}}"
       IPFS_GATEWAY_URL: '{{.IPFS_GATEWAY_URL | default "http://127.0.0.1:8080/ipfs/"}}'
       RPC_URL:
         sh: task get-rpc
@@ -46,7 +46,7 @@ tasks:
     cmds:
       - |
         export IPFS_GATEWAY_URL="{{.IPFS_GATEWAY_URL}}"
-        forge script script/Rewards.s.sol:Rewards \
+        forge script script/Merkler.s.sol:Merkler \
           --sig "claimRewards(string,string)" \
           "{{.REWARD_DISTRIBUTOR_ADDRESS}}" \
           "{{.REWARD_TOKEN_ADDRESS}}" \

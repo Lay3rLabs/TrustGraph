@@ -46,10 +46,10 @@ forge script script/DeployGovernance.s.sol:DeployGovernance \
     --broadcast \
     --json > .docker/governance_deploy.json
 
-echo "💰 Deploying Rewards contracts..."
+echo "💰 Deploying Merkler contracts..."
 
-# Deploy Rewards contracts using Foundry script
-forge script script/DeployRewards.s.sol:DeployScript \
+# Deploy Merkler contracts using Foundry script
+forge script script/DeployMerkler.s.sol:DeployScript \
     --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
     --rpc-url "${RPC_URL}" \
     --private-key "${FUNDED_KEY}" \
@@ -112,9 +112,10 @@ export GOVERNOR_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("
 # Extract deployed addresses from Geyser deployment
 export GYSER_ADDR=$(jq -r '.deployedTo' .docker/geyser_deploy.json 2>/dev/null || echo "")
 
-# Extract deployed addresses from Rewards deployment
-export REWARD_DISTRIBUTOR_ADDR=$(jq -r '.reward_distributor' .docker/rewards_deploy.json 2>/dev/null || echo "")
-export REWARD_TOKEN_ADDR=$(jq -r '.reward_token' .docker/rewards_deploy.json 2>/dev/null || echo "")
+# Extract deployed addresses from Merkler deployment
+export MERKLE_SNAPSHOT_ADDR=$(jq -r '.merkle_snapshot' .docker/merkler_deploy.json 2>/dev/null || echo "")
+export REWARD_DISTRIBUTOR_ADDR=$(jq -r '.reward_distributor' .docker/merkler_deploy.json 2>/dev/null || echo "")
+export REWARD_TOKEN_ADDR=$(jq -r '.reward_token' .docker/merkler_deploy.json 2>/dev/null || echo "")
 
 # Extract deployed addresses from Prediction Market deployment
 export PREDICTION_ORACLE_CONTROLLER_ADDR=$(jq -r '.oracle_controller' .docker/prediction_market_deploy.json 2>/dev/null || echo "")
@@ -174,6 +175,9 @@ cat > .docker/deployment_summary.json << EOF
     "timelock": "${TIMELOCK_ADDR}",
     "governor": "${GOVERNOR_ADDR}"
   },
+  "merkler": {
+    "merkle_snapshot": "${MERKLE_SNAPSHOT_ADDR}"
+  },
   "reward_contracts": {
     "reward_distributor": "${REWARD_DISTRIBUTOR_ADDR}",
     "reward_token": "${REWARD_TOKEN_ADDR}"
@@ -201,7 +205,7 @@ cat > .docker/deployment_summary.json << EOF
 }
 EOF
 
-echo "✅ EAS, Governance, and Rewards Deployment Complete!"
+echo "✅ EAS, Governance, and Merkler Deployment Complete!"
 echo ""
 echo "📋 Deployment Summary:"
 echo "   RPC_URL: ${RPC_URL}"
@@ -235,6 +239,9 @@ echo ""
 echo "🎯 Service Contracts:"
 echo "   SERVICE_TRIGGER_ADDR: ${SERVICE_TRIGGER_ADDR}"
 echo ""
+echo "💰 Merkler Contracts:"
+echo "   MERKLE_SNAPSHOT_ADDR: ${MERKLE_SNAPSHOT_ADDR}"
+echo ""
 echo "💰 Reward Contracts:"
 echo "   REWARD_DISTRIBUTOR_ADDR: ${REWARD_DISTRIBUTOR_ADDR}"
 echo "   REWARD_TOKEN_ADDR: ${REWARD_TOKEN_ADDR}"
@@ -260,7 +267,7 @@ echo ""
 echo "📄 Deployment details saved to .docker/deployment_summary.json"
 echo "📄 EAS deployment logs saved to .docker/eas_deploy.json"
 echo "📄 Governance deployment logs saved to .docker/governance_deploy.json"
-echo "📄 Rewards deployment details saved to .docker/rewards_deploy.json"
+echo "📄 Merkler deployment details saved to .docker/merkler_deploy.json"
 echo "📄 Prediction Market deployment details saved to .docker/prediction_market_deploy.json"
 echo "📄 Zodiac Safes deployment details saved to .docker/zodiac_safes_deploy.json"
 echo "📄 WavsIndexer deployment details saved to .docker/wavs_indexer_deploy.json"

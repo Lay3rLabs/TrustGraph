@@ -294,6 +294,7 @@ task forge:query-voting-power
 ```
 
 ### Distribute Rewards
+
 Trigger the service to run:
 ```bash
 task forge:update-rewards

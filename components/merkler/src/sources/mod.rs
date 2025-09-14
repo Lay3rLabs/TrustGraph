@@ -9,23 +9,23 @@ pub mod eas_pagerank;
 pub mod erc721;
 pub mod interactions;
 
-/// A source of rewards.
+/// A source of value.
 #[async_trait(?Send)]
 pub trait Source {
     /// Get the name of the source.
     fn get_name(&self) -> &str;
 
-    /// Get all accounts that have rewards from this source.
+    /// Get all accounts that have values from this source.
     async fn get_accounts(&self) -> Result<Vec<String>>;
 
-    /// Get the rewards for an account.
-    async fn get_rewards(&self, account: &str) -> Result<U256>;
+    /// Get the value for an account.
+    async fn get_value(&self, account: &str) -> Result<U256>;
 
     /// Get metadata about the source.
     async fn get_metadata(&self) -> Result<serde_json::Value>;
 }
 
-/// A registry that manages multiple reward sources.
+/// A registry that manages multiple value sources.
 pub struct SourceRegistry {
     sources: Vec<Box<dyn Source>>,
 }
@@ -50,41 +50,41 @@ impl SourceRegistry {
         Ok(accounts.into_iter().collect())
     }
 
-    /// Get rewards for an account across all sources.
-    pub async fn get_rewards(&self, account: &str) -> Result<U256> {
+    /// Get value for an account across all sources.
+    pub async fn get_value(&self, account: &str) -> Result<U256> {
         let mut total = U256::ZERO;
-        let max_single_source_reward = U256::from(1000000000000000000000000u128); // 1M tokens max per source
+        let max_single_source_value = U256::from(1000000000000000000000000u128); // 1M tokens max per source
 
         for source in &self.sources {
-            let source_rewards = source.get_rewards(account).await?;
+            let source_value = source.get_value(account).await?;
 
-            // Safety check: prevent any single source from returning unreasonably large rewards
-            if source_rewards > max_single_source_reward {
+            // Safety check: prevent any single source from returning unreasonably large value
+            if source_value > max_single_source_value {
                 return Err(anyhow::anyhow!(
-                    "Source '{}' returned excessive rewards: {} (max allowed: {})",
+                    "Source '{}' returned excessive value: {} (max allowed: {})",
                     source.get_name(),
-                    source_rewards,
-                    max_single_source_reward
+                    source_value,
+                    max_single_source_value
                 ));
             }
 
             // Use checked addition to prevent overflow
-            total = total.checked_add(source_rewards).ok_or_else(|| {
+            total = total.checked_add(source_value).ok_or_else(|| {
                 anyhow::anyhow!(
-                    "Total rewards overflow when adding {} from source '{}' to existing total {}",
-                    source_rewards,
+                    "Total value overflow when adding {} from source '{}' to existing total {}",
+                    source_value,
                     source.get_name(),
                     total
                 )
             })?;
 
-            if !source_rewards.is_zero() {
-                println!("💰 {} rewards from '{}': {}", account, source.get_name(), source_rewards);
+            if !source_value.is_zero() {
+                println!("💰 {} from '{}': {}", account, source.get_name(), source_value);
             }
         }
 
         if !total.is_zero() {
-            println!("💎 Total rewards for {}: {}", account, total);
+            println!("💎 Total value for {}: {}", account, total);
         }
 
         Ok(total)

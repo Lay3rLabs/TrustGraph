@@ -19,6 +19,12 @@ tasks:
       - 'echo "{{.INDEXER_ADDR}}"'
     silent: true
 
+  merkle-snapshot-address:
+    desc: "Get the merkle snapshot address"
+    cmds:
+      - 'echo "{{.MERKLE_SNAPSHOT_ADDR}}"'
+    silent: true
+
   collateral-token-address:
     desc: "Get the prediction market collateral token address"
     cmds:
@@ -90,6 +96,8 @@ vars:
     sh: test -f .docker/deployment_summary.json && jq -r '.reward_contracts.reward_token' .docker/deployment_summary.json || echo ""
   REWARD_DISTRIBUTOR_ADDRESS:
     sh: test -f .docker/deployment_summary.json && jq -r '.reward_contracts.reward_distributor' .docker/deployment_summary.json || echo ""
+  MERKLE_SNAPSHOT_ADDR:
+    sh: test -f .docker/deployment_summary.json && jq -r '.merkler.merkle_snapshot' .docker/deployment_summary.json || echo ""
 
   # Prediction Market contract addresses (loaded from deployment summary)
   PREDICTION_MARKET_FACTORY_ADDRESS:

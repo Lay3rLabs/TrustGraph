@@ -2,21 +2,20 @@
 
 import type React from "react";
 import { Button } from "@/components/ui/button";
+import { mockUsdcAddress } from "@/lib/contracts";
 
 interface RewardsCardProps {
   merkleRoot?: string;
   currentIpfsHash?: string;
   pendingReward?: {
     account: string;
-    reward: string;
-    claimable: string;
+    value: string;
     proof: string[];
   } | null;
   claimedAmount?: string;
   merkleData?: {
     metadata: {
-      reward_token_address: string;
-      total_rewards: string;
+      total_value: string;
     };
   } | null;
   tokenSymbol?: string;
@@ -49,7 +48,7 @@ export function RewardsCard({
   };
 
   const hasClaimableRewards =
-    pendingReward && Number(pendingReward.claimable) > Number(claimedAmount);
+    pendingReward && Number(pendingReward.value) > Number(claimedAmount);
 
   return (
     <div className="border border-gray-700 bg-black/10 p-6 rounded-sm space-y-4">
@@ -111,13 +110,13 @@ export function RewardsCard({
             <div className="space-y-2">
               <div className="terminal-dim text-xs">TOTAL REWARDS</div>
               <div className="terminal-text text-sm">
-                {formatAmount(merkleData.metadata.total_rewards)} {tokenSymbol}
+                {formatAmount(merkleData.metadata.total_value)} {tokenSymbol}
               </div>
             </div>
             <div className="space-y-2">
               <div className="terminal-dim text-xs">REWARD TOKEN</div>
               <div className="terminal-text text-sm font-mono break-all">
-                {merkleData.metadata.reward_token_address}
+                {mockUsdcAddress}
               </div>
             </div>
           </div>
@@ -132,7 +131,7 @@ export function RewardsCard({
           <div className="space-y-2">
             <div className="terminal-dim text-xs">TOTAL EARNED</div>
             <div className="terminal-text text-lg">
-              {pendingReward ? formatAmount(pendingReward.claimable) : "0"}{" "}
+              {pendingReward ? formatAmount(pendingReward.value) : "0"}{" "}
               {tokenSymbol}
             </div>
           </div>
@@ -140,7 +139,7 @@ export function RewardsCard({
           <div className="space-y-2">
             <div className="terminal-dim text-xs">CLAIMABLE</div>
             <div className="terminal-text text-lg">
-              {pendingReward ? formatAmount((BigInt(pendingReward.claimable) - BigInt(claimedAmount)).toString()) : "0"}{" "}
+              {pendingReward ? formatAmount((BigInt(pendingReward.value) - BigInt(claimedAmount)).toString()) : "0"}{" "}
               {tokenSymbol}
             </div>
           </div>
@@ -177,7 +176,7 @@ export function RewardsCard({
             className="mobile-terminal-btn !px-4 !py-2 flex-1"
           >
             <span className="terminal-command text-xs">
-              CLAIM {formatAmount(pendingReward?.claimable)} {tokenSymbol}
+              CLAIM {formatAmount(pendingReward?.value)} {tokenSymbol}
             </span>
           </Button>
         )}

@@ -9,7 +9,11 @@ import {
   useWriteContract,
 } from 'wagmi'
 
-import { merkleGovModuleAbi, merkleGovModuleAddress } from '@/lib/contracts'
+import {
+  merkleGovModuleAbi,
+  merkleGovModuleAddress,
+  mockUsdcAddress,
+} from '@/lib/contracts'
 import { writeEthContractAndWait } from '@/lib/utils'
 
 // Types matching the MerkleGovModule contract structs
@@ -59,20 +63,17 @@ const cidToUrl = (cid: string): string => {
 interface MerkleTreeData {
   tree: Array<{
     account: string
-    reward: string
-    claimable: string
+    value: string
     proof: string[]
   }>
   metadata: {
-    reward_token_address: string
-    total_rewards: string
+    total_value: string
   }
 }
 
 interface VotingPowerEntry {
   account: string
-  reward: string
-  claimable: string
+  value: string
   proof: string[]
 }
 
@@ -486,7 +487,7 @@ export function useGovernance() {
         return null
       }
 
-      if (!userVotingPower || !merkleData?.metadata?.reward_token_address) {
+      if (!userVotingPower) {
         setError(
           'No voting power found. Please check if you have governance tokens.'
         )
@@ -505,8 +506,8 @@ export function useGovernance() {
         console.log('Casting vote with:', {
           proposalId: BigInt(proposalId),
           voteType: support,
-          votingPower: userVotingPower.claimable,
-          rewardToken: merkleData.metadata.reward_token_address,
+          votingPower: userVotingPower.value,
+          rewardToken: mockUsdcAddress,
           proof: userVotingPower.proof,
         })
 
@@ -524,8 +525,8 @@ export function useGovernance() {
           args: [
             BigInt(proposalId),
             support,
-            BigInt(userVotingPower.claimable),
-            merkleData.metadata.reward_token_address as `0x${string}`,
+            BigInt(userVotingPower.value),
+            mockUsdcAddress,
             userVotingPower.proof as `0x${string}`[],
           ],
           account: address,
@@ -542,8 +543,8 @@ export function useGovernance() {
           args: [
             BigInt(proposalId),
             support,
-            BigInt(userVotingPower.claimable),
-            merkleData.metadata.reward_token_address as `0x${string}`,
+            BigInt(userVotingPower.value),
+            mockUsdcAddress,
             userVotingPower.proof as `0x${string}`[],
           ],
           gas: (gasEstimate * BigInt(120)) / BigInt(100),

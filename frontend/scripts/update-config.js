@@ -42,6 +42,9 @@ try {
   if (deployment.reward_contracts) {
     Object.assign(contractAddresses, deployment.reward_contracts)
   }
+  if (deployment.merkler) {
+    Object.assign(contractAddresses, deployment.merkler)
+  }
   if (deployment.prediction_market_contracts) {
     Object.assign(contractAddresses, deployment.prediction_market_contracts)
   }
@@ -77,7 +80,8 @@ try {
     // Service contracts
     trigger: 'EASAttestTrigger',
 
-    // Reward contracts
+    // Merkle contracts
+    merkle_snapshot: 'MerkleSnapshot',
     reward_distributor: 'RewardDistributor',
     reward_token: 'ENOVA',
 

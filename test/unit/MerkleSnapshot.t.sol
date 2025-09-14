@@ -7,6 +7,7 @@ import {MerkleSnapshot} from "../../src/contracts/merkle/MerkleSnapshot.sol";
 import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 import {ITypes} from "interfaces/ITypes.sol";
+import {IMerkler} from "interfaces/IMerkler.sol";
 
 contract MerkleSnapshotTest is Test {
     MerkleSnapshot public merkleSnapshot;
@@ -670,30 +671,27 @@ contract MerkleSnapshotTest is Test {
         string memory ipfsHashCid
     )
         internal
-        pure
         returns (
             IWavsServiceHandler.Envelope memory envelope,
             IWavsServiceHandler.SignatureData memory signatureData
         )
     {
-        // Create AVS output
-        ITypes.AvsOutput memory avsOutput = ITypes.AvsOutput({
-            root: root,
-            ipfsHashData: ipfsHash,
-            ipfsHash: ipfsHashCid
-        });
+        uint64 triggerId = merkleSnapshot.trigger();
 
-        // Create data with ID
-        ITypes.DataWithId memory dataWithId = ITypes.DataWithId({
-            triggerId: ITypes.TriggerId.wrap(1),
-            data: abi.encode(avsOutput)
+        // Create AVS output
+        IMerkler.MerklerAvsOutput memory avsOutput = IMerkler.MerklerAvsOutput({
+            triggerId: triggerId,
+            cronNanos: 0,
+            root: root,
+            ipfsHash: ipfsHash,
+            ipfsHashCid: ipfsHashCid
         });
 
         // Create envelope
         envelope = IWavsServiceHandler.Envelope({
             eventId: bytes20(uint160(0x1)),
             ordering: bytes12(uint96(0)),
-            payload: abi.encode(dataWithId)
+            payload: abi.encode(avsOutput)
         });
 
         // Create mock signature data

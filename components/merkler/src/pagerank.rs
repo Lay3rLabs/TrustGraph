@@ -389,7 +389,7 @@ impl AttestationGraph {
             let trusted_count = config.trust_config.trusted_seeds.len();
             (base_factor * config.trust_config.trust_boost) / trusted_count as f64
         } else {
-            // Non-trusted nodes get minimal teleportation (prevents isolated nodes from getting rewards)
+            // Non-trusted nodes get minimal teleportation (prevents isolated nodes from getting points)
             let non_trusted_count = n - config.trust_config.trusted_seeds.len();
             if non_trusted_count > 0 {
                 (base_factor * (1.0 - config.trust_config.trust_boost)) / non_trusted_count as f64
@@ -553,23 +553,23 @@ impl AttestationGraph {
     }
 }
 
-/// Trust Aware PageRank-based reward source configuration
+/// Trust Aware PageRank-based source configuration
 pub struct PageRankRewardSource {
     /// Schema UID for attestations
     pub schema_uid: String,
-    /// Total reward pool to distribute
-    pub total_reward_pool: U256,
+    /// Total pool to distribute
+    pub total_pool: U256,
     /// PageRank configuration (including trust settings)
     pub config: PageRankConfig,
-    /// Minimum PageRank score to receive rewards (to filter out very low scores)
+    /// Minimum PageRank score to receive points (to filter out very low scores)
     pub min_score_threshold: f64,
 }
 
 impl PageRankRewardSource {
-    pub fn new(schema_uid: String, total_reward_pool: U256, config: PageRankConfig) -> Self {
+    pub fn new(schema_uid: String, total_pool: U256, config: PageRankConfig) -> Self {
         Self {
             schema_uid,
-            total_reward_pool,
+            total_pool,
             config,
             min_score_threshold: 0.0001, // 0.01% minimum
         }
@@ -580,10 +580,10 @@ impl PageRankRewardSource {
         self
     }
 
-    /// Create a Trust Aware PageRank reward source
+    /// Create a Trust Aware PageRank source
     pub fn with_trusted_seeds(
         schema_uid: String,
-        total_reward_pool: U256,
+        total_pool: U256,
         trusted_seeds: Vec<&str>,
     ) -> Result<Self, Box<dyn std::error::Error>> {
         // Parse trusted seed addresses
@@ -597,10 +597,10 @@ impl PageRankRewardSource {
         let trust_config = TrustConfig::new(parsed_seeds);
         let config = PageRankConfig::default().with_trust_config(trust_config);
 
-        Ok(Self::new(schema_uid, total_reward_pool, config))
+        Ok(Self::new(schema_uid, total_pool, config))
     }
 
-    /// Check if this reward source uses trust features
+    /// Check if this source uses trust features
     pub fn has_trust_enabled(&self) -> bool {
         self.config.has_trust_enabled()
     }

@@ -3,25 +3,26 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useReadContract } from 'wagmi'
 
-import { rewardDistributorAbi, rewardDistributorAddress } from '@/lib/contracts'
+import {
+  mockUsdcAddress,
+  rewardDistributorAbi,
+  rewardDistributorAddress,
+} from '@/lib/contracts'
 
 interface LeaderboardEntry {
   account: string
-  reward: string
-  claimable: string
+  value: string
   rank: number
 }
 
 interface MerkleTreeData {
   tree: Array<{
     account: string
-    reward: string
-    claimable: string
+    value: string
     proof: string[]
   }>
   metadata: {
-    reward_token_address: string
-    total_rewards: string
+    total_value: string
     sources?: Array<{
       name: string
       metadata: { address: string }
@@ -84,8 +85,8 @@ export function useLeaderboard() {
         }))
         .sort((a, b) => {
           // Sort by claimable amount in descending order
-          const aClaimable = BigInt(a.claimable)
-          const bClaimable = BigInt(b.claimable)
+          const aClaimable = BigInt(a.value)
+          const bClaimable = BigInt(b.value)
           return bClaimable > aClaimable ? 1 : bClaimable < aClaimable ? -1 : 0
         })
         .map((entry, index) => ({
@@ -94,23 +95,21 @@ export function useLeaderboard() {
         }))
 
       setLeaderboardData(sortedEntries)
-      setTotalRewards(data.metadata.total_rewards)
+      setTotalRewards(data.metadata.total_value)
       setTotalParticipants(data.tree.length)
 
       // Fetch token symbol
-      if (data.metadata.reward_token_address) {
-        try {
-          const tokenResponse = await fetch(
-            `/api/token-symbol/${data.metadata.reward_token_address}`
-          )
-          if (tokenResponse.ok) {
-            const tokenData = await tokenResponse.json()
-            setTokenSymbol(tokenData.symbol || 'TOKEN')
-          }
-        } catch (err) {
-          console.error('Error fetching token symbol:', err)
-          setTokenSymbol('TOKEN')
+      try {
+        const tokenResponse = await fetch(
+          `/api/token-symbol/${mockUsdcAddress}`
+        )
+        if (tokenResponse.ok) {
+          const tokenData = await tokenResponse.json()
+          setTokenSymbol(tokenData.symbol || 'TOKEN')
         }
+      } catch (err) {
+        console.error('Error fetching token symbol:', err)
+        setTokenSymbol('TOKEN')
       }
     } catch (err) {
       console.error('Error loading leaderboard data:', err)

@@ -13,38 +13,6 @@ interface ITypes {
     }
 
     /**
-     * @notice Struct to store AVS output data
-     * @param root Root of the merkle tree
-     * @param ipfsHash IPFS hash of the merkle tree
-     */
-    struct AvsOutput {
-        bytes32 root;
-        bytes32 ipfsHashData;
-        string ipfsHash;
-    }
-
-    /**
-     * @notice Struct to store AVS output data
-     * @param lmsrMarketMaker Address of the LMSR market maker
-     * @param conditionalTokens Address of the conditional tokens
-     * @param result The result of the oracle AVS
-     */
-    struct AvsOutputData {
-        address lmsrMarketMaker;
-        address conditionalTokens;
-        bool result;
-    }
-
-    /**
-     * @notice Event emitted when a new trigger is created
-     * @param triggerId Unique identifier for the trigger
-     */
-    event WavsRewardsTrigger(uint64 triggerId);
-
-    // Geyser
-    event UpdateService(string json);
-
-    /**
      * @notice Struct to store trigger information
      * @param triggerId Unique identifier for the trigger
      * @param creator Address of the creator of the trigger

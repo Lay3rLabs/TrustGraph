@@ -26,7 +26,7 @@ pub fn encode_trigger_output(
 ) -> Vec<u8> {
     solidity::DataWithId {
         triggerId: trigger_id,
-        data: solidity::AvsOutputData {
+        data: solidity::PredictionMarketOracleAvsOutput {
             lmsrMarketMaker: lmsr_market_maker,
             conditionalTokens: conditional_tokens,
             result,
@@ -40,7 +40,12 @@ pub fn encode_trigger_output(
 
 mod solidity {
     use alloy_sol_macro::sol;
+
     pub use ITypes::*;
     // imports DataWithId, TriggerInfo, NewTrigger, and TriggerId
     sol!("../../src/interfaces/ITypes.sol");
+
+    pub use IPredictionMarketOracleController::*;
+    // imports PredictionMarketOracleAvsOutput
+    sol!("../../src/interfaces/IPredictionMarketOracleController.sol");
 }

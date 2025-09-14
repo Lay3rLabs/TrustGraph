@@ -13,18 +13,18 @@ use wavs_wasi_utils::evm::{
 
 use super::Source;
 
-/// Compute rewards from an ERC721 token.
+/// Compute points from an ERC721 token.
 pub struct Erc721Source {
     /// Contract address.
     pub address: Address,
-    /// Rewards per token.
-    pub rewards_per_token: U256,
+    /// Points per token.
+    pub points_per_token: U256,
 }
 
 impl Erc721Source {
-    pub fn new(address: &str, rewards_per_token: U256) -> Self {
+    pub fn new(address: &str, points_per_token: U256) -> Self {
         let nft_contract = Address::from_str(address).unwrap();
-        Self { address: nft_contract, rewards_per_token }
+        Self { address: nft_contract, points_per_token }
     }
 }
 
@@ -39,16 +39,16 @@ impl Source for Erc721Source {
         Ok(holders)
     }
 
-    async fn get_rewards(&self, account: &str) -> Result<U256> {
+    async fn get_value(&self, account: &str) -> Result<U256> {
         let address = Address::from_str(account).unwrap();
         let nft_balance = self.query_nft_ownership(address).await?;
-        Ok(self.rewards_per_token * nft_balance)
+        Ok(self.points_per_token * nft_balance)
     }
 
     async fn get_metadata(&self) -> Result<serde_json::Value> {
         Ok(serde_json::json!({
             "address": self.address.to_string(),
-            "rewards_per_token": self.rewards_per_token.to_string(),
+            "points_per_token": self.points_per_token.to_string(),
         }))
     }
 }

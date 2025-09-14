@@ -5,13 +5,17 @@ import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsSe
 import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import {ITypes} from "interfaces/ITypes.sol";
+import {IMerkler} from "interfaces/IMerkler.sol";
 
 /// @title MerkleSnapshot - Merkle tree snapshotter that can be used by other contracts to verify merkle proofs and access history
 /// @dev Implements IWavsServiceHandler for merkle root updates via WAVS
-contract MerkleSnapshot is IWavsServiceHandler {
+contract MerkleSnapshot is IWavsServiceHandler, ITypes, IMerkler {
     error NoMerkleStates();
     error NoMerkleStateAtBlock(uint256 requested, uint256 firstBlock);
     error NoMerkleStateAtIndex(uint256 requested, uint256 total);
+
+    error InvalidCronTimestamp(uint64 given, uint64 last);
+    error InvalidTriggerId(uint64 actual, uint64 expected);
 
     event MerkleRootUpdated(
         bytes32 indexed root,
@@ -33,6 +37,12 @@ contract MerkleSnapshot is IWavsServiceHandler {
     /// @notice Service manager for WAVS integration
     IWavsServiceManager private _serviceManager;
 
+    /// @notice The next trigger ID
+    uint64 public nextTriggerId = 1;
+
+    /// @notice The last cron timestamp seen
+    uint64 public lastCronTimestampSeen;
+
     /// @notice Historical merkle states, keyed by index
     mapping(uint256 stateIndex => MerkleState state) public states;
 
@@ -46,6 +56,16 @@ contract MerkleSnapshot is IWavsServiceHandler {
 
     constructor(IWavsServiceManager serviceManager) {
         _serviceManager = serviceManager;
+    }
+
+    /// @notice Trigger the Merkler AVS
+    /// @return triggerId The ID of the trigger
+    function trigger() external returns (uint64 triggerId) {
+        // Get and increment the trigger ID.
+        triggerId = nextTriggerId++;
+
+        // Emit the trigger event.
+        emit MerklerTrigger(triggerId);
     }
 
     /// @notice Update the state at the current block, overriding the existing state for this block if it exists
@@ -315,26 +335,38 @@ contract MerkleSnapshot is IWavsServiceHandler {
         _serviceManager.validate(envelope, signatureData);
 
         // Decode payload
-        ITypes.DataWithId memory dataWithId = abi.decode(
+        MerklerAvsOutput memory avsOutput = abi.decode(
             envelope.payload,
-            (ITypes.DataWithId)
-        );
-        ITypes.AvsOutput memory avsOutput = abi.decode(
-            dataWithId.data,
-            (ITypes.AvsOutput)
+            (MerklerAvsOutput)
         );
 
+        // If trigger ID set and not the last trigger ID, error. Ensure only the most recent trigger is used.
+        if (
+            avsOutput.triggerId > 0 && avsOutput.triggerId != nextTriggerId - 1
+        ) {
+            revert InvalidTriggerId(avsOutput.triggerId, nextTriggerId - 1);
+        }
+
+        // If cron timestamp set and less than the last cron timestamp seen, error. Ensure only a new cron timestamp is used.
+        if (avsOutput.cronNanos > 0) {
+            if (avsOutput.cronNanos <= lastCronTimestampSeen) {
+                revert InvalidCronTimestamp(
+                    avsOutput.cronNanos,
+                    lastCronTimestampSeen
+                );
+            } else {
+                // If valid new cron timestamp, update the last seen.
+                lastCronTimestampSeen = avsOutput.cronNanos;
+            }
+        }
+
         // Update merkle root
-        _updateState(
-            avsOutput.root,
-            avsOutput.ipfsHashData,
-            avsOutput.ipfsHash
-        );
+        _updateState(avsOutput.root, avsOutput.ipfsHash, avsOutput.ipfsHashCid);
 
         emit MerkleRootUpdated(
             avsOutput.root,
-            avsOutput.ipfsHashData,
-            avsOutput.ipfsHash
+            avsOutput.ipfsHash,
+            avsOutput.ipfsHashCid
         );
     }
 

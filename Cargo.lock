@@ -4289,6 +4289,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "merkler"
+version = "0.5.5"
+dependencies = [
+ "alloy-network 0.15.11",
+ "alloy-provider 0.15.11",
+ "alloy-rpc-types",
+ "alloy-sol-macro",
+ "alloy-sol-types",
+ "anyhow",
+ "async-trait",
+ "bs58 0.5.1",
+ "cid",
+ "merkle-tree-rs",
+ "multibase",
+ "multihash 0.18.1",
+ "serde",
+ "serde_json",
+ "wavs-indexer-api",
+ "wavs-wasi-utils",
+ "wit-bindgen-rt 0.44.0",
+ "wstd",
+]
+
+[[package]]
 name = "mime"
 version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5365,30 +5389,6 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
-]
-
-[[package]]
-name = "rewards"
-version = "0.5.5"
-dependencies = [
- "alloy-network 0.15.11",
- "alloy-provider 0.15.11",
- "alloy-rpc-types",
- "alloy-sol-macro",
- "alloy-sol-types",
- "anyhow",
- "async-trait",
- "bs58 0.5.1",
- "cid",
- "merkle-tree-rs",
- "multibase",
- "multihash 0.18.1",
- "serde",
- "serde_json",
- "wavs-indexer-api",
- "wavs-wasi-utils",
- "wit-bindgen-rt 0.44.0",
- "wstd",
 ]
 
 [[package]]

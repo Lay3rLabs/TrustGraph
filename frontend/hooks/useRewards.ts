@@ -3,19 +3,23 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAccount, useReadContract, useWriteContract } from 'wagmi'
 
-import { rewardDistributorAbi, rewardDistributorAddress } from '@/lib/contracts'
+import {
+  merkleSnapshotAbi,
+  merkleSnapshotAddress,
+  mockUsdcAddress,
+  rewardDistributorAbi,
+  rewardDistributorAddress,
+} from '@/lib/contracts'
 import { writeEthContractAndWait } from '@/lib/utils'
 
 interface MerkleTreeData {
   tree: Array<{
     account: string
-    reward: string
-    claimable: string
+    value: string
     proof: string[]
   }>
   metadata: {
-    reward_token_address: string
-    total_rewards: string
+    total_value: string
     sources?: Array<{
       name: string
       metadata: { address: string }
@@ -25,15 +29,13 @@ interface MerkleTreeData {
 
 interface PendingReward {
   account: string
-  reward: string
-  claimable: string
+  value: string
   proof: string[]
 }
 
 interface RewardClaim {
   account: string
-  reward: string
-  claimable: string
+  value: string
   claimed: string
   timestamp: number
   transactionHash: string
@@ -47,9 +49,6 @@ export function useRewards() {
   const { address, isConnected } = useAccount()
   const { writeContract, isPending: isWriting } = useWriteContract()
 
-  // Use the imported reward distributor address
-  const contractAddress = rewardDistributorAddress
-
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentIpfsHash, setCurrentIpfsHash] = useState<string>('')
@@ -60,37 +59,34 @@ export function useRewards() {
 
   // Read merkle root from contract
   const { data: merkleRoot, isLoading: isLoadingRoot } = useReadContract({
-    address: contractAddress,
+    address: rewardDistributorAddress,
     abi: rewardDistributorAbi,
     functionName: 'root',
     query: {
-      enabled: !!contractAddress,
+      enabled: !!rewardDistributorAddress,
       refetchInterval: 60_000,
     },
   })
 
   // Read IPFS hash CID from contract
   const { data: ipfsHashCid, isLoading: isLoadingHash } = useReadContract({
-    address: contractAddress,
+    address: rewardDistributorAddress,
     abi: rewardDistributorAbi,
     functionName: 'ipfsHashCid',
     query: {
-      enabled: !!contractAddress,
+      enabled: !!rewardDistributorAddress,
       refetchInterval: 60_000,
     },
   })
 
   // Read claimed amount for connected user
   const { data: claimedAmount, refetch: refetchClaimed } = useReadContract({
-    address: contractAddress,
+    address: rewardDistributorAddress,
     abi: rewardDistributorAbi,
     functionName: 'claimed',
-    args:
-      address && merkleData?.metadata?.reward_token_address
-        ? [address, merkleData.metadata.reward_token_address as `0x${string}`]
-        : undefined,
+    args: address ? [address, mockUsdcAddress] : undefined,
     query: {
-      enabled: !!address && !!merkleData?.metadata?.reward_token_address,
+      enabled: !!address,
     },
   })
 
@@ -138,14 +134,8 @@ export function useRewards() {
   // Fetch token symbol when we have reward token address
   useEffect(() => {
     const fetchTokenSymbol = async () => {
-      if (!merkleData?.metadata?.reward_token_address) {
-        return
-      }
-
       try {
-        const response = await fetch(
-          `/api/token-symbol/${merkleData.metadata.reward_token_address}`
-        )
+        const response = await fetch(`/api/token-symbol/${mockUsdcAddress}`)
         if (response.ok) {
           const data = await response.json()
           setTokenSymbol(data.symbol || 'TOKEN')
@@ -157,11 +147,11 @@ export function useRewards() {
     }
 
     fetchTokenSymbol()
-  }, [merkleData?.metadata?.reward_token_address])
+  }, [])
 
-  // Trigger reward update
+  // Trigger merkle update
   const triggerUpdate = useCallback(async () => {
-    if (!isConnected || !contractAddress) {
+    if (!isConnected) {
       setError('Wallet not connected')
       return null
     }
@@ -170,9 +160,9 @@ export function useRewards() {
       setError(null)
 
       const { transactionHash } = await writeEthContractAndWait({
-        address: contractAddress,
-        abi: rewardDistributorAbi,
-        functionName: 'addTrigger',
+        address: merkleSnapshotAddress,
+        abi: merkleSnapshotAbi,
+        functionName: 'trigger',
       })
 
       console.log('Reward update triggered:', transactionHash)
@@ -182,16 +172,11 @@ export function useRewards() {
       setError(`Failed to trigger update: ${err.message}`)
       return null
     }
-  }, [isConnected, contractAddress, writeContract])
+  }, [isConnected, merkleSnapshotAddress, writeContract])
 
   // Claim rewards
   const claim = useCallback(async () => {
-    if (
-      !address ||
-      !pendingReward ||
-      !merkleData?.metadata?.reward_token_address ||
-      !isConnected
-    ) {
+    if (!address || !pendingReward || !isConnected) {
       setError('Missing requirements for claim')
       return null
     }
@@ -200,13 +185,13 @@ export function useRewards() {
       setError(null)
 
       const { transactionHash } = await writeEthContractAndWait({
-        address: contractAddress,
+        address: rewardDistributorAddress,
         abi: rewardDistributorAbi,
         functionName: 'claim',
         args: [
           address,
-          merkleData.metadata.reward_token_address as `0x${string}`,
-          BigInt(pendingReward.claimable),
+          mockUsdcAddress,
+          BigInt(pendingReward.value),
           pendingReward.proof as `0x${string}`[],
         ],
       })
@@ -214,7 +199,7 @@ export function useRewards() {
       // Add to claim history
       const newClaim: RewardClaim = {
         ...pendingReward,
-        claimed: pendingReward.claimable,
+        claimed: pendingReward.value,
         timestamp: Date.now(),
         transactionHash,
       }
@@ -233,9 +218,8 @@ export function useRewards() {
   }, [
     address,
     pendingReward,
-    merkleData,
     isConnected,
-    contractAddress,
+    rewardDistributorAddress,
     writeContract,
     refetchClaimed,
   ])
@@ -264,6 +248,6 @@ export function useRewards() {
     refresh,
 
     // Contract info
-    contractAddress,
+    contractAddress: rewardDistributorAddress,
   }
 }

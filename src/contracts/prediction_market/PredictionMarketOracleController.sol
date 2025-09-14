@@ -6,11 +6,12 @@ import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsSe
 import {ConditionalTokens} from "@lay3rlabs/conditional-tokens-contracts/ConditionalTokens.sol";
 import {LMSRMarketMaker} from "@lay3rlabs/conditional-tokens-market-makers/LMSRMarketMaker.sol";
 
+import {IPredictionMarketOracleController} from "interfaces/IPredictionMarketOracleController.sol";
 import {IWavsTrigger} from "interfaces/IWavsTrigger.sol";
 import {PredictionMarketFactory} from "./PredictionMarketFactory.sol";
 
 // The contract responsible for triggering the oracle to resolve the market and handling the oracle output and instructing the market maker to resolve the market.
-contract PredictionMarketOracleController is IWavsTrigger, IWavsServiceHandler {
+contract PredictionMarketOracleController is IPredictionMarketOracleController, IWavsTrigger, IWavsServiceHandler {
     // The factory that handles creating and resolving the market.
     PredictionMarketFactory public factory;
 
@@ -39,7 +40,7 @@ contract PredictionMarketOracleController is IWavsTrigger, IWavsServiceHandler {
         Trigger memory trigger = triggersById[dataWithId.triggerId];
         require(trigger.creator != address(0), "Trigger does not exist");
 
-        AvsOutputData memory returnData = abi.decode(dataWithId.data, (AvsOutputData));
+        PredictionMarketOracleAvsOutput memory returnData = abi.decode(dataWithId.data, (PredictionMarketOracleAvsOutput));
 
         // Tell factory to resolve the market
         factory.resolveMarket(

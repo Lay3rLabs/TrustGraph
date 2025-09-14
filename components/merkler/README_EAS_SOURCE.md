@@ -35,8 +35,8 @@ let eas_address = config_var("eas_address")?;                    // EAS contract
 let eas_indexer_address = config_var("eas_indexer_address")?;   // EAS indexer contract address
 let chain_name = config_var("chain_name").unwrap_or("local");    // Chain configuration name
 
-// Optional for schema-specific rewards
-let schema_uid = config_var("reward_schema_uid")?;               // Schema UID for schema-specific rewards
+// Optional for schema-specific points
+let schema_uid = config_var("schema_uid")?;               // Schema UID for schema-specific points
 ```
 
 ## Usage Examples
@@ -71,8 +71,8 @@ registry.add_source(EasSource::new(
 ### Schema-Specific Rewards
 
 ```rust
-// Reward attestations to a specific schema - 1e18 rewards per attestation
-if let Ok(schema_uid) = config_var("reward_schema_uid") {
+// Reward attestations to a specific schema - 1e18 points per attestation
+if let Ok(schema_uid) = config_var("schema_uid") {
     registry.add_source(EasSource::new(
         &eas_address,
         &eas_indexer_address, 
@@ -108,14 +108,14 @@ Set these environment variables or configuration values:
 - `eas_address`: Address of the EAS contract
 - `eas_indexer_address`: Address of the EAS indexer contract  
 - `chain_name`: Chain configuration name (defaults to "local")
-- `reward_schema_uid` (optional): Schema UID for schema-specific rewards
+- `schema_uid` (optional): Schema UID for schema-specific points
 
 ## Technical Implementation
 
 ### Key Components
 
 1. **EasSource struct**: Main implementation of the `Source` trait
-2. **EasRewardType enum**: Defines the three types of supported rewards
+2. **EasRewardType enum**: Defines the three types of supported points
 3. **IEASIndexer interface**: Solidity interface for interacting with the EAS indexer
 
 ### Query Methods

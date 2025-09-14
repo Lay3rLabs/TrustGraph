@@ -97,21 +97,20 @@ tasks:
           --rpc-url {{.RPC_URL}}
 
   update-rewards:
-    desc: "Trigger rewards distribution"
+    desc: "Trigger merkle tree / rewards distribution update"
     vars:
       RPC_URL:
         sh: task get-rpc
-      REWARD_DISTRIBUTOR_ADDRESS:
-        sh: test -f .docker/deployment_summary.json && jq -r '.reward_contracts.reward_distributor' .docker/deployment_summary.json || echo ""
+      MERKLE_SNAPSHOT_ADDR: "{{.MERKLE_SNAPSHOT_ADDR}}"
     preconditions:
       - test -f .docker/deployment_summary.json
-      - test -n "{{.REWARD_DISTRIBUTOR_ADDRESS}}"
+      - test -n "{{.MERKLE_SNAPSHOT_ADDR}}"
     cmds:
       - |
-        echo "Using reward distributor: {{.REWARD_DISTRIBUTOR_ADDRESS}}"
-        forge script script/Rewards.s.sol:Rewards \
-          --sig "updateRewards(string)" \
-          "{{.REWARD_DISTRIBUTOR_ADDRESS}}" \
+        echo "Using merkle snapshot: {{.MERKLE_SNAPSHOT_ADDR}}"
+        forge script script/Merkler.s.sol:Merkler \
+          --sig "updateMerkle(string)" \
+          "{{.MERKLE_SNAPSHOT_ADDR}}" \
           --rpc-url {{.RPC_URL}} \
           --broadcast
 
@@ -120,15 +119,14 @@ tasks:
     vars:
       RPC_URL:
         sh: task get-rpc
-      REWARD_DISTRIBUTOR_ADDRESS:
-        sh: test -f .docker/deployment_summary.json && jq -r '.reward_contracts.reward_distributor' .docker/deployment_summary.json || echo ""
+      REWARD_DISTRIBUTOR_ADDRESS: "{{.REWARD_DISTRIBUTOR_ADDRESS}}"
     preconditions:
       - test -f .docker/deployment_summary.json
       - test -n "{{.REWARD_DISTRIBUTOR_ADDRESS}}"
     cmds:
       - |
         echo "Using reward distributor: {{.REWARD_DISTRIBUTOR_ADDRESS}}"
-        forge script script/Rewards.s.sol:Rewards \
+        forge script script/Merkler.s.sol:Merkler \
           --sig "queryContractState(string)" \
           "{{.REWARD_DISTRIBUTOR_ADDRESS}}" \
           --rpc-url {{.RPC_URL}}
@@ -138,10 +136,8 @@ tasks:
     vars:
       RPC_URL:
         sh: task get-rpc
-      REWARD_DISTRIBUTOR_ADDRESS:
-        sh: test -f .docker/deployment_summary.json && jq -r '.reward_contracts.reward_distributor' .docker/deployment_summary.json || echo ""
-      REWARDS_TOKEN_ADDRESS:
-        sh: test -f .docker/deployment_summary.json && jq -r '.reward_contracts.reward_token' .docker/deployment_summary.json || echo ""
+      REWARD_DISTRIBUTOR_ADDRESS: "{{.REWARD_DISTRIBUTOR_ADDRESS}}"
+      REWARDS_TOKEN_ADDRESS: "{{.REWARDS_TOKEN_ADDRESS}}"
     env:
       IPFS_GATEWAY_URL: "http://127.0.0.1:8080/ipfs/"
     preconditions:
@@ -152,7 +148,7 @@ tasks:
       - |
         echo "Using reward distributor: {{.REWARD_DISTRIBUTOR_ADDRESS}}"
         echo "Using rewards token: {{.REWARDS_TOKEN_ADDRESS}}"
-        forge script script/Rewards.s.sol:Rewards \
+        forge script script/Merkler.s.sol:Merkler \
           --sig "claimRewards(string,string)" \
           "{{.REWARD_DISTRIBUTOR_ADDRESS}}" \
           "{{.REWARDS_TOKEN_ADDRESS}}" \
@@ -164,8 +160,7 @@ tasks:
     vars:
       RPC_URL:
         sh: task get-rpc
-      REWARDS_TOKEN_ADDRESS:
-        sh: test -f .docker/deployment_summary.json && jq -r '.reward_contracts.reward_token' .docker/deployment_summary.json || echo ""
+      REWARDS_TOKEN_ADDRESS: "{{.REWARDS_TOKEN_ADDRESS}}"
     preconditions:
       - test -f .docker/deployment_summary.json
       - test -n "{{.REWARDS_TOKEN_ADDRESS}}"
@@ -173,7 +168,7 @@ tasks:
       - |
         echo "Querying rewards balance for: {{.WALLET_ADDRESS}}"
         echo "Using rewards token: {{.REWARDS_TOKEN_ADDRESS}}"
-        forge script script/Rewards.s.sol:Rewards \
+        forge script script/Merkler.s.sol:Merkler \
           --sig "queryBalance(string,string)" \
           "{{.REWARDS_TOKEN_ADDRESS}}" \
           "{{.WALLET_ADDRESS}}" \

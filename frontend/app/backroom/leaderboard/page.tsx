@@ -170,7 +170,7 @@ export default function LeaderboardPage() {
                         </td>
                         <td className="p-4">
                           <div className="terminal-bright text-sm">
-                            {formatAmount(entry.claimable)} {tokenSymbol}
+                            {formatAmount(entry.value)} {tokenSymbol}
                           </div>
                         </td>
                       </tr>

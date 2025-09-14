@@ -8,15 +8,17 @@ import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsSe
 
 import {Common} from "script/Common.s.sol";
 
+import {MerkleSnapshot} from "contracts/merkle/MerkleSnapshot.sol";
 import {RewardDistributor} from "contracts/rewards/RewardDistributor.sol";
 import {ENOVA} from "contracts/tokens/ERC20.sol";
 
-/// @dev Deployment script for RewardDistributor contract
+/// @dev Deployment script for MerklerSnapshot and RewardDistributor contracts
 contract DeployScript is Common {
     using stdJson for string;
 
     string public root = vm.projectRoot();
-    string public script_output_path = string.concat(root, "/.docker/rewards_deploy.json");
+    string public script_output_path =
+        string.concat(root, "/.docker/merkler_deploy.json");
 
     /**
      * @dev Deploys the RewardDistributor contract and writes the results to a JSON file
@@ -27,8 +29,15 @@ contract DeployScript is Common {
 
         vm.startBroadcast(_privateKey);
 
+        // Create the merkle snapshot contract
+        MerkleSnapshot merkleSnapshot = new MerkleSnapshot(
+            IWavsServiceManager(serviceManager)
+        );
+
         // Create the distributor which handles WAVS stuff.
-        RewardDistributor rewardDistributor = new RewardDistributor(IWavsServiceManager(serviceManager));
+        RewardDistributor rewardDistributor = new RewardDistributor(
+            IWavsServiceManager(serviceManager)
+        );
 
         // Deploy ENOVA token and mint tokens for the distributor.
         address deployer = vm.addr(_privateKey);
@@ -43,8 +52,18 @@ contract DeployScript is Common {
         vm.stopBroadcast();
 
         string memory _json = "json";
-        _json.serialize("reward_distributor", Strings.toChecksumHexString(address(rewardDistributor)));
-        string memory finalJson = _json.serialize("reward_token", Strings.toChecksumHexString(address(rewardToken)));
+        _json.serialize(
+            "merkle_snapshot",
+            Strings.toChecksumHexString(address(merkleSnapshot))
+        );
+        _json.serialize(
+            "reward_distributor",
+            Strings.toChecksumHexString(address(rewardDistributor))
+        );
+        string memory finalJson = _json.serialize(
+            "reward_token",
+            Strings.toChecksumHexString(address(rewardToken))
+        );
 
         vm.writeFile(script_output_path, finalJson);
     }

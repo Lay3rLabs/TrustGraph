@@ -17,11 +17,13 @@ Trust Aware PageRank is an enhanced version of the traditional PageRank algorith
 ### Standard PageRank vs Trust Aware PageRank
 
 **Standard PageRank:**
+
 - All attestations treated equally
 - Uniform initial score distribution
 - Vulnerable to Sybil attacks
 
 **Trust Aware PageRank:**
+
 - Attestations from trusted seeds get multiplied weight (e.g., 2x, 3x)
 - Trusted seeds receive initial score boost
 - Trust flows through the network via weighted edges
@@ -39,9 +41,10 @@ Trust Aware PageRank is an enhanced version of the traditional PageRank algorith
 Configure Trust Aware PageRank using these environment variables:
 
 #### Standard PageRank (No Trust)
+
 ```bash
 # Basic PageRank rewards
-WAVS_ENV_pagerank_reward_pool=1000000000000000000000  # 1000 tokens in wei
+WAVS_ENV_pagerank_points_pool=1000000000000000000000  # 1000 tokens in wei
 WAVS_ENV_pagerank_damping_factor=0.85
 WAVS_ENV_pagerank_max_iterations=100
 WAVS_ENV_pagerank_tolerance=0.000001
@@ -49,9 +52,10 @@ WAVS_ENV_pagerank_min_threshold=0.0001
 ```
 
 #### Trust Aware PageRank
+
 ```bash
 # Trust Aware PageRank configuration
-WAVS_ENV_pagerank_reward_pool=5000000000000000000000   # 5000 tokens in wei
+WAVS_ENV_pagerank_points_pool=5000000000000000000000   # 5000 tokens in wei
 WAVS_ENV_pagerank_trusted_seeds="0x742d35Cc6634C0532925a3b8D58C9e5F9d6b2244,0x1234567890123456789012345678901234567890"
 WAVS_ENV_pagerank_trust_multiplier=2.5  # 2.5x weight for trusted attestors
 WAVS_ENV_pagerank_trust_boost=0.15      # 15% initial score boost for trusted seeds
@@ -63,15 +67,15 @@ WAVS_ENV_pagerank_min_threshold=0.0001
 
 ### Configuration Parameters
 
-| Parameter | Description | Default | Range |
-|-----------|-------------|---------|-------|
-| `pagerank_trusted_seeds` | Comma-separated list of trusted attestor addresses | None | Valid Ethereum addresses |
-| `pagerank_trust_multiplier` | Weight multiplier for trusted attestations | 2.0 | ≥ 1.0 |
-| `pagerank_trust_boost` | Initial score boost for trusted seeds (as fraction) | 0.15 | 0.0 - 1.0 |
-| `pagerank_damping_factor` | PageRank damping factor | 0.85 | 0.0 - 1.0 |
-| `pagerank_max_iterations` | Maximum iterations for convergence | 100 | > 0 |
-| `pagerank_tolerance` | Convergence tolerance | 1e-6 | > 0 |
-| `pagerank_min_threshold` | Minimum score to receive rewards | 0.0001 | ≥ 0 |
+| Parameter                   | Description                                         | Default | Range                    |
+| --------------------------- | --------------------------------------------------- | ------- | ------------------------ |
+| `pagerank_trusted_seeds`    | Comma-separated list of trusted attestor addresses  | None    | Valid Ethereum addresses |
+| `pagerank_trust_multiplier` | Weight multiplier for trusted attestations          | 2.0     | ≥ 1.0                    |
+| `pagerank_trust_boost`      | Initial score boost for trusted seeds (as fraction) | 0.15    | 0.0 - 1.0                |
+| `pagerank_damping_factor`   | PageRank damping factor                             | 0.85    | 0.0 - 1.0                |
+| `pagerank_max_iterations`   | Maximum iterations for convergence                  | 100     | > 0                      |
+| `pagerank_tolerance`        | Convergence tolerance                               | 1e-6    | > 0                      |
+| `pagerank_min_threshold`    | Minimum score to receive rewards                    | 0.0001  | ≥ 0                      |
 
 ## Usage Examples
 
@@ -113,13 +117,15 @@ WAVS_ENV_pagerank_trust_boost=0.25      # 25% initial boost
 ### Trusted Seed Selection
 
 **Criteria for Trusted Seeds:**
+
 - ✅ Well-established entities with strong track records
-- ✅ Diverse set to prevent central points of failure  
+- ✅ Diverse set to prevent central points of failure
 - ✅ Economic incentives aligned with network health
 - ✅ Public identities with accountability
 - ✅ Active participation in the ecosystem
 
 **Avoid:**
+
 - ❌ Single point of control
 - ❌ Unknown or unverified entities
 - ❌ Conflicting interests
@@ -128,11 +134,13 @@ WAVS_ENV_pagerank_trust_boost=0.25      # 25% initial boost
 ### Parameter Tuning
 
 **Trust Multiplier Guidelines:**
+
 - Conservative: 1.5x - 2.0x
-- Moderate: 2.0x - 3.0x  
+- Moderate: 2.0x - 3.0x
 - Aggressive: 3.0x - 5.0x
 
 **Trust Boost Guidelines:**
+
 - Subtle: 0.05 - 0.10 (5-10%)
 - Moderate: 0.10 - 0.20 (10-20%)
 - Strong: 0.20 - 0.30 (20-30%)
@@ -144,7 +152,7 @@ Monitor these metrics for system health:
 ```
 📊 Trust Statistics (from logs):
   Trusted seeds: X addresses with Y total score (avg: Z)
-  Regular nodes: X addresses with Y total score (avg: Z)  
+  Regular nodes: X addresses with Y total score (avg: Z)
   Trust advantage: X.XXx average score
 ```
 
@@ -156,12 +164,12 @@ Monitor these metrics for system health:
 
 ### Attack Mitigation
 
-| Attack Type | How Trust Aware PageRank Helps |
-|-------------|--------------------------------|
-| **Sybil Attack** | Trusted seed validation prevents fake identities from gaining authority |
-| **Spam Rings** | Artificial attestation networks isolated from trusted pathways |
-| **Collusion** | Diverse trusted seed set reduces single points of failure |
-| **Trust Seed Compromise** | Multi-signature controls and governance for seed management |
+| Attack Type               | How Trust Aware PageRank Helps                                          |
+| ------------------------- | ----------------------------------------------------------------------- |
+| **Sybil Attack**          | Trusted seed validation prevents fake identities from gaining authority |
+| **Spam Rings**            | Artificial attestation networks isolated from trusted pathways          |
+| **Collusion**             | Diverse trusted seed set reduces single points of failure               |
+| **Trust Seed Compromise** | Multi-signature controls and governance for seed management             |
 
 ### Governance Process
 
@@ -212,16 +220,19 @@ let pagerank_source = PageRankRewardSource::new(
 ### Common Issues
 
 **Trust advantage < 1.0x:**
+
 - Check trusted seed addresses are valid
 - Ensure trusted seeds are actively participating
 - Verify trust_multiplier ≥ 1.0
 
 **No PageRank rewards distributed:**
-- Check `pagerank_reward_pool` > 0
+
+- Check `pagerank_points_pool` > 0
 - Verify attestation data exists for schema
 - Ensure `pagerank_min_threshold` not too high
 
 **Slow convergence:**
+
 - Increase `pagerank_max_iterations`
 - Adjust `pagerank_tolerance`
 - Check graph connectivity
@@ -229,6 +240,7 @@ let pagerank_source = PageRankRewardSource::new(
 ### Debug Logging
 
 The component provides detailed logging:
+
 ```
 🔒 Trust Aware PageRank enabled with X trusted seeds
 📊 Trust Statistics: [detailed breakdown]
@@ -248,6 +260,7 @@ The component provides detailed logging:
 ### Rollback Strategy
 
 If issues arise, you can disable trust features by removing or commenting out:
+
 ```bash
 # WAVS_ENV_pagerank_trusted_seeds="..."  # Comment out to disable
 ```

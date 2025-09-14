@@ -169,7 +169,7 @@ export default function GovernancePage() {
         <>
           {/* Voting Power Card */}
           <VotingPowerCard
-            userVotingPower={userVotingPower?.claimable}
+            userVotingPower={userVotingPower?.value}
             proposalThreshold={proposalThreshold}
             canCreateProposal={canCreateProposal}
             merkleData={merkleData}
@@ -245,7 +245,7 @@ export default function GovernancePage() {
           {/* Create Proposal Form */}
           <CreateProposalForm
             canCreateProposal={canCreateProposal}
-            userVotingPower={userVotingPower?.claimable}
+            userVotingPower={userVotingPower?.value}
             proposalThreshold={proposalThreshold}
             onCreateProposal={handleCreateProposal}
             isLoading={isLoading}
@@ -281,7 +281,7 @@ export default function GovernancePage() {
                 key={proposal.core.id.toString()}
                 proposal={proposal.core}
                 actions={proposal.actions}
-                userVotingPower={userVotingPower?.claimable}
+                userVotingPower={userVotingPower?.value}
                 onVote={handleVote}
                 onQueue={handleQueue}
                 onExecute={handleExecute}

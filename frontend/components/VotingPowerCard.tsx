@@ -1,17 +1,12 @@
 "use client";
 
+import { mockUsdcAddress } from "@/lib/contracts";
 import type React from "react";
 
 interface VotingPowerCardProps {
   userVotingPower?: string;
   proposalThreshold?: string;
   canCreateProposal?: boolean;
-  merkleData?: {
-    metadata: {
-      reward_token_address: string;
-      total_rewards: string;
-    };
-  } | null;
   formatVotingPower?: (amount: string) => string;
   isLoading?: boolean;
 }
@@ -20,7 +15,6 @@ export function VotingPowerCard({
   userVotingPower,
   proposalThreshold,
   canCreateProposal = false,
-  merkleData,
   formatVotingPower = (amount) => amount,
   isLoading = false,
 }: VotingPowerCardProps) {
@@ -79,17 +73,15 @@ export function VotingPowerCard({
           </div>
 
           {/* Token Information */}
-          {merkleData && (
-            <div className="border-t border-gray-700 pt-4 space-y-3">
-              <div className="terminal-bright text-sm">GOVERNANCE TOKEN</div>
-              <div className="space-y-2">
-                <div className="terminal-dim text-xs">TOKEN CONTRACT</div>
-                <div className="terminal-text text-sm font-mono break-all">
-                  {merkleData.metadata.reward_token_address}
-                </div>
+          <div className="border-t border-gray-700 pt-4 space-y-3">
+            <div className="terminal-bright text-sm">GOVERNANCE TOKEN</div>
+            <div className="space-y-2">
+              <div className="terminal-dim text-xs">TOKEN CONTRACT</div>
+              <div className="terminal-text text-sm font-mono break-all">
+                {mockUsdcAddress}
               </div>
             </div>
-          )}
+          </div>
 
           {/* Voting Power Status */}
           <div className="border-t border-gray-700 pt-4 space-y-3">

@@ -15,16 +15,16 @@ use wavs_wasi_utils::evm::{
 
 use super::Source;
 
-/// Types of EAS-based rewards.
+/// Types of EAS-based points.
 #[derive(Clone, Debug)]
-pub enum EasRewardType {
-    /// Rewards based on received attestations count for a specific schema.
+pub enum EasSourceType {
+    /// Points based on received attestations count for a specific schema.
     ReceivedAttestations(String),
-    /// Rewards based on sent attestations count for a specific schema.
+    /// Points based on sent attestations count for a specific schema.
     SentAttestations(String),
 }
 
-/// Compute rewards from EAS attestations.
+/// Compute points from EAS attestations.
 pub struct EasSource {
     /// EAS contract address.
     pub eas_address: Address,
@@ -32,10 +32,10 @@ pub struct EasSource {
     pub indexer_address: Address,
     /// Chain name for configuration.
     pub chain_name: String,
-    /// Type of EAS reward to compute.
-    pub reward_type: EasRewardType,
-    /// Rewards per attestation.
-    pub rewards_per_attestation: U256,
+    /// Type of EAS points to compute.
+    pub source_type: EasSourceType,
+    /// Points per attestation.
+    pub points_per_attestation: U256,
 }
 
 impl EasSource {
@@ -43,8 +43,8 @@ impl EasSource {
         eas_address: &str,
         indexer_address: &str,
         chain_name: &str,
-        reward_type: EasRewardType,
-        rewards_per_attestation: U256,
+        source_type: EasSourceType,
+        points_per_attestation: U256,
     ) -> Self {
         let eas_addr = Address::from_str(eas_address).unwrap();
         let indexer_addr = Address::from_str(indexer_address).unwrap();
@@ -53,8 +53,8 @@ impl EasSource {
             eas_address: eas_addr,
             indexer_address: indexer_addr,
             chain_name: chain_name.to_string(),
-            reward_type,
-            rewards_per_attestation,
+            source_type,
+            points_per_attestation,
         }
     }
 
@@ -76,36 +76,36 @@ impl Source for EasSource {
     }
 
     async fn get_accounts(&self) -> Result<Vec<String>> {
-        match &self.reward_type {
-            EasRewardType::ReceivedAttestations(schema_uid) => {
+        match &self.source_type {
+            EasSourceType::ReceivedAttestations(schema_uid) => {
                 self.get_accounts_with_received_attestations(schema_uid).await
             }
-            EasRewardType::SentAttestations(schema_uid) => {
+            EasSourceType::SentAttestations(schema_uid) => {
                 self.get_accounts_with_sent_attestations(schema_uid).await
             }
         }
     }
 
-    async fn get_rewards(&self, account: &str) -> Result<U256> {
+    async fn get_value(&self, account: &str) -> Result<U256> {
         let address = Address::from_str(account)?;
-        let attestation_count = match &self.reward_type {
-            EasRewardType::ReceivedAttestations(schema_uid) => {
+        let attestation_count = match &self.source_type {
+            EasSourceType::ReceivedAttestations(schema_uid) => {
                 self.query_received_attestation_count(address, schema_uid).await?
             }
-            EasRewardType::SentAttestations(schema_uid) => {
+            EasSourceType::SentAttestations(schema_uid) => {
                 self.query_sent_attestation_count(address, schema_uid).await?
             }
         };
 
-        Ok(self.rewards_per_attestation * U256::from(attestation_count))
+        Ok(self.points_per_attestation * U256::from(attestation_count))
     }
 
     async fn get_metadata(&self) -> Result<serde_json::Value> {
-        let (reward_type_str, schema_uid) = match &self.reward_type {
-            EasRewardType::ReceivedAttestations(schema) => {
+        let (source_type_str, schema_uid) = match &self.source_type {
+            EasSourceType::ReceivedAttestations(schema) => {
                 ("received_attestations".to_string(), schema.clone())
             }
-            EasRewardType::SentAttestations(schema) => {
+            EasSourceType::SentAttestations(schema) => {
                 ("sent_attestations".to_string(), schema.clone())
             }
         };
@@ -114,9 +114,9 @@ impl Source for EasSource {
             "eas_address": self.eas_address.to_string(),
             "indexer_address": self.indexer_address.to_string(),
             "chain_name": self.chain_name,
-            "reward_type": reward_type_str,
+            "source_type": source_type_str,
             "schema_uid": schema_uid,
-            "rewards_per_attestation": self.rewards_per_attestation.to_string(),
+            "points_per_attestation": self.points_per_attestation.to_string(),
         }))
     }
 }

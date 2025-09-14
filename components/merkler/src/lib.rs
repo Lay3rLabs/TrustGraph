@@ -23,12 +23,7 @@ export!(Component with_types_in bindings);
 
 impl Guest for Component {
     fn run(action: TriggerAction) -> std::result::Result<Option<WasmResponse>, String> {
-        println!("🚀 Starting rewards component execution");
-
-        let reward_token_address =
-            config_var("reward_token").ok_or_else(|| "Failed to get reward token address")?;
-        // let reward_source_nft_address =
-        //     config_var("reward_source_nft").ok_or_else(|| "Failed to get NFT address")?;
+        println!("🚀 Starting merkler component execution");
 
         // EAS-related configuration
         let eas_address = config_var("eas_address").ok_or_else(|| "Failed to get EAS address")?;
@@ -37,7 +32,6 @@ impl Guest for Component {
         let chain_name = config_var("chain_name").unwrap_or_else(|| "local".to_string());
 
         println!("📋 Configuration loaded:");
-        println!("  - Reward token: {}", reward_token_address);
         println!("  - EAS address: {}", eas_address);
         println!("  - Indexer: {}", indexer_address);
         println!("  - Chain: {}", chain_name);
@@ -56,28 +50,28 @@ impl Guest for Component {
             }
         };
 
-        let trigger_id = decode_trigger_event(action.data).map_err(|e| e.to_string())?;
-        println!("🔧 Trigger ID: {:?}", trigger_id);
+        let trigger = decode_trigger_event(action.data).map_err(|e| e.to_string())?;
+        println!("🔧 Trigger: {:?}", trigger);
 
         let mut registry = SourceRegistry::new();
 
         // Add EAS sources - requires schema UID for attestations
-        let schema_uid = config_var("reward_schema_uid")
-            .ok_or_else(|| "Failed to get reward_schema_uid - this is required for EAS rewards")?;
+        let schema_uid = config_var("schema_uid")
+            .ok_or_else(|| "Failed to get schema_uid - this is required for EAS points")?;
 
         println!("📋 Using schema UID: {}", schema_uid);
 
-        // Reward users for received attestations - 5e17 rewards per attestation
+        // Reward users for received attestations - 5e17 points per attestation
         registry.add_source(sources::eas::EasSource::new(
             &eas_address,
             &indexer_address,
             &chain_name,
-            sources::eas::EasRewardType::ReceivedAttestations(schema_uid.clone()),
+            sources::eas::EasSourceType::ReceivedAttestations(schema_uid.clone()),
             U256::from(5e17),
         ));
-        println!("✅ Added EAS source for received attestations (5e17 rewards each)");
+        println!("✅ Added EAS source for received attestations (5e17 points each)");
 
-        // // Reward users for sent attestations - 3e17 rewards per attestation
+        // // Reward users for sent attestations - 3e17 points per attestation
         // registry.add_source(sources::eas::EasSource::new(
         //     &eas_address,
         //     &eas_indexer_address,
@@ -86,7 +80,7 @@ impl Guest for Component {
         //     U256::from(3e17),
         // ));
 
-        // Reward users for prediction market interactions (1e18 rewards per type+contract interacted with, so 2e18 if user trades and also redeems on same market, and 1e18 if only trades but no redeem)
+        // Reward users for prediction market interactions (1e18 points per type+contract interacted with, so 2e18 if user trades and also redeems on same market, and 1e18 if only trades but no redeem)
         registry.add_source(sources::interactions::InteractionsSource::new(
             &chain_name,
             &indexer_address,
@@ -102,16 +96,16 @@ impl Guest for Component {
             true,
         ));
 
-        // Add PageRank-based EAS rewards if configured
-        if let Some(pagerank_pool_str) = config_var("pagerank_reward_pool") {
+        // Add PageRank-based EAS points if configured
+        if let Some(pagerank_pool_str) = config_var("pagerank_points_pool") {
             let pool_amount = U256::from_str(&pagerank_pool_str)
                 .unwrap_or_else(|_| U256::from(1000000000000000000000u128)); // Default 1000 tokens in wei
 
-            // Safety check: prevent excessive reward pools
+            // Safety check: prevent excessive points pools
             let max_pool_size = U256::from(10000000000000000000000000u128); // 10M tokens max
             if pool_amount > max_pool_size {
                 return Err(format!(
-                    "PageRank reward pool too large: {} (max allowed: {})",
+                    "PageRank points pool too large: {} (max allowed: {})",
                     pool_amount, max_pool_size
                 ));
             }
@@ -208,11 +202,11 @@ impl Guest for Component {
                     registry.add_source(pagerank_source);
                     if has_trust {
                         println!(
-                            "✅ Added Trust Aware EAS PageRank source with {} reward pool",
+                            "✅ Added Trust Aware EAS PageRank source with {} points pool",
                             pool_amount
                         );
                     } else {
-                        println!("✅ Added EAS PageRank source with {} reward pool", pool_amount);
+                        println!("✅ Added EAS PageRank source with {} points pool", pool_amount);
                     }
                 }
                 Err(e) => {
@@ -220,18 +214,18 @@ impl Guest for Component {
                 }
             }
         } else {
-            println!("ℹ️  PageRank rewards disabled (no pagerank_reward_pool configured)");
+            println!("ℹ️  PageRank points disabled (no pagerank_points_pool configured)");
         }
 
-        // Example: Reward for specific schema attestations
-        // Uncomment and configure to reward attestations to a specific schema
-        // if let Ok(schema_uid) = config_var("reward_schema_uid") {
+        // Example: Points for specific schema attestations
+        // Uncomment and configure to points attestations to a specific schema
+        // if let Ok(schema_uid) = config_var("schema_uid") {
         //     registry.add_source(sources::eas::EasSource::new(
         //         &eas_address,
         //         &eas_indexer_address,
         //         &chain_name,
         //         sources::eas::EasRewardType::SchemaAttestations(schema_uid),
-        //         U256::from(1e18), // 1e18 rewards per schema attestation
+        //         U256::from(1e18), // 1e18 points per schema attestation
         //     ));
         // }
 
@@ -245,15 +239,10 @@ impl Guest for Component {
                 .into_iter()
                 .map(|account| {
                     let registry = &registry;
-                    let reward_token_address = reward_token_address.clone();
                     async move {
-                        let amount =
-                            registry.get_rewards(&account).await.map_err(|e| e.to_string())?;
-                        Ok::<Vec<String>, String>(vec![
-                            account,
-                            reward_token_address,
-                            amount.to_string(),
-                        ])
+                        let value =
+                            registry.get_value(&account).await.map_err(|e| e.to_string())?;
+                        Ok::<Vec<String>, String>(vec![account, value.to_string()])
                     }
                 })
                 .collect::<Vec<_>>();
@@ -263,44 +252,44 @@ impl Guest for Component {
                 .into_iter()
                 .collect::<Result<Vec<_>, _>>()?;
 
-            // Calculate total rewards with safety checks
-            let mut total_rewards_sum = U256::ZERO;
+            // Calculate total points with safety checks
+            let mut total_value = U256::ZERO;
             let max_reasonable_total = U256::from(100000000000000000000000000u128); // 100M tokens max
 
             for result in &results {
-                let amount = U256::from_str(&result[2])
-                    .map_err(|e| format!("Invalid reward amount '{}': {}", result[2], e))?;
-                total_rewards_sum = total_rewards_sum
+                let amount = U256::from_str(&result[1])
+                    .map_err(|e| format!("Invalid amount '{}': {}", result[1], e))?;
+                total_value = total_value
                     .checked_add(amount)
-                    .ok_or_else(|| "Total rewards calculation overflow".to_string())?;
+                    .ok_or_else(|| "Total calculation overflow".to_string())?;
             }
 
             // Safety check: prevent unreasonably large total distributions
-            if total_rewards_sum > max_reasonable_total {
+            if total_value > max_reasonable_total {
                 return Err(format!(
-                    "Total rewards exceed reasonable limit: {} (max: {})",
-                    total_rewards_sum, max_reasonable_total
+                    "Total exceeds reasonable limit: {} (max: {})",
+                    total_value, max_reasonable_total
                 ));
             }
 
-            let total_rewards = total_rewards_sum.to_string();
+            let total_value_str = total_value.to_string();
 
-            println!("💰 Calculated rewards for {} accounts", results.len());
-            println!("💎 Total rewards to distribute: {}", total_rewards);
+            println!("💰 Calculated points for {} accounts", results.len());
+            println!("💎 Total points assigned: {}", total_value_str);
 
             if results.len() == 0 {
-                println!("⚠️  No accounts to distribute rewards to");
+                println!("⚠️  No accounts to distribute points to");
                 return Ok(None);
             }
 
-            // Additional safety check: verify no individual reward is excessive
+            // Additional safety check: verify no individual value is excessive
             for result in &results {
-                let amount = U256::from_str(&result[2]).unwrap();
-                let max_individual_reward = U256::from(10000000000000000000000u128); // 10K tokens max per account
-                if amount > max_individual_reward {
+                let amount = U256::from_str(&result[1]).unwrap();
+                let max_individual_value = U256::from(10000000000000000000000u128); // 10K tokens max per account
+                if amount > max_individual_value {
                     return Err(format!(
-                        "Individual reward for account {} exceeds limit: {} (max: {})",
-                        result[0], amount, max_individual_reward
+                        "Individual value for account {} exceeds limit: {} (max: {})",
+                        result[0], amount, max_individual_value
                     ));
                 }
             }
@@ -318,8 +307,7 @@ impl Guest for Component {
                 id: root.clone(),
                 metadata: json!({
                     "num_accounts": results.len(),
-                    "reward_token_address": reward_token_address,
-                    "total_rewards": total_rewards,
+                    "total_value": total_value_str,
                     "sources": sources_with_metadata,
                 }),
                 root: root.clone(),
@@ -331,18 +319,17 @@ impl Guest for Component {
                 let proof = tree.get_proof(LeafType::LeafBytes(value.clone()));
                 ipfs_data.tree.push(MerkleTreeEntry {
                     account: value[0].clone(),
-                    reward: value[1].clone(),
-                    claimable: value[2].clone(),
+                    value: value[1].clone(),
                     proof,
                 });
             });
 
             let ipfs_data_json = serde_json::to_string(&ipfs_data).map_err(|e| e.to_string())?;
-            println!("📤 Uploading rewards data to IPFS...");
+            println!("📤 Uploading merkle tree to IPFS...");
 
             let cid = ipfs::upload_json_to_ipfs(
                 &ipfs_data_json,
-                &format!("rewards_{}.json", ipfs_data.root),
+                &format!("merkle_{}.json", ipfs_data.root),
                 &ipfs_url,
                 ipfs_api_key.as_deref(),
             )
@@ -352,15 +339,7 @@ impl Guest for Component {
             println!("✅ Successfully uploaded to IPFS with CID: {}", cid);
 
             let ipfs_hash = cid.hash().digest();
-
-            let payload = encode_trigger_output(
-                trigger_id,
-                solidity::AvsOutput {
-                    root: serde_json::from_value(root_bytes.into()).unwrap(),
-                    ipfsHashData: serde_json::from_value(ipfs_hash.into()).unwrap(),
-                    ipfsHash: cid.to_string(),
-                },
-            );
+            let payload = encode_trigger_output(trigger, &root_bytes, ipfs_hash, cid.to_string())?;
 
             println!("🎉 Rewards component execution completed successfully");
             println!("📦 Final payload size: {} bytes", payload.len());
@@ -373,8 +352,9 @@ impl Guest for Component {
 pub mod solidity {
     use alloy_sol_macro::sol;
     pub use ITypes::*;
-
     sol!("../../src/interfaces/ITypes.sol");
+    pub use IMerkler::*;
+    sol!("../../src/interfaces/IMerkler.sol");
 }
 
 #[derive(Serialize)]
@@ -388,8 +368,7 @@ struct MerkleTreeIpfsData {
 #[derive(Serialize)]
 struct MerkleTreeEntry {
     account: String,
-    reward: String,
-    claimable: String,
+    value: String,
     proof: Vec<String>,
 }
 
@@ -401,9 +380,8 @@ struct MerkleTreeEntry {
 //     "root": "The merkle root of the tree",
 //     "tree": [
 //       {
-//         "account": "The address of the claimer",
-//         "reward": "The address of the reward token",
-//         "claimable": "The claimable amount as a big number string",
+//         "account": "The address of the account",
+//         "value": "The value associated with the account",
 //         "proof": ["0x1...", "0x2...", "...", "0xN..."]
 //       }
 //     ]

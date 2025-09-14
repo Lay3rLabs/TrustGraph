@@ -7,11 +7,12 @@ import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsSe
 import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import {ITypes} from "interfaces/ITypes.sol";
+import {IMerkler} from "interfaces/IMerkler.sol";
 
 /// @title MerkleGovModule - Zodiac module for merkle-based governance
 /// @notice Combines merkle voting verification with Zodiac's execution capabilities
 /// @dev Implements IWavsServiceHandler for merkle root updates via WAVS
-contract MerkleGovModule is Module, IWavsServiceHandler {
+contract MerkleGovModule is Module, IWavsServiceHandler, IMerkler {
     /*///////////////////////////////////////////////////////////////
                                 TYPES
     //////////////////////////////////////////////////////////////*/
@@ -305,15 +306,14 @@ contract MerkleGovModule is Module, IWavsServiceHandler {
         _serviceManager.validate(envelope, signatureData);
 
         // Decode payload
-        ITypes.DataWithId memory dataWithId = abi.decode(envelope.payload, (ITypes.DataWithId));
-        ITypes.AvsOutput memory avsOutput = abi.decode(dataWithId.data, (ITypes.AvsOutput));
+        MerklerAvsOutput memory avsOutput = abi.decode(envelope.payload, (MerklerAvsOutput));
 
         // Update merkle root
         currentMerkleRoot = avsOutput.root;
-        ipfsHash = avsOutput.ipfsHashData;
-        ipfsHashCid = avsOutput.ipfsHash;
+        ipfsHash = avsOutput.ipfsHash;
+        ipfsHashCid = avsOutput.ipfsHashCid;
 
-        emit MerkleRootUpdated(avsOutput.root, avsOutput.ipfsHashData, avsOutput.ipfsHash);
+        emit MerkleRootUpdated(avsOutput.root, avsOutput.ipfsHash, avsOutput.ipfsHashCid);
     }
 
     /**

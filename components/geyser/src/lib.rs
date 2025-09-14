@@ -223,11 +223,8 @@ async fn execute_call(
 
 pub mod solidity {
     use alloy_sol_macro::sol;
-    pub use ITypes::*;
-
-    sol!("../../src/interfaces/ITypes.sol");
-
     sol! {
+        event UpdateService(string json);
         function getServiceURI() external view returns (string memory);
     }
 }
