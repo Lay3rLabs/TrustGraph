@@ -45,6 +45,7 @@
       "trigger_json_path": "merkler.merkle_snapshot",
       "submit_json_path": "merkler.merkle_snapshot",
       "config_values": {
+        "events_dir": "./events",
         "eas_address": "${EAS_ADDRESS}",
         "indexer_address": "${INDEXER_ADDRESS}",
         "chain_name": "${CHAIN_NAME}",

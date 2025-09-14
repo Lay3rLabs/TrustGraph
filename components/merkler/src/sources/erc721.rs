@@ -1,10 +1,11 @@
-use crate::bindings::host::get_evm_chain_config;
+use crate::{bindings::host::get_evm_chain_config, sources::SourceEvent};
 use alloy_network::Ethereum;
 use alloy_provider::{Provider, RootProvider};
 use alloy_rpc_types::TransactionInput;
 use alloy_sol_types::{sol, SolCall, SolType};
 use anyhow::Result;
 use async_trait::async_trait;
+use serde_json::json;
 use std::str::FromStr;
 use wavs_wasi_utils::evm::{
     alloy_primitives::{Address, TxKind, U256},
@@ -39,10 +40,21 @@ impl Source for Erc721Source {
         Ok(holders)
     }
 
-    async fn get_value(&self, account: &str) -> Result<U256> {
+    async fn get_events_and_value(&self, account: &str) -> Result<(Vec<SourceEvent>, U256)> {
         let address = Address::from_str(account).unwrap();
         let nft_balance = self.query_nft_ownership(address).await?;
-        Ok(self.points_per_token * nft_balance)
+        let source_events: Vec<SourceEvent> = (0..nft_balance.to::<u64>())
+            .map(|_| SourceEvent {
+                r#type: "ERC721".to_string(),
+                timestamp: 0,
+                value: self.points_per_token,
+                metadata: Some(json!({
+                    "address": address.to_string(),
+                })),
+            })
+            .collect();
+        let total_value = self.points_per_token * U256::from(source_events.len());
+        Ok((source_events, total_value))
     }
 
     async fn get_metadata(&self) -> Result<serde_json::Value> {

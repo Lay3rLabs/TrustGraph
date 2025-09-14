@@ -6,12 +6,14 @@ mod sources;
 mod trigger;
 
 use crate::bindings::{export, host::config_var, Guest, TriggerAction};
-use crate::sources::SourceRegistry;
+use crate::sources::{SourceEvent, SourceRegistry};
 use bindings::WasmResponse;
 use merkle::get_merkle_tree;
 use merkle_tree_rs::standard::LeafType;
 use serde::Serialize;
 use serde_json::json;
+use std::fs::File;
+use std::path::Path;
 use std::str::FromStr;
 use trigger::{decode_trigger_event, encode_trigger_output};
 use wavs_wasi_utils::evm::alloy_primitives::{hex, U256};
@@ -24,6 +26,20 @@ export!(Component with_types_in bindings);
 impl Guest for Component {
     fn run(action: TriggerAction) -> std::result::Result<Option<WasmResponse>, String> {
         println!("🚀 Starting merkler component execution");
+
+        let events_dir = config_var("events_dir").unwrap_or_else(|| "./events".to_string());
+        let events_dir = Path::new(events_dir.trim_end_matches("/"));
+        if !events_dir.exists() {
+            std::fs::create_dir_all(events_dir).map_err(|e| {
+                format!(
+                    "Failed to create events directory at {}: {}",
+                    events_dir.display(),
+                    e.to_string()
+                )
+            })?;
+        } else if !events_dir.is_dir() {
+            return Err(format!("Events directory {} is not a directory", events_dir.display()));
+        }
 
         // EAS-related configuration
         let eas_address = config_var("eas_address").ok_or_else(|| "Failed to get EAS address")?;
@@ -99,10 +115,10 @@ impl Guest for Component {
         // Add PageRank-based EAS points if configured
         if let Some(pagerank_pool_str) = config_var("pagerank_points_pool") {
             let pool_amount = U256::from_str(&pagerank_pool_str)
-                .unwrap_or_else(|_| U256::from(1000000000000000000000u128)); // Default 1000 tokens in wei
+                .unwrap_or_else(|_| U256::from(1000000000000000000000u128)); // Default 1000 points in wei
 
             // Safety check: prevent excessive points pools
-            let max_pool_size = U256::from(10000000000000000000000000u128); // 10M tokens max
+            let max_pool_size = U256::from(10000000000000000000000000u128); // 10M points max
             if pool_amount > max_pool_size {
                 return Err(format!(
                     "PageRank points pool too large: {} (max allowed: {})",
@@ -234,29 +250,34 @@ impl Guest for Component {
             let accounts = registry.get_accounts().await.map_err(|e| e.to_string())?;
             println!("👥 Found {} unique accounts", accounts.len());
 
-            // each value is [address, token, amount]
-            let values = accounts
+            // each value is [address, amount]
+            let events_and_values = accounts
                 .into_iter()
                 .map(|account| {
                     let registry = &registry;
                     async move {
-                        let value =
-                            registry.get_value(&account).await.map_err(|e| e.to_string())?;
-                        Ok::<Vec<String>, String>(vec![account, value.to_string()])
+                        let (events, value) = registry
+                            .get_events_and_value(&account)
+                            .await
+                            .map_err(|e| e.to_string())?;
+                        Ok::<(Vec<SourceEvent>, Vec<String>), String>((
+                            events,
+                            vec![account, value.to_string()],
+                        ))
                     }
                 })
                 .collect::<Vec<_>>();
 
-            let results = futures::future::join_all(values)
+            let results = futures::future::join_all(events_and_values)
                 .await
                 .into_iter()
                 .collect::<Result<Vec<_>, _>>()?;
 
             // Calculate total points with safety checks
             let mut total_value = U256::ZERO;
-            let max_reasonable_total = U256::from(100000000000000000000000000u128); // 100M tokens max
+            let max_reasonable_total = U256::from(100000000000000000000000000u128); // 100M points max
 
-            for result in &results {
+            for (_, result) in &results {
                 let amount = U256::from_str(&result[1])
                     .map_err(|e| format!("Invalid amount '{}': {}", result[1], e))?;
                 total_value = total_value
@@ -283,9 +304,9 @@ impl Guest for Component {
             }
 
             // Additional safety check: verify no individual value is excessive
-            for result in &results {
+            for (_, result) in &results {
                 let amount = U256::from_str(&result[1]).unwrap();
-                let max_individual_value = U256::from(10000000000000000000000u128); // 10K tokens max per account
+                let max_individual_value = U256::from(10000000000000000000000u128); // 10K points max per account
                 if amount > max_individual_value {
                     return Err(format!(
                         "Individual value for account {} exceeds limit: {} (max: {})",
@@ -294,7 +315,9 @@ impl Guest for Component {
                 }
             }
 
-            let tree = get_merkle_tree(results.clone())?;
+            let tree = get_merkle_tree(
+                results.iter().map(|(_, value)| value.clone()).collect::<Vec<_>>(),
+            )?;
             let root = tree.root();
             let root_bytes = hex::decode(&root).map_err(|e| e.to_string())?;
 
@@ -315,7 +338,7 @@ impl Guest for Component {
             };
 
             // get proof for each value
-            results.into_iter().for_each(|value| {
+            results.iter().for_each(|(_, value)| {
                 let proof = tree.get_proof(LeafType::LeafBytes(value.clone()));
                 ipfs_data.tree.push(MerkleTreeEntry {
                     account: value[0].clone(),
@@ -337,6 +360,18 @@ impl Guest for Component {
             .map_err(|e| format!("Failed to upload IPFS: {}", e))?;
 
             println!("✅ Successfully uploaded to IPFS with CID: {}", cid);
+
+            println!("🗃️ Writing account events to {}...", events_dir.display());
+            results
+                .into_iter()
+                .map(|(events, value)| {
+                    let file_path = events_dir.join(format!("{}.json", value[0]));
+                    let file = File::create(file_path).unwrap();
+                    serde_json::to_writer(file, &events)
+                })
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|e| format!("Failed to write events to files: {}", e.to_string()))?;
+            println!("✅ Successfully wrote account events");
 
             let ipfs_hash = cid.hash().digest();
             let payload = encode_trigger_output(trigger, &root_bytes, ipfs_hash, cid.to_string())?;

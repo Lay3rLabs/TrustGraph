@@ -1,4 +1,4 @@
-use crate::bindings::host::get_evm_chain_config;
+use crate::{bindings::host::get_evm_chain_config, sources::SourceEvent};
 use alloy_network::Ethereum;
 use alloy_provider::{Provider, RootProvider};
 use alloy_rpc_types::TransactionInput;
@@ -86,7 +86,7 @@ impl Source for EasSource {
         }
     }
 
-    async fn get_value(&self, account: &str) -> Result<U256> {
+    async fn get_events_and_value(&self, account: &str) -> Result<(Vec<SourceEvent>, U256)> {
         let address = Address::from_str(account)?;
         let attestation_count = match &self.source_type {
             EasSourceType::ReceivedAttestations(schema_uid) => {
@@ -97,7 +97,20 @@ impl Source for EasSource {
             }
         };
 
-        Ok(self.points_per_attestation * U256::from(attestation_count))
+        let total_value = self.points_per_attestation * U256::from(attestation_count);
+
+        let source_events: Vec<SourceEvent> = if !total_value.is_zero() {
+            vec![SourceEvent {
+                r#type: self.get_name().to_string(),
+                timestamp: 0,
+                value: total_value,
+                metadata: None,
+            }]
+        } else {
+            vec![]
+        };
+
+        Ok((source_events, total_value))
     }
 
     async fn get_metadata(&self) -> Result<serde_json::Value> {

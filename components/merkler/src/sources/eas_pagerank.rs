@@ -1,5 +1,6 @@
 use crate::bindings::host::get_evm_chain_config;
 use crate::pagerank::{AttestationGraph, PageRankRewardSource};
+use crate::sources::SourceEvent;
 use alloy_network::Ethereum;
 use alloy_provider::{Provider, RootProvider};
 use alloy_rpc_types::TransactionInput;
@@ -430,10 +431,21 @@ impl Source for EasPageRankSource {
         Ok(points.keys().map(|addr| addr.to_string()).collect())
     }
 
-    async fn get_value(&self, account: &str) -> Result<U256> {
+    async fn get_events_and_value(&self, account: &str) -> Result<(Vec<SourceEvent>, U256)> {
         let address = Address::from_str(account)?;
         let points = self.calculate_pagerank_points().await?;
-        Ok(points.get(&address).copied().unwrap_or(U256::ZERO))
+        let total_value = points.get(&address).copied().unwrap_or(U256::ZERO);
+        let source_events: Vec<SourceEvent> = if !total_value.is_zero() {
+            vec![SourceEvent {
+                r#type: self.get_name().to_string(),
+                timestamp: 0,
+                value: total_value,
+                metadata: None,
+            }]
+        } else {
+            vec![]
+        };
+        Ok((source_events, total_value))
     }
 
     async fn get_metadata(&self) -> Result<serde_json::Value> {

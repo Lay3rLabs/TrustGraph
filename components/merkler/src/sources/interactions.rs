@@ -1,6 +1,7 @@
-use crate::bindings::host::get_evm_chain_config;
+use crate::{bindings::host::get_evm_chain_config, sources::SourceEvent};
 use anyhow::Result;
 use async_trait::async_trait;
+use serde_json::json;
 use std::collections::HashSet;
 use std::str::FromStr;
 use wavs_indexer_api::WavsIndexerQuerier;
@@ -113,51 +114,81 @@ impl Source for InteractionsSource {
         Ok(result)
     }
 
-    async fn get_value(&self, account: &str) -> Result<U256> {
+    async fn get_events_and_value(&self, account: &str) -> Result<(Vec<SourceEvent>, U256)> {
         let address = Address::from_str(account)?;
         let indexer_querier = self.indexer_querier().await?;
-        let mut interaction_count = indexer_querier
+        let interaction_count = indexer_querier
             .get_interaction_count_by_type_and_address(&self.interaction_type, address)
             .await
             .map_err(|e| anyhow::anyhow!(e))?;
 
-        // If only one interaction per contract, filter out duplicates.
-        if self.one_per_contract {
-            let mut contracts = HashSet::new();
-            let batch_size = 100u64;
-            let mut start = 0u64;
+        let mut source_events: Vec<SourceEvent> = Vec::new();
+        let mut contracts: HashSet<String> = HashSet::new();
+        let batch_size = 100u64;
+        let mut start = 0u64;
 
-            while start < interaction_count {
-                let length = std::cmp::min(batch_size, interaction_count - start);
-                println!(
-                    "🔄 Fetching interactions batch for type {}: {} to {}",
-                    self.interaction_type,
+        while start < interaction_count {
+            let length = std::cmp::min(batch_size, interaction_count - start);
+            println!(
+                "🔄 Fetching interactions batch for type {}: {} to {}",
+                self.interaction_type,
+                start,
+                start + length - 1
+            );
+
+            let events = indexer_querier
+                .get_interactions_by_type_and_address(
+                    &self.interaction_type,
+                    address,
                     start,
-                    start + length - 1
-                );
+                    length,
+                    false,
+                )
+                .await
+                .map_err(|e| anyhow::anyhow!(e))?;
 
-                let events = indexer_querier
-                    .get_interactions_by_type_and_address(
-                        &self.interaction_type,
-                        address,
-                        start,
-                        length,
-                        false,
-                    )
-                    .await
-                    .map_err(|e| anyhow::anyhow!(e))?;
-
-                for event in events {
-                    contracts.insert(event.relevantContract.to_string());
+            for event in events {
+                // If only one interaction per contract, filter out duplicates.
+                if self.one_per_contract {
+                    if !contracts.contains(&event.relevantContract.to_string()) {
+                        contracts.insert(event.relevantContract.to_string());
+                        source_events.push(SourceEvent {
+                            r#type: self.interaction_type.clone(),
+                            timestamp: event.timestamp.to::<u64>(),
+                            value: self.points_per_interaction,
+                            metadata: Some(json!({
+                                "eventId": event.eventId.to_string(),
+                                "chainId": event.chainId,
+                                "block": event.blockNumber.to::<u64>(),
+                                "contract": event.relevantContract.to_string(),
+                                "tags": event.tags,
+                                "data": event.data.to_string(),
+                            })),
+                        });
+                    }
+                } else {
+                    source_events.push(SourceEvent {
+                        r#type: self.interaction_type.clone(),
+                        timestamp: event.timestamp.to::<u64>(),
+                        value: self.points_per_interaction,
+                        metadata: Some(json!({
+                            "eventId": event.eventId.to_string(),
+                            "chainId": event.chainId,
+                            "block": event.blockNumber.to::<u64>(),
+                            "contract": event.relevantContract.to_string(),
+                            "tags": event.tags,
+                            "data": event.data.to_string(),
+                        })),
+                    });
                 }
-
-                start += length;
             }
 
-            interaction_count = contracts.len() as u64;
+            start += length;
         }
 
-        Ok(self.points_per_interaction * U256::from(interaction_count))
+        let total_value = self.points_per_interaction * U256::from(source_events.len());
+
+        Ok((source_events, total_value))
     }
 
     async fn get_metadata(&self) -> Result<serde_json::Value> {
