@@ -2,8 +2,9 @@
 
 import type React from 'react'
 import { useState } from 'react'
-import { useServiceData } from '@/hooks/useServiceData'
 import { useAccount } from 'wagmi'
+
+import { useServiceData } from '@/hooks/useServiceData'
 import { poaServiceManagerAddress } from '@/lib/contracts'
 
 export default function ExplorerServicesPage() {

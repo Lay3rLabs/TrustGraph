@@ -1,25 +1,26 @@
-"use client";
+'use client'
 
-import type React from "react";
-import { useState, useRef, useEffect } from "react";
-import PredictionBuyForm from "@/components/PredictionBuyForm";
-import PredictionRedeemForm from "@/components/PredictionRedeemForm";
-import { formatNumber } from "@/lib/utils";
-import { Line } from "react-chartjs-2";
 import {
-  Chart as ChartJS,
-  Tooltip,
-  Legend,
-  ChartOptions,
-  LineElement,
-  PointElement,
-  LinearScale,
   CategoryScale,
-  TimeScale,
   ChartData,
+  Chart as ChartJS,
+  ChartOptions,
+  Legend,
+  LineElement,
+  LinearScale,
+  PointElement,
   ScriptableContext,
-} from "chart.js";
-import "chartjs-adapter-luxon";
+  TimeScale,
+  Tooltip,
+} from 'chart.js'
+import type React from 'react'
+import { useState } from 'react'
+import { Line } from 'react-chartjs-2'
+
+import PredictionBuyForm from '@/components/PredictionBuyForm'
+import PredictionRedeemForm from '@/components/PredictionRedeemForm'
+import { formatNumber } from '@/lib/utils'
+import 'chartjs-adapter-luxon'
 
 ChartJS.register(
   Tooltip,
@@ -29,38 +30,38 @@ ChartJS.register(
   LinearScale,
   CategoryScale,
   TimeScale
-);
+)
 
 export interface HyperstitionMarket {
-  id: string;
-  title: string;
-  description: string;
-  targetValue: number;
-  currentValue: number;
-  incentivePool: number;
-  probability: number;
-  deadline: string;
-  category?: string;
-  participants: number;
-  status: "active" | "achieved" | "failed" | "pending";
-  icon: string;
-  unit: string;
-  marketMakerAddress?: `0x${string}`;
-  collateralTokenAddress?: `0x${string}`;
-  conditionId?: `0x${string}`;
-  isResolved?: boolean;
-  result?: boolean;
+  id: string
+  title: string
+  description: string
+  targetValue: number
+  currentValue: number
+  incentivePool: number
+  probability: number
+  deadline: string
+  category?: string
+  participants: number
+  status: 'active' | 'achieved' | 'failed' | 'pending'
+  icon: string
+  unit: string
+  marketMakerAddress?: `0x${string}`
+  collateralTokenAddress?: `0x${string}`
+  conditionId?: `0x${string}`
+  isResolved?: boolean
+  result?: boolean
 }
 
 export type PredictionMarketDetailProps = {
-  market: HyperstitionMarket;
-};
+  market: HyperstitionMarket
+}
 
-const historyPoints = 100;
+const historyPoints = 100
 const historyData: {
-  timestamp: number;
-  value: number;
-  followers: number;
+  timestamp: number
+  value: number
+  followers: number
 }[] = [...Array(historyPoints)].reduce(
   (acc, _, index) => [
     ...acc,
@@ -88,47 +89,47 @@ const historyData: {
     },
   ],
   [] as {
-    timestamp: number;
-    value: number;
-    followers: number;
+    timestamp: number
+    value: number
+    followers: number
   }[]
-);
+)
 
 export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
   market,
 }) => {
-  const [activeTab, setActiveTab] = useState<"buy" | "redeem">("buy");
+  const [activeTab, setActiveTab] = useState<'buy' | 'redeem'>('buy')
 
   const getProgressPercentage = (current: number, target: number): number => {
-    return Math.min((current / target) * 100, 100);
-  };
+    return Math.min((current / target) * 100, 100)
+  }
 
   const getStatusColor = (status: string): string => {
     switch (status) {
-      case "achieved":
-        return "text-green";
-      case "failed":
-        return "text-pink";
-      case "active":
-        return "terminal-bright";
+      case 'achieved':
+        return 'text-green'
+      case 'failed':
+        return 'text-pink'
+      case 'active':
+        return 'terminal-bright'
       default:
-        return "terminal-dim";
+        return 'terminal-dim'
     }
-  };
+  }
 
   const greenColor = getComputedStyle(document.documentElement)
     .getPropertyValue('--green')
-    .trim();
+    .trim()
   const pinkColor = getComputedStyle(document.documentElement)
     .getPropertyValue('--pink')
-    .trim();
+    .trim()
 
-  const gradientColor = (context: ScriptableContext<"line">) => {
-    const chart = context.chart;
-    const { ctx, chartArea } = chart;
+  const gradientColor = (context: ScriptableContext<'line'>) => {
+    const chart = context.chart
+    const { ctx, chartArea } = chart
 
     if (!chartArea) {
-      return pinkColor;
+      return pinkColor
     }
 
     // Create gradient based on chart area
@@ -137,17 +138,17 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
       chartArea.bottom,
       0,
       chartArea.top
-    );
-    gradient.addColorStop(0, pinkColor); // Pink at bottom (value 0)
-    gradient.addColorStop(1, greenColor); // Green at top (value 1)
+    )
+    gradient.addColorStop(0, pinkColor) // Pink at bottom (value 0)
+    gradient.addColorStop(1, greenColor) // Green at top (value 1)
 
-    return gradient;
-  };
+    return gradient
+  }
 
-  const chartData: ChartData<"line"> = {
+  const chartData: ChartData<'line'> = {
     datasets: [
       {
-        label: "Market Value",
+        label: 'Market Value',
         data: historyData.map((point) => ({
           x: point.timestamp,
           y: point.value,
@@ -163,30 +164,30 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
         segment: {
           borderColor: (ctx) => {
             // Get the current and previous data points
-            const current = ctx.p1.parsed.y;
-            const previous = ctx.p0.parsed.y;
+            const current = ctx.p1.parsed.y
+            const previous = ctx.p0.parsed.y
 
             // Calculate the average value for this segment
-            const avgValue = (current + previous) / 2;
+            const avgValue = (current + previous) / 2
 
             // Interpolate between pink and green based on average value
             const red1 = 221,
               green1 = 112,
-              blue1 = 212; // #dd70d4 (pink)
+              blue1 = 212 // #dd70d4 (pink)
             const red2 = 5,
               green2 = 223,
-              blue2 = 114; // #05df72 (green)
+              blue2 = 114 // #05df72 (green)
 
-            const red = Math.round(red1 + (red2 - red1) * avgValue);
-            const green = Math.round(green1 + (green2 - green1) * avgValue);
-            const blue = Math.round(blue1 + (blue2 - blue1) * avgValue);
+            const red = Math.round(red1 + (red2 - red1) * avgValue)
+            const green = Math.round(green1 + (green2 - green1) * avgValue)
+            const blue = Math.round(blue1 + (blue2 - blue1) * avgValue)
 
-            return `rgb(${red}, ${green}, ${blue})`;
+            return `rgb(${red}, ${green}, ${blue})`
           },
         },
       },
       {
-        label: "Followers",
+        label: 'Followers',
         data: historyData.map((point) => ({
           x: point.timestamp,
           y: point.followers,
@@ -194,18 +195,18 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
         borderWidth: 3,
         pointRadius: 0,
         pointHoverRadius: 0,
-        pointBackgroundColor: "#666",
+        pointBackgroundColor: '#666',
         fill: false,
         yAxisID: 'yFollowers',
-        borderColor: "#666",
-        backgroundColor: "#666",
+        borderColor: '#666',
+        backgroundColor: '#666',
         borderDash: [5, 5],
         tension: 0.1,
       },
     ],
-  };
+  }
 
-  const chartOptions: ChartOptions<"line"> = {
+  const chartOptions: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
     resizeDelay: 0,
@@ -221,13 +222,13 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
         usePointStyle: true,
         callbacks: {
           title: (context) => {
-            return new Date(context[0].parsed.x).toLocaleDateString();
+            return new Date(context[0].parsed.x).toLocaleDateString()
           },
           label: (context) => {
             if (context.datasetIndex === 0) {
-              return ` ${(context.parsed.y * 100).toFixed(1)}%`;
+              return ` ${(context.parsed.y * 100).toFixed(1)}%`
             } else {
-              return ` Followers: ${context.parsed.y.toLocaleString()}`;
+              return ` Followers: ${context.parsed.y.toLocaleString()}`
             }
           },
         },
@@ -235,34 +236,34 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
     },
     scales: {
       x: {
-        type: "time",
+        type: 'time',
         time: {
-          unit: "day",
-          tooltipFormat: "DD T",
+          unit: 'day',
+          tooltipFormat: 'DD T',
         },
         grid: {
-          color: "rgba(255, 255, 255, 0.1)",
+          color: 'rgba(255, 255, 255, 0.1)',
         },
         ticks: {
-          color: "rgba(255, 255, 255, 0.7)",
+          color: 'rgba(255, 255, 255, 0.7)',
         },
       },
       yMarket: {
-        type: "linear",
+        type: 'linear',
         display: true,
-        position: "left",
+        position: 'left',
         min: 0,
         max: 1,
         grid: {
-          color: "rgba(255, 255, 255, 0.1)",
+          color: 'rgba(255, 255, 255, 0.1)',
         },
         ticks: {
-          color: "rgba(255, 255, 255, 0.7)",
+          color: 'rgba(255, 255, 255, 0.7)',
           stepSize: 0.1,
           includeBounds: true,
           callback: function (value) {
-            const numValue = Number(value);
-            return `${Math.round(numValue * 100)}%`;
+            const numValue = Number(value)
+            return `${Math.round(numValue * 100)}%`
           },
         },
       },
@@ -276,9 +277,9 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
           drawOnChartArea: false, // Only want the grid lines for one axis to show up
         },
         ticks: {
-          color: "#666",
-          callback: function(value) {
-            return Number(value).toLocaleString();
+          color: '#666',
+          callback: function (value) {
+            return Number(value).toLocaleString()
           },
         },
       },
@@ -289,7 +290,7 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
         hoverRadius: 8,
       },
     },
-  };
+  }
 
   return (
     <>
@@ -322,7 +323,9 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
                 </div>
               </div>
               <div
-                className={`px-3 py-1 border rounded-sm text-xs ${getStatusColor(market.status)}`}
+                className={`px-3 py-1 border rounded-sm text-xs ${getStatusColor(
+                  market.status
+                )}`}
               >
                 {market.status.toUpperCase()}
               </div>
@@ -396,18 +399,18 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
                     market.currentValue,
                     market.targetValue
                   ) > 75
-                    ? "IMMINENT"
+                    ? 'IMMINENT'
                     : getProgressPercentage(
-                          market.currentValue,
-                          market.targetValue
-                        ) > 50
-                      ? "PROBABLE"
-                      : getProgressPercentage(
-                            market.currentValue,
-                            market.targetValue
-                          ) > 25
-                        ? "POSSIBLE"
-                        : "DISTANT"}
+                        market.currentValue,
+                        market.targetValue
+                      ) > 50
+                    ? 'PROBABLE'
+                    : getProgressPercentage(
+                        market.currentValue,
+                        market.targetValue
+                      ) > 25
+                    ? 'POSSIBLE'
+                    : 'DISTANT'}
                 </div>
               </div>
             </div>
@@ -419,21 +422,21 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
               <div className="flex items-center justify-between">
                 <div className="flex space-x-6">
                   <button
-                    onClick={() => setActiveTab("buy")}
+                    onClick={() => setActiveTab('buy')}
                     className={`text-xs font-mono transition-colors ${
-                      activeTab === "buy"
-                        ? "terminal-command"
-                        : "terminal-dim hover:terminal-bright"
+                      activeTab === 'buy'
+                        ? 'terminal-command'
+                        : 'terminal-dim hover:terminal-bright'
                     }`}
                   >
                     BUY POSITION
                   </button>
                   <button
-                    onClick={() => setActiveTab("redeem")}
+                    onClick={() => setActiveTab('redeem')}
                     className={`text-xs font-mono transition-colors ${
-                      activeTab === "redeem"
-                        ? "terminal-command"
-                        : "terminal-dim hover:terminal-bright"
+                      activeTab === 'redeem'
+                        ? 'terminal-command'
+                        : 'terminal-dim hover:terminal-bright'
                     }`}
                   >
                     REDEEM
@@ -444,9 +447,9 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
 
             {/* Content */}
             <div>
-              {activeTab === "buy" && <PredictionBuyForm market={market} />}
+              {activeTab === 'buy' && <PredictionBuyForm market={market} />}
 
-              {activeTab === "redeem" && (
+              {activeTab === 'redeem' && (
                 <PredictionRedeemForm market={market} />
               )}
             </div>
@@ -454,5 +457,5 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
         </div>
       </div>
     </>
-  );
-};
+  )
+}

@@ -1,13 +1,12 @@
-"use client";
+'use client'
 
-import type React from "react";
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { useAccount, useConnect, useSwitchChain } from "wagmi";
-import { injected } from "wagmi/connectors";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import type React from 'react'
+import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { useAccount, useConnect } from 'wagmi'
+import { injected } from 'wagmi/connectors'
+
+import { Button } from '@/components/ui/button'
 import {
   Form,
   FormControl,
@@ -15,31 +14,32 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Modal } from '@/components/ui/modal'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Modal } from "@/components/ui/modal";
-import { useAttestation } from "@/hooks/useAttestation";
-import { schemas, SCHEMA_OPTIONS } from "@/lib/schemas";
-import { localChain } from "@/lib/wagmi";
-import { toHex } from "viem";
+} from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
+import { useAttestation } from '@/hooks/useAttestation'
+import { SCHEMA_OPTIONS, schemas } from '@/lib/schemas'
+import { localChain } from '@/lib/wagmi'
 
 interface AttestationFormData {
-  schema: string;
-  recipient: string;
-  data: string;
+  schema: string
+  recipient: string
+  data: string
 }
 
 interface VouchingModalProps {
-  trigger?: React.ReactNode;
-  onSuccess?: () => void;
-  isOpen?: boolean;
-  setIsOpen?: (value: boolean) => void;
+  trigger?: React.ReactNode
+  onSuccess?: () => void
+  isOpen?: boolean
+  setIsOpen?: (value: boolean) => void
 }
 
 export function VouchingModal({
@@ -48,90 +48,90 @@ export function VouchingModal({
   isOpen: externalIsOpen,
   setIsOpen: externalSetIsOpen,
 }: VouchingModalProps) {
-  const [internalIsOpen, setInternalIsOpen] = useState(false);
-  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+  const [internalIsOpen, setInternalIsOpen] = useState(false)
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen
   const setIsOpen = (value: boolean) => {
     if (externalIsOpen !== undefined && externalSetIsOpen) {
-      externalSetIsOpen(value);
+      externalSetIsOpen(value)
     } else {
-      setInternalIsOpen(value);
+      setInternalIsOpen(value)
     }
-  };
-  const [selectedSchema, setSelectedSchema] = useState<string>("");
+  }
+  const [selectedSchema, setSelectedSchema] = useState<string>('')
 
-  const { isConnected, chain } = useAccount();
-  const { connect } = useConnect();
+  const { isConnected, chain } = useAccount()
+  const { connect } = useConnect()
   const { createAttestation, isLoading, isSuccess, error, hash } =
-    useAttestation();
+    useAttestation()
 
   const form = useForm<AttestationFormData>({
     defaultValues: {
-      schema: "",
-      recipient: "",
-      data: "",
+      schema: '',
+      recipient: '',
+      data: '',
     },
-  });
+  })
 
   // Monitor transaction state
   useEffect(() => {
     if (hash && isSuccess) {
-      console.log(`✅ Transaction successful: ${hash}`);
-      onSuccess?.();
-      setIsOpen(false);
-      form.reset();
-      setSelectedSchema("");
+      console.log(`✅ Transaction successful: ${hash}`)
+      onSuccess?.()
+      setIsOpen(false)
+      form.reset()
+      setSelectedSchema('')
     }
-  }, [hash, isSuccess, onSuccess, form]);
+  }, [hash, isSuccess, onSuccess, form])
 
   const handleConnect = () => {
     try {
-      connect({ connector: injected() });
+      connect({ connector: injected() })
     } catch (err) {
-      console.error("Failed to connect wallet:", err);
+      console.error('Failed to connect wallet:', err)
     }
-  };
+  }
 
   const onSubmit = async (data: AttestationFormData) => {
     try {
-      await createAttestation(data);
+      await createAttestation(data)
     } catch (err) {
-      console.error("Failed to create attestation:", err);
+      console.error('Failed to create attestation:', err)
     }
-  };
+  }
 
   const selectedSchemaInfo = SCHEMA_OPTIONS.find(
     (s) => s.uid === selectedSchema
-  );
+  )
 
   const getSchemaPlaceholder = (schemaInfo: typeof selectedSchemaInfo) => {
-    if (!schemaInfo) return "Select a schema first...";
+    if (!schemaInfo) return 'Select a schema first...'
 
     switch (schemaInfo.uid) {
       case schemas.vouchingSchema:
-        return "Enter vouch weight (e.g., 1, 5, 100)";
+        return 'Enter vouch weight (e.g., 1, 5, 100)'
       case schemas.basicSchema:
-        return "Enter your message or attestation content";
+        return 'Enter your message or attestation content'
       case schemas.computeSchema:
-        return "Enter computation result and hash";
+        return 'Enter computation result and hash'
       default:
-        return `Enter data for ${(schemaInfo as any).name.toLowerCase()}...`;
+        return `Enter data for ${(schemaInfo as any).name.toLowerCase()}...`
     }
-  };
+  }
 
   const getSchemaHelperText = (schemaInfo: typeof selectedSchemaInfo) => {
-    if (!schemaInfo) return null;
+    if (!schemaInfo) return null
 
     switch (schemaInfo.uid) {
       case schemas.vouchingSchema:
-        return "Enter a numeric weight value representing the strength of your vouch";
+        return 'Enter a numeric weight value representing the strength of your vouch'
       case schemas.basicSchema:
-        return "Enter any text-based attestation or message";
+        return 'Enter any text-based attestation or message'
       case schemas.computeSchema:
-        return "Provide computational verification data";
+        return 'Provide computational verification data'
       default:
-        return `Expected fields: ${(schemaInfo as any).fields.join(", ")}`;
+        return `Expected fields: ${(schemaInfo as any).fields.join(', ')}`
     }
-  };
+  }
 
   const defaultTrigger = (
     <Button
@@ -140,7 +140,7 @@ export function VouchingModal({
     >
       <span className="terminal-command text-xs">CREATE ATTESTATION</span>
     </Button>
-  );
+  )
 
   return (
     <>
@@ -196,10 +196,10 @@ export function VouchingModal({
                     control={form.control}
                     name="recipient"
                     rules={{
-                      required: "Recipient address is required",
+                      required: 'Recipient address is required',
                       pattern: {
                         value: /^0x[a-fA-F0-9]{40}$/,
-                        message: "Invalid Ethereum address",
+                        message: 'Invalid Ethereum address',
                       },
                     }}
                     render={({ field }) => (
@@ -222,7 +222,7 @@ export function VouchingModal({
                   <FormField
                     control={form.control}
                     name="schema"
-                    rules={{ required: "Schema selection is required" }}
+                    rules={{ required: 'Schema selection is required' }}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="terminal-dim text-xs">
@@ -230,8 +230,8 @@ export function VouchingModal({
                         </FormLabel>
                         <Select
                           onValueChange={(value) => {
-                            field.onChange(value);
-                            setSelectedSchema(value);
+                            field.onChange(value)
+                            setSelectedSchema(value)
                           }}
                           value={field.value}
                         >
@@ -257,7 +257,7 @@ export function VouchingModal({
                 <FormField
                   control={form.control}
                   name="data"
-                  rules={{ required: "Attestation data is required" }}
+                  rules={{ required: 'Attestation data is required' }}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="terminal-dim text-xs">
@@ -297,14 +297,14 @@ export function VouchingModal({
                       className="mobile-terminal-btn !px-6 !py-2 flex-1"
                     >
                       <span className="terminal-command text-xs">
-                        {isLoading ? "CREATING..." : "CREATE ATTESTATION"}
+                        {isLoading ? 'CREATING...' : 'CREATE ATTESTATION'}
                       </span>
                     </Button>
                   </div>
 
                   {error && (
                     <div className="error-text text-xs">
-                      {error.message.toLowerCase().includes("nonce") ? (
+                      {error.message.toLowerCase().includes('nonce') ? (
                         <div className="space-y-1">
                           <div>⚠️ Nonce Conflict Detected</div>
                           <div className="text-xs opacity-75">
@@ -314,10 +314,10 @@ export function VouchingModal({
                         </div>
                       ) : error.message
                           .toLowerCase()
-                          .includes("internal json-rpc error") ||
+                          .includes('internal json-rpc error') ||
                         error.message
                           .toLowerCase()
-                          .includes("internal error") ? (
+                          .includes('internal error') ? (
                         <div className="space-y-1">
                           <div>🔧 Anvil Node Error</div>
                           <div className="text-xs opacity-75">
@@ -325,7 +325,7 @@ export function VouchingModal({
                             recovery...
                           </div>
                           <div className="text-xs opacity-50 mt-1">
-                            If this persists, restart anvil with:{" "}
+                            If this persists, restart anvil with:{' '}
                             <code className="bg-gray-800 px-1 rounded">
                               make start-all-local
                             </code>
@@ -364,5 +364,5 @@ export function VouchingModal({
         </div>
       </Modal>
     </>
-  );
+  )
 }

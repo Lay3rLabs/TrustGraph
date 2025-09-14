@@ -1,156 +1,157 @@
-"use client";
+'use client'
 
-import type React from "react";
-import { useState, useMemo, useEffect, useCallback } from "react";
+import type React from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+
+import { AttestationCard } from '@/components/AttestationCard'
+import { VouchingModal } from '@/components/VouchingModal'
 import {
-  useSchemaAttestations,
   useIndividualAttestation,
-} from "@/hooks/useIndexer";
-import { schemas, SCHEMA_OPTIONS } from "@/lib/schemas";
-import { AttestationCard } from "@/components/AttestationCard";
-import { VouchingModal } from "@/components/VouchingModal";
+  useSchemaAttestations,
+} from '@/hooks/useIndexer'
+import { SCHEMA_OPTIONS, schemas } from '@/lib/schemas'
 
 // Helper component to fetch attestation data for filtering
 function AttestationWithStatus({
   uid,
   onStatusReady,
 }: {
-  uid: `0x${string}`;
-  onStatusReady: (uid: string, status: string) => void;
+  uid: `0x${string}`
+  onStatusReady: (uid: string, status: string) => void
 }) {
-  const { data: attestationData } = useIndividualAttestation(uid);
+  const { data: attestationData } = useIndividualAttestation(uid)
 
   const getAttestationStatus = (attestation: any) => {
-    if (!attestation) return "loading";
-    if (Number(attestation.revocationTime) > 0) return "revoked";
+    if (!attestation) return 'loading'
+    if (Number(attestation.revocationTime) > 0) return 'revoked'
     if (
       Number(attestation.expirationTime) > 0 &&
       Number(attestation.expirationTime) < Math.floor(Date.now() / 1000)
     ) {
-      return "expired";
+      return 'expired'
     }
-    return "verified";
-  };
+    return 'verified'
+  }
 
   useEffect(() => {
     if (attestationData) {
-      const status = getAttestationStatus(attestationData);
-      onStatusReady(uid, status);
+      const status = getAttestationStatus(attestationData)
+      onStatusReady(uid, status)
     }
-  }, [attestationData, uid, onStatusReady]);
+  }, [attestationData, uid, onStatusReady])
 
-  return null;
+  return null
 }
 
 export default function AttestationsPage() {
-  const [selectedSchema, setSelectedSchema] = useState<string>("all");
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
-  const [limit, setLimit] = useState(20);
+  const [selectedSchema, setSelectedSchema] = useState<string>('all')
+  const [selectedStatus, setSelectedStatus] = useState<string>('all')
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest')
+  const [limit, setLimit] = useState(20)
   const [attestationStatuses, setAttestationStatuses] = useState<
     Record<string, string>
-  >({});
+  >({})
 
   // Fetch attestations for all schemas or specific schema
   const schemaQueries = useMemo(() => {
-    if (selectedSchema === "all") {
+    if (selectedSchema === 'all') {
       return SCHEMA_OPTIONS.map((schema) => ({
         schemaUID: schema.uid,
         name: schema.name,
-      }));
+      }))
     }
     const selectedSchemaOption = SCHEMA_OPTIONS.find(
-      (s) => s.uid === selectedSchema,
-    );
+      (s) => s.uid === selectedSchema
+    )
     return selectedSchemaOption
       ? [{ schemaUID: selectedSchema, name: selectedSchemaOption.name }]
-      : [];
-  }, [selectedSchema]);
+      : []
+  }, [selectedSchema])
 
   // Use hooks for each schema
   const basicSchema = useSchemaAttestations(
     schemas.basicSchema,
-    selectedSchema === "all" || selectedSchema === schemas.basicSchema
+    selectedSchema === 'all' || selectedSchema === schemas.basicSchema
       ? limit
-      : 0,
-  );
+      : 0
+  )
   const computeSchema = useSchemaAttestations(
     schemas.computeSchema,
-    selectedSchema === "all" || selectedSchema === schemas.computeSchema
+    selectedSchema === 'all' || selectedSchema === schemas.computeSchema
       ? limit
-      : 0,
-  );
+      : 0
+  )
   const vouchingSchema = useSchemaAttestations(
     schemas.vouchingSchema,
-    selectedSchema === "all" || selectedSchema === schemas.vouchingSchema
+    selectedSchema === 'all' || selectedSchema === schemas.vouchingSchema
       ? limit
-      : 0,
-  );
+      : 0
+  )
 
   // Handle status updates from individual attestations
   const handleStatusReady = useCallback((uid: string, status: string) => {
-    setAttestationStatuses((prev) => ({ ...prev, [uid]: status }));
-  }, []);
+    setAttestationStatuses((prev) => ({ ...prev, [uid]: status }))
+  }, [])
 
   // Combine all attestations
   const allAttestationUIDs = useMemo(() => {
     const uids: Array<{
-      uid: `0x${string}`;
-      schema: `0x${string}`;
-      timestamp?: number;
-    }> = [];
+      uid: `0x${string}`
+      schema: `0x${string}`
+      timestamp?: number
+    }> = []
 
-    if (selectedSchema === "all" || selectedSchema === schemas.basicSchema) {
+    if (selectedSchema === 'all' || selectedSchema === schemas.basicSchema) {
       basicSchema.attestationUIDs?.forEach((uid) =>
-        uids.push({ uid, schema: schemas.basicSchema }),
-      );
+        uids.push({ uid, schema: schemas.basicSchema })
+      )
     }
-    if (selectedSchema === "all" || selectedSchema === schemas.computeSchema) {
+    if (selectedSchema === 'all' || selectedSchema === schemas.computeSchema) {
       computeSchema.attestationUIDs?.forEach((uid) =>
-        uids.push({ uid, schema: schemas.computeSchema }),
-      );
+        uids.push({ uid, schema: schemas.computeSchema })
+      )
     }
-    if (selectedSchema === "all" || selectedSchema === schemas.vouchingSchema) {
+    if (selectedSchema === 'all' || selectedSchema === schemas.vouchingSchema) {
       vouchingSchema.attestationUIDs?.forEach((uid) =>
-        uids.push({ uid, schema: schemas.vouchingSchema }),
-      );
+        uids.push({ uid, schema: schemas.vouchingSchema })
+      )
     }
 
     // Sort by newest/oldest (UIDs are typically ordered by creation time already)
     // TODO: fix sort order make it sort by timestamp
-    return sortOrder === "newest" ? uids : uids.reverse();
+    return sortOrder === 'newest' ? uids : uids.reverse()
   }, [
     basicSchema.attestationUIDs,
     computeSchema.attestationUIDs,
     vouchingSchema.attestationUIDs,
     selectedSchema,
     sortOrder,
-  ]);
+  ])
 
   // Filter by status
   const filteredAttestationUIDs = useMemo(() => {
-    if (selectedStatus === "all") {
-      return allAttestationUIDs;
+    if (selectedStatus === 'all') {
+      return allAttestationUIDs
     }
     return allAttestationUIDs.filter(
-      (item) => attestationStatuses[item.uid] === selectedStatus,
-    );
-  }, [allAttestationUIDs, selectedStatus, attestationStatuses]);
+      (item) => attestationStatuses[item.uid] === selectedStatus
+    )
+  }, [allAttestationUIDs, selectedStatus, attestationStatuses])
 
   const isLoading =
     basicSchema.isLoadingUIDs ||
     computeSchema.isLoadingUIDs ||
-    vouchingSchema.isLoadingUIDs;
+    vouchingSchema.isLoadingUIDs
   const totalCount =
     (basicSchema.totalCount || 0) +
     (computeSchema.totalCount || 0) +
-    (vouchingSchema.totalCount || 0);
+    (vouchingSchema.totalCount || 0)
 
   // Handle successful attestation creation
   const handleAttestationSuccess = useCallback(() => {
     // Force refresh of all data
-    window.location.reload();
-  }, []);
+    window.location.reload()
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -204,7 +205,7 @@ export default function AttestationsPage() {
           <select
             value={sortOrder}
             onChange={(e) =>
-              setSortOrder(e.target.value as "newest" | "oldest")
+              setSortOrder(e.target.value as 'newest' | 'oldest')
             }
             className="w-full bg-black/20 border border-gray-700 terminal-text text-sm p-2 rounded-sm"
           >
@@ -251,7 +252,7 @@ export default function AttestationsPage() {
       )}
 
       {/* Hidden components to fetch status data */}
-      <div style={{ display: "none" }}>
+      <div style={{ display: 'none' }}>
         {allAttestationUIDs.map((item) => (
           <AttestationWithStatus
             key={`status-${item.uid}`}
@@ -286,9 +287,9 @@ export default function AttestationsPage() {
         <div className="text-center py-12">
           <div className="terminal-dim text-sm">NO ATTESTATIONS FOUND</div>
           <div className="system-message text-xs mt-2">
-            {selectedSchema !== "all"
-              ? "◆ NO ATTESTATIONS FOR SELECTED SCHEMA ◆"
-              : "◆ NO ATTESTATIONS AVAILABLE ◆"}
+            {selectedSchema !== 'all'
+              ? '◆ NO ATTESTATIONS FOR SELECTED SCHEMA ◆'
+              : '◆ NO ATTESTATIONS AVAILABLE ◆'}
           </div>
         </div>
       )}
@@ -300,5 +301,5 @@ export default function AttestationsPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

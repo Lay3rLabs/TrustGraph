@@ -1,123 +1,119 @@
-"use client";
+'use client'
 
-import type React from "react";
-import { useState } from "react";
-import { Modal } from "@/components/ui/modal";
-import PredictionBuyForm from "@/components/PredictionBuyForm";
-import PredictionRedeemForm from "@/components/PredictionRedeemForm";
+import type React from 'react'
+import { useState } from 'react'
+
 import {
   HyperstitionMarket,
   PredictionMarketDetail,
-} from "@/components/PredictionMarketDetail";
-import { formatNumber } from "@/lib/utils";
+} from '@/components/PredictionMarketDetail'
 
 const markets: HyperstitionMarket[] = [
   {
-    id: "1",
-    title: "EN0VA Twitter Ascension",
-    description: "EN0VA collective reaches 10,000 Twitter followers",
+    id: '1',
+    title: 'EN0VA Twitter Ascension',
+    description: 'EN0VA collective reaches 10,000 Twitter followers',
     targetValue: 10000,
     currentValue: 3247,
     incentivePool: 10000,
     probability: 67.3,
-    deadline: "2024.06.01",
-    category: "Social Growth",
+    deadline: '2024.06.01',
+    category: 'Social Growth',
     participants: 156,
-    status: "active",
-    icon: "◉",
-    unit: "followers",
+    status: 'active',
+    icon: '◉',
+    unit: 'followers',
   },
   {
-    id: "2",
-    title: "Collective Mind Repository",
+    id: '2',
+    title: 'Collective Mind Repository',
     description:
-      "GitHub repository reaches 1,000 stars signaling mass adoption",
+      'GitHub repository reaches 1,000 stars signaling mass adoption',
     targetValue: 1000,
     currentValue: 234,
     incentivePool: 5000,
     probability: 45.8,
-    deadline: "2024.08.15",
-    category: "Developer Adoption",
+    deadline: '2024.08.15',
+    category: 'Developer Adoption',
     participants: 89,
-    status: "active",
-    icon: "▲",
-    unit: "stars",
+    status: 'active',
+    icon: '▲',
+    unit: 'stars',
   },
   {
-    id: "3",
-    title: "Memetic Viral Threshold",
-    description: "EN0VA meme achieves 100K social media impressions",
+    id: '3',
+    title: 'Memetic Viral Threshold',
+    description: 'EN0VA meme achieves 100K social media impressions',
     targetValue: 100000,
     currentValue: 23450,
     incentivePool: 15000,
     probability: 73.9,
-    deadline: "2024.05.01",
-    category: "Memetic Warfare",
+    deadline: '2024.05.01',
+    category: 'Memetic Warfare',
     participants: 203,
-    status: "active",
-    icon: "◈",
-    unit: "impressions",
+    status: 'active',
+    icon: '◈',
+    unit: 'impressions',
   },
   {
-    id: "4",
-    title: "Economic Manifestation",
-    description: "Total $EN0 market cap reaches $1M through collective belief",
+    id: '4',
+    title: 'Economic Manifestation',
+    description: 'Total $EN0 market cap reaches $1M through collective belief',
     targetValue: 1000000,
     currentValue: 147000,
     incentivePool: 25000,
     probability: 52.1,
-    deadline: "2024.12.31",
-    category: "Market Dynamics",
+    deadline: '2024.12.31',
+    category: 'Market Dynamics',
     participants: 342,
-    status: "active",
-    icon: "◆",
-    unit: "USD",
+    status: 'active',
+    icon: '◆',
+    unit: 'USD',
   },
   {
-    id: "5",
-    title: "Reality Breach Protocol",
-    description: "EN0VA methodology cited in 50 academic papers",
+    id: '5',
+    title: 'Reality Breach Protocol',
+    description: 'EN0VA methodology cited in 50 academic papers',
     targetValue: 50,
     currentValue: 12,
     incentivePool: 8000,
     probability: 34.2,
-    deadline: "2025.03.15",
-    category: "Academic Recognition",
+    deadline: '2025.03.15',
+    category: 'Academic Recognition',
     participants: 67,
-    status: "active",
-    icon: "∞",
-    unit: "citations",
+    status: 'active',
+    icon: '∞',
+    unit: 'citations',
   },
   {
-    id: "6",
-    title: "Consciousness Upload Beta",
-    description: "First successful human-AI consciousness merge documented",
+    id: '6',
+    title: 'Consciousness Upload Beta',
+    description: 'First successful human-AI consciousness merge documented',
     targetValue: 1,
     currentValue: 0,
     incentivePool: 100000,
     probability: 12.4,
-    deadline: "2025.12.31",
-    category: "Transhumanist Goals",
+    deadline: '2025.12.31',
+    category: 'Transhumanist Goals',
     participants: 445,
-    status: "active",
-    icon: "◢◤",
-    unit: "merge",
+    status: 'active',
+    icon: '◢◤',
+    unit: 'merge',
   },
-];
+]
 
 export default function HyperstitionPage() {
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [selectedMarket, setSelectedMarket] =
-    useState<HyperstitionMarket | null>(null);
-  const [activeTab, setActiveTab] = useState<"overview" | "buy" | "redeem">(
-    "overview"
-  );
+    useState<HyperstitionMarket | null>(null)
+  const [activeTab, setActiveTab] = useState<'overview' | 'buy' | 'redeem'>(
+    'overview'
+  )
 
   const filteredMarkets = markets.filter(
     (market) =>
-      selectedCategory === "all" || market.category === selectedCategory
-  );
-
+      selectedCategory === 'all' || market.category === selectedCategory
+  )
 
   return (
     <div className="space-y-8">
@@ -212,5 +208,5 @@ export default function HyperstitionPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

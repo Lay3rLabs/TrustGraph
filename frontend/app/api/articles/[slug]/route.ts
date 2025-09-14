@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+
 import { getArticleBySlug } from '@/lib/articles'
 
 export async function GET(

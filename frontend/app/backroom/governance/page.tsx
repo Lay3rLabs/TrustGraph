@@ -1,20 +1,27 @@
-"use client";
+'use client'
 
-import type React from "react";
-import { useState, useEffect, useCallback } from "react";
-import { useAccount, useConnect } from "wagmi";
-import { injected } from "wagmi/connectors";
-import { Button } from "@/components/ui/button";
-import { ProposalCard } from "@/components/ProposalCard";
-import { CreateProposalForm } from "@/components/CreateProposalForm";
-import { VotingPowerCard } from "@/components/VotingPowerCard";
-import { useGovernance, ProposalCore, ProposalAction } from "@/hooks/useGovernance";
+import type React from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { useAccount, useConnect } from 'wagmi'
+import { injected } from 'wagmi/connectors'
+
+import { CreateProposalForm } from '@/components/CreateProposalForm'
+import { ProposalCard } from '@/components/ProposalCard'
+import { Button } from '@/components/ui/button'
+import { VotingPowerCard } from '@/components/VotingPowerCard'
+import {
+  ProposalAction,
+  ProposalCore,
+  useGovernance,
+} from '@/hooks/useGovernance'
 
 export default function GovernancePage() {
-  const { address, isConnected } = useAccount();
-  const { connect } = useConnect();
-  const [proposals, setProposals] = useState<{ core: ProposalCore; actions: ProposalAction[] }[]>([]);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const { address, isConnected } = useAccount()
+  const { connect } = useConnect()
+  const [proposals, setProposals] = useState<
+    { core: ProposalCore; actions: ProposalAction[] }[]
+  >([])
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const {
     isLoading,
@@ -38,80 +45,93 @@ export default function GovernancePage() {
     merkleVoteAddress,
     safeBalance,
     safeAddress,
-  } = useGovernance();
+  } = useGovernance()
 
   const handleConnect = useCallback(() => {
     try {
-      connect({ connector: injected() });
+      connect({ connector: injected() })
     } catch (err) {
-      console.error("Failed to connect wallet:", err);
+      console.error('Failed to connect wallet:', err)
     }
-  }, [connect]);
+  }, [connect])
 
   // Load proposals when connected
   useEffect(() => {
     const loadProposals = async () => {
       if (isConnected && proposalCounter > 0) {
-        const allProposals = await getAllProposals();
-        setProposals(allProposals);
+        const allProposals = await getAllProposals()
+        setProposals(allProposals)
       }
-    };
-
-    loadProposals();
-  }, [isConnected, proposalCounter, getAllProposals]);
-
-  const handleCreateProposal = useCallback(async (actions: ProposalAction[], description: string) => {
-    setSuccessMessage(null);
-    const hash = await createProposal(actions, description);
-    if (hash) {
-      setSuccessMessage(`Proposal created successfully! Transaction: ${hash}`);
-      setTimeout(() => setSuccessMessage(null), 5000);
-      // Reload proposals
-      const allProposals = await getAllProposals();
-      setProposals(allProposals);
     }
-    return hash;
-  }, [createProposal, getAllProposals]);
 
-  const handleVote = useCallback(async (proposalId: number, support: number) => {
-    setSuccessMessage(null);
-    const hash = await castVote(proposalId, support);
-    if (hash) {
-      const voteText = support === 1 ? "FOR" : support === 0 ? "AGAINST" : "ABSTAIN";
-      setSuccessMessage(`Vote cast ${voteText}! Transaction: ${hash}`);
-      setTimeout(() => setSuccessMessage(null), 5000);
-      // Reload proposals to update vote counts
-      const allProposals = await getAllProposals();
-      setProposals(allProposals);
-    }
-    return hash;
-  }, [castVote, getAllProposals]);
+    loadProposals()
+  }, [isConnected, proposalCounter, getAllProposals])
 
-  const handleQueue = useCallback(async (proposalId: number) => {
-    setSuccessMessage(null);
-    const hash = await queueProposal(proposalId);
-    if (hash) {
-      setSuccessMessage(`Proposal queued! Transaction: ${hash}`);
-      setTimeout(() => setSuccessMessage(null), 5000);
-      // Reload proposals
-      const allProposals = await getAllProposals();
-      setProposals(allProposals);
-    }
-    return hash;
-  }, [queueProposal, getAllProposals]);
+  const handleCreateProposal = useCallback(
+    async (actions: ProposalAction[], description: string) => {
+      setSuccessMessage(null)
+      const hash = await createProposal(actions, description)
+      if (hash) {
+        setSuccessMessage(`Proposal created successfully! Transaction: ${hash}`)
+        setTimeout(() => setSuccessMessage(null), 5000)
+        // Reload proposals
+        const allProposals = await getAllProposals()
+        setProposals(allProposals)
+      }
+      return hash
+    },
+    [createProposal, getAllProposals]
+  )
 
-  const handleExecute = useCallback(async (proposalId: number) => {
-    setSuccessMessage(null);
-    const hash = await executeProposal(proposalId);
-    if (hash) {
-      setSuccessMessage(`Proposal executed! Transaction: ${hash}`);
-      setTimeout(() => setSuccessMessage(null), 5000);
-      // Reload proposals
-      const allProposals = await getAllProposals();
-      setProposals(allProposals);
-    }
-    return hash;
-  }, [executeProposal, getAllProposals]);
+  const handleVote = useCallback(
+    async (proposalId: number, support: number) => {
+      setSuccessMessage(null)
+      const hash = await castVote(proposalId, support)
+      if (hash) {
+        const voteText =
+          support === 1 ? 'FOR' : support === 0 ? 'AGAINST' : 'ABSTAIN'
+        setSuccessMessage(`Vote cast ${voteText}! Transaction: ${hash}`)
+        setTimeout(() => setSuccessMessage(null), 5000)
+        // Reload proposals to update vote counts
+        const allProposals = await getAllProposals()
+        setProposals(allProposals)
+      }
+      return hash
+    },
+    [castVote, getAllProposals]
+  )
+
+  const handleQueue = useCallback(
+    async (proposalId: number) => {
+      setSuccessMessage(null)
+      const hash = await queueProposal(proposalId)
+      if (hash) {
+        setSuccessMessage(`Proposal queued! Transaction: ${hash}`)
+        setTimeout(() => setSuccessMessage(null), 5000)
+        // Reload proposals
+        const allProposals = await getAllProposals()
+        setProposals(allProposals)
+      }
+      return hash
+    },
+    [queueProposal, getAllProposals]
+  )
+
+  const handleExecute = useCallback(
+    async (proposalId: number) => {
+      setSuccessMessage(null)
+      const hash = await executeProposal(proposalId)
+      if (hash) {
+        setSuccessMessage(`Proposal executed! Transaction: ${hash}`)
+        setTimeout(() => setSuccessMessage(null), 5000)
+        // Reload proposals
+        const allProposals = await getAllProposals()
+        setProposals(allProposals)
+      }
+      return hash
+    },
+    [executeProposal, getAllProposals]
+  )
 
   return (
     <div className="space-y-6">
@@ -159,7 +179,9 @@ export default function GovernancePage() {
       {isConnected && (
         <div className="border border-yellow-700 bg-yellow-900/10 p-3 rounded-sm">
           <div className="text-yellow-400 text-sm">
-            DEBUG: merkleData={merkleData ? 'present' : 'null'}, userVotingPower={userVotingPower ? 'present' : 'null'}, canCreateProposal={canCreateProposal.toString()}
+            DEBUG: merkleData={merkleData ? 'present' : 'null'},
+            userVotingPower={userVotingPower ? 'present' : 'null'},
+            canCreateProposal={canCreateProposal.toString()}
           </div>
         </div>
       )}
@@ -180,16 +202,23 @@ export default function GovernancePage() {
           {/* Safe Info Card */}
           <div className="border border-blue-700 bg-blue-900/10 p-4 rounded-sm">
             <div className="flex items-center justify-between mb-3">
-              <div className="terminal-bright text-lg">GNOSIS SAFE TREASURY</div>
+              <div className="terminal-bright text-lg">
+                GNOSIS SAFE TREASURY
+              </div>
               <Button
-                onClick={() => window.open(`https://app.safe.global/home?safe=eth:${safeAddress}`, '_blank')}
+                onClick={() =>
+                  window.open(
+                    `https://app.safe.global/home?safe=eth:${safeAddress}`,
+                    '_blank'
+                  )
+                }
                 className="mobile-terminal-btn !px-3 !py-1 text-xs"
                 disabled={!safeAddress}
               >
                 <span className="terminal-command">OPEN SAFE →</span>
               </Button>
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="terminal-dim text-xs">ETH BALANCE:</span>
@@ -220,25 +249,37 @@ export default function GovernancePage() {
             <div className="border border-gray-700 bg-black/10 p-4 rounded-sm">
               <div className="terminal-dim text-xs mb-2">TOTAL PROPOSALS</div>
               <div className="terminal-bright text-xl">{proposalCounter}</div>
-              <div className="system-message text-xs mt-1">on-chain governance</div>
+              <div className="system-message text-xs mt-1">
+                on-chain governance
+              </div>
             </div>
-            
+
             <div className="border border-gray-700 bg-black/10 p-4 rounded-sm">
               <div className="terminal-dim text-xs mb-2">VOTING DELAY</div>
-              <div className="terminal-bright text-xl">{Math.floor(votingDelay / 3600)}h</div>
-              <div className="system-message text-xs mt-1">before voting starts</div>
+              <div className="terminal-bright text-xl">
+                {Math.floor(votingDelay / 3600)}h
+              </div>
+              <div className="system-message text-xs mt-1">
+                before voting starts
+              </div>
             </div>
-            
+
             <div className="border border-gray-700 bg-black/10 p-4 rounded-sm">
               <div className="terminal-dim text-xs mb-2">VOTING PERIOD</div>
-              <div className="terminal-bright text-xl">{Math.floor(votingPeriod / 3600)}h</div>
+              <div className="terminal-bright text-xl">
+                {Math.floor(votingPeriod / 3600)}h
+              </div>
               <div className="system-message text-xs mt-1">to cast votes</div>
             </div>
 
             <div className="border border-gray-700 bg-black/10 p-4 rounded-sm">
               <div className="terminal-dim text-xs mb-2">QUORUM REQUIRED</div>
-              <div className="terminal-bright text-xl">{formatVotingPower(quorumBasisPoints.toString())}</div>
-              <div className="system-message text-xs mt-1">voting power tokens</div>
+              <div className="terminal-bright text-xl">
+                {formatVotingPower(quorumBasisPoints.toString())}
+              </div>
+              <div className="system-message text-xs mt-1">
+                voting power tokens
+              </div>
             </div>
           </div>
 
@@ -260,10 +301,12 @@ export default function GovernancePage() {
                 {proposals.length} of {proposalCounter} loaded
               </div>
             </div>
-            
+
             {isLoading && proposals.length === 0 && (
               <div className="text-center py-8">
-                <div className="terminal-bright text-sm">◉ LOADING PROPOSALS ◉</div>
+                <div className="terminal-bright text-sm">
+                  ◉ LOADING PROPOSALS ◉
+                </div>
               </div>
             )}
 
@@ -291,7 +334,6 @@ export default function GovernancePage() {
               />
             ))}
           </div>
-
         </>
       )}
 
@@ -302,5 +344,5 @@ export default function GovernancePage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

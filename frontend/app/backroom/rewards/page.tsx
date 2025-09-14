@@ -1,17 +1,18 @@
-"use client";
+'use client'
 
-import type React from "react";
-import { useState, useCallback } from "react";
-import { useAccount, useConnect } from "wagmi";
-import { injected } from "wagmi/connectors";
-import { Button } from "@/components/ui/button";
-import { RewardsCard } from "@/components/RewardsCard";
-import { useRewards } from "@/hooks/useRewards";
+import type React from 'react'
+import { useCallback, useState } from 'react'
+import { useAccount, useConnect } from 'wagmi'
+import { injected } from 'wagmi/connectors'
+
+import { RewardsCard } from '@/components/RewardsCard'
+import { Button } from '@/components/ui/button'
+import { useRewards } from '@/hooks/useRewards'
 
 export default function RewardsPage() {
-  const { address, isConnected } = useAccount();
-  const { connect } = useConnect();
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const { address, isConnected } = useAccount()
+  const { connect } = useConnect()
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const {
     isLoading,
@@ -28,33 +29,35 @@ export default function RewardsPage() {
     triggerUpdate,
     refresh,
     contractAddress,
-  } = useRewards();
+  } = useRewards()
 
   const handleConnect = useCallback(() => {
     try {
-      connect({ connector: injected() });
+      connect({ connector: injected() })
     } catch (err) {
-      console.error("Failed to connect wallet:", err);
+      console.error('Failed to connect wallet:', err)
     }
-  }, [connect]);
+  }, [connect])
 
   const handleClaim = useCallback(async () => {
-    setSuccessMessage(null);
-    const hash = await claim();
+    setSuccessMessage(null)
+    const hash = await claim()
     if (hash) {
-      setSuccessMessage(`Rewards claimed successfully! Transaction: ${hash}`);
-      setTimeout(() => setSuccessMessage(null), 5000);
+      setSuccessMessage(`Rewards claimed successfully! Transaction: ${hash}`)
+      setTimeout(() => setSuccessMessage(null), 5000)
     }
-  }, [claim]);
+  }, [claim])
 
   const handleTriggerUpdate = useCallback(async () => {
-    setSuccessMessage(null);
-    const hash = await triggerUpdate();
+    setSuccessMessage(null)
+    const hash = await triggerUpdate()
     if (hash) {
-      setSuccessMessage(`Update triggered! Check back in a few minutes to see if there are any updates. Transaction: ${hash}`);
-      setTimeout(() => setSuccessMessage(null), 5000);
+      setSuccessMessage(
+        `Update triggered! Check back in a few minutes to see if there are any updates. Transaction: ${hash}`
+      )
+      setTimeout(() => setSuccessMessage(null), 5000)
     }
-  }, [triggerUpdate]);
+  }, [triggerUpdate])
 
   return (
     <div className="space-y-6">
@@ -137,7 +140,7 @@ export default function RewardsPage() {
                   <div className="space-y-1">
                     <div className="terminal-dim text-xs">AMOUNT CLAIMED</div>
                     <div className="terminal-text text-sm">
-                      {(Number(claim.claimed) / Math.pow(10, 18)).toFixed(6)}{" "}
+                      {(Number(claim.claimed) / Math.pow(10, 18)).toFixed(6)}{' '}
                       {tokenSymbol}
                     </div>
                   </div>
@@ -189,5 +192,5 @@ export default function RewardsPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

@@ -1,106 +1,106 @@
-"use client";
+'use client'
 
-import { useState } from "react";
+import { useState } from 'react'
 
 interface ExperimentGoal {
-  id: string;
-  label: string;
-  description: string;
-  icon: string;
+  id: string
+  label: string
+  description: string
+  icon: string
 }
 
 const experimentGoals: ExperimentGoal[] = [
   {
-    id: "hyperstition",
-    label: "Hyperstition Markets",
-    description: "Trade predictions about future possibilities",
-    icon: "▲▼",
+    id: 'hyperstition',
+    label: 'Hyperstition Markets',
+    description: 'Trade predictions about future possibilities',
+    icon: '▲▼',
   },
   {
-    id: "governance",
-    label: "Collective Governance",
-    description: "Participate in decentralized decision-making",
-    icon: "◢◤",
+    id: 'governance',
+    label: 'Collective Governance',
+    description: 'Participate in decentralized decision-making',
+    icon: '◢◤',
   },
   {
-    id: "attestations",
-    label: "Truth Verification",
-    description: "Create and verify attestations",
-    icon: "◆",
+    id: 'attestations',
+    label: 'Truth Verification',
+    description: 'Create and verify attestations',
+    icon: '◆',
   },
   {
-    id: "ico",
-    label: "Initial Collective Offering",
-    description: "Contribute to the collective treasury",
-    icon: "◊",
+    id: 'ico',
+    label: 'Initial Collective Offering',
+    description: 'Contribute to the collective treasury',
+    icon: '◊',
   },
   {
-    id: "memetics",
-    label: "Memetic Engineering",
-    description: "Shape collective thought patterns",
-    icon: "◈",
+    id: 'memetics',
+    label: 'Memetic Engineering',
+    description: 'Shape collective thought patterns',
+    icon: '◈',
   },
   {
-    id: "systems",
-    label: "Infrastructure Building",
-    description: "Develop network infrastructure",
-    icon: "░█",
+    id: 'systems',
+    label: 'Infrastructure Building',
+    description: 'Develop network infrastructure',
+    icon: '░█',
   },
   {
-    id: "vault",
-    label: "Multi-Chain Deposits",
-    description: "Contribute funds across blockchain networks",
-    icon: "◢◤",
+    id: 'vault',
+    label: 'Multi-Chain Deposits',
+    description: 'Contribute funds across blockchain networks',
+    icon: '◢◤',
   },
   {
-    id: "consciousness",
-    label: "Consciousness Exploration",
-    description: "Explore collective intelligence mechanisms",
-    icon: "∞",
+    id: 'consciousness',
+    label: 'Consciousness Exploration',
+    description: 'Explore collective intelligence mechanisms',
+    icon: '∞',
   },
-];
+]
 
 interface ProfileCreationFormProps {
   onSubmit: (data: {
-    name: string;
-    futureVision: string;
-    selectedGoals: string[];
-  }) => void;
-  isSubmitting: boolean;
+    name: string
+    futureVision: string
+    selectedGoals: string[]
+  }) => void
+  isSubmitting: boolean
 }
 
 export function ProfileCreationForm({
   onSubmit,
   isSubmitting,
 }: ProfileCreationFormProps) {
-  const [name, setName] = useState("");
-  const [futureVision, setFutureVision] = useState("");
-  const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
-  const [agreeToParticipate, setAgreeToParticipate] = useState(false);
+  const [name, setName] = useState('')
+  const [futureVision, setFutureVision] = useState('')
+  const [selectedGoals, setSelectedGoals] = useState<string[]>([])
+  const [agreeToParticipate, setAgreeToParticipate] = useState(false)
 
   const handleGoalToggle = (goalId: string) => {
     setSelectedGoals((prev) =>
       prev.includes(goalId)
         ? prev.filter((id) => id !== goalId)
-        : [...prev, goalId],
-    );
-  };
+        : [...prev, goalId]
+    )
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     if (
       !name.trim() ||
       !futureVision.trim() ||
       selectedGoals.length === 0 ||
       !agreeToParticipate
     )
-      return;
+      return
     onSubmit({
       name: name.trim(),
       futureVision: futureVision.trim(),
       selectedGoals,
-    });
-  };
+    })
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -166,8 +166,8 @@ export function ProfileCreationForm({
                   key={goal.id}
                   className={`flex items-start space-x-3 p-4 border rounded-sm cursor-pointer transition-colors ${
                     selectedGoals.includes(goal.id)
-                      ? "border-gray-400 bg-black/20"
-                      : "border-gray-700 hover:border-gray-600 bg-black/10"
+                      ? 'border-gray-400 bg-black/20'
+                      : 'border-gray-700 hover:border-gray-600 bg-black/10'
                   }`}
                 >
                   <input
@@ -179,8 +179,8 @@ export function ProfileCreationForm({
                   <span
                     className={`text-lg mt-0.5 ${
                       selectedGoals.includes(goal.id)
-                        ? "terminal-bright"
-                        : "terminal-dim"
+                        ? 'terminal-bright'
+                        : 'terminal-dim'
                     }`}
                   >
                     {goal.icon}
@@ -189,8 +189,8 @@ export function ProfileCreationForm({
                     <div
                       className={`font-medium text-sm ${
                         selectedGoals.includes(goal.id)
-                          ? "terminal-text"
-                          : "terminal-dim"
+                          ? 'terminal-text'
+                          : 'terminal-dim'
                       }`}
                     >
                       {goal.label}
@@ -204,7 +204,7 @@ export function ProfileCreationForm({
             </div>
             <div className="text-xs terminal-dim mt-4">
               Selected: {selectedGoals.length} experiment domain
-              {selectedGoals.length !== 1 ? "s" : ""}
+              {selectedGoals.length !== 1 ? 's' : ''}
             </div>
           </div>
         </div>
@@ -261,10 +261,10 @@ export function ProfileCreationForm({
           className="mobile-terminal-btn !px-8 !py-3 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span className="terminal-command text-sm">
-            {isSubmitting ? "CREATING PROFILE..." : "CREATE PROFILE"}
+            {isSubmitting ? 'CREATING PROFILE...' : 'CREATE PROFILE'}
           </span>
         </button>
       </div>
     </form>
-  );
+  )
 }

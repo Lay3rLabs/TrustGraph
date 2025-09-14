@@ -1,29 +1,34 @@
-"use client";
+'use client'
 
 interface StatusCardProps {
-  title: string;
-  status: "operational" | "degraded" | "running" | "error";
+  title: string
+  status: 'operational' | 'degraded' | 'running' | 'error'
   metrics?: Array<{
-    label: string;
-    value: string;
-  }>;
-  statusIcon?: string;
+    label: string
+    value: string
+  }>
+  statusIcon?: string
 }
 
-export function StatusCard({ title, status, metrics, statusIcon = "●" }: StatusCardProps) {
+export function StatusCard({
+  title,
+  status,
+  metrics,
+  statusIcon = '●',
+}: StatusCardProps) {
   const getStatusColor = (status: string): string => {
     switch (status) {
-      case "operational":
-      case "running":
-        return "terminal-bright";
-      case "degraded":
-        return "system-message";
-      case "error":
-        return "text-red-400";
+      case 'operational':
+      case 'running':
+        return 'terminal-bright'
+      case 'degraded':
+        return 'system-message'
+      case 'error':
+        return 'text-red-400'
       default:
-        return "terminal-dim";
+        return 'terminal-dim'
     }
-  };
+  }
 
   return (
     <div className="border border-gray-700 bg-black/10 p-4 rounded-sm">
@@ -46,5 +51,5 @@ export function StatusCard({ title, status, metrics, statusIcon = "●" }: Statu
         )}
       </div>
     </div>
-  );
+  )
 }

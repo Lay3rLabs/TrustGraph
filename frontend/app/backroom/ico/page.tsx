@@ -1,21 +1,21 @@
-"use client";
+'use client'
 
-import type React from "react";
-import { useState } from "react";
+import type React from 'react'
+import { useState } from 'react'
 
 interface UserContribution {
-  attestations: number;
-  operations: number;
-  contributions: number;
-  referrals: number;
+  attestations: number
+  operations: number
+  contributions: number
+  referrals: number
 }
 
 export default function ICOPage() {
-  const [purchaseAmount, setPurchaseAmount] = useState("");
+  const [purchaseAmount, setPurchaseAmount] = useState('')
   const [activeTab, setActiveTab] = useState<
-    "purchase" | "details" | "tokenomics"
-  >("purchase");
-  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+    'purchase' | 'details' | 'tokenomics'
+  >('purchase')
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false)
 
   // Mock user contribution data for discount calculation
   const userContributions: UserContribution = {
@@ -23,11 +23,11 @@ export default function ICOPage() {
     operations: 12,
     contributions: 8,
     referrals: 3,
-  };
+  }
 
   // Calculate user discount based on contributions
   const calculateDiscount = (contributions: UserContribution): number => {
-    let discount = 0;
+    let discount = 0
 
     // Base discount for participation
     if (
@@ -36,66 +36,66 @@ export default function ICOPage() {
       contributions.contributions > 0 ||
       contributions.referrals > 0
     ) {
-      discount += 5; // 5% base discount for any participation
+      discount += 5 // 5% base discount for any participation
     }
 
     // Additional discounts
-    discount += Math.min(contributions.attestations * 2, 10); // Max 10% from attestations
-    discount += Math.min(contributions.operations * 1.5, 15); // Max 15% from operations
-    discount += Math.min(contributions.contributions * 2.5, 20); // Max 20% from contributions
-    discount += Math.min(contributions.referrals * 3, 15); // Max 15% from referrals
+    discount += Math.min(contributions.attestations * 2, 10) // Max 10% from attestations
+    discount += Math.min(contributions.operations * 1.5, 15) // Max 15% from operations
+    discount += Math.min(contributions.contributions * 2.5, 20) // Max 20% from contributions
+    discount += Math.min(contributions.referrals * 3, 15) // Max 15% from referrals
 
-    return Math.min(discount, 45); // Cap at 45% total discount
-  };
+    return Math.min(discount, 45) // Cap at 45% total discount
+  }
 
-  const userDiscount = calculateDiscount(userContributions);
-  const basePrice = 0.001; // Base price: 1 ETH = 1000 $EN0
-  const discountedPrice = basePrice * (1 - userDiscount / 100);
+  const userDiscount = calculateDiscount(userContributions)
+  const basePrice = 0.001 // Base price: 1 ETH = 1000 $EN0
+  const discountedPrice = basePrice * (1 - userDiscount / 100)
 
   const getTokenAmount = (ethAmount: string): number => {
-    if (!ethAmount) return 0;
-    const eth = parseFloat(ethAmount);
-    return eth / discountedPrice;
-  };
+    if (!ethAmount) return 0
+    const eth = parseFloat(ethAmount)
+    return eth / discountedPrice
+  }
 
   const tokenomics = [
     {
-      category: "Phase 1 ICO",
-      percentage: "25%",
-      allocation: "250M $EN0",
-      color: "text-blue-400",
+      category: 'Phase 1 ICO',
+      percentage: '25%',
+      allocation: '250M $EN0',
+      color: 'text-blue-400',
     },
     {
-      category: "Development",
-      percentage: "20%",
-      allocation: "200M $EN0",
-      color: "text-green-400",
+      category: 'Development',
+      percentage: '20%',
+      allocation: '200M $EN0',
+      color: 'text-green-400',
     },
     {
-      category: "Community Rewards",
-      percentage: "20%",
-      allocation: "200M $EN0",
-      color: "text-yellow-400",
+      category: 'Community Rewards',
+      percentage: '20%',
+      allocation: '200M $EN0',
+      color: 'text-yellow-400',
     },
     {
-      category: "Liquidity",
-      percentage: "15%",
-      allocation: "150M $EN0",
-      color: "text-purple-400",
+      category: 'Liquidity',
+      percentage: '15%',
+      allocation: '150M $EN0',
+      color: 'text-purple-400',
     },
     {
-      category: "Team & Advisors",
-      percentage: "10%",
-      allocation: "100M $EN0",
-      color: "text-red-400",
+      category: 'Team & Advisors',
+      percentage: '10%',
+      allocation: '100M $EN0',
+      color: 'text-red-400',
     },
     {
-      category: "Strategic Reserve",
-      percentage: "10%",
-      allocation: "100M $EN0",
-      color: "text-gray-400",
+      category: 'Strategic Reserve',
+      percentage: '10%',
+      allocation: '100M $EN0',
+      color: 'text-gray-400',
     },
-  ];
+  ]
 
   return (
     <div className="space-y-8">
@@ -157,7 +157,7 @@ export default function ICOPage() {
                     +
                     {Math.min(
                       Math.floor(userContributions.operations * 1.5),
-                      15,
+                      15
                     )}
                     %
                   </div>
@@ -171,7 +171,7 @@ export default function ICOPage() {
                     +
                     {Math.min(
                       Math.floor(userContributions.contributions * 2.5),
-                      20,
+                      20
                     )}
                     %
                   </div>
@@ -221,21 +221,21 @@ export default function ICOPage() {
                     {purchaseAmount
                       ? getTokenAmount(purchaseAmount).toLocaleString(
                           undefined,
-                          { maximumFractionDigits: 2 },
+                          { maximumFractionDigits: 2 }
                         )
-                      : "0"}{" "}
+                      : '0'}{' '}
                     $EN0
                   </div>
                   <div className="terminal-dim text-xs mt-1">
                     {userDiscount > 0 && purchaseAmount && (
                       <span className="text-green-400">
-                        Saved:{" "}
+                        Saved:{' '}
                         {(
                           (parseFloat(purchaseAmount) * (userDiscount / 100)) /
                           basePrice
                         ).toLocaleString(undefined, {
                           maximumFractionDigits: 0,
-                        })}{" "}
+                        })}{' '}
                         $EN0
                       </span>
                     )}
@@ -270,8 +270,11 @@ export default function ICOPage() {
             >
               <span className="terminal-command text-lg">
                 {purchaseAmount
-                  ? `PURCHASE ${getTokenAmount(purchaseAmount).toLocaleString(undefined, { maximumFractionDigits: 0 })} $EN0`
-                  : "ENTER AMOUNT TO PURCHASE"}
+                  ? `PURCHASE ${getTokenAmount(purchaseAmount).toLocaleString(
+                      undefined,
+                      { maximumFractionDigits: 0 }
+                    )} $EN0`
+                  : 'ENTER AMOUNT TO PURCHASE'}
               </span>
             </button>
           </div>
@@ -318,17 +321,17 @@ export default function ICOPage() {
           <div className="border border-gray-700 bg-black/10 rounded-sm">
             <div className="flex border-b border-gray-700">
               {[
-                { key: "purchase", label: "PURCHASE" },
-                { key: "details", label: "DETAILS" },
-                { key: "tokenomics", label: "TOKENOMICS" },
+                { key: 'purchase', label: 'PURCHASE' },
+                { key: 'details', label: 'DETAILS' },
+                { key: 'tokenomics', label: 'TOKENOMICS' },
               ].map((tab) => (
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key as any)}
                   className={`flex-1 px-3 py-2 text-xs transition-colors ${
                     activeTab === tab.key
-                      ? "terminal-bright bg-black/20"
-                      : "terminal-dim hover:terminal-text"
+                      ? 'terminal-bright bg-black/20'
+                      : 'terminal-dim hover:terminal-text'
                   }`}
                 >
                   {tab.label}
@@ -337,7 +340,7 @@ export default function ICOPage() {
             </div>
 
             <div className="p-4">
-              {activeTab === "purchase" && (
+              {activeTab === 'purchase' && (
                 <div className="space-y-3 text-xs">
                   <div className="terminal-text">
                     Phase 1 offers the lowest prices and highest contributor
@@ -352,7 +355,7 @@ export default function ICOPage() {
                 </div>
               )}
 
-              {activeTab === "details" && (
+              {activeTab === 'details' && (
                 <div className="space-y-3 text-xs">
                   <div>
                     <div className="terminal-dim">TOTAL SUPPLY</div>
@@ -375,7 +378,7 @@ export default function ICOPage() {
                 </div>
               )}
 
-              {activeTab === "tokenomics" && (
+              {activeTab === 'tokenomics' && (
                 <div className="space-y-2 text-xs">
                   {tokenomics.map((item, index) => (
                     <div
@@ -414,7 +417,7 @@ export default function ICOPage() {
                 <span className="terminal-bright">
                   {getTokenAmount(purchaseAmount).toLocaleString(undefined, {
                     maximumFractionDigits: 2,
-                  })}{" "}
+                  })}{' '}
                   $EN0
                 </span>
               </div>
@@ -464,5 +467,5 @@ export default function ICOPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

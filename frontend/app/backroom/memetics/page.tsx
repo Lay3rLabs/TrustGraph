@@ -1,14 +1,15 @@
 'use client'
 
-import type React from 'react'
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import type React from 'react'
+import { useEffect, useState } from 'react'
+
 import { PasswordGate } from '@/components/ui/password-gate'
 import {
-  getAllArticles,
-  getTypeIcon,
-  getStatusColor,
   type ArticleMetadata,
+  getAllArticles,
+  getStatusColor,
+  getTypeIcon,
 } from '@/lib/articles-client'
 
 export default function MemeticsPage() {
@@ -173,7 +174,9 @@ export default function MemeticsPage() {
                     {getTypeIcon(writing.type)}
                   </span>
                   <div
-                    className={`text-xs px-2 py-1 rounded-sm ${getStatusColor(writing.status)}`}
+                    className={`text-xs px-2 py-1 rounded-sm ${getStatusColor(
+                      writing.status
+                    )}`}
                   >
                     {writing.status.toUpperCase()}
                   </div>

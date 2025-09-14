@@ -1,13 +1,13 @@
-"use client";
+'use client'
 
-import * as React from "react";
+import * as React from 'react'
 
 interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  children: React.ReactNode;
-  title?: string;
-  className?: string;
+  isOpen: boolean
+  onClose: () => void
+  children: React.ReactNode
+  title?: string
+  className?: string
 }
 
 export function Modal({
@@ -19,23 +19,23 @@ export function Modal({
 }: ModalProps) {
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
+      if (e.key === 'Escape') {
+        onClose()
       }
-    };
+    }
 
     if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
-      document.body.style.overflow = "hidden";
+      document.addEventListener('keydown', handleEscape)
+      document.body.style.overflow = 'hidden'
     }
 
     return () => {
-      document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen, onClose]);
+      document.removeEventListener('keydown', handleEscape)
+      document.body.style.overflow = 'unset'
+    }
+  }, [isOpen, onClose])
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center animate-in fade-in-0 duration-150 backdrop-blur-sm">
@@ -44,7 +44,9 @@ export function Modal({
 
       {/* Modal */}
       <div
-        className={`relative z-50 w-full max-w-md mx-4 bg-black/95 border border-gray-700 rounded-sm ${className || ""}`}
+        className={`relative z-50 w-full max-w-md mx-4 bg-black/95 border border-gray-700 rounded-sm ${
+          className || ''
+        }`}
       >
         {/* Header */}
         {title && (
@@ -63,5 +65,5 @@ export function Modal({
         <div className="p-4">{children}</div>
       </div>
     </div>
-  );
+  )
 }

@@ -1,8 +1,9 @@
 'use client'
 
 import type React from 'react'
-import { useOperators } from '@/hooks/useOperators'
 import { useAccount } from 'wagmi'
+
+import { useOperators } from '@/hooks/useOperators'
 
 export default function ExplorerOperatorsPage() {
   const { isConnected } = useAccount()

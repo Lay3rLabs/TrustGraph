@@ -1,13 +1,15 @@
 'use client'
 
-import type React from 'react'
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useAccount, useConnect, useDisconnect, useSwitchChain } from 'wagmi'
-import { Modal } from '../../components/ui/modal'
+import type React from 'react'
+import { useEffect, useState } from 'react'
 import { toHex } from 'viem'
+import { useAccount, useConnect, useDisconnect, useSwitchChain } from 'wagmi'
+
 import { localChain } from '@/lib/wagmi'
+
+import { Modal } from '../../components/ui/modal'
 
 interface MenuItem {
   id: string
@@ -182,7 +184,9 @@ export default function BackroomLayout({
   useEffect(() => {
     if (isConnected && (!chain || chain.id !== localChain.id)) {
       console.log(
-        `Current chain: ${chain?.id || 'unknown'}, switching to local chain: ${localChain.id}`
+        `Current chain: ${chain?.id || 'unknown'}, switching to local chain: ${
+          localChain.id
+        }`
       )
       handleSwitchToLocal()
     }
@@ -326,7 +330,9 @@ export default function BackroomLayout({
 
             {/* Mobile Navigation */}
             <nav
-              className={`${isMenuOpen ? 'block' : 'hidden'} lg:hidden border-t border-gray-700`}
+              className={`${
+                isMenuOpen ? 'block' : 'hidden'
+              } lg:hidden border-t border-gray-700`}
             >
               <div className="p-4 space-y-2">
                 {menuItems.map((item) => (

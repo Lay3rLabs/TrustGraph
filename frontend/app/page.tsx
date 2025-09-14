@@ -1,8 +1,9 @@
 'use client'
 
 import type React from 'react'
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
+
 import { useAttestation } from '@/hooks/useAttestation'
 import { schemas } from '@/lib/schemas'
 
@@ -194,7 +195,9 @@ export default function EN0VATerminal() {
                     if (newHistory[i]?.content?.includes(barConfig.label)) {
                       newHistory[i] = {
                         ...newHistory[i],
-                        content: `${generateLoadingBar(Math.floor(progress))} ${barConfig.label}`,
+                        content: `${generateLoadingBar(Math.floor(progress))} ${
+                          barConfig.label
+                        }`,
                       }
                       break
                     }
@@ -516,10 +519,10 @@ export default function EN0VATerminal() {
               entry.type === 'command'
                 ? 'terminal-command select-text'
                 : entry.type === 'option'
-                  ? `${entry.style} select-text`
-                  : entry.style
-                    ? `${entry.style} select-text`
-                    : 'terminal-text select-text'
+                ? `${entry.style} select-text`
+                : entry.style
+                ? `${entry.style} select-text`
+                : 'terminal-text select-text'
             } leading-relaxed break-words`}
             onClick={
               entry.clickable &&

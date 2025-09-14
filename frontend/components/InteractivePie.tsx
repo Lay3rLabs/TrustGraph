@@ -1,17 +1,17 @@
 'use client'
 
-import type React from 'react'
-import { useState } from 'react'
-import { Pie } from 'react-chartjs-2'
 import {
-  Chart as ChartJS,
   ArcElement,
-  Tooltip,
-  Legend,
+  Chart as ChartJS,
   ChartOptions,
+  Legend,
+  Tooltip,
 } from 'chart.js'
 import clsx from 'clsx'
 import { ChevronLeft } from 'lucide-react'
+import type React from 'react'
+import { useState } from 'react'
+import { Pie } from 'react-chartjs-2'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 

@@ -1,16 +1,12 @@
 'use client'
 
+import Link from 'next/link'
+import { useParams, useRouter } from 'next/navigation'
 import type React from 'react'
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import Link from 'next/link'
+
 import { PasswordGate } from '@/components/ui/password-gate'
-import {
-  getArticleBySlug,
-  getTypeIcon,
-  getStatusColor,
-  type Article,
-} from '@/lib/articles-client'
+import { type Article, getArticleBySlug } from '@/lib/articles-client'
 
 export default function ArticlePage() {
   const params = useParams()

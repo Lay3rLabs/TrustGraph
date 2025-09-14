@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useReadContract } from 'wagmi'
+
 import { poaServiceManagerAbi, poaServiceManagerAddress } from '@/lib/contracts'
 
 interface ServiceWorkflow {
@@ -37,14 +38,22 @@ interface ServiceData {
 
 export function useServiceData() {
   // Get service URI from POA Service Manager
-  const { data: serviceURI, isLoading: isServiceURILoading, error: serviceURIError } = useReadContract({
+  const {
+    data: serviceURI,
+    isLoading: isServiceURILoading,
+    error: serviceURIError,
+  } = useReadContract({
     address: poaServiceManagerAddress,
     abi: poaServiceManagerAbi,
     functionName: 'getServiceURI',
   })
 
   // Debug logging
-  console.log('ServiceURI loading:', { serviceURI, isServiceURILoading, serviceURIError })
+  console.log('ServiceURI loading:', {
+    serviceURI,
+    isServiceURILoading,
+    serviceURIError,
+  })
 
   // Fetch service data from IPFS
   const serviceDataQuery = useQuery({
@@ -54,7 +63,7 @@ export function useServiceData() {
         console.log('No serviceURI available:', serviceURI)
         return null
       }
-      
+
       try {
         // Handle IPFS URI formats
         let fetchUrl = serviceURI
@@ -63,13 +72,13 @@ export function useServiceData() {
           const hash = serviceURI.replace('ipfs://', '')
           fetchUrl = `/api/ipfs/${hash}`
         }
-        
+
         console.log('Fetching service data from:', fetchUrl)
         const response = await fetch(fetchUrl)
         if (!response.ok) {
           throw new Error(`Failed to fetch service data: ${response.status}`)
         }
-        
+
         const data = await response.json()
         console.log('Received service data:', data)
         return data
@@ -84,31 +93,38 @@ export function useServiceData() {
   })
 
   // Transform workflows data
-  const workflows: ServiceWorkflow[] = serviceDataQuery.data?.workflows 
-    ? Object.entries(serviceDataQuery.data.workflows).map(([id, workflow]: [string, any]) => ({
-        id,
-        package: workflow.component?.source?.Registry?.registry?.package || 'Unknown',
-        version: workflow.component?.source?.Registry?.registry?.version || '0.0.0',
-        digest: workflow.component?.source?.Registry?.registry?.digest || '',
-        domain: workflow.component?.source?.Registry?.registry?.domain || '',
-        trigger_address: workflow.trigger?.evm_contract_event?.address || '',
-        trigger_event: workflow.trigger?.evm_contract_event?.event_hash || '',
-        chain_name: workflow.trigger?.evm_contract_event?.chain_name || '',
-        aggregator_url: workflow.submit?.aggregator?.url || '',
-        aggregator_address: workflow.aggregators?.[0]?.evm?.address || 'N/A',
-        fuel_limit: workflow.component?.fuel_limit || 0,
-        time_limit: workflow.component?.time_limit_seconds || 0,
-        permissions: [
-          workflow.component?.permissions?.allowed_http_hosts === 'all'
-            ? 'HTTP: All hosts'
-            : `HTTP: ${workflow.component?.permissions?.allowed_http_hosts || 'None'}`,
-          workflow.component?.permissions?.file_system
-            ? 'File system access'
-            : 'No file system',
-        ],
-        env_keys: workflow.component?.env_keys || [],
-        config: workflow.component?.config || {},
-      }))
+  const workflows: ServiceWorkflow[] = serviceDataQuery.data?.workflows
+    ? Object.entries(serviceDataQuery.data.workflows).map(
+        ([id, workflow]: [string, any]) => ({
+          id,
+          package:
+            workflow.component?.source?.Registry?.registry?.package ||
+            'Unknown',
+          version:
+            workflow.component?.source?.Registry?.registry?.version || '0.0.0',
+          digest: workflow.component?.source?.Registry?.registry?.digest || '',
+          domain: workflow.component?.source?.Registry?.registry?.domain || '',
+          trigger_address: workflow.trigger?.evm_contract_event?.address || '',
+          trigger_event: workflow.trigger?.evm_contract_event?.event_hash || '',
+          chain_name: workflow.trigger?.evm_contract_event?.chain_name || '',
+          aggregator_url: workflow.submit?.aggregator?.url || '',
+          aggregator_address: workflow.aggregators?.[0]?.evm?.address || 'N/A',
+          fuel_limit: workflow.component?.fuel_limit || 0,
+          time_limit: workflow.component?.time_limit_seconds || 0,
+          permissions: [
+            workflow.component?.permissions?.allowed_http_hosts === 'all'
+              ? 'HTTP: All hosts'
+              : `HTTP: ${
+                  workflow.component?.permissions?.allowed_http_hosts || 'None'
+                }`,
+            workflow.component?.permissions?.file_system
+              ? 'File system access'
+              : 'No file system',
+          ],
+          env_keys: workflow.component?.env_keys || [],
+          config: workflow.component?.config || {},
+        })
+      )
     : []
 
   return {
