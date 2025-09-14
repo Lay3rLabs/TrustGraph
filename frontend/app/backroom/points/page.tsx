@@ -258,13 +258,11 @@ export default function PointsPage() {
             </div> */}
 
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white">
-                RECENT ACTIVITIES
-              </h2>
+              <h2 className="text-lg font-bold text-white">RECENT ACTIVITY</h2>
               <select
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value)}
-                className="bg-gray-900/30 text-white font-mono text-xs px-3 py-2 focus:border-blue-400 focus:outline-none cursor-pointer"
+                className="bg-gray-900/15 text-white font-mono text-xs px-3 py-2 focus:border-blue-400 focus:outline-none cursor-pointer"
               >
                 <option value="ALL">All</option>
                 {types.map((type) => (
@@ -289,7 +287,7 @@ export default function PointsPage() {
                   return (
                     <div
                       key={activity.id}
-                      className="flex items-center justify-between px-4 py-3 rounded-sm bg-gray-900/10 hover:bg-gray-900/20 transition-colors"
+                      className="flex items-center justify-between px-4 py-3 rounded-sm bg-gray-900/20 hover:bg-gray-900/30 transition-colors"
                     >
                       <div className="flex items-center space-x-4">
                         <div>
@@ -326,80 +324,43 @@ export default function PointsPage() {
             <h2 className="text-lg font-bold text-white mt-8">
               EARN MORE POINTS
             </h2>
-            <div className="border border-gray-700 bg-card-foreground/40 p-6 rounded-sm sticky top-4 max-w-full grow">
-              <div className="space-y-4">
-                {/* <div className="terminal-command text-base text-center">
-                  EARN MORE POINTS
-                </div> */}
-
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-10">
-                  <div className="terminal-text text-sm">
-                    <div className="system-message mb-2">
-                      ◉ HYPERSTITION MARKETS
-                    </div>
-                    <div className="terminal-dim text-xs pl-3">
-                      • Buy positions in active markets
-                      <br />
-                      • Redeem winning predictions
-                      <br />• Participate in collective manifestation
-                    </div>
-                  </div>
-
-                  <div className="terminal-text text-sm">
-                    <div className="system-message mb-2">◆ ATTESTATIONS</div>
-                    <div className="terminal-dim text-xs pl-3">
-                      • Verify truth statements
-                      <br />
-                      • Validate data integrity
-                      <br />• Create trust networks
-                    </div>
-                  </div>
-
-                  <div className="terminal-text text-sm">
-                    <div className="system-message mb-2">◢◤ GOVERNANCE</div>
-                    <div className="terminal-dim text-xs pl-3">
-                      • Vote on collective decisions
-                      <br />
-                      • Propose network changes
-                      <br />• Shape the future direction
-                    </div>
-                  </div>
-
-                  <div className="terminal-text text-sm">
-                    <div className="system-message mb-2">
-                      ▲ SOCIAL AMPLIFICATION
-                    </div>
-                    <div className="terminal-dim text-xs pl-3">
-                      • Share EN0VA content
-                      <br />
-                      • Refer new members
-                      <br />• Boost network effects
-                    </div>
-                  </div>
-
-                  <div className="terminal-text text-sm">
-                    <div className="system-message mb-2">
-                      ∞ CONSENSUS BUILDING
-                    </div>
-                    <div className="terminal-dim text-xs pl-3">
-                      • Contribute to collective intelligence
-                      <br />
-                      • Maintain network consensus
-                      <br />• Build trust relationships
-                    </div>
-                  </div>
+            <div className="border border-gray-700 bg-card-foreground/40 p-6 rounded-sm sticky top-4 max-w-full grow space-y-4">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:justify-center md:gap-8">
+                <div className="terminal-text text-sm space-y-2">
+                  <div className="system-message">◉ HYPERSTITION MARKETS</div>
+                  <ul className="terminal-dim text-xs pl-4 list-disc">
+                    <li>Participate in active Hyperstitions</li>
+                    <li>Redeem winning predictions</li>
+                    <li>Experience collective manifestation</li>
+                  </ul>
                 </div>
 
-                {/* <div className="border-t border-gray-700 pt-4">
-                  <div className="text-center">
-                    <div className="terminal-bright text-lg mb-1">
-                      MAXIMIZE CONTRIBUTION
-                    </div>
-                    <div className="terminal-dim text-xs">
-                      Every action amplifies the collective
-                    </div>
-                  </div>
-                </div> */}
+                <div className="terminal-text text-sm space-y-2">
+                  <div className="system-message">◆ ATTESTATIONS</div>
+                  <ul className="terminal-dim text-xs pl-4 list-disc">
+                    <li>Verify statements</li>
+                    <li>Validate data integrity</li>
+                    <li>Create trust networks</li>
+                  </ul>
+                </div>
+
+                <div className="terminal-text text-sm space-y-2">
+                  <div className="system-message">◢◤ GOVERNANCE</div>
+                  <ul className="terminal-dim text-xs pl-4 list-disc">
+                    <li>Build consensus</li>
+                    <li>Shape the future direction</li>
+                    <li>Vote on collective decisions</li>
+                  </ul>
+                </div>
+
+                <div className="terminal-text text-sm space-y-2">
+                  <div className="system-message">▲ SOCIAL AMPLIFICATION</div>
+                  <ul className="terminal-dim text-xs pl-4 list-disc">
+                    <li>Share EN0VA content</li>
+                    <li>Refer new members</li>
+                    <li>Boost network effects</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
