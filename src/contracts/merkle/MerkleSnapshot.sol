@@ -5,35 +5,18 @@ import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsSe
 import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import {ITypes} from "interfaces/ITypes.sol";
-import {IMerkler} from "interfaces/IMerkler.sol";
+import {IMerkler} from "interfaces/merkle/IMerkler.sol";
+import {IMerkleSnapshot} from "interfaces/merkle/IMerkleSnapshot.sol";
+import {IMerkleSnapshotHook} from "interfaces/merkle/IMerkleSnapshotHook.sol";
 
 /// @title MerkleSnapshot - Merkle tree snapshotter that can be used by other contracts to verify merkle proofs and access history
 /// @dev Implements IWavsServiceHandler for merkle root updates via WAVS
-contract MerkleSnapshot is IWavsServiceHandler, ITypes, IMerkler {
-    error NoMerkleStates();
-    error NoMerkleStateAtBlock(uint256 requested, uint256 firstBlock);
-    error NoMerkleStateAtIndex(uint256 requested, uint256 total);
-
-    error InvalidCronTimestamp(uint64 given, uint64 last);
-    error InvalidTriggerId(uint64 actual, uint64 expected);
-
-    event MerkleRootUpdated(
-        bytes32 indexed root,
-        bytes32 ipfsHash,
-        string ipfsHashCid
-    );
-
-    struct MerkleState {
-        /// @notice The block number the merkle tree was set at
-        uint256 blockNumber;
-        /// @notice The root of the merkle tree
-        bytes32 root;
-        /// @notice The IPFS hash of the merkle tree
-        bytes32 ipfsHash;
-        /// @notice The IPFS hash CID of the merkle tree
-        string ipfsHashCid;
-    }
-
+contract MerkleSnapshot is
+    IMerkleSnapshot,
+    IWavsServiceHandler,
+    ITypes,
+    IMerkler
+{
     /// @notice Service manager for WAVS integration
     IWavsServiceManager private _serviceManager;
 
@@ -53,6 +36,15 @@ contract MerkleSnapshot is IWavsServiceHandler, ITypes, IMerkler {
     /// @notice Mapping from block number to state index for efficient lookups
     /// @dev Only one state per block is allowed
     mapping(uint256 blockNumber => uint256 stateIndex) public blockToStateIndex;
+
+    /// @notice Array of contracts to execute when the merkle state is updated.
+    mapping(uint256 hookIndex => IMerkleSnapshotHook hook) public hooks;
+    /// @notice Mapping from hook to hook index for efficient removal.
+    mapping(IMerkleSnapshotHook hook => uint256 hookIndex) public hookIndex;
+    /// @notice The next hook index to use. Start at 1 since 0 is the default value in the mappings above.
+    uint64 public nextHookIndex = 1;
+    /// @notice The number of hooks.
+    uint64 public hookCount;
 
     constructor(IWavsServiceManager serviceManager) {
         _serviceManager = serviceManager;
@@ -99,6 +91,14 @@ contract MerkleSnapshot is IWavsServiceHandler, ITypes, IMerkler {
             ipfsHash: ipfsHash,
             ipfsHashCid: ipfsHashCid
         });
+
+        // Call the hooks.
+        for (uint256 i = 1; i < nextHookIndex; i++) {
+            if (hooks[i] == IMerkleSnapshotHook(address(0))) {
+                continue;
+            }
+            hooks[i].onMerkleUpdate(states[stateIndex]);
+        }
     }
 
     /// @notice Verify a merkle proof for a given root and account
@@ -319,6 +319,49 @@ contract MerkleSnapshot is IWavsServiceHandler, ITypes, IMerkler {
         MerkleState[] memory result = new MerkleState[](end - offset);
         for (uint256 i = offset; i < end; i++) {
             result[i - offset] = states[i];
+        }
+        return result;
+    }
+
+    /////////////////////////////////////////////////////////////////
+    // HOOKS
+    /////////////////////////////////////////////////////////////////
+
+    /// @notice Add a hook
+    function addHook(IMerkleSnapshotHook hook) external {
+        if (hookIndex[hook] != 0) {
+            revert HookAlreadyAdded();
+        }
+
+        hooks[nextHookIndex] = hook;
+        hookIndex[hook] = nextHookIndex;
+        nextHookIndex++;
+        hookCount++;
+    }
+
+    /// @notice Remove a hook
+    function removeHook(IMerkleSnapshotHook hook) external {
+        if (hookIndex[hook] == 0) {
+            revert HookNotAdded();
+        }
+
+        delete hooks[hookIndex[hook]];
+        delete hookIndex[hook];
+        hookCount--;
+    }
+
+    /// @notice List all hooks
+    function getHooks() external view returns (IMerkleSnapshotHook[] memory) {
+        IMerkleSnapshotHook[] memory result = new IMerkleSnapshotHook[](
+            hookCount
+        );
+        uint256 resultIndex = 0;
+        for (uint256 i = 1; i < nextHookIndex; i++) {
+            if (hooks[i] == IMerkleSnapshotHook(address(0))) {
+                continue;
+            }
+            result[resultIndex] = hooks[i];
+            resultIndex++;
         }
         return result;
     }

@@ -1,7 +1,12 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { useAccount, useReadContract, useWriteContract } from 'wagmi'
+import {
+  useAccount,
+  useBalance,
+  useReadContract,
+  useWriteContract,
+} from 'wagmi'
 
 import {
   merkleSnapshotAbi,
@@ -87,6 +92,15 @@ export function useRewards() {
     args: address ? [address, mockUsdcAddress] : undefined,
     query: {
       enabled: !!address,
+    },
+  })
+
+  // Use mock USDC for collateral balance
+  const { data: rewardBalance, refetch: refetchRewardBalance } = useBalance({
+    address: address,
+    token: mockUsdcAddress,
+    query: {
+      refetchInterval: 3_000,
     },
   })
 
@@ -190,7 +204,6 @@ export function useRewards() {
         functionName: 'claim',
         args: [
           address,
-          mockUsdcAddress,
           BigInt(pendingReward.value),
           pendingReward.proof as `0x${string}`[],
         ],
@@ -226,7 +239,8 @@ export function useRewards() {
 
   const refresh = useCallback(async () => {
     await refetchClaimed()
-  }, [refetchClaimed])
+    await refetchRewardBalance()
+  }, [refetchClaimed, refetchRewardBalance])
 
   return {
     // Loading states
@@ -241,6 +255,7 @@ export function useRewards() {
     claimedAmount: claimedAmount?.toString() || '0',
     claimHistory,
     tokenSymbol,
+    rewardBalance,
 
     // Actions
     claim,

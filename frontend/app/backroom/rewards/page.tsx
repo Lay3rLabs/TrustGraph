@@ -23,6 +23,7 @@ export default function RewardsPage() {
     claimedAmount,
     claimHistory,
     tokenSymbol,
+    rewardBalance,
     claim,
     triggerUpdate,
     refresh,
@@ -99,6 +100,7 @@ export default function RewardsPage() {
           claimedAmount={claimedAmount}
           merkleData={merkleData}
           tokenSymbol={tokenSymbol}
+          rewardBalance={rewardBalance}
           contractAddress={contractAddress}
           onClaim={handleClaim}
           onTriggerUpdate={handleTriggerUpdate}

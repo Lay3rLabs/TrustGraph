@@ -57,44 +57,6 @@
       "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
     },
     {
-      "filename": "merkler.wasm",
-      "package_name": "merkler",
-      "package_version": "0.1.0",
-      "trigger_event": "MerklerTrigger(uint64)",
-      "trigger_json_path": "merkler.merkle_snapshot",
-      "submit_json_path": "reward_contracts.reward_distributor",
-      "config_values": {
-        "eas_address": "${EAS_ADDRESS}",
-        "indexer_address": "${INDEXER_ADDRESS}",
-        "chain_name": "${CHAIN_NAME}",
-        "schema_uid": "${VOUCHING_SCHEMA_ID}",
-        "pagerank_points_pool": "1000000000000000000000",
-        "pagerank_trusted_seeds": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-        "pagerank_trust_multiplier": "10.5",
-        "pagerank_trust_boost": "0.99"
-      },
-      "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
-    },
-    {
-      "filename": "merkler.wasm",
-      "package_name": "merkler",
-      "package_version": "0.1.0",
-      "trigger_event": "MerklerTrigger(uint64)",
-      "trigger_json_path": "merkler.merkle_snapshot",
-      "submit_json_path": "zodiac_safes.safe1.merkle_gov_module",
-      "config_values": {
-        "eas_address": "${EAS_ADDRESS}",
-        "indexer_address": "${INDEXER_ADDRESS}",
-        "chain_name": "${CHAIN_NAME}",
-        "schema_uid": "${VOUCHING_SCHEMA_ID}",
-        "pagerank_points_pool": "1000000000000000000000",
-        "pagerank_trusted_seeds": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-        "pagerank_trust_multiplier": "10.5",
-        "pagerank_trust_boost": "0.99"
-      },
-      "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
-    },
-    {
       "filename": "wavs_safe_signer_sync.wasm",
       "package_name": "wavs-safe-signer-sync",
       "package_version": "0.1.0",

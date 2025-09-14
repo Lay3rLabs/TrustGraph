@@ -128,24 +128,12 @@ forge script script/Merkler.s.sol:Merkler \
 
 - `rewardDistributorAddr`: Address of the deployed RewardDistributor contract
 
-### 6. Query Trigger Information
-
-Get detailed information about a specific trigger:
-
-```bash
-forge script script/Merkler.s.sol:Merkler \
-    --sig "queryTrigger(string,uint256)" \
-    "0x1234567890123456789012345678901234567890" \
-    "1" \
-    --rpc-url $RPC_URL
-```
-
 **Parameters:**
 
 - `rewardDistributorAddr`: Address of the deployed RewardDistributor contract
 - `triggerId`: The trigger ID to query (e.g., 1, 2, 3...)
 
-### 7. Query Claim Status
+### 6. Query Claim Status
 
 Check how much an address has already claimed:
 
@@ -164,7 +152,7 @@ forge script script/Merkler.s.sol:Merkler \
 - `rewardTokenAddr`: Address of the ENOVA token contract
 - `account`: Address to check claim status for
 
-### 8. Query Token Balance
+### 7. Query Token Balance
 
 Check current token balance for an address:
 
@@ -181,7 +169,7 @@ forge script script/Merkler.s.sol:Merkler \
 - `rewardTokenAddr`: Address of the ENOVA token contract
 - `account`: Address to check balance for
 
-### 9. Comprehensive Query
+### 8. Comprehensive Query
 
 Get all relevant information in a single call:
 
@@ -202,54 +190,6 @@ forge script script/Merkler.s.sol:Merkler \
 
 ## Example Output
 
-### Successful Trigger Match
-
-```
-Fetching data for TriggerId 1
-Trigger executed successfully, root and ipfsHash match. This means the last rewards update occurred due to a manual trigger.
-
---------------------------------
-root:
-0x1234567890123456789012345678901234567890123456789012345678901234
-ipfsHash:
-0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef
-ipfsHashCid:
-QmXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
---------------------------------
-
-Merkle data URL: https://gateway.pinata.cloud/ipfs/QmXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-Claiming rewards...
-Claimable: 1000000000000000000
-Balance before: 0
-Balance after: 1000000000000000000
-Claimed: 1000000000000000000
-```
-
-### Trigger Mismatch (Cron vs Manual)
-
-```
-Fetching data for TriggerId 1
-Trigger failed, root or ipfsHash mismatch. This will happen if the last rewards update occurred due to a cron schedule and not a manual trigger.
-
---------------------------------
-
-contract root:
-0x1111111111111111111111111111111111111111111111111111111111111111
-contract ipfsHash:
-0x2222222222222222222222222222222222222222222222222222222222222222
-contract ipfsHashCid:
-QmYyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
-
---------------------------------
-
-avsOutput.root:
-0x3333333333333333333333333333333333333333333333333333333333333333
-avsOutput.ipfsHashData:
-0x4444444444444444444444444444444444444444444444444444444444444444
-avsOutput.ipfsHash:
-QmZzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
-```
-
 ### Query Contract State Output
 
 ```
@@ -262,8 +202,6 @@ Current IPFS Hash:
 
 Current IPFS Hash CID:
 QmXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-Next Trigger ID: 2
 =====================
 ```
 
@@ -271,23 +209,6 @@ Next Trigger ID: 2
 
 ```
 IPFS URI: https://gateway.pinata.cloud/ipfs/QmXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-```
-
-### Query Trigger Information Output
-
-```
-=== Trigger Information ===
-Trigger ID: 1
-Is Valid: true
-Creator: 0x742d35Cc6634C0532925a3b8D21Ce0C7a26F5BA5
-Data: 0x0000000000000000000000000000000000000000000000000000000000000001
-AVS Output Root:
-0x1234567890123456789012345678901234567890123456789012345678901234
-AVS Output IPFS Hash Data:
-0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef
-AVS Output IPFS Hash CID:
-QmXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-==========================
 ```
 
 ### Query Claim Status Output
@@ -324,8 +245,6 @@ Current IPFS Hash:
 
 Current IPFS Hash CID:
 QmXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-Next Trigger ID: 2
 =====================
 
 IPFS URI: https://gateway.pinata.cloud/ipfs/QmXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -341,20 +260,6 @@ Account: 0x742d35Cc6634C0532925a3b8D21Ce0C7a26F5BA5
 Reward Token: 0xabcdefabcdefabcdefabcdefabcdefabcdefabcd
 Already Claimed: 500000000000000000
 ===================
-
-Latest Trigger Information:
-=== Trigger Information ===
-Trigger ID: 1
-Is Valid: true
-Creator: 0x742d35Cc6634C0532925a3b8D21Ce0C7a26F5BA5
-Data: 0x0000000000000000000000000000000000000000000000000000000000000001
-AVS Output Root:
-0x1234567890123456789012345678901234567890123456789012345678901234
-AVS Output IPFS Hash Data:
-0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef
-AVS Output IPFS Hash CID:
-QmXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-==========================
 
 === END COMPREHENSIVE QUERY ===
 ```

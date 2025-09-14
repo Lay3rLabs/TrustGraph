@@ -5,75 +5,79 @@ pragma solidity ^0.8.19;
  Note: having stupid version issues with this contract's dependencies so it's disabled for now.
 */
 
-import {ITypes} from "interfaces/ITypes.sol";
-import {IMerkler} from "interfaces/IMerkler.sol";
-import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
-import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 import {UniversalRewardsDistributor} from "@morpho-org/universal-rewards-distributor/UniversalRewardsDistributor.sol";
+import {ErrorsLib} from "@morpho-org/universal-rewards-distributor/libraries/ErrorsLib.sol";
+import {EventsLib} from "@morpho-org/universal-rewards-distributor/libraries/EventsLib.sol";
+import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import {SafeERC20, IERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract RewardDistributor is IWavsServiceHandler, UniversalRewardsDistributor, IMerkler {
-    /// @notice The last trigger ID seen
-    uint64 public lastTriggerId;
+import {IMerkleSnapshot} from "interfaces/merkle/IMerkleSnapshot.sol";
+import {IMerkleSnapshotHook} from "interfaces/merkle/IMerkleSnapshotHook.sol";
 
-    /// @notice Mapping of valid triggers
-    mapping(uint64 _triggerId => bool _isValid) internal _validTriggers;
-    /// @notice Mapping of trigger data
-    mapping(uint64 _triggerId => bytes _data) internal _datas;
-    /// @notice Mapping of trigger signatures
-    mapping(uint64 _triggerId => SignatureData _signature) internal _signatures;
-
-    /// @notice Service manager instance
-    IWavsServiceManager private _serviceManager;
+contract RewardDistributor is UniversalRewardsDistributor, IMerkleSnapshotHook {
+    using SafeERC20 for IERC20;
 
     /// @notice The optional ipfs hash CID containing metadata about the root (e.g. the merkle tree itself).
     string public ipfsHashCid;
 
+    /// @notice The ERC20 reward token to distribute
+    address public rewardToken;
+
     /**
      * @notice Initialize the contract
-     * @param serviceManager The service manager instance
+     * @param rewardToken_ The ERC20 reward token to distribute
      */
-    constructor(IWavsServiceManager serviceManager)
-        UniversalRewardsDistributor(address(this), 0, bytes32(0), bytes32(0))
-    {
-        _serviceManager = serviceManager;
+    constructor(
+        address rewardToken_
+    ) UniversalRewardsDistributor(address(this), 0, bytes32(0), bytes32(0)) {
+        rewardToken = rewardToken_;
     }
 
-    /// @inheritdoc IWavsServiceHandler
-    function handleSignedEnvelope(Envelope calldata envelope, SignatureData calldata signatureData) external {
-        _serviceManager.validate(envelope, signatureData);
-
-        MerklerAvsOutput memory avsOutput = abi.decode(envelope.payload, (MerklerAvsOutput));
-
-        _signatures[avsOutput.triggerId] = signatureData;
-        _datas[avsOutput.triggerId] = envelope.payload;
-        _validTriggers[avsOutput.triggerId] = true;
-        if (avsOutput.triggerId > lastTriggerId) {
-            lastTriggerId = avsOutput.triggerId;
-        }
-
-        // Update distributor
-
-        _setRoot(avsOutput.root, avsOutput.ipfsHash);
-        ipfsHashCid = avsOutput.ipfsHashCid;
+    /// @inheritdoc IMerkleSnapshotHook
+    function onMerkleUpdate(IMerkleSnapshot.MerkleState memory state) external {
+        _setRoot(state.root, state.ipfsHash);
+        ipfsHashCid = state.ipfsHashCid;
+        emit IMerkleSnapshot.MerkleRootUpdated(
+            state.root,
+            state.ipfsHash,
+            state.ipfsHashCid
+        );
     }
 
-    function isValidTriggerId(uint64 _triggerId) external view returns (bool _isValid) {
-        _isValid = _validTriggers[_triggerId];
-    }
+    /// @notice Claims rewards for the reward token.
+    /// @param account The address to claim rewards for.
+    /// @param claimable The overall claimable amount of token rewards.
+    /// @param proof The merkle proof that validates this claim.
+    /// @return amount The amount of reward token claimed.
+    /// @dev Anyone can claim rewards on behalf of an account.
+    function claim(
+        address account,
+        uint256 claimable,
+        bytes32[] calldata proof
+    ) external returns (uint256 amount) {
+        require(root != bytes32(0), ErrorsLib.ROOT_NOT_SET);
+        require(
+            MerkleProof.verifyCalldata(
+                proof,
+                root,
+                keccak256(
+                    bytes.concat(keccak256(abi.encode(account, claimable)))
+                )
+            ),
+            ErrorsLib.INVALID_PROOF_OR_EXPIRED
+        );
 
-    function getSignature(uint64 _triggerId) external view returns (SignatureData memory _signature) {
-        _signature = _signatures[_triggerId];
-    }
+        require(
+            claimable > claimed[account][rewardToken],
+            ErrorsLib.CLAIMABLE_TOO_LOW
+        );
 
-    function getData(uint64 _triggerId) external view returns (bytes memory _data) {
-        _data = _datas[_triggerId];
-    }
+        amount = claimable - claimed[account][rewardToken];
 
-    /**
-     * @notice Get the service manager address
-     * @return address The address of the service manager
-     */
-    function getServiceManager() external view returns (address) {
-        return address(_serviceManager);
+        claimed[account][rewardToken] = claimable;
+
+        IERC20(rewardToken).safeTransfer(account, amount);
+
+        emit EventsLib.Claimed(account, rewardToken, amount);
     }
 }

@@ -4,14 +4,18 @@ pragma solidity ^0.8.22;
 import {Test} from "forge-std/Test.sol";
 import {console} from "forge-std/console.sol";
 import {MerkleSnapshot} from "../../src/contracts/merkle/MerkleSnapshot.sol";
+import {IMerkleSnapshot} from "interfaces/merkle/IMerkleSnapshot.sol";
+import {IMerkleSnapshotHook} from "interfaces/merkle/IMerkleSnapshotHook.sol";
 import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 import {ITypes} from "interfaces/ITypes.sol";
-import {IMerkler} from "interfaces/IMerkler.sol";
+import {IMerkler} from "interfaces/merkle/IMerkler.sol";
 
 contract MerkleSnapshotTest is Test {
     MerkleSnapshot public merkleSnapshot;
     MockWavsServiceManager public mockServiceManager;
+    MockMerkleSnapshotHook public mockMerkleSnapshotHook1;
+    MockMerkleSnapshotHook public mockMerkleSnapshotHook2;
 
     // Test data
     address public alice = address(0x1);
@@ -34,16 +38,13 @@ contract MerkleSnapshotTest is Test {
     string public constant TEST_IPFS_CID_2 = "QmTest2";
     string public constant TEST_IPFS_CID_3 = "QmTest3";
 
-    // Events
-    event MerkleRootUpdated(
-        bytes32 indexed root,
-        bytes32 ipfsHash,
-        string ipfsHashCid
-    );
-
     function setUp() public {
         mockServiceManager = new MockWavsServiceManager();
         merkleSnapshot = new MerkleSnapshot(mockServiceManager);
+        mockMerkleSnapshotHook1 = new MockMerkleSnapshotHook();
+        mockMerkleSnapshotHook2 = new MockMerkleSnapshotHook();
+        merkleSnapshot.addHook(mockMerkleSnapshotHook1);
+        merkleSnapshot.addHook(mockMerkleSnapshotHook2);
     }
 
     function testConstruction_ShouldInitializeCorrectly() public view {
@@ -52,27 +53,49 @@ contract MerkleSnapshotTest is Test {
             address(mockServiceManager)
         );
         assertEq(merkleSnapshot.getStateCount(), 0);
+        assertEq(merkleSnapshot.hookCount(), 2);
     }
 
     function testGetLatestState_ShouldRevertWhenNoStates() public {
-        vm.expectRevert(MerkleSnapshot.NoMerkleStates.selector);
+        vm.expectRevert(IMerkleSnapshot.NoMerkleStates.selector);
         merkleSnapshot.getLatestState();
     }
 
     function testGetStateAtBlock_ShouldRevertWhenNoStates() public {
-        vm.expectRevert(MerkleSnapshot.NoMerkleStates.selector);
+        vm.expectRevert(IMerkleSnapshot.NoMerkleStates.selector);
         merkleSnapshot.getStateAtBlock(100);
     }
 
     function testGetStateAtIndex_ShouldRevertWhenInvalidIndex() public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                MerkleSnapshot.NoMerkleStateAtIndex.selector,
+                IMerkleSnapshot.NoMerkleStateAtIndex.selector,
                 0,
                 0
             )
         );
         merkleSnapshot.getStateAtIndex(0);
+    }
+
+    function testGetHooks_ShouldReturnCorrectHooks() public view {
+        assertEq(
+            address(merkleSnapshot.getHooks()[0]),
+            address(mockMerkleSnapshotHook1)
+        );
+        assertEq(
+            address(merkleSnapshot.getHooks()[1]),
+            address(mockMerkleSnapshotHook2)
+        );
+    }
+
+    function testRemoveHook_ShouldRemoveHook() public {
+        merkleSnapshot.removeHook(mockMerkleSnapshotHook1);
+        assertEq(merkleSnapshot.hookCount(), 1);
+        assertEq(
+            address(merkleSnapshot.getHooks()[0]),
+            address(mockMerkleSnapshotHook2)
+        );
+        assertEq(merkleSnapshot.getHooks().length, 1);
     }
 
     function testHandleSignedEnvelope_ShouldCreateFirstState() public {
@@ -90,7 +113,11 @@ contract MerkleSnapshotTest is Test {
 
         // Expect event emission
         vm.expectEmit(true, false, false, true);
-        emit MerkleRootUpdated(TEST_ROOT_1, TEST_IPFS_HASH_1, TEST_IPFS_CID_1);
+        emit IMerkleSnapshot.MerkleRootUpdated(
+            TEST_ROOT_1,
+            TEST_IPFS_HASH_1,
+            TEST_IPFS_CID_1
+        );
 
         // Execute the signed envelope
         merkleSnapshot.handleSignedEnvelope(envelope, signatureData);
@@ -119,6 +146,10 @@ contract MerkleSnapshotTest is Test {
     }
 
     function testHandleSignedEnvelope_ShouldCreateMultipleStates() public {
+        // Ensure hook states are empty
+        assertEq(mockMerkleSnapshotHook1.latestState().root, bytes32(0));
+        assertEq(mockMerkleSnapshotHook2.latestState().root, bytes32(0));
+
         // Create states in different blocks
         // Block 100
         vm.roll(100);
@@ -128,6 +159,10 @@ contract MerkleSnapshotTest is Test {
             TEST_IPFS_CID_1
         );
 
+        // Ensure hook states are updated
+        assertEq(mockMerkleSnapshotHook1.latestState().root, TEST_ROOT_1);
+        assertEq(mockMerkleSnapshotHook2.latestState().root, TEST_ROOT_1);
+
         // Block 200
         vm.roll(200);
         _createStateAtCurrentBlock(
@@ -136,6 +171,13 @@ contract MerkleSnapshotTest is Test {
             TEST_IPFS_CID_2
         );
 
+        // Ensure hook states are updated
+        assertEq(mockMerkleSnapshotHook1.latestState().root, TEST_ROOT_2);
+        assertEq(mockMerkleSnapshotHook2.latestState().root, TEST_ROOT_2);
+
+        // Remove first hook.
+        merkleSnapshot.removeHook(mockMerkleSnapshotHook1);
+
         // Block 300
         vm.roll(300);
         _createStateAtCurrentBlock(
@@ -143,6 +185,10 @@ contract MerkleSnapshotTest is Test {
             TEST_IPFS_HASH_3,
             TEST_IPFS_CID_3
         );
+
+        // Ensure only second hook state is updated
+        assertEq(mockMerkleSnapshotHook1.latestState().root, TEST_ROOT_2);
+        assertEq(mockMerkleSnapshotHook2.latestState().root, TEST_ROOT_3);
 
         // Verify all states
         assertEq(merkleSnapshot.getStateCount(), 3);
@@ -286,7 +332,7 @@ contract MerkleSnapshotTest is Test {
         // Try to get state for block before first state
         vm.expectRevert(
             abi.encodeWithSelector(
-                MerkleSnapshot.NoMerkleStateAtBlock.selector,
+                IMerkleSnapshot.NoMerkleStateAtBlock.selector,
                 currentBlock - 1,
                 currentBlock
             )
@@ -613,7 +659,7 @@ contract MerkleSnapshotTest is Test {
         // Test block before first state should revert
         vm.expectRevert(
             abi.encodeWithSelector(
-                MerkleSnapshot.NoMerkleStateAtBlock.selector,
+                IMerkleSnapshot.NoMerkleStateAtBlock.selector,
                 50,
                 100
             )
@@ -755,4 +801,25 @@ contract MockWavsServiceManager is IWavsServiceManager {
     function getDelegationManager() external view override returns (address) {}
 
     function getStakeRegistry() external view override returns (address) {}
+}
+
+contract MockMerkleSnapshotHook is IMerkleSnapshotHook, IMerkleSnapshot {
+    IMerkleSnapshot.MerkleState public _state;
+
+    function latestState()
+        external
+        view
+        returns (IMerkleSnapshot.MerkleState memory)
+    {
+        return _state;
+    }
+
+    function onMerkleUpdate(IMerkleSnapshot.MerkleState memory state) external {
+        _state = state;
+        emit IMerkleSnapshot.MerkleRootUpdated(
+            state.root,
+            state.ipfsHash,
+            state.ipfsHashCid
+        );
+    }
 }

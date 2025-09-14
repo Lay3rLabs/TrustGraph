@@ -66,9 +66,10 @@ forge script script/DeployPredictionMarket.s.sol:DeployScript \
 
 echo "🔐 Deploying Zodiac-enabled Safes with modules..."
 
-# Deploy Zodiac Safes using Foundry script
+# Deploy Zodiac Safes using Foundry script. MUST RUN AFTER MERKLER DEPLOYMENT.
+export MERKLE_SNAPSHOT_ADDR=`task config:merkle-snapshot-address`
 forge script script/DeployZodiacSafes.s.sol:DeployZodiacSafes \
-    --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
+    --sig 'run(string,string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" "${MERKLE_SNAPSHOT_ADDR}" \
     --rpc-url "${RPC_URL}" \
     --private-key "${FUNDED_KEY}" \
     --broadcast

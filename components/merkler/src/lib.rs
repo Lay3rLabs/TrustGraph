@@ -354,7 +354,7 @@ pub mod solidity {
     pub use ITypes::*;
     sol!("../../src/interfaces/ITypes.sol");
     pub use IMerkler::*;
-    sol!("../../src/interfaces/IMerkler.sol");
+    sol!("../../src/interfaces/merkle/IMerkler.sol");
 }
 
 #[derive(Serialize)]

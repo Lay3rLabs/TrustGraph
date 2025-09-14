@@ -10,7 +10,7 @@ import {MerkleSnapshot} from "contracts/merkle/MerkleSnapshot.sol";
 import {RewardDistributor} from "contracts/rewards/RewardDistributor.sol";
 import {ENOVA} from "contracts/tokens/ERC20.sol";
 import {ITypes} from "interfaces/ITypes.sol";
-import {IMerkler} from "interfaces/IMerkler.sol";
+import {IMerkler} from "interfaces/merkle/IMerkler.sol";
 
 /// @dev Combined script to update merkle tree and claim rewards
 contract Merkler is Common {
@@ -43,64 +43,7 @@ contract Merkler is Common {
             payable(vm.parseAddress(rewardDistributorAddr))
         );
 
-        uint64 triggerId = rewardDistributor.lastTriggerId();
-        console.log("Fetching data for TriggerId", triggerId);
-
-        bytes memory data = rewardDistributor.getData(triggerId);
-
-        IMerkler.MerklerAvsOutput memory avsOutput = abi.decode(
-            data,
-            (IMerkler.MerklerAvsOutput)
-        );
-
-        bytes32 root = rewardDistributor.root();
-        bytes32 ipfsHash = rewardDistributor.ipfsHash();
         string memory ipfsHashCid = rewardDistributor.ipfsHashCid();
-
-        if (root == avsOutput.root && ipfsHash == avsOutput.ipfsHash) {
-            console.log(
-                "Trigger executed successfully, root and ipfsHash match. This means the last rewards update occurred due to a manual trigger."
-            );
-            console.log("");
-            console.log("--------------------------------");
-            console.log("root:");
-            console.logBytes32(root);
-            console.log("");
-            console.log("ipfsHash:");
-            console.logBytes32(ipfsHash);
-            console.log("ipfsHashCid:");
-            console.log(ipfsHashCid);
-            console.log("--------------------------------");
-            console.log("");
-        } else {
-            console.log(
-                "Trigger failed, root or ipfsHash mismatch. This will happen if the last rewards update occurred due to a cron schedule and not a manual trigger."
-            );
-            console.log("");
-            console.log("--------------------------------");
-            console.log("");
-            console.log("contract root:");
-            console.logBytes32(root);
-            console.log("");
-            console.log("contract ipfsHash:");
-            console.logBytes32(ipfsHash);
-            console.log("contract ipfsHashCid:");
-            console.log(ipfsHashCid);
-            console.log("");
-            console.log("--------------------------------");
-            console.log("");
-            console.log("avsOutput.root:");
-            console.logBytes32(avsOutput.root);
-            console.log("");
-            console.log("avsOutput.ipfsHash:");
-            console.logBytes32(avsOutput.ipfsHash);
-            console.log("");
-            console.log("avsOutput.ipfsHashCid:");
-            console.log(avsOutput.ipfsHashCid);
-            console.log("");
-            console.log("--------------------------------");
-            console.log("");
-        }
 
         // access IPFS_GATEWAY_URL from env
         string memory ipfsGatewayUrl = vm.envString("IPFS_GATEWAY_URL");
@@ -182,7 +125,6 @@ contract Merkler is Common {
         bytes32 root = rewardDistributor.root();
         bytes32 ipfsHash = rewardDistributor.ipfsHash();
         string memory ipfsHashCid = rewardDistributor.ipfsHashCid();
-        uint64 lastTriggerId = rewardDistributor.lastTriggerId();
 
         console.log("=== Contract State ===");
         console.log("Current Root:");
@@ -193,8 +135,6 @@ contract Merkler is Common {
         console.log("");
         console.log("Current IPFS Hash CID:");
         console.log(ipfsHashCid);
-        console.log("");
-        console.log("Last Trigger ID:", lastTriggerId);
         console.log("=====================");
     }
 
@@ -213,41 +153,6 @@ contract Merkler is Common {
 
         console.log("IPFS URI:", uri);
         return uri;
-    }
-
-    /// @dev Query trigger information
-    /// @param rewardDistributorAddr Address of the RewardDistributor contract
-    /// @param triggerId The trigger ID to query
-    function queryTrigger(
-        string calldata rewardDistributorAddr,
-        uint64 triggerId
-    ) public view {
-        RewardDistributor rewardDistributor = RewardDistributor(
-            payable(vm.parseAddress(rewardDistributorAddr))
-        );
-
-        console.log("=== Trigger Information ===");
-        console.log("Trigger ID:", triggerId);
-
-        bool isValid = rewardDistributor.isValidTriggerId(triggerId);
-        console.log("Is Valid:", isValid);
-
-        if (isValid) {
-            bytes memory data = rewardDistributor.getData(triggerId);
-            if (data.length > 0) {
-                IMerkler.MerklerAvsOutput memory avsOutput = abi.decode(
-                    data,
-                    (IMerkler.MerklerAvsOutput)
-                );
-                console.log("AVS Output Root:");
-                console.logBytes32(avsOutput.root);
-                console.log("AVS Output IPFS Hash Data:");
-                console.logBytes32(avsOutput.ipfsHash);
-                console.log("AVS Output IPFS Hash CID:");
-                console.log(avsOutput.ipfsHashCid);
-            }
-        }
-        console.log("==========================");
     }
 
     /// @dev Query claim status for an address
@@ -321,17 +226,6 @@ contract Merkler is Common {
 
         queryClaimStatus(rewardDistributorAddr, rewardTokenAddr, account);
         console.log("");
-
-        // Query the latest trigger if it exists
-        RewardDistributor rewardDistributor = RewardDistributor(
-            payable(vm.parseAddress(rewardDistributorAddr))
-        );
-        uint64 lastTriggerId = rewardDistributor.lastTriggerId();
-
-        if (lastTriggerId > 0) {
-            console.log("Last Trigger Information:");
-            queryTrigger(rewardDistributorAddr, lastTriggerId);
-        }
 
         console.log("=== END COMPREHENSIVE QUERY ===");
     }

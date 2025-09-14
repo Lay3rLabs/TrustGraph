@@ -3,16 +3,14 @@ pragma solidity ^0.8.22;
 
 import {Module} from "@gnosis-guild/zodiac-core/core/Module.sol";
 import {Operation} from "@gnosis-guild/zodiac-core/core/Operation.sol";
-import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
-import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
-import {ITypes} from "interfaces/ITypes.sol";
-import {IMerkler} from "interfaces/IMerkler.sol";
+
+import {IMerkleSnapshot} from "interfaces/merkle/IMerkleSnapshot.sol";
+import {IMerkleSnapshotHook} from "interfaces/merkle/IMerkleSnapshotHook.sol";
 
 /// @title MerkleGovModule - Zodiac module for merkle-based governance
 /// @notice Combines merkle voting verification with Zodiac's execution capabilities
-/// @dev Implements IWavsServiceHandler for merkle root updates via WAVS
-contract MerkleGovModule is Module, IWavsServiceHandler, IMerkler {
+contract MerkleGovModule is Module, IMerkleSnapshotHook {
     /*///////////////////////////////////////////////////////////////
                                 TYPES
     //////////////////////////////////////////////////////////////*/
@@ -59,14 +57,22 @@ contract MerkleGovModule is Module, IWavsServiceHandler, IMerkler {
     //////////////////////////////////////////////////////////////*/
 
     event ProposalCreated(
-        uint256 indexed proposalId, address indexed proposer, uint256 startBlock, uint256 endBlock, bytes32 merkleRoot
+        uint256 indexed proposalId,
+        address indexed proposer,
+        uint256 startBlock,
+        uint256 endBlock,
+        bytes32 merkleRoot
     );
 
-    event VoteCast(address indexed voter, uint256 indexed proposalId, VoteType voteType, uint256 votingPower);
+    event VoteCast(
+        address indexed voter,
+        uint256 indexed proposalId,
+        VoteType voteType,
+        uint256 votingPower
+    );
 
     event ProposalExecuted(uint256 indexed proposalId);
     event ProposalCancelled(uint256 indexed proposalId);
-    event MerkleRootUpdated(bytes32 indexed root, bytes32 ipfsHash, string ipfsHashCid);
     event QuorumUpdated(uint256 newQuorum);
     event VotingDelayUpdated(uint256 newDelay);
     event VotingPeriodUpdated(uint256 newPeriod);
@@ -74,9 +80,6 @@ contract MerkleGovModule is Module, IWavsServiceHandler, IMerkler {
     /*///////////////////////////////////////////////////////////////
                                 STORAGE
     //////////////////////////////////////////////////////////////*/
-
-    /// @notice Service manager for WAVS integration
-    IWavsServiceManager private _serviceManager;
 
     /// @notice Current merkle root for voting power verification
     bytes32 public currentMerkleRoot;
@@ -108,28 +111,29 @@ contract MerkleGovModule is Module, IWavsServiceHandler, IMerkler {
                               CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
 
-    constructor(address _owner, address _avatar, address _target, IWavsServiceManager serviceManager) {
-        _setUp(_owner, _avatar, _target, serviceManager);
+    constructor(address _owner, address _avatar, address _target) {
+        _setUp(_owner, _avatar, _target);
     }
 
     /// @notice Sets up the module for factory deployment
     function setUp(bytes memory initializeParams) public override {
         require(!_initialized, "Already initialized");
 
-        (address _owner, address _avatar, address _target, IWavsServiceManager serviceManager) =
-            abi.decode(initializeParams, (address, address, address, IWavsServiceManager));
+        (address _owner, address _avatar, address _target) = abi.decode(
+            initializeParams,
+            (address, address, address)
+        );
 
-        _setUp(_owner, _avatar, _target, serviceManager);
+        _setUp(_owner, _avatar, _target);
     }
 
-    function _setUp(address _owner, address _avatar, address _target, IWavsServiceManager serviceManager) private {
+    function _setUp(address _owner, address _avatar, address _target) private {
         require(!_initialized, "Already initialized");
         _initialized = true;
 
         _transferOwnership(_owner);
         avatar = _avatar;
         target = _target;
-        _serviceManager = serviceManager;
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -151,7 +155,9 @@ contract MerkleGovModule is Module, IWavsServiceHandler, IMerkler {
     ) external returns (uint256 proposalId) {
         require(currentMerkleRoot != bytes32(0), "No merkle root set");
         require(
-            targets.length == values.length && targets.length == calldatas.length && targets.length == operations.length,
+            targets.length == values.length &&
+                targets.length == calldatas.length &&
+                targets.length == operations.length,
             "Invalid proposal data"
         );
         require(targets.length > 0, "Empty proposal");
@@ -168,11 +174,22 @@ contract MerkleGovModule is Module, IWavsServiceHandler, IMerkler {
         // Store actions
         for (uint256 i = 0; i < targets.length; i++) {
             proposalActions[proposalId].push(
-                ProposalAction({target: targets[i], value: values[i], data: calldatas[i], operation: operations[i]})
+                ProposalAction({
+                    target: targets[i],
+                    value: values[i],
+                    data: calldatas[i],
+                    operation: operations[i]
+                })
             );
         }
 
-        emit ProposalCreated(proposalId, msg.sender, proposal.startBlock, proposal.endBlock, currentMerkleRoot);
+        emit ProposalCreated(
+            proposalId,
+            msg.sender,
+            proposal.startBlock,
+            proposal.endBlock,
+            currentMerkleRoot
+        );
     }
 
     /// @notice Cast a vote with merkle proof verification
@@ -193,8 +210,15 @@ contract MerkleGovModule is Module, IWavsServiceHandler, IMerkler {
         require(!proposal.hasVoted[msg.sender], "Already voted");
 
         // Verify voting power with merkle proof
-        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(msg.sender, rewardToken, votingPower))));
-        require(MerkleProof.verifyCalldata(proof, proposal.merkleRoot, leaf), "Invalid voting proof");
+        bytes32 leaf = keccak256(
+            bytes.concat(
+                keccak256(abi.encode(msg.sender, rewardToken, votingPower))
+            )
+        );
+        require(
+            MerkleProof.verifyCalldata(proof, proposal.merkleRoot, leaf),
+            "Invalid voting proof"
+        );
 
         // Record vote
         proposal.hasVoted[msg.sender] = true;
@@ -221,7 +245,12 @@ contract MerkleGovModule is Module, IWavsServiceHandler, IMerkler {
 
         ProposalAction[] memory actions = proposalActions[proposalId];
         for (uint256 i = 0; i < actions.length; i++) {
-            exec(actions[i].target, actions[i].value, actions[i].data, actions[i].operation);
+            exec(
+                actions[i].target,
+                actions[i].value,
+                actions[i].data,
+                actions[i].operation
+            );
         }
 
         emit ProposalExecuted(proposalId);
@@ -231,7 +260,10 @@ contract MerkleGovModule is Module, IWavsServiceHandler, IMerkler {
     /// @param proposalId The proposal to cancel
     function cancel(uint256 proposalId) external {
         Proposal storage proposal = proposals[proposalId];
-        require(msg.sender == proposal.proposer || msg.sender == owner(), "Not authorized");
+        require(
+            msg.sender == proposal.proposer || msg.sender == owner(),
+            "Not authorized"
+        );
         require(!proposal.executed, "Already executed");
 
         proposal.cancelled = true;
@@ -255,7 +287,9 @@ contract MerkleGovModule is Module, IWavsServiceHandler, IMerkler {
         if (currentBlock <= proposal.endBlock) return ProposalState.Active;
 
         // Check if proposal succeeded
-        uint256 totalVotes = proposal.forVotes + proposal.againstVotes + proposal.abstainVotes;
+        uint256 totalVotes = proposal.forVotes +
+            proposal.againstVotes +
+            proposal.abstainVotes;
         if (totalVotes >= quorum && proposal.forVotes > proposal.againstVotes) {
             return ProposalState.Succeeded;
         }
@@ -264,12 +298,17 @@ contract MerkleGovModule is Module, IWavsServiceHandler, IMerkler {
     }
 
     /// @notice Get proposal actions
-    function getActions(uint256 proposalId) external view returns (ProposalAction[] memory) {
+    function getActions(
+        uint256 proposalId
+    ) external view returns (ProposalAction[] memory) {
         return proposalActions[proposalId];
     }
 
     /// @notice Check if an address has voted
-    function hasVoted(uint256 proposalId, address account) external view returns (bool) {
+    function hasVoted(
+        uint256 proposalId,
+        address account
+    ) external view returns (bool) {
         return proposals[proposalId].hasVoted[account];
     }
 
@@ -298,29 +337,20 @@ contract MerkleGovModule is Module, IWavsServiceHandler, IMerkler {
     }
 
     /*///////////////////////////////////////////////////////////////
-                          WAVS INTEGRATION
+                        MERKLE SNAPSHOT HOOK
     //////////////////////////////////////////////////////////////*/
 
-    /// @inheritdoc IWavsServiceHandler
-    function handleSignedEnvelope(Envelope calldata envelope, SignatureData calldata signatureData) external {
-        _serviceManager.validate(envelope, signatureData);
-
-        // Decode payload
-        MerklerAvsOutput memory avsOutput = abi.decode(envelope.payload, (MerklerAvsOutput));
-
-        // Update merkle root
-        currentMerkleRoot = avsOutput.root;
-        ipfsHash = avsOutput.ipfsHash;
-        ipfsHashCid = avsOutput.ipfsHashCid;
-
-        emit MerkleRootUpdated(avsOutput.root, avsOutput.ipfsHash, avsOutput.ipfsHashCid);
-    }
-
-    /**
-     * @notice Get the service manager address
-     * @return address The address of the service manager
-     */
-    function getServiceManager() external view returns (address) {
-        return address(_serviceManager);
+    /// @inheritdoc IMerkleSnapshotHook
+    function onMerkleUpdate(
+        IMerkleSnapshot.MerkleState memory state_
+    ) external {
+        currentMerkleRoot = state_.root;
+        ipfsHash = state_.ipfsHash;
+        ipfsHashCid = state_.ipfsHashCid;
+        emit IMerkleSnapshot.MerkleRootUpdated(
+            state_.root,
+            state_.ipfsHash,
+            state_.ipfsHashCid
+        );
     }
 }

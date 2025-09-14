@@ -34,12 +34,7 @@ contract DeployScript is Common {
             IWavsServiceManager(serviceManager)
         );
 
-        // Create the distributor which handles WAVS stuff.
-        RewardDistributor rewardDistributor = new RewardDistributor(
-            IWavsServiceManager(serviceManager)
-        );
-
-        // Deploy ENOVA token and mint tokens for the distributor.
+        // Deploy ENOVA token.
         address deployer = vm.addr(_privateKey);
         ENOVA rewardToken = new ENOVA(
             deployer, // defaultAdmin
@@ -47,6 +42,14 @@ contract DeployScript is Common {
             deployer, // pauser
             deployer // minter
         );
+
+        // Create the distributor and add it as a hook to the merkle snapshot.
+        RewardDistributor rewardDistributor = new RewardDistributor(
+            address(rewardToken)
+        );
+        merkleSnapshot.addHook(rewardDistributor);
+
+        // Mint tokens for the distributor to distribute.
         rewardToken.mint(address(rewardDistributor), 1000 ether);
 
         vm.stopBroadcast();
