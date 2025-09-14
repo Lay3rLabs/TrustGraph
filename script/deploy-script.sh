@@ -252,3 +252,11 @@ fi
 trap - INT TERM EXIT
 
 echo "✅ Deployment complete!"
+
+# if post-deploy.sh exists, run it
+if [ -f "script/post-deploy.sh" ]; then
+    echo "Running post-deploy.sh..."
+    bash script/post-deploy.sh
+
+    echo "✅ post-deploy.sh completed!"
+fi
