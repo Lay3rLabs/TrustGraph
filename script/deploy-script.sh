@@ -168,8 +168,6 @@ export COMPONENT_CONFIGS_FILE="$COMPONENT_CONFIGS_FILE"
 REGISTRY=`task get-registry` source ./script/build-service.sh
 sleep 1
 
-
-
 # === Upload service.json to IPFS ===
 # local: 127.0.0.1:5001 | testnet: https://app.pinata.cloud/. set PINATA_API_KEY to JWT token in .env
 echo "Uploading to IPFS..."
@@ -216,6 +214,18 @@ sleep 3
 # Deploy the service JSON to WAVS so it now watches and submits.
 # 'opt in' for WAVS to watch (this is before we register to Eigenlayer)
 WAVS_ENDPOINT=http://127.0.0.1:8000 SERVICE_URL=${IPFS_URI} IPFS_GATEWAY=${IPFS_GATEWAY} make deploy-service
+sleep 3
+
+export SERVICE_ID=${SERVICE_ID:-`task config:service-id`}
+if [ -z "$SERVICE_ID" ]; then
+    echo "❌ Failed to retrieve service ID"
+    exit 1
+fi
+echo "✅ Service ID: ${SERVICE_ID}"
+
+# Update the deployment summary with the service ID
+jq ".service_id = \"${SERVICE_ID}\"" .docker/deployment_summary.json > .docker/deployment_summary.json.tmp
+mv .docker/deployment_summary.json.tmp .docker/deployment_summary.json
 
 ### === Register service specific operator ===
 

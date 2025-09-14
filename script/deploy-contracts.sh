@@ -143,6 +143,7 @@ export SERVICE_TRIGGER_ADDR="${EAS_ATTEST_TRIGGER_ADDR}"
 # Create consolidated deployment info
 cat > .docker/deployment_summary.json << EOF
 {
+  "service_id": "",
   "rpc_url": "${RPC_URL}",
   "wavs_service_manager": "${WAVS_SERVICE_MANAGER_ADDRESS}",
   "wavs_indexer": {

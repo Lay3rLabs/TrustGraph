@@ -52,5 +52,15 @@ services:
         wait
     restart: unless-stopped
 
+  merkler-events-server:
+    image: halverneus/static-file-server:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infra/wavs-1/app:/web
+    environment:
+      - PORT=9090
+      # Optional config, e.g. CORS or TLS
+
 volumes:
   ollama-data:

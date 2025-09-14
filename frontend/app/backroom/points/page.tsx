@@ -1,7 +1,7 @@
 'use client'
 
 import type React from 'react'
-import { ComponentType, useState } from 'react'
+import { ComponentType, useMemo, useState } from 'react'
 import { useAccount } from 'wagmi'
 import clsx from 'clsx'
 import { Pie } from 'react-chartjs-2'
@@ -20,6 +20,9 @@ import {
 } from 'chart.js'
 import { ChevronLeft, Eye, Hand, FlaskConical } from 'lucide-react'
 import 'chartjs-adapter-luxon'
+import { useQuery } from '@tanstack/react-query'
+import { hexToNumber } from 'viem'
+import { wavsServiceId } from '@/lib/config'
 
 ChartJS.register(
   ArcElement,
@@ -46,149 +49,101 @@ type PieLevel = {
   parent?: PieLevel
 }
 
-enum ActivityType {
-  Vouch = 'vouch',
-  Hyperstition = 'hyperstition',
-  Joined = 'joined',
-}
-
-const types = Object.values(ActivityType)
-
 const ActivityTypeIcon: Record<
-  ActivityType,
+  string,
   ComponentType<{ className?: string }>
 > = {
-  [ActivityType.Vouch]: Hand,
-  [ActivityType.Hyperstition]: Eye,
-  [ActivityType.Joined]: FlaskConical,
+  vouch: Hand,
+  hyperstition: Eye,
+  joined: FlaskConical,
+}
+
+const ActivitySummary: Record<string, string> = {
+  vouch: 'Vouched for a contributor',
+  hyperstition: 'Bought YES position in a Hyperstition market',
+  joined: 'Joined the Experiment',
 }
 
 type Activity = {
   id: string
-  type: ActivityType
+  type: string
   summary: string
-  timestamp: Date
+  timestamp?: Date
   points: number
 }
 
 const rank = 1000
 const numRanks = 1000
 
-const activities: Activity[] = [
-  {
-    id: '1',
-    type: ActivityType.Joined,
-    summary: 'Joined the Experiment',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    points: 1,
-  },
-  // {
-  //   id: '2',
-  //   type: ActivityType.Vouch,
-  //   summary: 'Vouched for a contributor',
-  //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 18),
-  //   points: 50,
-  // },
-  // {
-  //   id: '3',
-  //   type: ActivityType.Hyperstition,
-  //   summary: 'Bought YES position in a Hyperstition market',
-  //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 17),
-  //   points: 50,
-  // },
-  // {
-  //   id: '4',
-  //   type: ActivityType.Vouch,
-  //   summary: 'Vouched for a contributor',
-  //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12),
-  //   points: 30,
-  // },
-  // {
-  //   id: '5',
-  //   type: ActivityType.Vouch,
-  //   summary: 'Vouched for a contributor',
-  //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8),
-  //   points: 10,
-  // },
-  // {
-  //   id: '6',
-  //   type: ActivityType.Hyperstition,
-  //   summary: 'Bought NO position in a Hyperstition market',
-  //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6),
-  //   points: 30,
-  // },
-  // {
-  //   id: '7',
-  //   type: ActivityType.Vouch,
-  //   summary: 'Vouched for a contributor',
-  //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-  //   points: 10,
-  // },
-  // {
-  //   id: '8',
-  //   type: ActivityType.Hyperstition,
-  //   summary: 'Redeemed YES position in a Hyperstition market',
-  //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-  //   points: 10,
-  // },
-  // {
-  //   id: '9',
-  //   type: ActivityType.Hyperstition,
-  //   summary: 'Redeemed NO position in a Hyperstition market',
-  //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-  //   points: 10,
-  // },
-]
-
-const cumulativePoints = activities.reduce(
-  (acc, activity, index) => [
-    ...acc.filter((point) => point.timestamp !== activity.timestamp.getTime()),
-    {
-      timestamp: activity.timestamp.getTime(),
-      points:
-        index > 0
-          ? acc[acc.length - 1].points + activity.points
-          : activity.points,
-    },
-  ],
-  [] as {
-    timestamp: number
-    points: number
-  }[]
-)
-
-const totalPoints = cumulativePoints[cumulativePoints.length - 1].points
-const otherPoints = 999
-
-const rootPieLevel: PieLevel = {
-  title: 'All Phases',
-  values: [
-    {
-      title: 'Phase 1',
-      value: 1,
-      color: 'rgb(36, 36, 36)',
-      subPie: {
-        values: [
-          { title: 'Your points', value: totalPoints, color: '#dd70d4' },
-          {
-            title: "Others' points",
-            value: otherPoints,
-            color: 'rgb(24, 24, 24)',
-          },
-        ],
-      },
-    },
-    {
-      title: 'Remaining phases',
-      value: 99,
-      color: 'rgb(24, 24, 24)',
-    },
-  ],
-}
+// const activities: Activity[] = [
+//   {
+//     id: '1',
+//     type: ActivityType.Joined,
+//     summary: 'Joined the Experiment',
+//     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
+//     points: 1,
+//   },
+//   // {
+//   //   id: '2',
+//   //   type: ActivityType.Vouch,
+//   //   summary: 'Vouched for a contributor',
+//   //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 18),
+//   //   points: 50,
+//   // },
+//   // {
+//   //   id: '3',
+//   //   type: ActivityType.Hyperstition,
+//   //   summary: 'Bought YES position in a Hyperstition market',
+//   //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 17),
+//   //   points: 50,
+//   // },
+//   // {
+//   //   id: '4',
+//   //   type: ActivityType.Vouch,
+//   //   summary: 'Vouched for a contributor',
+//   //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12),
+//   //   points: 30,
+//   // },
+//   // {
+//   //   id: '5',
+//   //   type: ActivityType.Vouch,
+//   //   summary: 'Vouched for a contributor',
+//   //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8),
+//   //   points: 10,
+//   // },
+//   // {
+//   //   id: '6',
+//   //   type: ActivityType.Hyperstition,
+//   //   summary: 'Bought NO position in a Hyperstition market',
+//   //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6),
+//   //   points: 30,
+//   // },
+//   // {
+//   //   id: '7',
+//   //   type: ActivityType.Vouch,
+//   //   summary: 'Vouched for a contributor',
+//   //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
+//   //   points: 10,
+//   // },
+//   // {
+//   //   id: '8',
+//   //   type: ActivityType.Hyperstition,
+//   //   summary: 'Redeemed YES position in a Hyperstition market',
+//   //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
+//   //   points: 10,
+//   // },
+//   // {
+//   //   id: '9',
+//   //   type: ActivityType.Hyperstition,
+//   //   summary: 'Redeemed NO position in a Hyperstition market',
+//   //   timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
+//   //   points: 10,
+//   // },
+// ]
 
 export default function PointsPage() {
   const { address, isConnected } = useAccount()
-  const [selectedType, setSelectedType] = useState<ActivityType | 'all'>('all')
+  const [selectedType, setSelectedType] = useState<string>('ALL')
 
   const formatTimeAgo = (timestamp: Date) => {
     const now = new Date()
@@ -204,6 +159,113 @@ export default function PointsPage() {
       return `${Math.floor(diffInMinutes / 1440)}d ago`
     }
   }
+
+  const { data: activities = [] } = useQuery({
+    queryKey: ['events', address],
+    queryFn: async () => {
+      const response = await fetch(
+        `http://localhost:9090/${wavsServiceId}/events/${address}.json`
+      )
+      if (response.ok) {
+        const events = (await response.json()) as {
+          type: string
+          timestamp: number
+          value: string
+          metadata?: Record<string, any>
+        }[]
+
+        return events.map(
+          (event, index): Activity => ({
+            id: index.toString(),
+            type: event.type,
+            summary: ActivitySummary[event.type] || '',
+            timestamp: event.timestamp ? new Date(event.timestamp) : undefined,
+            points: event.value.startsWith('0x')
+              ? hexToNumber(event.value as `0x${string}`)
+              : Number(event.value),
+          })
+        )
+      }
+
+      return []
+    },
+    enabled: !!address,
+    refetchInterval: 30_000,
+  })
+
+  const { types, cumulativePoints, rootPieLevel } = useMemo(() => {
+    const types = [...new Set(activities.map((activity) => activity.type))]
+
+    const cumulativePoints = [...activities]
+      // Ascending order, with zero timestamps at the beginning.
+      .sort(
+        (a, b) => (a.timestamp?.getTime() || 0) - (b.timestamp?.getTime() || 0)
+      )
+      .reduce(
+        (acc, activity, index) => [
+          ...acc.filter(
+            (point) => point.timestamp !== (activity.timestamp?.getTime() || 0)
+          ),
+          {
+            timestamp: activity.timestamp?.getTime() || 0,
+            points:
+              index > 0
+                ? acc[acc.length - 1].points + activity.points
+                : activity.points,
+          },
+        ],
+        [] as {
+          timestamp: number
+          points: number
+        }[]
+      )
+
+    // Set all zero timestamps to the first nonzero timestamp.
+    const firstNonZeroTimestamp = cumulativePoints.find(
+      (point) => point.timestamp !== 0
+    )?.timestamp
+    if (firstNonZeroTimestamp) {
+      cumulativePoints.forEach((point) => {
+        if (point.timestamp === 0) {
+          point.timestamp = firstNonZeroTimestamp
+        }
+      })
+    }
+
+    const totalPoints =
+      cumulativePoints.length > 0
+        ? cumulativePoints[cumulativePoints.length - 1].points
+        : 0
+    const otherPoints = 999
+
+    const rootPieLevel: PieLevel = {
+      title: 'All Phases',
+      values: [
+        {
+          title: 'Phase 1',
+          value: 1,
+          color: 'rgb(36, 36, 36)',
+          subPie: {
+            values: [
+              { title: 'Your points', value: totalPoints, color: '#dd70d4' },
+              {
+                title: "Others' points",
+                value: otherPoints,
+                color: 'rgb(24, 24, 24)',
+              },
+            ],
+          },
+        },
+        {
+          title: 'Remaining phases',
+          value: 99,
+          color: 'rgb(24, 24, 24)',
+        },
+      ],
+    }
+
+    return { types, cumulativePoints, rootPieLevel }
+  }, [activities])
 
   if (!isConnected) {
     return (
@@ -367,13 +429,15 @@ export default function PointsPage() {
         <div className="text-center space-y-3">
           <h1 className="text-lg">YOUR POINTS</h1>
           <div className="terminal-bright text-8xl font-bold">
-            {cumulativePoints[
-              cumulativePoints.length - 1
-            ].points.toLocaleString()}
+            {cumulativePoints.length > 0
+              ? cumulativePoints[
+                  cumulativePoints.length - 1
+                ].points.toLocaleString()
+              : 0}
           </div>
-          <div className="text-lg terminal-dim">
+          {/* <div className="text-lg terminal-dim">
             RANK #{rank} / {numRanks}
-          </div>
+          </div> */}
         </div>
       </div>
 
@@ -392,10 +456,10 @@ export default function PointsPage() {
           <h2 className="text-lg font-bold text-white">RECENT ACTIVITIES</h2>
           <select
             value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value as ActivityType)}
+            onChange={(e) => setSelectedType(e.target.value)}
             className="bg-gray-900/30 text-white font-mono text-xs px-3 py-2 focus:border-blue-400 focus:outline-none cursor-pointer"
           >
-            <option value="all">All</option>
+            <option value="ALL">All</option>
             {types.map((type) => (
               <option key={type} value={type}>
                 {type.toUpperCase()}
@@ -408,7 +472,7 @@ export default function PointsPage() {
           {activities
             .filter(
               (activity) =>
-                selectedType === 'all' || activity.type === selectedType
+                selectedType === 'ALL' || activity.type === selectedType
             )
             .map((activity) => {
               const Icon = ActivityTypeIcon[activity.type]
@@ -420,7 +484,7 @@ export default function PointsPage() {
                   <div className="flex items-center space-x-4">
                     <div>
                       <div className="flex items-center space-x-2">
-                        <Icon className="w-4 h-4" />
+                        {Icon && <Icon className="w-4 h-4" />}
                         <div className="text-white font-medium text-sm">
                           {activity.type.toUpperCase()}
                         </div>
@@ -428,9 +492,11 @@ export default function PointsPage() {
                       <div className="text-xs text-gray-400 mt-1">
                         {activity.summary}
                       </div>
-                      <div className="text-xs text-gray-400 mt-1">
-                        {formatTimeAgo(activity.timestamp)}
-                      </div>
+                      {activity.timestamp && (
+                        <div className="text-xs text-gray-400 mt-1">
+                          {formatTimeAgo(activity.timestamp)}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="text-right">

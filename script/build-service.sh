@@ -121,8 +121,7 @@ fi
 
 TRIGGER_EVENT_HASH=`cast keccak ${TRIGGER_EVENT}`
 
-export SERVICE_ID=`eval "${BASE_CMD} init --name demo" | jq -r .service.id`
-echo "Service ID: ${SERVICE_ID}"
+eval "${BASE_CMD} init --name demo"
 
 # Process component configurations from JSON file
 if [ -z "${COMPONENT_CONFIGS_FILE}" ] || [ ! -f "${COMPONENT_CONFIGS_FILE}" ]; then

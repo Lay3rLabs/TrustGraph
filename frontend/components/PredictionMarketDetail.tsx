@@ -106,9 +106,9 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
   const getStatusColor = (status: string): string => {
     switch (status) {
       case "achieved":
-        return "text-green-400";
+        return "text-green";
       case "failed":
-        return "text-red-400";
+        return "text-pink";
       case "active":
         return "terminal-bright";
       default:
@@ -116,12 +116,19 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
     }
   };
 
+  const greenColor = getComputedStyle(document.documentElement)
+    .getPropertyValue('--green')
+    .trim();
+  const pinkColor = getComputedStyle(document.documentElement)
+    .getPropertyValue('--pink')
+    .trim();
+
   const gradientColor = (context: ScriptableContext<"line">) => {
     const chart = context.chart;
     const { ctx, chartArea } = chart;
 
     if (!chartArea) {
-      return "#dd70d4";
+      return pinkColor;
     }
 
     // Create gradient based on chart area
@@ -131,8 +138,8 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
       0,
       chartArea.top
     );
-    gradient.addColorStop(0, "#dd70d4"); // Pink at bottom (value 0)
-    gradient.addColorStop(1, "#05df72"); // Green at top (value 1)
+    gradient.addColorStop(0, pinkColor); // Pink at bottom (value 0)
+    gradient.addColorStop(1, greenColor); // Green at top (value 1)
 
     return gradient;
   };

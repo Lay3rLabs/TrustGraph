@@ -13,6 +13,7 @@ const deploymentSummaryFile = path.join(
 )
 const wagmiConfigFile = path.join(__dirname, '../wagmi.config.ts')
 const schemasFile = path.join(__dirname, '../lib/schemas.ts')
+const configFile = path.join(__dirname, '../lib/config.ts')
 
 console.log('🔄 Updating config files with latest deployment data...')
 
@@ -21,6 +22,17 @@ try {
   const deployment = JSON.parse(fs.readFileSync(deploymentSummaryFile, 'utf8'))
 
   console.log('📋 Found deployment data')
+
+  // Update WAVS service ID
+  if (deployment.service_id) {
+    let configContent = fs.readFileSync(configFile, 'utf8')
+    configContent = configContent.replace(
+      new RegExp('wavsServiceId =([\\n\\s]+)[\'"][^\'"]*[\'"]', 'm'),
+      `wavsServiceId =$1'${deployment.service_id}'`
+    )
+    fs.writeFileSync(configFile, configContent)
+    console.log('✅ wavsServiceId updated successfully!')
+  }
 
   // ========================================
   // UPDATE WAGMI CONFIG WITH CONTRACT ADDRESSES
