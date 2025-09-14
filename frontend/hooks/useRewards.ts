@@ -9,9 +9,9 @@ import {
 } from 'wagmi'
 
 import {
+  enovaAddress,
   merkleSnapshotAbi,
   merkleSnapshotAddress,
-  mockUsdcAddress,
   rewardDistributorAbi,
   rewardDistributorAddress,
 } from '@/lib/contracts'
@@ -89,7 +89,7 @@ export function useRewards() {
     address: rewardDistributorAddress,
     abi: rewardDistributorAbi,
     functionName: 'claimed',
-    args: address ? [address, mockUsdcAddress] : undefined,
+    args: address ? [address, enovaAddress] : undefined,
     query: {
       enabled: !!address,
     },
@@ -98,7 +98,7 @@ export function useRewards() {
   // Use mock USDC for collateral balance
   const { data: rewardBalance, refetch: refetchRewardBalance } = useBalance({
     address: address,
-    token: mockUsdcAddress,
+    token: enovaAddress,
     query: {
       refetchInterval: 3_000,
     },
@@ -149,7 +149,7 @@ export function useRewards() {
   useEffect(() => {
     const fetchTokenSymbol = async () => {
       try {
-        const response = await fetch(`/api/token-symbol/${mockUsdcAddress}`)
+        const response = await fetch(`/api/token-symbol/${enovaAddress}`)
         if (response.ok) {
           const data = await response.json()
           setTokenSymbol(data.symbol || 'TOKEN')

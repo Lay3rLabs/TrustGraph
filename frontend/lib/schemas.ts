@@ -3,18 +3,18 @@
 
 export const schemas = {
   basicSchema:
-    '0x987e6a6587aaeb5b7066528fce3465fc990edeb206525522c2d1944cdb1949ea',
+    '0x400dbdbd3d5d0de7f895c90ae00fd0e9d703d96ccf3310f794735e8fdaca31f0',
   computeSchema:
-    '0xed27039790a661bcb38cb0f2b3403c15104072c70b95c1b16453c78d202944b2',
+    '0x648388d8ace300dcd86fd56c9914d1f46b9ffab0554da568f144ac3e1dc6ba8c',
 
   statementSchema:
-    '0x587c058e08a6666ef63f0250307317347edc3b0a87323545236ed26233d8877c',
+    '0xbfd34c405311ee8911114434fb1c70450f5cf0e68e7ab980b3bd3caf66ec97d7',
   isTrueSchema:
-    '0x6dd845489f27e47bec122500f8a53cde22db99d536f8d253f68aeab8df79ee45',
+    '0x2f234efbc19d45f191b034af09d02d0c9c89049176b3eeb28985864d6fc0853b',
   likeSchema:
-    '0xaf8c9fc453e604e5fe6c166a1cf2c73f980ad9cebb62cf7b618028077839484d',
+    '0x9f266d5e5bf7ef538ef93db00c8c937dd610d088d7767de6c4e4aa91ec29d9bf',
   vouchingSchema:
-    '0x2f274a9da8f875389020c382cd007cc7922d7b10b6af4822b5bde703e41559c7',
+    '0xc8fca51f7e4fe37babd237e1bdbe4a889f35cd4cb2d1c22d667bad1be0233def',
 } as const
 
 // Schema definitions with metadata for UI
