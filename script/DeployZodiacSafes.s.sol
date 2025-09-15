@@ -376,72 +376,61 @@ contract DeployZodiacSafes is Common {
         address safeSingleton,
         address safeFactory
     ) internal {
-        string memory jsonKey = "deployment";
+        string memory rootJson = "root";
 
-        // Add deployment note
-        vm.serializeString(
-            jsonKey,
-            "deployment_note",
-            "Safe 1 has SignerManagerModule and MerkleGovModule. Safe 2 has WavsModule. Both deployed with single signer for easy setup."
+        // Add deployment note and factory data
+        string
+            memory deploymentNote = "Safe 1 has SignerManagerModule and MerkleGovModule. Safe 2 has WavsModule. Both deployed with single signer for easy setup.";
+        rootJson.serialize("deployment_note", deploymentNote);
+        rootJson.serialize(
+            "safe_singleton",
+            Strings.toChecksumHexString(safeSingleton)
+        );
+        rootJson.serialize(
+            "safe_factory",
+            Strings.toChecksumHexString(safeFactory)
         );
 
         // Safe 1 data
-        vm.serializeString(
-            jsonKey,
-            "safe1_address",
-            Strings.toHexString(safe1.safe)
+        string memory safe1Json = "safe1";
+        safe1Json.serialize("address", Strings.toChecksumHexString(safe1.safe));
+        safe1Json.serialize(
+            "merkle_gov_module",
+            Strings.toChecksumHexString(safe1.merkleGovModule)
         );
-        vm.serializeString(
-            jsonKey,
-            "safe1_merkle_gov_module",
-            Strings.toHexString(safe1.merkleGovModule)
+        safe1Json.serialize(
+            "signer_module",
+            Strings.toChecksumHexString(safe1.signerModule)
         );
-        vm.serializeString(
-            jsonKey,
-            "safe1_signer_module",
-            Strings.toHexString(safe1.signerModule)
+        safe1Json.serialize("threshold", safe1.threshold);
+        vm.serializeBool(safe1Json, "modules_enabled", safe1.modulesEnabled);
+        safe1Json = vm.serializeUint(
+            safe1Json,
+            "funding_amount",
+            safe1.fundingAmount
         );
-        vm.serializeUint(jsonKey, "safe1_threshold", safe1.threshold);
-        vm.serializeBool(
-            jsonKey,
-            "safe1_modules_enabled",
-            safe1.modulesEnabled
-        );
-        vm.serializeUint(jsonKey, "safe1_funding_amount", safe1.fundingAmount);
 
         // Safe 2 data
-        vm.serializeString(
-            jsonKey,
-            "safe2_address",
-            Strings.toHexString(safe2.safe)
+        string memory safe2Json = "safe2";
+        safe2Json.serialize("address", Strings.toChecksumHexString(safe2.safe));
+        safe2Json.serialize(
+            "wavs_module",
+            Strings.toChecksumHexString(safe2.wavsModule)
         );
-        vm.serializeString(
-            jsonKey,
-            "safe2_wavs_module",
-            Strings.toHexString(safe2.wavsModule)
+        vm.serializeUint(safe2Json, "threshold", safe2.threshold);
+        vm.serializeBool(safe2Json, "modules_enabled", safe2.modulesEnabled);
+        safe2Json = vm.serializeUint(
+            safe2Json,
+            "funding_amount",
+            safe2.fundingAmount
         );
-        vm.serializeUint(jsonKey, "safe2_threshold", safe2.threshold);
-        vm.serializeBool(
-            jsonKey,
-            "safe2_modules_enabled",
-            safe2.modulesEnabled
-        );
-        vm.serializeUint(jsonKey, "safe2_funding_amount", safe2.fundingAmount);
 
-        // Factory data
-        vm.serializeString(
-            jsonKey,
-            "safe_singleton",
-            Strings.toHexString(safeSingleton)
-        );
-        string memory finalJson = vm.serializeString(
-            jsonKey,
-            "safe_factory",
-            Strings.toHexString(safeFactory)
-        );
+        // Add safe1 and safe2 to root JSON
+        rootJson.serialize("safe1", safe1Json);
+        rootJson = rootJson.serialize("safe2", safe2Json);
 
         // Write to file
-        vm.writeFile(script_output_path, finalJson);
+        vm.writeFile(script_output_path, rootJson);
 
         // Log success message
         console.log(

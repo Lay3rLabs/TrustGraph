@@ -18,20 +18,3 @@ tasks:
           "{{.VOTING_POWER_ADDRESS}}" \
           "{{.WALLET_ADDRESS}}" \
           --rpc-url {{.RPC_URL}}
-
-  merkle-query:
-    desc: "Query Merkle governance contracts"
-    vars:
-      MERKLE_GOV_ADDR: '{{.MERKLE_GOV_ADDR}}'
-      MERKLE_VOTE_ADDR: '{{.MERKLE_VOTE_ADDR}}'
-      RPC_URL:
-        sh: task get-rpc
-    preconditions:
-      - test -n "{{.MERKLE_GOV_ADDR}}"
-      - test -n "{{.MERKLE_VOTE_ADDR}}"
-    cmds:
-      - |
-        forge script script/MerkleGov.s.sol:MerkleGovScript \
-          --sig "queryAll(string,string)" \
-          "{{.MERKLE_GOV_ADDR}}" "{{.MERKLE_VOTE_ADDR}}" \
-          --rpc-url {{.RPC_URL}}

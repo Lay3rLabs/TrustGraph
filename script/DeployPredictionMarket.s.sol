@@ -20,7 +20,8 @@ contract DeployScript is Common {
     using stdJson for string;
 
     string public root = vm.projectRoot();
-    string public script_output_path = string.concat(root, "/.docker/prediction_market_deploy.json");
+    string public script_output_path =
+        string.concat(root, "/.docker/prediction_market_deploy.json");
 
     /**
      * @dev Deploys the Prediction Market contracts and creates an initial market
@@ -39,7 +40,9 @@ contract DeployScript is Common {
         vm.startBroadcast(_privateKey);
 
         // Deploy the oracle controller which also deploys the factory
-        PredictionMarketOracleController oracleController = new PredictionMarketOracleController(serviceManager);
+        PredictionMarketOracleController oracleController = new PredictionMarketOracleController(
+                serviceManager
+            );
         PredictionMarketFactory factory = oracleController.factory();
 
         // Deploy collateral token for the market
@@ -52,28 +55,59 @@ contract DeployScript is Common {
         collateralToken.approve(address(factory), funding);
 
         // Create the conditional tokens and market maker
-        (ConditionalTokens conditionalTokens, LMSRMarketMaker lmsrMarketMaker) =
-            factory.createConditionalTokenAndLMSRMarketMaker(uri, questionId, address(collateralToken), fee, funding);
+        (
+            ConditionalTokens conditionalTokens,
+            LMSRMarketMaker lmsrMarketMaker
+        ) = factory.createConditionalTokenAndLMSRMarketMaker(
+                uri,
+                questionId,
+                address(collateralToken),
+                fee,
+                funding
+            );
 
         vm.stopBroadcast();
 
         // Log deployment info
-        console.log("PredictionMarketOracleController deployed at:", address(oracleController));
+        console.log(
+            "PredictionMarketOracleController deployed at:",
+            address(oracleController)
+        );
         console.log("PredictionMarketFactory deployed at:", address(factory));
-        console.log("MockUSDC collateral token deployed at:", address(collateralToken));
-        console.log("ConditionalTokens deployed at:", address(conditionalTokens));
+        console.log(
+            "MockUSDC collateral token deployed at:",
+            address(collateralToken)
+        );
+        console.log(
+            "ConditionalTokens deployed at:",
+            address(conditionalTokens)
+        );
         console.log("LMSRMarketMaker deployed at:", address(lmsrMarketMaker));
         console.log("Market funded with:", funding / 1e18, "tokens");
         console.log("Market fee:", fee / 1e16, "%");
 
         // Write deployment info to JSON
         string memory _json = "json";
-        _json.serialize("service_manager", Strings.toChecksumHexString(serviceManager));
-        _json.serialize("oracle_controller", Strings.toChecksumHexString(address(oracleController)));
-        _json.serialize("factory", Strings.toChecksumHexString(address(factory)));
-        _json.serialize("collateral_token", Strings.toChecksumHexString(address(collateralToken)));
-        _json.serialize("conditional_tokens", Strings.toChecksumHexString(address(conditionalTokens)));
-        _json.serialize("market_maker", Strings.toChecksumHexString(address(lmsrMarketMaker)));
+        _json.serialize(
+            "oracle_controller",
+            Strings.toChecksumHexString(address(oracleController))
+        );
+        _json.serialize(
+            "factory",
+            Strings.toChecksumHexString(address(factory))
+        );
+        _json.serialize(
+            "collateral_token",
+            Strings.toChecksumHexString(address(collateralToken))
+        );
+        _json.serialize(
+            "conditional_tokens",
+            Strings.toChecksumHexString(address(conditionalTokens))
+        );
+        _json.serialize(
+            "market_maker",
+            Strings.toChecksumHexString(address(lmsrMarketMaker))
+        );
         _json.serialize("initial_funding", funding);
         _json.serialize("fee_percentage", fee);
         _json.serialize("question_id", vm.toString(questionId));

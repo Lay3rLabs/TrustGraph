@@ -572,7 +572,7 @@ export const conditionalTokensAbi = [
 ] as const
 
 export const conditionalTokensAddress =
-  '0xd85Ef0E863C9d66c9Da3DA1e833C2bF4c51Dcd08' as const
+  '0x21B7c37597044F7375e7FeE5AC1f329B6763a7d5' as const
 
 export const conditionalTokensConfig = {
   address: conditionalTokensAddress,
@@ -1170,7 +1170,7 @@ export const easAbi = [
   { type: 'error', inputs: [], name: 'WrongSchema' },
 ] as const
 
-export const easAddress = '0xfe5E8459BC5c957870a51Db25DF532532d5Dd417' as const
+export const easAddress = '0x5e87FD45017f2Fac1DdFb4A31F66de95E4c60465' as const
 
 export const easConfig = { address: easAddress, abi: easAbi } as const
 
@@ -1271,7 +1271,7 @@ export const easAttestTriggerAbi = [
 ] as const
 
 export const easAttestTriggerAddress =
-  '0xDB3eB8a9258E215e84c6D079b0e4ce9B2b6116DA' as const
+  '0xb09BCB325cb4da3a5E6F5476682E913CCD936361' as const
 
 export const easAttestTriggerConfig = {
   address: easAttestTriggerAddress,
@@ -1457,7 +1457,7 @@ export const easIndexerResolverAbi = [
 ] as const
 
 export const easIndexerResolverAddress =
-  '0xe1F3c3e8Cd8aABCF7719E239E99E0a82Cc6C9a83' as const
+  '0xb876fF73161D710D03650f190de31Bb1eD0a8c20' as const
 
 export const easIndexerResolverConfig = {
   address: easIndexerResolverAddress,
@@ -2221,7 +2221,7 @@ export const enovaAbi = [
 ] as const
 
 export const enovaAddress =
-  '0x897aC4045B6C9De4399c61b0bDC021387163fa7A' as const
+  '0xDeba5e3ba4C1671e57c3e2Fa11CC58AD1c623856' as const
 
 export const enovaConfig = { address: enovaAddress, abi: enovaAbi } as const
 
@@ -2804,7 +2804,7 @@ export const gnosisSafeAbi = [
 ] as const
 
 export const gnosisSafeAddress =
-  '0x8e3b164C08A0e4Eb9684F0Ba0f897ed11a439a71' as const
+  '0x990CBb6933b72eFc5a33713B4326fC013BED7F94' as const
 
 export const gnosisSafeConfig = {
   address: gnosisSafeAddress,
@@ -2825,7 +2825,7 @@ export const gnosisSafeProxyAbi = [
 ] as const
 
 export const gnosisSafeProxyAddress =
-  '0xa17b9C018FB6dC1D170F3D45d42F4B1e08E268b7' as const
+  '0xb997bA067267eDaf2960B88E4A0Ae2B505f8B712' as const
 
 export const gnosisSafeProxyConfig = {
   address: gnosisSafeProxyAddress,
@@ -3241,364 +3241,12 @@ export const lmsrMarketMakerAbi = [
 ] as const
 
 export const lmsrMarketMakerAddress =
-  '0x7aaF237bc7e9A7eED2e0C0158FD6aB1c39B5d7d4' as const
+  '0x2F68B5945028da8f6A21e8B1c96CF38776aF6c81' as const
 
 export const lmsrMarketMakerConfig = {
   address: lmsrMarketMakerAddress,
   abi: lmsrMarketMakerAbi,
 } as const
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// MarketMaker
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-export const marketMakerAbi = [
-  {
-    type: 'function',
-    inputs: [],
-    name: 'FEE_RANGE',
-    outputs: [{ name: '', internalType: 'uint64', type: 'uint64' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'atomicOutcomeSlotCount',
-    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: 'outcomeTokenCost', internalType: 'uint256', type: 'uint256' },
-    ],
-    name: 'calcMarketFee',
-    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [
-      {
-        name: 'outcomeTokenAmounts',
-        internalType: 'int256[]',
-        type: 'int256[]',
-      },
-    ],
-    name: 'calcNetCost',
-    outputs: [{ name: 'netCost', internalType: 'int256', type: 'int256' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [{ name: '_fee', internalType: 'uint64', type: 'uint64' }],
-    name: 'changeFee',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [{ name: 'fundingChange', internalType: 'int256', type: 'int256' }],
-    name: 'changeFunding',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'close',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'collateralToken',
-    outputs: [{ name: '', internalType: 'contract IERC20', type: 'address' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
-    name: 'conditionIds',
-    outputs: [{ name: '', internalType: 'bytes32', type: 'bytes32' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'fee',
-    outputs: [{ name: '', internalType: 'uint64', type: 'uint64' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'funding',
-    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: '_operator', internalType: 'address', type: 'address' },
-      { name: '', internalType: 'address', type: 'address' },
-      { name: '', internalType: 'uint256[]', type: 'uint256[]' },
-      { name: '', internalType: 'uint256[]', type: 'uint256[]' },
-      { name: '', internalType: 'bytes', type: 'bytes' },
-    ],
-    name: 'onERC1155BatchReceived',
-    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: 'operator', internalType: 'address', type: 'address' },
-      { name: '', internalType: 'address', type: 'address' },
-      { name: '', internalType: 'uint256', type: 'uint256' },
-      { name: '', internalType: 'uint256', type: 'uint256' },
-      { name: '', internalType: 'bytes', type: 'bytes' },
-    ],
-    name: 'onERC1155Received',
-    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'owner',
-    outputs: [{ name: '', internalType: 'address', type: 'address' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'pause',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'pmSystem',
-    outputs: [
-      { name: '', internalType: 'contract ConditionalTokens', type: 'address' },
-    ],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'renounceOwnership',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'resume',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'stage',
-    outputs: [
-      { name: '', internalType: 'enum MarketMaker.Stage', type: 'uint8' },
-    ],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [{ name: 'interfaceId', internalType: 'bytes4', type: 'bytes4' }],
-    name: 'supportsInterface',
-    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
-    stateMutability: 'pure',
-  },
-  {
-    type: 'function',
-    inputs: [
-      {
-        name: 'outcomeTokenAmounts',
-        internalType: 'int256[]',
-        type: 'int256[]',
-      },
-      { name: 'collateralLimit', internalType: 'int256', type: 'int256' },
-    ],
-    name: 'trade',
-    outputs: [{ name: 'netCost', internalType: 'int256', type: 'int256' }],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
-    name: 'transferOwnership',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'whitelist',
-    outputs: [
-      { name: '', internalType: 'contract Whitelist', type: 'address' },
-    ],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'withdrawFees',
-    outputs: [{ name: 'fees', internalType: 'uint256', type: 'uint256' }],
-    stateMutability: 'nonpayable',
-  },
-  { type: 'event', anonymous: false, inputs: [], name: 'AMMClosed' },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'initialFunding',
-        internalType: 'uint256',
-        type: 'uint256',
-        indexed: false,
-      },
-    ],
-    name: 'AMMCreated',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'newFee',
-        internalType: 'uint64',
-        type: 'uint64',
-        indexed: false,
-      },
-    ],
-    name: 'AMMFeeChanged',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'fees',
-        internalType: 'uint256',
-        type: 'uint256',
-        indexed: false,
-      },
-    ],
-    name: 'AMMFeeWithdrawal',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'fundingChange',
-        internalType: 'int256',
-        type: 'int256',
-        indexed: false,
-      },
-    ],
-    name: 'AMMFundingChanged',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'transactor',
-        internalType: 'address',
-        type: 'address',
-        indexed: true,
-      },
-      {
-        name: 'outcomeTokenAmounts',
-        internalType: 'int256[]',
-        type: 'int256[]',
-        indexed: false,
-      },
-      {
-        name: 'outcomeTokenNetCost',
-        internalType: 'int256',
-        type: 'int256',
-        indexed: false,
-      },
-      {
-        name: 'marketFees',
-        internalType: 'uint256',
-        type: 'uint256',
-        indexed: false,
-      },
-    ],
-    name: 'AMMOutcomeTokenTrade',
-  },
-  { type: 'event', anonymous: false, inputs: [], name: 'AMMPaused' },
-  { type: 'event', anonymous: false, inputs: [], name: 'AMMResumed' },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      { name: 'addr', internalType: 'address', type: 'address', indexed: true },
-      {
-        name: 'interactionType',
-        internalType: 'string',
-        type: 'string',
-        indexed: false,
-      },
-      {
-        name: 'tags',
-        internalType: 'string[]',
-        type: 'string[]',
-        indexed: false,
-      },
-      { name: 'data', internalType: 'bytes', type: 'bytes', indexed: false },
-    ],
-    name: 'Interaction',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'previousOwner',
-        internalType: 'address',
-        type: 'address',
-        indexed: true,
-      },
-      {
-        name: 'newOwner',
-        internalType: 'address',
-        type: 'address',
-        indexed: true,
-      },
-    ],
-    name: 'OwnershipTransferred',
-  },
-  {
-    type: 'error',
-    inputs: [{ name: 'owner', internalType: 'address', type: 'address' }],
-    name: 'OwnableInvalidOwner',
-  },
-  {
-    type: 'error',
-    inputs: [{ name: 'account', internalType: 'address', type: 'address' }],
-    name: 'OwnableUnauthorizedAccount',
-  },
-  {
-    type: 'error',
-    inputs: [
-      { name: 'value', internalType: 'uint256', type: 'uint256' },
-      { name: 'length', internalType: 'uint256', type: 'uint256' },
-    ],
-    name: 'StringsInsufficientHexLength',
-  },
-] as const
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // MerkleGovModule
@@ -4118,7 +3766,7 @@ export const merkleGovModuleAbi = [
 ] as const
 
 export const merkleGovModuleAddress =
-  '0x4bB931339a3EaA6581ECf5f3412FBEF34b118428' as const
+  '0x3aeB1f545487b29E80c5b3b81E400aE66310AdFB' as const
 
 export const merkleGovModuleConfig = {
   address: merkleGovModuleAddress,
@@ -4551,7 +4199,7 @@ export const merkleSnapshotAbi = [
 ] as const
 
 export const merkleSnapshotAddress =
-  '0x41DedC58a078a88F110e8e5401f6C6CfD75F528C' as const
+  '0x67aaee27A33bF0442e5bb80d0aD74d12D633e949' as const
 
 export const merkleSnapshotConfig = {
   address: merkleSnapshotAddress,
@@ -4781,7 +4429,7 @@ export const mockUsdcAbi = [
 ] as const
 
 export const mockUsdcAddress =
-  '0x8B8C4c4F6445791F11988c49C395f7f5cD221ECc' as const
+  '0x6d9BF25CA90ee40d7306ed36d29ccf838837066F' as const
 
 export const mockUsdcConfig = {
   address: mockUsdcAddress,
@@ -4913,7 +4561,7 @@ export const predictionMarketFactoryAbi = [
 ] as const
 
 export const predictionMarketFactoryAddress =
-  '0xe00a6669C0B10cdD89084B51d68f436CBb23AB99' as const
+  '0xf01502474674e3fB8154e7F7321388D0522825c3' as const
 
 export const predictionMarketFactoryConfig = {
   address: predictionMarketFactoryAddress,
@@ -5074,7 +4722,7 @@ export const predictionMarketOracleControllerAbi = [
 ] as const
 
 export const predictionMarketOracleControllerAddress =
-  '0x01ffE9c909037163b48AdEea9E7dC7B13F931d0c' as const
+  '0xe79c74Dc84cE6078f572BDEc07c4e05E581c8b4f' as const
 
 export const predictionMarketOracleControllerConfig = {
   address: predictionMarketOracleControllerAddress,
@@ -5418,7 +5066,7 @@ export const rewardDistributorAbi = [
 ] as const
 
 export const rewardDistributorAddress =
-  '0xFC4ca5645baB29099032151d5d78B92cdae8414E' as const
+  '0x6Be9eaf8D460144e7AE180Cf6748d2f5AB71E1E6' as const
 
 export const rewardDistributorConfig = {
   address: rewardDistributorAddress,
@@ -5462,7 +5110,7 @@ export const schemaRegistrarAbi = [
 ] as const
 
 export const schemaRegistrarAddress =
-  '0xe03C4bB1363877ADa0649703f2DCcb598770eD0D' as const
+  '0x01a71BD1E2BBf60C4D24A48dF3e46252afeF84FD' as const
 
 export const schemaRegistrarConfig = {
   address: schemaRegistrarAddress,
@@ -5554,7 +5202,7 @@ export const schemaRegistryAbi = [
 ] as const
 
 export const schemaRegistryAddress =
-  '0xdEaAA2a134883c8f0834b43185A65e8367479BB0' as const
+  '0x9FcCb35EAF9b4BbD99313bC3FeB37FBBd6d42a4b' as const
 
 export const schemaRegistryConfig = {
   address: schemaRegistryAddress,
@@ -5943,7 +5591,7 @@ export const signerManagerModuleAbi = [
 ] as const
 
 export const signerManagerModuleAddress =
-  '0x098F5c5227d5757e7E9BeFe60e5A99D3d729Ff84' as const
+  '0xaC9BE90426C619704180860e1B0a010317D17fAc' as const
 
 export const signerManagerModuleConfig = {
   address: signerManagerModuleAddress,
@@ -6123,7 +5771,7 @@ export const wavsAttesterAbi = [
 ] as const
 
 export const wavsAttesterAddress =
-  '0x510458A4E8D3060000Dbf1752213Db4559e05AaE' as const
+  '0xF637Bcb04D44B8352d5a20608F57B23dBa3E5b6C' as const
 
 export const wavsAttesterConfig = {
   address: wavsAttesterAddress,
@@ -7121,7 +6769,7 @@ export const wavsIndexerAbi = [
 ] as const
 
 export const wavsIndexerAddress =
-  '0x4465dBA13bb1B1Cf86064fa6b74132aC02F55E4e' as const
+  '0x63ff8e959525D36ADCDCD07f48EE1a7E89A1f894' as const
 
 export const wavsIndexerConfig = {
   address: wavsIndexerAddress,

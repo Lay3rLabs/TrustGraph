@@ -41,11 +41,10 @@ try {
   // Create a flattened mapping of all contract addresses
   const contractAddresses = {
     wavs_service_manager: deployment.wavs_service_manager,
-    ...deployment.wavs_indexer,
+    wavs_indexer: deployment.wavs_indexer,
     ...deployment.eas.contracts,
-    ...deployment.reward_contracts,
     ...deployment.merkler,
-    ...deployment.prediction_market_contracts,
+    ...deployment.prediction_market,
     // Zodiac Safe stuff
     safe_singleton: deployment.zodiac_safes.safe_singleton,
     safe_factory: deployment.zodiac_safes.safe_factory,

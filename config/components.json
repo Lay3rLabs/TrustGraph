@@ -30,7 +30,7 @@
       "package_version": "0.1.0",
       "trigger_event": "Attested(address,address,bytes32,bytes32)",
       "trigger_json_path": "eas.contracts.indexer_resolver",
-      "submit_json_path": "governance_contracts.voting_power",
+      "submit_json_path": "governance.voting_power",
       "config_values": {
         "eas_address": "${EAS_ADDRESS}",
         "indexer_address": "${INDEXER_ADDRESS}",
@@ -87,8 +87,8 @@
       "package_name": "predictionmarketoracle",
       "package_version": "0.1.0",
       "trigger_event": "NewTrigger(bytes)",
-      "trigger_json_path": "prediction_market_contracts.oracle_controller",
-      "submit_json_path": "prediction_market_contracts.oracle_controller",
+      "trigger_json_path": "prediction_market.oracle_controller",
+      "submit_json_path": "prediction_market.oracle_controller",
       "config_values": {
         "market_maker": "${MARKET_MAKER_ADDRESS}",
         "conditional_tokens": "${CONDITIONAL_TOKENS_ADDRESS}",
@@ -128,7 +128,7 @@
       "package_version": "0.1.0",
       "trigger_event": "AttestationAttested(address,bytes32)",
       "trigger_json_path": "eas.contracts.indexer_resolver",
-      "submit_json_path": "wavs_indexer.wavs_indexer"
+      "submit_json_path": "wavs_indexer"
     },
     {
       "filename": "wavs_indexer.wasm",
@@ -136,7 +136,7 @@
       "package_version": "0.1.0",
       "trigger_event": "AttestationRevoked(address,bytes32)",
       "trigger_json_path": "eas.contracts.indexer_resolver",
-      "submit_json_path": "wavs_indexer.wavs_indexer"
+      "submit_json_path": "wavs_indexer"
     },
     {
       "filename": "wavs_indexer.wasm",
@@ -144,7 +144,7 @@
       "package_version": "0.1.0",
       "trigger_event": "AttestationAttested(address,bytes32)",
       "trigger_json_path": "eas.contracts.payable_indexer_resolver",
-      "submit_json_path": "wavs_indexer.wavs_indexer"
+      "submit_json_path": "wavs_indexer"
     },
     {
       "filename": "wavs_indexer.wasm",
@@ -152,7 +152,7 @@
       "package_version": "0.1.0",
       "trigger_event": "AttestationRevoked(address,bytes32)",
       "trigger_json_path": "eas.contracts.payable_indexer_resolver",
-      "submit_json_path": "wavs_indexer.wavs_indexer"
+      "submit_json_path": "wavs_indexer"
     },
     {
       "filename": "wavs_indexer.wasm",
@@ -160,7 +160,7 @@
       "package_version": "0.1.0",
       "trigger_event": "AttestationAttested(address,bytes32)",
       "trigger_json_path": "eas.contracts.attester_indexer_resolver",
-      "submit_json_path": "wavs_indexer.wavs_indexer"
+      "submit_json_path": "wavs_indexer"
     },
     {
       "filename": "wavs_indexer.wasm",
@@ -168,23 +168,23 @@
       "package_version": "0.1.0",
       "trigger_event": "AttestationRevoked(address,bytes32)",
       "trigger_json_path": "eas.contracts.attester_indexer_resolver",
-      "submit_json_path": "wavs_indexer.wavs_indexer"
+      "submit_json_path": "wavs_indexer"
     },
     {
       "filename": "wavs_indexer.wasm",
       "package_name": "wavs-indexer",
       "package_version": "0.1.0",
       "trigger_event": "Interaction(address,string,string[],bytes)",
-      "trigger_json_path": "prediction_market_contracts.conditional_tokens",
-      "submit_json_path": "wavs_indexer.wavs_indexer"
+      "trigger_json_path": "prediction_market.conditional_tokens",
+      "submit_json_path": "wavs_indexer"
     },
     {
       "filename": "wavs_indexer.wasm",
       "package_name": "wavs-indexer",
       "package_version": "0.1.0",
       "trigger_event": "Interaction(address,string,string[],bytes)",
-      "trigger_json_path": "prediction_market_contracts.market_maker",
-      "submit_json_path": "wavs_indexer.wavs_indexer"
+      "trigger_json_path": "prediction_market.market_maker",
+      "submit_json_path": "wavs_indexer"
     }
   ]
 }

@@ -1665,7 +1665,7 @@ contract WavsIndexerTest is Test {
     }
 
     function _addressTag(string memory prefix, address addr) internal pure returns (string memory) {
-        return string.concat(prefix, ":", Strings.toHexString(addr));
+        return string.concat(prefix, ":", Strings.toChecksumHexString(addr));
     }
 
     // Helper function to create an indexing payload

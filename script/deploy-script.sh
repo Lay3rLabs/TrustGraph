@@ -84,7 +84,7 @@ if [ "$(task get-deploy-status)" = "TESTNET" ]; then
     export SUBMIT_CHAIN=sepolia
 fi
 
-export INDEXER_ADDRESS=$(jq -r '.wavs_indexer.wavs_indexer' .docker/deployment_summary.json)
+export INDEXER_ADDRESS=$(jq -r '.wavs_indexer' .docker/deployment_summary.json)
 
 # Configure EAS addresses from deployment summary
 echo "Configuring EAS addresses from deployment summary..."
@@ -119,12 +119,12 @@ echo "✅ Indexer Address: ${INDEXER_ADDRESS}"
 echo "✅ Vouching Schema ID: ${VOUCHING_SCHEMA_ID}"
 echo "✅ Chain Name: ${CHAIN_NAME}"
 
-export REWARDS_TOKEN_ADDRESS=$(jq -r '.reward_contracts.reward_token' .docker/deployment_summary.json)
+export REWARDS_TOKEN_ADDRESS=$(jq -r '.merkler.reward_token' .docker/deployment_summary.json)
 
 # === Prediction Market Oracle ===
-export ORACLE_CONTROLLER_ADDRESS=`jq -r '.prediction_market_contracts.oracle_controller' "./.docker/deployment_summary.json"`
-export MARKET_MAKER_ADDRESS=`jq -r '.prediction_market_contracts.market_maker' "./.docker/deployment_summary.json"`
-export CONDITIONAL_TOKENS_ADDRESS=`jq -r '.prediction_market_contracts.conditional_tokens' "./.docker/deployment_summary.json"`
+export ORACLE_CONTROLLER_ADDRESS=`jq -r '.prediction_market.oracle_controller' "./.docker/deployment_summary.json"`
+export MARKET_MAKER_ADDRESS=`jq -r '.prediction_market.market_maker' "./.docker/deployment_summary.json"`
+export CONDITIONAL_TOKENS_ADDRESS=`jq -r '.prediction_market.conditional_tokens' "./.docker/deployment_summary.json"`
 
 echo "✅ Oracle Controller Address: ${ORACLE_CONTROLLER_ADDRESS}"
 echo "✅ Market Maker Address: ${MARKET_MAKER_ADDRESS}"

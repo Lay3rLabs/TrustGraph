@@ -281,19 +281,19 @@ add_component_interactive() {
     echo "Common paths:"
     echo "  eas.contracts.attest_trigger"
     echo "  eas.contracts.indexer_resolver"
-    echo "  governance_contracts.voting_power"
+    echo "  governance.voting_power"
     echo "  merkler.merkle_snapshot"
-    echo "  reward_contracts.reward_distributor"
-    echo "  prediction_market_contracts.oracle_controller"
+    echo "  merkler.reward_distributor"
+    echo "  prediction_market.oracle_controller"
     read -p "Trigger address JSON path: " trigger_path
 
     echo ""
     echo "Common submit paths:"
     echo "  eas.contracts.attester"
-    echo "  governance_contracts.voting_power"
+    echo "  governance.voting_power"
     echo "  merkler.merkle_snapshot"
-    echo "  reward_contracts.reward_distributor"
-    echo "  prediction_market_contracts.oracle_controller"
+    echo "  merkler.reward_distributor"
+    echo "  prediction_market.oracle_controller"
     read -p "Submit address JSON path: " submit_path
 
     echo ""

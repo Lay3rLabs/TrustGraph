@@ -7,13 +7,13 @@ tasks:
       RPC_URL:
         sh: task get-rpc
       PREDICTION_MARKET_FACTORY_ADDRESS:
-        sh: jq -r '.prediction_market_contracts.factory' .docker/deployment_summary.json || echo ""
+        sh: jq -r '.prediction_market.factory' .docker/deployment_summary.json || echo ""
       MARKET_MAKER_ADDRESS:
-        sh: jq -r '.prediction_market_contracts.market_maker' .docker/deployment_summary.json || echo ""
+        sh: jq -r '.prediction_market.market_maker' .docker/deployment_summary.json || echo ""
       CONDITIONAL_TOKENS_ADDRESS:
-        sh: jq -r '.prediction_market_contracts.conditional_tokens' .docker/deployment_summary.json || echo ""
+        sh: jq -r '.prediction_market.conditional_tokens' .docker/deployment_summary.json || echo ""
       COLLATERAL_TOKEN_ADDRESS:
-        sh: jq -r '.prediction_market_contracts.collateral_token' .docker/deployment_summary.json || echo ""
+        sh: jq -r '.prediction_market.collateral_token' .docker/deployment_summary.json || echo ""
     preconditions:
       - test -f .docker/deployment_summary.json
       - test -n "{{.PREDICTION_MARKET_FACTORY_ADDRESS}}"
@@ -42,13 +42,13 @@ tasks:
       RPC_URL:
         sh: task get-rpc
       PREDICTION_MARKET_FACTORY_ADDRESS:
-        sh: jq -r '.prediction_market_contracts.factory' .docker/deployment_summary.json || echo ""
+        sh: jq -r '.prediction_market.factory' .docker/deployment_summary.json || echo ""
       MARKET_MAKER_ADDRESS:
-        sh: jq -r '.prediction_market_contracts.market_maker' .docker/deployment_summary.json || echo ""
+        sh: jq -r '.prediction_market.market_maker' .docker/deployment_summary.json || echo ""
       CONDITIONAL_TOKENS_ADDRESS:
-        sh: jq -r '.prediction_market_contracts.conditional_tokens' .docker/deployment_summary.json || echo ""
+        sh: jq -r '.prediction_market.conditional_tokens' .docker/deployment_summary.json || echo ""
       COLLATERAL_TOKEN_ADDRESS:
-        sh: jq -r '.prediction_market_contracts.collateral_token' .docker/deployment_summary.json || echo ""
+        sh: jq -r '.prediction_market.collateral_token' .docker/deployment_summary.json || echo ""
     preconditions:
       - test -f .docker/deployment_summary.json
       - test -n "{{.PREDICTION_MARKET_FACTORY_ADDRESS}}"
@@ -77,7 +77,7 @@ tasks:
       RPC_URL:
         sh: task get-rpc
       PREDICTION_MARKET_ORACLE_CONTROLLER_ADDRESS:
-        sh: jq -r '.prediction_market_contracts.oracle_controller' .docker/deployment_summary.json || echo ""
+        sh: jq -r '.prediction_market.oracle_controller' .docker/deployment_summary.json || echo ""
     preconditions:
       - test -f .docker/deployment_summary.json
       - test -n "{{.PREDICTION_MARKET_ORACLE_CONTROLLER_ADDRESS}}"
@@ -99,11 +99,11 @@ tasks:
       RPC_URL:
         sh: task get-rpc
       PREDICTION_MARKET_FACTORY_ADDRESS:
-        sh: jq -r '.prediction_market_contracts.factory' .docker/deployment_summary.json || echo ""
+        sh: jq -r '.prediction_market.factory' .docker/deployment_summary.json || echo ""
       COLLATERAL_TOKEN_ADDRESS:
-        sh: jq -r '.prediction_market_contracts.collateral_token' .docker/deployment_summary.json || echo ""
+        sh: jq -r '.prediction_market.collateral_token' .docker/deployment_summary.json || echo ""
       CONDITIONAL_TOKENS_ADDRESS:
-        sh: jq -r '.prediction_market_contracts.conditional_tokens' .docker/deployment_summary.json || echo ""
+        sh: jq -r '.prediction_market.conditional_tokens' .docker/deployment_summary.json || echo ""
     preconditions:
       - test -f .docker/deployment_summary.json
       - test -n "{{.PREDICTION_MARKET_FACTORY_ADDRESS}}"
@@ -129,9 +129,9 @@ tasks:
       RPC_URL:
         sh: task get-rpc
       PREDICTION_MARKET_FACTORY_ADDRESS:
-        sh: jq -r '.prediction_market_contracts.factory' .docker/deployment_summary.json || echo ""
+        sh: jq -r '.prediction_market.factory' .docker/deployment_summary.json || echo ""
       MARKET_MAKER_ADDRESS:
-        sh: jq -r '.prediction_market_contracts.market_maker' .docker/deployment_summary.json || echo ""
+        sh: jq -r '.prediction_market.market_maker' .docker/deployment_summary.json || echo ""
     preconditions:
       - test -f .docker/deployment_summary.json
       - test -n "{{.PREDICTION_MARKET_FACTORY_ADDRESS}}"
@@ -153,11 +153,11 @@ tasks:
       RPC_URL:
         sh: task get-rpc
       PREDICTION_MARKET_FACTORY_ADDRESS:
-        sh: jq -r '.prediction_market_contracts.factory' .docker/deployment_summary.json || echo ""
+        sh: jq -r '.prediction_market.factory' .docker/deployment_summary.json || echo ""
       COLLATERAL_TOKEN_ADDRESS:
-        sh: jq -r '.prediction_market_contracts.collateral_token' .docker/deployment_summary.json || echo ""
+        sh: jq -r '.prediction_market.collateral_token' .docker/deployment_summary.json || echo ""
       CONDITIONAL_TOKENS_ADDRESS:
-        sh: jq -r '.prediction_market_contracts.conditional_tokens' .docker/deployment_summary.json || echo ""
+        sh: jq -r '.prediction_market.conditional_tokens' .docker/deployment_summary.json || echo ""
     preconditions:
       - test -f .docker/deployment_summary.json
       - test -n "{{.PREDICTION_MARKET_FACTORY_ADDRESS}}"

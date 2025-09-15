@@ -143,8 +143,8 @@ trigger-statement-attestation:
 
 The Taskfile automatically resolves environment variables from deployment configuration:
 
-- `EAS_ADDR`: From `.docker/deployment_summary.json` → `eas_contracts.eas`
-- `STATEMENT_SCHEMA_UID`: From `.docker/deployment_summary.json` → `eas_schemas.statement_schema`
+- `EAS_ADDR`: From `.docker/deployment_summary.json` → `eas.contracts.eas`
+- `STATEMENT_SCHEMA_UID`: From `.docker/deployment_summary.json` → `eas.schemas.statement`
 - `WALLET_ADDRESS`: Derived from `FUNDED_KEY` using `cast wallet address`
 
 ## Payment Support

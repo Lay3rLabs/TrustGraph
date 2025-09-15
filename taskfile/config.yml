@@ -96,35 +96,31 @@ vars:
   SCHEMA_REGISTRAR_ADDR:
     sh: test -f .docker/deployment_summary.json && jq -r '.eas.contracts.schema_registrar' .docker/deployment_summary.json || echo ""
   INDEXER_ADDR:
-    sh: test -f .docker/deployment_summary.json && jq -r '.wavs_indexer.wavs_indexer' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.wavs_indexer' .docker/deployment_summary.json || echo ""
   COLLATERAL_TOKEN_ADDR:
-    sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market_contracts.collateral_token' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market.collateral_token' .docker/deployment_summary.json || echo ""
   EAS_INDEXER_RESOLVER_ADDR:
     sh: test -f .docker/deployment_summary.json && jq -r '.eas.contracts.indexer_resolver' .docker/deployment_summary.json || echo ""
   VOTING_POWER_ADDR:
-    sh: test -f .docker/deployment_summary.json && jq -r '.governance_contracts.voting_power' .docker/deployment_summary.json || echo ""
-  MERKLE_GOV_ADDR:
-    sh: test -f .docker/deployment_summary.json && jq -r '.merkle_governance_contracts.merkle_gov' .docker/deployment_summary.json || echo ""
-  MERKLE_VOTE_ADDR:
-    sh: test -f .docker/deployment_summary.json && jq -r '.merkle_governance_contracts.merkle_vote' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.governance.voting_power' .docker/deployment_summary.json || echo ""
   REWARDS_TOKEN_ADDRESS:
-    sh: test -f .docker/deployment_summary.json && jq -r '.reward_contracts.reward_token' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.merkler.reward_token' .docker/deployment_summary.json || echo ""
   REWARD_DISTRIBUTOR_ADDRESS:
-    sh: test -f .docker/deployment_summary.json && jq -r '.reward_contracts.reward_distributor' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.merkler.reward_distributor' .docker/deployment_summary.json || echo ""
   MERKLE_SNAPSHOT_ADDR:
     sh: test -f .docker/merkler_deploy.json && jq -r '.merkle_snapshot' .docker/merkler_deploy.json || echo ""
 
   # Prediction Market contract addresses (loaded from deployment summary)
   PREDICTION_MARKET_FACTORY_ADDRESS:
-    sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market_contracts.factory' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market.factory' .docker/deployment_summary.json || echo ""
   MARKET_MAKER_ADDRESS:
-    sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market_contracts.market_maker' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market.market_maker' .docker/deployment_summary.json || echo ""
   CONDITIONAL_TOKENS_ADDRESS:
-    sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market_contracts.conditional_tokens' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market.conditional_tokens' .docker/deployment_summary.json || echo ""
   COLLATERAL_TOKEN_ADDRESS:
-    sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market_contracts.collateral_token' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market.collateral_token' .docker/deployment_summary.json || echo ""
   PREDICTION_MARKET_ORACLE_CONTROLLER_ADDRESS:
-    sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market_contracts.oracle_controller' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market.oracle_controller' .docker/deployment_summary.json || echo ""
 
   # Schema UIDs (loaded from deployment summary)
   VOUCH_SCHEMA_UID:
