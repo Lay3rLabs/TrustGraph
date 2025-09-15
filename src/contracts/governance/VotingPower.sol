@@ -14,6 +14,8 @@ import {ITypes} from "../../interfaces/ITypes.sol";
  * This contract manages voting power distribution and delegation for the AttestationGovernor.
  */
 contract VotingPower is Votes, Ownable, IWavsServiceHandler {
+    error EnvelopeAlreadySeen();
+
     /// @dev Operation types for voting power management
     enum OperationType {
         MINT, // 0 - Mint tokens to accounts
@@ -39,6 +41,9 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
 
     // The WAVS service manager instance
     IWavsServiceManager private immutable _serviceManager;
+
+    // Prevent replay attacks.
+    mapping(bytes20 eventId => bool seen) public envelopesSeen;
 
     // Mapping from account to their voting power balance
     mapping(address => uint256) private _balances;
@@ -261,6 +266,13 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
     function handleSignedEnvelope(Envelope calldata envelope, SignatureData calldata signatureData) external {
         // Validate the envelope signature through the service manager
         _serviceManager.validate(envelope, signatureData);
+
+        // Prevent replay attacks.
+        if (envelopesSeen[envelope.eventId]) {
+            revert EnvelopeAlreadySeen();
+        }
+
+        envelopesSeen[envelope.eventId] = true;
 
         // Decode the payload
         VotingPowerPayload memory payload = abi.decode(envelope.payload, (VotingPowerPayload));

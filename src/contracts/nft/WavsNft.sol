@@ -25,6 +25,8 @@ contract WavsNft is
     ERC721Votes,
     IWavsServiceHandler
 {
+    error MintAlreadySeen();
+
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
@@ -43,6 +45,9 @@ contract WavsNft is
 
     // Mapping to store additional metadata for each trigger
     mapping(IWavsNftServiceTypes.TriggerId => UpdateReceipt) public receipts;
+
+    // Prevent mint replay attacks.
+    mapping(IWavsNftServiceTypes.TriggerId => bool) public mintsSeen;
 
     constructor(address serviceManager_, address fundsRecipient_)
         ERC721("TriggerNFT", "TNFT")
@@ -81,6 +86,13 @@ contract WavsNft is
             // Decode the mint info
             IWavsNftServiceTypes.WavsMintResult memory mintResult =
                 abi.decode(wavsResponse.data, (IWavsNftServiceTypes.WavsMintResult));
+
+            // Prevent replay attacks.
+            if (mintsSeen[mintResult.triggerId]) {
+                revert MintAlreadySeen();
+            }
+
+            mintsSeen[mintResult.triggerId] = true;
 
             // Increment the tokenId
             uint256 tokenId = nextTokenId++;

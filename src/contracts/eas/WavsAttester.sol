@@ -25,6 +25,7 @@ contract WavsAttester is IWavsServiceHandler {
     error InvalidOperationType();
     error PayloadDecodingFailed();
     error DataDecodingFailed();
+    error EnvelopeAlreadySeen();
 
     event DebuggingEnvelopeReceived(bytes payload, uint256 payloadLength);
     event DebuggingPayloadDecoded(uint8 operationType, uint256 dataLength);
@@ -47,6 +48,9 @@ contract WavsAttester is IWavsServiceHandler {
 
     // The WAVS service manager instance
     IWavsServiceManager private immutable _serviceManager;
+
+    // Prevent replay attacks.
+    mapping(bytes20 eventId => bool seen) public envelopesSeen;
 
     /// @notice Creates a new WavsAttester instance.
     /// @param eas The address of the global EAS contract.
@@ -72,6 +76,13 @@ contract WavsAttester is IWavsServiceHandler {
 
         // Validate the envelope signature through the service manager
         _serviceManager.validate(envelope, signatureData);
+
+        // Prevent replay attacks.
+        if (envelopesSeen[envelope.eventId]) {
+            revert EnvelopeAlreadySeen();
+        }
+
+        envelopesSeen[envelope.eventId] = true;
 
         // Decode the payload to get the attestation payload
         AttestationPayload memory payload;

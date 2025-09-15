@@ -11,6 +11,8 @@ import {ITypes} from "../../interfaces/ITypes.sol";
 /// @notice This module allows for programmatic management of Safe signers and threshold
 /// @dev Provides functions to add, remove, swap owners and change threshold on the connected Safe
 contract SignerManagerModule is Module, IWavsServiceHandler {
+    error EnvelopeAlreadySeen();
+
     /// @dev Operation types for signer management
     enum OperationType {
         ADD_SIGNER, // 0 - Add a new signer with threshold
@@ -43,6 +45,9 @@ contract SignerManagerModule is Module, IWavsServiceHandler {
 
     // The WAVS service manager instance
     IWavsServiceManager private _serviceManager;
+
+    // Prevent replay attacks.
+    mapping(bytes20 eventId => bool seen) public envelopesSeen;
 
     bool private _initialized;
 
@@ -194,6 +199,13 @@ contract SignerManagerModule is Module, IWavsServiceHandler {
     function handleSignedEnvelope(Envelope calldata envelope, SignatureData calldata signatureData) external {
         // Validate the envelope signature through the service manager
         _serviceManager.validate(envelope, signatureData);
+
+        // Prevent replay attacks.
+        if (envelopesSeen[envelope.eventId]) {
+            revert EnvelopeAlreadySeen();
+        }
+
+        envelopesSeen[envelope.eventId] = true;
 
         // Decode the payload
         SignerManagerPayload memory payload = abi.decode(envelope.payload, (SignerManagerPayload));

@@ -8,7 +8,12 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 // Geyser is a factory pattern that allows the handler to control the ServiceManager to add new services via an updated serviceURI.
 // Some Trigger w/ component info -> WAVS watch -> Submit to Geyser -> Geyser updates ServiceManager with new serviceURI
 contract Geyser is Ownable, IWavsServiceHandler {
+    error EnvelopeAlreadySeen();
+
     IWavsServiceManager private _serviceManager;
+
+    // Prevent replay attacks.
+    mapping(bytes20 eventId => bool seen) public envelopesSeen;
 
     event UpdateService(string json);
 
@@ -29,6 +34,13 @@ contract Geyser is Ownable, IWavsServiceHandler {
         SignatureData calldata signatureData
     ) external override {
         _serviceManager.validate(envelope, signatureData);
+
+        // Prevent replay attacks.
+        if (envelopesSeen[envelope.eventId]) {
+            revert EnvelopeAlreadySeen();
+        }
+
+        envelopesSeen[envelope.eventId] = true;
 
         // this should be an ipfs link returned from the component
         _serviceManager.setServiceURI(string(envelope.payload));
