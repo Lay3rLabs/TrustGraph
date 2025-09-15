@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { encodePacked, stringToHex } from 'viem'
+import { stringToHex, toHex } from 'viem'
 import { useAccount, useChainId, usePublicClient } from 'wagmi'
 
 import { easAbi, easAddress } from '@/lib/contracts'
@@ -77,19 +77,22 @@ export function useAttestation() {
         )
       }
 
-      // Encode the data fields based on schema type
-      const encodedData = encodePacked(
-        schema.fields.map((field) => field.type),
-        schema.fields.map((field) => {
-          const value = attestationData.data[field.name]
-          return field.type.startsWith('uint')
-            ? BigInt(value)
-            : field.type.startsWith('bytes')
-            ? value.startsWith('0x')
-              ? value
-              : stringToHex(value)
-            : value
-        })
+      // Encode JSON data to hex
+      const encodedData = toHex(
+        JSON.stringify(
+          schema.fields.reduce((acc, { name, type }) => {
+            const value = attestationData.data[name]
+            const encodedValue = type.startsWith('uint')
+              ? BigInt(value).toString()
+              : type.startsWith('bytes')
+              ? value.startsWith('0x')
+                ? value
+                : stringToHex(value)
+              : value
+
+            return { ...acc, [name]: encodedValue }
+          }, {})
+        )
       )
 
       // Helper function to execute transaction with fresh nonce

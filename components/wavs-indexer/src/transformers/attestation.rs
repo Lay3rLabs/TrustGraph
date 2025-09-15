@@ -62,7 +62,7 @@ impl AttestationTransformer {
             chainId: chain.chain_id,
             relevantContract: attested.eas,
             blockNumber: U256::from(event_data.block_number),
-            timestamp: utils::get_current_timestamp(),
+            timestamp: (attestation.time as u128) * 1000,
             eventType: "attestation".to_string(),
             tags: vec![
                 format!("eas:{}", attested.eas),

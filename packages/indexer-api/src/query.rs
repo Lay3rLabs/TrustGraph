@@ -52,6 +52,14 @@ impl WavsIndexerQuerier {
 // Attestation Queries
 // =============================================================================
 
+pub struct IndexedAttestation {
+    pub uid: FixedBytes<32>,
+    pub schema_uid: FixedBytes<32>,
+    pub attester: Address,
+    pub recipient: Address,
+    pub event: IndexedEvent,
+}
+
 impl WavsIndexerQuerier {
     pub async fn is_attestation_indexed(&self, uid: FixedBytes<32>) -> Result<bool, String> {
         let result = self
@@ -73,25 +81,25 @@ impl WavsIndexerQuerier {
             .map_err(|e| format!("Failed to get schema attestation count: {}", e))
     }
 
-    pub async fn get_attestation_uids_by_schema(
+    pub async fn get_indexed_attestations_by_schema(
         &self,
         schema_uid: FixedBytes<32>,
-        start: U256,
-        length: U256,
+        start: u64,
+        length: u64,
         reverse_order: bool,
-    ) -> Result<Vec<FixedBytes<32>>, String> {
+    ) -> Result<Vec<IndexedAttestation>, String> {
         self.getEventsByTypeAndTag(
             "attestation".to_string(),
             format!("schema:{}", schema_uid),
-            start,
-            length,
+            U256::from(start),
+            U256::from(length),
             reverse_order,
         )
         .call()
         .await
         .map_err(|e| format!("Failed to get schema attestation UIDs: {}", e))?
-        .iter()
-        .map(|event| self.get_attestation_uid(event))
+        .into_iter()
+        .map(|event| self.get_indexed_attestation(event))
         .collect::<Result<Vec<_>, _>>()
     }
 
@@ -108,25 +116,25 @@ impl WavsIndexerQuerier {
         .map_err(|e| format!("Failed to get recipient attestation count: {}", e))
     }
 
-    pub async fn get_attestation_uids_by_recipient(
+    pub async fn get_indexed_attestations_by_recipient(
         &self,
         recipient: Address,
-        start: U256,
-        length: U256,
+        start: u64,
+        length: u64,
         reverse_order: bool,
-    ) -> Result<Vec<FixedBytes<32>>, String> {
+    ) -> Result<Vec<IndexedAttestation>, String> {
         self.getEventsByTypeAndTag(
             "attestation".to_string(),
             format!("recipient:{}", recipient),
-            start,
-            length,
+            U256::from(start),
+            U256::from(length),
             reverse_order,
         )
         .call()
         .await
         .map_err(|e| format!("Failed to get recipient attestation UIDs: {}", e))?
-        .iter()
-        .map(|event| self.get_attestation_uid(event))
+        .into_iter()
+        .map(|event| self.get_indexed_attestation(event))
         .collect::<Result<Vec<_>, _>>()
     }
 
@@ -140,25 +148,25 @@ impl WavsIndexerQuerier {
             .map_err(|e| format!("Failed to get attester attestation count: {}", e))
     }
 
-    pub async fn get_attestation_uids_by_attester(
+    pub async fn get_indexed_attestations_by_attester(
         &self,
         attester: Address,
-        start: U256,
-        length: U256,
+        start: u64,
+        length: u64,
         reverse_order: bool,
-    ) -> Result<Vec<FixedBytes<32>>, String> {
+    ) -> Result<Vec<IndexedAttestation>, String> {
         self.getEventsByTypeAndTag(
             "attestation".to_string(),
             format!("attester:{}", attester),
-            start,
-            length,
+            U256::from(start),
+            U256::from(length),
             reverse_order,
         )
         .call()
         .await
         .map_err(|e| format!("Failed to get attester attestation UIDs: {}", e))?
-        .iter()
-        .map(|event| self.get_attestation_uid(event))
+        .into_iter()
+        .map(|event| self.get_indexed_attestation(event))
         .collect::<Result<Vec<_>, _>>()
     }
 
@@ -176,26 +184,26 @@ impl WavsIndexerQuerier {
         .map_err(|e| format!("Failed to get schema/attester attestation count: {}", e))
     }
 
-    pub async fn get_attestation_uids_by_schema_and_attester(
+    pub async fn get_indexed_attestations_by_schema_and_attester(
         &self,
         schema_uid: FixedBytes<32>,
         attester: Address,
-        start: U256,
-        length: U256,
+        start: u64,
+        length: u64,
         reverse_order: bool,
-    ) -> Result<Vec<FixedBytes<32>>, String> {
+    ) -> Result<Vec<IndexedAttestation>, String> {
         self.getEventsByTypeAndTag(
             "attestation".to_string(),
             format!("schema:{}/attester:{}", schema_uid, attester),
-            start,
-            length,
+            U256::from(start),
+            U256::from(length),
             reverse_order,
         )
         .call()
         .await
         .map_err(|e| format!("Failed to get schema/attester attestation UIDs: {}", e))?
-        .iter()
-        .map(|event| self.get_attestation_uid(event))
+        .into_iter()
+        .map(|event| self.get_indexed_attestation(event))
         .collect::<Result<Vec<_>, _>>()
     }
 
@@ -213,26 +221,26 @@ impl WavsIndexerQuerier {
         .map_err(|e| format!("Failed to get schema/recipient attestation count: {}", e))
     }
 
-    pub async fn get_attestation_uids_by_schema_and_recipient(
+    pub async fn get_indexed_attestations_by_schema_and_recipient(
         &self,
         schema_uid: FixedBytes<32>,
         recipient: Address,
-        start: U256,
-        length: U256,
+        start: u64,
+        length: u64,
         reverse_order: bool,
-    ) -> Result<Vec<FixedBytes<32>>, String> {
+    ) -> Result<Vec<IndexedAttestation>, String> {
         self.getEventsByTypeAndTag(
             "attestation".to_string(),
             format!("schema:{}/recipient:{}", schema_uid, recipient),
-            start,
-            length,
+            U256::from(start),
+            U256::from(length),
             reverse_order,
         )
         .call()
         .await
         .map_err(|e| format!("Failed to get schema/recipient attestation UIDs: {}", e))?
-        .iter()
-        .map(|event| self.get_attestation_uid(event))
+        .into_iter()
+        .map(|event| self.get_indexed_attestation(event))
         .collect::<Result<Vec<_>, _>>()
     }
 
@@ -251,32 +259,32 @@ impl WavsIndexerQuerier {
         .map_err(|e| format!("Failed to get schema/attester/recipient attestation count: {}", e))
     }
 
-    pub async fn get_attestation_uids_by_schema_and_attester_and_recipient(
+    pub async fn get_indexed_attestations_by_schema_and_attester_and_recipient(
         &self,
         schema_uid: FixedBytes<32>,
         attester: Address,
         recipient: Address,
-        start: U256,
-        length: U256,
+        start: u64,
+        length: u64,
         reverse_order: bool,
-    ) -> Result<Vec<FixedBytes<32>>, String> {
+    ) -> Result<Vec<IndexedAttestation>, String> {
         self.getEventsByTypeAndTag(
             "attestation".to_string(),
             format!("schema:{}/attester:{}/recipient:{}", schema_uid, attester, recipient),
-            start,
-            length,
+            U256::from(start),
+            U256::from(length),
             reverse_order,
         )
         .call()
         .await
         .map_err(|e| format!("Failed to get schema/attester/recipient attestation UIDs: {}", e))?
-        .iter()
-        .map(|event| self.get_attestation_uid(event))
+        .into_iter()
+        .map(|event| self.get_indexed_attestation(event))
         .collect::<Result<Vec<_>, _>>()
     }
 
-    fn get_attestation_uid(&self, event: &IndexedEvent) -> Result<FixedBytes<32>, String> {
-        event
+    fn get_indexed_attestation(&self, event: IndexedEvent) -> Result<IndexedAttestation, String> {
+        let uid = event
             .tags
             .iter()
             .find(|tag| tag.starts_with("uid:"))
@@ -285,7 +293,42 @@ impl WavsIndexerQuerier {
             .nth(1)
             .ok_or(format!("No `uid` found in tags for event with ID {:?}", event.eventId))?
             .parse::<FixedBytes<32>>()
-            .map_err(|e| format!("Failed to parse uid: {}", e))
+            .map_err(|e| format!("Failed to parse uid: {}", e))?;
+
+        let schema_uid = event
+            .tags
+            .iter()
+            .find(|tag| tag.starts_with("schema:"))
+            .ok_or(format!("No `schema` tag found in event with ID {:?}", event.eventId))?
+            .split(":")
+            .nth(1)
+            .ok_or(format!("No `schema` found in tags for event with ID {:?}", event.eventId))?
+            .parse::<FixedBytes<32>>()
+            .map_err(|e| format!("Failed to parse schema uid: {}", e))?;
+
+        let attester = event
+            .tags
+            .iter()
+            .find(|tag| tag.starts_with("attester:"))
+            .ok_or(format!("No `attester` tag found in event with ID {:?}", event.eventId))?
+            .split(":")
+            .nth(1)
+            .ok_or(format!("No `attester` found in tags for event with ID {:?}", event.eventId))?
+            .parse::<Address>()
+            .map_err(|e| format!("Failed to parse attester: {}", e))?;
+
+        let recipient = event
+            .tags
+            .iter()
+            .find(|tag| tag.starts_with("recipient:"))
+            .ok_or(format!("No `recipient` tag found in event with ID {:?}", event.eventId))?
+            .split(":")
+            .nth(1)
+            .ok_or(format!("No `recipient` found in tags for event with ID {:?}", event.eventId))?
+            .parse::<Address>()
+            .map_err(|e| format!("Failed to parse recipient: {}", e))?;
+
+        Ok(IndexedAttestation { uid, schema_uid, attester, recipient, event })
     }
 }
 

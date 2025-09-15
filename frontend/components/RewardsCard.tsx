@@ -48,11 +48,7 @@ export function RewardsCard({
   error,
 }: RewardsCardProps) {
   const formatAmount = (amount: string | undefined) => {
-    if (!amount || amount === '0') return '0'
-    // Convert from wei to ether (assuming 18 decimals)
-    const value = BigInt(amount)
-    const formatted = Number(value) / Math.pow(10, 18)
-    return formatted.toFixed(6)
+    return BigInt(amount || 0).toLocaleString()
   }
 
   const hasClaimableRewards =

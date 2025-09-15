@@ -154,12 +154,12 @@ impl Source for InteractionsSource {
                         contracts.insert(event.relevantContract.to_string());
                         source_events.push(SourceEvent {
                             r#type: self.interaction_type.clone(),
-                            timestamp: event.timestamp.to::<u64>(),
+                            timestamp: event.timestamp,
                             value: self.points_per_interaction,
                             metadata: Some(json!({
                                 "eventId": event.eventId.to_string(),
                                 "chainId": event.chainId,
-                                "block": event.blockNumber.to::<u64>(),
+                                "block": event.blockNumber.to::<u128>(),
                                 "contract": event.relevantContract.to_string(),
                                 "tags": event.tags,
                                 "data": event.data.to_string(),
@@ -169,12 +169,12 @@ impl Source for InteractionsSource {
                 } else {
                     source_events.push(SourceEvent {
                         r#type: self.interaction_type.clone(),
-                        timestamp: event.timestamp.to::<u64>(),
+                        timestamp: event.timestamp,
                         value: self.points_per_interaction,
                         metadata: Some(json!({
                             "eventId": event.eventId.to_string(),
                             "chainId": event.chainId,
-                            "block": event.blockNumber.to::<u64>(),
+                            "block": event.blockNumber.to::<u128>(),
                             "contract": event.relevantContract.to_string(),
                             "tags": event.tags,
                             "data": event.data.to_string(),

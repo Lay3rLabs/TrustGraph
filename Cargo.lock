@@ -4292,6 +4292,7 @@ dependencies = [
 name = "merkler"
 version = "0.5.5"
 dependencies = [
+ "alloy-dyn-abi",
  "alloy-network 0.15.11",
  "alloy-provider 0.15.11",
  "alloy-rpc-types",

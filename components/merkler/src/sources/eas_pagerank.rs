@@ -9,7 +9,8 @@ use anyhow::Result;
 use async_trait::async_trait;
 use std::collections::HashMap;
 use std::str::FromStr;
-use wavs_indexer_api::WavsIndexerQuerier;
+use wavs_indexer_api::solidity::IndexedEvent;
+use wavs_indexer_api::{IndexedAttestation, WavsIndexerQuerier};
 use wavs_wasi_utils::evm::{
     alloy_primitives::{hex, Address, FixedBytes, TxKind, U256},
     new_evm_provider,
@@ -123,19 +124,19 @@ impl EasPageRankSource {
         Ok(count.to::<u64>())
     }
 
-    async fn get_attestation_uids(
+    async fn get_indexed_attestations(
         &self,
         schema_uid: &str,
         start: u64,
         length: u64,
-    ) -> Result<Vec<FixedBytes<32>>> {
+    ) -> Result<Vec<IndexedAttestation>> {
         let schema = self.parse_schema_uid(schema_uid)?;
         let indexer_querier = self.indexer_querier().await?;
-        let uids = indexer_querier
-            .get_attestation_uids_by_schema(schema, U256::from(start), U256::from(length), false)
+        let attestations = indexer_querier
+            .get_indexed_attestations_by_schema(schema, start, length, false)
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to get schema attestation UIDs: {}", e))?;
-        Ok(uids)
+            .map_err(|e| anyhow::anyhow!("Failed to get indexed schema attestations: {}", e))?;
+        Ok(attestations)
     }
 
     async fn get_attestation_details(
@@ -180,85 +181,80 @@ impl EasPageRankSource {
             let length = std::cmp::min(batch_size, total_attestations - start);
             println!("🔄 Processing attestation batch: {} to {}", start, start + length - 1);
 
-            let uids = self.get_attestation_uids(schema_uid, start, length).await?;
+            let attestations = self.get_indexed_attestations(schema_uid, start, length).await?;
 
-            for uid in uids {
-                match self.get_attestation_details(uid).await {
-                    Ok((attester, recipient, data)) => {
-                        // Debug attestation data
-                        println!("🔍 Attestation UID: {:?}", uid);
-                        println!("   Attester: {}", attester);
-                        println!("   Recipient: {}", recipient);
-                        println!("   Data length: {}", data.len());
+            for IndexedAttestation {
+                uid,
+                schema_uid,
+                attester,
+                recipient,
+                event: IndexedEvent { data, .. },
+            } in attestations
+            {
+                // Debug attestation data
+                println!("🔍 Attestation UID: {:?}", uid);
+                println!("   Schema UID: {:?}", schema_uid);
+                println!("   Attester: {}", attester);
+                println!("   Recipient: {}", recipient);
+                println!("   Data length: {}", data.len());
 
-                        if data.len() > 0 {
-                            println!(
-                                "   Data (hex): 0x{}",
-                                hex::encode(&data[..data.len().min(64)])
-                            );
-                        }
-
-                        // Decode weight from attestation data
-                        let weight = if data.len() >= 32 {
-                            // Data is ABI encoded uint256
-                            let mut weight_bytes = [0u8; 32];
-                            weight_bytes.copy_from_slice(&data[..32]);
-                            let weight_u256 = U256::from_be_bytes(weight_bytes);
-
-                            println!("   Raw weight U256: {}", weight_u256);
-                            println!("   Weight hex: 0x{}", hex::encode(&weight_bytes));
-                            println!("   u64::MAX: {}", u64::MAX);
-                            println!(
-                                "   Overflow check: {} > {} = {}",
-                                weight_u256,
-                                U256::from(u64::MAX),
-                                weight_u256 > U256::from(u64::MAX)
-                            );
-
-                            // Handle potential overflow when converting U256 to u64
-                            // Cap weight at reasonable maximum or scale down large values
-                            if weight_u256 > U256::from(u64::MAX) {
-                                println!(
-                                    "⚠️  Large weight detected ({}), capping at maximum",
-                                    weight_u256
-                                );
-                                // For very large values, scale them down to a reasonable range
-                                // Use logarithmic scaling to handle extreme values
-                                let scaled_weight =
-                                    (weight_u256.to_string().len() as f64).max(1.0).min(1000.0);
-                                println!("   Scaled weight: {}", scaled_weight);
-                                scaled_weight
-                            } else if weight_u256.is_zero() {
-                                // Avoid zero weights which can cause issues in PageRank
-                                println!("   Zero weight, using default: 1.0");
-                                1.0
-                            } else {
-                                // Safe conversion for values that fit in u64
-                                let converted_weight = weight_u256.to::<u64>() as f64;
-                                println!("   Converted weight: {}", converted_weight);
-                                converted_weight
-                            }
-                        } else {
-                            // Default weight if data is missing or invalid
-                            println!("   Data too short, using default weight: 1.0");
-                            1.0
-                        };
-
-                        graph.add_edge(attester, recipient, weight);
-                        edge_count += 1;
-                        unique_attesters.insert(attester);
-                        unique_recipients.insert(recipient);
-
-                        // Log all edges for debugging
-                        println!(
-                            "  Edge #{}: {} → {} (weight: {})",
-                            edge_count, attester, recipient, weight
-                        );
-                    }
-                    Err(e) => {
-                        println!("⚠️  Failed to get attestation details for UID {:?}: {}", uid, e);
-                    }
+                if data.len() > 0 {
+                    println!("   Data (hex): 0x{}", hex::encode(&data[..data.len().min(64)]));
                 }
+
+                // Decode weight from attestation data
+                let weight = if data.len() >= 32 {
+                    // Data is ABI encoded uint256
+                    let mut weight_bytes = [0u8; 32];
+                    weight_bytes.copy_from_slice(&data[..32]);
+                    let weight_u256 = U256::from_be_bytes(weight_bytes);
+
+                    println!("   Raw weight U256: {}", weight_u256);
+                    println!("   Weight hex: 0x{}", hex::encode(&weight_bytes));
+                    println!("   u64::MAX: {}", u64::MAX);
+                    println!(
+                        "   Overflow check: {} > {} = {}",
+                        weight_u256,
+                        U256::from(u64::MAX),
+                        weight_u256 > U256::from(u64::MAX)
+                    );
+
+                    // Handle potential overflow when converting U256 to u64
+                    // Cap weight at reasonable maximum or scale down large values
+                    if weight_u256 > U256::from(u64::MAX) {
+                        println!("⚠️  Large weight detected ({}), capping at maximum", weight_u256);
+                        // For very large values, scale them down to a reasonable range
+                        // Use logarithmic scaling to handle extreme values
+                        let scaled_weight =
+                            (weight_u256.to_string().len() as f64).max(1.0).min(1000.0);
+                        println!("   Scaled weight: {}", scaled_weight);
+                        scaled_weight
+                    } else if weight_u256.is_zero() {
+                        // Avoid zero weights which can cause issues in PageRank
+                        println!("   Zero weight, using default: 1.0");
+                        1.0
+                    } else {
+                        // Safe conversion for values that fit in u64
+                        let converted_weight = weight_u256.to::<u64>() as f64;
+                        println!("   Converted weight: {}", converted_weight);
+                        converted_weight
+                    }
+                } else {
+                    // Default weight if data is missing or invalid
+                    println!("   Data too short, using default weight: 1.0");
+                    1.0
+                };
+
+                graph.add_edge(attester, recipient, weight);
+                edge_count += 1;
+                unique_attesters.insert(attester);
+                unique_recipients.insert(recipient);
+
+                // Log all edges for debugging
+                println!(
+                    "  Edge #{}: {} → {} (weight: {})",
+                    edge_count, attester, recipient, weight
+                );
             }
 
             start += length;

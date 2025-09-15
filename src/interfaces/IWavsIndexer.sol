@@ -51,7 +51,7 @@ interface IWavsIndexer {
         string chainId; // Chain ID of the event
         address relevantContract; // Relevant contract for the event
         uint256 blockNumber; // Block number when event was emitted
-        uint128 timestamp; // Timestamp when event was processed
+        uint128 timestamp; // Timestamp when event was processed (milliseconds)
         string eventType; // Type of the event (e.g., "attestation")
         bytes data; // Data for the event
         string[] tags; // Searchable tags (e.g., "sender:ADDRESS", "recipient:ADDRESS", "schema:SCHEMA_ID")

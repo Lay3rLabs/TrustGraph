@@ -5,9 +5,11 @@ use alloy_rpc_types::TransactionInput;
 use alloy_sol_types::{sol, SolCall};
 use anyhow::Result;
 use async_trait::async_trait;
+use serde::Serialize;
+use serde_json::Value;
 use std::collections::HashSet;
 use std::str::FromStr;
-use wavs_indexer_api::WavsIndexerQuerier;
+use wavs_indexer_api::{IndexedAttestation, WavsIndexerQuerier};
 use wavs_wasi_utils::evm::{
     alloy_primitives::{hex, Address, FixedBytes, TxKind, U256},
     new_evm_provider,
@@ -34,8 +36,18 @@ pub struct EasSource {
     pub chain_name: String,
     /// Type of EAS points to compute.
     pub source_type: EasSourceType,
-    /// Points per attestation.
-    pub points_per_attestation: U256,
+    /// How to compute points for a given attestation.
+    pub points_computation: EasPointsComputation,
+    // TODO: add a seed field that only counts from certain senders
+}
+
+/// How to compute points for a given attestation.
+#[derive(Serialize)]
+pub enum EasPointsComputation {
+    /// A constant number of points for each attestation.
+    Constant(U256),
+    /// The value of a numeric field in the attestation data JSON.
+    NumericJsonDataField(String),
 }
 
 impl EasSource {
@@ -44,7 +56,7 @@ impl EasSource {
         indexer_address: &str,
         chain_name: &str,
         source_type: EasSourceType,
-        points_per_attestation: U256,
+        points_computation: EasPointsComputation,
     ) -> Self {
         let eas_addr = Address::from_str(eas_address).unwrap();
         let indexer_addr = Address::from_str(indexer_address).unwrap();
@@ -54,7 +66,7 @@ impl EasSource {
             indexer_address: indexer_addr,
             chain_name: chain_name.to_string(),
             source_type,
-            points_per_attestation,
+            points_computation,
         }
     }
 
@@ -88,27 +100,100 @@ impl Source for EasSource {
 
     async fn get_events_and_value(&self, account: &str) -> Result<(Vec<SourceEvent>, U256)> {
         let address = Address::from_str(account)?;
-        let attestation_count = match &self.source_type {
-            EasSourceType::ReceivedAttestations(schema_uid) => {
-                self.query_received_attestation_count(address, schema_uid).await?
-            }
-            EasSourceType::SentAttestations(schema_uid) => {
-                self.query_sent_attestation_count(address, schema_uid).await?
+        let indexer_querier = self.indexer_querier().await?;
+        let (schema_uid, attestation_count) = match &self.source_type {
+            EasSourceType::ReceivedAttestations(schema_uid) => (
+                self.parse_schema_uid(schema_uid)?,
+                self.query_received_attestation_count(address, schema_uid).await?,
+            ),
+            EasSourceType::SentAttestations(schema_uid) => (
+                self.parse_schema_uid(schema_uid)?,
+                self.query_sent_attestation_count(address, schema_uid).await?,
+            ),
+        };
+
+        let mut source_events: Vec<SourceEvent> = Vec::new();
+        let batch_size = 100u64;
+        let mut start = 0u64;
+
+        let value_for_attestation: Box<dyn Fn(&IndexedAttestation) -> Result<U256>> = match &self
+            .points_computation
+        {
+            EasPointsComputation::Constant(value) => Box::new(move |_| Ok(value.clone())),
+            EasPointsComputation::NumericJsonDataField(field_name) => {
+                Box::new(move |attestation| -> Result<U256> {
+                    let decoded =
+                        serde_json::from_slice::<serde_json::Value>(&attestation.event.data)?;
+                    let value = decoded.get(field_name).ok_or_else(|| {
+                        anyhow::anyhow!("Field {field_name} not found in attestation data")
+                    })?;
+
+                    match value {
+                        Value::String(v) => U256::from_str(v)
+                            .map_err(|e| anyhow::anyhow!("Failed to convert attestation data field {field_name} string to U256: {e}")),
+                        Value::Number(v) => v
+                            .as_u64()
+                            .map(U256::from)
+                            .ok_or_else(|| anyhow::anyhow!("Attestation data field {field_name} number is not a u64")),
+                        _ => Err(anyhow::anyhow!(
+                            "Attestation data field {field_name} is not a string or number"
+                        )),
+                    }
+                })
             }
         };
 
-        let total_value = self.points_per_attestation * U256::from(attestation_count);
+        while start < attestation_count {
+            let length = std::cmp::min(batch_size, attestation_count - start);
 
-        let source_events: Vec<SourceEvent> = if !total_value.is_zero() {
-            vec![SourceEvent {
-                r#type: self.get_name().to_string(),
-                timestamp: 0,
-                value: total_value,
-                metadata: None,
-            }]
-        } else {
-            vec![]
-        };
+            let attestations = match &self.source_type {
+                EasSourceType::ReceivedAttestations(_) => {
+                    indexer_querier
+                        .get_indexed_attestations_by_schema_and_recipient(
+                            schema_uid, address, start, length, false,
+                        )
+                        .await
+                }
+                EasSourceType::SentAttestations(_) => {
+                    indexer_querier
+                        .get_indexed_attestations_by_schema_and_attester(
+                            schema_uid, address, start, length, false,
+                        )
+                        .await
+                }
+            }
+            .map_err(|e| anyhow::anyhow!(e))?;
+
+            for attestation in attestations {
+                let value = match value_for_attestation(&attestation) {
+                    Ok(value) => value,
+                    // Log the error and continue if the value is not found, so that formatting errors don't interrupt the flow.
+                    Err(e) => {
+                        println!(
+                            "⚠️  Failed to get value for attestation {}: {}",
+                            attestation.uid, e
+                        );
+                        continue;
+                    }
+                };
+
+                source_events.push(SourceEvent {
+                    r#type: "attestation".to_string(),
+                    timestamp: attestation.event.timestamp,
+                    value,
+                    metadata: Some(serde_json::json!({
+                        "uid": attestation.uid,
+                        "schema": schema_uid.to_string(),
+                        "attester": attestation.attester,
+                        "recipient": attestation.recipient,
+                    })),
+                });
+            }
+
+            start += length;
+        }
+
+        let total_value = source_events.iter().map(|event| event.value).sum();
 
         Ok((source_events, total_value))
     }
@@ -129,7 +214,7 @@ impl Source for EasSource {
             "chain_name": self.chain_name,
             "source_type": source_type_str,
             "schema_uid": schema_uid,
-            "points_per_attestation": self.points_per_attestation.to_string(),
+            "points_computation": serde_json::to_value(&self.points_computation)?.to_string(),
         }))
     }
 }
@@ -184,19 +269,19 @@ impl EasSource {
         Ok(count.to::<u64>())
     }
 
-    async fn get_attestation_uids(
+    async fn get_indexed_attestations(
         &self,
         schema_uid: &str,
         start: u64,
         length: u64,
-    ) -> Result<Vec<FixedBytes<32>>> {
+    ) -> Result<Vec<IndexedAttestation>> {
         let schema = self.parse_schema_uid(schema_uid)?;
         let indexer_querier = self.indexer_querier().await?;
-        let uids = indexer_querier
-            .get_attestation_uids_by_schema(schema, U256::from(start), U256::from(length), false)
+        let attestations = indexer_querier
+            .get_indexed_attestations_by_schema(schema, start, length, false)
             .await
-            .map_err(|e| anyhow::anyhow!("Failed to get schema attestation UIDs: {}", e))?;
-        Ok(uids)
+            .map_err(|e| anyhow::anyhow!("Failed to get indexed schema attestations: {}", e))?;
+        Ok(attestations)
     }
 
     async fn get_total_schema_attestations(&self, schema_uid: &str) -> Result<u64> {
@@ -250,17 +335,10 @@ impl EasSource {
             let length = std::cmp::min(batch_size, total_attestations - start);
             println!("🔄 Fetching attestation UIDs batch: {} to {}", start, start + length - 1);
 
-            let uids = self.get_attestation_uids(schema_uid, start, length).await?;
+            let attestations = self.get_indexed_attestations(schema_uid, start, length).await?;
 
-            for uid in uids {
-                match self.get_attestation_details(uid).await {
-                    Ok((_attester, recipient)) => {
-                        recipients.insert(recipient.to_string());
-                    }
-                    Err(e) => {
-                        println!("⚠️  Failed to get attestation details for UID {:?}: {}", uid, e);
-                    }
-                }
+            for attestation in attestations {
+                recipients.insert(attestation.recipient.to_string());
             }
 
             start += length;
@@ -289,17 +367,10 @@ impl EasSource {
             let length = std::cmp::min(batch_size, total_attestations - start);
             println!("🔄 Fetching attestation UIDs batch: {} to {}", start, start + length - 1);
 
-            let uids = self.get_attestation_uids(schema_uid, start, length).await?;
+            let attestations = self.get_indexed_attestations(schema_uid, start, length).await?;
 
-            for uid in uids {
-                match self.get_attestation_details(uid).await {
-                    Ok((attester, _recipient)) => {
-                        attesters.insert(attester.to_string());
-                    }
-                    Err(e) => {
-                        println!("⚠️  Failed to get attestation details for UID {:?}: {}", uid, e);
-                    }
-                }
+            for attestation in attestations {
+                attesters.insert(attestation.attester.to_string());
             }
 
             start += length;

@@ -71,12 +71,6 @@ impl Guest for Component {
 
         let mut registry = SourceRegistry::new();
 
-        // Add EAS sources - requires schema UID for attestations
-        let schema_uid = config_var("schema_uid")
-            .ok_or_else(|| "Failed to get schema_uid - this is required for EAS points")?;
-
-        println!("📋 Using schema UID: {}", schema_uid);
-
         // Reward users for received attestations - 5e17 points per attestation
         // registry.add_source(sources::eas::EasSource::new(
         //     &eas_address,
@@ -95,6 +89,19 @@ impl Guest for Component {
         //     sources::eas::EasRewardType::SentAttestations,
         //     U256::from(3e17),
         // ));
+
+        // Reward users for receiving recognition attestations
+        let recognition_schema_uid = config_var("recognition_schema_uid").ok_or_else(|| {
+            "Failed to get recognition_schema_uid - this is required for EAS points"
+        })?;
+        println!("📋 Using recognition schema UID: {}", recognition_schema_uid);
+        registry.add_source(sources::eas::EasSource::new(
+            &eas_address,
+            &indexer_address,
+            &chain_name,
+            sources::eas::EasSourceType::ReceivedAttestations(recognition_schema_uid),
+            sources::eas::EasPointsComputation::NumericJsonDataField("value".to_string()),
+        ));
 
         // Reward users for prediction market interactions (1 point per type+contract interacted with, so 2 if user trades and also redeems on same market, and 1 if only trades but no redeem)
         registry.add_source(sources::interactions::InteractionsSource::new(

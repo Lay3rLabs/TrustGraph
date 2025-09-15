@@ -158,7 +158,7 @@ pub async fn query_received_attestation_uids(
     let config = config.unwrap_or_default();
     let indexer_querier = config.indexer_querier().await?;
     let uids = indexer_querier
-        .get_attestation_uids_by_schema_and_recipient(
+        .get_indexed_attestations_by_schema_and_recipient(
             schema_uid,
             recipient,
             start,
@@ -207,7 +207,7 @@ pub async fn query_sent_attestation_uids(
     let config = config.unwrap_or_default();
     let indexer_querier = config.indexer_querier().await?;
     let uids = indexer_querier
-        .get_attestation_uids_by_schema_and_attester(
+        .get_indexed_attestations_by_schema_and_attester(
             schema_uid,
             attester,
             start,
@@ -250,7 +250,7 @@ pub async fn query_schema_attestation_uids(
     let config = config.unwrap_or_default();
     let indexer_querier = config.indexer_querier().await?;
     let uids = indexer_querier
-        .get_attestation_uids_by_schema(schema_uid, start, length, reverse_order)
+        .get_indexed_attestations_by_schema(schema_uid, start, length, reverse_order)
         .await?;
 
     println!("Retrieved {} attestation UIDs for schema {}", uids.len(), schema_uid);
@@ -296,7 +296,7 @@ pub async fn query_schema_attester_recipient_uids(
     let config = config.unwrap_or_default();
     let indexer_querier = config.indexer_querier().await?;
     let uids = indexer_querier
-        .get_attestation_uids_by_schema_and_attester_and_recipient(
+        .get_indexed_attestations_by_schema_and_attester_and_recipient(
             schema_uid,
             attester,
             recipient,

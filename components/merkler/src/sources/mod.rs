@@ -16,7 +16,7 @@ pub struct SourceEvent {
     /// The type of the event.
     pub r#type: String,
     /// The timestamp (unix epoch milliseconds) of the event.
-    pub timestamp: u64,
+    pub timestamp: u128,
     /// The value earned from the event.
     pub value: U256,
     /// Optional metadata for the event.

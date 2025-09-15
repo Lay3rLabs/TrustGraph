@@ -572,7 +572,7 @@ export const conditionalTokensAbi = [
 ] as const
 
 export const conditionalTokensAddress =
-  '0x030C8995EabB7988a50740DC90D905c82CeB436d' as const
+  '0x335EA5381704C27Bc252C0CaB8619A3189590708' as const
 
 export const conditionalTokensConfig = {
   address: conditionalTokensAddress,
@@ -1170,7 +1170,7 @@ export const easAbi = [
   { type: 'error', inputs: [], name: 'WrongSchema' },
 ] as const
 
-export const easAddress = '0xc53358EFAB6a151667a15Be8C6d21Cfa65F915E6' as const
+export const easAddress = '0xF91Cd885F47D49661Feb6652e5eDD5dB778866D2' as const
 
 export const easConfig = { address: easAddress, abi: easAbi } as const
 
@@ -1271,7 +1271,7 @@ export const easAttestTriggerAbi = [
 ] as const
 
 export const easAttestTriggerAddress =
-  '0x4EB7Fdc2e95401Fc8C64cFB8DA40161abF964bc0' as const
+  '0x4D4eF4000CBd418A15bbe1E19809387b0Bd5B19c' as const
 
 export const easAttestTriggerConfig = {
   address: easAttestTriggerAddress,
@@ -1457,7 +1457,7 @@ export const easIndexerResolverAbi = [
 ] as const
 
 export const easIndexerResolverAddress =
-  '0x8D27Cb3d5b18cce8C1F48170daF7d70fbcfB6eae' as const
+  '0xe1766441E79a9951abbf67d62aF139e25AFA04bA' as const
 
 export const easIndexerResolverConfig = {
   address: easIndexerResolverAddress,
@@ -2221,7 +2221,7 @@ export const enovaAbi = [
 ] as const
 
 export const enovaAddress =
-  '0xD7E03d30a9c6e285A61Be3E063F9D2bf9eb58203' as const
+  '0x5837b980939d506e12243beC08bEDC04A2945e76' as const
 
 export const enovaConfig = { address: enovaAddress, abi: enovaAbi } as const
 
@@ -2804,7 +2804,7 @@ export const gnosisSafeAbi = [
 ] as const
 
 export const gnosisSafeAddress =
-  '0x8A94EcfcFB461AFC09b74Be102E1c183FcEd0E2b' as const
+  '0xC43788314d99d9D26528d993FDbd3A692dfbB123' as const
 
 export const gnosisSafeConfig = {
   address: gnosisSafeAddress,
@@ -2825,7 +2825,7 @@ export const gnosisSafeProxyAbi = [
 ] as const
 
 export const gnosisSafeProxyAddress =
-  '0xdcd815C23453e407034D55E7e978538Ae941866B' as const
+  '0xFAdB3880af7830a1D673b203019BA2aB7d915F96' as const
 
 export const gnosisSafeProxyConfig = {
   address: gnosisSafeProxyAddress,
@@ -3241,7 +3241,7 @@ export const lmsrMarketMakerAbi = [
 ] as const
 
 export const lmsrMarketMakerAddress =
-  '0xe8ff4632F321661616c97aeCe2C232BA0b5fc4D8' as const
+  '0xfDb228F72D5cf4e780FEE370F7d3d1E662223734' as const
 
 export const lmsrMarketMakerConfig = {
   address: lmsrMarketMakerAddress,
@@ -3766,7 +3766,7 @@ export const merkleGovModuleAbi = [
 ] as const
 
 export const merkleGovModuleAddress =
-  '0x866919c369eF83B9030e10374a8CC1a09Ab5e4bF' as const
+  '0xf75Ea754453b8300E069BDBEBAbC3Cc486Ad611e' as const
 
 export const merkleGovModuleConfig = {
   address: merkleGovModuleAddress,
@@ -4199,7 +4199,7 @@ export const merkleSnapshotAbi = [
 ] as const
 
 export const merkleSnapshotAddress =
-  '0xa8Ba879b06C2a500162893DD4628A777c243772D' as const
+  '0x80cB0ba1D5CB7db8c72aB6B18b727e0d249EC031' as const
 
 export const merkleSnapshotConfig = {
   address: merkleSnapshotAddress,
@@ -4429,7 +4429,7 @@ export const mockUsdcAbi = [
 ] as const
 
 export const mockUsdcAddress =
-  '0x5EE1E5FD7771f4a8c5b240B81dE0EbdFb55139D0' as const
+  '0x866313Fb6cd588038c5421bD546d12947fF69Eb5' as const
 
 export const mockUsdcConfig = {
   address: mockUsdcAddress,
@@ -4561,7 +4561,7 @@ export const predictionMarketFactoryAbi = [
 ] as const
 
 export const predictionMarketFactoryAddress =
-  '0x298Ab2C4dF8007a49ff14bc207202733Fe1e1F01' as const
+  '0x898fAE02e468D88556554c3790e2519b487F3281' as const
 
 export const predictionMarketFactoryConfig = {
   address: predictionMarketFactoryAddress,
@@ -4670,6 +4670,15 @@ export const predictionMarketOracleControllerAbi = [
   },
   {
     type: 'function',
+    inputs: [
+      { name: 'lmsrMarketMaker', internalType: 'address', type: 'address' },
+    ],
+    name: 'resolvedMarkets',
+    outputs: [{ name: 'resolved', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
     inputs: [],
     name: 'serviceManager',
     outputs: [
@@ -4719,10 +4728,11 @@ export const predictionMarketOracleControllerAbi = [
     ],
     name: 'NewTrigger',
   },
+  { type: 'error', inputs: [], name: 'MarketAlreadyResolved' },
 ] as const
 
 export const predictionMarketOracleControllerAddress =
-  '0x05FD48D1a1437da87B236e4941a9CE6A1Bc31116' as const
+  '0x080317489B14BAF39B344aF311e363542C5e4343' as const
 
 export const predictionMarketOracleControllerConfig = {
   address: predictionMarketOracleControllerAddress,
@@ -5066,7 +5076,7 @@ export const rewardDistributorAbi = [
 ] as const
 
 export const rewardDistributorAddress =
-  '0x1A068ab8710647221603a4fc497FcB446786759B' as const
+  '0xbFA26f6fdb753dCf3DBe7435f44E1DFCDB02b48e' as const
 
 export const rewardDistributorConfig = {
   address: rewardDistributorAddress,
@@ -5110,7 +5120,7 @@ export const schemaRegistrarAbi = [
 ] as const
 
 export const schemaRegistrarAddress =
-  '0xF2Ad876d5fA2DAc2A90E20a1AB812d5935c9d467' as const
+  '0xeC49240501a6FE5e52D3424B8eE32F5A528E5fd4' as const
 
 export const schemaRegistrarConfig = {
   address: schemaRegistrarAddress,
@@ -5202,7 +5212,7 @@ export const schemaRegistryAbi = [
 ] as const
 
 export const schemaRegistryAddress =
-  '0xA863638B772710BF051c0908852faed3301EEe12' as const
+  '0x52028936718942263059D67B762E23648959FF6E' as const
 
 export const schemaRegistryConfig = {
   address: schemaRegistryAddress,
@@ -5253,6 +5263,13 @@ export const signerManagerModuleAbi = [
     name: 'changeThreshold',
     outputs: [],
     stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'eventId', internalType: 'bytes20', type: 'bytes20' }],
+    name: 'envelopesSeen',
+    outputs: [{ name: 'seen', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
   },
   {
     type: 'function',
@@ -5576,6 +5593,7 @@ export const signerManagerModuleAbi = [
     ],
     name: 'WAVSOperationExecuted',
   },
+  { type: 'error', inputs: [], name: 'EnvelopeAlreadySeen' },
   { type: 'error', inputs: [], name: 'InvalidInitialization' },
   { type: 'error', inputs: [], name: 'NotInitializing' },
   {
@@ -5591,7 +5609,7 @@ export const signerManagerModuleAbi = [
 ] as const
 
 export const signerManagerModuleAddress =
-  '0xDc2eEFd7d3c9A664E9aB50CdbCC00Ad975896B00' as const
+  '0xDFaCa1BacDE2816b5cEa638D4981F0eA23DE7136' as const
 
 export const signerManagerModuleConfig = {
   address: signerManagerModuleAddress,
@@ -5668,6 +5686,13 @@ export const wavsAttesterAbi = [
       },
     ],
     stateMutability: 'pure',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'eventId', internalType: 'bytes20', type: 'bytes20' }],
+    name: 'envelopesSeen',
+    outputs: [{ name: 'seen', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
   },
   {
     type: 'function',
@@ -5763,6 +5788,7 @@ export const wavsAttesterAbi = [
     name: 'DebuggingPayloadDecoded',
   },
   { type: 'error', inputs: [], name: 'DataDecodingFailed' },
+  { type: 'error', inputs: [], name: 'EnvelopeAlreadySeen' },
   { type: 'error', inputs: [], name: 'InvalidEAS' },
   { type: 'error', inputs: [], name: 'InvalidInput' },
   { type: 'error', inputs: [], name: 'InvalidOperationType' },
@@ -5771,7 +5797,7 @@ export const wavsAttesterAbi = [
 ] as const
 
 export const wavsAttesterAddress =
-  '0x38B3f24CFfc96D9429dCc3b9501393cD714Be845' as const
+  '0x94D857A5dAF386117888257Cd57A191481A3CfEB' as const
 
 export const wavsAttesterConfig = {
   address: wavsAttesterAddress,
@@ -5817,7 +5843,7 @@ export const wavsIndexerAbi = [
                 type: 'address',
               },
               { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
-              { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+              { name: 'timestamp', internalType: 'uint128', type: 'uint128' },
               { name: 'eventType', internalType: 'string', type: 'string' },
               { name: 'data', internalType: 'bytes', type: 'bytes' },
               { name: 'tags', internalType: 'string[]', type: 'string[]' },
@@ -5859,7 +5885,7 @@ export const wavsIndexerAbi = [
       { name: 'chainId', internalType: 'string', type: 'string' },
       { name: 'relevantContract', internalType: 'address', type: 'address' },
       { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
-      { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+      { name: 'timestamp', internalType: 'uint128', type: 'uint128' },
       { name: 'eventType', internalType: 'string', type: 'string' },
       { name: 'data', internalType: 'bytes', type: 'bytes' },
       { name: 'metadata', internalType: 'bytes', type: 'bytes' },
@@ -6159,7 +6185,7 @@ export const wavsIndexerAbi = [
             type: 'address',
           },
           { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
-          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+          { name: 'timestamp', internalType: 'uint128', type: 'uint128' },
           { name: 'eventType', internalType: 'string', type: 'string' },
           { name: 'data', internalType: 'bytes', type: 'bytes' },
           { name: 'tags', internalType: 'string[]', type: 'string[]' },
@@ -6199,7 +6225,7 @@ export const wavsIndexerAbi = [
             type: 'address',
           },
           { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
-          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+          { name: 'timestamp', internalType: 'uint128', type: 'uint128' },
           { name: 'eventType', internalType: 'string', type: 'string' },
           { name: 'data', internalType: 'bytes', type: 'bytes' },
           { name: 'tags', internalType: 'string[]', type: 'string[]' },
@@ -6239,7 +6265,7 @@ export const wavsIndexerAbi = [
             type: 'address',
           },
           { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
-          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+          { name: 'timestamp', internalType: 'uint128', type: 'uint128' },
           { name: 'eventType', internalType: 'string', type: 'string' },
           { name: 'data', internalType: 'bytes', type: 'bytes' },
           { name: 'tags', internalType: 'string[]', type: 'string[]' },
@@ -6280,7 +6306,7 @@ export const wavsIndexerAbi = [
             type: 'address',
           },
           { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
-          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+          { name: 'timestamp', internalType: 'uint128', type: 'uint128' },
           { name: 'eventType', internalType: 'string', type: 'string' },
           { name: 'data', internalType: 'bytes', type: 'bytes' },
           { name: 'tags', internalType: 'string[]', type: 'string[]' },
@@ -6319,7 +6345,7 @@ export const wavsIndexerAbi = [
             type: 'address',
           },
           { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
-          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+          { name: 'timestamp', internalType: 'uint128', type: 'uint128' },
           { name: 'eventType', internalType: 'string', type: 'string' },
           { name: 'data', internalType: 'bytes', type: 'bytes' },
           { name: 'tags', internalType: 'string[]', type: 'string[]' },
@@ -6359,7 +6385,7 @@ export const wavsIndexerAbi = [
             type: 'address',
           },
           { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
-          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+          { name: 'timestamp', internalType: 'uint128', type: 'uint128' },
           { name: 'eventType', internalType: 'string', type: 'string' },
           { name: 'data', internalType: 'bytes', type: 'bytes' },
           { name: 'tags', internalType: 'string[]', type: 'string[]' },
@@ -6400,7 +6426,7 @@ export const wavsIndexerAbi = [
             type: 'address',
           },
           { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
-          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+          { name: 'timestamp', internalType: 'uint128', type: 'uint128' },
           { name: 'eventType', internalType: 'string', type: 'string' },
           { name: 'data', internalType: 'bytes', type: 'bytes' },
           { name: 'tags', internalType: 'string[]', type: 'string[]' },
@@ -6441,7 +6467,7 @@ export const wavsIndexerAbi = [
             type: 'address',
           },
           { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
-          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+          { name: 'timestamp', internalType: 'uint128', type: 'uint128' },
           { name: 'eventType', internalType: 'string', type: 'string' },
           { name: 'data', internalType: 'bytes', type: 'bytes' },
           { name: 'tags', internalType: 'string[]', type: 'string[]' },
@@ -6482,7 +6508,7 @@ export const wavsIndexerAbi = [
             type: 'address',
           },
           { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
-          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+          { name: 'timestamp', internalType: 'uint128', type: 'uint128' },
           { name: 'eventType', internalType: 'string', type: 'string' },
           { name: 'data', internalType: 'bytes', type: 'bytes' },
           { name: 'tags', internalType: 'string[]', type: 'string[]' },
@@ -6524,7 +6550,7 @@ export const wavsIndexerAbi = [
             type: 'address',
           },
           { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
-          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+          { name: 'timestamp', internalType: 'uint128', type: 'uint128' },
           { name: 'eventType', internalType: 'string', type: 'string' },
           { name: 'data', internalType: 'bytes', type: 'bytes' },
           { name: 'tags', internalType: 'string[]', type: 'string[]' },
@@ -6563,7 +6589,7 @@ export const wavsIndexerAbi = [
             type: 'address',
           },
           { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
-          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+          { name: 'timestamp', internalType: 'uint128', type: 'uint128' },
           { name: 'eventType', internalType: 'string', type: 'string' },
           { name: 'data', internalType: 'bytes', type: 'bytes' },
           { name: 'tags', internalType: 'string[]', type: 'string[]' },
@@ -6602,7 +6628,7 @@ export const wavsIndexerAbi = [
             type: 'address',
           },
           { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
-          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+          { name: 'timestamp', internalType: 'uint128', type: 'uint128' },
           { name: 'eventType', internalType: 'string', type: 'string' },
           { name: 'data', internalType: 'bytes', type: 'bytes' },
           { name: 'tags', internalType: 'string[]', type: 'string[]' },
@@ -6642,7 +6668,7 @@ export const wavsIndexerAbi = [
             type: 'address',
           },
           { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
-          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+          { name: 'timestamp', internalType: 'uint128', type: 'uint128' },
           { name: 'eventType', internalType: 'string', type: 'string' },
           { name: 'data', internalType: 'bytes', type: 'bytes' },
           { name: 'tags', internalType: 'string[]', type: 'string[]' },
@@ -6769,7 +6795,7 @@ export const wavsIndexerAbi = [
 ] as const
 
 export const wavsIndexerAddress =
-  '0xc17A5B79fc43ee5a1a17EC2266f27991Da800BD6' as const
+  '0x1b7E87613cF44Fa6E2d949Fb3fA3A6e797b167a5' as const
 
 export const wavsIndexerConfig = {
   address: wavsIndexerAddress,

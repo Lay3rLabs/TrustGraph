@@ -19,6 +19,7 @@ alloy-network = { workspace = true }
 alloy-provider = { workspace = true }
 alloy-rpc-types = { workspace = true }
 wavs-indexer-api = { workspace = true }
+alloy-dyn-abi = { workspace = true }
 
 ## IPFS
 cid = { workspace = true }
