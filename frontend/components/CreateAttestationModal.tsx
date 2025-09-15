@@ -32,22 +32,22 @@ import { localChain } from '@/lib/wagmi'
 interface AttestationFormData {
   schema: string
   recipient: string
-  data: string
+  data: Record<string, string>
 }
 
-interface VouchingModalProps {
+interface CreateAttestationModalProps {
   trigger?: React.ReactNode
   onSuccess?: () => void
   isOpen?: boolean
   setIsOpen?: (value: boolean) => void
 }
 
-export function VouchingModal({
+export function CreateAttestationModal({
   trigger,
   onSuccess,
   isOpen: externalIsOpen,
   setIsOpen: externalSetIsOpen,
-}: VouchingModalProps) {
+}: CreateAttestationModalProps) {
   const [internalIsOpen, setInternalIsOpen] = useState(false)
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen
   const setIsOpen = (value: boolean) => {
@@ -68,7 +68,7 @@ export function VouchingModal({
     defaultValues: {
       schema: '',
       recipient: '',
-      data: '',
+      data: {},
     },
   })
 
@@ -103,21 +103,6 @@ export function VouchingModal({
     (s) => s.uid === selectedSchema
   )
 
-  const getSchemaPlaceholder = (schemaInfo: typeof selectedSchemaInfo) => {
-    if (!schemaInfo) return 'Select a schema first...'
-
-    switch (schemaInfo.uid) {
-      case schemas.vouching:
-        return 'Enter vouch weight (e.g., 1, 5, 100)'
-      case schemas.basic:
-        return 'Enter your message or attestation content'
-      case schemas.compute:
-        return 'Enter computation result and hash'
-      default:
-        return `Enter data for ${(schemaInfo as any).name.toLowerCase()}...`
-    }
-  }
-
   const getSchemaHelperText = (schemaInfo: typeof selectedSchemaInfo) => {
     if (!schemaInfo) return null
 
@@ -128,8 +113,12 @@ export function VouchingModal({
         return 'Enter any text-based attestation or message'
       case schemas.compute:
         return 'Provide computational verification data'
+      case schemas.recognition:
+        return 'Enter reason and an optional value'
+      case schemas.statement:
+        return 'Attest to an arbitrary statement'
       default:
-        return `Expected fields: ${(schemaInfo as any).fields.join(', ')}`
+        return null
     }
   }
 
@@ -254,31 +243,49 @@ export function VouchingModal({
                   />
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name="data"
-                  rules={{ required: 'Attestation data is required' }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="terminal-dim text-xs">
-                        ATTESTATION DATA
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea
-                          {...field}
-                          placeholder={getSchemaPlaceholder(selectedSchemaInfo)}
-                          className="border-gray-700 bg-black/10 terminal-text text-xs min-h-20"
-                        />
-                      </FormControl>
-                      <FormMessage className="error-text text-xs" />
-                      {selectedSchemaInfo && (
-                        <div className="terminal-dim text-xs mt-2">
-                          {getSchemaHelperText(selectedSchemaInfo)}
-                        </div>
-                      )}
-                    </FormItem>
-                  )}
-                />
+                {selectedSchemaInfo && (
+                  <div className="terminal-dim text-xs mt-2">
+                    {getSchemaHelperText(selectedSchemaInfo)}
+                  </div>
+                )}
+
+                {selectedSchemaInfo?.fields.map(({ name, type }) => (
+                  <FormField
+                    key={selectedSchemaInfo.uid + ':' + name}
+                    control={form.control}
+                    name={`data.${name}`}
+                    rules={{ required: `Field ${name} is required` }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="terminal-dim text-xs">
+                          {name.toUpperCase()}
+                        </FormLabel>
+
+                        <FormControl>
+                          {type.startsWith('uint') ? (
+                            <Input
+                              {...field}
+                              type="number"
+                              className="border-gray-700 bg-black/10 terminal-text text-xs"
+                              required
+                            />
+                          ) : (
+                            <Textarea
+                              {...field}
+                              className="border-gray-700 bg-black/10 terminal-text text-xs min-h-20"
+                              required
+                            />
+                          )}
+                        </FormControl>
+                        <FormMessage className="error-text text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                )) || (
+                  <p className="error-text text-xs mt-2">
+                    Select a schema to attest to.
+                  </p>
+                )}
 
                 <div className="pt-4 border-t border-gray-700 space-y-3">
                   <div className="flex space-x-3">

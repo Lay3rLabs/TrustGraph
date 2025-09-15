@@ -4,7 +4,7 @@ import type React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { AttestationCard } from '@/components/AttestationCard'
-import { VouchingModal } from '@/components/VouchingModal'
+import { CreateAttestationModal } from '@/components/CreateAttestationModal'
 import {
   useIndividualAttestation,
   useSchemaAttestations,
@@ -81,6 +81,12 @@ export default function AttestationsPage() {
     schemas.vouching,
     selectedSchema === 'all' || selectedSchema === schemas.vouching ? limit : 0
   )
+  const recognitionSchema = useSchemaAttestations(
+    schemas.recognition,
+    selectedSchema === 'all' || selectedSchema === schemas.recognition
+      ? limit
+      : 0
+  )
 
   // Handle status updates from individual attestations
   const handleStatusReady = useCallback((uid: string, status: string) => {
@@ -110,6 +116,11 @@ export default function AttestationsPage() {
         uids.push({ uid, schema: schemas.vouching })
       )
     }
+    if (selectedSchema === 'all' || selectedSchema === schemas.recognition) {
+      recognitionSchema.attestationUIDs?.forEach((uid) =>
+        uids.push({ uid, schema: schemas.recognition })
+      )
+    }
 
     // Sort by newest/oldest (UIDs are typically ordered by creation time already)
     // TODO: fix sort order make it sort by timestamp
@@ -118,6 +129,7 @@ export default function AttestationsPage() {
     basicSchema.attestationUIDs,
     computeSchema.attestationUIDs,
     vouchingSchema.attestationUIDs,
+    recognitionSchema.attestationUIDs,
     selectedSchema,
     sortOrder,
   ])
@@ -135,11 +147,13 @@ export default function AttestationsPage() {
   const isLoading =
     basicSchema.isLoadingUIDs ||
     computeSchema.isLoadingUIDs ||
-    vouchingSchema.isLoadingUIDs
+    vouchingSchema.isLoadingUIDs ||
+    recognitionSchema.isLoadingUIDs
   const totalCount =
     (basicSchema.totalCount || 0) +
     (computeSchema.totalCount || 0) +
-    (vouchingSchema.totalCount || 0)
+    (vouchingSchema.totalCount || 0) +
+    (recognitionSchema.totalCount || 0)
 
   // Handle successful attestation creation
   const handleAttestationSuccess = useCallback(() => {
@@ -153,7 +167,7 @@ export default function AttestationsPage() {
       <div className="border-b border-gray-700 pb-4">
         <div className="flex items-center justify-between mb-2">
           <div className="ascii-art-title text-lg">ATTESTATIONS</div>
-          <VouchingModal onSuccess={handleAttestationSuccess} />
+          <CreateAttestationModal onSuccess={handleAttestationSuccess} />
         </div>
         <div className="system-message text-sm">
           ◆ VERIFIABLE CREDENTIALS • REPUTATION NETWORKS • TRUST PROTOCOLS ◆

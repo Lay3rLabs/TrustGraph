@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { encodePacked } from 'viem'
+import { encodePacked, stringToHex } from 'viem'
 import {
   useAccount,
   useChainId,
@@ -11,14 +11,14 @@ import {
 } from 'wagmi'
 
 import { easAbi, easAddress } from '@/lib/contracts'
-import { schemas } from '@/lib/schemas'
+import { SCHEMA_OPTIONS } from '@/lib/schemas'
 import { writeEthContractAndWait } from '@/lib/utils'
 import { localChain } from '@/lib/wagmi'
 
 interface AttestationData {
   schema: string
   recipient: string
-  data: string
+  data: Record<string, string>
 }
 
 export function useAttestation() {
@@ -115,16 +115,34 @@ export function useAttestation() {
       setIsLoading(true)
 
       // Encode the attestation data as bytes based on schema type
-
-      // Special handling for vouching schema which expects uint256
-      if (attestationData.schema === schemas.vouching) {
-        // Parse the weight as a number and encode as uint256
-        const weight = BigInt(attestationData.data)
-        encodedData = encodePacked(['uint256'], [weight])
-      } else {
-        // Default to string encoding for other schemas
-        encodedData = encodePacked(['string'], [attestationData.data])
+      const schema = SCHEMA_OPTIONS.find(
+        (s) => s.uid === attestationData.schema
+      )
+      if (!schema) {
+        throw new Error(`Unknown schema: ${attestationData.schema}`)
       }
+
+      // Ensure all data fields are present
+      schema.fields.forEach((field) => {
+        if (!(field.name in attestationData.data)) {
+          throw new Error(`Missing field: ${field.name}`)
+        }
+      })
+
+      // Encode the data fields based on schema type
+      encodedData = encodePacked(
+        schema.fields.map((field) => field.type),
+        schema.fields.map((field) => {
+          const value = attestationData.data[field.name]
+          return field.type.startsWith('uint')
+            ? BigInt(value)
+            : field.type.startsWith('bytes')
+            ? value.startsWith('0x')
+              ? value
+              : stringToHex(value)
+            : value
+        })
+      )
 
       // Validate inputs before calling contract
       if (
