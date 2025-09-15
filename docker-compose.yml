@@ -36,7 +36,7 @@ services:
     restart: unless-stopped
 
   ollama:
-    image: "ollama/ollama"
+    image: ollama/ollama:0.11.0
     container_name: "ollama"
     stop_signal: SIGKILL
     ports:
