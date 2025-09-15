@@ -89,18 +89,18 @@ vars:
           echo ""
         fi
       fi
-  SERVICE_TRIGGER_ADDR:
-    sh: test -f .docker/deployment_summary.json && jq -r '.service_contracts.trigger' .docker/deployment_summary.json || echo ""
+  EAS_ATTEST_TRIGGER_ADDR:
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.contracts.attest_trigger' .docker/deployment_summary.json || echo ""
   EAS_ADDR:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas_contracts.eas' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.contracts.eas' .docker/deployment_summary.json || echo ""
   SCHEMA_REGISTRAR_ADDR:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas_contracts.schema_registrar' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.contracts.schema_registrar' .docker/deployment_summary.json || echo ""
   INDEXER_ADDR:
     sh: test -f .docker/deployment_summary.json && jq -r '.wavs_indexer.wavs_indexer' .docker/deployment_summary.json || echo ""
   COLLATERAL_TOKEN_ADDR:
     sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market_contracts.collateral_token' .docker/deployment_summary.json || echo ""
   EAS_INDEXER_RESOLVER_ADDR:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas_contracts.indexer_resolver' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.contracts.indexer_resolver' .docker/deployment_summary.json || echo ""
   VOTING_POWER_ADDR:
     sh: test -f .docker/deployment_summary.json && jq -r '.governance_contracts.voting_power' .docker/deployment_summary.json || echo ""
   MERKLE_GOV_ADDR:
@@ -128,12 +128,12 @@ vars:
 
   # Schema UIDs (loaded from deployment summary)
   VOUCH_SCHEMA_UID:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas_schemas.vouching_schema' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.vouching' .docker/deployment_summary.json || echo ""
   BASIC_SCHEMA_UID:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas_schemas.basic_schema' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.basic' .docker/deployment_summary.json || echo ""
   COMPUTE_SCHEMA_UID:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas_schemas.compute_schema' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.compute' .docker/deployment_summary.json || echo ""
   STATEMENT_SCHEMA_UID:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas_schemas.statement_schema' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.statement' .docker/deployment_summary.json || echo ""
   LIKE_SCHEMA_UID:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas_schemas.like_schema' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.like' .docker/deployment_summary.json || echo ""

@@ -145,5 +145,5 @@ export function useSchemaAttestations(schemaUID: `0x${string}`, limit = 10) {
 
 // Vouching-specific hook
 export function useVouchingAttestations(limit = 10) {
-  return useSchemaAttestationUIDs(schemas.vouchingSchema, limit)
+  return useSchemaAttestationUIDs(schemas.vouching, limit)
 }

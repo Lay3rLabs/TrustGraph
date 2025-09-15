@@ -10,9 +10,9 @@ tasks:
       vars: [INPUT]
     cmds:
       - |
-        forge script script/Trigger.s.sol:EasTrigger \
+        forge script script/EASAttestTrigger.s.sol:EASAttestTriggerScript \
           --sig "triggerRawAttestation(string,string,string,string)" \
-          "{{.SERVICE_TRIGGER_ADDR}}" \
+          "{{.EAS_ATTEST_TRIGGER_ADDR}}" \
           "{{.VOUCH_SCHEMA_UID}}" \
           "{{.WALLET_ADDRESS}}" \
           "{{.INPUT}}" \
@@ -27,7 +27,7 @@ tasks:
       vars: [INPUT]
     cmds:
       - |
-        forge script script/EasAttest.s.sol:EasAttest \
+        forge script script/EASAttest.s.sol:EASAttest \
           --sig "attestWithMilliEth(string,string,string,string,uint256)" \
           "{{.EAS_ADDR}}" \
           "{{.STATEMENT_SCHEMA_UID}}" \
@@ -45,9 +45,9 @@ tasks:
       vars: [INPUT]
     cmds:
       - |
-        forge script script/Trigger.s.sol:EasTrigger \
+        forge script script/EASAttestTrigger.s.sol:EASAttestTriggerScript \
           --sig "addAgentTrigger(string,string)" \
-          "{{.SERVICE_TRIGGER_ADDR}}" \
+          "{{.EAS_ATTEST_TRIGGER_ADDR}}" \
           "{{.INPUT}}" \
           --rpc-url {{.RPC_URL}} --broadcast
 
@@ -58,7 +58,7 @@ tasks:
         sh: task get-rpc
     cmds:
       - |
-        forge script script/Trigger.s.sol:EasTrigger \
+        forge script script/EASAttestTrigger.s.sol:EASAttestTriggerScript \
           --sig "queryAttestations(string,string,string,string,uint256)" \
           "{{.INDEXER_ADDR}}" \
           "{{.EAS_ADDR}}" \
@@ -74,7 +74,7 @@ tasks:
         sh: task get-rpc
     cmds:
       - |
-        forge script script/Trigger.s.sol:EasTrigger \
+        forge script script/EASAttestTrigger.s.sol:EASAttestTriggerScript \
           --sig "queryAttestations(string,string,string,string,uint256)" \
           "{{.INDEXER_ADDR}}" \
           "{{.EAS_ADDR}}" \

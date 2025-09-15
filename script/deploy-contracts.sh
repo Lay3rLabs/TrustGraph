@@ -33,8 +33,7 @@ forge script script/DeployEAS.s.sol:DeployEAS \
     --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
     --rpc-url "${RPC_URL}" \
     --private-key "${FUNDED_KEY}" \
-    --broadcast \
-    --json > .docker/eas_deploy.json
+    --broadcast
 
 echo "🏛️  Deploying Governance contracts..."
 
@@ -43,8 +42,7 @@ forge script script/DeployGovernance.s.sol:DeployGovernance \
     --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
     --rpc-url "${RPC_URL}" \
     --private-key "${FUNDED_KEY}" \
-    --broadcast \
-    --json > .docker/governance_deploy.json
+    --broadcast
 
 echo "💰 Deploying Merkler contracts..."
 
@@ -86,29 +84,10 @@ forge script script/DeployWavsIndexer.s.sol:DeployWavsIndexer \
     --private-key "${FUNDED_KEY}" \
     --broadcast
 
-# Extract deployed addresses from EAS deployment
-export EAS_REGISTRY_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("SchemaRegistry deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
-export EAS_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("EAS deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
-export EAS_ATTESTER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("WavsAttester deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
-export EAS_SCHEMA_REGISTRAR_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("SchemaRegistrar deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
-export EAS_INDEXER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("Indexer deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
-export EAS_INDEXER_RESOLVER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("EASIndexerResolver deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
-export EAS_PAYABLE_INDEXER_RESOLVER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("PayableEASIndexerResolver deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
-export EAS_ATTESTER_INDEXER_RESOLVER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("AttesterEASIndexerResolver deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
-export EAS_ATTEST_TRIGGER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("EASAttestTrigger deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
-
-# Extract schema IDs
-export BASIC_SCHEMA_ID=$(jq -r '.logs[] | select(type == "string" and startswith("Basic Schema ID:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
-export COMPUTE_SCHEMA_ID=$(jq -r '.logs[] | select(type == "string" and startswith("Compute Schema ID:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
-export STATEMENT_SCHEMA_ID=$(jq -r '.logs[] | select(type == "string" and startswith("Statement Schema ID:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
-export IS_TRUE_SCHEMA_ID=$(jq -r '.logs[] | select(type == "string" and startswith("IsTrue Schema ID:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
-export LIKE_SCHEMA_ID=$(jq -r '.logs[] | select(type == "string" and startswith("Like Schema ID:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
-export VOUCHING_SCHEMA_ID=$(jq -r '.logs[] | select(type == "string" and startswith("Vouching Schema ID:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo "")
-
 # Extract deployed addresses from Governance deployment
-export VOTING_POWER_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("VotingPower deployed at:")) | split(": ")[1]' .docker/governance_deploy.json 2>/dev/null || echo "")
-export TIMELOCK_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("TimelockController deployed at:")) | split(": ")[1]' .docker/governance_deploy.json 2>/dev/null || echo "")
-export GOVERNOR_ADDR=$(jq -r '.logs[] | select(type == "string" and startswith("AttestationGovernor deployed at:")) | split(": ")[1]' .docker/governance_deploy.json 2>/dev/null || echo "")
+export VOTING_POWER_ADDR=$(jq -r '.voting_power' .docker/governance_deploy.json 2>/dev/null || echo "")
+export TIMELOCK_ADDR=$(jq -r '.timelock' .docker/governance_deploy.json 2>/dev/null || echo "")
+export GOVERNOR_ADDR=$(jq -r '.governor' .docker/governance_deploy.json 2>/dev/null || echo "")
 
 # Extract deployed addresses from Geyser deployment
 export GYSER_ADDR=$(jq -r '.deployedTo' .docker/geyser_deploy.json 2>/dev/null || echo "")
@@ -137,75 +116,76 @@ export SAFE_FACTORY=$(jq -r '.safe_factory' .docker/zodiac_safes_deploy.json 2>/
 # Extract deployed addresses from WavsIndexer deployment
 export wavs_indexer_ADDR=$(jq -r '.wavs_indexer' .docker/wavs_indexer_deploy.json 2>/dev/null || echo "")
 
-# Use EAS Attest Trigger as the main service trigger
-export SERVICE_TRIGGER_ADDR="${EAS_ATTEST_TRIGGER_ADDR}"
-
-# Create consolidated deployment info
-cat > .docker/deployment_summary.json << EOF
-{
-  "service_id": "",
-  "rpc_url": "${RPC_URL}",
-  "wavs_service_manager": "${WAVS_SERVICE_MANAGER_ADDRESS}",
-  "wavs_indexer": {
-    "wavs_indexer": "${wavs_indexer_ADDR}"
-  },
-  "eas_contracts": {
-    "schema_registry": "${EAS_REGISTRY_ADDR}",
-    "eas": "${EAS_ADDR}",
-    "attester": "${EAS_ATTESTER_ADDR}",
-    "schema_registrar": "${EAS_SCHEMA_REGISTRAR_ADDR}",
-    "indexer_resolver": "${EAS_INDEXER_RESOLVER_ADDR}",
-    "attester_indexer_resolver": "${EAS_ATTESTER_INDEXER_RESOLVER_ADDR}",
-    "payable_indexer_resolver": "${EAS_PAYABLE_INDEXER_RESOLVER_ADDR}"
-  },
-  "eas_schemas": {
-    "basic_schema": "${BASIC_SCHEMA_ID}",
-    "compute_schema": "${COMPUTE_SCHEMA_ID}",
-    "statement_schema": "${STATEMENT_SCHEMA_ID}",
-    "is_true_schema": "${IS_TRUE_SCHEMA_ID}",
-    "like_schema": "${LIKE_SCHEMA_ID}",
-    "vouching_schema": "${VOUCHING_SCHEMA_ID}"
-  },
-  "service_contracts": {
-    "trigger": "${SERVICE_TRIGGER_ADDR}"
-  },
-  "geyser": {
-    "trigger": "${GYSER_ADDR}"
-  },
-  "governance_contracts": {
-    "voting_power": "${VOTING_POWER_ADDR}",
-    "timelock": "${TIMELOCK_ADDR}",
-    "governor": "${GOVERNOR_ADDR}"
-  },
-  "merkler": {
-    "merkle_snapshot": "${MERKLE_SNAPSHOT_ADDR}"
-  },
-  "reward_contracts": {
-    "reward_distributor": "${REWARD_DISTRIBUTOR_ADDR}",
-    "reward_token": "${REWARD_TOKEN_ADDR}"
-  },
-  "prediction_market_contracts": {
-    "oracle_controller": "${PREDICTION_ORACLE_CONTROLLER_ADDR}",
-    "factory": "${PREDICTION_FACTORY_ADDR}",
-    "collateral_token": "${PREDICTION_COLLATERAL_TOKEN_ADDR}",
-    "conditional_tokens": "${PREDICTION_CONDITIONAL_TOKENS_ADDR}",
-    "market_maker": "${PREDICTION_MARKET_MAKER_ADDR}"
-  },
-  "zodiac_safes": {
-    "safe_singleton": "${SAFE_SINGLETON}",
-    "safe_factory": "${SAFE_FACTORY}",
-    "safe1": {
-      "address": "${SAFE1_ADDR}",
-      "merkle_gov_module": "${SAFE1_MERKLE_GOV_MODULE}",
-      "signer_module": "${SAFE1_SIGNER_MODULE}"
+jq -n \
+  --arg service_id "" \
+  --arg rpc_url "${RPC_URL}" \
+  --arg wavs_service_manager "${WAVS_SERVICE_MANAGER_ADDRESS}" \
+  --arg wavs_indexer_addr "${wavs_indexer_ADDR}" \
+  --arg geyser_addr "${GYSER_ADDR}" \
+  --arg voting_power "${VOTING_POWER_ADDR}" \
+  --arg timelock "${TIMELOCK_ADDR}" \
+  --arg governor "${GOVERNOR_ADDR}" \
+  --arg merkle_snapshot "${MERKLE_SNAPSHOT_ADDR}" \
+  --arg reward_distributor "${REWARD_DISTRIBUTOR_ADDR}" \
+  --arg reward_token "${REWARD_TOKEN_ADDR}" \
+  --arg oracle_controller "${PREDICTION_ORACLE_CONTROLLER_ADDR}" \
+  --arg factory "${PREDICTION_FACTORY_ADDR}" \
+  --arg collateral_token "${PREDICTION_COLLATERAL_TOKEN_ADDR}" \
+  --arg conditional_tokens "${PREDICTION_CONDITIONAL_TOKENS_ADDR}" \
+  --arg market_maker "${PREDICTION_MARKET_MAKER_ADDR}" \
+  --arg safe_singleton "${SAFE_SINGLETON}" \
+  --arg safe_factory "${SAFE_FACTORY}" \
+  --arg safe1_addr "${SAFE1_ADDR}" \
+  --arg safe1_merkle_gov "${SAFE1_MERKLE_GOV_MODULE}" \
+  --arg safe1_signer "${SAFE1_SIGNER_MODULE}" \
+  --arg safe2_addr "${SAFE2_ADDR}" \
+  --arg safe2_wavs "${SAFE2_WAVS_MODULE}" \
+  --slurpfile eas_deploy .docker/eas_deploy.json \
+  '{
+    service_id: $service_id,
+    rpc_url: $rpc_url,
+    wavs_service_manager: $wavs_service_manager,
+    wavs_indexer: {
+      wavs_indexer: $wavs_indexer_addr
     },
-    "safe2": {
-      "address": "${SAFE2_ADDR}",
-      "wavs_module": "${SAFE2_WAVS_MODULE}"
+    geyser: {
+      trigger: $geyser_addr
+    },
+    governance_contracts: {
+      voting_power: $voting_power,
+      timelock: $timelock,
+      governor: $governor
+    },
+    eas: $eas_deploy[0],
+    merkler: {
+      merkle_snapshot: $merkle_snapshot
+    },
+    reward_contracts: {
+      reward_distributor: $reward_distributor,
+      reward_token: $reward_token
+    },
+    prediction_market_contracts: {
+      oracle_controller: $oracle_controller,
+      factory: $factory,
+      collateral_token: $collateral_token,
+      conditional_tokens: $conditional_tokens,
+      market_maker: $market_maker
+    },
+    zodiac_safes: {
+      safe_singleton: $safe_singleton,
+      safe_factory: $safe_factory,
+      safe1: {
+        address: $safe1_addr,
+        merkle_gov_module: $safe1_merkle_gov,
+        signer_module: $safe1_signer
+      },
+      safe2: {
+        address: $safe2_addr,
+        wavs_module: $safe2_wavs
+      }
     }
-  }
-}
-EOF
+  }' \
+  > .docker/deployment_summary.json
 
 echo "✅ EAS, Governance, and Merkler Deployment Complete!"
 echo ""
@@ -214,32 +194,10 @@ echo "   RPC_URL: ${RPC_URL}"
 echo "   WAVS_SERVICE_MANAGER_ADDRESS: ${WAVS_SERVICE_MANAGER_ADDRESS}"
 echo "   wavs_indexer_ADDR: ${wavs_indexer_ADDR}"
 echo ""
-echo "🏗️  EAS Contracts:"
-echo "   EAS_REGISTRY_ADDR: ${EAS_REGISTRY_ADDR}"
-echo "   EAS_ADDR: ${EAS_ADDR}"
-echo "   EAS_ATTESTER_ADDR: ${EAS_ATTESTER_ADDR}"
-echo "   EAS_SCHEMA_REGISTRAR_ADDR: ${EAS_SCHEMA_REGISTRAR_ADDR}"
-echo "   EAS_INDEXER_ADDR: ${EAS_INDEXER_ADDR}"
-echo "   EAS_INDEXER_RESOLVER_ADDR: ${EAS_INDEXER_RESOLVER_ADDR}"
-echo "   EAS_PAYABLE_INDEXER_RESOLVER_ADDR: ${EAS_PAYABLE_INDEXER_RESOLVER_ADDR}"
-echo "   EAS_ATTESTER_INDEXER_RESOLVER_ADDR: ${EAS_ATTESTER_INDEXER_RESOLVER_ADDR}"
-echo "   EAS_ATTEST_TRIGGER_ADDR: ${EAS_ATTEST_TRIGGER_ADDR}"
-echo ""
-echo "📋 EAS Schemas:"
-echo "   BASIC_SCHEMA_ID: ${BASIC_SCHEMA_ID}"
-echo "   COMPUTE_SCHEMA_ID: ${COMPUTE_SCHEMA_ID}"
-echo "   STATEMENT_SCHEMA_ID: ${STATEMENT_SCHEMA_ID}"
-echo "   IS_TRUE_SCHEMA_ID: ${IS_TRUE_SCHEMA_ID}"
-echo "   LIKE_SCHEMA_ID: ${LIKE_SCHEMA_ID}"
-echo "   VOUCHING_SCHEMA_ID: ${VOUCHING_SCHEMA_ID}"
-echo ""
 echo "🏛️  Governance Contracts:"
 echo "   VOTING_POWER_ADDR: ${VOTING_POWER_ADDR}"
 echo "   TIMELOCK_ADDR: ${TIMELOCK_ADDR}"
 echo "   GOVERNOR_ADDR: ${GOVERNOR_ADDR}"
-echo ""
-echo "🎯 Service Contracts:"
-echo "   SERVICE_TRIGGER_ADDR: ${SERVICE_TRIGGER_ADDR}"
 echo ""
 echo "💰 Merkler Contracts:"
 echo "   MERKLE_SNAPSHOT_ADDR: ${MERKLE_SNAPSHOT_ADDR}"
@@ -267,17 +225,9 @@ echo "     Address: ${SAFE2_ADDR}"
 echo "     WAVS Module: ${SAFE2_WAVS_MODULE}"
 echo ""
 echo "📄 Deployment details saved to .docker/deployment_summary.json"
-echo "📄 EAS deployment logs saved to .docker/eas_deploy.json"
-echo "📄 Governance deployment logs saved to .docker/governance_deploy.json"
+echo "📄 EAS deployment details saved to .docker/eas_deploy.json"
+echo "📄 Governance deployment details saved to .docker/governance_deploy.json"
 echo "📄 Merkler deployment details saved to .docker/merkler_deploy.json"
 echo "📄 Prediction Market deployment details saved to .docker/prediction_market_deploy.json"
 echo "📄 Zodiac Safes deployment details saved to .docker/zodiac_safes_deploy.json"
 echo "📄 WavsIndexer deployment details saved to .docker/wavs_indexer_deploy.json"
-
-# Update environment variables for other scripts
-export SERVICE_SUBMISSION_ADDR="${EAS_ATTESTER_ADDR}"  # For backwards compatibility
-
-echo ""
-echo "🔄 Environment Variables Set:"
-echo "   SERVICE_SUBMISSION_ADDR=${SERVICE_SUBMISSION_ADDR} (Attester contract)"
-echo "   SERVICE_TRIGGER_ADDR=${SERVICE_TRIGGER_ADDR}"

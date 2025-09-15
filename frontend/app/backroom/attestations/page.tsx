@@ -70,22 +70,16 @@ export default function AttestationsPage() {
 
   // Use hooks for each schema
   const basicSchema = useSchemaAttestations(
-    schemas.basicSchema,
-    selectedSchema === 'all' || selectedSchema === schemas.basicSchema
-      ? limit
-      : 0
+    schemas.basic,
+    selectedSchema === 'all' || selectedSchema === schemas.basic ? limit : 0
   )
   const computeSchema = useSchemaAttestations(
-    schemas.computeSchema,
-    selectedSchema === 'all' || selectedSchema === schemas.computeSchema
-      ? limit
-      : 0
+    schemas.compute,
+    selectedSchema === 'all' || selectedSchema === schemas.compute ? limit : 0
   )
   const vouchingSchema = useSchemaAttestations(
-    schemas.vouchingSchema,
-    selectedSchema === 'all' || selectedSchema === schemas.vouchingSchema
-      ? limit
-      : 0
+    schemas.vouching,
+    selectedSchema === 'all' || selectedSchema === schemas.vouching ? limit : 0
   )
 
   // Handle status updates from individual attestations
@@ -101,19 +95,19 @@ export default function AttestationsPage() {
       timestamp?: number
     }> = []
 
-    if (selectedSchema === 'all' || selectedSchema === schemas.basicSchema) {
+    if (selectedSchema === 'all' || selectedSchema === schemas.basic) {
       basicSchema.attestationUIDs?.forEach((uid) =>
-        uids.push({ uid, schema: schemas.basicSchema })
+        uids.push({ uid, schema: schemas.basic })
       )
     }
-    if (selectedSchema === 'all' || selectedSchema === schemas.computeSchema) {
+    if (selectedSchema === 'all' || selectedSchema === schemas.compute) {
       computeSchema.attestationUIDs?.forEach((uid) =>
-        uids.push({ uid, schema: schemas.computeSchema })
+        uids.push({ uid, schema: schemas.compute })
       )
     }
-    if (selectedSchema === 'all' || selectedSchema === schemas.vouchingSchema) {
+    if (selectedSchema === 'all' || selectedSchema === schemas.vouching) {
       vouchingSchema.attestationUIDs?.forEach((uid) =>
-        uids.push({ uid, schema: schemas.vouchingSchema })
+        uids.push({ uid, schema: schemas.vouching })
       )
     }
 

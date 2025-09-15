@@ -13,8 +13,6 @@ MIDDLEWARE_DOCKER_IMAGE?=ghcr.io/lay3rlabs/wavs-middleware:0.5.0-beta.10
 IPFS_ENDPOINT?=http://127.0.0.1:5001
 RPC_URL?=http://127.0.0.1:8545
 SERVICE_FILE?=.docker/service.json
-SERVICE_SUBMISSION_ADDR?=`jq -r .deployedTo .docker/submit.json`
-SERVICE_TRIGGER_ADDR?=`jq -r .deployedTo .docker/trigger.json`
 WASI_BUILD_DIR ?= ""
 ENV_FILE?=.env
 WAVS_CMD ?= $(SUDO) docker run --rm --network host $$(test -f ${ENV_FILE} && echo "--env-file ./${ENV_FILE}") -v $$(pwd):/data ${DOCKER_IMAGE} wavs-cli
@@ -100,13 +98,6 @@ setup: check-requirements
 start-all-local: clean-docker setup-env
 	@sh ./script/start_all.sh
 
-## get-trigger-from-deploy: getting the trigger address from the script deploy
-get-trigger-from-deploy:
-	@jq -r '.service_contracts.trigger' .docker/deployment_summary.json
-
-## get-submit-from-deploy: getting the submit address from the script deploy
-get-submit-from-deploy:
-	@jq -r '.logs[] | select(type == "string" and startswith("WavsAttester deployed at:")) | split(": ")[1]' .docker/eas_deploy.json 2>/dev/null || echo ""
 ## wavs-cli: running wavs-cli in docker
 wavs-cli:
 	@$(WAVS_CMD) $(filter-out $@,$(MAKECMDGOALS))

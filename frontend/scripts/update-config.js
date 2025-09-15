@@ -27,7 +27,7 @@ try {
   if (deployment.service_id) {
     let configContent = fs.readFileSync(configFile, 'utf8')
     configContent = configContent.replace(
-      new RegExp('wavsServiceId =([\\n\\s]+)[\'"][^\'"]*[\'"]', 'm'),
+      new RegExp('wavsServiceId =(\\s+)[\'"][^\'"]*[\'"]', 'm'),
       `wavsServiceId =$1'${deployment.service_id}'`
     )
     fs.writeFileSync(configFile, configContent)
@@ -39,41 +39,18 @@ try {
   // ========================================
 
   // Create a flattened mapping of all contract addresses
-  const contractAddresses = {}
-
-  // Add all contract addresses from different sections
-  if (deployment.wavs_indexer) {
-    Object.assign(contractAddresses, deployment.wavs_indexer)
-  }
-  if (deployment.eas_contracts) {
-    Object.assign(contractAddresses, deployment.eas_contracts)
-  }
-  if (deployment.service_contracts) {
-    Object.assign(contractAddresses, deployment.service_contracts)
-  }
-  if (deployment.reward_contracts) {
-    Object.assign(contractAddresses, deployment.reward_contracts)
-  }
-  if (deployment.merkler) {
-    Object.assign(contractAddresses, deployment.merkler)
-  }
-  if (deployment.prediction_market_contracts) {
-    Object.assign(contractAddresses, deployment.prediction_market_contracts)
-  }
-  if (deployment.zodiac_safes) {
-    contractAddresses.safe_singleton = deployment.zodiac_safes.safe_singleton
-    contractAddresses.safe_factory = deployment.zodiac_safes.safe_factory
-    if (deployment.zodiac_safes.safe1) {
-      contractAddresses.merkle_gov_module =
-        deployment.zodiac_safes.safe1.merkle_gov_module
-      contractAddresses.signer_module =
-        deployment.zodiac_safes.safe1.signer_module
-    }
-  }
-
-  // Add WAVS service manager address
-  if (deployment.wavs_service_manager) {
-    contractAddresses.wavs_service_manager = deployment.wavs_service_manager
+  const contractAddresses = {
+    wavs_service_manager: deployment.wavs_service_manager,
+    ...deployment.wavs_indexer,
+    ...deployment.eas.contracts,
+    ...deployment.reward_contracts,
+    ...deployment.merkler,
+    ...deployment.prediction_market_contracts,
+    // Zodiac Safe stuff
+    safe_singleton: deployment.zodiac_safes.safe_singleton,
+    safe_factory: deployment.zodiac_safes.safe_factory,
+    merkle_gov_module: deployment.zodiac_safes.safe1.merkle_gov_module,
+    signer_module: deployment.zodiac_safes.safe1.signer_module,
   }
 
   console.log('📋 Contract addresses:', contractAddresses)
@@ -88,9 +65,7 @@ try {
     attester: 'WavsAttester',
     schema_registrar: 'SchemaRegistrar',
     indexer_resolver: 'EASIndexerResolver',
-
-    // Service contracts
-    trigger: 'EASAttestTrigger',
+    attest_trigger: 'EASAttestTrigger',
 
     // Merkle contracts
     merkle_snapshot: 'MerkleSnapshot',
@@ -144,48 +119,40 @@ try {
   // UPDATE SCHEMAS WITH SCHEMA IDs
   // ========================================
 
-  if (deployment.eas_schemas) {
-    console.log('📋 Schema IDs:', deployment.eas_schemas)
+  if (deployment.eas?.schemas) {
+    console.log('📋 Schema IDs:', deployment.eas.schemas)
 
     // Read current schemas file
     let schemasContent = fs.readFileSync(schemasFile, 'utf8')
 
-    // Schema name mappings
-    const schemaNameMapping = {
-      basic_schema: 'basicSchema',
-      compute_schema: 'computeSchema',
-      statement_schema: 'statementSchema',
-      is_true_schema: 'isTrueSchema',
-      like_schema: 'likeSchema',
-      vouching_schema: 'vouchingSchema',
-    }
-
     // Update schema IDs
-    Object.entries(deployment.eas_schemas).forEach(
-      ([deploymentName, schemaId]) => {
-        const codeName = schemaNameMapping[deploymentName]
-        if (codeName && schemaId) {
-          const schemaRegex = new RegExp(
-            `(${codeName}:\\s*["'])([^"']*)(["'])`,
-            'g'
-          )
-
-          if (schemaRegex.test(schemasContent)) {
-            schemasContent = schemasContent.replace(
-              schemaRegex,
-              `$1${schemaId}$3`
-            )
-            console.log(`✅ Updated ${codeName}: ${schemaId}`)
-          } else {
-            console.log(`⚠️  Could not find ${codeName} in schemas`)
-          }
-        }
-      }
+    const schemaData = Object.entries(deployment.eas.schemas).map(
+      ([snakeCasedName, schemaId]) => [
+        snakeCasedName.replaceAll(/_[a-z]/g, (match) =>
+          match.slice(1).toUpperCase()
+        ),
+        schemaId,
+      ]
     )
 
-    // Write updated schemas file
-    fs.writeFileSync(schemasFile, schemasContent)
-    console.log('✅ schemas.ts updated successfully!')
+    const schemaRegex = /const schemas = \{[^}]+\}/g
+    if (schemaRegex.test(schemasContent)) {
+      schemasContent = schemasContent.replace(
+        schemaRegex,
+        `
+const schemas = {
+${schemaData
+  .map(([name, id]) => `  ${name}:${name.length > 7 ? '\n    ' : ' '}'${id}',`)
+  .join('\n')}
+}`.trim()
+      )
+
+      // Write updated schemas file
+      fs.writeFileSync(schemasFile, schemasContent)
+      console.log(`✅ Updated ${schemaData.length} schemas`)
+    } else {
+      console.log(`⚠️ Could not find schemas variable`)
+    }
   }
 
   console.log('🚀 All config files updated! Now run: npm run wagmi:generate')

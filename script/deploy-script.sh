@@ -88,8 +88,8 @@ export INDEXER_ADDRESS=$(jq -r '.wavs_indexer.wavs_indexer' .docker/deployment_s
 
 # Configure EAS addresses from deployment summary
 echo "Configuring EAS addresses from deployment summary..."
-export EAS_ADDRESS=$(jq -r '.eas_contracts.eas' .docker/deployment_summary.json)
-export VOUCHING_SCHEMA_ID=$(jq -r '.eas_schemas.vouching_schema' .docker/deployment_summary.json)
+export EAS_ADDRESS=$(jq -r '.eas.contracts.eas' .docker/deployment_summary.json)
+export VOUCHING_SCHEMA_ID=$(jq -r '.eas.schemas.vouching' .docker/deployment_summary.json)
 
 # Determine chain name based on deployment environment
 if [ "$(task get-deploy-status)" = "TESTNET" ]; then

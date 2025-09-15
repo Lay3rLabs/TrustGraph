@@ -312,7 +312,7 @@ export default function EN0VATerminal() {
 
       // Create attestation using the hook
       await createAttestation({
-        schema: schemas.statementSchema,
+        schema: schemas.statement,
         recipient: address || '0x0000000000000000000000000000000000000000',
         data: 'EN0VA Experiment Participant Oath: I understand and accept all terms',
       })

@@ -49,18 +49,23 @@ The `script/configure-components.sh` helper script provides easy management of c
 ### Commands
 
 #### List Components
+
 ```bash
 ./script/configure-components.sh list
 ```
+
 Shows all configured components with their settings.
 
 #### Add Component (Interactive)
+
 ```bash
 ./script/configure-components.sh add
 ```
+
 Prompts for all component details interactively.
 
 #### Add Component (Batch)
+
 ```bash
 ./script/configure-components.sh add-batch \
   my_component.wasm \
@@ -72,20 +77,25 @@ Prompts for all component details interactively.
 ```
 
 #### Remove Component
+
 ```bash
 ./script/configure-components.sh remove my_component.wasm
 ```
 
 #### Validate Configuration
+
 ```bash
 ./script/configure-components.sh validate
 ```
+
 Checks all component configurations for errors.
 
 #### Export Configuration
+
 ```bash
 ./script/configure-components.sh export
 ```
+
 Outputs the configuration in JSON format.
 
 ## Configuration Format
@@ -102,15 +112,15 @@ Component configurations are stored in `config/components.json` with this JSON f
       "package_name": "wasm-eas-attest",
       "package_version": "0.1.0",
       "trigger_event": "AttestationRequested(address,bytes32,address,bytes)",
-      "trigger_json_path": "service_contracts.trigger",
-      "submit_json_path": "eas_contracts.attester"
+      "trigger_json_path": "eas.contracts.eas_attester_trigger",
+      "submit_json_path": "eas.contracts.attester"
     },
     {
       "filename": "wavs_eas_compute.wasm",
       "package_name": "wasm-eas-compute",
       "package_version": "0.1.0",
       "trigger_event": "Attested(address,address,bytes32,bytes32)",
-      "trigger_json_path": "eas_contracts.indexer_resolver",
+      "trigger_json_path": "eas.contracts.indexer_resolver",
       "submit_json_path": "governance_contracts.voting_power"
     },
     {
@@ -127,14 +137,14 @@ Component configurations are stored in `config/components.json` with this JSON f
 
 ### Field Descriptions
 
-| Field | Description | Example |
-|-------|-------------|---------|
-| filename | WASM component filename | `wavs_eas_attest.wasm` |
-| package_name | WASI registry package name | `wasm-eas-attest` |
-| package_version | Package version | `0.1.0` |
-| trigger_event | Solidity event signature | `AttestationRequested(address,bytes32,address,bytes)` |
-| trigger_json_path | JSON path to trigger address | `service_contracts.trigger` |
-| submit_json_path | JSON path to submit address | `eas_contracts.attester` |
+| Field             | Description                  | Example                                               |
+| ----------------- | ---------------------------- | ----------------------------------------------------- |
+| filename          | WASM component filename      | `wavs_eas_attest.wasm`                                |
+| package_name      | WASI registry package name   | `wasm-eas-attest`                                     |
+| package_version   | Package version              | `0.1.0`                                               |
+| trigger_event     | Solidity event signature     | `AttestationRequested(address,bytes32,address,bytes)` |
+| trigger_json_path | JSON path to trigger address | `service_contracts.trigger`                           |
+| submit_json_path  | JSON path to submit address  | `eas.contracts.attester`                              |
 
 ### JSON Paths
 
@@ -147,12 +157,14 @@ The configuration uses a JSON object with a `components` array. Each component o
 The JSON paths reference fields in `.docker/deployment_summary.json`:
 
 #### Common Trigger Paths
-- `service_contracts.trigger` - Main trigger contract
-- `eas_contracts.indexer_resolver` - EAS indexer resolver
+
+- `eas_deploy.contracts.attest_trigger` - EAS attest trigger contract
+- `eas_deploy.contracts.indexer_resolver` - EAS indexer resolver
 - `governance_contracts.voting_trigger` - Governance trigger
 
 #### Common Submit Paths
-- `eas_contracts.attester` - EAS attester contract
+
+- `eas_deploy.contracts.attester` - EAS attester contract
 - `governance_contracts.voting_power` - Governance voting contract
 - `service_contracts.results` - Results submission contract
 
@@ -265,7 +277,7 @@ cat .docker/deployment_summary.json
 
 # Verify path structure
 jq '.service_contracts' .docker/deployment_summary.json
-jq '.eas_contracts' .docker/deployment_summary.json
+jq '.eas.contracts' .docker/deployment_summary.json
 
 # Check component configuration structure
 jq '.components' config/components.json
@@ -313,6 +325,6 @@ Always validate before deploying:
   wasm-custom-attest \
   0.3.0 \
   'CustomAttestation(address,bytes32,bytes)' \
-  eas_contracts.custom_schema \
-  eas_contracts.attester
+  eas.contracts.custom_schema \
+  eas.contracts.attester
 ```

@@ -55,7 +55,7 @@ Three main components that handle different aspects of the attestation workflow:
 - `WavsAttester.sol`: Main attestation request handler
 - `VotingPower.sol`: Manages voting power based on attestations
 - `RewardDistributor.sol`: Handles reward distribution logic
-- `Trigger.sol`: Event emission for off-chain component triggers
+- `EASAttestTrigger.sol`: Event emission for off-chain component triggers
 - `Governor.sol`: Governance implementation using attestation-based voting
 
 #### Service Architecture

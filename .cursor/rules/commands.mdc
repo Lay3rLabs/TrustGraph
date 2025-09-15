@@ -25,13 +25,9 @@ fmt                       format Solidity and Rust code
 test                      run tests
 setup                     install initial dependencies
 start-all-local           start anvil and core services (e.g., IPFS)
-get-trigger-from-deploy   get trigger address from deployment script
-get-submit-from-deploy    get submit address from deployment script
 wavs-cli                  run wavs-cli in docker
 upload-component          upload WAVS component | COMPONENT_FILENAME, WAVS_ENDPOINT
 deploy-service            deploy WAVS component service JSON | SERVICE_URL, CREDENTIAL, WAVS_ENDPOINT
-get-trigger               get trigger id | SERVICE_TRIGGER_ADDR, RPC_URL
-show-result               show result | SERVICE_SUBMISSION_ADDR, TRIGGER_ID, RPC_URL
 upload-to-ipfs            upload service config to IPFS | SERVICE_FILE, [PINATA_API_KEY]
 update-submodules         update git submodules
 check-requirements        verify system requirements are installed

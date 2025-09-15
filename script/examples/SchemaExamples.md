@@ -5,6 +5,7 @@ This document provides examples of how to use the `Schema.s.sol` script for mana
 ## Prerequisites
 
 Make sure you have:
+
 - Deployed EAS SchemaRegistry contract
 - (Optional) Deployed SchemaRegistrar contract for managed registration
 - Your private key set in environment (or use `--private-key` flag)
@@ -13,6 +14,7 @@ Make sure you have:
 ## Schema Registration
 
 ### Register Schema via Registrar Contract
+
 ```bash
 forge script script/Schema.s.sol:EasSchema \
     --sig "registerSchema(string,string,string,bool)" \
@@ -25,6 +27,7 @@ forge script script/Schema.s.sol:EasSchema \
 ```
 
 ### Register Schema Directly with Registry
+
 ```bash
 forge script script/Schema.s.sol:EasSchema \
     --sig "registerSchemaDirect(string,string,string,bool)" \
@@ -37,6 +40,7 @@ forge script script/Schema.s.sol:EasSchema \
 ```
 
 ### Register Schema with Custom Resolver
+
 ```bash
 forge script script/Schema.s.sol:EasSchema \
     --sig "registerSchema(string,string,string,bool)" \
@@ -51,6 +55,7 @@ forge script script/Schema.s.sol:EasSchema \
 ## Schema Queries
 
 ### Show Schema Details
+
 ```bash
 forge script script/Schema.s.sol:EasSchema \
     --sig "showSchema(string,string)" \
@@ -60,6 +65,7 @@ forge script script/Schema.s.sol:EasSchema \
 ```
 
 ### Check if Schema Exists
+
 ```bash
 forge script script/Schema.s.sol:EasSchema \
     --sig "schemaExists(string,string)" \
@@ -69,6 +75,7 @@ forge script script/Schema.s.sol:EasSchema \
 ```
 
 ### List Recent Schemas
+
 ```bash
 forge script script/Schema.s.sol:EasSchema \
     --sig "listRecentSchemas(string)" \
@@ -79,6 +86,7 @@ forge script script/Schema.s.sol:EasSchema \
 ## Schema Utilities
 
 ### Validate Schema Syntax
+
 ```bash
 forge script script/Schema.s.sol:EasSchema \
     --sig "validateSchema(string)" \
@@ -87,6 +95,7 @@ forge script script/Schema.s.sol:EasSchema \
 ```
 
 ### Preview Schema UID
+
 ```bash
 forge script script/Schema.s.sol:EasSchema \
     --sig "previewSchemaUID(string,string,bool)" \
@@ -99,6 +108,7 @@ forge script script/Schema.s.sol:EasSchema \
 ## Common Schema Examples
 
 ### User Profile Schema
+
 ```bash
 forge script script/Schema.s.sol:EasSchema \
     --sig "registerSchemaDirect(string,string,string,bool)" \
@@ -110,6 +120,7 @@ forge script script/Schema.s.sol:EasSchema \
 ```
 
 ### Financial Transaction Schema
+
 ```bash
 forge script script/Schema.s.sol:EasSchema \
     --sig "registerSchemaDirect(string,string,string,bool)" \
@@ -121,6 +132,7 @@ forge script script/Schema.s.sol:EasSchema \
 ```
 
 ### Identity Verification Schema
+
 ```bash
 forge script script/Schema.s.sol:EasSchema \
     --sig "registerSchemaDirect(string,string,string,bool)" \
@@ -132,6 +144,7 @@ forge script script/Schema.s.sol:EasSchema \
 ```
 
 ### Voting/Governance Schema
+
 ```bash
 forge script script/Schema.s.sol:EasSchema \
     --sig "registerSchemaDirect(string,string,string,bool)" \
@@ -143,6 +156,7 @@ forge script script/Schema.s.sol:EasSchema \
 ```
 
 ### Reputation/Review Schema
+
 ```bash
 forge script script/Schema.s.sol:EasSchema \
     --sig "registerSchemaDirect(string,string,string,bool)" \
@@ -156,6 +170,7 @@ forge script script/Schema.s.sol:EasSchema \
 ## Schema Syntax Reference
 
 ### Basic Types
+
 - `uint256` - Unsigned integer (also uint8, uint16, uint32, etc.)
 - `int256` - Signed integer (also int8, int16, int32, etc.)
 - `string` - Text string
@@ -165,12 +180,15 @@ forge script script/Schema.s.sol:EasSchema \
 - `bytes32` - Fixed 32-byte array
 
 ### Schema Format
+
 Schemas are comma-separated field definitions:
+
 ```
 "type1 name1,type2 name2,type3 name3"
 ```
 
 ### Examples:
+
 - Simple: `"string message"`
 - Multiple fields: `"string name,uint256 age,bool active"`
 - Complex: `"address user,bytes32 hash,uint256[] values,string metadata"`
@@ -178,6 +196,7 @@ Schemas are comma-separated field definitions:
 ## Common Workflows
 
 ### 1. Design and Register New Schema
+
 ```bash
 # 1. Validate your schema syntax first
 forge script script/Schema.s.sol:EasSchema \
@@ -204,6 +223,7 @@ forge script script/Schema.s.sol:EasSchema \
 ```
 
 ### 2. Verify Schema Registration
+
 ```bash
 # 1. Check if schema exists (using UID from registration output)
 forge script script/Schema.s.sol:EasSchema \
@@ -221,6 +241,7 @@ forge script script/Schema.s.sol:EasSchema \
 ```
 
 ### 3. Schema Management Pipeline
+
 ```bash
 # For production use - validate, then register with resolver
 # 1. Validate
@@ -241,6 +262,7 @@ forge script script/Schema.s.sol:EasSchema \
 ## Advanced Examples
 
 ### Schema with Array Types
+
 ```bash
 forge script script/Schema.s.sol:EasSchema \
     --sig "registerSchemaDirect(string,string,string,bool)" \
@@ -252,6 +274,7 @@ forge script script/Schema.s.sol:EasSchema \
 ```
 
 ### Multi-Purpose Schema
+
 ```bash
 forge script script/Schema.s.sol:EasSchema \
     --sig "registerSchemaDirect(string,string,string,bool)" \
@@ -265,6 +288,7 @@ forge script script/Schema.s.sol:EasSchema \
 ## Environment Variables Setup
 
 For easier usage, set these in your `.env` file:
+
 ```bash
 # Common addresses
 SCHEMA_REGISTRY_ADDRESS=0x...
@@ -300,11 +324,13 @@ forge script script/Schema.s.sol:EasSchema \
 ### Schema Syntax Validation
 
 Valid examples:
+
 - ✅ `"string name"`
 - ✅ `"string name,uint256 value"`
 - ✅ `"address user,bool active,uint256[] scores"`
 
 Invalid examples:
+
 - ❌ `"string"` (missing field name)
 - ❌ `"name string"` (wrong order)
 - ❌ `"string name uint256 value"` (missing comma)
@@ -312,6 +338,7 @@ Invalid examples:
 ### Getting Schema UIDs
 
 After registration, look for the console output:
+
 ```
 SCHEMA_REGISTRATION_RESULT:
 {"schema_uid":"0x...","schema":"...","resolver":"...","revocable":true}
@@ -322,9 +349,10 @@ Save the `schema_uid` for future attestation creation!
 ## Integration with Attestation Creation
 
 Once you have a schema UID, you can use it with the Trigger script:
+
 ```bash
 # Use your registered schema UID in attestation creation
-forge script script/Trigger.s.sol:EasTrigger \
+forge script script/EASAttestTrigger.s.sol:EASAttestTriggerScript \
     --sig "triggerJsonAttestation(string,string,string,string)" \
     "0x...TriggerAddress" \
     "0x...YourSchemaUID" \

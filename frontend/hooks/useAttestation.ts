@@ -117,7 +117,7 @@ export function useAttestation() {
       // Encode the attestation data as bytes based on schema type
 
       // Special handling for vouching schema which expects uint256
-      if (attestationData.schema === schemas.vouchingSchema) {
+      if (attestationData.schema === schemas.vouching) {
         // Parse the weight as a number and encode as uint256
         const weight = BigInt(attestationData.data)
         encodedData = encodePacked(['uint256'], [weight])

@@ -24,7 +24,7 @@ usage() {
     echo "  $0 add-batch FILENAME PKG_NAME PKG_VERSION TRIGGER_EVENT TRIGGER_PATH SUBMIT_PATH [CONFIG_VALUES] [ENV_VARIABLES]"
     echo ""
     echo "Example command:"
-    echo '  $0 add-batch my_component.wasm wasm-my-comp 1.0.0 "MyEvent(uint256)" service_contracts.my_trigger eas_contracts.my_submitter "key1=value1,key2=value2" "WAVS_ENV_SECRET1,WAVS_ENV_SECRET2"'
+    echo '  $0 add-batch my_component.wasm wasm-my-comp 1.0.0 "MyEvent(uint256)" eas.contracts.my_trigger eas.contracts.my_submitter "key1=value1,key2=value2" "WAVS_ENV_SECRET1,WAVS_ENV_SECRET2"'
     echo ""
     echo "Expected JSON configuration format in config/components.json:"
     echo '  {
@@ -34,8 +34,8 @@ usage() {
         "package_name": "wasm-eas-attest",
         "package_version": "0.1.0",
         "trigger_event": "AttestationRequested(address,bytes32,address,bytes)",
-        "trigger_json_path": "service_contracts.trigger",
-        "submit_json_path": "eas_contracts.attester",
+        "trigger_json_path": "eas.contracts.attest_trigger",
+        "submit_json_path": "eas.contracts.attester",
         "config_values": {
           "eas_address": "${EAS_ADDRESS}",
           "indexer_address": "${INDEXER_ADDRESS}",
@@ -279,8 +279,8 @@ add_component_interactive() {
 
     echo ""
     echo "Common paths:"
-    echo "  service_contracts.trigger"
-    echo "  eas_contracts.indexer_resolver"
+    echo "  eas.contracts.attest_trigger"
+    echo "  eas.contracts.indexer_resolver"
     echo "  governance_contracts.voting_power"
     echo "  merkler.merkle_snapshot"
     echo "  reward_contracts.reward_distributor"
@@ -289,7 +289,7 @@ add_component_interactive() {
 
     echo ""
     echo "Common submit paths:"
-    echo "  eas_contracts.attester"
+    echo "  eas.contracts.attester"
     echo "  governance_contracts.voting_power"
     echo "  merkler.merkle_snapshot"
     echo "  reward_contracts.reward_distributor"

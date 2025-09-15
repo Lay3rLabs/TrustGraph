@@ -9,8 +9,6 @@ sh ./build_service.sh
 
 # Overrides:
 - FILE_LOCATION: The save location of the configuration file
-- TRIGGER_ADDRESS: The address to trigger the service
-- SUBMIT_ADDRESS: The address to submit the service
 - TRIGGER_EVENT: The event to trigger the service (e.g. "NewTrigger(bytes)")
 - FUEL_LIMIT: The fuel limit (wasm compute metering) for the service
 - MAX_GAS: The maximum chain gas for the submission Tx
@@ -98,12 +96,6 @@ if [ -z "$WAVS_SERVICE_MANAGER_ADDRESS" ]; then
     fi
 fi
 
-if [ -z "$TRIGGER_ADDRESS" ]; then
-    TRIGGER_ADDRESS=`jq -r '.service_contracts.trigger' .docker/deployment_summary.json`
-fi
-if [ -z "$SUBMIT_ADDRESS" ]; then
-    SUBMIT_ADDRESS=`jq -r '.eas_contracts.attester' .docker/deployment_summary.json`
-fi
 if [ -z "$DEPLOY_ENV" ]; then
     DEPLOY_ENV=$(task get-deploy-status)
 fi

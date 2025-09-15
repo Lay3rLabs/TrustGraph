@@ -107,11 +107,11 @@ export function VouchingModal({
     if (!schemaInfo) return 'Select a schema first...'
 
     switch (schemaInfo.uid) {
-      case schemas.vouchingSchema:
+      case schemas.vouching:
         return 'Enter vouch weight (e.g., 1, 5, 100)'
-      case schemas.basicSchema:
+      case schemas.basic:
         return 'Enter your message or attestation content'
-      case schemas.computeSchema:
+      case schemas.compute:
         return 'Enter computation result and hash'
       default:
         return `Enter data for ${(schemaInfo as any).name.toLowerCase()}...`
@@ -122,11 +122,11 @@ export function VouchingModal({
     if (!schemaInfo) return null
 
     switch (schemaInfo.uid) {
-      case schemas.vouchingSchema:
+      case schemas.vouching:
         return 'Enter a numeric weight value representing the strength of your vouch'
-      case schemas.basicSchema:
+      case schemas.basic:
         return 'Enter any text-based attestation or message'
-      case schemas.computeSchema:
+      case schemas.compute:
         return 'Provide computational verification data'
       default:
         return `Expected fields: ${(schemaInfo as any).fields.join(', ')}`

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import {EASAttestTrigger} from "contracts/misc/Trigger.sol";
+import {EASAttestTrigger} from "contracts/eas/EASAttestTrigger.sol";
 import {IWavsIndexer} from "interfaces/IWavsIndexer.sol";
 import {IEAS} from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/contracts/Common.sol";
@@ -10,10 +10,10 @@ import {Common} from "script/Common.s.sol";
 import {console} from "forge-std/console.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
-/// @title EasTrigger
+/// @title EASAttestTrigger
 /// @notice Comprehensive script for EAS attestation operations via WAVS
 /// @dev Consolidates all EAS trigger and query functionality
-contract EasTrigger is Common {
+contract EASAttestTriggerScript is Common {
     // ============================================================
     // TRIGGER FUNCTIONS
     // ============================================================
@@ -31,7 +31,9 @@ contract EasTrigger is Common {
     ) public {
         vm.startBroadcast(_privateKey);
 
-        EASAttestTrigger trigger = EASAttestTrigger(vm.parseAddress(triggerAddr));
+        EASAttestTrigger trigger = EASAttestTrigger(
+            vm.parseAddress(triggerAddr)
+        );
 
         bytes32 schemaBytes = bytes32(vm.parseBytes(schema));
         address recipientAddr = vm.parseAddress(recipient);
@@ -57,12 +59,18 @@ contract EasTrigger is Common {
     ) public {
         vm.startBroadcast(_privateKey);
 
-        EASAttestTrigger trigger = EASAttestTrigger(vm.parseAddress(triggerAddr));
+        EASAttestTrigger trigger = EASAttestTrigger(
+            vm.parseAddress(triggerAddr)
+        );
 
         console.log("Creating raw EAS attestation trigger:");
         console.log("Data:", rawData);
 
-        trigger.triggerRequestRawAttestation(vm.parseBytes32(schema), vm.parseAddress(recipient), bytes(rawData));
+        trigger.triggerRequestRawAttestation(
+            vm.parseBytes32(schema),
+            vm.parseAddress(recipient),
+            bytes(rawData)
+        );
 
         vm.stopBroadcast();
     }
@@ -70,10 +78,15 @@ contract EasTrigger is Common {
     /// @notice Trigger agent event with string data
     /// @param triggerAddr Address of the EAS attest trigger contract
     /// @param data Agent trigger data as string
-    function addAgentTrigger(string calldata triggerAddr, string calldata data) public {
+    function addAgentTrigger(
+        string calldata triggerAddr,
+        string calldata data
+    ) public {
         vm.startBroadcast(_privateKey);
 
-        EASAttestTrigger trigger = EASAttestTrigger(vm.parseAddress(triggerAddr));
+        EASAttestTrigger trigger = EASAttestTrigger(
+            vm.parseAddress(triggerAddr)
+        );
 
         console.log("Creating agent trigger:");
         console.log("Trigger Address:", triggerAddr);
@@ -120,42 +133,71 @@ contract EasTrigger is Common {
         // Query based on whether recipient is specified
         if (recipientAddr == address(0)) {
             // Get all attestations for the schema
-            totalCount = indexer.getEventCountByTypeAndTag("attestation", string.concat("schema:", schemaId));
+            totalCount = indexer.getEventCountByTypeAndTag(
+                "attestation",
+                string.concat("schema:", schemaId)
+            );
             console.log("Total attestations for schema:", totalCount);
 
             if (totalCount > 0) {
-                IWavsIndexer.IndexedEvent[] memory events = indexer.getEventsByTypeAndTag(
-                    "attestation",
-                    string.concat("schema:", schemaId),
-                    0, // start from beginning
-                    maxResults > totalCount ? totalCount : maxResults,
-                    true // reverse order (newest first)
-                );
+                IWavsIndexer.IndexedEvent[] memory events = indexer
+                    .getEventsByTypeAndTag(
+                        "attestation",
+                        string.concat("schema:", schemaId),
+                        0, // start from beginning
+                        maxResults > totalCount ? totalCount : maxResults,
+                        true // reverse order (newest first)
+                    );
                 attestationUIDs = new bytes32[](events.length);
                 for (uint256 i = 0; i < events.length; i++) {
                     // Second tag is UID. Cut off the "uid:" prefix, and get 64-byte UID with 0x prefix
-                    attestationUIDs[i] = bytes32(Strings.parseHexUint(_substring(events[i].tags[1], 4, 4 + 66)));
+                    attestationUIDs[i] = bytes32(
+                        Strings.parseHexUint(
+                            _substring(events[i].tags[1], 4, 4 + 66)
+                        )
+                    );
                 }
             }
         } else {
             // Get attestations received by specific recipient
-            totalCount = indexer.getEventCountByTypeAndTag("attestation", string.concat("recipient:", recipient));
-            console.log("Total attestations received by recipient:", totalCount);
+            totalCount = indexer.getEventCountByTypeAndTag(
+                "attestation",
+                string.concat("recipient:", recipient)
+            );
+            console.log(
+                "Total attestations received by recipient:",
+                totalCount
+            );
 
             if (totalCount > 0) {
-                IWavsIndexer.IndexedEvent[] memory events = indexer.getEventsByTypeAndTag(
-                    "attestation",
-                    string.concat("schema:", schemaId, "/recipient:", recipient),
-                    0, // start from beginning
-                    maxResults > totalCount ? totalCount : maxResults,
-                    true // reverse order (newest first)
-                );
+                IWavsIndexer.IndexedEvent[] memory events = indexer
+                    .getEventsByTypeAndTag(
+                        "attestation",
+                        string.concat(
+                            "schema:",
+                            schemaId,
+                            "/recipient:",
+                            recipient
+                        ),
+                        0, // start from beginning
+                        maxResults > totalCount ? totalCount : maxResults,
+                        true // reverse order (newest first)
+                    );
                 attestationUIDs = new bytes32[](events.length);
                 for (uint256 i = 0; i < events.length; i++) {
                     // Second tag is UID. Cut off the "uid:" prefix, and get 64-byte UID with 0x prefix
-                    attestationUIDs[i] = (bytes32(Strings.parseHexUint(_substring(events[i].tags[1], 4, 4 + 66))));
+                    attestationUIDs[i] = (
+                        bytes32(
+                            Strings.parseHexUint(
+                                _substring(events[i].tags[1], 4, 4 + 66)
+                            )
+                        )
+                    );
                 }
-                console.log("Total attestations received by recipient for schema:", totalCount);
+                console.log(
+                    "Total attestations received by recipient for schema:",
+                    totalCount
+                );
             }
         }
 
@@ -211,24 +253,37 @@ contract EasTrigger is Common {
         console.log("");
 
         // Get attestations sent by specific attester
-        uint256 totalCount = indexer.getEventCountByTypeAndTag("attestation", string.concat("attester:", attester));
+        uint256 totalCount = indexer.getEventCountByTypeAndTag(
+            "attestation",
+            string.concat("attester:", attester)
+        );
         console.log("Total attestations sent by attester:", totalCount);
 
         bytes32[] memory attestationUIDs;
         if (totalCount > 0) {
-            IWavsIndexer.IndexedEvent[] memory events = indexer.getEventsByTypeAndTag(
-                "attestation",
-                string.concat("schema:", schemaId, "/attester:", attester),
-                0, // start from beginning
-                maxResults > totalCount ? totalCount : maxResults,
-                true // reverse order (newest first)
-            );
+            IWavsIndexer.IndexedEvent[] memory events = indexer
+                .getEventsByTypeAndTag(
+                    "attestation",
+                    string.concat("schema:", schemaId, "/attester:", attester),
+                    0, // start from beginning
+                    maxResults > totalCount ? totalCount : maxResults,
+                    true // reverse order (newest first)
+                );
             attestationUIDs = new bytes32[](maxResults);
             for (uint256 i = 0; i < events.length; i++) {
                 // Second tag is UID. Cut off the "uid:" prefix, and get 64-byte UID with 0x prefix
-                attestationUIDs[i] = (bytes32(Strings.parseHexUint(_substring(events[i].tags[1], 4, 4 + 66))));
+                attestationUIDs[i] = (
+                    bytes32(
+                        Strings.parseHexUint(
+                            _substring(events[i].tags[1], 4, 4 + 66)
+                        )
+                    )
+                );
             }
-            console.log("Total attestations sent by attester for schema:", totalCount);
+            console.log(
+                "Total attestations sent by attester for schema:",
+                totalCount
+            );
         }
 
         // Display attestation details
@@ -255,22 +310,39 @@ contract EasTrigger is Common {
         string calldata schemaId,
         string calldata attester
     ) public view {
-        queryAttestationsByAttester(indexerAddr, easAddr, schemaId, attester, 10);
+        queryAttestationsByAttester(
+            indexerAddr,
+            easAddr,
+            schemaId,
+            attester,
+            10
+        );
     }
 
     /// @notice Helper function to display attestation details
     /// @param eas The EAS contract instance
     /// @param attestationUID The attestation UID to display
     /// @param index The display index for numbering
-    function _displayAttestation(IEAS eas, bytes32 attestationUID, uint256 index) internal view {
-        try eas.getAttestation(attestationUID) returns (Attestation memory att) {
+    function _displayAttestation(
+        IEAS eas,
+        bytes32 attestationUID,
+        uint256 index
+    ) internal view {
+        try eas.getAttestation(attestationUID) returns (
+            Attestation memory att
+        ) {
             console.log("--- Attestation", index, "---");
             console.log("UID:", vm.toString(attestationUID));
             console.log("Schema:", vm.toString(att.schema));
             console.log("Attester:", vm.toString(att.attester));
             console.log("Recipient:", vm.toString(att.recipient));
             console.log("Time:", att.time);
-            console.log("Expiration:", att.expirationTime == 0 ? "Never" : vm.toString(att.expirationTime));
+            console.log(
+                "Expiration:",
+                att.expirationTime == 0
+                    ? "Never"
+                    : vm.toString(att.expirationTime)
+            );
             console.log("Revocable:", att.revocable ? "Yes" : "No");
             console.log("Revoked:", att.revocationTime > 0 ? "Yes" : "No");
             if (att.refUID != bytes32(0)) {
@@ -315,7 +387,10 @@ contract EasTrigger is Common {
     /// @notice Show attestation details by UID
     /// @param easAddr The EAS contract address
     /// @param attestationUid The attestation UID
-    function showAttestation(string calldata easAddr, string calldata attestationUid) public view {
+    function showAttestation(
+        string calldata easAddr,
+        string calldata attestationUid
+    ) public view {
         IEAS eas = IEAS(vm.parseAddress(easAddr));
         bytes32 uid = vm.parseBytes32(attestationUid);
 
@@ -334,15 +409,18 @@ contract EasTrigger is Common {
                 console.log("  Data:", string(att.data));
             }
         } catch {
-            console.log("Attestation not found or invalid UID:", attestationUid);
+            console.log(
+                "Attestation not found or invalid UID:",
+                attestationUid
+            );
         }
     }
 
-    function _substring(string memory str, uint256 startIndex, uint256 endIndex)
-        internal
-        pure
-        returns (string memory)
-    {
+    function _substring(
+        string memory str,
+        uint256 startIndex,
+        uint256 endIndex
+    ) internal pure returns (string memory) {
         bytes memory strBytes = bytes(str);
         bytes memory result = new bytes(endIndex - startIndex);
         for (uint256 i = startIndex; i < endIndex; i++) {

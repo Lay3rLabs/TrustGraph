@@ -4,9 +4,9 @@ tasks:
   trigger:
     desc: "Trigger an attestation request"
     vars:
-      TRIGGER_ADDRESS: '{{.TRIGGER_ADDRESS}}'
-      SCHEMA_UID: '{{.SCHEMA_UID}}'
-      RECIPIENT: '{{.RECIPIENT}}'
+      TRIGGER_ADDRESS: "{{.TRIGGER_ADDRESS}}"
+      SCHEMA_UID: "{{.SCHEMA_UID}}"
+      RECIPIENT: "{{.RECIPIENT}}"
       MESSAGE: '{{.MESSAGE | default "Attestation via WAVS"}}'
       RPC_URL:
         sh: task get-rpc
@@ -16,7 +16,7 @@ tasks:
       - test -n "{{.RECIPIENT}}"
     cmds:
       - |
-        forge script script/Trigger.s.sol:EasTrigger \
+        forge script script/EASAttestTrigger.s.sol:EASAttestTriggerScript \
           --sig "triggerRawAttestation(string,string,string,string)" \
           "{{.TRIGGER_ADDRESS}}" \
           "{{.SCHEMA_UID}}" \
@@ -27,10 +27,10 @@ tasks:
   query:
     desc: "Query attestations"
     vars:
-      INDEXER_ADDRESS: '{{.INDEXER_ADDRESS}}'
-      EAS_ADDRESS: '{{.EAS_ADDRESS}}'
-      SCHEMA_UID: '{{.SCHEMA_UID}}'
-      RECIPIENT: '{{.RECIPIENT}}'
+      INDEXER_ADDRESS: "{{.INDEXER_ADDRESS}}"
+      EAS_ADDRESS: "{{.EAS_ADDRESS}}"
+      SCHEMA_UID: "{{.SCHEMA_UID}}"
+      RECIPIENT: "{{.RECIPIENT}}"
       LIMIT: '{{.LIMIT | default "10"}}'
       RPC_URL:
         sh: task get-rpc
@@ -41,7 +41,7 @@ tasks:
       - test -n "{{.RECIPIENT}}"
     cmds:
       - |
-        forge script script/Trigger.s.sol:EasTrigger \
+        forge script script/EASAttestTrigger.s.sol:EASAttestTriggerScript \
           --sig "queryAttestations(string,string,string,string,uint256)" \
           "{{.INDEXER_ADDRESS}}" \
           "{{.EAS_ADDRESS}}" \

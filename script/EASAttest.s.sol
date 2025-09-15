@@ -1,16 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import {
-    IEAS,
-    AttestationRequest,
-    AttestationRequestData
-} from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
+import {IEAS, AttestationRequest, AttestationRequestData} from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
 import {EMPTY_UID, NO_EXPIRATION_TIME} from "@ethereum-attestation-service/eas-contracts/contracts/Common.sol";
 import {Common} from "script/Common.s.sol";
 import {console} from "forge-std/console.sol";
 
-/// @title EasAttest
+/// @title EASAttest
 /// @notice Foundry script for making direct EAS attestations with optional payment
 /// @dev Provides methods to attest directly to EAS contracts with or without ETH payment.
 ///      This script is designed to work with the Taskfile.yml forge tasks and can be used
@@ -20,7 +16,7 @@ import {console} from "forge-std/console.sol";
 ///      task forge:trigger-statement-attestation INPUT="Hello World"
 ///
 /// @custom:usage Direct forge script execution:
-///      forge script script/EasAttest.s.sol:EasAttest \
+///      forge script script/EASAttest.s.sol:EASAttest \
 ///        --sig "attestWithMilliEth(string,string,string,string,uint256)" \
 ///        "0xEAS_CONTRACT_ADDRESS" \
 ///        "0xSCHEMA_UID" \
@@ -28,7 +24,7 @@ import {console} from "forge-std/console.sol";
 ///        "Hello World" \
 ///        1 \
 ///        --rpc-url http://localhost:8545 --broadcast
-contract EasAttest is Common {
+contract EASAttest is Common {
     /// @notice Make a direct attestation to EAS without payment
     /// @param easAddr The EAS contract address (hex string with 0x prefix)
     /// @param schema The schema UID (hex string with 0x prefix, 32 bytes)
@@ -36,9 +32,12 @@ contract EasAttest is Common {
     /// @param data The attestation data string (will be encoded as bytes)
     /// @dev Creates a revocable attestation with no expiration time and no payment.
     ///      Uses the private key from FUNDED_KEY environment variable for signing.
-    function attest(string calldata easAddr, string calldata schema, string calldata recipient, string calldata data)
-        public
-    {
+    function attest(
+        string calldata easAddr,
+        string calldata schema,
+        string calldata recipient,
+        string calldata data
+    ) public {
         vm.startBroadcast(_privateKey);
 
         IEAS eas = IEAS(vm.parseAddress(easAddr));
@@ -60,11 +59,17 @@ contract EasAttest is Common {
             value: 0
         });
 
-        AttestationRequest memory request = AttestationRequest({schema: schemaUID, data: requestData});
+        AttestationRequest memory request = AttestationRequest({
+            schema: schemaUID,
+            data: requestData
+        });
 
         bytes32 attestationUID = eas.attest(request);
 
-        console.log("Attestation created with UID:", vm.toString(attestationUID));
+        console.log(
+            "Attestation created with UID:",
+            vm.toString(attestationUID)
+        );
 
         vm.stopBroadcast();
     }
@@ -109,11 +114,17 @@ contract EasAttest is Common {
             value: value
         });
 
-        AttestationRequest memory request = AttestationRequest({schema: schemaUID, data: requestData});
+        AttestationRequest memory request = AttestationRequest({
+            schema: schemaUID,
+            data: requestData
+        });
 
         bytes32 attestationUID = eas.attest{value: value}(request);
 
-        console.log("Attestation created with UID:", vm.toString(attestationUID));
+        console.log(
+            "Attestation created with UID:",
+            vm.toString(attestationUID)
+        );
         console.log("Payment of", value, "wei sent with attestation");
 
         vm.stopBroadcast();
