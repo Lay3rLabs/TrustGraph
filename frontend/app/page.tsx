@@ -314,7 +314,10 @@ export default function EN0VATerminal() {
       await createAttestation({
         schema: schemas.statement,
         recipient: address || '0x0000000000000000000000000000000000000000',
-        data: 'EN0VA Experiment Participant Oath: I understand and accept all terms',
+        data: {
+          statement:
+            'EN0VA Experiment Participant Oath: I understand and accept all terms',
+        },
       })
 
       setAttestationComplete(true)

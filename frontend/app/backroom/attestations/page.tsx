@@ -98,33 +98,37 @@ export default function AttestationsPage() {
     const uids: Array<{
       uid: `0x${string}`
       schema: `0x${string}`
-      timestamp?: number
+      timestamp: number
     }> = []
 
     if (selectedSchema === 'all' || selectedSchema === schemas.basic) {
-      basicSchema.attestationUIDs?.forEach((uid) =>
-        uids.push({ uid, schema: schemas.basic })
+      basicSchema.attestationUIDs?.forEach(({ uid, timestamp }) =>
+        uids.push({ uid, schema: schemas.basic, timestamp })
       )
     }
     if (selectedSchema === 'all' || selectedSchema === schemas.compute) {
-      computeSchema.attestationUIDs?.forEach((uid) =>
-        uids.push({ uid, schema: schemas.compute })
+      computeSchema.attestationUIDs?.forEach(({ uid, timestamp }) =>
+        uids.push({ uid, schema: schemas.compute, timestamp })
       )
     }
     if (selectedSchema === 'all' || selectedSchema === schemas.vouching) {
-      vouchingSchema.attestationUIDs?.forEach((uid) =>
-        uids.push({ uid, schema: schemas.vouching })
+      vouchingSchema.attestationUIDs?.forEach(({ uid, timestamp }) =>
+        uids.push({ uid, schema: schemas.vouching, timestamp })
       )
     }
     if (selectedSchema === 'all' || selectedSchema === schemas.recognition) {
-      recognitionSchema.attestationUIDs?.forEach((uid) =>
-        uids.push({ uid, schema: schemas.recognition })
+      recognitionSchema.attestationUIDs?.forEach(({ uid, timestamp }) =>
+        uids.push({ uid, schema: schemas.recognition, timestamp })
       )
     }
 
-    // Sort by newest/oldest (UIDs are typically ordered by creation time already)
-    // TODO: fix sort order make it sort by timestamp
-    return sortOrder === 'newest' ? uids : uids.reverse()
+    if (sortOrder === 'newest') {
+      uids.sort((a, b) => b.timestamp - a.timestamp)
+    } else {
+      uids.sort((a, b) => a.timestamp - b.timestamp)
+    }
+
+    return uids
   }, [
     basicSchema.attestationUIDs,
     computeSchema.attestationUIDs,
@@ -155,19 +159,13 @@ export default function AttestationsPage() {
     (vouchingSchema.totalCount || 0) +
     (recognitionSchema.totalCount || 0)
 
-  // Handle successful attestation creation
-  const handleAttestationSuccess = useCallback(() => {
-    // Force refresh of all data
-    window.location.reload()
-  }, [])
-
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="border-b border-gray-700 pb-4">
         <div className="flex items-center justify-between mb-2">
           <div className="ascii-art-title text-lg">ATTESTATIONS</div>
-          <CreateAttestationModal onSuccess={handleAttestationSuccess} />
+          <CreateAttestationModal />
         </div>
         <div className="system-message text-sm">
           ◆ VERIFIABLE CREDENTIALS • REPUTATION NETWORKS • TRUST PROTOCOLS ◆
@@ -273,7 +271,7 @@ export default function AttestationsPage() {
       {/* Attestations List */}
       <div className="space-y-4">
         {!isLoading &&
-          filteredAttestationUIDs.map((item, index) => (
+          filteredAttestationUIDs.map((item) => (
             <AttestationCard key={item.uid} uid={item.uid} />
           ))}
       </div>

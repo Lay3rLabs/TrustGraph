@@ -1,10 +1,11 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { useReadContract } from 'wagmi'
+import { readContract } from '@wagmi/core'
 
 import { easConfig, wavsIndexerConfig } from '@/lib/contracts'
 import { schemas } from '@/lib/schemas'
+import { config } from '@/lib/wagmi'
 
 export interface AttestationData {
   uid: string
@@ -34,23 +35,17 @@ export const attestationKeys = {
 
 // Hook to get schema attestation count with React Query
 function useSchemaAttestationCount(schemaUID: `0x${string}`) {
-  const {
-    data: rawCount,
-    error,
-    isLoading,
-  } = useReadContract({
-    ...wavsIndexerConfig,
-    functionName: 'getEventCountByTypeAndTag',
-    args: ['attestation', `schema:${schemaUID}`],
-    query: {
-      enabled: !!schemaUID,
-    },
-  })
-
   return useQuery({
     queryKey: attestationKeys.schemaCount(schemaUID),
-    queryFn: () => (rawCount ? Number(rawCount) : 0),
-    enabled: !!rawCount && !error && !isLoading,
+    queryFn: async () =>
+      Number(
+        await readContract(config, {
+          ...wavsIndexerConfig,
+          functionName: 'getEventCountByTypeAndTag',
+          args: ['attestation', `schema:${schemaUID}`],
+        })
+      ),
+    enabled: !!schemaUID,
     staleTime: 60 * 1000, // Count changes less frequently
     gcTime: 10 * 60 * 1000, // Cache for 10 minutes
   })
@@ -62,35 +57,37 @@ function useSchemaAttestationUIDs(
   limit = 10,
   totalCount?: number
 ) {
-  const {
-    data: indexedAttestations,
-    error,
-    isLoading,
-  } = useReadContract({
-    ...wavsIndexerConfig,
-    functionName: 'getEventsByTypeAndTag',
-    args: [
-      'attestation',
-      `schema:${schemaUID}`,
-      BigInt(0), // start
-      BigInt(limit), // length
-      false, // reverseOrder - newest first
-    ],
-    query: {
-      enabled: !!schemaUID && !!totalCount && totalCount > 0,
-    },
-  })
-
   return useQuery({
     queryKey: attestationKeys.schemaUIDs(schemaUID, limit),
-    queryFn: () =>
-      indexedAttestations?.flatMap(
-        (attestation) =>
-          (attestation.tags
-            .find((tag) => tag.startsWith('uid:'))
-            ?.split(':')[1] as `0x${string}`) || []
-      ) || [],
-    enabled: !!indexedAttestations && !error && !isLoading,
+    queryFn: async () => {
+      // Refetch the contract data when React Query refetches
+      const result = await readContract(config, {
+        ...wavsIndexerConfig,
+        functionName: 'getEventsByTypeAndTag',
+        args: [
+          'attestation',
+          `schema:${schemaUID}`,
+          BigInt(0),
+          BigInt(limit),
+          false,
+        ],
+      })
+      return result.flatMap((indexedEvent) => {
+        const uid = indexedEvent.tags
+          .find((tag) => tag.startsWith('uid:'))
+          ?.split(':')[1] as `0x${string}`
+
+        if (!uid) {
+          return []
+        }
+
+        return {
+          uid,
+          timestamp: Number(indexedEvent.timestamp),
+        }
+      })
+    },
+    enabled: !!schemaUID && !!totalCount && totalCount > 0,
     staleTime: 30 * 1000, // UIDs change more frequently
     gcTime: 5 * 60 * 1000, // Cache for 5 minutes
   })
@@ -98,23 +95,15 @@ function useSchemaAttestationUIDs(
 
 // Hook to get individual attestation data with React Query
 export function useIndividualAttestation(uid: `0x${string}`) {
-  const {
-    data: rawData,
-    error,
-    isLoading,
-  } = useReadContract({
-    ...easConfig,
-    functionName: 'getAttestation',
-    args: uid ? [uid] : undefined,
-    query: {
-      enabled: !!uid,
-    },
-  })
-
   return useQuery({
     queryKey: attestationKeys.attestation(uid),
-    queryFn: () => rawData as AttestationData,
-    enabled: !!rawData && !error && !isLoading,
+    queryFn: async () =>
+      await readContract(config, {
+        ...easConfig,
+        functionName: 'getAttestation',
+        args: [uid],
+      }),
+    enabled: !!uid,
     staleTime: 2 * 60 * 1000, // Individual attestations are relatively static once created
     gcTime: 10 * 60 * 1000, // Cache longer since they don't change often
   })

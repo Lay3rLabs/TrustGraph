@@ -244,7 +244,7 @@ export function CreateAttestationModal({
                 </div>
 
                 {selectedSchemaInfo && (
-                  <div className="terminal-dim text-xs mt-2">
+                  <div className="terminal-dim text-xs">
                     {getSchemaHelperText(selectedSchemaInfo)}
                   </div>
                 )}
@@ -282,7 +282,7 @@ export function CreateAttestationModal({
                     )}
                   />
                 )) || (
-                  <p className="error-text text-xs mt-2">
+                  <p className="error-text text-xs">
                     Select a schema to attest to.
                   </p>
                 )}
@@ -360,8 +360,7 @@ export function CreateAttestationModal({
 
                   {isLoading && chain?.id === localChain.id && (
                     <div className="terminal-dim text-xs">
-                      🔄 Processing on local Anvil network... Nonce conflicts
-                      auto-handled
+                      🔄 Processing on local Anvil network...
                     </div>
                   )}
                 </div>

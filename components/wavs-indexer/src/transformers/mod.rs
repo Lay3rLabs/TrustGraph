@@ -3,7 +3,7 @@ pub mod interaction;
 
 use crate::solidity::IndexingPayload;
 use crate::trigger::EventData;
-use alloy_primitives::{FixedBytes, U256};
+use alloy_primitives::FixedBytes;
 use anyhow::Result;
 
 /// Static transformer function type
@@ -117,13 +117,9 @@ pub mod utils {
     use crate::bindings::wavs::types::chain::EvmAddress;
     use alloy_primitives::Address;
 
-    use super::*;
-
-    /// Get current timestamp
-    pub fn get_current_timestamp() -> U256 {
-        U256::from(
-            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(),
-        )
+    /// Get current timestamp in milliseconds
+    pub fn get_current_timestamp() -> u128 {
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis()
     }
 
     /// Convert EvmAddress to alloy Address
