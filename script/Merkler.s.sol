@@ -8,7 +8,7 @@ import {Common} from "script/Common.s.sol";
 
 import {MerkleSnapshot} from "contracts/merkle/MerkleSnapshot.sol";
 import {RewardDistributor} from "contracts/rewards/RewardDistributor.sol";
-import {ENOVA} from "contracts/tokens/ERC20.sol";
+import {ENOVA} from "contracts/tokens/ENOVA.sol";
 import {ITypes} from "interfaces/ITypes.sol";
 import {IMerkler} from "interfaces/merkle/IMerkler.sol";
 

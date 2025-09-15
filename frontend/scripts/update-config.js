@@ -38,77 +38,91 @@ try {
   // UPDATE WAGMI CONFIG WITH CONTRACT ADDRESSES
   // ========================================
 
-  // Create a flattened mapping of all contract addresses
+  // Contract name mappings from wagmi config names to contract addresses
   const contractAddresses = {
-    wavs_service_manager: deployment.wavs_service_manager,
-    wavs_indexer: deployment.wavs_indexer,
-    ...deployment.eas.contracts,
-    ...deployment.merkler,
-    ...deployment.prediction_market,
-    // Zodiac Safe stuff
-    safe_singleton: deployment.zodiac_safes.safe_singleton,
-    safe_factory: deployment.zodiac_safes.safe_factory,
-    merkle_gov_module: deployment.zodiac_safes.safe1.merkle_gov_module,
-    signer_module: deployment.zodiac_safes.safe1.signer_module,
-  }
+    // Indexer
+    WavsIndexer: deployment.wavs_indexer,
 
-  console.log('📋 Contract addresses:', contractAddresses)
+    // EAS
+    EASAttestTrigger: deployment.eas.contracts.attest_trigger,
+    WavsAttester: deployment.eas.contracts.attester,
+    EAS: deployment.eas.contracts.eas,
+    EASIndexerResolver: deployment.eas.contracts.indexer_resolver,
+    SchemaRegistrar: deployment.eas.contracts.schema_registrar,
+    SchemaRegistry: deployment.eas.contracts.schema_registry,
 
-  // Contract name mappings from deployment keys to wagmi config names
-  const contractNameMapping = {
-    wavs_indexer: 'WavsIndexer',
+    // Merkler
+    MerkleSnapshot: deployment.merkler.merkle_snapshot,
+    RewardDistributor: deployment.merkler.reward_distributor,
+    ENOVA: deployment.merkler.reward_token,
 
-    // EAS contracts
-    schema_registry: 'SchemaRegistry',
-    eas: 'EAS',
-    attester: 'WavsAttester',
-    schema_registrar: 'SchemaRegistrar',
-    indexer_resolver: 'EASIndexerResolver',
-    attest_trigger: 'EASAttestTrigger',
+    // Prediction market
+    MockUSDC: deployment.prediction_market.collateral_token,
+    ConditionalTokens: deployment.prediction_market.conditional_tokens,
+    PredictionMarketFactory: deployment.prediction_market.factory,
+    PredictionMarketOracleController:
+      deployment.prediction_market.oracle_controller,
+    LMSRMarketMaker: deployment.prediction_market.market_maker,
 
-    // Merkle contracts
-    merkle_snapshot: 'MerkleSnapshot',
-    reward_distributor: 'RewardDistributor',
-    reward_token: 'ENOVA',
-
-    // Prediction market contracts
-    oracle_controller: 'PredictionMarketOracleController',
-    factory: 'PredictionMarketFactory',
-    collateral_token: 'MockUSDC',
-    conditional_tokens: 'ConditionalTokens',
-    market_maker: 'LMSRMarketMaker',
-
-    // Zodiac Safe contracts
-    safe_singleton: 'GnosisSafe',
-    safe_factory: 'GnosisSafeProxy',
-    merkle_gov_module: 'MerkleGovModule',
-    signer_module: 'SignerManagerModule',
-
-    // WAVS service manager
-    wavs_service_manager: 'POAServiceManager',
+    // Zodiac safes
+    GnosisSafe: deployment.zodiac_safes.safe_singleton,
+    GnosisSafeProxy: deployment.zodiac_safes.safe_factory,
+    MerkleGovModule: deployment.zodiac_safes.safe1.merkle_gov_module,
+    SignerManagerModule: deployment.zodiac_safes.safe1.signer_module,
   }
 
   // Read current wagmi config
   let configContent = fs.readFileSync(wagmiConfigFile, 'utf8')
 
-  // Update each contract address
-  Object.entries(contractAddresses).forEach(([deploymentName, address]) => {
-    const configName = contractNameMapping[deploymentName]
-    if (configName && address) {
-      // Simple regex to find and replace the address field for each contract
-      const addressRegex = new RegExp(
-        `(name:\\s*["']${configName}["'][^}]*address:\\s*["'])([^"']*)(["'])`,
-        'g'
-      )
+  // Get unique contract names.
+  const contractNames = Object.keys(contractAddresses).sort()
 
-      if (addressRegex.test(configContent)) {
-        configContent = configContent.replace(addressRegex, `$1${address}$3`)
-        console.log(`✅ Updated ${configName}: ${address}`)
-      } else {
-        console.log(`⚠️  Could not find ${configName} in config`)
-      }
+  // Make sure ABIs exist for all contracts.
+  contractNames.forEach((name) => {
+    const abiPath = path.join(__dirname, `../../out/${name}.sol/${name}.json`)
+    const abiExists = fs.existsSync(abiPath)
+    if (!abiExists) {
+      throw new Error(
+        `Could not find ABI for ${name} at ${abiPath}. Please ensure the contract name and file name match.`
+      )
     }
   })
+
+  const abiRegex = /const ABI = \{[^}]+\}/
+  if (abiRegex.test(configContent)) {
+    configContent = configContent.replace(
+      abiRegex,
+      `
+const ABI = {
+${contractNames
+  .map((name) => `  ${name}: require('../out/${name}.sol/${name}.json'),`)
+  .join('\n')}
+}`.trim()
+    )
+  } else {
+    throw new Error(`Could not find "ABI" variable in wagmi.config.ts`)
+  }
+
+  // Update configured contracts
+  const contractsRegex = /(  contracts: )\[[^\]]+\]/
+  if (contractsRegex.test(configContent)) {
+    configContent = configContent.replace(
+      contractsRegex,
+      `$1[
+${contractNames
+  .map(
+    (name) => `    {
+      abi: ABI.${name}.abi,
+      name: '${name}',
+      address: '${contractAddresses[name]}',
+    },`
+  )
+  .join('\n')}
+  ]`
+    )
+  } else {
+    throw new Error(`Could not find "contracts" config key in wagmi.config.ts`)
+  }
 
   // Write updated wagmi config
   fs.writeFileSync(wagmiConfigFile, configContent)
@@ -150,7 +164,7 @@ ${schemaData
       fs.writeFileSync(schemasFile, schemasContent)
       console.log(`✅ Updated ${schemaData.length} schemas`)
     } else {
-      console.log(`⚠️ Could not find schemas variable`)
+      throw new Error(`Could not find schemas variable`)
     }
   }
 
