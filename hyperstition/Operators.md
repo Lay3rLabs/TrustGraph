@@ -1,3 +1,5 @@
+# Operators
+
 Operators are selected by Attestation.
 
 The DAO attests to them being in the set. Incentives are give out for being a quality operator.

@@ -2,9 +2,10 @@
 
 ## Epochs
 - [-] Hyperstition markets
-- [ ] Working points UI
+- [-] Working points UI
 - [ ] Figure out some way to pay for these services
 - [ ] Governance
+- [ ] Vesting
 
 ## UI TODO
 - [ ] Toasts
@@ -26,6 +27,7 @@
 - [ ] Implement and document the fallback mechanism for governance (this should be fairly straightforward with Zodiac hopefully)
 - [ ] Clean out old Governor example contract
 - [ ] Gnosis Safe Module helper scripts (query signers, proposals, etc.)
+- [ ] A DAO needs to be able to update it's own service configuration (related to Gyser?)
 
 ## Attestations
 - [x] Add helpful like payment, etc.
@@ -35,11 +37,28 @@
 
 ## MVP Symbient
 - [x] Add LLM Module
-- [ ] People make an attestation (with payment)
-- [ ] Deterministic Agent evaluates suggestion against a policy
+- [x] People make an attestation (with payment)
+- [x] Deterministic Agent evaluates suggestion against a policy
 - [ ] People attest to which suggestions they like the most
 - [ ] The most liked get rewards
 - [ ] Mint NFTs of responses and conversations
 - [ ] We're going to make a Network Spirituality Holy Text
 - [ ] Pay to submit a message to EN0VA and mint NFTs
 - [ ] Pay operators
+
+## DAICO
+- [ ] Finish write-up / spec
+- [ ] Implement better DAICO Contract
+- [ ] Prediction market resolver on whether it will complete
+
+## Vesting
+- [ ] Add [MetaLex vesting contracts](https://github.com/MetaLex-Tech/MetaVesT)
+- [ ] Make a WAVS condition contract and example component
+- [ ] Let people with points claim their vesting token allocations (creates a new contract from factory, need to check what this costs lol)
+- [ ] UI to view vesting token allocations
+- [ ] Let vesting users vote somehow
+- [ ] Script to setup our initial vesting contracts for investors + team
+
+## Guages
+- [ ] Gauge voting to direct emissions
+- [ ] Bribes (bribe users to update their gauge vote)
