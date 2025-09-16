@@ -44,6 +44,7 @@
     "forge-std": "github:foundry-rs/forge-std#v1.9.6",
     "lint-staged": ">=10",
     "solhint-community": "4.0.0",
+    "solmate": "^6.8.0",
     "sort-package-json": "2.10.0"
   },
   "devDependencies": {

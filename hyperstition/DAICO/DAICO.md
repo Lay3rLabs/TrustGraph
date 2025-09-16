@@ -1,4 +1,4 @@
-# DAOICO
+# DAICO
 
 In 2018, Vitalik wrote a [blog post](https://ethresear.ch/t/explanation-of-daicos/465) about DAICOs, a better way to do ICOs, designed to counter some of the bad behavior emerging out of ICOs of the 2017 era.
 

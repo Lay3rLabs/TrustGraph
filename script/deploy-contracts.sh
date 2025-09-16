@@ -84,6 +84,15 @@ forge script script/DeployWavsIndexer.s.sol:DeployWavsIndexer \
     --private-key "${FUNDED_KEY}" \
     --broadcast
 
+echo "🏛️  Deploying DAICO contracts..."
+
+# Deploy DAICO contracts using Foundry script
+forge script script/DeployDAICO.s.sol:DeployScript \
+    --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
+    --rpc-url "${RPC_URL}" \
+    --private-key "${FUNDED_KEY}" \
+    --broadcast
+
 # Combine all deployment JSON files into a single deployment summary.
 
 jq -n \
@@ -97,6 +106,7 @@ jq -n \
   --slurpfile merkler_deploy .docker/merkler_deploy.json \
   --slurpfile prediction_market_deploy .docker/prediction_market_deploy.json \
   --slurpfile zodiac_safes_deploy .docker/zodiac_safes_deploy.json \
+  --slurpfile daico_deploy .docker/daico_deploy.json \
   '{
     service_id: $service_id,
     rpc_url: $rpc_url,
@@ -110,6 +120,7 @@ jq -n \
     prediction_market: $prediction_market_deploy[0],
     merkler: $merkler_deploy[0],
     zodiac_safes: $zodiac_safes_deploy[0],
+    daico: $daico_deploy[0],
   }' \
   > .docker/deployment_summary.json
 
@@ -127,3 +138,4 @@ echo "📄 Merkler deployment details saved to .docker/merkler_deploy.json"
 echo "📄 Prediction Market deployment details saved to .docker/prediction_market_deploy.json"
 echo "📄 Zodiac Safes deployment details saved to .docker/zodiac_safes_deploy.json"
 echo "📄 WavsIndexer deployment details saved to .docker/wavs_indexer_deploy.json"
+echo "📄 DAICO deployment details saved to .docker/daico_deploy.json"

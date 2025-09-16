@@ -7,6 +7,7 @@
 @lay3rlabs/conditional-tokens-contracts=node_modules/@lay3rlabs/conditional-tokens-contracts/contracts
 @lay3rlabs/conditional-tokens-market-makers=node_modules/@lay3rlabs/conditional-tokens-market-makers/contracts
 forge-std=node_modules/forge-std/src
+solmate=node_modules/solmate/src
 @wavs=node_modules/@wavs/solidity/contracts
 @lay3rlabs/poa-middleware=node_modules/@lay3rlabs/poa-middleware/contracts
 @transmissions11/vrgda/=node_modules/transmissions11/vrgda/src
