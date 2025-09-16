@@ -81,7 +81,7 @@ Maybe the team should be able to change tap address? So if a new gauge system is
 #### Yield strategies
 - Funds in the DAICO can be used to generate yield through low-risk DeFi protocols, yield is paid out to vToken holders. (Phase 2)
 
-## Simplified Interface
+## Interface
 
 ```solidity
 // SPDX-License-Identifier: MIT
@@ -117,6 +117,7 @@ interface IDAICO is IERC4626 {
         uint256 tapRate; // Wei per second that can be withdrawn
         address tapRecipient; // Address receiving tap withdrawals
         uint256 minRaise; // Minimum amount for refundable crowdsale
+        uint256 raiseDeadline; // Deadline for meeting minRaise (timestamp)
         uint256 vestingDuration; // Linear vesting period for project tokens
         // VRGDA Parameters
         int256 targetPrice; // Starting price per token in contribution asset
@@ -137,21 +138,16 @@ interface IDAICO is IERC4626 {
 
     event TapWithdrawn(uint256 amount);
     event TapRateUpdated(uint256 newRate);
+    event TapRecipientUpdated(address indexed oldRecipient, address indexed newRecipient);
     event ProjectTokensClaimed(address indexed holder, uint256 amount);
     event ProposalCreated(uint256 indexed proposalId, ProposalType proposalType);
     event VoteCast(uint256 indexed proposalId, address indexed voter, bool support, uint256 weight);
     event ProposalExecuted(uint256 indexed proposalId);
     event DAICODissolved();
+    event Refunded(address indexed contributor, uint256 amount);
 
     // ============ Core Functions ============
     // Note: deposit() and redeem() from ERC4626 handle contributions and treasury claims
-
-    /**
-     * @notice Get current VRGDA price for a given amount of tokens
-     * @param amount The amount of tokens to price
-     * @return price The current price in contribution asset
-     */
-    function getCurrentPrice(uint256 amount) external view returns (uint256 price);
 
     /**
      * @notice Get spot price for next token
@@ -182,6 +178,27 @@ interface IDAICO is IERC4626 {
      * @return amount The amount available
      */
     function getAvailableTap() external view returns (uint256 amount);
+
+    /**
+     * @notice Update the tap recipient address (only current tapRecipient)
+     * @param newRecipient The new address to receive tap withdrawals
+     */
+    function updateTapRecipient(address newRecipient) external;
+
+    // ============ Refund Functions ============
+
+    /**
+     * @notice Refund contribution if minRaise not met after deadline
+     * @dev Burns sender's vTokens and returns proportional contribution
+     * @return amount The amount of contribution asset refunded
+     */
+    function refund() external returns (uint256 amount);
+
+    /**
+     * @notice Check if refunds are available (minRaise not met and past deadline)
+     * @return Whether refunds can be claimed
+     */
+    function isRefundable() external view returns (bool);
 
     // ============ Governance Functions ============
 
