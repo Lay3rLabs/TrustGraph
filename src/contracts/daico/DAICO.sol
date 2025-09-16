@@ -2,17 +2,20 @@
 pragma solidity 0.8.27;
 
 import {IDAICO} from "interfaces/IDAICO.sol";
-import {LogisticVRGDA} from "@transmissions11/vrgda/LogisticVRGDA.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {toWadUnsafe} from "solmate/utils/SignedWadMath.sol";
 import {DAICOVault} from "contracts/tokens/DAICOVault.sol";
 
 /// @title DAICO
-/// @notice Decentralized Autonomous Initial Coin Offering with VRGDA pricing
+/// @notice Decentralized Autonomous Initial Coin Offering with Time-Weighted Polynomial Bonding Curve
 /// @dev Uses vault tokens for governance and refunds, project tokens vest over time
-contract DAICO is IDAICO, LogisticVRGDA, ReentrancyGuard {
+///
+/// The pricing mechanism uses a polynomial bonding curve with time-based adjustments:
+/// - Base price follows a polynomial curve: P(s) = a0 + a1*s + a2*s² + a3*s³
+/// - Time adjustment multiplies base price based on sales pace vs target
+/// - This creates VRGDA-like behavior while being gas efficient and continuous
+contract DAICO is IDAICO, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /// ================================================
@@ -42,6 +45,35 @@ contract DAICO is IDAICO, LogisticVRGDA, ReentrancyGuard {
 
     /// @notice Total vesting duration
     uint256 public immutable override vestingDuration;
+
+    /// ================================================
+    /// PRICING PARAMETERS (IMMUTABLES)
+    /// ================================================
+
+    /// @notice Target sale velocity (tokens per second, scaled by 1e18)
+    /// @dev Used to determine if sales are ahead/behind schedule
+    uint256 public immutable targetVelocity;
+
+    /// @notice Pace adjustment factor (scaled by 1e18)
+    /// @dev Controls how strongly price reacts to being ahead/behind schedule
+    /// @dev Higher values = stronger price adjustments
+    uint256 public immutable paceAdjustmentFactor;
+
+    /// @notice Polynomial coefficient a0 (constant term, scaled by 1e18)
+    /// @dev Base price when no tokens have been sold
+    uint256 public immutable a0;
+
+    /// @notice Polynomial coefficient a1 (linear term, scaled by 1e36)
+    /// @dev Controls linear price growth
+    uint256 public immutable a1;
+
+    /// @notice Polynomial coefficient a2 (quadratic term, scaled by 1e54)
+    /// @dev Controls quadratic price growth
+    uint256 public immutable a2;
+
+    /// @notice Polynomial coefficient a3 (cubic term, scaled by 1e72)
+    /// @dev Controls cubic price growth
+    uint256 public immutable a3;
 
     /// ================================================
     /// STATE VARIABLES
@@ -94,14 +126,14 @@ contract DAICO is IDAICO, LogisticVRGDA, ReentrancyGuard {
     /// CONSTRUCTOR
     /// ================================================
 
-    /// @notice Initialize the DAICO contract
+    /// @notice Initialize the DAICO contract with polynomial bonding curve pricing
     /// @param _projectToken The project token to be distributed
     /// @param _treasury The treasury address
     /// @param _admin The admin address
     /// @param _maxSupply Maximum project tokens available for sale
-    /// @param _targetPrice Target price for VRGDA (in wei per token)
-    /// @param _priceDecayPercent Price decay percent (1e18 = 100%)
-    /// @param _timeScale Time scale for logistic curve (in wad)
+    /// @param _targetVelocity Target sale rate (tokens per second, scaled by 1e18)
+    /// @param _paceAdjustmentFactor How strongly to adjust price based on pace (scaled by 1e18)
+    /// @param _polynomialCoefficients Array of [a0, a1, a2, a3] polynomial coefficients
     /// @param _cliffDuration Vesting cliff duration in seconds
     /// @param _vestingDuration Total vesting duration in seconds
     /// @param _vaultName Name for the vault token
@@ -111,18 +143,19 @@ contract DAICO is IDAICO, LogisticVRGDA, ReentrancyGuard {
         address _treasury,
         address _admin,
         uint256 _maxSupply,
-        int256 _targetPrice,
-        int256 _priceDecayPercent,
-        int256 _timeScale,
+        uint256 _targetVelocity,
+        uint256 _paceAdjustmentFactor,
+        uint256[4] memory _polynomialCoefficients,
         uint256 _cliffDuration,
         uint256 _vestingDuration,
         string memory _vaultName,
         string memory _vaultSymbol
-    ) LogisticVRGDA(_targetPrice, _priceDecayPercent, toWadUnsafe(_maxSupply / 1e18), _timeScale) {
+    ) {
         if (_projectToken == address(0)) revert ZeroAddress();
         if (_treasury == address(0)) revert ZeroAddress();
         if (_admin == address(0)) revert ZeroAddress();
         if (_maxSupply == 0) revert InvalidAmount();
+        if (_targetVelocity == 0) revert InvalidAmount();
         if (_vestingDuration < _cliffDuration) revert InvalidAmount();
 
         projectToken = IERC20(_projectToken);
@@ -133,6 +166,14 @@ contract DAICO is IDAICO, LogisticVRGDA, ReentrancyGuard {
         cliffDuration = _cliffDuration;
         vestingDuration = _vestingDuration;
         lastVestingWithdrawal = block.timestamp;
+
+        // Set pricing parameters
+        targetVelocity = _targetVelocity;
+        paceAdjustmentFactor = _paceAdjustmentFactor;
+        a0 = _polynomialCoefficients[0];
+        a1 = _polynomialCoefficients[1];
+        a2 = _polynomialCoefficients[2];
+        a3 = _polynomialCoefficients[3];
 
         // Deploy vault token
         vaultToken = new DAICOVault(address(this), _vaultName, _vaultSymbol);
@@ -155,7 +196,7 @@ contract DAICO is IDAICO, LogisticVRGDA, ReentrancyGuard {
         if (projectTokenAmount == 0) revert InvalidAmount();
         if (totalSold + projectTokenAmount > maxSupply) revert ExceedsMaxSupply();
 
-        // Calculate ETH cost using VRGDA
+        // Calculate ETH cost using polynomial bonding curve
         uint256 ethRequired = _calculatePrice(projectTokenAmount);
         if (msg.value < ethRequired) revert InsufficientPayment();
 
@@ -424,58 +465,169 @@ contract DAICO is IDAICO, LogisticVRGDA, ReentrancyGuard {
     }
 
     /// ================================================
-    /// INTERNAL FUNCTIONS
+    /// PRICING FUNCTIONS (Time-Weighted Polynomial Bonding Curve)
     /// ================================================
 
-    /// @notice Calculate price using VRGDA
+    /// @notice Calculate price using Time-Weighted Polynomial Bonding Curve
+    /// @dev Implements a polynomial bonding curve with time-based adjustments
+    ///
+    /// The pricing mechanism consists of two parts:
+    /// 1. Base Price: Integral of polynomial P(s) = a0 + a1*s + a2*s² + a3*s³
+    /// 2. Time Multiplier: Adjusts price based on sales velocity vs target
+    ///
+    /// This creates VRGDA-like behavior:
+    /// - Selling ahead of schedule → higher multiplier → higher price
+    /// - Selling behind schedule → lower multiplier → lower price
+    ///
+    /// @param amount The amount of project tokens to price
+    /// @return totalPrice The total ETH cost for the tokens
     function _calculatePrice(uint256 amount) private view returns (uint256 totalPrice) {
-        int256 timeSinceStart = toWadUnsafe(block.timestamp - saleStartTime);
-
         if (amount == 0) return 0;
 
-        // Convert from wei-like units to whole tokens for VRGDA pricing
-        uint256 tokensToPrice = amount / 1e18;
-        uint256 currentTokensSold = totalSold / 1e18;
+        uint256 start = totalSold;
+        uint256 end = totalSold + amount;
 
-        if (tokensToPrice > 0) {
-            // Price whole tokens
-            for (uint256 i = 0; i < tokensToPrice; i++) {
-                totalPrice += getVRGDAPrice(timeSinceStart, currentTokensSold + i);
-            }
-        }
+        // Calculate base price using polynomial integral
+        uint256 baseCost = _integratePolynomial(start, end);
 
-        // Handle fractional token (remainder)
-        uint256 remainder = amount % 1e18;
-        if (remainder > 0) {
-            uint256 nextTokenPrice = getVRGDAPrice(timeSinceStart, currentTokensSold + tokensToPrice);
-            // Scale the price proportionally for the fractional amount
-            totalPrice += (nextTokenPrice * remainder) / 1e18;
+        // Calculate time-based multiplier
+        uint256 multiplier = _calculateTimeMultiplier();
+
+        // Apply time adjustment to base cost
+        totalPrice = (baseCost * multiplier) / 1e18;
+    }
+
+    /// @notice Calculate price at a specific supply level
+    /// @param amount The amount of tokens to price
+    /// @param currentSold The supply level to calculate price at
+    /// @return totalPrice The total ETH cost
+    function _calculatePriceAtSupply(uint256 amount, uint256 currentSold) private view returns (uint256 totalPrice) {
+        if (amount == 0) return 0;
+
+        uint256 start = currentSold;
+        uint256 end = currentSold + amount;
+
+        // Calculate base price using polynomial integral
+        uint256 baseCost = _integratePolynomial(start, end);
+
+        // Calculate time-based multiplier
+        uint256 multiplier = _calculateTimeMultiplier();
+
+        // Apply time adjustment to base cost
+        totalPrice = (baseCost * multiplier) / 1e18;
+    }
+
+    /// @notice Integrate the polynomial from start to end supply
+    /// @dev Calculates ∫[start,end] (a0 + a1*s + a2*s² + a3*s³) ds
+    ///
+    /// The integral evaluates to:
+    /// [a0*s + a1*s²/2 + a2*s³/3 + a3*s⁴/4] evaluated from start to end
+    ///
+    /// @param start Starting supply point (in wei units)
+    /// @param end Ending supply point (in wei units)
+    /// @return cost The integrated cost between start and end
+    function _integratePolynomial(uint256 start, uint256 end) private view returns (uint256 cost) {
+        // Convert to whole token units for cleaner calculations
+        uint256 s1 = start / 1e18;
+        uint256 s2 = end / 1e18;
+
+        // Calculate powers
+        uint256 s1_2 = s1 * s1;
+        uint256 s1_3 = s1_2 * s1;
+        uint256 s1_4 = s1_3 * s1;
+
+        uint256 s2_2 = s2 * s2;
+        uint256 s2_3 = s2_2 * s2;
+        uint256 s2_4 = s2_3 * s2;
+
+        // Integral of a0 term: a0 * (s2 - s1)
+        uint256 term0 = a0 * (s2 - s1);
+
+        // Integral of a1 term: a1/2 * (s2² - s1²)
+        // Note: a1 is scaled by 1e36, so we divide by 2e18 to maintain scaling
+        uint256 term1 = (a1 * (s2_2 - s1_2)) / (2 * 1e18);
+
+        // Integral of a2 term: a2/3 * (s2³ - s1³)
+        // Note: a2 is scaled by 1e54, so we divide by 3e36 to maintain scaling
+        uint256 term2 = (a2 * (s2_3 - s1_3)) / (3 * 1e36);
+
+        // Integral of a3 term: a3/4 * (s2⁴ - s1⁴)
+        // Note: a3 is scaled by 1e72, so we divide by 4e54 to maintain scaling
+        uint256 term3 = (a3 * (s2_4 - s1_4)) / (4 * 1e54);
+
+        // Sum all terms
+        cost = term0 + term1 + term2 + term3;
+
+        // Handle fractional tokens
+        uint256 fractionalTokens = (end - start) % 1e18;
+        if (fractionalTokens > 0) {
+            // Calculate spot price at end point and scale by fraction
+            uint256 spotPrice = _calculateSpotPrice(end);
+            cost += (spotPrice * fractionalTokens) / 1e18;
         }
     }
 
-    /// @notice Calculate price at specific supply
-    function _calculatePriceAtSupply(uint256 amount, uint256 currentSold) private view returns (uint256 totalPrice) {
-        int256 timeSinceStart = toWadUnsafe(block.timestamp - saleStartTime);
+    /// @notice Calculate the spot price at a given supply level
+    /// @dev Evaluates the polynomial P(s) = a0 + a1*s + a2*s² + a3*s³
+    /// @param supply The supply level to evaluate at (in wei units)
+    /// @return price The spot price at the given supply
+    function _calculateSpotPrice(uint256 supply) private view returns (uint256 price) {
+        uint256 s = supply / 1e18; // Convert to whole tokens
 
-        if (amount == 0) return 0;
+        // Calculate polynomial: a0 + a1*s + a2*s² + a3*s³
+        uint256 s_2 = s * s;
+        uint256 s_3 = s_2 * s;
 
-        // Convert from wei-like units to whole tokens for VRGDA pricing
-        uint256 tokensToPrice = amount / 1e18;
-        uint256 currentTokensSold = currentSold / 1e18;
+        price = a0;
+        price += (a1 * s) / 1e18;
+        price += (a2 * s_2) / 1e36;
+        price += (a3 * s_3) / 1e54;
+    }
 
-        if (tokensToPrice > 0) {
-            // Price whole tokens
-            for (uint256 i = 0; i < tokensToPrice; i++) {
-                totalPrice += getVRGDAPrice(timeSinceStart, currentTokensSold + i);
+    /// @notice Calculate the time-based price multiplier
+    /// @dev Adjusts price based on actual vs target sales velocity
+    ///
+    /// The multiplier uses an exponential adjustment:
+    /// - If selling faster than target: multiplier > 1 (higher prices)
+    /// - If selling slower than target: multiplier < 1 (lower prices)
+    /// - If exactly on target: multiplier = 1 (no adjustment)
+    ///
+    /// @return multiplier The price multiplier (scaled by 1e18)
+    function _calculateTimeMultiplier() private view returns (uint256 multiplier) {
+        uint256 timeElapsed = block.timestamp - saleStartTime;
+        if (timeElapsed == 0) return 1e18; // No adjustment at start
+
+        // Calculate expected vs actual sales
+        uint256 expectedSold = (targetVelocity * timeElapsed) / 1e18;
+
+        if (totalSold > expectedSold) {
+            // Selling ahead of schedule - increase price
+            uint256 aheadBy = totalSold - expectedSold;
+            uint256 percentAhead = (aheadBy * 1e18) / (expectedSold + 1); // +1 to avoid division by zero
+
+            // Exponential increase: e^(paceAdjustmentFactor * percentAhead)
+            // Approximation: 1 + factor * percent + (factor * percent)² / 2
+            uint256 adjustment = (paceAdjustmentFactor * percentAhead) / 1e18;
+            uint256 adjustmentSquared = (adjustment * adjustment) / 1e18;
+
+            multiplier = 1e18 + adjustment + adjustmentSquared / 2;
+        } else {
+            // Selling behind schedule - decrease price
+            uint256 behindBy = expectedSold - totalSold;
+            uint256 percentBehind = (behindBy * 1e18) / (expectedSold + 1);
+
+            // Exponential decrease: e^(-paceAdjustmentFactor * percentBehind)
+            // Approximation: 1 - factor * percent + (factor * percent)² / 2
+            uint256 adjustment = (paceAdjustmentFactor * percentBehind) / 1e18;
+            uint256 adjustmentSquared = (adjustment * adjustment) / 1e18;
+
+            // Ensure we don't go below a minimum multiplier (e.g., 0.1x)
+            uint256 decrease = adjustment - adjustmentSquared / 2;
+            if (decrease >= 9e17) {
+                multiplier = 1e17; // Minimum 0.1x multiplier
+            } else {
+                multiplier = 1e18 - decrease;
             }
-        }
-
-        // Handle fractional token (remainder)
-        uint256 remainder = amount % 1e18;
-        if (remainder > 0) {
-            uint256 nextTokenPrice = getVRGDAPrice(timeSinceStart, currentTokensSold + tokensToPrice);
-            // Scale the price proportionally for the fractional amount
-            totalPrice += (nextTokenPrice * remainder) / 1e18;
         }
     }
 
