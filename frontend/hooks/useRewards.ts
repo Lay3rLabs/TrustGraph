@@ -15,7 +15,7 @@ import {
   rewardDistributorAbi,
   rewardDistributorAddress,
 } from '@/lib/contracts'
-import { writeEthContractAndWait } from '@/lib/utils'
+import { txToast } from '@/lib/tx'
 
 interface MerkleTreeData {
   tree: Array<{
@@ -173,13 +173,17 @@ export function useRewards() {
     try {
       setError(null)
 
-      const { transactionHash } = await writeEthContractAndWait({
-        address: merkleSnapshotAddress,
-        abi: merkleSnapshotAbi,
-        functionName: 'trigger',
+      const [{ transactionHash }] = await txToast({
+        tx: {
+          address: merkleSnapshotAddress,
+          abi: merkleSnapshotAbi,
+          functionName: 'trigger',
+        },
+        successMessage: 'Reward update triggered!',
       })
 
       console.log('Reward update triggered:', transactionHash)
+
       return transactionHash
     } catch (err: any) {
       console.error('Error triggering reward update:', err)
@@ -198,15 +202,18 @@ export function useRewards() {
     try {
       setError(null)
 
-      const { transactionHash } = await writeEthContractAndWait({
-        address: rewardDistributorAddress,
-        abi: rewardDistributorAbi,
-        functionName: 'claim',
-        args: [
-          address,
-          BigInt(pendingReward.value),
-          pendingReward.proof as `0x${string}`[],
-        ],
+      const [{ transactionHash }] = await txToast({
+        tx: {
+          address: rewardDistributorAddress,
+          abi: rewardDistributorAbi,
+          functionName: 'claim',
+          args: [
+            address,
+            BigInt(pendingReward.value),
+            pendingReward.proof as `0x${string}`[],
+          ],
+        },
+        successMessage: 'Rewards claimed!',
       })
 
       // Add to claim history
@@ -222,6 +229,7 @@ export function useRewards() {
       await refetchClaimed()
 
       console.log('Rewards claimed:', transactionHash)
+
       return transactionHash
     } catch (err: any) {
       console.error('Error claiming rewards:', err)

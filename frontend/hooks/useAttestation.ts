@@ -7,7 +7,7 @@ import { useAccount, useChainId, usePublicClient } from 'wagmi'
 
 import { easAbi, easAddress } from '@/lib/contracts'
 import { SCHEMA_OPTIONS } from '@/lib/schemas'
-import { writeEthContractAndWait } from '@/lib/utils'
+import { txToast } from '@/lib/tx'
 import { localChain } from '@/lib/wagmi'
 
 import { attestationKeys } from './useIndexer'
@@ -134,8 +134,8 @@ export function useAttestation() {
 
         const gasPrice = await publicClient!.getGasPrice()
 
-        const receipt = await writeEthContractAndWait(
-          {
+        const [receipt] = await txToast({
+          tx: {
             address: easAddress as `0x${string}`,
             abi: easAbi,
             functionName: 'attest',
@@ -145,10 +145,9 @@ export function useAttestation() {
             nonce,
             type: 'legacy',
           },
-          {
-            onTransactionSent: setHash,
-          }
-        )
+          onTransactionSent: setHash,
+          successMessage: 'Attestation created!',
+        })
 
         console.log(`✅ Transaction confirmed: ${receipt.transactionHash}`)
 

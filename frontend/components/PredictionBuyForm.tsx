@@ -16,7 +16,7 @@ import {
   mockUsdcAddress,
   predictionMarketFactoryAddress,
 } from '@/lib/contracts'
-import { writeEthContractAndWait } from '@/lib/utils'
+import { txToast } from '@/lib/tx'
 
 import { HyperstitionMarket } from './PredictionMarketDetail'
 
@@ -369,22 +369,28 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
           ? [BigInt(0), tokenAmount]
           : [tokenAmount, BigInt(0)]
 
-      // Execute transactions sequentially and wait for each one
-      // Approve market maker to spend collateral
-      await writeEthContractAndWait({
-        address: mockUsdcAddress,
-        abi: mockUsdcAbi,
-        functionName: 'approve',
-        args: [marketMakerAddress, collateralLimit],
-      })
-
-      // Execute trade
-      await writeEthContractAndWait({
-        address: marketMakerAddress,
-        abi: lmsrMarketMakerAbi,
-        functionName: 'trade',
-        args: [outcomeTokenAmounts, collateralLimit],
-      })
+      await txToast(
+        // Approve market maker to spend collateral
+        {
+          tx: {
+            address: mockUsdcAddress,
+            abi: mockUsdcAbi,
+            functionName: 'approve',
+            args: [marketMakerAddress, collateralLimit],
+          },
+          successMessage: 'Spend approved!',
+        },
+        // Execute trade
+        {
+          tx: {
+            address: marketMakerAddress,
+            abi: lmsrMarketMakerAbi,
+            functionName: 'trade',
+            args: [outcomeTokenAmounts, collateralLimit],
+          },
+          successMessage: 'Trade executed!',
+        }
+      )
 
       setSuccess(
         `Successfully spent ${formData.collateralAmount} USDC on ${formData.outcome} tokens!`

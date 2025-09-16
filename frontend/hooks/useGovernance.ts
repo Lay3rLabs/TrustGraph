@@ -14,7 +14,7 @@ import {
   merkleGovModuleAddress,
   mockUsdcAddress,
 } from '@/lib/contracts'
-import { writeEthContractAndWait } from '@/lib/utils'
+import { txToast } from '@/lib/tx'
 
 // Types matching the MerkleGovModule contract structs
 export interface ProposalAction {
@@ -414,48 +414,21 @@ export function useGovernance() {
         // Get gas price
         const gasPrice = await publicClient.getGasPrice()
 
-        console.log('Calling writeContract...')
-
-        // Call writeContract and wait for it to return a hash
-        await writeEthContractAndWait({
-          address: merkleGovModuleAddress,
-          abi: merkleGovModuleAbi,
-          functionName: 'propose',
-          args: [targets, values, calldatas, operations, description],
-          gas: (gasEstimate * BigInt(120)) / BigInt(100), // Add 20% buffer
-          gasPrice: gasPrice,
-          nonce,
-          type: 'legacy',
+        const [receipt] = await txToast({
+          tx: {
+            address: merkleGovModuleAddress,
+            abi: merkleGovModuleAbi,
+            functionName: 'propose',
+            args: [targets, values, calldatas, operations, description],
+            gas: (gasEstimate * BigInt(120)) / BigInt(100), // Add 20% buffer
+            gasPrice,
+            nonce,
+            type: 'legacy',
+          },
+          successMessage: 'Proposal created!',
         })
 
-        // Return a promise that resolves when the transaction hash is available
-        return new Promise((resolve, reject) => {
-          // Set up a listener for when writeHash changes
-          const checkForHash = () => {
-            if (writeHash) {
-              console.log('Transaction hash received:', writeHash)
-              resolve(writeHash)
-              return
-            }
-            if (writeError) {
-              console.error('Write error:', writeError)
-              reject(writeError)
-              return
-            }
-            // Check again in 100ms
-            setTimeout(checkForHash, 100)
-          }
-
-          // Start checking
-          setTimeout(checkForHash, 100)
-
-          // Timeout after 30 seconds
-          setTimeout(() => {
-            reject(
-              new Error('Transaction timeout - no response after 30 seconds')
-            )
-          }, 30000)
-        })
+        return receipt.transactionHash
       } catch (err: any) {
         console.error('Error creating proposal:', err)
         setError(
@@ -536,49 +509,27 @@ export function useGovernance() {
         const gasPrice = await publicClient.getGasPrice()
 
         // Call writeContract
-        await writeEthContractAndWait({
-          address: merkleGovModuleAddress,
-          abi: merkleGovModuleAbi,
-          functionName: 'castVote',
-          args: [
-            BigInt(proposalId),
-            support,
-            BigInt(userVotingPower.value),
-            mockUsdcAddress,
-            userVotingPower.proof as `0x${string}`[],
-          ],
-          gas: (gasEstimate * BigInt(120)) / BigInt(100),
-          gasPrice: gasPrice,
-          nonce,
-          type: 'legacy',
+        const [receipt] = await txToast({
+          tx: {
+            address: merkleGovModuleAddress,
+            abi: merkleGovModuleAbi,
+            functionName: 'castVote',
+            args: [
+              BigInt(proposalId),
+              support,
+              BigInt(userVotingPower.value),
+              mockUsdcAddress,
+              userVotingPower.proof as `0x${string}`[],
+            ],
+            gas: (gasEstimate * BigInt(120)) / BigInt(100),
+            gasPrice,
+            nonce,
+            type: 'legacy',
+          },
+          successMessage: 'Vote cast!',
         })
 
-        // Return promise that resolves when the transaction hash is available
-        return new Promise((resolve, reject) => {
-          const checkForHash = () => {
-            if (writeHash) {
-              console.log('Vote transaction hash received:', writeHash)
-              resolve(writeHash)
-              return
-            }
-            if (writeError) {
-              console.error('Vote write error:', writeError)
-              reject(writeError)
-              return
-            }
-            setTimeout(checkForHash, 100)
-          }
-
-          setTimeout(checkForHash, 100)
-
-          setTimeout(() => {
-            reject(
-              new Error(
-                'Vote transaction timeout - no response after 30 seconds'
-              )
-            )
-          }, 30000)
-        })
+        return receipt.transactionHash
       } catch (err: any) {
         console.error('Error casting vote:', err)
         setError(
@@ -648,44 +599,21 @@ export function useGovernance() {
         // Get gas price
         const gasPrice = await publicClient.getGasPrice()
 
-        // Call writeContract
-        await writeEthContractAndWait({
-          address: merkleGovModuleAddress,
-          abi: merkleGovModuleAbi,
-          functionName: 'execute',
-          args: [BigInt(proposalId)],
-          gas: (gasEstimate * BigInt(120)) / BigInt(100),
-          gasPrice: gasPrice,
-          nonce,
-          type: 'legacy',
+        const [receipt] = await txToast({
+          tx: {
+            address: merkleGovModuleAddress,
+            abi: merkleGovModuleAbi,
+            functionName: 'execute',
+            args: [BigInt(proposalId)],
+            gas: (gasEstimate * BigInt(120)) / BigInt(100),
+            gasPrice,
+            nonce,
+            type: 'legacy',
+          },
+          successMessage: 'Proposal executed!',
         })
 
-        // Return promise that resolves when the transaction hash is available
-        return new Promise((resolve, reject) => {
-          const checkForHash = () => {
-            if (writeHash) {
-              console.log('Execute transaction hash received:', writeHash)
-              resolve(writeHash)
-              return
-            }
-            if (writeError) {
-              console.error('Execute write error:', writeError)
-              reject(writeError)
-              return
-            }
-            setTimeout(checkForHash, 100)
-          }
-
-          setTimeout(checkForHash, 100)
-
-          setTimeout(() => {
-            reject(
-              new Error(
-                'Execute transaction timeout - no response after 30 seconds'
-              )
-            )
-          }, 30000)
-        })
+        return receipt.transactionHash
       } catch (err: any) {
         console.error('Error executing proposal:', err)
         setError(

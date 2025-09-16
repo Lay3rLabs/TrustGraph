@@ -6,6 +6,8 @@ import { WagmiProvider } from 'wagmi'
 
 import { config } from '@/lib/wagmi'
 
+import { Toaster } from './toasts/Toaster'
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -41,6 +43,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         {children}
+
+        <Toaster />
+
         {/* {process.env.NODE_ENV === "development" && (
           <ReactQueryDevtools initialIsOpen={false} />
         )} */}
