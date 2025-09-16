@@ -9,6 +9,8 @@
 forge-std=node_modules/forge-std/src
 @wavs=node_modules/@wavs/solidity/contracts
 @lay3rlabs/poa-middleware=node_modules/@lay3rlabs/poa-middleware/contracts
+@transmissions11/vrgda/=node_modules/transmissions11/vrgda/src
+@metalex-tech/metavest/=node_modules/metalex-tech/metavest/src
 contracts/=src/contracts
 common/=src/common
 interfaces/=src/interfaces

@@ -310,7 +310,6 @@ This creates a self-balancing mechanism where:
 5. **Fair for Contributors**: Early supporters get better prices, but latecomers aren't priced out
 6. **Anti-Manipulation**: Exponential pricing makes it expensive to corner the market
 
-
 ## Open Question
 
 - One big DAICO? Or phased approach?
