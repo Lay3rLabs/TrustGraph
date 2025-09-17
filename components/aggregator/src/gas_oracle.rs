@@ -49,14 +49,11 @@ pub fn get_gas_price() -> Result<Option<u128>, String> {
         _ => &response.result.propose_gas_price,
     };
 
-    let gas_price_gwei: f64 = gas_price_str
-        .parse()
-        .map_err(|e| format!("Invalid gas price from Etherscan: {e}"))?;
+    let gas_price_gwei: f64 =
+        gas_price_str.parse().map_err(|e| format!("Invalid gas price from Etherscan: {e}"))?;
 
     if !(0.1..=10000.0).contains(&gas_price_gwei) {
-        return Err(format!(
-            "Unreasonable gas price from Etherscan: {gas_price_gwei} Gwei"
-        ));
+        return Err(format!("Unreasonable gas price from Etherscan: {gas_price_gwei} Gwei"));
     }
 
     let gas_price_wei = (gas_price_gwei * 1_000_000_000.0) as u128;

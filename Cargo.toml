@@ -41,9 +41,9 @@ alloy-network = "1.0.0"
 alloy-provider = { version = "1.0.0", default-features = false, features = [
     "rpc-api",
 ] }
-alloy-rpc-types = "0.15.10"
-alloy-contract = "0.15.10"
-alloy-transport-http = { version = "0.15.10", default-features = false }
+alloy-rpc-types = "1.0.0"
+alloy-contract = "1.0.0"
+alloy-transport-http = { version = "1.0.0", default-features = false }
 
 ## IPFS
 cid = "0.7"

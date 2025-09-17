@@ -3,7 +3,10 @@ use alloy_provider::Provider;
 use wavs_wasi_utils::evm::new_evm_provider;
 use wstd::runtime::block_on;
 
-use crate::bindings::{host, wavs::{aggregator::aggregator::TriggerData, types::events::TriggerDataEvmContractEvent}};
+use crate::bindings::{
+    host,
+    wavs::{aggregator::aggregator::TriggerData, types::events::TriggerDataEvmContractEvent},
+};
 
 pub fn is_valid_tx(trigger_data: TriggerData) -> Result<bool, String> {
     match trigger_data {
