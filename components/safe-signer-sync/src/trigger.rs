@@ -1,4 +1,5 @@
-use crate::bindings::wavs::worker::input::{TriggerData, TriggerDataEvmContractEvent};
+use crate::bindings::wavs::operator::input::TriggerData;
+use crate::bindings::wavs::types::events::TriggerDataEvmContractEvent;
 use crate::bindings::WasmResponse;
 use crate::solidity::MerkleRootUpdated;
 use anyhow::Result;
@@ -34,7 +35,7 @@ pub enum Destination {
 pub fn decode_trigger_event(trigger_data: TriggerData) -> Result<(MerkleRootUpdated, Destination)> {
     match trigger_data {
         TriggerData::EvmContractEvent(TriggerDataEvmContractEvent { log, .. }) => {
-            let event: MerkleRootUpdated = decode_event_log_data!(log)?;
+            let event: MerkleRootUpdated = decode_event_log_data!(log.data)?;
             Ok((event, Destination::Ethereum))
         }
         // TODO fixme
