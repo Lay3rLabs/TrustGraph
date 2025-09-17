@@ -20,8 +20,8 @@ FUEL_LIMIT=${FUEL_LIMIT:-1000000000000}
 MAX_GAS=${MAX_GAS:-5000000}
 FILE_LOCATION=${FILE_LOCATION:-".docker/service.json"}
 TRIGGER_EVENT=${TRIGGER_EVENT:-"AttestationRequested(address,bytes32,address,bytes)"}
-TRIGGER_CHAIN=${TRIGGER_CHAIN:-"local"}
-SUBMIT_CHAIN=${SUBMIT_CHAIN:-"local"}
+TRIGGER_CHAIN=${TRIGGER_CHAIN:-"evm:31337"}
+SUBMIT_CHAIN=${SUBMIT_CHAIN:-"evm:31337"}
 AGGREGATOR_URL=${AGGREGATOR_URL:-""}
 DEPLOY_ENV=${DEPLOY_ENV:-""}
 REGISTRY=${REGISTRY:-"wa.dev"}
@@ -179,14 +179,14 @@ jq -c '.components[]' "${COMPONENT_CONFIGS_FILE}" | while IFS= read -r component
     WORKFLOW_ID=`eval "$BASE_CMD workflow add" | jq -r .workflow_id`
     echo "  Workflow ID: ${WORKFLOW_ID}"
 
-    eval "$BASE_CMD workflow trigger --id ${WORKFLOW_ID} set-evm --address ${COMP_TRIGGER_ADDRESS} --chain-name ${TRIGGER_CHAIN} --event-hash ${COMP_TRIGGER_EVENT_HASH}" > /dev/null
+    eval "$BASE_CMD workflow trigger --id ${WORKFLOW_ID} set-evm --address ${COMP_TRIGGER_ADDRESS} --chain ${TRIGGER_CHAIN} --event-hash ${COMP_TRIGGER_EVENT_HASH}" > /dev/null
 
     # If no aggregator is set, use the default
     SUB_CMD="set-evm"
     if [ -n "$AGGREGATOR_URL" ]; then
         SUB_CMD="set-aggregator --url ${AGGREGATOR_URL}"
     fi
-    eval "$BASE_CMD workflow submit --id ${WORKFLOW_ID} ${SUB_CMD} --address ${COMP_SUBMIT_ADDRESS} --chain-name ${SUBMIT_CHAIN} --max-gas ${MAX_GAS}" > /dev/null
+    eval "$BASE_CMD workflow submit --id ${WORKFLOW_ID} ${SUB_CMD} --address ${COMP_SUBMIT_ADDRESS} --chain ${SUBMIT_CHAIN} --max-gas ${MAX_GAS}" > /dev/null
     eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} set-source-registry --domain ${REGISTRY} --package ${PKG_NAMESPACE}:${COMP_PKG_NAME} --version ${COMP_PKG_VERSION}"
 
     eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} permissions --http-hosts '*' --file-system true" > /dev/null
@@ -218,7 +218,7 @@ jq -c '.components[]' "${COMPONENT_CONFIGS_FILE}" | while IFS= read -r component
     echo ""
 done
 
-eval "$BASE_CMD manager set-evm --chain-name ${SUBMIT_CHAIN} --address `cast --to-checksum ${WAVS_SERVICE_MANAGER_ADDRESS}`" > /dev/null
+eval "$BASE_CMD manager set-evm --chain ${SUBMIT_CHAIN} --address `cast --to-checksum ${WAVS_SERVICE_MANAGER_ADDRESS}`" > /dev/null
 eval "$BASE_CMD validate" > /dev/null
 
 echo "Configuration file created ${FILE_LOCATION}. Watching events from '${TRIGGER_CHAIN}' & submitting to '${SUBMIT_CHAIN}'."

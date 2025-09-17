@@ -45,11 +45,11 @@ log_level = ["info", "wavs=debug"]
 # gas_price = 0.0053
 # gas_denom = "untrn"
 
-# # EVM chains
-# [default.chains.evm.31337]
-# ws_endpoint = "ws://localhost:8545"
-# http_endpoint = "http://localhost:8545"
-# poll_interval_ms = 7000
+# EVM chains
+[default.chains.evm.31337]
+ws_endpoint = "ws://localhost:8545"
+http_endpoint = "http://localhost:8545"
+poll_interval_ms = 7000
 
 # [default.chains.evm.11155111]
 # ws_endpoint = "wss://ethereum-sepolia-rpc.publicnode.com"
