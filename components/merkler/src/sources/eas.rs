@@ -200,6 +200,8 @@ impl Source for EasSource {
                             .ok_or_else(|| {
                                 anyhow::anyhow!("Field {field_name} not found in attestation data")
                             })?
+                            .as_str()
+                            .ok_or_else(|| anyhow::anyhow!("Field {field_name} is not a string"))?
                             .to_string()
                     }
                 };

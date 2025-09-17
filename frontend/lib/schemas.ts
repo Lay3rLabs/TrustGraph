@@ -2,16 +2,16 @@
 // These are the standard schemas used in the application
 
 export const schemas = {
-  basic: '0x0fde621f7f4b76e4954d75cb96903ca3581931678a66758f4de1224a5bdbd114',
-  compute: '0x0a550ccef4ab477ac9e1e266f6b94e8e6ffba859f372f4ff4a7932b7eb416129',
-  isTrue: '0xab61910e745f7a8b2757d436f8ab1cf1b492ae59a327c0fa9e991c87ec92da25',
-  like: '0xbdbf2de21d4536e52a8f9a380d48664cc2afb5eed766d9d606cd9886200f7fb1',
+  basic: '0x9b9fce7e12ad60ec91a413996435b3db1ca988e6a623931680ecb4ad22ebe0ca',
+  compute: '0x5dba5bf8782eb162689ca5baf4148a7145191770a7bc6de44a2683eb67e7cdbe',
+  isTrue: '0x42e0aa833c6d1ca4f2cc8be8219e8ed176454370c025836bfe4f5a3de602b37e',
+  like: '0xd08a940f2989de29aed3ca9527944927433017d82c2d6132a5c874afc1ac63b3',
   recognition:
-    '0xf6e6f7c97e847dc06af70d0eca892383f80ee29e56991b131808253e96413af2',
+    '0x28048dd864394ef46ff8110e2b0e26176f6f42cb9f6789634c8b603709533931',
   statement:
-    '0x91f59114dd2cc6cc808b23eac90b165c33b6eaf59aedbfdf4a7463ff6790de69',
+    '0x304744605ac3989e7dfd5fc0cdf9b9780b654a15762408c01c2ba9ec46e310ca',
   vouching:
-    '0x81fc70d5dee5f714c7b1950e7f7f4771c94e681aa831d5dbeaa8e9cdd33b7bf7',
+    '0x3dff482449710cf743b77aeb7fc0c754fc4e7c80b7fbb79caa393ea6df7673a0',
 } as const
 
 // Schema definitions with metadata for UI

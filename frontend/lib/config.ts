@@ -2,4 +2,4 @@
  * The ID of the WAVS service.
  */
 export const wavsServiceId =
-  'd31ab364144adabf6a1659fcced12e8fff1048dd3bc3a6f0de9df02d0f82aff7'
+  '44df57418835de31fbb63b114ba1082090cbb7db3b5674306bfb41eb71d32b6d'

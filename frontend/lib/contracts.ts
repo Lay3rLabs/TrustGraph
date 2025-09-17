@@ -572,7 +572,7 @@ export const conditionalTokensAbi = [
 ] as const
 
 export const conditionalTokensAddress =
-  '0xFcdB605828b77F22ffB813eCa50782b601A9455E' as const
+  '0xf9333086ebF1074dAcd55073d90fbe612e156059' as const
 
 export const conditionalTokensConfig = {
   address: conditionalTokensAddress,
@@ -1170,7 +1170,7 @@ export const easAbi = [
   { type: 'error', inputs: [], name: 'WrongSchema' },
 ] as const
 
-export const easAddress = '0x68DD0bd2fD82c194B5cd9EbD14e09c57fc88c566' as const
+export const easAddress = '0x830Dc16a900Ac00c8665B112Ae2f3726224c9377' as const
 
 export const easConfig = { address: easAddress, abi: easAbi } as const
 
@@ -1271,7 +1271,7 @@ export const easAttestTriggerAbi = [
 ] as const
 
 export const easAttestTriggerAddress =
-  '0x0cEFBF8c0fdcd0c953Eb79AfcC545C241730D4dD' as const
+  '0xf9A34C528d3a5Cf130926bcA736E2938dE6C1dA7' as const
 
 export const easAttestTriggerConfig = {
   address: easAttestTriggerAddress,
@@ -1457,7 +1457,7 @@ export const easIndexerResolverAbi = [
 ] as const
 
 export const easIndexerResolverAddress =
-  '0xBa385b2BE564e47b9f4E28D77e1D295b690D3828' as const
+  '0xEc1D957a3B3053DaaaFA72188635EF40832Ac9dB' as const
 
 export const easIndexerResolverConfig = {
   address: easIndexerResolverAddress,
@@ -2221,7 +2221,7 @@ export const enovaAbi = [
 ] as const
 
 export const enovaAddress =
-  '0xd5013b13C8DDe5a187D71716eF12D3a35cCCc4FA' as const
+  '0x2556161027dE8E51b6A8e55CEb8E3aAa6EE52F2b' as const
 
 export const enovaConfig = { address: enovaAddress, abi: enovaAbi } as const
 
@@ -2804,7 +2804,7 @@ export const gnosisSafeAbi = [
 ] as const
 
 export const gnosisSafeAddress =
-  '0xc4921ceD0BE9b2Fab3cA1EC44c97669371810e96' as const
+  '0xff3e703a5FBD6d4E0AE2a301bb924134b3d14Dbc' as const
 
 export const gnosisSafeConfig = {
   address: gnosisSafeAddress,
@@ -2825,7 +2825,7 @@ export const gnosisSafeProxyAbi = [
 ] as const
 
 export const gnosisSafeProxyAddress =
-  '0xB5968e99F36a7a2C7CcE535C41F76C698D95269a' as const
+  '0x42D9E6f6c2274EFf3bDe58A5e1A730b059Ef5664' as const
 
 export const gnosisSafeProxyConfig = {
   address: gnosisSafeProxyAddress,
@@ -3241,7 +3241,7 @@ export const lmsrMarketMakerAbi = [
 ] as const
 
 export const lmsrMarketMakerAddress =
-  '0xA222b51BA38bd4c5204dec6510BFE76Ae4016b1E' as const
+  '0xEeae9106f1dE4A9C59cD6f00336440BaD2886963' as const
 
 export const lmsrMarketMakerConfig = {
   address: lmsrMarketMakerAddress,
@@ -3766,7 +3766,7 @@ export const merkleGovModuleAbi = [
 ] as const
 
 export const merkleGovModuleAddress =
-  '0xA5b2E1E8b6e5251279b5a955B7A0998C8e1C50a4' as const
+  '0x5f261Aed1F7F7332C7822357014b705C0ea69Fd3' as const
 
 export const merkleGovModuleConfig = {
   address: merkleGovModuleAddress,
@@ -4199,7 +4199,7 @@ export const merkleSnapshotAbi = [
 ] as const
 
 export const merkleSnapshotAddress =
-  '0xF09Dfc51980579AC30448Aa4B8F766CE13F4eBaC' as const
+  '0x523f67ECcAE1Ae4705cc3C675A82A7c2000b9e25' as const
 
 export const merkleSnapshotConfig = {
   address: merkleSnapshotAddress,
@@ -4429,7 +4429,7 @@ export const mockUsdcAbi = [
 ] as const
 
 export const mockUsdcAddress =
-  '0xcA00F5125b4b009143491fe15933E957D2C5f695' as const
+  '0xc8e62f8cFA8D6BdCEc51bcDF4A3dc5fD5d45f4c5' as const
 
 export const mockUsdcConfig = {
   address: mockUsdcAddress,
@@ -4561,7 +4561,7 @@ export const predictionMarketFactoryAbi = [
 ] as const
 
 export const predictionMarketFactoryAddress =
-  '0x1351462D0D264ebd77C5610e3f9FE0f6cBB058Cc' as const
+  '0x30223222f708CbdA82366390F4704CfD96783Ad4' as const
 
 export const predictionMarketFactoryConfig = {
   address: predictionMarketFactoryAddress,
@@ -4732,7 +4732,7 @@ export const predictionMarketOracleControllerAbi = [
 ] as const
 
 export const predictionMarketOracleControllerAddress =
-  '0xcfa5aed8aa157694C41a5FE9A7809399caB78703' as const
+  '0xcEF2Fdb5323f900867B8e060ad26F41c723DCFbb' as const
 
 export const predictionMarketOracleControllerConfig = {
   address: predictionMarketOracleControllerAddress,
@@ -5076,7 +5076,7 @@ export const rewardDistributorAbi = [
 ] as const
 
 export const rewardDistributorAddress =
-  '0x1E2043b301c49a71fC84d63dBBe82523496157e6' as const
+  '0x85C67d43f48cFEBdE87D623D50453566aCB0Ea31' as const
 
 export const rewardDistributorConfig = {
   address: rewardDistributorAddress,
@@ -5120,7 +5120,7 @@ export const schemaRegistrarAbi = [
 ] as const
 
 export const schemaRegistrarAddress =
-  '0x474e0E8399ef616a18ff15fF2CF34bFAE9C4822b' as const
+  '0x22a7Bcac2E15f22433f91510d81F1B3d6B90B9E4' as const
 
 export const schemaRegistrarConfig = {
   address: schemaRegistrarAddress,
@@ -5212,7 +5212,7 @@ export const schemaRegistryAbi = [
 ] as const
 
 export const schemaRegistryAddress =
-  '0x9345d178a1f7b7F61d9219426dD96c32d606D71b' as const
+  '0xf53905D6cB58F7B938Db06a0874D835f4c28086c' as const
 
 export const schemaRegistryConfig = {
   address: schemaRegistryAddress,
@@ -5609,7 +5609,7 @@ export const signerManagerModuleAbi = [
 ] as const
 
 export const signerManagerModuleAddress =
-  '0x721A215096bA433c645fB1625FbDc4D96b9b23fC' as const
+  '0xeA713C14383a233454de10e1b0d211A6A9c12992' as const
 
 export const signerManagerModuleConfig = {
   address: signerManagerModuleAddress,
@@ -5797,7 +5797,7 @@ export const wavsAttesterAbi = [
 ] as const
 
 export const wavsAttesterAddress =
-  '0x6Fde6f0F7fc582D2a953D39E163bc9b6B9daefc8' as const
+  '0x2b0414Bfe983238De67A7064e3750Bf5B25191c6' as const
 
 export const wavsAttesterConfig = {
   address: wavsAttesterAddress,
@@ -6795,7 +6795,7 @@ export const wavsIndexerAbi = [
 ] as const
 
 export const wavsIndexerAddress =
-  '0x4cd0Ebcc0e4bcB9Fb412e0106EADc1C3728b14B3' as const
+  '0x5e856CB6585d5196CC07FFC1D4CF14588829094d' as const
 
 export const wavsIndexerConfig = {
   address: wavsIndexerAddress,
