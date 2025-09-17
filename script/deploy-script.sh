@@ -90,6 +90,7 @@ export INDEXER_ADDRESS=$(jq -r '.wavs_indexer' .docker/deployment_summary.json)
 echo "Configuring EAS addresses from deployment summary..."
 export EAS_ADDRESS=$(jq -r '.eas.contracts.eas' .docker/deployment_summary.json)
 export RECOGNITION_SCHEMA_UID=$(jq -r '.eas.schemas.recognition' .docker/deployment_summary.json)
+export VOUCHING_SCHEMA_UID=$(jq -r '.eas.schemas.vouching' .docker/deployment_summary.json)
 
 # Determine chain name based on deployment environment
 if [ "$(task get-deploy-status)" = "TESTNET" ]; then
@@ -114,9 +115,15 @@ if [ "$RECOGNITION_SCHEMA_UID" = "null" ] || [ -z "$RECOGNITION_SCHEMA_UID" ]; t
     exit 1
 fi
 
+if [ "$VOUCHING_SCHEMA_UID" = "null" ] || [ -z "$VOUCHING_SCHEMA_UID" ]; then
+    echo "❌ Failed to extract vouching schema UID from deployment summary"
+    exit 1
+fi
+
 echo "✅ EAS Address: ${EAS_ADDRESS}"
 echo "✅ Indexer Address: ${INDEXER_ADDRESS}"
 echo "✅ Recognition Schema UID: ${RECOGNITION_SCHEMA_UID}"
+echo "✅ Vouching Schema UID: ${VOUCHING_SCHEMA_UID}"
 echo "✅ Chain Name: ${CHAIN_NAME}"
 
 export REWARDS_TOKEN_ADDRESS=$(jq -r '.merkler.reward_token' .docker/deployment_summary.json)

@@ -311,7 +311,7 @@ export default function PointsPage() {
                       </div>
                       <div className="text-right">
                         <div className="text-green-400 font-bold">
-                          +{activity.points}
+                          +{activity.points.toLocaleString()}
                         </div>
                         <div className="text-xs text-gray-500">points</div>
                       </div>

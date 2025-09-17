@@ -45,16 +45,6 @@ impl EasPageRankSource {
         let indexer_addr = Address::from_str(indexer_address)
             .map_err(|e| anyhow::anyhow!("Invalid indexer address: {}", e))?;
 
-        // Validate points pool size to prevent excessive distributions
-        let max_pool_size = U256::from(10000000000000000000000000u128); // 10M tokens max
-        if pagerank_config.total_pool > max_pool_size {
-            return Err(anyhow::anyhow!(
-                "PageRank points pool too large: {} (max allowed: {})",
-                pagerank_config.total_pool,
-                max_pool_size
-            ));
-        }
-
         if pagerank_config.total_pool.is_zero() {
             return Err(anyhow::anyhow!("PageRank points pool cannot be zero"));
         }
