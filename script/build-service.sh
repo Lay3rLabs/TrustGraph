@@ -216,6 +216,9 @@ jq -c '.components[]' "${COMPONENT_CONFIGS_FILE}" | while IFS= read -r component
             echo "  📋 Configuring aggregator"
             eval "$BASE_CMD workflow submit --id ${WORKFLOW_ID} component config ${AGG_CONFIG_ARGS}" > /dev/null
         fi
+
+        # Configure routing
+         eval "$BASE_CMD workflow submit --id ${WORKFLOW_ID} component config --config \"${SUBMIT_CHAIN}=${COMP_SUBMIT_ADDRESS}\" > /dev/null
     else
         eval "$BASE_CMD workflow submit --id ${WORKFLOW_ID} set-none" > /dev/null
     fi
