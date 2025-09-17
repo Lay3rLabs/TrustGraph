@@ -2,7 +2,6 @@
 pragma solidity 0.8.27;
 
 import {Test} from "forge-std/Test.sol";
-import {console} from "forge-std/console.sol";
 
 // Safe contracts
 import {GnosisSafe} from "@gnosis.pm/safe-contracts/GnosisSafe.sol";
@@ -83,13 +82,13 @@ contract ZodiacModulesTest is Test {
         wavsModule = new WavsModule(owner, address(safe), address(safe), mockServiceManager, true); // strict nonce ordering
     }
 
-    function test_SignerModule_Setup() public {
+    function test_SignerModule_Setup() public view {
         assertEq(signerModule.avatar(), address(safe));
         assertEq(signerModule.target(), address(safe));
         assertEq(signerModule.owner(), owner);
     }
 
-    function test_SignerModule_GetCurrentSigners() public {
+    function test_SignerModule_GetCurrentSigners() public view {
         // This is a view function test
         address[] memory currentSigners = signerModule.getSigners();
 
@@ -112,7 +111,7 @@ contract ZodiacModulesTest is Test {
         assertTrue(foundUser2, "User2 not found in signers");
     }
 
-    function test_SignerModule_GetThreshold() public {
+    function test_SignerModule_GetThreshold() public view {
         uint256 threshold = signerModule.getThreshold();
         assertEq(threshold, 2, "Threshold should be 2");
     }
@@ -144,7 +143,7 @@ contract ZodiacModulesTest is Test {
         assertEq(signerModule.target(), address(safe));
     }
 
-    function test_SafeHasCorrectInitialState() public {
+    function test_SafeHasCorrectInitialState() public view {
         // Verify Safe was set up correctly
         assertEq(safe.getThreshold(), 2);
 
@@ -158,7 +157,7 @@ contract ZodiacModulesTest is Test {
     }
 
     // Helper function to enable module on Safe (would require multi-sig in practice)
-    function enableModuleOnSafe(address module) internal {
+    function enableModuleOnSafe(address module) internal pure {
         // This would require executing a Safe transaction to enable the module
         // For testing purposes, this is a placeholder
         // In practice, you'd need to:
@@ -300,7 +299,7 @@ contract ZodiacModulesTest is Test {
     // WavsModule Tests
     // ============================================
 
-    function test_WavsModule_Setup() public {
+    function test_WavsModule_Setup() public view {
         assertEq(wavsModule.avatar(), address(safe));
         assertEq(wavsModule.target(), address(safe));
         assertEq(wavsModule.owner(), owner);
@@ -505,7 +504,7 @@ contract ZodiacModulesTest is Test {
         wavsModule.updateModuleConfig(newAvatar, address(0));
     }
 
-    function test_WavsModule_ViewFunctions() public {
+    function test_WavsModule_ViewFunctions() public view {
         // Test getNextNonce
         assertEq(wavsModule.getNextNonce(), 1);
 
@@ -575,10 +574,10 @@ contract MockTarget {
 
 // Mock WAVS Service Manager for testing
 contract MockWavsServiceManager is IWavsServiceManager {
-    function validate(
-        IWavsServiceHandler.Envelope calldata,
-        IWavsServiceHandler.SignatureData calldata
-    ) external pure {
+    function validate(IWavsServiceHandler.Envelope calldata, IWavsServiceHandler.SignatureData calldata)
+        external
+        pure
+    {
         // Mock validation - always passes for testing
         return;
     }
@@ -588,9 +587,7 @@ contract MockWavsServiceManager is IWavsServiceManager {
         return 100;
     }
 
-    function getLatestOperatorForSigningKey(
-        address
-    ) external pure returns (address) {
+    function getLatestOperatorForSigningKey(address) external pure returns (address) {
         // Return a mock operator address
         return address(0x1234567890123456789012345678901234567890);
     }

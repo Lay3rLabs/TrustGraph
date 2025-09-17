@@ -2,7 +2,7 @@ use alloy_network::Ethereum;
 use alloy_provider::{Provider, RootProvider};
 use alloy_rpc_types::{TransactionInput, TransactionRequest};
 use alloy_sol_types::{sol, SolCall};
-use wavs_indexer_api::WavsIndexerQuerier;
+use wavs_indexer_api::{IndexedAttestation, WavsIndexerQuerier};
 use wavs_wasi_utils::evm::{
     alloy_primitives::{Address, FixedBytes, U256},
     new_evm_provider,
@@ -154,7 +154,7 @@ pub async fn query_received_attestation_uids(
     length: U256,
     reverse_order: bool,
     config: Option<QueryConfig>,
-) -> Result<Vec<FixedBytes<32>>, String> {
+) -> Result<Vec<IndexedAttestation>, String> {
     let config = config.unwrap_or_default();
     let indexer_querier = config.indexer_querier().await?;
     let uids = indexer_querier
@@ -203,7 +203,7 @@ pub async fn query_sent_attestation_uids(
     length: U256,
     reverse_order: bool,
     config: Option<QueryConfig>,
-) -> Result<Vec<FixedBytes<32>>, String> {
+) -> Result<Vec<IndexedAttestation>, String> {
     let config = config.unwrap_or_default();
     let indexer_querier = config.indexer_querier().await?;
     let uids = indexer_querier
@@ -246,11 +246,16 @@ pub async fn query_schema_attestation_uids(
     length: U256,
     reverse_order: bool,
     config: Option<QueryConfig>,
-) -> Result<Vec<FixedBytes<32>>, String> {
+) -> Result<Vec<IndexedAttestation>, String> {
     let config = config.unwrap_or_default();
     let indexer_querier = config.indexer_querier().await?;
     let uids = indexer_querier
-        .get_indexed_attestations_by_schema(schema_uid, start, length, reverse_order)
+        .get_indexed_attestations_by_schema(
+            schema_uid,
+            start.to::<u64>(),
+            length.to::<u64>(),
+            reverse_order,
+        )
         .await?;
 
     println!("Retrieved {} attestation UIDs for schema {}", uids.len(), schema_uid);
@@ -292,7 +297,7 @@ pub async fn query_schema_attester_recipient_uids(
     length: U256,
     reverse_order: bool,
     config: Option<QueryConfig>,
-) -> Result<Vec<FixedBytes<32>>, String> {
+) -> Result<Vec<IndexedAttestation>, String> {
     let config = config.unwrap_or_default();
     let indexer_querier = config.indexer_querier().await?;
     let uids = indexer_querier
@@ -388,7 +393,7 @@ pub async fn query_recent_received_attestations(
     limit: u64,
     config: Option<QueryConfig>,
 ) -> Result<Vec<IEAS::Attestation>, String> {
-    let uids = query_received_attestation_uids(
+    let uids: Vec<FixedBytes<32>> = query_received_attestation_uids(
         recipient,
         schema_uid,
         U256::from(0),
@@ -396,7 +401,10 @@ pub async fn query_recent_received_attestations(
         true, // reverse order to get most recent first
         config.clone(),
     )
-    .await?;
+    .await?
+    .into_iter()
+    .map(|indexed| indexed.uid)
+    .collect();
 
     query_attestations_batch(uids, config).await
 }
@@ -408,7 +416,7 @@ pub async fn query_recent_sent_attestations(
     limit: u64,
     config: Option<QueryConfig>,
 ) -> Result<Vec<IEAS::Attestation>, String> {
-    let uids = query_sent_attestation_uids(
+    let uids: Vec<FixedBytes<32>> = query_sent_attestation_uids(
         attester,
         schema_uid,
         U256::from(0),
@@ -416,7 +424,10 @@ pub async fn query_recent_sent_attestations(
         true, // reverse order to get most recent first
         config.clone(),
     )
-    .await?;
+    .await?
+    .into_iter()
+    .map(|indexed| indexed.uid)
+    .collect();
 
     query_attestations_batch(uids, config).await
 }

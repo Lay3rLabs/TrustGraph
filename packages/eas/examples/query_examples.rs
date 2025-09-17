@@ -138,7 +138,7 @@ async fn basic_query_examples() -> Result<(), String> {
         Ok(uids) => {
             println!("   ✓ Retrieved {} attestation UIDs", uids.len());
             for (i, uid) in uids.iter().take(3).enumerate() {
-                println!("     {}. {}", i + 1, uid);
+                println!("     {}. {}", i + 1, uid.uid);
             }
         }
         Err(e) => {

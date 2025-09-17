@@ -5,7 +5,6 @@ import {Module} from "@gnosis-guild/zodiac-core/core/Module.sol";
 import {Operation} from "@gnosis-guild/zodiac-core/core/Operation.sol";
 import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
-import {ITypes} from "../../interfaces/ITypes.sol";
 
 /// @title SignerManagerModule - A Zodiac module that can manage Safe signers
 /// @notice This module allows for programmatic management of Safe signers and threshold

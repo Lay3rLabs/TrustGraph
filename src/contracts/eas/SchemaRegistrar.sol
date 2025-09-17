@@ -13,7 +13,7 @@ contract SchemaRegistrar {
     error InvalidResolver();
 
     // The address of the global SchemaRegistry contract.
-    ISchemaRegistry private immutable _schemaRegistry;
+    ISchemaRegistry private immutable SCHEMA_REGISTRY;
 
     /// @notice Creates a new Attester instance.
     /// @param schemaRegistry The address of the global EAS contract.
@@ -22,7 +22,7 @@ contract SchemaRegistrar {
             revert InvalidSchemaRegistry();
         }
 
-        _schemaRegistry = schemaRegistry;
+        SCHEMA_REGISTRY = schemaRegistry;
     }
 
     /// @notice Submits and reserves a new schema
@@ -35,6 +35,6 @@ contract SchemaRegistrar {
             revert InvalidSchema();
         }
 
-        return _schemaRegistry.register(schema, resolver, revocable);
+        return SCHEMA_REGISTRY.register(schema, resolver, revocable);
     }
 }

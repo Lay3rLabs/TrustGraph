@@ -13,38 +13,38 @@ abstract contract EIP712Verifier {
     bytes32 private constant TYPE_HASH =
         keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
 
-    address private immutable _target;
+    address private immutable TARGET;
 
     // Cache the domain separator as an immutable value, but also store the chain id that it corresponds to, in order to
     // invalidate the cached domain separator if the chain id changes.
-    bytes32 private immutable _cachedDomainSeparator;
-    uint256 private immutable _cachedChainId;
-    address private immutable _cachedThis;
+    bytes32 private immutable CACHED_DOMAIN_SEPARATOR;
+    uint256 private immutable CACHED_CHAIN_ID;
+    address private immutable CACHED_THIS;
 
-    bytes32 private immutable _hashedName;
-    bytes32 private immutable _hashedVersion;
+    bytes32 private immutable HASHEDNAME;
+    bytes32 private immutable HASHED_VERSION;
 
-    ShortString private immutable _name;
-    ShortString private immutable _version;
+    ShortString private immutable NAME;
+    ShortString private immutable VERSION;
 
     /// @dev Initializes the domain separator and parameter caches.
     constructor(string memory name, string memory version, address target) {
-        _target = target;
+        TARGET = target;
 
-        _name = name.toShortString();
-        _version = version.toShortString();
-        _hashedName = keccak256(bytes(name));
-        _hashedVersion = keccak256(bytes(version));
+        NAME = name.toShortString();
+        VERSION = version.toShortString();
+        HASHEDNAME = keccak256(bytes(name));
+        HASHED_VERSION = keccak256(bytes(version));
 
-        _cachedChainId = block.chainid;
-        _cachedDomainSeparator = _buildDomainSeparator();
-        _cachedThis = address(this);
+        CACHED_CHAIN_ID = block.chainid;
+        CACHED_DOMAIN_SEPARATOR = _buildDomainSeparator();
+        CACHED_THIS = address(this);
     }
 
     /// @dev Returns the domain separator for the current chain and for a specific target.
     function _domainSeparatorV4() internal view returns (bytes32) {
-        if (address(this) == _cachedThis && block.chainid == _cachedChainId) {
-            return _cachedDomainSeparator;
+        if (address(this) == CACHED_THIS && block.chainid == CACHED_CHAIN_ID) {
+            return CACHED_DOMAIN_SEPARATOR;
         }
 
         return _buildDomainSeparator();
@@ -52,7 +52,7 @@ abstract contract EIP712Verifier {
 
     /// @dev Builds the domain separator for the current chain and for a specific target.
     function _buildDomainSeparator() private view returns (bytes32) {
-        return keccak256(abi.encode(TYPE_HASH, _hashedName, _hashedVersion, block.chainid, _target));
+        return keccak256(abi.encode(TYPE_HASH, HASHEDNAME, HASHED_VERSION, block.chainid, TARGET));
     }
 
     /// @dev Given an already hashed struct, this function returns the hash of the fully encoded EIP712 message for this

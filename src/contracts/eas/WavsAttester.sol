@@ -14,7 +14,6 @@ import {
 import {NO_EXPIRATION_TIME, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/contracts/Common.sol";
 import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
-import {ITypes} from "../../interfaces/ITypes.sol";
 
 /// @title WavsAttester
 /// @notice Ethereum Attestation Service - Example that integrates with WAVS
@@ -44,10 +43,10 @@ contract WavsAttester is IWavsServiceHandler {
     }
 
     // The address of the global EAS contract.
-    IEAS private immutable _eas;
+    IEAS private immutable EAS;
 
     // The WAVS service manager instance
-    IWavsServiceManager private immutable _serviceManager;
+    IWavsServiceManager private immutable SERVICE_MANAGER;
 
     // Prevent replay attacks.
     mapping(bytes20 eventId => bool seen) public envelopesSeen;
@@ -63,8 +62,8 @@ contract WavsAttester is IWavsServiceHandler {
             revert InvalidServiceManager();
         }
 
-        _eas = eas;
-        _serviceManager = serviceManager;
+        EAS = eas;
+        SERVICE_MANAGER = serviceManager;
     }
 
     /// @inheritdoc IWavsServiceHandler
@@ -75,7 +74,7 @@ contract WavsAttester is IWavsServiceHandler {
         emit DebuggingEnvelopeReceived(envelope.payload, envelope.payload.length);
 
         // Validate the envelope signature through the service manager
-        _serviceManager.validate(envelope, signatureData);
+        SERVICE_MANAGER.validate(envelope, signatureData);
 
         // Prevent replay attacks.
         if (envelopesSeen[envelope.eventId]) {
@@ -132,14 +131,14 @@ contract WavsAttester is IWavsServiceHandler {
     /// @param request The AttestationRequest containing all attestation details.
     /// @return The UID of the new attestation.
     function _attest(AttestationRequest memory request) internal returns (bytes32) {
-        return _eas.attest(request);
+        return EAS.attest(request);
     }
 
     /// @notice Internal function to revoke an attestation.
     /// @param schema The schema UID of the attestation.
     /// @param uid The UID of the attestation to revoke.
     function _revoke(bytes32 schema, bytes32 uid) internal {
-        _eas.revoke(RevocationRequest({schema: schema, data: RevocationRequestData({uid: uid, value: 0})}));
+        EAS.revoke(RevocationRequest({schema: schema, data: RevocationRequestData({uid: uid, value: 0})}));
     }
 
     /// @notice Internal function to multi-attest to schemas with generic data.
@@ -162,7 +161,7 @@ contract WavsAttester is IWavsServiceHandler {
             multiRequests[i] = _buildMultiAttestationRequest(schemas[i], recipients[i], schemaData[i]);
         }
 
-        return _eas.multiAttest(multiRequests);
+        return EAS.multiAttest(multiRequests);
     }
 
     /// @notice Internal helper to build a MultiAttestationRequest
@@ -223,7 +222,7 @@ contract WavsAttester is IWavsServiceHandler {
             multiRequests[i] = MultiRevocationRequest({schema: schemas[i], data: data});
         }
 
-        _eas.multiRevoke(multiRequests);
+        EAS.multiRevoke(multiRequests);
     }
 
     /**
@@ -231,6 +230,6 @@ contract WavsAttester is IWavsServiceHandler {
      * @return address The address of the service manager
      */
     function getServiceManager() external view returns (address) {
-        return address(_serviceManager);
+        return address(SERVICE_MANAGER);
     }
 }

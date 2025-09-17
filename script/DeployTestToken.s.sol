@@ -8,12 +8,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract TestToken is ERC20 {
     uint8 private _decimals;
 
-    constructor(
-        string memory name,
-        string memory symbol,
-        uint8 decimals_,
-        uint256 initialSupply
-    ) ERC20(name, symbol) {
+    constructor(string memory name, string memory symbol, uint8 decimals_, uint256 initialSupply) ERC20(name, symbol) {
         _decimals = decimals_;
         _mint(msg.sender, initialSupply);
     }
@@ -37,12 +32,7 @@ contract DeployTestToken is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         // Deploy test token with 10 million supply
-        TestToken token = new TestToken(
-            "Test Vesting Token",
-            "TVT",
-            18,
-            10_000_000 * 10**18
-        );
+        TestToken token = new TestToken("Test Vesting Token", "TVT", 18, 10_000_000 * 10 ** 18);
 
         vm.stopBroadcast();
 

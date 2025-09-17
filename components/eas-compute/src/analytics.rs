@@ -98,6 +98,8 @@ pub async fn analyze_schema_statistics(
             break;
         }
 
+        let uids = uids.into_iter().map(|indexed| indexed.uid).collect::<Vec<_>>();
+
         // Get attestation details to extract attester/recipient info
         let attestations = query_attestations_batch(uids, config.clone()).await?;
 
@@ -151,7 +153,10 @@ pub async fn analyze_address_statistics(
         false,
         config.clone(),
     )
-    .await?;
+    .await?
+    .into_iter()
+    .map(|indexed| indexed.uid)
+    .collect();
 
     let sent_uids = query_sent_attestation_uids(
         address,
@@ -161,7 +166,10 @@ pub async fn analyze_address_statistics(
         false,
         config.clone(),
     )
-    .await?;
+    .await?
+    .into_iter()
+    .map(|indexed| indexed.uid)
+    .collect();
 
     let mut all_attestations = Vec::new();
     all_attestations.extend(query_attestations_batch(received_uids, config.clone()).await?);
@@ -210,7 +218,10 @@ pub async fn analyze_time_series(
         false,
         config.clone(),
     )
-    .await?;
+    .await?
+    .into_iter()
+    .map(|indexed| indexed.uid)
+    .collect();
 
     let attestations = query_attestations_batch(uids, config).await?;
 
@@ -266,7 +277,10 @@ pub async fn analyze_attestation_network(
         false,
         config.clone(),
     )
-    .await?;
+    .await?
+    .into_iter()
+    .map(|indexed| indexed.uid)
+    .collect();
 
     let attestations = query_attestations_batch(uids, config).await?;
 
@@ -382,7 +396,10 @@ pub async fn calculate_reputation_score(
         false,
         config.clone(),
     )
-    .await?;
+    .await?
+    .into_iter()
+    .map(|indexed| indexed.uid)
+    .collect();
 
     let sent_uids = query_sent_attestation_uids(
         address,
@@ -392,7 +409,10 @@ pub async fn calculate_reputation_score(
         false,
         config.clone(),
     )
-    .await?;
+    .await?
+    .into_iter()
+    .map(|indexed| indexed.uid)
+    .collect();
 
     let mut all_attestations = Vec::new();
     all_attestations.extend(query_attestations_batch(received_uids, config.clone()).await?);
@@ -444,7 +464,10 @@ pub async fn identify_schema_leaders(
         false,
         config.clone(),
     )
-    .await?;
+    .await?
+    .into_iter()
+    .map(|indexed| indexed.uid)
+    .collect();
 
     let attestations = query_attestations_batch(uids, config.clone()).await?;
 
@@ -486,7 +509,10 @@ pub async fn detect_suspicious_patterns(
         false,
         config.clone(),
     )
-    .await?;
+    .await?
+    .into_iter()
+    .map(|indexed| indexed.uid)
+    .collect();
 
     let attestations = query_attestations_batch(uids, config).await?;
 

@@ -2,9 +2,7 @@
 pragma solidity ^0.8.27;
 
 import {stdJson} from "forge-std/StdJson.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {console} from "forge-std/console.sol";
-import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 
 import {Common} from "script/Common.s.sol";
 import {DAICO} from "src/contracts/daico/DAICO.sol";
@@ -114,7 +112,7 @@ contract DeployScript is Common {
             ENOVA(token).mint(address(daicoInstance), maxSupply);
         } else {
             // If using existing token, transfer from treasury
-            IERC20(token).transferFrom(treasury, address(daicoInstance), maxSupply);
+            require(IERC20(token).transferFrom(treasury, address(daicoInstance), maxSupply), "Transfer failed");
         }
 
         vm.stopBroadcast();

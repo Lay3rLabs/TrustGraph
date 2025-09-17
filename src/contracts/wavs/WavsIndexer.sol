@@ -4,10 +4,9 @@ pragma solidity 0.8.27;
 
 import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
-import {ITypes} from "../../interfaces/ITypes.sol";
 import {IWavsIndexer} from "../../interfaces/IWavsIndexer.sol";
 import {Semver} from "@ethereum-attestation-service/eas-contracts/contracts/Semver.sol";
-import {EMPTY_UID, uncheckedInc} from "@ethereum-attestation-service/eas-contracts/contracts/Common.sol";
+import {uncheckedInc} from "@ethereum-attestation-service/eas-contracts/contracts/Common.sol";
 
 /// @title WavsIndexer
 /// @notice An indexing service for arbitrary blockchain events and data running on WAVS

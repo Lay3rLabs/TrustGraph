@@ -48,17 +48,17 @@ contract OffchainAttestationVerifier is EIP712Verifier {
         0x258b757fc37a6699a984f4be01258122f834200374b34b4457b6db0dd0f71132;
 
     // The address of the global EAS contract.
-    IEAS private immutable _eas;
+    IEAS private immutable EAS;
 
     /// @notice Creates a new Attester instance.
     /// @param eas The address of the global EAS contract.
     constructor(IEAS eas) EIP712Verifier("EAS Attestation", eas.version(), address(eas)) {
-        _eas = eas;
+        EAS = eas;
     }
 
     /// @notice Returns the EAS.
     function getEAS() external view returns (IEAS) {
-        return _eas;
+        return EAS;
     }
 
     /// @notice Verify the offchain attestation.
@@ -81,13 +81,13 @@ contract OffchainAttestationVerifier is EIP712Verifier {
         }
 
         // Verify that the schema exists.
-        SchemaRecord memory schemaRecord = _eas.getSchemaRegistry().getSchema(attestation.schema);
+        SchemaRecord memory schemaRecord = EAS.getSchemaRegistry().getSchema(attestation.schema);
         if (schemaRecord.uid == EMPTY_UID) {
             return false;
         }
 
         // Verify that the referenced attestation exists.
-        if (attestation.refUID != EMPTY_UID && !_eas.isAttestationValid(attestation.refUID)) {
+        if (attestation.refUID != EMPTY_UID && !EAS.isAttestationValid(attestation.refUID)) {
             return false;
         }
 

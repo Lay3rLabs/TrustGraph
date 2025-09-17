@@ -75,9 +75,7 @@ interface IWavsIndexer {
     /// @notice Checks whether an event exists and was deleted
     /// @param eventId The ID of the event to check
     /// @return true if the event exists and was deleted, false otherwise
-    function eventExistsAndDeleted(
-        bytes32 eventId
-    ) external view returns (bool);
+    function eventExistsAndDeleted(bytes32 eventId) external view returns (bool);
 
     /// @notice Gets events by chain ID
     /// @param chainId The chain ID to filter by
@@ -85,12 +83,10 @@ interface IWavsIndexer {
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
     /// @return Array of IndexedEvent structs
-    function getEventsByChainId(
-        string calldata chainId,
-        uint256 start,
-        uint256 length,
-        bool reverseOrder
-    ) external view returns (IndexedEvent[] memory);
+    function getEventsByChainId(string calldata chainId, uint256 start, uint256 length, bool reverseOrder)
+        external
+        view
+        returns (IndexedEvent[] memory);
 
     /// @notice Gets events by contract
     /// @param chainId The chain ID of the contract to filter by
@@ -113,12 +109,10 @@ interface IWavsIndexer {
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
     /// @return Array of IndexedEvent structs
-    function getEventsByAddress(
-        address addr,
-        uint256 start,
-        uint256 length,
-        bool reverseOrder
-    ) external view returns (IndexedEvent[] memory);
+    function getEventsByAddress(address addr, uint256 start, uint256 length, bool reverseOrder)
+        external
+        view
+        returns (IndexedEvent[] memory);
 
     /// @notice Gets events by type
     /// @param eventType The event type to filter by
@@ -126,12 +120,10 @@ interface IWavsIndexer {
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
     /// @return Array of IndexedEvent structs
-    function getEventsByType(
-        string calldata eventType,
-        uint256 start,
-        uint256 length,
-        bool reverseOrder
-    ) external view returns (IndexedEvent[] memory);
+    function getEventsByType(string calldata eventType, uint256 start, uint256 length, bool reverseOrder)
+        external
+        view
+        returns (IndexedEvent[] memory);
 
     /// @notice Gets events by tag
     /// @param tag The tag to filter by
@@ -139,12 +131,10 @@ interface IWavsIndexer {
     /// @param length The number of events to retrieve
     /// @param reverseOrder Whether to return in reverse chronological order
     /// @return Array of IndexedEvent structs
-    function getEventsByTag(
-        string calldata tag,
-        uint256 start,
-        uint256 length,
-        bool reverseOrder
-    ) external view returns (IndexedEvent[] memory);
+    function getEventsByTag(string calldata tag, uint256 start, uint256 length, bool reverseOrder)
+        external
+        view
+        returns (IndexedEvent[] memory);
 
     /// @notice Gets events by contract and address combination
     /// @param chainId The chain ID of the contract to filter by
@@ -281,71 +271,52 @@ interface IWavsIndexer {
     // ============ COUNT FUNCTIONS ============
 
     /// @notice Gets total number of events by chain ID
-    function getEventCountByChainId(
-        string calldata chainId
-    ) external view returns (uint256);
+    function getEventCountByChainId(string calldata chainId) external view returns (uint256);
 
     /// @notice Gets total number of events by contract
-    function getEventCountByContract(
-        string calldata chainId,
-        address contract_
-    ) external view returns (uint256);
+    function getEventCountByContract(string calldata chainId, address contract_) external view returns (uint256);
 
     /// @notice Gets total number of events by type
-    function getEventCountByType(
-        string calldata eventType
-    ) external view returns (uint256);
+    function getEventCountByType(string calldata eventType) external view returns (uint256);
 
     /// @notice Gets total number of events by tag
-    function getEventCountByTag(
-        string calldata tag
-    ) external view returns (uint256);
+    function getEventCountByTag(string calldata tag) external view returns (uint256);
 
     /// @notice Gets total number of events for a contract and address
-    function getEventCountByContractAndAddress(
-        string calldata chainId,
-        address contract_,
-        address addr
-    ) external view returns (uint256);
+    function getEventCountByContractAndAddress(string calldata chainId, address contract_, address addr)
+        external
+        view
+        returns (uint256);
 
     /// @notice Gets total number of events for a type and tag
-    function getEventCountByTypeAndTag(
-        string calldata eventType,
-        string calldata tag
-    ) external view returns (uint256);
+    function getEventCountByTypeAndTag(string calldata eventType, string calldata tag)
+        external
+        view
+        returns (uint256);
 
     /// @notice Gets total number of events for an address and type
-    function getEventCountByAddressAndType(
-        address addr,
-        string calldata eventType
-    ) external view returns (uint256);
+    function getEventCountByAddressAndType(address addr, string calldata eventType) external view returns (uint256);
 
     /// @notice Gets total number of events for an address and tag
-    function getEventCountByAddressAndTag(
-        address addr,
-        string calldata tag
-    ) external view returns (uint256);
+    function getEventCountByAddressAndTag(address addr, string calldata tag) external view returns (uint256);
 
     /// @notice Gets total number of events for a contract and type
-    function getEventCountByContractAndType(
-        string calldata chainId,
-        address contract_,
-        string calldata eventType
-    ) external view returns (uint256);
+    function getEventCountByContractAndType(string calldata chainId, address contract_, string calldata eventType)
+        external
+        view
+        returns (uint256);
 
     /// @notice Gets total number of events for a contract and tag
-    function getEventCountByContractAndTag(
-        string calldata chainId,
-        address contract_,
-        string calldata tag
-    ) external view returns (uint256);
+    function getEventCountByContractAndTag(string calldata chainId, address contract_, string calldata tag)
+        external
+        view
+        returns (uint256);
 
     /// @notice Gets total number of events for an address, type, and tag
-    function getEventCountByAddressAndTypeAndTag(
-        address addr,
-        string calldata eventType,
-        string calldata tag
-    ) external view returns (uint256);
+    function getEventCountByAddressAndTypeAndTag(address addr, string calldata eventType, string calldata tag)
+        external
+        view
+        returns (uint256);
 
     /// @notice Gets total number of events for a contract, type, and tag
     function getEventCountByContractAndTypeAndTag(

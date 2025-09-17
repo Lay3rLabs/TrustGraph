@@ -30,7 +30,7 @@ contract SchemaRegistrarTest is Test {
         registrar = new SchemaRegistrar(ISchemaRegistry(address(schemaRegistry)));
     }
 
-    function testConstruction_ShouldInitializeCorrectly() public {
+    function testConstruction_ShouldInitializeCorrectly() public view {
         // Verify the registrar was created successfully
         // We can't directly test internal state, so we test functionality instead
         assertTrue(address(registrar) != ZERO_ADDRESS);

@@ -14,6 +14,9 @@ fs_permissions = [
     { access = "read-write", path = "../.docker" }
 ]
 
+[lint]
+exclude_lints = ["asm-keccak256", "mixed-case-function", "mixed-case-variable"]
+
 [profile.metavest]
 src = 'script-metavest'
 out = 'out'

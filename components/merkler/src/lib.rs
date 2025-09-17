@@ -1,3 +1,4 @@
+#[rustfmt::skip]
 pub mod bindings;
 mod ipfs;
 mod merkle;

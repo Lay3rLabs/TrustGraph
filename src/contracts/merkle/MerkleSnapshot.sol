@@ -11,12 +11,7 @@ import {IMerkleSnapshotHook} from "interfaces/merkle/IMerkleSnapshotHook.sol";
 
 /// @title MerkleSnapshot - Merkle tree snapshotter that can be used by other contracts to verify merkle proofs and access history
 /// @dev Implements IWavsServiceHandler for merkle root updates via WAVS
-contract MerkleSnapshot is
-    IMerkleSnapshot,
-    IWavsServiceHandler,
-    ITypes,
-    IMerkler
-{
+contract MerkleSnapshot is IMerkleSnapshot, IWavsServiceHandler, ITypes, IMerkler {
     /// @notice Service manager for WAVS integration
     IWavsServiceManager private _serviceManager;
 
@@ -64,19 +59,12 @@ contract MerkleSnapshot is
     /// @param root The merkle root
     /// @param ipfsHash The IPFS hash
     /// @param ipfsHashCid The IPFS hash CID
-    function _updateState(
-        bytes32 root,
-        bytes32 ipfsHash,
-        string memory ipfsHashCid
-    ) internal {
+    function _updateState(bytes32 root, bytes32 ipfsHash, string memory ipfsHashCid) internal {
         uint256 currentBlock = block.number;
         uint256 stateIndex;
 
         // If this is a new block, add it.
-        if (
-            stateBlocks.length == 0 ||
-            stateBlocks[stateBlocks.length - 1] != currentBlock
-        ) {
+        if (stateBlocks.length == 0 || stateBlocks[stateBlocks.length - 1] != currentBlock) {
             stateIndex = stateBlocks.length;
             blockToStateIndex[currentBlock] = stateIndex;
             stateBlocks.push(currentBlock);
@@ -85,12 +73,8 @@ contract MerkleSnapshot is
             stateIndex = blockToStateIndex[currentBlock];
         }
 
-        states[stateIndex] = MerkleState({
-            blockNumber: currentBlock,
-            root: root,
-            ipfsHash: ipfsHash,
-            ipfsHashCid: ipfsHashCid
-        });
+        states[stateIndex] =
+            MerkleState({blockNumber: currentBlock, root: root, ipfsHash: ipfsHash, ipfsHashCid: ipfsHashCid});
 
         // Call the hooks.
         for (uint256 i = 1; i < nextHookIndex; i++) {
@@ -107,15 +91,13 @@ contract MerkleSnapshot is
     /// @param value The value to verify
     /// @param proof The merkle proof
     /// @return valid Whether the proof is valid
-    function _verifyProof(
-        bytes32 root,
-        address account,
-        uint256 value,
-        bytes32[] calldata proof
-    ) internal pure returns (bool) {
-        bytes32 leaf = keccak256(
-            bytes.concat(keccak256(abi.encode(account, value)))
-        );
+    function _verifyProof(bytes32 root, address account, uint256 value, bytes32[] calldata proof)
+        internal
+        pure
+        returns (bool)
+    {
+        // solhint-disable-next-line
+        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(account, value))));
         return MerkleProof.verifyCalldata(proof, root, leaf);
     }
 
@@ -124,11 +106,7 @@ contract MerkleSnapshot is
     /// @param value The value to verify
     /// @param proof The merkle proof
     /// @return valid Whether the proof is valid
-    function verifyProof(
-        address account,
-        uint256 value,
-        bytes32[] calldata proof
-    ) public view returns (bool) {
+    function verifyProof(address account, uint256 value, bytes32[] calldata proof) public view returns (bool) {
         return _verifyProof(getLatestState().root, account, value, proof);
     }
 
@@ -136,10 +114,7 @@ contract MerkleSnapshot is
     /// @param value The value to verify
     /// @param proof The merkle proof
     /// @return valid Whether the proof is valid
-    function verifyMyProof(
-        uint256 value,
-        bytes32[] calldata proof
-    ) public view returns (bool) {
+    function verifyMyProof(uint256 value, bytes32[] calldata proof) public view returns (bool) {
         return verifyProof(msg.sender, value, proof);
     }
 
@@ -149,12 +124,11 @@ contract MerkleSnapshot is
     /// @param proof The merkle proof
     /// @param blockNumber The maximum block number to consider
     /// @return valid Whether the proof is valid
-    function verifyProofAtBlock(
-        address account,
-        uint256 value,
-        bytes32[] calldata proof,
-        uint256 blockNumber
-    ) public view returns (bool) {
+    function verifyProofAtBlock(address account, uint256 value, bytes32[] calldata proof, uint256 blockNumber)
+        public
+        view
+        returns (bool)
+    {
         MerkleState memory state = getStateAtBlock(blockNumber);
         return _verifyProof(state.root, account, value, proof);
     }
@@ -164,11 +138,11 @@ contract MerkleSnapshot is
     /// @param proof The merkle proof
     /// @param blockNumber The maximum block number to consider
     /// @return valid Whether the proof is valid
-    function verifyMyProofAtBlock(
-        uint256 value,
-        bytes32[] calldata proof,
-        uint256 blockNumber
-    ) public view returns (bool) {
+    function verifyMyProofAtBlock(uint256 value, bytes32[] calldata proof, uint256 blockNumber)
+        public
+        view
+        returns (bool)
+    {
         return verifyProofAtBlock(msg.sender, value, proof, blockNumber);
     }
 
@@ -178,12 +152,11 @@ contract MerkleSnapshot is
     /// @param proof The merkle proof
     /// @param stateIndex The state index to verify against
     /// @return valid Whether the proof is valid
-    function verifyProofAtStateIndex(
-        address account,
-        uint256 value,
-        bytes32[] calldata proof,
-        uint256 stateIndex
-    ) public view returns (bool) {
+    function verifyProofAtStateIndex(address account, uint256 value, bytes32[] calldata proof, uint256 stateIndex)
+        public
+        view
+        returns (bool)
+    {
         MerkleState memory state = getStateAtIndex(stateIndex);
         return _verifyProof(state.root, account, value, proof);
     }
@@ -193,11 +166,11 @@ contract MerkleSnapshot is
     /// @param proof The merkle proof
     /// @param stateIndex The state index to verify against
     /// @return valid Whether the proof is valid
-    function verifyMyProofAtStateIndex(
-        uint256 value,
-        bytes32[] calldata proof,
-        uint256 stateIndex
-    ) public view returns (bool) {
+    function verifyMyProofAtStateIndex(uint256 value, bytes32[] calldata proof, uint256 stateIndex)
+        public
+        view
+        returns (bool)
+    {
         return verifyProofAtStateIndex(msg.sender, value, proof, stateIndex);
     }
 
@@ -211,9 +184,7 @@ contract MerkleSnapshot is
     /// @notice Get the state at (or before) a specific block number
     /// @param blockNumber The target block number
     /// @return state The merkle state at (or before) the specified block
-    function getStateAtBlock(
-        uint256 blockNumber
-    ) public view returns (MerkleState memory state) {
+    function getStateAtBlock(uint256 blockNumber) public view returns (MerkleState memory state) {
         if (stateBlocks.length == 0) {
             revert NoMerkleStates();
         }
@@ -225,9 +196,7 @@ contract MerkleSnapshot is
         }
 
         // Binary search for the latest state at (or before) the target block
-        (bool found, uint256 stateIndex) = _findStateIndexAtOrBeforeBlock(
-            blockNumber
-        );
+        (bool found, uint256 stateIndex) = _findStateIndexAtOrBeforeBlock(blockNumber);
         if (!found) {
             revert NoMerkleStateAtBlock(blockNumber, stateBlocks[0]);
         }
@@ -237,9 +206,7 @@ contract MerkleSnapshot is
     /// @notice Get the state at a specific index
     /// @param index The state index
     /// @return state The merkle state at the specified index
-    function getStateAtIndex(
-        uint256 index
-    ) public view returns (MerkleState memory state) {
+    function getStateAtIndex(uint256 index) public view returns (MerkleState memory state) {
         if (index >= stateBlocks.length) {
             revert NoMerkleStateAtIndex(index, stateBlocks.length);
         }
@@ -250,9 +217,7 @@ contract MerkleSnapshot is
     /// @param blockNumber The target block number
     /// @return found Whether the state index was found
     /// @return index The state index
-    function _findStateIndexAtOrBeforeBlock(
-        uint256 blockNumber
-    ) internal view returns (bool found, uint256 index) {
+    function _findStateIndexAtOrBeforeBlock(uint256 blockNumber) internal view returns (bool found, uint256 index) {
         uint256 left = 0;
         uint256 right = stateBlocks.length;
         uint256 result = 0;
@@ -287,10 +252,7 @@ contract MerkleSnapshot is
     /// @param offset The offset to start from
     /// @param limit The number of blocks to return
     /// @return result_ Array of block numbers with states
-    function getStateBlocks(
-        uint256 offset,
-        uint256 limit
-    ) public view returns (uint256[] memory result_) {
+    function getStateBlocks(uint256 offset, uint256 limit) public view returns (uint256[] memory result_) {
         uint256 end = offset + limit;
         if (end > stateBlocks.length) {
             end = stateBlocks.length;
@@ -307,10 +269,7 @@ contract MerkleSnapshot is
     /// @param offset The offset to start from
     /// @param limit The number of blocks to return
     /// @return result_ Array of states
-    function getStates(
-        uint256 offset,
-        uint256 limit
-    ) public view returns (MerkleState[] memory result_) {
+    function getStates(uint256 offset, uint256 limit) public view returns (MerkleState[] memory result_) {
         uint256 end = offset + limit;
         if (end > stateBlocks.length) {
             end = stateBlocks.length;
@@ -352,9 +311,7 @@ contract MerkleSnapshot is
 
     /// @notice List all hooks
     function getHooks() external view returns (IMerkleSnapshotHook[] memory) {
-        IMerkleSnapshotHook[] memory result = new IMerkleSnapshotHook[](
-            hookCount
-        );
+        IMerkleSnapshotHook[] memory result = new IMerkleSnapshotHook[](hookCount);
         uint256 resultIndex = 0;
         for (uint256 i = 1; i < nextHookIndex; i++) {
             if (hooks[i] == IMerkleSnapshotHook(address(0))) {
@@ -371,32 +328,21 @@ contract MerkleSnapshot is
     //////////////////////////////////////////////////////////////*/
 
     /// @inheritdoc IWavsServiceHandler
-    function handleSignedEnvelope(
-        Envelope calldata envelope,
-        SignatureData calldata signatureData
-    ) external {
+    function handleSignedEnvelope(Envelope calldata envelope, SignatureData calldata signatureData) external {
         _serviceManager.validate(envelope, signatureData);
 
         // Decode payload
-        MerklerAvsOutput memory avsOutput = abi.decode(
-            envelope.payload,
-            (MerklerAvsOutput)
-        );
+        MerklerAvsOutput memory avsOutput = abi.decode(envelope.payload, (MerklerAvsOutput));
 
         // If trigger ID set and not the last trigger ID, error. Ensure only the most recent trigger is used.
-        if (
-            avsOutput.triggerId > 0 && avsOutput.triggerId != nextTriggerId - 1
-        ) {
+        if (avsOutput.triggerId > 0 && avsOutput.triggerId != nextTriggerId - 1) {
             revert InvalidTriggerId(avsOutput.triggerId, nextTriggerId - 1);
         }
 
         // If cron timestamp set and less than the last cron timestamp seen, error. Ensure only a new cron timestamp is used.
         if (avsOutput.cronNanos > 0) {
             if (avsOutput.cronNanos <= lastCronTimestampSeen) {
-                revert InvalidCronTimestamp(
-                    avsOutput.cronNanos,
-                    lastCronTimestampSeen
-                );
+                revert InvalidCronTimestamp(avsOutput.cronNanos, lastCronTimestampSeen);
             } else {
                 // If valid new cron timestamp, update the last seen.
                 lastCronTimestampSeen = avsOutput.cronNanos;
@@ -406,11 +352,7 @@ contract MerkleSnapshot is
         // Update merkle root
         _updateState(avsOutput.root, avsOutput.ipfsHash, avsOutput.ipfsHashCid);
 
-        emit MerkleRootUpdated(
-            avsOutput.root,
-            avsOutput.ipfsHash,
-            avsOutput.ipfsHashCid
-        );
+        emit MerkleRootUpdated(avsOutput.root, avsOutput.ipfsHash, avsOutput.ipfsHashCid);
     }
 
     /**

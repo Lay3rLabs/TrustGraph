@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import "forge-std/Test.sol";
-import "forge-std/console.sol";
+import {Test} from "forge-std/Test.sol";
 import {DAICO} from "../../src/contracts/daico/DAICO.sol";
 import {DAICOVault} from "../../src/contracts/tokens/DAICOVault.sol";
 import {IDAICO} from "../../src/interfaces/IDAICO.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {console} from "forge-std/console.sol";
 
 /// @title DAICO Gas Optimization Test Suite
 /// @notice Tests focused on gas consumption and optimization opportunities

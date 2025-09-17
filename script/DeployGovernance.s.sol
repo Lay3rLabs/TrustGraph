@@ -3,7 +3,6 @@ pragma solidity ^0.8.27;
 
 import {stdJson} from "forge-std/StdJson.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {Script} from "forge-std/Script.sol";
 import {console} from "forge-std/console.sol";
 import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 import {VotingPower} from "../src/contracts/governance/VotingPower.sol";
@@ -17,8 +16,7 @@ contract DeployGovernance is Common {
     using stdJson for string;
 
     string public root = vm.projectRoot();
-    string public script_output_path =
-        string.concat(root, "/.docker/governance_deploy.json");
+    string public script_output_path = string.concat(root, "/.docker/governance_deploy.json");
 
     /// @notice Deploy governance contracts
     /// @param wavsServiceManagerAddr The WAVS service manager address
@@ -27,10 +25,7 @@ contract DeployGovernance is Common {
         vm.startBroadcast(_privateKey);
 
         address serviceManager = vm.parseAddress(wavsServiceManagerAddr);
-        require(
-            serviceManager != address(0),
-            "Invalid service manager address"
-        );
+        require(serviceManager != address(0), "Invalid service manager address");
 
         console.log("Deploying governance contracts...");
 
@@ -43,10 +38,7 @@ contract DeployGovernance is Common {
             deployer, // Initial owner
             IWavsServiceManager(serviceManager)
         );
-        _json.serialize(
-            "voting_power",
-            Strings.toChecksumHexString(address(votingPower))
-        );
+        _json.serialize("voting_power", Strings.toChecksumHexString(address(votingPower)));
         console.log("VotingPower deployed at:", address(votingPower));
 
         // 2. Deploy TimelockController
@@ -61,21 +53,12 @@ contract DeployGovernance is Common {
             executors,
             deployer // Admin (can be renounced later)
         );
-        _json.serialize(
-            "timelock",
-            Strings.toChecksumHexString(address(timelock))
-        );
+        _json.serialize("timelock", Strings.toChecksumHexString(address(timelock)));
         console.log("TimelockController deployed at:", address(timelock));
 
         // 3. Deploy AttestationGovernor
-        AttestationGovernor governor = new AttestationGovernor(
-            votingPower,
-            timelock
-        );
-        string memory finalJson = _json.serialize(
-            "governor",
-            Strings.toChecksumHexString(address(governor))
-        );
+        AttestationGovernor governor = new AttestationGovernor(votingPower, timelock);
+        string memory finalJson = _json.serialize("governor", Strings.toChecksumHexString(address(governor)));
         console.log("AttestationGovernor deployed at:", address(governor));
 
         // 4. Grant proposer role to governor

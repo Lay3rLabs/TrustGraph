@@ -163,14 +163,22 @@ impl Source for EasSource {
                 EasSourceType::ReceivedAttestations(_) => {
                     indexer_querier
                         .get_indexed_attestations_by_schema_and_recipient(
-                            schema_uid, address, start, length, false,
+                            schema_uid,
+                            address,
+                            U256::from(start),
+                            U256::from(length),
+                            false,
                         )
                         .await
                 }
                 EasSourceType::SentAttestations(_) => {
                     indexer_querier
                         .get_indexed_attestations_by_schema_and_attester(
-                            schema_uid, address, start, length, false,
+                            schema_uid,
+                            address,
+                            U256::from(start),
+                            U256::from(length),
+                            false,
                         )
                         .await
                 }

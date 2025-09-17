@@ -11,7 +11,6 @@ import {LMSRMarketMaker} from "@lay3rlabs/conditional-tokens-market-makers/LMSRM
 
 import {MockUSDC} from "contracts/tokens/MockUSDC.sol";
 import {PredictionMarketOracleController} from "contracts/prediction_market/PredictionMarketOracleController.sol";
-import {IWavsTrigger} from "interfaces/IWavsTrigger.sol";
 import {ITypes} from "interfaces/ITypes.sol";
 
 contract PredictionMarket is Common {

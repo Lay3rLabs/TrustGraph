@@ -188,8 +188,8 @@ impl WavsIndexerQuerier {
         &self,
         schema_uid: FixedBytes<32>,
         attester: Address,
-        start: u64,
-        length: u64,
+        start: U256,
+        length: U256,
         reverse_order: bool,
     ) -> Result<Vec<IndexedAttestation>, String> {
         self.getEventsByTypeAndTag(
@@ -225,8 +225,8 @@ impl WavsIndexerQuerier {
         &self,
         schema_uid: FixedBytes<32>,
         recipient: Address,
-        start: u64,
-        length: u64,
+        start: U256,
+        length: U256,
         reverse_order: bool,
     ) -> Result<Vec<IndexedAttestation>, String> {
         self.getEventsByTypeAndTag(
@@ -264,8 +264,8 @@ impl WavsIndexerQuerier {
         schema_uid: FixedBytes<32>,
         attester: Address,
         recipient: Address,
-        start: u64,
-        length: u64,
+        start: U256,
+        length: U256,
         reverse_order: bool,
     ) -> Result<Vec<IndexedAttestation>, String> {
         self.getEventsByTypeAndTag(
