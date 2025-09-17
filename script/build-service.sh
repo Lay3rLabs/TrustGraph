@@ -45,45 +45,39 @@ substitute_config_vars() {
     echo "$config_str"
 }
 
-# Function to build config string from JSON object
-build_config_string() {
+# Function to build config arguments from JSON object
+build_config_args() {
     local config_json="$1"
-    local config_str=""
+    local args=""
 
     if [ -n "$config_json" ] && [ "$config_json" != "null" ] && [ "$config_json" != "{}" ]; then
         # Process each key-value pair
         while IFS= read -r line; do
-            if [ -n "$config_str" ]; then
-                config_str="${config_str},"
-            fi
             key=$(echo "$line" | jq -r '.key')
             value=$(echo "$line" | jq -r '.value')
             # Substitute variables in the value
             value=$(substitute_config_vars "$value")
-            config_str="${config_str}${key}=${value}"
+            args="${args} --config \"${key}=${value}\""
         done < <(echo "$config_json" | jq -c 'to_entries[]')
     fi
 
-    echo "$config_str"
+    echo "$args"
 }
 
-# Function to build environment variables string
-build_env_string() {
+# Function to build environment variable arguments
+build_env_args() {
     local env_json="$1"
-    local env_str=""
+    local args=""
 
     if [ -n "$env_json" ] && [ "$env_json" != "null" ] && [ "$env_json" != "[]" ]; then
         # Process each environment variable
         while IFS= read -r env_var; do
             env_var=$(echo "$env_var" | jq -r '.')
-            if [ -n "$env_str" ]; then
-                env_str="${env_str},"
-            fi
-            env_str="${env_str}${env_var}"
+            args="${args} --values \"${env_var}\""
         done < <(echo "$env_json" | jq -c '.[]')
     fi
 
-    echo "$env_str"
+    echo "$args"
 }
 
 BASE_CMD="docker run --rm --network host -w /data -v $(pwd):/data ghcr.io/lay3rlabs/wavs:latest wavs-cli service --json true --home /data --file /data/${FILE_LOCATION}"
@@ -193,10 +187,10 @@ jq -c '.components[]' "${COMPONENT_CONFIGS_FILE}" | while IFS= read -r component
     eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} time-limit --seconds 30" > /dev/null
 
     # Set component-specific environment variables
-    ENV_STRING=$(build_env_string "$COMP_ENV_VARIABLES")
-    if [ -n "$ENV_STRING" ]; then
-        echo "  📋 Setting environment variables: ${ENV_STRING}"
-        eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} env --values \"${ENV_STRING}\"" > /dev/null
+    ENV_ARGS=$(build_env_args "$COMP_ENV_VARIABLES")
+    if [ -n "$ENV_ARGS" ]; then
+        echo "  📋 Setting environment variables"
+        eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} env ${ENV_ARGS}" > /dev/null
     else
         # Default env variables if none specified
         echo "  📋 Setting default environment variables"
@@ -204,10 +198,10 @@ jq -c '.components[]' "${COMPONENT_CONFIGS_FILE}" | while IFS= read -r component
     fi
 
     # Set component-specific config values
-    CONFIG_STRING=$(build_config_string "$COMP_CONFIG_VALUES")
-    if [ -n "$CONFIG_STRING" ]; then
-        echo "  📋 Configuring component with: ${CONFIG_STRING}"
-        eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} config --values \"${CONFIG_STRING}\"" > /dev/null
+    CONFIG_ARGS=$(build_config_args "$COMP_CONFIG_VALUES")
+    if [ -n "$CONFIG_ARGS" ]; then
+        echo "  📋 Configuring component"
+        eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} config ${CONFIG_ARGS}" > /dev/null
     else
         echo "  ⚠️  No configuration values specified for ${COMP_FILENAME}"
     fi
