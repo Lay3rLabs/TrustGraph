@@ -2776,6 +2776,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "en0va-aggregator"
+version = "0.5.5"
+dependencies = [
+ "alloy-primitives",
+ "serde",
+ "serde_json",
+ "wit-bindgen-rt 0.44.0",
+]
+
+[[package]]
 name = "encoding_rs"
 version = "0.8.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
