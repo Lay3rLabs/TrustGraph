@@ -1,5 +1,11 @@
+import { porto } from 'porto/wagmi'
 import { createConfig, http } from 'wagmi'
-import { injected, metaMask } from 'wagmi/connectors'
+import {
+  coinbaseWallet,
+  injected,
+  metaMask,
+  walletConnect,
+} from 'wagmi/connectors'
 
 // Local chain configuration matching the deployment
 export const localChain = {
@@ -22,7 +28,15 @@ export const localChain = {
 
 export const config = createConfig({
   chains: [localChain],
-  connectors: [injected(), metaMask()],
+  connectors: [
+    injected(),
+    porto(),
+    metaMask(),
+    coinbaseWallet(),
+    walletConnect({
+      projectId: '',
+    }),
+  ],
   transports: {
     [localChain.id]: http(localChain.rpcUrls.default.http[0], {
       retryCount: 3,

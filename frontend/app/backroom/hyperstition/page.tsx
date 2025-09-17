@@ -3,6 +3,7 @@
 import type React from 'react'
 import { useState } from 'react'
 
+import { Card } from '@/components/Card'
 import {
   HyperstitionMarket,
   PredictionMarketDetail,
@@ -189,10 +190,23 @@ export default function HyperstitionPage() {
         </div>
       </div> */}
 
+      {/* Header */}
+      <Card type="primary" className="space-y-2">
+        <div className="terminal-command text-lg">HYPERSTITION MARKET</div>
+        <div className="system-message">
+          ▲▼ Where collective belief shapes reality through prediction markets
+          ▲▼
+        </div>
+        <div className="terminal-text text-sm">
+          Manifest reality through coordinated belief. Achieve hyperstitions,
+          unlock $EN0 incentives.
+        </div>
+      </Card>
+
       <PredictionMarketDetail market={filteredMarkets[0]} />
 
       {/* Belief Amplification Section */}
-      <div className="border-t border-gray-700 pt-8 mt-8">
+      {/* <div className="border-t border-gray-700 pt-8 mt-8">
         <div className="text-center space-y-4">
           <div className="terminal-command text-base">
             COLLECTIVE MANIFESTATION PROTOCOL
@@ -206,7 +220,7 @@ export default function HyperstitionPage() {
             ∞ BELIEF → ACTION → REALITY → REWARDS ∞
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   )
 }

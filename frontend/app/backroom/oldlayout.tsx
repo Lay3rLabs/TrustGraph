@@ -3,13 +3,9 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type React from 'react'
-import { useEffect, useState } from 'react'
-import { toHex } from 'viem'
-import { useAccount, useConnect, useDisconnect, useSwitchChain } from 'wagmi'
+import { useState } from 'react'
 
-import { localChain } from '@/lib/wagmi'
-
-import { Modal } from '../../components/ui/modal'
+import { WalletConnectionButton } from '@/components/WalletConnectionButton'
 
 interface MenuItem {
   id: string
@@ -109,7 +105,6 @@ export default function BackroomLayout({
   children: React.ReactNode
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false)
   const [expandedMenus, setExpandedMenus] = useState<string[]>([])
   const pathname = usePathname()
 
@@ -132,65 +127,6 @@ export default function BackroomLayout({
     }
     return false
   }
-
-  const addLocalNetwork = async () => {
-    try {
-      await window.ethereum?.request({
-        method: 'wallet_addEthereumChain',
-        params: [
-          {
-            chainId: toHex(localChain.id),
-            chainName: 'Local Anvil',
-            nativeCurrency: {
-              name: 'Ether',
-              symbol: 'ETH',
-              decimals: 18,
-            },
-            rpcUrls: ['http://localhost:8545'],
-            blockExplorerUrls: ['http://localhost:8545'],
-          },
-        ],
-      })
-    } catch (err) {
-      console.error('Failed to add local network:', err)
-      throw err
-    }
-  }
-
-  const { switchChain } = useSwitchChain()
-  const { address, isConnected, chain } = useAccount()
-  const { connectors, connect, isPending } = useConnect()
-  const { disconnect } = useDisconnect()
-
-  const formatAddress = (addr: string) => {
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`
-  }
-
-  const handleSwitchToLocal = async () => {
-    try {
-      switchChain({ chainId: localChain.id })
-    } catch (err) {
-      console.error('Failed to switch network:', err)
-      try {
-        await addLocalNetwork()
-        switchChain({ chainId: localChain.id })
-      } catch (addErr) {
-        console.error('Failed to add and switch network:', addErr)
-      }
-    }
-  }
-
-  // Auto-switch to local network when connected to wrong chain
-  useEffect(() => {
-    if (isConnected && (!chain || chain.id !== localChain.id)) {
-      console.log(
-        `Current chain: ${chain?.id || 'unknown'}, switching to local chain: ${
-          localChain.id
-        }`
-      )
-      handleSwitchToLocal()
-    }
-  }, [isConnected, chain])
 
   return (
     <div className="min-h-screen terminal-text text-xs sm:text-sm dynamic-bg">
@@ -295,28 +231,7 @@ export default function BackroomLayout({
 
               <div className="flex items-center space-x-2">
                 {/* Connect Wallet Button */}
-                <div>
-                  {isConnected && address ? (
-                    <button
-                      onClick={() => setIsWalletModalOpen(true)}
-                      className="flex items-center space-x-2 mobile-terminal-btn !px-3 !py-2"
-                    >
-                      <span className="terminal-bright text-xs">◉</span>
-                      <span className="terminal-command text-xs">
-                        {formatAddress(address)}
-                      </span>
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => setIsWalletModalOpen(true)}
-                      className="mobile-terminal-btn !px-4 !py-2"
-                    >
-                      <span className="terminal-command text-xs">
-                        CONNECT WALLET
-                      </span>
-                    </button>
-                  )}
-                </div>
+                <WalletConnectionButton />
 
                 {/* Mobile menu toggle */}
                 <button
@@ -415,58 +330,6 @@ export default function BackroomLayout({
           </footer>*/}
         </div>
       </div>
-
-      {/* Wallet Modal */}
-      <Modal
-        isOpen={isWalletModalOpen}
-        onClose={() => setIsWalletModalOpen(false)}
-        title={isConnected ? 'WALLET' : 'CONNECT WALLET'}
-      >
-        {isConnected && address ? (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <div className="terminal-dim text-xs">CONNECTED WALLET</div>
-              <div className="terminal-text text-xs break-all bg-black/30 p-3 rounded border border-gray-700">
-                {address}
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                disconnect()
-                setIsWalletModalOpen(false)
-              }}
-              className="w-full mobile-terminal-btn !px-4 !py-2"
-            >
-              <span className="terminal-command text-xs">DISCONNECT</span>
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="terminal-dim text-xs">SELECT WALLET</div>
-            {connectors && connectors.length > 0 ? (
-              <div className="space-y-2">
-                {connectors.map((connector) => (
-                  <button
-                    key={connector.id}
-                    onClick={() => {
-                      connect({ connector })
-                      setIsWalletModalOpen(false)
-                    }}
-                    disabled={isPending}
-                    className="w-full mobile-terminal-btn !px-4 !py-2 text-left"
-                  >
-                    <span className="terminal-text text-xs">
-                      {connector.name}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="terminal-dim text-xs">No wallets detected</div>
-            )}
-          </div>
-        )}
-      </Modal>
     </div>
   )
 }

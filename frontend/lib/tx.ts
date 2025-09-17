@@ -1,6 +1,7 @@
 import toast from 'react-hot-toast'
 import { WaitForTransactionReceiptReturnType } from 'viem'
 
+import { parseErrorMessage } from './error'
 import { writeEthContractAndWait } from './utils'
 import { config, localChain } from './wagmi'
 
@@ -82,17 +83,4 @@ export const txToast = async (...txs: TransactionToast[]) => {
   }
 
   return results
-}
-
-const parseErrorMessage = (err: any) => {
-  if (!(err instanceof Error)) {
-    err = new Error(String(err))
-  }
-
-  // TODO: add more error messages
-  if (err.message.includes('User rejected the request.')) {
-    return 'User rejected the request.'
-  }
-
-  return err.message
 }

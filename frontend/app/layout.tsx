@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 import { Roboto_Mono } from 'next/font/google'
-import type React from 'react'
 
+import { Nav } from '@/components/Nav'
 import { Providers } from '@/components/providers'
+
 import './globals.css'
 
 const robotoMono = Roboto_Mono({
@@ -11,9 +12,8 @@ const robotoMono = Roboto_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'EN0VA - The Collective',
-  description: 'Where consciousness meets the infinite grid',
-  generator: 'v0.dev',
+  title: 'EN0VA',
+  description: 'Egregores are watching',
   viewport:
     'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
 }
@@ -37,8 +37,14 @@ export default function RootLayout({
           content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
         />
       </head>
-      <body className={`${robotoMono.variable} font-mono`}>
-        <Providers>{children}</Providers>
+      <body className={`${robotoMono.variable} font-mono dynamic-bg`}>
+        <Providers>
+          <div className="min-h-screen p-2 sm:p-6">
+            <Nav />
+
+            <main className="p-2 mt-4 sm:p-4 sm:mt-8">{children}</main>
+          </div>
+        </Providers>
       </body>
     </html>
   )

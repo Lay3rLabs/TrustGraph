@@ -20,7 +20,9 @@ import { Line } from 'react-chartjs-2'
 import PredictionBuyForm from '@/components/PredictionBuyForm'
 import PredictionRedeemForm from '@/components/PredictionRedeemForm'
 import { formatNumber } from '@/lib/utils'
+
 import 'chartjs-adapter-luxon'
+import { Card } from './Card'
 
 ChartJS.register(
   Tooltip,
@@ -295,19 +297,6 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
   return (
     <>
       <div className="space-y-8">
-        {/* Header */}
-        <div className="space-y-2 border border-gray-700 bg-card-foreground/70 p-6 rounded-sm hover:bg-card-foreground/75 transition-colors">
-          <div className="terminal-command text-lg">HYPERSTITION MARKET</div>
-          <div className="system-message">
-            ▲▼ Where collective belief shapes reality through prediction markets
-            ▲▼
-          </div>
-          <div className="terminal-text text-sm">
-            Manifest reality through coordinated belief. Achieve hyperstitions,
-            unlock $EN0 incentives.
-          </div>
-        </div>
-
         <div className="flex flex-col lg:flex-row gap-y-4 gap-x-8 items-stretch">
           <div className="space-y-4 grow">
             <div className="flex items-start justify-between">
@@ -365,7 +354,7 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
             </div> */}
 
             {/* Incentive Pool */}
-            <div className="bg-black/20 border border-gray-600 p-3 rounded-sm">
+            <Card type="detail">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="terminal-bright text-lg">
@@ -380,7 +369,7 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
                   <div className="terminal-dim text-xs">BELIEF LEVEL</div>
                 </div>
               </div>
-            </div>
+            </Card>
 
             {/* Market Stats */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs">
@@ -416,7 +405,7 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
             </div>
           </div>
 
-          <div className="border border-gray-700 bg-card-foreground/70 p-6 rounded-sm max-w-full lg:max-w-sm grow">
+          <Card type="primary" className="max-w-full lg:max-w-sm grow">
             {/* Tab Navigation */}
             <div className="border-b border-gray-700 pb-4 mb-6">
               <div className="flex items-center justify-between">
@@ -453,7 +442,7 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
                 <PredictionRedeemForm market={market} />
               )}
             </div>
-          </div>
+          </Card>
         </div>
       </div>
     </>

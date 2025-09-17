@@ -1,6 +1,9 @@
 'use client'
 
-import * as React from 'react'
+import clsx from 'clsx'
+import { useEffect, useRef } from 'react'
+
+import { Card } from '../Card'
 
 interface ModalProps {
   isOpen: boolean
@@ -17,7 +20,7 @@ export function Modal({
   title,
   className,
 }: ModalProps) {
-  React.useEffect(() => {
+  useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onClose()
@@ -35,18 +38,32 @@ export function Modal({
     }
   }, [isOpen, onClose])
 
-  if (!isOpen) return null
+  const openedOnce = useRef(isOpen)
+  if (isOpen && !openedOnce.current) {
+    openedOnce.current = true
+  }
+
+  // Prevent initial flash on page load by hiding until first open.
+  if (!openedOnce.current) {
+    return null
+  }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center animate-in fade-in-0 duration-150 backdrop-blur-sm">
+    <div
+      className={clsx(
+        'fixed inset-0 z-50 flex items-center justify-center duration-200 backdrop-blur-sm',
+        isOpen
+          ? 'animate-in fade-in-0 zoom-in-95'
+          : 'animate-out fade-out-0 zoom-out-95 pointer-events-none'
+      )}
+    >
       {/* Backdrop */}
       <div className="fixed inset-0 bg-black/60" onClick={onClose} />
 
       {/* Modal */}
-      <div
-        className={`relative z-50 w-full max-w-md mx-4 bg-black/95 border border-gray-700 rounded-sm ${
-          className || ''
-        }`}
+      <Card
+        type="popover"
+        className={clsx('relative z-50 w-full max-w-md mx-4 !p-0', className)}
       >
         {/* Header */}
         {title && (
@@ -63,7 +80,7 @@ export function Modal({
 
         {/* Content */}
         <div className="p-4">{children}</div>
-      </div>
+      </Card>
     </div>
   )
 }

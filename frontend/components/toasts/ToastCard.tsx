@@ -2,6 +2,8 @@ import clsx from 'clsx'
 import { ReactNode, cloneElement } from 'react'
 import { Toast, ToastBar, toast as hotToast } from 'react-hot-toast'
 
+import { Card } from '../Card'
+
 export interface ToastCardProps {
   toast: Toast
   containerClassName?: string
@@ -15,9 +17,10 @@ export const ToastCard = ({
 }: ToastCardProps) => (
   <ToastBar toast={toast}>
     {({ message }) => (
-      <div
+      <Card
+        type="popover"
         className={clsx(
-          'relative flex min-w-0 flex-row items-start gap-3 rounded-sm bg-popover-foreground p-4 text-sm text-primary-foreground shadow-2xl',
+          'relative flex min-w-0 flex-row items-start gap-3 text-sm text-primary-foreground',
           toast.type !== 'loading' && 'pr-10',
           containerClassName
         )}
@@ -45,7 +48,7 @@ export const ToastCard = ({
             ×
           </button>
         )}
-      </div>
+      </Card>
     )}
   </ToastBar>
 )
