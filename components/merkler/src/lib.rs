@@ -120,125 +120,118 @@ impl Guest for Component {
         ));
 
         // Add PageRank-based EAS points if configured
-        // if let Some(pagerank_pool_str) = config_var("pagerank_points_pool") {
-        //     let pool_amount = U256::from_str(&pagerank_pool_str)
-        //         .unwrap_or_else(|_| U256::from(1000000000000000000000u128)); // Default 1000 points in wei
+        if let (Some(pagerank_pool_str), Some(vouching_schema_uid)) =
+            (config_var("pagerank_points_pool"), config_var("vouching_schema_uid"))
+        {
+            let pool_amount = U256::from_str(&pagerank_pool_str)
+                .map_err(|err| format!("Failed to get pagerank_points_pool: {err}"))?;
 
-        //     // Safety check: prevent excessive points pools
-        //     let max_pool_size = U256::from(10000000000000000000000000u128); // 10M points max
-        //     if pool_amount > max_pool_size {
-        //         return Err(format!(
-        //             "PageRank points pool too large: {} (max allowed: {})",
-        //             pool_amount, max_pool_size
-        //         ));
-        //     }
+            // Configure Trust Aware PageRank
+            let mut pagerank_config = pagerank::PageRankConfig {
+                damping_factor: config_var("pagerank_damping_factor")
+                    .and_then(|s| s.parse().ok())
+                    .unwrap_or(0.85),
+                max_iterations: config_var("pagerank_max_iterations")
+                    .and_then(|s| s.parse().ok())
+                    .unwrap_or(100),
+                tolerance: config_var("pagerank_tolerance")
+                    .and_then(|s| s.parse().ok())
+                    .unwrap_or(1e-6),
+                trust_config: pagerank::TrustConfig::default(),
+            };
 
-        //     // Configure Trust Aware PageRank
-        //     let mut pagerank_config = pagerank::PageRankConfig {
-        //         damping_factor: config_var("pagerank_damping_factor")
-        //             .and_then(|s| s.parse().ok())
-        //             .unwrap_or(0.85),
-        //         max_iterations: config_var("pagerank_max_iterations")
-        //             .and_then(|s| s.parse().ok())
-        //             .unwrap_or(100),
-        //         tolerance: config_var("pagerank_tolerance")
-        //             .and_then(|s| s.parse().ok())
-        //             .unwrap_or(1e-6),
-        //         trust_config: pagerank::TrustConfig::default(),
-        //     };
+            // Configure trusted seeds if provided
+            println!("🔍 Checking for pagerank_trusted_seeds configuration...");
+            if let Some(trusted_seeds_str) = config_var("pagerank_trusted_seeds") {
+                println!("🔍 Found pagerank_trusted_seeds: '{}'", trusted_seeds_str);
+                let seed_addresses: Vec<&str> =
+                    trusted_seeds_str.split(',').map(|s| s.trim()).collect();
+                let mut parsed_seeds = Vec::new();
 
-        //     // Configure trusted seeds if provided
-        //     println!("🔍 Checking for pagerank_trusted_seeds configuration...");
-        //     if let Some(trusted_seeds_str) = config_var("pagerank_trusted_seeds") {
-        //         println!("🔍 Found pagerank_trusted_seeds: '{}'", trusted_seeds_str);
-        //         let seed_addresses: Vec<&str> =
-        //             trusted_seeds_str.split(',').map(|s| s.trim()).collect();
-        //         let mut parsed_seeds = Vec::new();
+                for seed_str in seed_addresses {
+                    if seed_str.is_empty() {
+                        continue;
+                    }
+                    match wavs_wasi_utils::evm::alloy_primitives::Address::from_str(seed_str) {
+                        Ok(address) => parsed_seeds.push(address),
+                        Err(e) => {
+                            println!("⚠️  Invalid trusted seed address '{}': {}", seed_str, e);
+                        }
+                    }
+                }
 
-        //         for seed_str in seed_addresses {
-        //             if seed_str.is_empty() {
-        //                 continue;
-        //             }
-        //             match wavs_wasi_utils::evm::alloy_primitives::Address::from_str(seed_str) {
-        //                 Ok(address) => parsed_seeds.push(address),
-        //                 Err(e) => {
-        //                     println!("⚠️  Invalid trusted seed address '{}': {}", seed_str, e);
-        //                 }
-        //             }
-        //         }
+                println!("🔍 Parsed {} trusted seed addresses", parsed_seeds.len());
+                if !parsed_seeds.is_empty() {
+                    let mut trust_config = pagerank::TrustConfig::new(parsed_seeds.clone());
 
-        //         println!("🔍 Parsed {} trusted seed addresses", parsed_seeds.len());
-        //         if !parsed_seeds.is_empty() {
-        //             let mut trust_config = pagerank::TrustConfig::new(parsed_seeds.clone());
+                    // Configure trust parameters
+                    if let Some(multiplier_str) = config_var("pagerank_trust_multiplier") {
+                        if let Ok(multiplier) = multiplier_str.parse::<f64>() {
+                            trust_config = trust_config.with_trust_multiplier(multiplier);
+                        }
+                    }
 
-        //             // Configure trust parameters
-        //             if let Some(multiplier_str) = config_var("pagerank_trust_multiplier") {
-        //                 if let Ok(multiplier) = multiplier_str.parse::<f64>() {
-        //                     trust_config = trust_config.with_trust_multiplier(multiplier);
-        //                 }
-        //             }
+                    if let Some(boost_str) = config_var("pagerank_trust_boost") {
+                        if let Ok(boost) = boost_str.parse::<f64>() {
+                            trust_config = trust_config.with_trust_boost(boost);
+                        }
+                    }
 
-        //             if let Some(boost_str) = config_var("pagerank_trust_boost") {
-        //                 if let Ok(boost) = boost_str.parse::<f64>() {
-        //                     trust_config = trust_config.with_trust_boost(boost);
-        //                 }
-        //             }
+                    pagerank_config = pagerank_config.with_trust_config(trust_config);
+                    println!(
+                        "✅ Configured Trust Aware PageRank with {} trusted seeds",
+                        parsed_seeds.len()
+                    );
+                    println!(
+                        "   Trust multiplier: {:.1}x",
+                        pagerank_config.trust_config.trust_multiplier
+                    );
+                    println!(
+                        "   Trust boost: {:.1}%",
+                        pagerank_config.trust_config.trust_boost * 100.0
+                    );
+                } else {
+                    println!("⚠️  No valid trusted seed addresses found, using standard PageRank");
+                }
+            } else {
+                println!("ℹ️  No pagerank_trusted_seeds configured, using standard PageRank");
+            }
 
-        //             pagerank_config = pagerank_config.with_trust_config(trust_config);
-        //             println!(
-        //                 "✅ Configured Trust Aware PageRank with {} trusted seeds",
-        //                 parsed_seeds.len()
-        //             );
-        //             println!(
-        //                 "   Trust multiplier: {:.1}x",
-        //                 pagerank_config.trust_config.trust_multiplier
-        //             );
-        //             println!(
-        //                 "   Trust boost: {:.1}%",
-        //                 pagerank_config.trust_config.trust_boost * 100.0
-        //             );
-        //         } else {
-        //             println!("⚠️  No valid trusted seed addresses found, using standard PageRank");
-        //         }
-        //     } else {
-        //         println!("ℹ️  No pagerank_trusted_seeds configured, using standard PageRank");
-        //     }
+            let min_threshold =
+                config_var("pagerank_min_threshold").and_then(|s| s.parse().ok()).unwrap_or(0.0001);
 
-        //     let min_threshold =
-        //         config_var("pagerank_min_threshold").and_then(|s| s.parse().ok()).unwrap_or(0.0001);
+            let pagerank_source_config = pagerank::PageRankRewardSource::new(
+                vouching_schema_uid.clone(),
+                pool_amount,
+                pagerank_config,
+            )
+            .with_min_threshold(min_threshold);
 
-        //     let pagerank_source_config = pagerank::PageRankRewardSource::new(
-        //         schema_uid.clone(),
-        //         pool_amount,
-        //         pagerank_config,
-        //     )
-        //     .with_min_threshold(min_threshold);
-
-        //     let has_trust = pagerank_source_config.has_trust_enabled();
-        //     match sources::eas_pagerank::EasPageRankSource::new(
-        //         &eas_address,
-        //         &indexer_address,
-        //         &chain_name,
-        //         pagerank_source_config,
-        //     ) {
-        //         Ok(pagerank_source) => {
-        //             registry.add_source(pagerank_source);
-        //             if has_trust {
-        //                 println!(
-        //                     "✅ Added Trust Aware EAS PageRank source with {} points pool",
-        //                     pool_amount
-        //                 );
-        //             } else {
-        //                 println!("✅ Added EAS PageRank source with {} points pool", pool_amount);
-        //             }
-        //         }
-        //         Err(e) => {
-        //             println!("⚠️  Failed to create PageRank source: {}", e);
-        //         }
-        //     }
-        // } else {
-        //     println!("ℹ️  PageRank points disabled (no pagerank_points_pool configured)");
-        // }
+            let has_trust = pagerank_source_config.has_trust_enabled();
+            match sources::eas_pagerank::EasPageRankSource::new(
+                &eas_address,
+                &indexer_address,
+                &chain_name,
+                pagerank_source_config,
+            ) {
+                Ok(pagerank_source) => {
+                    registry.add_source(pagerank_source);
+                    if has_trust {
+                        println!(
+                            "✅ Added Trust Aware EAS PageRank source with {} points pool",
+                            pool_amount
+                        );
+                    } else {
+                        println!("✅ Added EAS PageRank source with {} points pool", pool_amount);
+                    }
+                }
+                Err(e) => {
+                    println!("⚠️  Failed to create PageRank source: {}", e);
+                }
+            }
+        } else {
+            println!("ℹ️  PageRank points disabled (no pagerank_points_pool configured)");
+        }
 
         // Example: Points for specific schema attestations
         // Uncomment and configure to points attestations to a specific schema

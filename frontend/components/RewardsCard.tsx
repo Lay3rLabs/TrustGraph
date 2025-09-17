@@ -3,7 +3,7 @@
 import type React from 'react'
 
 import { Button } from '@/components/ui/button'
-import { mockUsdcAddress } from '@/lib/contracts'
+import { enovaAddress } from '@/lib/contracts'
 
 interface RewardsCardProps {
   merkleRoot?: string
@@ -120,7 +120,7 @@ export function RewardsCard({
             <div className="space-y-2">
               <div className="terminal-dim text-xs">REWARD TOKEN</div>
               <div className="terminal-text text-sm font-mono break-all">
-                {mockUsdcAddress}
+                {enovaAddress}
               </div>
             </div>
           </div>
