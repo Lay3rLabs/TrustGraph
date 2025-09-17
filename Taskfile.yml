@@ -148,3 +148,10 @@ tasks:
           exit 1
         fi
         echo "✅ All requirements satisfied"
+
+  dos2unix:
+    desc: "Convert all script files to Unix line endings"
+    cmds:
+      - |
+        find script/ -type f -name "*.sh" -exec dos2unix {} \;
+        find script/ -type f -name "*.env*" -exec dos2unix {} \;
