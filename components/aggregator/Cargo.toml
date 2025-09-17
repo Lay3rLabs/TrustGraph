@@ -11,7 +11,7 @@ rust-version.workspace = true
 crate-type = ["cdylib"]
 
 [package.metadata.component]
-package = "component:aggregator"
+package = "component:en0va-aggregator"
 target = "wavs:aggregator@0.6.0-alpha.12"
 
 [dependencies]
