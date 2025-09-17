@@ -37,7 +37,9 @@ export default function RootLayout({
           content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
         />
       </head>
-      <body className={`${robotoMono.variable} font-mono dynamic-bg`}>
+      <body
+        className={`${robotoMono.variable} font-mono dynamic-bg text-primary-foreground`}
+      >
         <Providers>
           <div className="min-h-screen p-2 sm:p-6">
             <Nav />

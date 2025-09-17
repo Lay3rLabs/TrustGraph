@@ -1,7 +1,9 @@
 'use client'
 
-import { AttestationData, useIndividualAttestation } from '@/hooks/useIndexer'
-import { SCHEMA_OPTIONS } from '@/lib/schemas'
+import { useIndividualAttestation } from '@/hooks/useIndexer'
+import { AttestationData, SCHEMA_OPTIONS } from '@/lib/schemas'
+
+import { Card } from './Card'
 
 interface AttestationCardProps {
   uid: `0x${string}`
@@ -38,37 +40,9 @@ export function AttestationCard({ uid }: AttestationCardProps) {
     return { status: 'verified', color: 'text-green-400' }
   }
 
-  const parseVouchingData = (data: string) => {
-    try {
-      // Parse the ABI encoded data for vouching schema
-      // Vouching schema has a "weight" field
-      if (data === '0x' || !data) return { weight: '0' }
-
-      // Simple parsing - in a real implementation you'd use proper ABI decoding
-      // The data should be ABI-encoded uint256 for the weight
-      // For now, assume it's a simple hex-encoded number
-      if (data.length > 2) {
-        try {
-          const hexValue = data.slice(2)
-          if (hexValue.length === 64) {
-            // Standard ABI-encoded uint256
-            const weight = parseInt(hexValue, 16)
-            return { weight: weight.toString() }
-          }
-        } catch {
-          // Fall through to default
-        }
-      }
-
-      return { weight: '1' } // Default weight
-    } catch (err) {
-      return { weight: 'Unknown' }
-    }
-  }
-
   if (isLoading) {
     return (
-      <div className="border border-gray-700 bg-black/5 p-4 rounded-sm">
+      <Card type="primary" size="lg">
         <div className="space-y-4">
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-3">
@@ -85,13 +59,17 @@ export function AttestationCard({ uid }: AttestationCardProps) {
             Fetching attestation details from EAS contract...
           </div>
         </div>
-      </div>
+      </Card>
     )
   }
 
   if (error) {
     return (
-      <div className="border border-red-700 bg-red-900/10 p-4 rounded-sm">
+      <Card
+        type="primary"
+        size="lg"
+        className="border border-red-700 bg-red-900/10"
+      >
         <div className="space-y-4">
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-3">
@@ -108,13 +86,17 @@ export function AttestationCard({ uid }: AttestationCardProps) {
             Failed to load attestation: {error.message}
           </div>
         </div>
-      </div>
+      </Card>
     )
   }
 
   if (!attestation) {
     return (
-      <div className="border border-yellow-700 bg-yellow-900/10 p-4 rounded-sm">
+      <Card
+        type="primary"
+        size="lg"
+        className="border border-yellow-700 bg-yellow-900/10"
+      >
         <div className="space-y-4">
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-3">
@@ -131,31 +113,25 @@ export function AttestationCard({ uid }: AttestationCardProps) {
             Attestation not found or invalid UID
           </div>
         </div>
-      </div>
+      </Card>
     )
   }
 
-  const data = parseVouchingData(attestation.data)
   const statusInfo = getAttestationStatus(attestation)
   const schemaOptions = SCHEMA_OPTIONS.find(
     (schema) => schema.uid === attestation.schema
   )
 
   return (
-    <div className="border border-gray-700 bg-card-foreground/70 p-4 rounded-sm hover:bg-card-foreground/75 transition-colors">
+    <Card type="primary" size="lg">
       <div className="space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
             <span className="terminal-bright text-lg">◆</span>
-            <div>
-              <h3 className="terminal-bright text-base">
-                {schemaOptions?.name.split(' ')[0].toUpperCase()} ATTESTATION
-              </h3>
-              <div className="terminal-dim text-sm">
-                Vouch Weight: {data.weight}
-              </div>
-            </div>
+            <h3 className="terminal-bright text-base">
+              {schemaOptions?.name.split(' ')[0].toUpperCase()}
+            </h3>
           </div>
           <div
             className={`px-3 py-1 border border-gray-700 rounded-sm text-xs ${statusInfo.color}`}
@@ -220,6 +196,12 @@ export function AttestationCard({ uid }: AttestationCardProps) {
               </div>
             </div>
           )}
+          <div>
+            <div className="terminal-dim text-xs mb-1">DATA</div>
+            <div className="terminal-text text-xs">
+              {JSON.stringify(attestation.decodedData)}
+            </div>
+          </div>
         </div>
 
         {/* Additional Status Messages */}
@@ -242,6 +224,6 @@ export function AttestationCard({ uid }: AttestationCardProps) {
             </div>
           )}
       </div>
-    </div>
+    </Card>
   )
 }

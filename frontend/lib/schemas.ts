@@ -1,6 +1,8 @@
 // Schema UIDs for EAS attestations
 // These are the standard schemas used in the application
 
+import { Hex, fromHex, stringToHex, toHex } from 'viem'
+
 export const schemas = {
   basic: '0x9b9fce7e12ad60ec91a413996435b3db1ca988e6a623931680ecb4ad22ebe0ca',
   compute: '0x5dba5bf8782eb162689ca5baf4148a7145191770a7bc6de44a2683eb67e7cdbe',
@@ -72,3 +74,86 @@ export const SCHEMA_OPTIONS: {
     ],
   },
 ]
+
+export interface AttestationData {
+  uid: string
+  attester: string
+  recipient: string
+  time: bigint
+  expirationTime: bigint
+  revocationTime: bigint
+  refUID: string
+  schema: string
+  data: string
+  decodedData: Record<string, string>
+}
+
+export const encodeAttestationData = (
+  schemaUid: string,
+  data: Record<string, string>
+): Hex => {
+  // Validate schema and encode data
+  const schema = SCHEMA_OPTIONS.find((s) => s.uid === schemaUid)
+  if (!schema) {
+    throw new Error(`Unknown schema: ${schemaUid}`)
+  }
+
+  // Ensure all data fields are present
+  schema.fields.forEach((field) => {
+    if (!(field.name in data)) {
+      throw new Error(`Missing field: ${field.name}`)
+    }
+  })
+
+  // Encode JSON data to hex
+  const encodedData = toHex(
+    JSON.stringify(
+      schema.fields.reduce((acc, { name, type }) => {
+        const value = data[name]
+        const encodedValue = type.startsWith('uint')
+          ? BigInt(value).toString()
+          : type.startsWith('bytes')
+          ? value.startsWith('0x')
+            ? value
+            : stringToHex(value)
+          : value
+
+        return { ...acc, [name]: encodedValue }
+      }, {})
+    )
+  )
+
+  return encodedData
+}
+
+export const decodeAttestationData = (
+  attestation: Pick<AttestationData, 'schema' | 'data'>
+): Record<string, string> => {
+  const schema = SCHEMA_OPTIONS.find((s) => s.uid === attestation.schema)
+  if (!schema) {
+    throw new Error(`Unknown schema: ${attestation.schema}`)
+  }
+
+  if (!attestation.data.startsWith('0x')) {
+    throw new Error(`Invalid data format: ${attestation.data}`)
+  }
+  const decodedDataString = fromHex(attestation.data as Hex, 'string')
+
+  let decodedData: Record<string, string>
+  try {
+    decodedData = JSON.parse(decodedDataString)
+  } catch (error) {
+    throw new Error(`Invalid JSON data format: ${attestation.data}`)
+  }
+
+  return schema.fields.reduce((acc: Record<string, string>, { name, type }) => {
+    const value = decodedData[name]
+    acc[name] =
+      type.startsWith('bytes') &&
+      typeof value === 'string' &&
+      value.startsWith('0x')
+        ? fromHex(value as Hex, 'string')
+        : value
+    return acc
+  }, {})
+}

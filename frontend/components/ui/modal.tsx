@@ -53,17 +53,22 @@ export function Modal({
       className={clsx(
         'fixed inset-0 z-50 flex items-center justify-center duration-200 backdrop-blur-sm',
         isOpen
-          ? 'animate-in fade-in-0 zoom-in-95'
-          : 'animate-out fade-out-0 zoom-out-95 pointer-events-none'
+          ? 'animate-in fade-in-0'
+          : 'animate-out fade-out-0 pointer-events-none'
       )}
     >
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/60" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
 
       {/* Modal */}
       <Card
         type="popover"
-        className={clsx('relative z-50 w-full max-w-md mx-4 !p-0', className)}
+        size="md"
+        className={clsx(
+          'relative z-50 w-full max-w-md mx-4 !p-0',
+          isOpen ? 'animate-in zoom-in-95' : 'animate-out zoom-out-95',
+          className
+        )}
       >
         {/* Header */}
         {title && (

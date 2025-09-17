@@ -4,6 +4,7 @@ import type React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { AttestationCard } from '@/components/AttestationCard'
+import { Card } from '@/components/Card'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
 import {
   useIndividualAttestation,
@@ -179,7 +180,7 @@ export default function AttestationsPage() {
           <select
             value={selectedSchema}
             onChange={(e) => setSelectedSchema(e.target.value)}
-            className="w-full bg-black/20 border border-gray-700 terminal-text text-sm p-2 rounded-sm"
+            className="w-full terminal-text text-sm p-2 rounded-sm bg-card-foreground/30 shadow-md"
           >
             <option value="all">ALL SCHEMAS</option>
             {SCHEMA_OPTIONS.map((schema) => (
@@ -197,7 +198,7 @@ export default function AttestationsPage() {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="w-full bg-black/20 border border-gray-700 terminal-text text-sm p-2 rounded-sm"
+            className="w-full terminal-text text-sm p-2 rounded-sm bg-card-foreground/30 shadow-md"
           >
             <option value="all">ALL STATUS</option>
             <option value="verified">VERIFIED</option>
@@ -213,7 +214,7 @@ export default function AttestationsPage() {
             onChange={(e) =>
               setSortOrder(e.target.value as 'newest' | 'oldest')
             }
-            className="w-full bg-black/20 border border-gray-700 terminal-text text-sm p-2 rounded-sm"
+            className="w-full terminal-text text-sm p-2 rounded-sm bg-card-foreground/30 shadow-md"
           >
             <option value="newest">NEWEST FIRST</option>
             <option value="oldest">OLDEST FIRST</option>
@@ -223,26 +224,26 @@ export default function AttestationsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
+        <Card type="detail" size="sm">
           <div className="terminal-bright text-lg">
             {filteredAttestationUIDs.length}
           </div>
           <div className="terminal-dim text-xs">SHOWING</div>
-        </div>
-        <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
+        </Card>
+        <Card type="detail" size="sm">
           <div className="terminal-bright text-lg">
             {allAttestationUIDs.length}
           </div>
           <div className="terminal-dim text-xs">FETCHED</div>
-        </div>
-        <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
+        </Card>
+        <Card type="detail" size="sm">
           <div className="terminal-bright text-lg">{totalCount}</div>
           <div className="terminal-dim text-xs">TOTAL</div>
-        </div>
-        <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
+        </Card>
+        <Card type="detail" size="sm">
           <div className="terminal-bright text-lg">{SCHEMA_OPTIONS.length}</div>
           <div className="terminal-dim text-xs">SCHEMAS</div>
-        </div>
+        </Card>
       </div>
 
       {/* Loading State */}

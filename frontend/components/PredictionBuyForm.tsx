@@ -18,6 +18,7 @@ import {
 } from '@/lib/contracts'
 import { txToast } from '@/lib/tx'
 
+import { Card } from './Card'
 import { HyperstitionMarket } from './PredictionMarketDetail'
 
 interface PredictionBuyFormProps {
@@ -425,21 +426,13 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
         <p className="terminal-text text-sm">{market.description}</p>
       </div>
 
-      {collateralBalance && (
-        <div className="bg-black/20 border border-gray-600 p-3 rounded-sm">
-          <div className="terminal-dim text-xs">COLLATERAL BALANCE</div>
-          <div className="terminal-bright text-sm">
-            {formatUnits(collateralBalance.value, 18)}{' '}
-            {collateralBalance.symbol}
-          </div>
-        </div>
-      )}
-
       {isConnected &&
         address &&
         (yesTokenBalance !== null || noTokenBalance !== null) && (
-          <div className="bg-black/20 border border-gray-600 p-3 rounded-sm">
-            <div className="terminal-dim text-xs">YOUR POSITION</div>
+          <Card size="sm" type="detail">
+            <div className="terminal-dim text-xs text-center">
+              YOUR POSITION
+            </div>
             <div className="grid grid-cols-2 gap-4 mt-2">
               <div className="flex flex-col items-center">
                 <div className="text-[#05df72] text-sm font-bold">
@@ -456,7 +449,7 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
                 <div className="terminal-dim text-xs">NO tokens</div>
               </div>
             </div>
-          </div>
+          </Card>
         )}
 
       {error && (
@@ -540,6 +533,13 @@ const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
             required
           />
         </div>
+
+        {collateralBalance && (
+          <p className="-mt-2 terminal-bright text-xs">
+            BALANCE: {formatUnits(collateralBalance.value, 18)}{' '}
+            {collateralBalance.symbol}
+          </p>
+        )}
 
         {formData.collateralAmount && (tokensEstimate || isCalculating) && (
           <div className="bg-black/20 border border-gray-600 p-3 rounded-sm">

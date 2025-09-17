@@ -19,6 +19,7 @@ import { ComponentType, useMemo, useState } from 'react'
 import { hexToNumber } from 'viem'
 import { useAccount } from 'wagmi'
 
+import { Card } from '@/components/Card'
 import { wavsServiceId } from '@/lib/config'
 
 import 'chartjs-adapter-luxon'
@@ -236,7 +237,7 @@ export default function PointsPage() {
           <div className="flex flex-col justify-center items-center my-4 md:my-18">
             <div className="text-center space-y-3">
               <h1 className="text-lg">YOUR POINTS</h1>
-              <div className="terminal-bright text-8xl font-bold">
+              <div className="text-8xl font-bold font-mono">
                 {cumulativePoints.length > 0
                   ? cumulativePoints[
                       cumulativePoints.length - 1
@@ -262,7 +263,7 @@ export default function PointsPage() {
               <select
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value)}
-                className="bg-gray-900/15 text-white font-mono text-xs px-3 py-2 focus:border-blue-400 focus:outline-none cursor-pointer"
+                className="font-mono text-xs px-3 py-2 cursor-pointer bg-card-foreground/30 shadow-md"
               >
                 <option value="ALL">All</option>
                 {types.map((type) => (
@@ -285,9 +286,11 @@ export default function PointsPage() {
                   const summary =
                     activity.metadata?.summary || ActivitySummary[activity.type]
                   return (
-                    <div
+                    <Card
                       key={activity.id}
-                      className="flex items-center justify-between px-4 py-3 rounded-sm bg-gray-900/20 hover:bg-gray-900/30 transition-colors"
+                      type="detail"
+                      size="sm"
+                      className="flex items-center justify-between"
                     >
                       <div className="flex items-center space-x-4">
                         <div>
@@ -315,7 +318,7 @@ export default function PointsPage() {
                         </div>
                         <div className="text-xs text-gray-500">points</div>
                       </div>
-                    </div>
+                    </Card>
                   )
                 })}
             </div>
@@ -324,45 +327,47 @@ export default function PointsPage() {
             <h2 className="text-lg font-bold text-white mt-8">
               EARN MORE POINTS
             </h2>
-            <div className="border border-gray-700 bg-card-foreground/40 p-6 rounded-sm sticky top-4 max-w-full grow space-y-4">
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:justify-center md:gap-8">
-                <div className="terminal-text text-sm space-y-2">
-                  <div className="system-message">◉ HYPERSTITION MARKETS</div>
-                  <ul className="terminal-dim text-xs pl-4 list-disc">
-                    <li>Participate in active Hyperstitions</li>
-                    <li>Redeem winning predictions</li>
-                    <li>Experience collective manifestation</li>
-                  </ul>
-                </div>
-
-                <div className="terminal-text text-sm space-y-2">
-                  <div className="system-message">◆ ATTESTATIONS</div>
-                  <ul className="terminal-dim text-xs pl-4 list-disc">
-                    <li>Verify statements</li>
-                    <li>Validate data integrity</li>
-                    <li>Create trust networks</li>
-                  </ul>
-                </div>
-
-                <div className="terminal-text text-sm space-y-2">
-                  <div className="system-message">◢◤ GOVERNANCE</div>
-                  <ul className="terminal-dim text-xs pl-4 list-disc">
-                    <li>Build consensus</li>
-                    <li>Shape the future direction</li>
-                    <li>Vote on collective decisions</li>
-                  </ul>
-                </div>
-
-                <div className="terminal-text text-sm space-y-2">
-                  <div className="system-message">▲ SOCIAL AMPLIFICATION</div>
-                  <ul className="terminal-dim text-xs pl-4 list-disc">
-                    <li>Share EN0VA content</li>
-                    <li>Refer new members</li>
-                    <li>Boost network effects</li>
-                  </ul>
-                </div>
+            <Card
+              type="detail"
+              size="md"
+              className="grow grid grid-cols-1 gap-6 md:grid-cols-2 md:justify-center md:gap-8"
+            >
+              <div className="terminal-text text-sm space-y-2">
+                <div className="system-message">◉ HYPERSTITION MARKETS</div>
+                <ul className="terminal-dim text-xs pl-4 list-disc">
+                  <li>Participate in active Hyperstitions</li>
+                  <li>Redeem winning predictions</li>
+                  <li>Experience collective manifestation</li>
+                </ul>
               </div>
-            </div>
+
+              <div className="terminal-text text-sm space-y-2">
+                <div className="system-message">◆ ATTESTATIONS</div>
+                <ul className="terminal-dim text-xs pl-4 list-disc">
+                  <li>Verify statements</li>
+                  <li>Validate data integrity</li>
+                  <li>Create trust networks</li>
+                </ul>
+              </div>
+
+              <div className="terminal-text text-sm space-y-2">
+                <div className="system-message">◢◤ GOVERNANCE</div>
+                <ul className="terminal-dim text-xs pl-4 list-disc">
+                  <li>Build consensus</li>
+                  <li>Shape the future direction</li>
+                  <li>Vote on collective decisions</li>
+                </ul>
+              </div>
+
+              <div className="terminal-text text-sm space-y-2">
+                <div className="system-message">▲ SOCIAL AMPLIFICATION</div>
+                <ul className="terminal-dim text-xs pl-4 list-disc">
+                  <li>Share EN0VA content</li>
+                  <li>Refer new members</li>
+                  <li>Boost network effects</li>
+                </ul>
+              </div>
+            </Card>
           </div>
         </div>
       </div>

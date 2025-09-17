@@ -2,17 +2,16 @@
 
 import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { stringToHex, toHex } from 'viem'
 import { useAccount, useChainId, usePublicClient } from 'wagmi'
 
 import { easAbi, easAddress } from '@/lib/contracts'
-import { SCHEMA_OPTIONS } from '@/lib/schemas'
+import { encodeAttestationData } from '@/lib/schemas'
 import { txToast } from '@/lib/tx'
 import { localChain } from '@/lib/wagmi'
 
 import { attestationKeys } from './useIndexer'
 
-interface AttestationData {
+interface NewAttestationData {
   schema: string
   recipient: string
   data: Record<string, string>
@@ -29,7 +28,7 @@ export function useAttestation() {
   const [error, setError] = useState<Error | null>(null)
   const [hash, setHash] = useState<`0x${string}` | null>(null)
 
-  const createAttestation = async (attestationData: AttestationData) => {
+  const createAttestation = async (attestationData: NewAttestationData) => {
     if (!isConnected) {
       throw new Error('Please connect your wallet')
     }
@@ -46,21 +45,6 @@ export function useAttestation() {
     setHash(null)
 
     try {
-      // Validate schema and encode data
-      const schema = SCHEMA_OPTIONS.find(
-        (s) => s.uid === attestationData.schema
-      )
-      if (!schema) {
-        throw new Error(`Unknown schema: ${attestationData.schema}`)
-      }
-
-      // Ensure all data fields are present
-      schema.fields.forEach((field) => {
-        if (!(field.name in attestationData.data)) {
-          throw new Error(`Missing field: ${field.name}`)
-        }
-      })
-
       // Validate input formats
       if (
         !attestationData.schema.startsWith('0x') ||
@@ -77,22 +61,9 @@ export function useAttestation() {
         )
       }
 
-      // Encode JSON data to hex
-      const encodedData = toHex(
-        JSON.stringify(
-          schema.fields.reduce((acc, { name, type }) => {
-            const value = attestationData.data[name]
-            const encodedValue = type.startsWith('uint')
-              ? BigInt(value).toString()
-              : type.startsWith('bytes')
-              ? value.startsWith('0x')
-                ? value
-                : stringToHex(value)
-              : value
-
-            return { ...acc, [name]: encodedValue }
-          }, {})
-        )
+      const encodedData = encodeAttestationData(
+        attestationData.schema,
+        attestationData.data
       )
 
       // Helper function to execute transaction with fresh nonce

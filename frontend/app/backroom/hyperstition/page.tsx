@@ -191,7 +191,7 @@ export default function HyperstitionPage() {
       </div> */}
 
       {/* Header */}
-      <Card type="primary" className="space-y-2">
+      <Card type="primary" size="lg" className="space-y-2">
         <div className="terminal-command text-lg">HYPERSTITION MARKET</div>
         <div className="system-message">
           ▲▼ Where collective belief shapes reality through prediction markets

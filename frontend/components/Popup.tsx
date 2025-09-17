@@ -235,6 +235,7 @@ export const Popup = ({
         createPortal(
           <Card
             type="popover"
+            size="md"
             className={clsx(
               'fixed z-50 flex flex-col transition-all',
               // Prevent initial flash on page load by hiding until first open.

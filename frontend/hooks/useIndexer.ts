@@ -4,20 +4,8 @@ import { useQuery } from '@tanstack/react-query'
 import { readContract } from '@wagmi/core'
 
 import { easConfig, wavsIndexerConfig } from '@/lib/contracts'
-import { schemas } from '@/lib/schemas'
+import { decodeAttestationData, schemas } from '@/lib/schemas'
 import { config } from '@/lib/wagmi'
-
-export interface AttestationData {
-  uid: string
-  attester: string
-  recipient: string
-  time: bigint
-  expirationTime: bigint
-  revocationTime: bigint
-  refUID: string
-  data: string
-  schema: string
-}
 
 // Query keys for consistent caching
 export const attestationKeys = {
@@ -97,12 +85,25 @@ function useSchemaAttestationUIDs(
 export function useIndividualAttestation(uid: `0x${string}`) {
   return useQuery({
     queryKey: attestationKeys.attestation(uid),
-    queryFn: async () =>
-      await readContract(config, {
+    queryFn: async () => {
+      const attestation = await readContract(config, {
         ...easConfig,
         functionName: 'getAttestation',
         args: [uid],
-      }),
+      })
+
+      let decodedData
+      try {
+        decodedData = decodeAttestationData(attestation)
+      } catch (error) {
+        decodedData = {}
+      }
+
+      return {
+        ...attestation,
+        decodedData,
+      }
+    },
     enabled: !!uid,
     staleTime: 2 * 60 * 1000, // Individual attestations are relatively static once created
     gcTime: 10 * 60 * 1000, // Cache longer since they don't change often

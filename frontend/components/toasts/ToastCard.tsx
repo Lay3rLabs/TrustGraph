@@ -19,6 +19,7 @@ export const ToastCard = ({
     {({ message }) => (
       <Card
         type="popover"
+        size="md"
         className={clsx(
           'relative flex min-w-0 flex-row items-start gap-3 text-sm text-primary-foreground',
           toast.type !== 'loading' && 'pr-10',

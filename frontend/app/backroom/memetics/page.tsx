@@ -97,10 +97,10 @@ export default function MemeticsPage() {
           const isClassified = writing.status === 'classified'
           const canAccess = !isClassified || hasClassifiedAccess
 
-          if (isClassified && !hasClassifiedAccess) {
+          if (!canAccess) {
             return (
               <div
-                key={writing.id}
+                key={writing.slug}
                 onClick={() => handleClassifiedClick(writing)}
                 className="block border-b border-gray-800 pb-6 hover:bg-black/20 transition-colors group cursor-pointer opacity-80"
               >
@@ -151,7 +151,7 @@ export default function MemeticsPage() {
 
           return (
             <Link
-              key={writing.id}
+              key={writing.slug}
               href={`/backroom/memetics/articles/${writing.slug}`}
               className="block border-b border-gray-800 pb-6 hover:bg-black/10 transition-colors group cursor-pointer"
             >
@@ -202,7 +202,7 @@ export default function MemeticsPage() {
       </div>
 
       {/* Simple Footer */}
-      <div className="text-center border-t border-gray-800 pt-8">
+      <div className="text-center pt-8">
         <div className="terminal-dim text-xs">∞ WORDS BECOME WORLDS ∞</div>
       </div>
     </div>

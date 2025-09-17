@@ -354,7 +354,7 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
             </div> */}
 
             {/* Incentive Pool */}
-            <Card type="detail">
+            <Card size="sm" type="detail">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="terminal-bright text-lg">
@@ -405,7 +405,11 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
             </div>
           </div>
 
-          <Card type="primary" className="max-w-full lg:max-w-sm grow">
+          <Card
+            size="lg"
+            type="primary"
+            className="max-w-full lg:max-w-sm grow"
+          >
             {/* Tab Navigation */}
             <div className="border-b border-gray-700 pb-4 mb-6">
               <div className="flex items-center justify-between">
