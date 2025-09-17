@@ -12,6 +12,7 @@ sh ./build_service.sh
 - TRIGGER_EVENT: The event to trigger the service (e.g. "NewTrigger(bytes)")
 - FUEL_LIMIT: The fuel limit (wasm compute metering) for the service
 - MAX_GAS: The maximum chain gas for the submission Tx
+- AGGREGATOR_URL: The URL of the aggregator service
 '''
 
 # == Defaults ==
@@ -126,6 +127,25 @@ fi
 
 echo "Reading component configurations from: ${COMPONENT_CONFIGS_FILE}"
 
+# Function to get aggregator component configuration
+get_aggregator_config() {
+    local config_file="$1"
+    local config_json="{}"
+
+    if [ -f "$config_file" ]; then
+        config_json=$(jq '.aggregator_components[0] // {}' "$config_file")
+    fi
+
+    echo "$config_json"
+}
+
+# Get aggregator component configuration
+AGGREGATOR_COMPONENT=$(get_aggregator_config "${COMPONENT_CONFIGS_FILE}")
+AGG_PKG_NAME=$(echo "$AGGREGATOR_COMPONENT" | jq -r '.package_name // "en0va-aggregator"')
+AGG_PKG_VERSION=$(echo "$AGGREGATOR_COMPONENT" | jq -r '.package_version // "0.1.0"')
+AGG_CONFIG_VALUES=$(echo "$AGGREGATOR_COMPONENT" | jq '.config_values // {}')
+AGG_ENV_VARIABLES=$(echo "$AGGREGATOR_COMPONENT" | jq '.env_variables // []')
+
 # Export all required variables that might be used in config value substitutions
 # These should be set by deploy-script.sh before calling this script
 echo "📋 Available configuration variables:"
@@ -175,12 +195,30 @@ jq -c '.components[]' "${COMPONENT_CONFIGS_FILE}" | while IFS= read -r component
 
     eval "$BASE_CMD workflow trigger --id ${WORKFLOW_ID} set-evm --address ${COMP_TRIGGER_ADDRESS} --chain ${TRIGGER_CHAIN} --event-hash ${COMP_TRIGGER_EVENT_HASH}" > /dev/null
 
-    # If no aggregator is set, use the default
-    SUB_CMD="set-evm"
+    # Set submit to use aggregator component
     if [ -n "$AGGREGATOR_URL" ]; then
-        SUB_CMD="set-aggregator --url ${AGGREGATOR_URL}"
+        eval "$BASE_CMD workflow submit --id ${WORKFLOW_ID} set-aggregator --url ${AGGREGATOR_URL}" > /dev/null
+
+        # Configure aggregator component for this workflow
+        echo "  📋 Configuring aggregator component"
+        eval "$BASE_CMD workflow submit --id ${WORKFLOW_ID} component set-source-registry --domain ${REGISTRY} --package ${PKG_NAMESPACE}:${AGG_PKG_NAME} --version ${AGG_PKG_VERSION}" > /dev/null
+        eval "$BASE_CMD workflow submit --id ${WORKFLOW_ID} component permissions --http-hosts '*' --file-system true" > /dev/null
+
+        # Set aggregator component environment variables
+        AGG_ENV_ARGS=$(build_env_args "$AGG_ENV_VARIABLES")
+        if [ -n "$AGG_ENV_ARGS" ]; then
+            eval "$BASE_CMD workflow submit --id ${WORKFLOW_ID} component env ${AGG_ENV_ARGS}" > /dev/null
+        fi
+
+        # Set aggregator component configuration
+        AGG_CONFIG_ARGS=$(build_config_args "$AGG_CONFIG_VALUES")
+        if [ -n "$AGG_CONFIG_ARGS" ]; then
+            echo "  📋 Configuring aggregator"
+            eval "$BASE_CMD workflow submit --id ${WORKFLOW_ID} component config ${AGG_CONFIG_ARGS}" > /dev/null
+        fi
+    else
+        eval "$BASE_CMD workflow submit --id ${WORKFLOW_ID} set-none" > /dev/null
     fi
-    eval "$BASE_CMD workflow submit --id ${WORKFLOW_ID} ${SUB_CMD} --address ${COMP_SUBMIT_ADDRESS} --chain ${SUBMIT_CHAIN} --max-gas ${MAX_GAS}" > /dev/null
     eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} set-source-registry --domain ${REGISTRY} --package ${PKG_NAMESPACE}:${COMP_PKG_NAME} --version ${COMP_PKG_VERSION}"
 
     eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} permissions --http-hosts '*' --file-system true" > /dev/null

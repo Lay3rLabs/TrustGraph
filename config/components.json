@@ -55,7 +55,10 @@
         "pagerank_trust_multiplier": "10.5",
         "pagerank_trust_boost": "0.99"
       },
-      "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
+      "env_variables": [
+        "WAVS_ENV_PINATA_API_URL",
+        "WAVS_ENV_PINATA_API_KEY"
+      ]
     },
     {
       "filename": "wavs_safe_signer_sync.wasm",
@@ -70,7 +73,10 @@
         "signer_module_address": "${SIGNER_MANAGER_ZODIAC_MODULE}",
         "chain_name": "${CHAIN_NAME}"
       },
-      "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
+      "env_variables": [
+        "WAVS_ENV_PINATA_API_URL",
+        "WAVS_ENV_PINATA_API_KEY"
+      ]
     },
     {
       "filename": "dao_agent.wasm",
@@ -80,7 +86,10 @@
       "trigger_json_path": "eas.contracts.attest_trigger",
       "submit_json_path": "zodiac_safes.safe2.wavs_module",
       "config_values": {},
-      "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
+      "env_variables": [
+        "WAVS_ENV_PINATA_API_URL",
+        "WAVS_ENV_PINATA_API_KEY"
+      ]
     },
     {
       "filename": "prediction_market_oracle.wasm",
@@ -185,6 +194,16 @@
       "trigger_event": "Interaction(address,string,string[],bytes)",
       "trigger_json_path": "prediction_market.market_maker",
       "submit_json_path": "wavs_indexer"
+    }
+  ],
+  "aggregator_components": [
+    {
+      "filename": "en0va-aggregator.wasm",
+      "package_name": "en0va-aggregator",
+      "package_version": "0.1.0",
+      "env_variables": [
+        "WAVS_ENV_ETHERSCAN_API_KEY"
+      ]
     }
   ]
 }
