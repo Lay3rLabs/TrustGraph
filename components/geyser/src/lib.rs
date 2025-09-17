@@ -12,7 +12,7 @@ use bindings::{host::get_evm_chain_config, WasmResponse};
 use serde_json;
 use trigger::decode_trigger_event;
 use uuid::Uuid;
-use wavs_types::WorkflowID;
+use wavs_types::WorkflowId;
 use wavs_wasi_utils::evm::{alloy_primitives::Address, new_evm_provider};
 use wstd::runtime::block_on;
 
@@ -157,7 +157,7 @@ async fn process_workflow(
     let mut updated_service_json = current_service_json;
     updated_service_json
         .workflows
-        .insert(WorkflowID::new(new_workflow_id.clone()).unwrap(), workflow_json);
+        .insert(WorkflowId::new(new_workflow_id.clone()).unwrap(), workflow_json);
     println!("🆕 Updated service JSON with new workflow: {:?}", updated_service_json);
 
     // Serialize updated service JSON

@@ -1,13 +1,13 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use wavs_types::{Component, ServiceManager, ServiceStatus, Submit, Trigger, WorkflowID};
+use wavs_types::{Component, ServiceManager, ServiceStatus, Submit, Trigger, WorkflowId};
 
 // this is from the WAVS cli package, would be nice if we exposed it in wavs types instead ?
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "snake_case")]
 pub struct ServiceJson {
     pub name: String,
-    pub workflows: BTreeMap<WorkflowID, WorkflowJson>,
+    pub workflows: BTreeMap<WorkflowId, WorkflowJson>,
     pub status: ServiceStatus,
     pub manager: ServiceManagerJson,
 }
