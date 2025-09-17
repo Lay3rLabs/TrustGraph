@@ -36,9 +36,20 @@ pub struct EasSource {
     pub chain_name: String,
     /// Type of EAS points to compute.
     pub source_type: EasSourceType,
+    /// How to compute the summary for a given attestation.
+    pub summary_computation: EasSummaryComputation,
     /// How to compute points for a given attestation.
     pub points_computation: EasPointsComputation,
     // TODO: add a seed field that only counts from certain senders
+}
+
+/// How to derive the summary for a given attestation.
+#[derive(Serialize)]
+pub enum EasSummaryComputation {
+    /// A constant string for each attestation.
+    Constant(String),
+    /// The value of a string field in the attestation data JSON.
+    StringJsonDataField(String),
 }
 
 /// How to compute points for a given attestation.
@@ -56,6 +67,7 @@ impl EasSource {
         indexer_address: &str,
         chain_name: &str,
         source_type: EasSourceType,
+        summary_computation: EasSummaryComputation,
         points_computation: EasPointsComputation,
     ) -> Self {
         let eas_addr = Address::from_str(eas_address).unwrap();
@@ -66,6 +78,7 @@ impl EasSource {
             indexer_address: indexer_addr,
             chain_name: chain_name.to_string(),
             source_type,
+            summary_computation,
             points_computation,
         }
     }
@@ -177,6 +190,20 @@ impl Source for EasSource {
                     }
                 };
 
+                let summary = match &self.summary_computation {
+                    EasSummaryComputation::Constant(summary) => summary.clone(),
+                    EasSummaryComputation::StringJsonDataField(field_name) => {
+                        let decoded =
+                            serde_json::from_slice::<serde_json::Value>(&attestation.event.data)?;
+                        decoded
+                            .get(field_name)
+                            .ok_or_else(|| {
+                                anyhow::anyhow!("Field {field_name} not found in attestation data")
+                            })?
+                            .to_string()
+                    }
+                };
+
                 source_events.push(SourceEvent {
                     r#type: "attestation".to_string(),
                     timestamp: attestation.event.timestamp,
@@ -186,6 +213,7 @@ impl Source for EasSource {
                         "schema": schema_uid.to_string(),
                         "attester": attestation.attester,
                         "recipient": attestation.recipient,
+                        "summary": summary,
                     })),
                 });
             }
@@ -214,6 +242,7 @@ impl Source for EasSource {
             "chain_name": self.chain_name,
             "source_type": source_type_str,
             "schema_uid": schema_uid,
+            "summary_computation": serde_json::to_value(&self.summary_computation)?.to_string(),
             "points_computation": serde_json::to_value(&self.points_computation)?.to_string(),
         }))
     }

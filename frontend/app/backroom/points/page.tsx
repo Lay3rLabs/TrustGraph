@@ -35,7 +35,7 @@ ChartJS.register(
 
 const ActivityLabel: Record<string, string> = {
   joined: 'Joined',
-  attestation: 'Attested',
+  attestation: 'Attestation',
   prediction_market_trade: 'Hyperstition',
   prediction_market_redeem: 'Hyperstition Redemption',
 }
@@ -49,7 +49,7 @@ const ActivityIcon: Record<string, ComponentType<{ className?: string }>> = {
 
 const ActivitySummary: Record<string, string> = {
   joined: 'Joined the experiment',
-  attested: 'Attested to something',
+  attestation: 'Received an attestation',
   prediction_market_trade: 'Participated in a collective Hyperstition',
   prediction_market_redeem: 'Redeemed successful Hyperstition',
 }
