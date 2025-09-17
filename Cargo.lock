@@ -497,12 +497,10 @@ dependencies = [
  "alloy-network-primitives 0.15.11",
  "alloy-primitives",
  "alloy-rpc-client 0.15.11",
- "alloy-rpc-types",
  "alloy-rpc-types-eth 0.15.11",
  "alloy-signer 0.15.11",
  "alloy-sol-types",
  "alloy-transport 0.15.11",
- "alloy-transport-http 0.15.11",
  "async-stream",
  "async-trait",
  "auto_impl 1.3.0",
@@ -513,13 +511,11 @@ dependencies = [
  "lru",
  "parking_lot 0.12.4",
  "pin-project",
- "reqwest 0.12.23",
  "serde",
  "serde_json",
  "thiserror 2.0.16",
  "tokio",
  "tracing",
- "url",
  "wasmtimer",
 ]
 
@@ -539,6 +535,7 @@ dependencies = [
  "alloy-primitives",
  "alloy-pubsub",
  "alloy-rpc-client 1.0.27",
+ "alloy-rpc-types 1.0.27",
  "alloy-rpc-types-anvil",
  "alloy-rpc-types-eth 1.0.27",
  "alloy-signer 1.0.27",
@@ -623,7 +620,6 @@ dependencies = [
  "async-stream",
  "futures",
  "pin-project",
- "reqwest 0.12.23",
  "serde",
  "serde_json",
  "tokio",
@@ -631,7 +627,6 @@ dependencies = [
  "tower",
  "tracing",
  "tracing-futures",
- "url",
  "wasmtimer",
 ]
 
@@ -670,6 +665,17 @@ dependencies = [
  "alloy-rpc-types-engine",
  "alloy-rpc-types-eth 0.15.11",
  "alloy-serde 0.15.11",
+ "serde",
+]
+
+[[package]]
+name = "alloy-rpc-types"
+version = "1.0.27"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e6445ccdc73c8a97e1794e9f0f91af52fb2bbf9ff004339a801b0293c3928abb"
+dependencies = [
+ "alloy-primitives",
+ "alloy-serde 1.0.27",
  "serde",
 ]
 
@@ -963,12 +969,7 @@ version = "0.15.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ef7c5ea7bda4497abe4ea92dcb8c76e9f052c178f3c82aa6976bcb264675f73c"
 dependencies = [
- "alloy-json-rpc 0.15.11",
  "alloy-transport 0.15.11",
- "reqwest 0.12.23",
- "serde_json",
- "tower",
- "tracing",
  "url",
 ]
 
@@ -2410,10 +2411,10 @@ version = "0.5.5"
 dependencies = [
  "alloy-dyn-abi",
  "alloy-json-abi",
- "alloy-network 0.15.11",
+ "alloy-network 1.0.27",
  "alloy-primitives",
- "alloy-provider 0.15.11",
- "alloy-rpc-types",
+ "alloy-provider 1.0.27",
+ "alloy-rpc-types 0.15.11",
  "alloy-sol-types",
  "anyhow",
  "hex",
@@ -2779,10 +2780,14 @@ dependencies = [
 name = "en0va-aggregator"
 version = "0.5.5"
 dependencies = [
+ "alloy-network 1.0.27",
  "alloy-primitives",
+ "alloy-provider 1.0.27",
  "serde",
  "serde_json",
+ "wavs-wasi-utils",
  "wit-bindgen-rt 0.44.0",
+ "wstd",
 ]
 
 [[package]]
@@ -3430,9 +3435,9 @@ dependencies = [
 name = "geyser"
 version = "0.5.5"
 dependencies = [
- "alloy-network 0.15.11",
- "alloy-provider 0.15.11",
- "alloy-rpc-types",
+ "alloy-network 1.0.27",
+ "alloy-provider 1.0.27",
+ "alloy-rpc-types 0.15.11",
  "alloy-sol-macro",
  "alloy-sol-types",
  "anyhow",
@@ -4222,10 +4227,10 @@ version = "0.5.5"
 dependencies = [
  "alloy-dyn-abi",
  "alloy-json-abi",
- "alloy-network 0.15.11",
+ "alloy-network 1.0.27",
  "alloy-primitives",
- "alloy-provider 0.15.11",
- "alloy-rpc-types",
+ "alloy-provider 1.0.27",
+ "alloy-rpc-types 0.15.11",
  "alloy-sol-macro",
  "alloy-sol-types",
  "anyhow",
@@ -4303,9 +4308,9 @@ name = "merkler"
 version = "0.5.5"
 dependencies = [
  "alloy-dyn-abi",
- "alloy-network 0.15.11",
- "alloy-provider 0.15.11",
- "alloy-rpc-types",
+ "alloy-network 1.0.27",
+ "alloy-provider 1.0.27",
+ "alloy-rpc-types 0.15.11",
  "alloy-sol-macro",
  "alloy-sol-types",
  "anyhow",
@@ -7230,10 +7235,10 @@ version = "0.5.5"
 dependencies = [
  "alloy-dyn-abi",
  "alloy-json-abi",
- "alloy-network 0.15.11",
+ "alloy-network 1.0.27",
  "alloy-primitives",
- "alloy-provider 0.15.11",
- "alloy-rpc-types",
+ "alloy-provider 1.0.27",
+ "alloy-rpc-types 0.15.11",
  "alloy-sol-types",
  "anyhow",
  "hex",
@@ -7270,10 +7275,10 @@ dependencies = [
 name = "wavs-eas-compute"
 version = "0.5.5"
 dependencies = [
- "alloy-network 0.15.11",
+ "alloy-network 1.0.27",
  "alloy-primitives",
- "alloy-provider 0.15.11",
- "alloy-rpc-types",
+ "alloy-provider 1.0.27",
+ "alloy-rpc-types 0.15.11",
  "alloy-sol-macro",
  "alloy-sol-types",
  "anyhow",
@@ -7291,10 +7296,10 @@ name = "wavs-indexer"
 version = "0.5.5"
 dependencies = [
  "alloy-contract 0.15.11",
- "alloy-network 0.15.11",
+ "alloy-network 1.0.27",
  "alloy-primitives",
- "alloy-provider 0.15.11",
- "alloy-rpc-types",
+ "alloy-provider 1.0.27",
+ "alloy-rpc-types 0.15.11",
  "alloy-sol-macro",
  "alloy-sol-types",
  "anyhow",
@@ -7316,10 +7321,10 @@ dependencies = [
  "alloy-contract 0.15.11",
  "alloy-dyn-abi",
  "alloy-json-abi",
- "alloy-network 0.15.11",
+ "alloy-network 1.0.27",
  "alloy-primitives",
- "alloy-provider 0.15.11",
- "alloy-rpc-types",
+ "alloy-provider 1.0.27",
+ "alloy-rpc-types 0.15.11",
  "alloy-sol-macro",
  "alloy-sol-types",
  "anyhow",
@@ -7340,10 +7345,10 @@ version = "0.5.5"
 dependencies = [
  "alloy-dyn-abi",
  "alloy-json-abi",
- "alloy-network 0.15.11",
+ "alloy-network 1.0.27",
  "alloy-primitives",
- "alloy-provider 0.15.11",
- "alloy-rpc-types",
+ "alloy-provider 1.0.27",
+ "alloy-rpc-types 0.15.11",
  "alloy-sol-types",
  "anyhow",
  "base64 0.22.1",
@@ -7364,10 +7369,10 @@ dependencies = [
 name = "wavs-safe-signer-sync"
 version = "0.5.5"
 dependencies = [
- "alloy-network 0.15.11",
+ "alloy-network 1.0.27",
  "alloy-primitives",
- "alloy-provider 0.15.11",
- "alloy-rpc-types",
+ "alloy-provider 1.0.27",
+ "alloy-rpc-types 0.15.11",
  "alloy-sol-macro",
  "alloy-sol-types",
  "anyhow",
@@ -7415,17 +7420,17 @@ dependencies = [
 
 [[package]]
 name = "wavs-wasi-utils"
-version = "0.4.0"
+version = "0.6.0-alpha.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14e8eac2bf7511c34b1efb62175ba84479d5f039b194a64bd1a089cfb65b0381"
+checksum = "f3808f9258f87e170d1ebe04cdfcdd833bef1ee3dc20d3c087301429a88d03df"
 dependencies = [
- "alloy-json-rpc 0.15.11",
+ "alloy-json-rpc 1.0.27",
  "alloy-primitives",
- "alloy-provider 0.15.11",
- "alloy-rpc-client 0.15.11",
+ "alloy-provider 1.0.27",
+ "alloy-rpc-client 1.0.27",
  "alloy-sol-types",
- "alloy-transport 0.15.11",
- "alloy-transport-http 0.15.11",
+ "alloy-transport 1.0.27",
+ "alloy-transport-http 1.0.27",
  "anyhow",
  "cfg-if 1.0.3",
  "futures-utils-wasm",
@@ -7434,7 +7439,6 @@ dependencies = [
  "serde_json",
  "tower-service",
  "wasi 0.14.2+wasi-0.2.4",
- "wit-bindgen-rt 0.42.1",
  "wstd",
 ]
 
@@ -7831,17 +7835,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6f42320e61fe2cfd34354ecb597f86f413484a798ba44a8ca1165c58d42da6c1"
 dependencies = [
  "bitflags 2.9.3",
-]
-
-[[package]]
-name = "wit-bindgen-rt"
-version = "0.42.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "051105bab12bc78e161f8dfb3596e772dd6a01ebf9c4840988e00347e744966a"
-dependencies = [
- "bitflags 2.9.3",
- "futures",
- "once_cell",
 ]
 
 [[package]]

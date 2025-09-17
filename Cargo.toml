@@ -16,7 +16,7 @@ wit-bindgen-rt = { version = "0.44.0", features = ["bitflags"] }
 wit-bindgen = "0.44.0"
 wstd = "0.5.4"
 wasi = "0.14.2"
-wavs-wasi-utils = "0.4.0"
+wavs-wasi-utils = "0.6.0-alpha.12"
 
 # WAVS
 wavs-llm = { path = "./packages/llm" }
@@ -37,8 +37,8 @@ alloy-sol-types = "1.0.0"
 alloy-dyn-abi = "1.0.0"
 alloy-json-abi = "1.0.0"
 alloy-primitives = "1.0.0"
-alloy-network = "0.15.10"
-alloy-provider = { version = "0.15.10", default-features = false, features = [
+alloy-network = "1.0.0"
+alloy-provider = { version = "1.0.0", default-features = false, features = [
     "rpc-api",
 ] }
 alloy-rpc-types = "0.15.10"

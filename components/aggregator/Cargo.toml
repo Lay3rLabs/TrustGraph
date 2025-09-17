@@ -16,6 +16,10 @@ target = "wavs:aggregator@0.6.0-alpha.12"
 
 [dependencies]
 alloy-primitives = { workspace = true }
+alloy-network = { workspace = true }
+alloy-provider = { workspace = true }
 wit-bindgen-rt = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
+wavs-wasi-utils = { workspace = true }
+wstd = { workspace = true }
