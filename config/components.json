@@ -199,7 +199,7 @@
   ],
   "aggregator_components": [
     {
-      "filename": "en0va-aggregator.wasm",
+      "filename": "en0va_aggregator.wasm",
       "package_name": "en0va-aggregator",
       "package_version": "0.1.0",
       "env_variables": [
