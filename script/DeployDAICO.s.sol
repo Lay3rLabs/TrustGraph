@@ -7,8 +7,9 @@ import {console} from "forge-std/console.sol";
 import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 
 import {Common} from "script/Common.s.sol";
-import {DAICO} from "contracts/daico/DAICO.sol";
+import {DAICO} from "src/contracts/daico/DAICO.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ENOVA} from "src/contracts/tokens/ENOVA.sol";
 
 /// @title DeployDAICO
 /// @notice Deployment script for DAICO contract with polynomial bonding curve
@@ -30,8 +31,33 @@ contract DeployScript is Common {
         address token = vm.envOr("DAICO_TOKEN", address(0));
         address treasury = vm.envOr("DAICO_TREASURY", address(0));
         address admin = vm.envOr("DAICO_ADMIN", vm.addr(_privateKey));
+        address deployer = vm.addr(_privateKey);
 
-        // If no token address provided, you'll need to deploy or specify one
+        // Deploy ENOVA token if no token address provided
+        bool deployedNewToken = false;
+        if (token == address(0)) {
+            console.log("No DAICO_TOKEN provided, deploying new ENOVA token...");
+
+            vm.startBroadcast(_privateKey);
+            ENOVA enovaToken = new ENOVA(
+                deployer, // defaultAdmin
+                deployer, // tokenBridge
+                deployer, // pauser
+                deployer // minter
+            );
+            vm.stopBroadcast();
+
+            token = address(enovaToken);
+            deployedNewToken = true;
+
+            // If no treasury specified and we deployed a new token, use deployer as treasury
+            if (treasury == address(0)) {
+                treasury = deployer;
+            }
+
+            console.log("Deployed new ENOVA token at:", token);
+        }
+
         require(token != address(0), "Token address required");
         require(treasury != address(0), "Treasury address required");
 
@@ -82,8 +108,14 @@ contract DeployScript is Common {
             vaultSymbol
         );
 
-        // Fund DAICO with project tokens from treasury
-        IERC20(token).transferFrom(treasury, address(daicoInstance), maxSupply);
+        // Fund DAICO with project tokens
+        if (deployedNewToken) {
+            // If we deployed a new token, mint directly to DAICO
+            ENOVA(token).mint(address(daicoInstance), maxSupply);
+        } else {
+            // If using existing token, transfer from treasury
+            IERC20(token).transferFrom(treasury, address(daicoInstance), maxSupply);
+        }
 
         vm.stopBroadcast();
 
