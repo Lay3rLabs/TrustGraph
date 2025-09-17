@@ -12,7 +12,7 @@ use trigger::{
 use wavs_eas::query::{query_attestation, QueryConfig};
 use wavs_eas::schema::SchemaEncoder;
 use wstd::runtime::block_on;
-
+#[rustfmt::skip]
 pub mod bindings;
 use crate::bindings::{export, Guest, TriggerAction, WasmResponse};
 

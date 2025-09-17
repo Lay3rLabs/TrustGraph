@@ -53,11 +53,11 @@ contract OffchainAttestationVerifierTest is Test {
         new OffchainAttestationVerifier(IEAS(ZERO_ADDRESS));
     }
 
-    function testConstruction_ShouldBeProperlyInitialized() public {
+    function testConstruction_ShouldBeProperlyInitialized() public view {
         assertEq(address(verifier.getEAS()), address(eas));
     }
 
-    function testVerify_LegacyVersion_ShouldVerify() public {
+    function testVerify_LegacyVersion_ShouldVerify() public view {
         OffchainAttestationVerifier.OffchainAttestation memory attestation = _createAttestation(LEGACY);
 
         // Sign the attestation
@@ -68,7 +68,7 @@ contract OffchainAttestationVerifierTest is Test {
         assertTrue(verifier.verify(attestation));
     }
 
-    function testVerify_Version1_ShouldVerify() public {
+    function testVerify_Version1_ShouldVerify() public view {
         OffchainAttestationVerifier.OffchainAttestation memory attestation = _createAttestation(VERSION1);
 
         // Sign the attestation
@@ -79,7 +79,7 @@ contract OffchainAttestationVerifierTest is Test {
         assertTrue(verifier.verify(attestation));
     }
 
-    function testVerify_Version2_ShouldVerify() public {
+    function testVerify_Version2_ShouldVerify() public view {
         OffchainAttestationVerifier.OffchainAttestation memory attestation = _createAttestation(VERSION2);
         attestation.salt = keccak256("test_salt");
 
@@ -91,14 +91,14 @@ contract OffchainAttestationVerifierTest is Test {
         assertTrue(verifier.verify(attestation));
     }
 
-    function testVerify_ShouldFailWithInvalidAttester() public {
+    function testVerify_ShouldFailWithInvalidAttester() public view {
         OffchainAttestationVerifier.OffchainAttestation memory attestation = _createAttestation(LEGACY);
         attestation.attester = ZERO_ADDRESS;
 
         assertFalse(verifier.verify(attestation));
     }
 
-    function testVerify_ShouldFailWithFutureTime() public {
+    function testVerify_ShouldFailWithFutureTime() public view {
         OffchainAttestationVerifier.OffchainAttestation memory attestation = _createAttestation(LEGACY);
         attestation.time = uint64(block.timestamp + 365 days);
 
@@ -110,7 +110,7 @@ contract OffchainAttestationVerifierTest is Test {
         assertFalse(verifier.verify(attestation));
     }
 
-    function testVerify_ShouldFailWithInvalidSchema() public {
+    function testVerify_ShouldFailWithInvalidSchema() public view {
         OffchainAttestationVerifier.OffchainAttestation memory attestation = _createAttestation(LEGACY);
         attestation.schema = ZERO_BYTES32;
 
@@ -122,7 +122,7 @@ contract OffchainAttestationVerifierTest is Test {
         assertFalse(verifier.verify(attestation));
     }
 
-    function testVerify_ShouldFailWithInvalidRefUID() public {
+    function testVerify_ShouldFailWithInvalidRefUID() public view {
         OffchainAttestationVerifier.OffchainAttestation memory attestation = _createAttestation(LEGACY);
         attestation.refUID = keccak256("BAD_REF");
 
@@ -134,7 +134,7 @@ contract OffchainAttestationVerifierTest is Test {
         assertFalse(verifier.verify(attestation));
     }
 
-    function testVerify_ShouldFailWithInvalidSignature() public {
+    function testVerify_ShouldFailWithInvalidSignature() public view {
         OffchainAttestationVerifier.OffchainAttestation memory attestation = _createAttestation(LEGACY);
 
         // Create invalid signature
@@ -143,7 +143,7 @@ contract OffchainAttestationVerifierTest is Test {
         assertFalse(verifier.verify(attestation));
     }
 
-    function testVerify_ShouldFailWithUnknownVersion() public {
+    function testVerify_ShouldFailWithUnknownVersion() public view {
         OffchainAttestationVerifier.OffchainAttestation memory attestation = _createAttestation(999); // Unknown version
 
         // Sign the attestation

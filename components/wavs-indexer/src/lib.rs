@@ -1,4 +1,5 @@
 #[allow(warnings)]
+#[rustfmt::skip]
 mod bindings;
 mod solidity;
 mod transformers;

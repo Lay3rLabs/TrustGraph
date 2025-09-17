@@ -149,7 +149,7 @@ contract WavsAttesterTest is Test {
         // but that would require additional EAS testing infrastructure
     }
 
-    function testManualEncodingDecoding() public {
+    function testManualEncodingDecoding() public view {
         // Test the exact encoding/decoding logic used by WAVS component
         bytes32 schema = schemaId;
         address recipient = address(0x123);

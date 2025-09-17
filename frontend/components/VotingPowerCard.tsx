@@ -2,7 +2,7 @@
 
 import type React from 'react'
 
-import { mockUsdcAddress } from '@/lib/contracts'
+import { enovaAddress } from '@/lib/contracts'
 
 interface VotingPowerCardProps {
   userVotingPower?: string
@@ -85,7 +85,7 @@ export function VotingPowerCard({
             <div className="space-y-2">
               <div className="terminal-dim text-xs">TOKEN CONTRACT</div>
               <div className="terminal-text text-sm font-mono break-all">
-                {mockUsdcAddress}
+                {enovaAddress}
               </div>
             </div>
           </div>

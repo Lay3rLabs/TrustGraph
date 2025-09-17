@@ -14,11 +14,7 @@ interface IMerkleSnapshot {
     error HookAlreadyAdded();
     error HookNotAdded();
 
-    event MerkleRootUpdated(
-        bytes32 indexed root,
-        bytes32 ipfsHash,
-        string ipfsHashCid
-    );
+    event MerkleRootUpdated(bytes32 indexed root, bytes32 ipfsHash, string ipfsHashCid);
 
     struct MerkleState {
         /// @notice The block number the merkle tree was set at

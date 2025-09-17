@@ -11,6 +11,7 @@ mod trigger;
 use bindings::host::config_var;
 use trigger::{decode_trigger_event, encode_trigger_output, Destination};
 use wavs_eas::query::query_received_attestation_count;
+#[rustfmt::skip]
 pub mod bindings;
 use crate::bindings::{export, Guest, TriggerAction, WasmResponse};
 use crate::solidity::{Operation, OperationType, VotingPowerPayload};

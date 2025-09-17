@@ -6,7 +6,6 @@ import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
-import {ITypes} from "../../interfaces/ITypes.sol";
 
 /**
  * @title VotingPower
@@ -40,7 +39,7 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
     }
 
     // The WAVS service manager instance
-    IWavsServiceManager private immutable _serviceManager;
+    IWavsServiceManager private immutable SERVICE_MANAGER;
 
     // Prevent replay attacks.
     mapping(bytes20 eventId => bool seen) public envelopesSeen;
@@ -82,7 +81,7 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
         Ownable(_initialOwner)
     {
         require(address(serviceManager) != address(0), "VotingPower: invalid service manager");
-        _serviceManager = serviceManager;
+        SERVICE_MANAGER = serviceManager;
         name = _name;
         symbol = _symbol;
         decimals = 18;
@@ -265,7 +264,7 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
     /// @param signatureData The signature data for validation
     function handleSignedEnvelope(Envelope calldata envelope, SignatureData calldata signatureData) external {
         // Validate the envelope signature through the service manager
-        _serviceManager.validate(envelope, signatureData);
+        SERVICE_MANAGER.validate(envelope, signatureData);
 
         // Prevent replay attacks.
         if (envelopesSeen[envelope.eventId]) {
@@ -382,6 +381,6 @@ contract VotingPower is Votes, Ownable, IWavsServiceHandler {
      * @return address The address of the service manager
      */
     function getServiceManager() external view returns (address) {
-        return address(_serviceManager);
+        return address(SERVICE_MANAGER);
     }
 }

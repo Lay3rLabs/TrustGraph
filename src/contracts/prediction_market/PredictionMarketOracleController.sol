@@ -11,19 +11,14 @@ import {IWavsTrigger} from "interfaces/IWavsTrigger.sol";
 import {PredictionMarketFactory} from "./PredictionMarketFactory.sol";
 
 // The contract responsible for triggering the oracle to resolve the market and handling the oracle output and instructing the market maker to resolve the market.
-contract PredictionMarketOracleController is
-    IPredictionMarketOracleController,
-    IWavsTrigger,
-    IWavsServiceHandler
-{
+contract PredictionMarketOracleController is IPredictionMarketOracleController, IWavsTrigger, IWavsServiceHandler {
     error MarketAlreadyResolved();
 
     // The factory that handles creating and resolving the market.
     PredictionMarketFactory public factory;
 
     mapping(TriggerId _triggerId => Trigger _trigger) public triggersById;
-    mapping(address _creator => TriggerId[] _triggerIds)
-        internal _triggerIdsByCreator;
+    mapping(address _creator => TriggerId[] _triggerIds) internal _triggerIdsByCreator;
 
     IWavsServiceManager public serviceManager;
     TriggerId public nextTriggerId;
@@ -42,24 +37,16 @@ contract PredictionMarketOracleController is
      * @param envelope The envelope containing the data.
      * @param signatureData The signature data.
      */
-    function handleSignedEnvelope(
-        Envelope calldata envelope,
-        SignatureData calldata signatureData
-    ) external override {
+    function handleSignedEnvelope(Envelope calldata envelope, SignatureData calldata signatureData) external override {
         serviceManager.validate(envelope, signatureData);
 
-        DataWithId memory dataWithId = abi.decode(
-            envelope.payload,
-            (DataWithId)
-        );
+        DataWithId memory dataWithId = abi.decode(envelope.payload, (DataWithId));
 
         Trigger memory trigger = triggersById[dataWithId.triggerId];
         require(trigger.creator != address(0), "Trigger does not exist");
 
-        PredictionMarketOracleAvsOutput memory returnData = abi.decode(
-            dataWithId.data,
-            (PredictionMarketOracleAvsOutput)
-        );
+        PredictionMarketOracleAvsOutput memory returnData =
+            abi.decode(dataWithId.data, (PredictionMarketOracleAvsOutput));
 
         // Prevent replay attacks.
         if (resolvedMarkets[returnData.lmsrMarketMaker]) {
@@ -87,38 +74,24 @@ contract PredictionMarketOracleController is
         triggerId = nextTriggerId;
         nextTriggerId = TriggerId.wrap(TriggerId.unwrap(nextTriggerId) + 1);
 
-        Trigger memory trigger = Trigger({
-            creator: msg.sender,
-            data: bytes("")
-        });
+        Trigger memory trigger = Trigger({creator: msg.sender, data: bytes("")});
         triggersById[triggerId] = trigger;
         _triggerIdsByCreator[msg.sender].push(triggerId);
 
-        TriggerInfo memory triggerInfo = TriggerInfo({
-            triggerId: triggerId,
-            creator: trigger.creator,
-            data: trigger.data
-        });
+        TriggerInfo memory triggerInfo =
+            TriggerInfo({triggerId: triggerId, creator: trigger.creator, data: trigger.data});
 
         emit NewTrigger(abi.encode(triggerInfo));
     }
 
     /// @inheritdoc IWavsTrigger
-    function getTrigger(
-        TriggerId triggerId
-    ) external view override returns (TriggerInfo memory _triggerInfo) {
+    function getTrigger(TriggerId triggerId) external view override returns (TriggerInfo memory _triggerInfo) {
         Trigger storage _trigger = triggersById[triggerId];
-        _triggerInfo = TriggerInfo({
-            triggerId: triggerId,
-            creator: _trigger.creator,
-            data: _trigger.data
-        });
+        _triggerInfo = TriggerInfo({triggerId: triggerId, creator: _trigger.creator, data: _trigger.data});
     }
 
     /// @inheritdoc IWavsTrigger
-    function triggerIdsByCreator(
-        address _creator
-    ) external view returns (TriggerId[] memory _triggerIds) {
+    function triggerIdsByCreator(address _creator) external view returns (TriggerId[] memory _triggerIds) {
         _triggerIds = _triggerIdsByCreator[_creator];
     }
 

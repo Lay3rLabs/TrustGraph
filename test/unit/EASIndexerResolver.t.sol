@@ -38,7 +38,7 @@ contract EASIndexerResolverTest is Test {
         schemaId = schemaRegistry.register(SCHEMA, resolver, true);
     }
 
-    function testConstruction_ShouldInitializeCorrectly() public {
+    function testConstruction_ShouldInitializeCorrectly() public view {
         // Verify the resolver was created successfully
         assertTrue(address(resolver) != address(0));
     }

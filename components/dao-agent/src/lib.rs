@@ -1,4 +1,5 @@
 #[allow(warnings)]
+#[rustfmt::skip]
 mod bindings;
 pub mod context;
 pub mod sol_interfaces;

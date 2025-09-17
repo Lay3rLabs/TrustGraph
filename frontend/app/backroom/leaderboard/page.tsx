@@ -30,10 +30,7 @@ export default function LeaderboardPage() {
   }
 
   const formatAmount = (amount: string) => {
-    if (!amount || amount === '0') return '0'
-    const value = BigInt(amount)
-    const formatted = Number(value) / Math.pow(10, 18)
-    return formatted.toFixed(6)
+    return BigInt(amount || 0).toLocaleString()
   }
 
   return (

@@ -23,18 +23,17 @@ interface IPOAServiceManager {
     // functions
     function setSigningKey(address signingKey) external;
 
-    function whitelistOperator(address operator,uint256 weight) external;
+    function whitelistOperator(address operator, uint256 weight) external;
     function removeOperator(address operator) external;
-    function updateOperatorWeight(address operator,uint256 newWeight) external;
+    function updateOperatorWeight(address operator, uint256 newWeight) external;
 
     // function getLatestOperatorForSigningKey(address signingKeyAddress) external view returns (address); // already in WAVSServiceManager
     function getLatestSigningKeyForOperator(address operatorAddress) external view returns (address);
 
     // view
     function isOperatorWhitelisted(address operatorAddress) external view returns (bool);
-    function getOperators(
-        uint256 start,
-        uint256 length,
-        bool reverseOrder
-    ) external view returns (address[] memory operators, uint256[] memory weights);
+    function getOperators(uint256 start, uint256 length, bool reverseOrder)
+        external
+        view
+        returns (address[] memory operators, uint256[] memory weights);
 }

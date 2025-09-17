@@ -2,7 +2,6 @@
 pragma solidity ^0.8.27;
 
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
-import {console} from "forge-std/console.sol";
 
 import {LMSRMarketMaker} from "@lay3rlabs/conditional-tokens-market-makers/LMSRMarketMaker.sol";
 import {Whitelist} from "@lay3rlabs/conditional-tokens-market-makers/Whitelist.sol";
@@ -52,7 +51,7 @@ contract PredictionMarketFactory {
         );
 
         // Transfer funding to this factory
-        collateralToken.transferFrom(msg.sender, address(this), funding);
+        require(collateralToken.transferFrom(msg.sender, address(this), funding), "Transfer failed");
 
         // Approve the market maker to spend the funding from this factory
         collateralToken.approve(address(lmsrMarketMaker), funding);

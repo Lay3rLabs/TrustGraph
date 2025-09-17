@@ -1,0 +1,84 @@
+{
+  "allocations": [
+    {
+      "grantee": "0x1111111111111111111111111111111111111111",
+      "totalAmount": "1000000000000000000000000",
+      "vestingCliff": "250000000000000000000000",
+      "unlockCliff": "250000000000000000000000",
+      "vestingDuration": 31536000,
+      "unlockDuration": 31536000,
+      "startTime": 0,
+      "category": "team"
+    },
+    {
+      "grantee": "0x2222222222222222222222222222222222222222",
+      "totalAmount": "750000000000000000000000",
+      "vestingCliff": "187500000000000000000000",
+      "unlockCliff": "187500000000000000000000",
+      "vestingDuration": 31536000,
+      "unlockDuration": 31536000,
+      "startTime": 0,
+      "category": "team"
+    },
+    {
+      "grantee": "0x3333333333333333333333333333333333333333",
+      "totalAmount": "500000000000000000000000",
+      "vestingCliff": "50000000000000000000000",
+      "unlockCliff": "50000000000000000000000",
+      "vestingDuration": 15768000,
+      "unlockDuration": 15768000,
+      "startTime": 0,
+      "category": "investor"
+    },
+    {
+      "grantee": "0x4444444444444444444444444444444444444444",
+      "totalAmount": "500000000000000000000000",
+      "vestingCliff": "50000000000000000000000",
+      "unlockCliff": "50000000000000000000000",
+      "vestingDuration": 15768000,
+      "unlockDuration": 15768000,
+      "startTime": 0,
+      "category": "investor"
+    },
+    {
+      "grantee": "0x5555555555555555555555555555555555555555",
+      "totalAmount": "300000000000000000000000",
+      "vestingCliff": "0",
+      "unlockCliff": "0",
+      "vestingDuration": 23652000,
+      "unlockDuration": 23652000,
+      "startTime": 0,
+      "category": "investor"
+    },
+    {
+      "grantee": "0x6666666666666666666666666666666666666666",
+      "totalAmount": "200000000000000000000000",
+      "vestingCliff": "50000000000000000000000",
+      "unlockCliff": "50000000000000000000000",
+      "vestingDuration": 31536000,
+      "unlockDuration": 31536000,
+      "startTime": 0,
+      "category": "advisor"
+    },
+    {
+      "grantee": "0x7777777777777777777777777777777777777777",
+      "totalAmount": "150000000000000000000000",
+      "vestingCliff": "37500000000000000000000",
+      "unlockCliff": "37500000000000000000000",
+      "vestingDuration": 31536000,
+      "unlockDuration": 31536000,
+      "startTime": 0,
+      "category": "advisor"
+    },
+    {
+      "grantee": "0x8888888888888888888888888888888888888888",
+      "totalAmount": "100000000000000000000000",
+      "vestingCliff": "25000000000000000000000",
+      "unlockCliff": "25000000000000000000000",
+      "vestingDuration": 31536000,
+      "unlockDuration": 31536000,
+      "startTime": 0,
+      "category": "advisor"
+    }
+  ]
+}

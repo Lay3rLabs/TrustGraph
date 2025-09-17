@@ -27,9 +27,7 @@ contract RewardDistributor is UniversalRewardsDistributor, IMerkleSnapshotHook {
      * @notice Initialize the contract
      * @param rewardToken_ The ERC20 reward token to distribute
      */
-    constructor(
-        address rewardToken_
-    ) UniversalRewardsDistributor(address(this), 0, bytes32(0), bytes32(0)) {
+    constructor(address rewardToken_) UniversalRewardsDistributor(address(this), 0, bytes32(0), bytes32(0)) {
         rewardToken = rewardToken_;
     }
 
@@ -37,11 +35,7 @@ contract RewardDistributor is UniversalRewardsDistributor, IMerkleSnapshotHook {
     function onMerkleUpdate(IMerkleSnapshot.MerkleState memory state) external {
         _setRoot(state.root, state.ipfsHash);
         ipfsHashCid = state.ipfsHashCid;
-        emit IMerkleSnapshot.MerkleRootUpdated(
-            state.root,
-            state.ipfsHash,
-            state.ipfsHashCid
-        );
+        emit IMerkleSnapshot.MerkleRootUpdated(state.root, state.ipfsHash, state.ipfsHashCid);
     }
 
     /// @notice Claims rewards for the reward token.
@@ -50,27 +44,14 @@ contract RewardDistributor is UniversalRewardsDistributor, IMerkleSnapshotHook {
     /// @param proof The merkle proof that validates this claim.
     /// @return amount The amount of reward token claimed.
     /// @dev Anyone can claim rewards on behalf of an account.
-    function claim(
-        address account,
-        uint256 claimable,
-        bytes32[] calldata proof
-    ) external returns (uint256 amount) {
+    function claim(address account, uint256 claimable, bytes32[] calldata proof) external returns (uint256 amount) {
         require(root != bytes32(0), ErrorsLib.ROOT_NOT_SET);
         require(
-            MerkleProof.verifyCalldata(
-                proof,
-                root,
-                keccak256(
-                    bytes.concat(keccak256(abi.encode(account, claimable)))
-                )
-            ),
+            MerkleProof.verifyCalldata(proof, root, keccak256(bytes.concat(keccak256(abi.encode(account, claimable))))),
             ErrorsLib.INVALID_PROOF_OR_EXPIRED
         );
 
-        require(
-            claimable > claimed[account][rewardToken],
-            ErrorsLib.CLAIMABLE_TOO_LOW
-        );
+        require(claimable > claimed[account][rewardToken], ErrorsLib.CLAIMABLE_TOO_LOW);
 
         amount = claimable - claimed[account][rewardToken];
 

@@ -10,9 +10,9 @@ import {
 } from 'wagmi'
 
 import {
+  enovaAddress,
   merkleGovModuleAbi,
   merkleGovModuleAddress,
-  mockUsdcAddress,
 } from '@/lib/contracts'
 import { txToast } from '@/lib/tx'
 
@@ -480,7 +480,7 @@ export function useGovernance() {
           proposalId: BigInt(proposalId),
           voteType: support,
           votingPower: userVotingPower.value,
-          rewardToken: mockUsdcAddress,
+          rewardToken: enovaAddress,
           proof: userVotingPower.proof,
         })
 
@@ -499,7 +499,7 @@ export function useGovernance() {
             BigInt(proposalId),
             support,
             BigInt(userVotingPower.value),
-            mockUsdcAddress,
+            enovaAddress,
             userVotingPower.proof as `0x${string}`[],
           ],
           account: address,
@@ -518,7 +518,7 @@ export function useGovernance() {
               BigInt(proposalId),
               support,
               BigInt(userVotingPower.value),
-              mockUsdcAddress,
+              enovaAddress,
               userVotingPower.proof as `0x${string}`[],
             ],
             gas: (gasEstimate * BigInt(120)) / BigInt(100),

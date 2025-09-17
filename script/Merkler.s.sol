@@ -9,8 +9,6 @@ import {Common} from "script/Common.s.sol";
 import {MerkleSnapshot} from "contracts/merkle/MerkleSnapshot.sol";
 import {RewardDistributor} from "contracts/rewards/RewardDistributor.sol";
 import {ENOVA} from "contracts/tokens/ENOVA.sol";
-import {ITypes} from "interfaces/ITypes.sol";
-import {IMerkler} from "interfaces/merkle/IMerkler.sol";
 
 /// @dev Combined script to update merkle tree and claim rewards
 contract Merkler is Common {
@@ -20,9 +18,7 @@ contract Merkler is Common {
     /// @param merkleSnapshotAddr Address of the MerkleSnapshot contract
     function updateMerkle(string calldata merkleSnapshotAddr) public {
         vm.startBroadcast(_privateKey);
-        MerkleSnapshot merkleSnapshot = MerkleSnapshot(
-            payable(vm.parseAddress(merkleSnapshotAddr))
-        );
+        MerkleSnapshot merkleSnapshot = MerkleSnapshot(payable(vm.parseAddress(merkleSnapshotAddr)));
 
         uint64 triggerId = merkleSnapshot.trigger();
         console.log("TriggerId", triggerId);
@@ -32,16 +28,11 @@ contract Merkler is Common {
     /// @dev Claim rewards using merkle proof
     /// @param rewardDistributorAddr Address of the RewardDistributor contract
     /// @param rewardTokenAddr Address of the reward token (ENOVA) contract
-    function claimRewards(
-        string calldata rewardDistributorAddr,
-        string calldata rewardTokenAddr
-    ) public {
+    function claimRewards(string calldata rewardDistributorAddr, string calldata rewardTokenAddr) public {
         address rewardTokenAddress = vm.parseAddress(rewardTokenAddr);
 
         vm.startBroadcast(_privateKey);
-        RewardDistributor rewardDistributor = RewardDistributor(
-            payable(vm.parseAddress(rewardDistributorAddr))
-        );
+        RewardDistributor rewardDistributor = RewardDistributor(payable(vm.parseAddress(rewardDistributorAddr)));
 
         string memory ipfsHashCid = rewardDistributor.ipfsHashCid();
 
@@ -59,13 +50,7 @@ contract Merkler is Common {
         // Query for the merkle entry for this specific claimer
         string memory claimerStr = vm.toString(claimer);
         string memory entry = runCmd(
-            string.concat(
-                "curl -s -X GET ",
-                url,
-                " | jq -c '.tree[] | select(.account == \"",
-                claimerStr,
-                "\")'"
-            )
+            string.concat("curl -s -X GET ", url, " | jq -c '.tree[] | select(.account == \"", claimerStr, "\")'")
         );
 
         // Check if entry was found
@@ -85,12 +70,7 @@ contract Merkler is Common {
         // Claim rewards with proof
         ENOVA rewardToken = ENOVA(rewardTokenAddress);
         uint256 balanceBefore = rewardToken.balanceOf(claimer);
-        uint256 claimed = rewardDistributor.claim(
-            claimer,
-            rewardTokenAddress,
-            claimable,
-            proof
-        );
+        uint256 claimed = rewardDistributor.claim(claimer, rewardTokenAddress, claimable, proof);
         uint256 balanceAfter = rewardToken.balanceOf(claimer);
 
         console.log("Balance before:", balanceBefore);
@@ -115,12 +95,8 @@ contract Merkler is Common {
 
     /// @dev Query current contract state information
     /// @param rewardDistributorAddr Address of the RewardDistributor contract
-    function queryContractState(
-        string calldata rewardDistributorAddr
-    ) public view {
-        RewardDistributor rewardDistributor = RewardDistributor(
-            payable(vm.parseAddress(rewardDistributorAddr))
-        );
+    function queryContractState(string calldata rewardDistributorAddr) public view {
+        RewardDistributor rewardDistributor = RewardDistributor(payable(vm.parseAddress(rewardDistributorAddr)));
 
         bytes32 root = rewardDistributor.root();
         bytes32 ipfsHash = rewardDistributor.ipfsHash();
@@ -140,12 +116,8 @@ contract Merkler is Common {
 
     /// @dev Get the IPFS URI for the current merkle tree
     /// @param rewardDistributorAddr Address of the RewardDistributor contract
-    function getIpfsUri(
-        string calldata rewardDistributorAddr
-    ) public view returns (string memory) {
-        RewardDistributor rewardDistributor = RewardDistributor(
-            payable(vm.parseAddress(rewardDistributorAddr))
-        );
+    function getIpfsUri(string calldata rewardDistributorAddr) public view returns (string memory) {
+        RewardDistributor rewardDistributor = RewardDistributor(payable(vm.parseAddress(rewardDistributorAddr)));
 
         string memory ipfsHashCid = rewardDistributor.ipfsHashCid();
         string memory ipfsGatewayUrl = vm.envString("IPFS_GATEWAY_URL");
@@ -164,17 +136,12 @@ contract Merkler is Common {
         string calldata rewardTokenAddr,
         string calldata account
     ) public view {
-        RewardDistributor rewardDistributor = RewardDistributor(
-            payable(vm.parseAddress(rewardDistributorAddr))
-        );
+        RewardDistributor rewardDistributor = RewardDistributor(payable(vm.parseAddress(rewardDistributorAddr)));
 
         address accountAddr = vm.parseAddress(account);
         address rewardTokenAddress = vm.parseAddress(rewardTokenAddr);
 
-        uint256 claimedAmount = rewardDistributor.claimed(
-            accountAddr,
-            rewardTokenAddress
-        );
+        uint256 claimedAmount = rewardDistributor.claimed(accountAddr, rewardTokenAddress);
 
         console.log("=== Claim Status ===");
         console.log("Account:", accountAddr);
@@ -186,10 +153,7 @@ contract Merkler is Common {
     /// @dev Get current balance of reward tokens for an address
     /// @param rewardTokenAddr Address of the reward token
     /// @param account Address to check balance for
-    function queryBalance(
-        string calldata rewardTokenAddr,
-        string calldata account
-    ) public view {
+    function queryBalance(string calldata rewardTokenAddr, string calldata account) public view {
         address accountAddr = vm.parseAddress(account);
         address rewardTokenAddress = vm.parseAddress(rewardTokenAddr);
 
@@ -207,11 +171,10 @@ contract Merkler is Common {
     /// @param rewardDistributorAddr Address of the RewardDistributor contract
     /// @param rewardTokenAddr Address of the reward token
     /// @param account Address to check information for
-    function queryAll(
-        string calldata rewardDistributorAddr,
-        string calldata rewardTokenAddr,
-        string calldata account
-    ) public view {
+    function queryAll(string calldata rewardDistributorAddr, string calldata rewardTokenAddr, string calldata account)
+        public
+        view
+    {
         console.log("=== COMPREHENSIVE QUERY ===");
         console.log("");
 

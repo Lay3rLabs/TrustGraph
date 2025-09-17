@@ -17,9 +17,7 @@ contract Geyser is Ownable, IWavsServiceHandler {
 
     event UpdateService(string json);
 
-    constructor(
-        address wavsServiceManager
-    ) Ownable(msg.sender) {
+    constructor(address wavsServiceManager) Ownable(msg.sender) {
         _serviceManager = IWavsServiceManager(wavsServiceManager);
     }
 
@@ -29,10 +27,7 @@ contract Geyser is Ownable, IWavsServiceHandler {
         emit UpdateService(jsonBlob);
     }
 
-    function handleSignedEnvelope(
-        Envelope calldata envelope,
-        SignatureData calldata signatureData
-    ) external override {
+    function handleSignedEnvelope(Envelope calldata envelope, SignatureData calldata signatureData) external override {
         _serviceManager.validate(envelope, signatureData);
 
         // Prevent replay attacks.

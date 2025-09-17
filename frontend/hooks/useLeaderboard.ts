@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useReadContract } from 'wagmi'
 
 import {
-  mockUsdcAddress,
+  enovaAddress,
   rewardDistributorAbi,
   rewardDistributorAddress,
 } from '@/lib/contracts'
@@ -100,9 +100,7 @@ export function useLeaderboard() {
 
       // Fetch token symbol
       try {
-        const tokenResponse = await fetch(
-          `/api/token-symbol/${mockUsdcAddress}`
-        )
+        const tokenResponse = await fetch(`/api/token-symbol/${enovaAddress}`)
         if (tokenResponse.ok) {
           const tokenData = await tokenResponse.json()
           setTokenSymbol(tokenData.symbol || 'TOKEN')

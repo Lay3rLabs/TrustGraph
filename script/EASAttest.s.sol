@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import {IEAS, AttestationRequest, AttestationRequestData} from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
+import {
+    IEAS,
+    AttestationRequest,
+    AttestationRequestData
+} from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
 import {EMPTY_UID, NO_EXPIRATION_TIME} from "@ethereum-attestation-service/eas-contracts/contracts/Common.sol";
 import {Common} from "script/Common.s.sol";
 import {console} from "forge-std/console.sol";
@@ -32,12 +36,9 @@ contract EASAttest is Common {
     /// @param data The attestation data string (will be encoded as bytes)
     /// @dev Creates a revocable attestation with no expiration time and no payment.
     ///      Uses the private key from FUNDED_KEY environment variable for signing.
-    function attest(
-        string calldata easAddr,
-        string calldata schema,
-        string calldata recipient,
-        string calldata data
-    ) public {
+    function attest(string calldata easAddr, string calldata schema, string calldata recipient, string calldata data)
+        public
+    {
         vm.startBroadcast(_privateKey);
 
         IEAS eas = IEAS(vm.parseAddress(easAddr));
@@ -59,17 +60,11 @@ contract EASAttest is Common {
             value: 0
         });
 
-        AttestationRequest memory request = AttestationRequest({
-            schema: schemaUID,
-            data: requestData
-        });
+        AttestationRequest memory request = AttestationRequest({schema: schemaUID, data: requestData});
 
         bytes32 attestationUID = eas.attest(request);
 
-        console.log(
-            "Attestation created with UID:",
-            vm.toString(attestationUID)
-        );
+        console.log("Attestation created with UID:", vm.toString(attestationUID));
 
         vm.stopBroadcast();
     }
@@ -114,17 +109,11 @@ contract EASAttest is Common {
             value: value
         });
 
-        AttestationRequest memory request = AttestationRequest({
-            schema: schemaUID,
-            data: requestData
-        });
+        AttestationRequest memory request = AttestationRequest({schema: schemaUID, data: requestData});
 
         bytes32 attestationUID = eas.attest{value: value}(request);
 
-        console.log(
-            "Attestation created with UID:",
-            vm.toString(attestationUID)
-        );
+        console.log("Attestation created with UID:", vm.toString(attestationUID));
         console.log("Payment of", value, "wei sent with attestation");
 
         vm.stopBroadcast();

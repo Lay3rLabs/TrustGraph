@@ -13,8 +13,7 @@ import {
     RevocationRequestData,
     Attestation
 } from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
-import {ISchemaRegistry, SchemaRecord} from "@ethereum-attestation-service/eas-contracts/contracts/SchemaRegistry.sol";
-import {AttestationAttested, AttestationRevoked} from "../../src/interfaces/IIndexedEvents.sol";
+import {ISchemaRegistry} from "@ethereum-attestation-service/eas-contracts/contracts/SchemaRegistry.sol";
 
 contract PayableEASIndexerResolverTest is Test {
     PayableEASIndexerResolver resolver;

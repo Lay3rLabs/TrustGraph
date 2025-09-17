@@ -1,6 +1,7 @@
 mod trigger;
 use alloy_sol_types::SolValue;
 use trigger::{decode_trigger_event, encode_trigger_output, Destination};
+#[rustfmt::skip]
 pub mod bindings;
 use crate::bindings::{export, Guest, TriggerAction, WasmResponse};
 

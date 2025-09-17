@@ -1,4 +1,5 @@
 #[allow(warnings)]
+#[rustfmt::skip]
 mod bindings;
 use std::{collections::HashMap, str::FromStr};
 mod resolvers;

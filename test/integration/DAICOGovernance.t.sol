@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import "forge-std/Test.sol";
-import "forge-std/console.sol";
+import {Test} from "forge-std/Test.sol";
+import {console} from "forge-std/console.sol";
 import {DAICO} from "../../src/contracts/daico/DAICO.sol";
 import {DAICOVault} from "../../src/contracts/tokens/DAICOVault.sol";
-import {IDAICO} from "../../src/interfaces/IDAICO.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {ERC20Votes} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {IGovernor} from "@openzeppelin/contracts/governance/IGovernor.sol";
 import {Governor} from "@openzeppelin/contracts/governance/Governor.sol";
@@ -439,7 +437,7 @@ contract DAICOGovernanceTest is Test {
         uint256 transferAmount = vaultToken.balanceOf(bob) / 2;
 
         vm.prank(bob);
-        vaultToken.transfer(eve, transferAmount);
+        require(vaultToken.transfer(eve, transferAmount), "Transfer failed");
 
         // Eve needs to delegate to herself to get voting power
         vm.prank(eve);

@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import "forge-std/Test.sol";
-import "forge-std/console.sol";
+import {Test} from "forge-std/Test.sol";
 import {DAICO} from "../../src/contracts/daico/DAICO.sol";
 import {DAICOVault} from "../../src/contracts/tokens/DAICOVault.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {ERC20Votes} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import {IDAICO} from "../../src/interfaces/IDAICO.sol";
 
 /// @title Comprehensive DAICO Test Suite
@@ -543,14 +541,14 @@ contract DAICOTest is Test {
 
         uint256 halfVault = vaultToken.balanceOf(alice) / 2;
         vm.prank(alice);
-        uint256 firstClaim = daico.claimProjectTokens(halfVault);
+        daico.claimProjectTokens(halfVault);
 
         // Second claim at 100% vesting
         vm.warp(block.timestamp + VESTING_DURATION);
 
         uint256 remainingVault = vaultToken.balanceOf(alice);
         vm.prank(alice);
-        uint256 secondClaim = daico.claimProjectTokens(remainingVault);
+        daico.claimProjectTokens(remainingVault);
 
         // Verify total claimed equals allocated
         IDAICO.VestingSchedule memory schedule = daico.getVestingSchedule(alice);
@@ -744,7 +742,7 @@ contract DAICOTest is Test {
 
         // Alice transfers half to Bob
         vm.prank(alice);
-        vaultToken.transfer(bob, vaultBalance / 2);
+        require(vaultToken.transfer(bob, vaultBalance / 2), "Transfer failed");
 
         // Bob delegates to himself
         vm.prank(bob);
@@ -1084,7 +1082,6 @@ contract ReentrancyAttacker {
 
     function contribute() external payable {
         uint256 tokenAmount = 100 * 1e18;
-        uint256 price = daico.getCurrentPrice(tokenAmount);
         // Send the exact amount received to avoid refunds
         daico.contribute{value: msg.value}(tokenAmount);
     }

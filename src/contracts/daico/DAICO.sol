@@ -12,7 +12,7 @@ import {DAICOVault} from "contracts/tokens/DAICOVault.sol";
 /// @dev Uses vault tokens for governance and refunds, project tokens vest over time
 ///
 /// The pricing mechanism uses a polynomial bonding curve with time-based adjustments:
-/// - Base price follows a polynomial curve: P(s) = a0 + a1*s + a2*s² + a3*s³
+/// - Base price follows a polynomial curve: P(s) = A0 + A1*s + A2*s² + A3*s³
 /// - Time adjustment multiplies base price based on sales pace vs target
 /// - This creates VRGDA-like behavior while being gas efficient and continuous
 contract DAICO is IDAICO, ReentrancyGuard {
@@ -23,28 +23,28 @@ contract DAICO is IDAICO, ReentrancyGuard {
     /// ================================================
 
     /// @notice The vault token (governance token)
-    DAICOVault public immutable override vaultToken;
+    DAICOVault public immutable VAULT_TOKEN;
 
     /// @notice The project token being distributed
-    IERC20 public immutable override projectToken;
+    IERC20 public immutable PROJECT_TOKEN;
 
-    /// @notice Treasury address for vested funds
-    address public immutable override treasury;
+    /// @notice TREASURY address for vested funds
+    address public immutable TREASURY;
 
-    /// @notice Admin address
-    address public immutable admin;
+    /// @notice ADMIN address
+    address public immutable ADMIN;
 
     /// @notice Sale start timestamp
-    uint256 public immutable override saleStartTime;
+    uint256 public immutable SALE_START_TIME;
 
     /// @notice Maximum supply of project tokens for sale
-    uint256 public immutable override maxSupply;
+    uint256 public immutable MAX_SUPPLY;
 
     /// @notice Vesting cliff duration
-    uint256 public immutable override cliffDuration;
+    uint256 public immutable CLIFF_DURATION;
 
     /// @notice Total vesting duration
-    uint256 public immutable override vestingDuration;
+    uint256 public immutable VESTING_DURATION;
 
     /// ================================================
     /// PRICING PARAMETERS (IMMUTABLES)
@@ -52,28 +52,28 @@ contract DAICO is IDAICO, ReentrancyGuard {
 
     /// @notice Target sale velocity (tokens per second, scaled by 1e18)
     /// @dev Used to determine if sales are ahead/behind schedule
-    uint256 public immutable targetVelocity;
+    uint256 public immutable TARGET_VELOCITY;
 
     /// @notice Pace adjustment factor (scaled by 1e18)
     /// @dev Controls how strongly price reacts to being ahead/behind schedule
     /// @dev Higher values = stronger price adjustments
-    uint256 public immutable paceAdjustmentFactor;
+    uint256 public immutable PAGE_ADJUSTMENT_FACTOR;
 
-    /// @notice Polynomial coefficient a0 (constant term, scaled by 1e18)
+    /// @notice Polynomial coefficient A0 (constant term, scaled by 1e18)
     /// @dev Base price when no tokens have been sold
-    uint256 public immutable a0;
+    uint256 public immutable A0;
 
-    /// @notice Polynomial coefficient a1 (linear term, scaled by 1e36)
+    /// @notice Polynomial coefficient A1 (linear term, scaled by 1e36)
     /// @dev Controls linear price growth
-    uint256 public immutable a1;
+    uint256 public immutable A1;
 
-    /// @notice Polynomial coefficient a2 (quadratic term, scaled by 1e54)
+    /// @notice Polynomial coefficient A2 (quadratic term, scaled by 1e54)
     /// @dev Controls quadratic price growth
-    uint256 public immutable a2;
+    uint256 public immutable A2;
 
-    /// @notice Polynomial coefficient a3 (cubic term, scaled by 1e72)
+    /// @notice Polynomial coefficient A3 (cubic term, scaled by 1e72)
     /// @dev Controls cubic price growth
-    uint256 public immutable a3;
+    uint256 public immutable A3;
 
     /// ================================================
     /// STATE VARIABLES
@@ -118,7 +118,7 @@ contract DAICO is IDAICO, ReentrancyGuard {
     }
 
     modifier onlyAdmin() virtual {
-        if (msg.sender != admin) revert Unauthorized();
+        if (msg.sender != ADMIN) revert Unauthorized();
         _;
     }
 
@@ -128,12 +128,12 @@ contract DAICO is IDAICO, ReentrancyGuard {
 
     /// @notice Initialize the DAICO contract with polynomial bonding curve pricing
     /// @param _projectToken The project token to be distributed
-    /// @param _treasury The treasury address
-    /// @param _admin The admin address
+    /// @param _treasury The TREASURY address
+    /// @param _admin The ADMIN address
     /// @param _maxSupply Maximum project tokens available for sale
     /// @param _targetVelocity Target sale rate (tokens per second, scaled by 1e18)
     /// @param _paceAdjustmentFactor How strongly to adjust price based on pace (scaled by 1e18)
-    /// @param _polynomialCoefficients Array of [a0, a1, a2, a3] polynomial coefficients
+    /// @param _polynomialCoefficients Array of [A0, A1, A2, A3] polynomial coefficients
     /// @param _cliffDuration Vesting cliff duration in seconds
     /// @param _vestingDuration Total vesting duration in seconds
     /// @param _vaultName Name for the vault token
@@ -158,25 +158,25 @@ contract DAICO is IDAICO, ReentrancyGuard {
         if (_targetVelocity == 0) revert InvalidAmount();
         if (_vestingDuration < _cliffDuration) revert InvalidAmount();
 
-        projectToken = IERC20(_projectToken);
-        treasury = _treasury;
-        admin = _admin;
-        maxSupply = _maxSupply;
-        saleStartTime = block.timestamp;
-        cliffDuration = _cliffDuration;
-        vestingDuration = _vestingDuration;
+        PROJECT_TOKEN = IERC20(_projectToken);
+        TREASURY = _treasury;
+        ADMIN = _admin;
+        MAX_SUPPLY = _maxSupply;
+        SALE_START_TIME = block.timestamp;
+        CLIFF_DURATION = _cliffDuration;
+        VESTING_DURATION = _vestingDuration;
         lastVestingWithdrawal = block.timestamp;
 
         // Set pricing parameters
-        targetVelocity = _targetVelocity;
-        paceAdjustmentFactor = _paceAdjustmentFactor;
-        a0 = _polynomialCoefficients[0];
-        a1 = _polynomialCoefficients[1];
-        a2 = _polynomialCoefficients[2];
-        a3 = _polynomialCoefficients[3];
+        TARGET_VELOCITY = _targetVelocity;
+        PAGE_ADJUSTMENT_FACTOR = _paceAdjustmentFactor;
+        A0 = _polynomialCoefficients[0];
+        A1 = _polynomialCoefficients[1];
+        A2 = _polynomialCoefficients[2];
+        A3 = _polynomialCoefficients[3];
 
         // Deploy vault token
-        vaultToken = new DAICOVault(address(this), _vaultName, _vaultSymbol);
+        VAULT_TOKEN = new DAICOVault(address(this), _vaultName, _vaultSymbol);
     }
 
     /// ================================================
@@ -194,7 +194,7 @@ contract DAICO is IDAICO, ReentrancyGuard {
         returns (uint256 vaultTokensIssued)
     {
         if (projectTokenAmount == 0) revert InvalidAmount();
-        if (totalSold + projectTokenAmount > maxSupply) revert ExceedsMaxSupply();
+        if (totalSold + projectTokenAmount > MAX_SUPPLY) revert ExceedsMaxSupply();
 
         // Calculate ETH cost using polynomial bonding curve
         uint256 ethRequired = _calculatePrice(projectTokenAmount);
@@ -208,7 +208,7 @@ contract DAICO is IDAICO, ReentrancyGuard {
         vaultTokensIssued = ethRequired;
 
         // Mint vault tokens to contributor
-        vaultToken.mint(msg.sender, vaultTokensIssued);
+        VAULT_TOKEN.mint(msg.sender, vaultTokensIssued);
 
         // Update or create vesting schedule
         _updateVestingSchedule(msg.sender, projectTokenAmount, ethRequired);
@@ -252,7 +252,7 @@ contract DAICO is IDAICO, ReentrancyGuard {
     /// @inheritdoc IDAICO
     function refund(uint256 vaultTokenAmount) external override nonReentrant returns (uint256 ethRefunded) {
         if (vaultTokenAmount == 0) revert InvalidAmount();
-        if (vaultToken.balanceOf(msg.sender) < vaultTokenAmount) revert InsufficientVaultTokens();
+        if (VAULT_TOKEN.balanceOf(msg.sender) < vaultTokenAmount) revert InsufficientVaultTokens();
 
         VestingSchedule storage schedule = vestingSchedules[msg.sender];
         if (schedule.ethContributed == 0) revert NothingToClaim();
@@ -270,7 +270,7 @@ contract DAICO is IDAICO, ReentrancyGuard {
         schedule.ethContributed -= ethRefunded;
 
         // Burn vault tokens
-        vaultToken.burnFrom(msg.sender, vaultTokenAmount);
+        VAULT_TOKEN.burnFrom(msg.sender, vaultTokenAmount);
 
         // Send ETH refund
         (bool success,) = msg.sender.call{value: ethRefunded}("");
@@ -287,7 +287,7 @@ contract DAICO is IDAICO, ReentrancyGuard {
         returns (uint256 projectTokensClaimed)
     {
         if (vaultTokenAmount == 0) revert InvalidAmount();
-        if (vaultToken.balanceOf(msg.sender) < vaultTokenAmount) revert InsufficientVaultTokens();
+        if (VAULT_TOKEN.balanceOf(msg.sender) < vaultTokenAmount) revert InsufficientVaultTokens();
 
         VestingSchedule storage schedule = vestingSchedules[msg.sender];
         if (schedule.totalTokens == 0) revert NothingToClaim();
@@ -315,10 +315,10 @@ contract DAICO is IDAICO, ReentrancyGuard {
         schedule.claimed += projectTokensClaimed;
 
         // Burn vault tokens
-        vaultToken.burnFrom(msg.sender, vaultTokenAmount);
+        VAULT_TOKEN.burnFrom(msg.sender, vaultTokenAmount);
 
         // Transfer project tokens to user
-        projectToken.safeTransfer(msg.sender, projectTokensClaimed);
+        PROJECT_TOKEN.safeTransfer(msg.sender, projectTokensClaimed);
 
         emit TokensClaimed(msg.sender, vaultTokenAmount, projectTokensClaimed);
     }
@@ -388,16 +388,15 @@ contract DAICO is IDAICO, ReentrancyGuard {
     function withdrawVestedToTreasury() external override onlyAdmin returns (uint256 amount) {
         // Calculate total vested ETH since last withdrawal
         uint256 currentTime = block.timestamp;
-        uint256 timeSinceLastWithdrawal = currentTime - lastVestingWithdrawal;
 
         // Simple linear vesting of raised funds
-        if (currentTime >= saleStartTime + vestingDuration) {
+        if (currentTime >= SALE_START_TIME + VESTING_DURATION) {
             // All funds are vested
             amount = address(this).balance;
-        } else if (currentTime >= saleStartTime + cliffDuration) {
+        } else if (currentTime >= SALE_START_TIME + CLIFF_DURATION) {
             // Calculate vested portion
-            uint256 totalVestingTime = currentTime - saleStartTime;
-            uint256 vestedPortion = (totalRaised * totalVestingTime) / vestingDuration;
+            uint256 totalVestingTime = currentTime - SALE_START_TIME;
+            uint256 vestedPortion = (totalRaised * totalVestingTime) / VESTING_DURATION;
             amount = vestedPortion - totalVested;
 
             if (amount > address(this).balance) {
@@ -412,7 +411,7 @@ contract DAICO is IDAICO, ReentrancyGuard {
             totalVested += amount;
             lastVestingWithdrawal = currentTime;
 
-            (bool success,) = treasury.call{value: amount}("");
+            (bool success,) = TREASURY.call{value: amount}("");
             if (!success) revert TransferFailed();
 
             emit VestedToTreasury(amount);
@@ -472,7 +471,7 @@ contract DAICO is IDAICO, ReentrancyGuard {
     /// @dev Implements a polynomial bonding curve with time-based adjustments
     ///
     /// The pricing mechanism consists of two parts:
-    /// 1. Base Price: Integral of polynomial P(s) = a0 + a1*s + a2*s² + a3*s³
+    /// 1. Base Price: Integral of polynomial P(s) = A0 + A1*s + A2*s² + A3*s³
     /// 2. Time Multiplier: Adjusts price based on sales velocity vs target
     ///
     /// This creates VRGDA-like behavior:
@@ -518,10 +517,10 @@ contract DAICO is IDAICO, ReentrancyGuard {
     }
 
     /// @notice Integrate the polynomial from start to end supply
-    /// @dev Calculates ∫[start,end] (a0 + a1*s + a2*s² + a3*s³) ds
+    /// @dev Calculates ∫[start,end] (A0 + A1*s + A2*s² + A3*s³) ds
     ///
     /// The integral evaluates to:
-    /// [a0*s + a1*s²/2 + a2*s³/3 + a3*s⁴/4] evaluated from start to end
+    /// [A0*s + A1*s²/2 + A2*s³/3 + A3*s⁴/4] evaluated from start to end
     ///
     /// @param start Starting supply point (in wei units)
     /// @param end Ending supply point (in wei units)
@@ -540,20 +539,20 @@ contract DAICO is IDAICO, ReentrancyGuard {
         uint256 s2_3 = s2_2 * s2;
         uint256 s2_4 = s2_3 * s2;
 
-        // Integral of a0 term: a0 * (s2 - s1)
-        uint256 term0 = a0 * (s2 - s1);
+        // Integral of A0 term: A0 * (s2 - s1)
+        uint256 term0 = A0 * (s2 - s1);
 
-        // Integral of a1 term: a1/2 * (s2² - s1²)
-        // Note: a1 is scaled by 1e36, so we divide by 2e18 to maintain scaling
-        uint256 term1 = (a1 * (s2_2 - s1_2)) / (2 * 1e18);
+        // Integral of A1 term: A1/2 * (s2² - s1²)
+        // Note: A1 is scaled by 1e36, so we divide by 2e18 to maintain scaling
+        uint256 term1 = (A1 * (s2_2 - s1_2)) / (2 * 1e18);
 
-        // Integral of a2 term: a2/3 * (s2³ - s1³)
-        // Note: a2 is scaled by 1e54, so we divide by 3e36 to maintain scaling
-        uint256 term2 = (a2 * (s2_3 - s1_3)) / (3 * 1e36);
+        // Integral of A2 term: A2/3 * (s2³ - s1³)
+        // Note: A2 is scaled by 1e54, so we divide by 3e36 to maintain scaling
+        uint256 term2 = (A2 * (s2_3 - s1_3)) / (3 * 1e36);
 
-        // Integral of a3 term: a3/4 * (s2⁴ - s1⁴)
-        // Note: a3 is scaled by 1e72, so we divide by 4e54 to maintain scaling
-        uint256 term3 = (a3 * (s2_4 - s1_4)) / (4 * 1e54);
+        // Integral of A3 term: A3/4 * (s2⁴ - s1⁴)
+        // Note: A3 is scaled by 1e72, so we divide by 4e54 to maintain scaling
+        uint256 term3 = (A3 * (s2_4 - s1_4)) / (4 * 1e54);
 
         // Sum all terms
         cost = term0 + term1 + term2 + term3;
@@ -568,20 +567,20 @@ contract DAICO is IDAICO, ReentrancyGuard {
     }
 
     /// @notice Calculate the spot price at a given supply level
-    /// @dev Evaluates the polynomial P(s) = a0 + a1*s + a2*s² + a3*s³
+    /// @dev Evaluates the polynomial P(s) = A0 + A1*s + A2*s² + A3*s³
     /// @param supply The supply level to evaluate at (in wei units)
     /// @return price The spot price at the given supply
     function _calculateSpotPrice(uint256 supply) private view returns (uint256 price) {
         uint256 s = supply / 1e18; // Convert to whole tokens
 
-        // Calculate polynomial: a0 + a1*s + a2*s² + a3*s³
+        // Calculate polynomial: A0 + A1*s + A2*s² + A3*s³
         uint256 s_2 = s * s;
         uint256 s_3 = s_2 * s;
 
-        price = a0;
-        price += (a1 * s) / 1e18;
-        price += (a2 * s_2) / 1e36;
-        price += (a3 * s_3) / 1e54;
+        price = A0;
+        price += (A1 * s) / 1e18;
+        price += (A2 * s_2) / 1e36;
+        price += (A3 * s_3) / 1e54;
     }
 
     /// @notice Calculate the time-based price multiplier
@@ -594,20 +593,20 @@ contract DAICO is IDAICO, ReentrancyGuard {
     ///
     /// @return multiplier The price multiplier (scaled by 1e18)
     function _calculateTimeMultiplier() private view returns (uint256 multiplier) {
-        uint256 timeElapsed = block.timestamp - saleStartTime;
+        uint256 timeElapsed = block.timestamp - SALE_START_TIME;
         if (timeElapsed == 0) return 1e18; // No adjustment at start
 
         // Calculate expected vs actual sales
-        uint256 expectedSold = (targetVelocity * timeElapsed) / 1e18;
+        uint256 expectedSold = (TARGET_VELOCITY * timeElapsed) / 1e18;
 
         if (totalSold > expectedSold) {
             // Selling ahead of schedule - increase price
             uint256 aheadBy = totalSold - expectedSold;
             uint256 percentAhead = (aheadBy * 1e18) / (expectedSold + 1); // +1 to avoid division by zero
 
-            // Exponential increase: e^(paceAdjustmentFactor * percentAhead)
+            // Exponential increase: e^(PAGE_ADJUSTMENT_FACTOR * percentAhead)
             // Approximation: 1 + factor * percent + (factor * percent)² / 2
-            uint256 adjustment = (paceAdjustmentFactor * percentAhead) / 1e18;
+            uint256 adjustment = (PAGE_ADJUSTMENT_FACTOR * percentAhead) / 1e18;
             uint256 adjustmentSquared = (adjustment * adjustment) / 1e18;
 
             multiplier = 1e18 + adjustment + adjustmentSquared / 2;
@@ -616,9 +615,9 @@ contract DAICO is IDAICO, ReentrancyGuard {
             uint256 behindBy = expectedSold - totalSold;
             uint256 percentBehind = (behindBy * 1e18) / (expectedSold + 1);
 
-            // Exponential decrease: e^(-paceAdjustmentFactor * percentBehind)
+            // Exponential decrease: e^(-PAGE_ADJUSTMENT_FACTOR * percentBehind)
             // Approximation: 1 - factor * percent + (factor * percent)² / 2
-            uint256 adjustment = (paceAdjustmentFactor * percentBehind) / 1e18;
+            uint256 adjustment = (PAGE_ADJUSTMENT_FACTOR * percentBehind) / 1e18;
             uint256 adjustmentSquared = (adjustment * adjustment) / 1e18;
 
             // Ensure we don't go below a minimum multiplier (e.g., 0.1x)
@@ -639,8 +638,8 @@ contract DAICO is IDAICO, ReentrancyGuard {
             // Create new schedule
             schedule.totalTokens = tokenAmount;
             schedule.startTime = block.timestamp;
-            schedule.cliffDuration = cliffDuration;
-            schedule.vestingDuration = vestingDuration;
+            schedule.cliffDuration = CLIFF_DURATION;
+            schedule.vestingDuration = VESTING_DURATION;
             schedule.ethContributed = ethAmount;
         } else {
             // Add to existing schedule
@@ -682,6 +681,36 @@ contract DAICO is IDAICO, ReentrancyGuard {
     function _calculateUnvestedETH(VestingSchedule memory schedule) private view returns (uint256) {
         uint256 vestedETH = _calculateVestedETH(schedule);
         return schedule.ethContributed - vestedETH;
+    }
+
+    /// @notice Get the vault token contract address
+    /// @return vaultToken The vault token contract
+    function vaultToken() external view returns (DAICOVault) {
+        return VAULT_TOKEN;
+    }
+
+    function cliffDuration() external view returns (uint256 cliff) {
+        return CLIFF_DURATION;
+    }
+
+    function maxSupply() external view returns (uint256 supply) {
+        return MAX_SUPPLY;
+    }
+
+    function projectToken() external view returns (IERC20) {
+        return PROJECT_TOKEN;
+    }
+
+    function saleStartTime() external view returns (uint256 timestamp) {
+        return SALE_START_TIME;
+    }
+
+    function treasury() external view returns (address) {
+        return TREASURY;
+    }
+
+    function vestingDuration() external view returns (uint256 duration) {
+        return VESTING_DURATION;
     }
 
     /// @notice Receive ETH - reverts to prevent accidental sends

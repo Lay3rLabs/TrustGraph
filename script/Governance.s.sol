@@ -3,7 +3,6 @@ pragma solidity 0.8.27;
 
 import {AttestationGovernor} from "contracts/governance/Governor.sol";
 import {VotingPower} from "contracts/governance/VotingPower.sol";
-import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 import {IGovernor} from "@openzeppelin/contracts/governance/IGovernor.sol";
 import {Common} from "script/Common.s.sol";
 import {console} from "forge-std/console.sol";
@@ -199,7 +198,7 @@ contract Governance is Common {
                 console.log("Status: HAS VOTED");
                 // Try to get vote details if available
                 try governor.proposalVotes(proposalId) returns (
-                    uint256 againstVotes, uint256 forVotes, uint256 abstainVotes
+                    uint256, /* againstVotes */ uint256, /* forVotes */ uint256 /* abstainVotes */
                 ) {
                     // Note: OpenZeppelin doesn't expose individual vote details by default
                     console.log("Note: Cannot retrieve specific vote choice with standard interface");
@@ -374,7 +373,7 @@ contract Governance is Common {
         uint256[] calldata values,
         bytes[] calldata calldatas,
         string calldata description
-    ) public view returns (uint256) {
+    ) public pure returns (uint256) {
         AttestationGovernor governor = AttestationGovernor(payable(vm.parseAddress(governorAddr)));
 
         return governor.hashProposal(targets, values, calldatas, keccak256(bytes(description)));
@@ -383,7 +382,7 @@ contract Governance is Common {
     /// @notice Show current account's governance participation status
     /// @param votingPowerAddr Address of the VotingPower contract
     /// @param governorAddr Address of the AttestationGovernor contract
-    function showMyGovernanceStatus(string calldata votingPowerAddr, string calldata governorAddr) public {
+    function showMyGovernanceStatus(string calldata votingPowerAddr, string calldata governorAddr) public view  {
         address myAddress = vm.addr(_privateKey);
         string memory myAddressStr = vm.toString(myAddress);
 

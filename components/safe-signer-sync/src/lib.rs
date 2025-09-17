@@ -13,6 +13,7 @@ use alloy_rpc_types::TransactionInput;
 use bindings::host::{config_var, get_evm_chain_config};
 use trigger::{decode_trigger_event, encode_trigger_output, Destination};
 use wavs_wasi_utils::evm::new_evm_provider;
+#[rustfmt::skip]
 pub mod bindings;
 use crate::bindings::{export, Guest, TriggerAction, WasmResponse};
 use crate::solidity::{ISignerManagerModule, OperationType, SignerManagerPayload, SignerOperation};

@@ -13,14 +13,14 @@ import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
 ///      Can be redeemed for unvested ETH or exchanged for vested project tokens
 contract DAICOVault is ERC20, ERC20Burnable, ERC20Permit, ERC20Votes {
     /// @notice The DAICO contract that can mint and burn tokens
-    address public immutable daico;
+    address public immutable DAICO;
 
     /// @notice Only the DAICO contract can call this function
     error OnlyDAICO();
 
     /// @notice Requires caller to be the DAICO contract
     modifier onlyDAICO() {
-        if (msg.sender != daico) revert OnlyDAICO();
+        if (msg.sender != DAICO) revert OnlyDAICO();
         _;
     }
 
@@ -29,7 +29,7 @@ contract DAICOVault is ERC20, ERC20Burnable, ERC20Permit, ERC20Votes {
     /// @param _name Token name (e.g., "DAICO Vault Token")
     /// @param _symbol Token symbol (e.g., "vDAICO")
     constructor(address _daico, string memory _name, string memory _symbol) ERC20(_name, _symbol) ERC20Permit(_name) {
-        daico = _daico;
+        DAICO = _daico;
     }
 
     /// @notice Mint vault tokens to a contributor
@@ -58,5 +58,9 @@ contract DAICOVault is ERC20, ERC20Burnable, ERC20Permit, ERC20Votes {
     /// @notice Override nonces for ERC20Permit functionality
     function nonces(address owner) public view override(ERC20Permit, Nonces) returns (uint256) {
         return super.nonces(owner);
+    }
+
+    function daico() public view returns (address) {
+        return DAICO;
     }
 }

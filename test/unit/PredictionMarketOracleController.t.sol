@@ -5,7 +5,6 @@ import {Test} from "forge-std/Test.sol";
 import {PredictionMarketOracleController} from "contracts/prediction_market/PredictionMarketOracleController.sol";
 import {ITypes} from "interfaces/ITypes.sol";
 import {IWavsTrigger} from "interfaces/IWavsTrigger.sol";
-import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 
 contract PredictionMarketOracleControllerTest is Test {
     PredictionMarketOracleController public controller;

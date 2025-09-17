@@ -50,7 +50,8 @@
         "indexer_address": "${INDEXER_ADDRESS}",
         "chain_name": "${CHAIN_NAME}",
         "recognition_schema_uid": "${RECOGNITION_SCHEMA_UID}",
-        "pagerank_points_pool": "1000000000000000000000",
+        "vouching_schema_uid": "${VOUCHING_SCHEMA_UID}",
+        "pagerank_points_pool": "10000",
         "pagerank_trusted_seeds": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
         "pagerank_trust_multiplier": "10.5",
         "pagerank_trust_boost": "0.99"
