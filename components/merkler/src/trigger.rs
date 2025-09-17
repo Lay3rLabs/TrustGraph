@@ -1,5 +1,8 @@
 use crate::{
-    bindings::wavs::worker::input::{TriggerData, TriggerDataCron, TriggerDataEvmContractEvent},
+    bindings::wavs::{
+        operator::input::TriggerData,
+        types::events::{TriggerDataCron, TriggerDataEvmContractEvent},
+    },
     solidity,
 };
 use alloy_sol_types::SolValue;
@@ -18,7 +21,7 @@ pub fn decode_trigger_event(trigger_data: TriggerData) -> Result<DecodedTrigger>
             Ok(DecodedTrigger::Cron(trigger_time.nanos))
         }
         TriggerData::EvmContractEvent(TriggerDataEvmContractEvent { log, .. }) => {
-            let solidity::MerklerTrigger { triggerId } = decode_event_log_data!(log)?;
+            let solidity::MerklerTrigger { triggerId } = decode_event_log_data!(log.data)?;
             Ok(DecodedTrigger::Trigger(triggerId))
         }
         _ => Err(anyhow::anyhow!("Unsupported trigger data type")),

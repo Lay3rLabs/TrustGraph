@@ -3,20 +3,19 @@ mod bindings;
 pub mod context;
 pub mod sol_interfaces;
 
+use crate::bindings::{
+    export,
+    wavs::{operator::input::TriggerData, types::events::TriggerDataEvmContractEvent},
+    Guest, TriggerAction,
+};
 use crate::sol_interfaces::TransactionPayload;
 use alloy_primitives::{Address, Bytes, U256};
 use alloy_sol_types::{SolType, SolValue};
 use bindings::WasmResponse;
-use bindings::{
-    export,
-    wavs::worker::input::{TriggerData, TriggerDataEvmContractEvent},
-    Guest, TriggerAction,
-};
 use context::DaoContext;
 use sol_interfaces::{Operation, Transaction};
 use std::str::FromStr;
-use wavs_llm::{client, errors::AgentError, ToolCall};
-use wavs_llm::{LlmResponse, Message};
+use wavs_llm::{client, errors::AgentError, LlmResponse, Message, ToolCall};
 
 struct Component;
 
@@ -119,7 +118,7 @@ impl Guest for Component {
         let prompt = match trigger_action.data {
             TriggerData::EvmContractEvent(TriggerDataEvmContractEvent { log, .. }) => {
                 // Decode the ABI-encoded string first
-                let decoded = alloy_sol_types::sol_data::String::abi_decode(&log.data)
+                let decoded = alloy_sol_types::sol_data::String::abi_decode(&log.data.data)
                     .map_err(|e| format!("Failed to decode ABI string: {}", e))?;
 
                 Ok(decoded.to_string())

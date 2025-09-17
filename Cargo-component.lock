@@ -3,9 +3,9 @@
 version = 1
 
 [[package]]
-name = "wavs:worker"
+name = "wavs:operator"
 
 [[package.version]]
-requirement = "^0.5.1"
-version = "0.5.1"
-digest = "sha256:121db8ddd89ca54ee362ea7b88e37d98b78b510391fbc274fff052057afa6b60"
+requirement = "^0.6.0-alpha.12"
+version = "0.6.0-alpha.15"
+digest = "sha256:475d6b8ad33bc584e8002ee3a28e4f0a37cef91a68da0fbf9c68d31d06e94851"

@@ -1,6 +1,6 @@
-use crate::bindings::wavs::worker::input::{
-    EvmEventLogData, TriggerData, TriggerDataEvmContractEvent,
-};
+use crate::bindings::wavs::operator::input::TriggerData;
+use crate::bindings::wavs::types::chain::EvmEventLogData;
+use crate::bindings::wavs::types::events::TriggerDataEvmContractEvent;
 use crate::bindings::WasmResponse;
 use crate::solidity::IndexingPayload;
 use alloy_primitives::Address as AlloyAddress;
@@ -21,27 +21,21 @@ pub struct EventData {
     pub contract_address: AlloyAddress,
     pub log: EvmEventLogData,
     pub block_number: u64,
-    pub chain_name: String,
+    pub chain: String,
 }
 
 /// Decodes incoming trigger event data
 pub fn decode_trigger_event(trigger_data: TriggerData) -> Result<(EventData, Destination)> {
     match trigger_data {
-        TriggerData::EvmContractEvent(TriggerDataEvmContractEvent {
-            contract_address,
-            log,
-            block_height,
-            chain_name,
-            ..
-        }) => {
+        TriggerData::EvmContractEvent(TriggerDataEvmContractEvent { chain, log }) => {
             // Convert the EvmAddress to AlloyAddress
-            let alloy_address = AlloyAddress::from_slice(&contract_address.raw_bytes);
+            let alloy_address = AlloyAddress::from_slice(&log.address.raw_bytes);
 
             let event_data = EventData {
                 contract_address: alloy_address,
-                log,
-                block_number: block_height,
-                chain_name,
+                log: log.data,
+                block_number: log.block_number,
+                chain,
             };
             Ok((event_data, Destination::Ethereum))
         }
@@ -53,7 +47,7 @@ pub fn decode_trigger_event(trigger_data: TriggerData) -> Result<(EventData, Des
                 contract_address: AlloyAddress::ZERO,
                 log: dummy_log,
                 block_number: 0,
-                chain_name: "test".to_string(),
+                chain: "test".to_string(),
             };
             Ok((event_data, Destination::CliOutput))
         }

@@ -3,7 +3,11 @@ mod ipfs;
 pub mod service_parser;
 mod trigger;
 
-use crate::bindings::{export, host, Guest, TriggerAction};
+use crate::bindings::{
+    export, host,
+    wavs::types::service::{EvmManager, ServiceManager},
+    Guest, TriggerAction,
+};
 use alloy_network::Ethereum;
 use alloy_provider::{Provider, RootProvider};
 use alloy_rpc_types::{TransactionInput, TransactionRequest};
@@ -12,7 +16,7 @@ use bindings::{host::get_evm_chain_config, WasmResponse};
 use serde_json;
 use trigger::decode_trigger_event;
 use uuid::Uuid;
-use wavs_types::WorkflowId;
+use wavs_types::{ChainKey, WorkflowId};
 use wavs_wasi_utils::evm::{alloy_primitives::Address, new_evm_provider};
 use wstd::runtime::block_on;
 
@@ -39,14 +43,18 @@ impl Guest for Component {
             }
         };
 
-        let (evm_address, chain_name) = match service.service.manager {
-            bindings::wavs::types::service::ServiceManager::Evm(evm_manager) => {
-                let address = Address::from_slice(&evm_manager.address.raw_bytes);
-                (address, evm_manager.chain_name)
+        let (evm_address, chain, service_id) = match service.service.manager {
+            ServiceManager::Evm(EvmManager { chain, address }) => {
+                let address = Address::from_slice(&address.raw_bytes);
+                let service_id = wavs_types::ServiceId::from(&wavs_types::ServiceManager::Evm {
+                    chain: ChainKey::new(chain.clone())
+                        .map_err(|e| format!("Could not parse chain {chain} to ChainKey: {e}"))?,
+                    address,
+                });
+                (address, chain, service_id)
             }
-            _ => return Err("Service manager is not of type EVM".to_string()),
         };
-        println!("🏛️  Service Manager EVM Address: {:?} (chain: {})", evm_address, chain_name);
+        println!("🏛️  Service Manager EVM Address: {:?} (chain: {})", evm_address, chain);
 
         // user_input is a JSON string which is passed in as a workflow
         let (user_input, block_height, dest) =
@@ -63,11 +71,11 @@ impl Guest for Component {
                 dest,
                 user_input,
                 new_workflow_id,
-                service.service_id,
+                service_id.to_string(),
                 ipfs_gateway,
                 ipfs_api_key,
                 evm_address,
-                chain_name,
+                chain,
             )
             .await
         })

@@ -1,10 +1,11 @@
-use crate::bindings::wavs::worker::input::{TriggerData, TriggerDataEvmContractEvent};
+use crate::bindings::wavs::{
+    operator::input::TriggerData, types::events::TriggerDataEvmContractEvent,
+};
 use crate::bindings::WasmResponse;
 
 use alloy_primitives::{FixedBytes, U256};
 use alloy_sol_types::SolValue;
 use anyhow::Result;
-use std::cmp::min;
 use wavs_wasi_utils::decode_event_log_data;
 
 /// Represents the destination where the trigger output should be sent
@@ -31,7 +32,7 @@ pub fn decode_trigger_event(
     match trigger_data {
         TriggerData::EvmContractEvent(TriggerDataEvmContractEvent { log, .. }) => {
             // Decode the AttestationRequested event
-            let event: AttestationRequested = decode_event_log_data!(log)?;
+            let event: AttestationRequested = decode_event_log_data!(log.data)?;
 
             println!(
                 "DEBUG: Event decoded - schema: {}, recipient: {}, data_len: {}",

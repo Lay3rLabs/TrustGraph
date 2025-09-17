@@ -1,5 +1,5 @@
 use crate::{
-    bindings::wavs::worker::input::{TriggerData, TriggerDataEvmContractEvent},
+    bindings::wavs::{operator::input::TriggerData, types::events::TriggerDataEvmContractEvent},
     solidity,
 };
 use anyhow::Result;
@@ -12,11 +12,9 @@ pub enum Destination {
 
 pub fn decode_trigger_event(trigger_data: TriggerData) -> Result<(String, u64, Destination)> {
     match trigger_data {
-        TriggerData::EvmContractEvent(TriggerDataEvmContractEvent {
-            log, block_height, ..
-        }) => {
-            let solidity::UpdateService { json } = decode_event_log_data!(log)?;
-            Ok((json, block_height, Destination::Ethereum))
+        TriggerData::EvmContractEvent(TriggerDataEvmContractEvent { log, .. }) => {
+            let solidity::UpdateService { json } = decode_event_log_data!(log.data)?;
+            Ok((json, log.block_number, Destination::Ethereum))
         }
         TriggerData::Raw(e) => {
             let s = std::str::from_utf8(&e)

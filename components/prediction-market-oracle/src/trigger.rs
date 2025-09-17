@@ -1,4 +1,6 @@
-use crate::bindings::wavs::worker::input::{TriggerData, TriggerDataEvmContractEvent};
+use crate::bindings::wavs::{
+    operator::input::TriggerData, types::events::TriggerDataEvmContractEvent,
+};
 use alloy_sol_types::SolValue;
 use anyhow::Result;
 use wavs_wasi_utils::{decode_event_log_data, evm::alloy_primitives::Address};
@@ -7,7 +9,7 @@ pub fn decode_trigger_event(trigger_data: TriggerData) -> Result<solidity::Trigg
     match trigger_data {
         TriggerData::EvmContractEvent(TriggerDataEvmContractEvent { log, .. }) => {
             let event: solidity::NewTrigger =
-                decode_event_log_data!(log).map_err(|e| e.to_string())?;
+                decode_event_log_data!(log.data).map_err(|e| e.to_string())?;
 
             let trigger_info = solidity::TriggerInfo::abi_decode(&event._triggerInfo)
                 .map_err(|e| e.to_string())?;
