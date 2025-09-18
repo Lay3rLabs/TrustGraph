@@ -211,7 +211,7 @@ curl -s -H "Content-Type: application/json" -d "{
       \"address\": \"${WAVS_SERVICE_MANAGER_ADDRESS}\"
     }
   }
-}" ${AGGREGATOR_URL}/register-service
+}" ${AGGREGATOR_URL}/services
 
 ### === Start WAVS ===
 bash ./script/create-operator.sh 1

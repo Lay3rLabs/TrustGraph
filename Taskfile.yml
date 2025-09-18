@@ -69,7 +69,6 @@ tasks:
   deploy-full:
     desc: "Run complete WAVS deployment pipeline"
     cmds:
-      - task: env:get-rpc
       - |
         export AGGREGATOR_URL={{.AGGREGATOR_URL}}
         bash ./script/deploy-script.sh
