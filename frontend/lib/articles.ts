@@ -109,8 +109,8 @@ export function parseMarkdownFrontmatter(content: string): {
   return { metadata, content: articleContent.trim() }
 }
 
-export function processMarkdownContent(content: string): string {
-  let htmlContent = marked(content)
+export async function processMarkdownContent(content: string): Promise<string> {
+  let htmlContent = await marked(content)
 
   // Apply custom styling to markdown elements
   htmlContent = htmlContent
@@ -204,7 +204,7 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
       slug,
       filename: SLUG_TO_FILENAME[slug] || `${slug}.md`,
       content: articleContent,
-      htmlContent: processMarkdownContent(articleContent),
+      htmlContent: await processMarkdownContent(articleContent),
       title: metadata.title,
       subtitle: metadata.subtitle,
       author: metadata.author || 'Anonymous',

@@ -1,0 +1,342 @@
+import clsx from 'clsx'
+import { AnimationDefinition, motion, useAnimation } from 'motion/react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+
+export type LogoProps = {
+  className?: string
+  animationMode?: 'followMouse' | 'nav'
+  blinkOnClick?: boolean
+  blinkInterval?: boolean
+}
+
+const wave = (side: 'topLeft' | 'topRight') => {
+  const peak = 1.2 + Math.random() * 0.3
+
+  return {
+    rotate: [
+      0,
+      -15 + Math.random() * 5 * (Math.random() < 0.5 ? 1 : -1),
+      15 + Math.random() * 5 * (Math.random() < 0.5 ? 1 : -1),
+      -15 + Math.random() * 5 * (Math.random() < 0.5 ? 1 : -1),
+      15 + Math.random() * 5 * (Math.random() < 0.5 ? 1 : -1),
+      0,
+    ],
+    scale: [
+      1,
+      (1 + peak) / 2 + ((peak - 1) / 2) * Math.random(),
+      peak,
+      peak,
+      (1 + peak) / 2 + ((peak - 1) / 2) * Math.random(),
+      1,
+    ],
+    transformOrigin: side === 'topLeft' ? 'bottom right' : 'bottom left',
+    transition: {
+      duration: 1 + Math.random() * 0.2 * (Math.random() < 0.5 ? 1 : -1),
+      ease: 'easeInOut',
+    },
+  } satisfies AnimationDefinition
+}
+
+const blink = () => {
+  return {
+    scaleY: [1, 0.1, 1],
+    opacity: [1, 0.8, 1],
+    transition: {
+      duration: 0.25,
+      ease: 'easeInOut',
+    },
+  } satisfies AnimationDefinition
+}
+
+const squint = (duration = 1) => {
+  return {
+    scaleY: [1, 0.8, 0.8, 1],
+    transition: {
+      duration,
+      times: [0, 0.2, 0.8, 1],
+      ease: 'easeInOut',
+    },
+  } satisfies AnimationDefinition
+}
+
+const pulse = (duration = 3) => {
+  return {
+    scale: [0.9, 1.1, 0.9],
+    opacity: [1, 0.8, 1],
+    transition: {
+      duration,
+      times: [0, 0.2, 0.8, 1],
+      repeat: Infinity,
+      ease: 'easeInOut',
+    },
+  } satisfies AnimationDefinition
+}
+
+const expand = (scale = 1.1, duration = 1) => {
+  return {
+    scale: [1, scale, scale, 1],
+    transition: {
+      duration,
+      times: [0, 0.2, 0.8, 1],
+      ease: 'easeInOut',
+    },
+  } satisfies AnimationDefinition
+}
+
+const stretch = (side: 'top' | 'bottom' | 'left' | 'right', duration = 1) => {
+  return {
+    scaleY: side === 'top' || side === 'bottom' ? [1, 1.2, 1.2, 1] : undefined,
+    scaleX: side === 'left' || side === 'right' ? [1, 1.2, 1.2, 1] : undefined,
+    transformOrigin:
+      side === 'top'
+        ? 'bottom'
+        : side === 'bottom'
+        ? 'top'
+        : side === 'left'
+        ? 'right'
+        : 'left',
+    transition: {
+      duration,
+      times: [0, 0.2, 0.8, 1],
+      ease: 'easeInOut',
+    },
+  } satisfies AnimationDefinition
+}
+
+const animations = () => ({
+  iris: {
+    blink: blink(),
+    squint: squint(),
+    expand: expand(),
+    pulse: pulse(),
+  },
+  structure: {
+    expand: expand(),
+  },
+  topLeft: { wave: wave('topLeft') },
+  topRight: { wave: wave('topRight') },
+  top: {
+    stretch: stretch('top'),
+  },
+  bottom: {
+    stretch: stretch('bottom'),
+  },
+  left: {
+    stretch: stretch('left'),
+  },
+  right: {
+    stretch: stretch('right'),
+  },
+})
+
+const Logo = ({
+  className,
+  animationMode,
+  blinkOnClick = false,
+  blinkInterval = true,
+}: LogoProps) => {
+  const [
+    logo,
+    iris,
+    structure,
+    verticalTop,
+    topRight,
+    horizontalRight,
+    bottomRight,
+    verticalBottom,
+    bottomLeft,
+    horizontalLeft,
+    topLeft,
+  ] = [
+    useAnimation(),
+    useAnimation(),
+    useAnimation(),
+    useAnimation(),
+    useAnimation(),
+    useAnimation(),
+    useAnimation(),
+    useAnimation(),
+    useAnimation(),
+    useAnimation(),
+    useAnimation(),
+  ]
+
+  useEffect(() => {
+    topRight.start(animations().topRight.wave)
+    // topLeft.start(animations().topLeft.wave)
+    // iris.start(animations().iris.squint)
+    iris.start(animations().iris.expand)
+    structure.start(animations().structure.expand)
+    verticalTop.start(animations().top.stretch)
+    verticalBottom.start(animations().bottom.stretch)
+    horizontalLeft.start(animations().left.stretch)
+    horizontalRight.start(animations().right.stretch)
+  }, [])
+
+  const [rotation, setRotation] = useState({ x: 0, y: 0 })
+  const svgRef = useRef<SVGSVGElement>(null)
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!svgRef.current) {
+      return
+    }
+
+    const rect = svgRef.current.getBoundingClientRect()
+    const centerX = rect.left + rect.width / 2
+    const centerY = rect.top + rect.height / 2
+
+    // Calculate mouse position relative to center
+    const deltaX = e.clientX - centerX
+    const deltaY = e.clientY - centerY
+
+    // Convert to rotation values with proper bounds
+    const maxTilt = 30 // Maximum tilt in degrees
+    const maxDistance = window.innerWidth / 2 // Half window width for max tilt
+
+    const rotateY = Math.max(
+      -maxTilt,
+      Math.min(maxTilt, (deltaX / maxDistance) * maxTilt)
+    )
+    const rotateX = Math.max(
+      -maxTilt,
+      Math.min(maxTilt, -(deltaY / maxDistance) * maxTilt)
+    )
+
+    setRotation({ x: rotateX, y: rotateY })
+  }, [])
+
+  const handleMouseLeave = useCallback(() => {
+    setRotation({ x: 0, y: 0 })
+  }, [])
+
+  useEffect(() => {
+    if (animationMode !== 'followMouse') {
+      return
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+    }
+  }, [handleMouseMove, handleMouseLeave])
+
+  // Trigger eye blink animation every 20-40 seconds
+  useEffect(() => {
+    if (!blinkInterval) {
+      return
+    }
+
+    let timeout: NodeJS.Timeout
+    const queueBlink = () => {
+      timeout = setTimeout(() => {
+        iris.start(animations().iris.blink)
+        queueBlink()
+      }, Math.random() * 20_000 + 20_000)
+    }
+    queueBlink()
+
+    return () => clearTimeout(timeout)
+  }, [blinkInterval])
+
+  // Start iris pulse animation.
+  useEffect(() => {
+    if (animationMode !== 'nav') {
+      return
+    }
+
+    iris.start(animations().iris.pulse)
+  }, [blinkOnClick])
+
+  // Trigger eye blink animation on click 3% of the time.
+  useEffect(() => {
+    if (!blinkOnClick) {
+      return
+    }
+
+    const handleClick = () => {
+      const value = Math.random()
+      if (value < 0.03) {
+        iris.start(animations().iris.blink)
+      }
+    }
+    window.addEventListener('click', handleClick)
+    return () => {
+      window.removeEventListener('click', handleClick)
+    }
+  }, [blinkOnClick])
+
+  return (
+    <motion.svg
+      animate={logo}
+      ref={svgRef}
+      xmlns="http://www.w3.org/2000/svg"
+      width={49}
+      height={37}
+      viewBox="0 0 49 37"
+      fill="none"
+      className={clsx(animationMode === 'nav' && 'en0va-animated', className)}
+      style={
+        animationMode === 'followMouse'
+          ? {
+              transform: `perspective(300px) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
+              transition: 'transform 0.1s ease-out',
+              transformStyle: 'preserve-3d',
+            }
+          : {}
+      }
+    >
+      <motion.path
+        animate={structure}
+        d="M23.2319 26.2416C23.2721 26.2416 23.3121 26.247 23.3513 26.2559C23.4758 26.2843 23.6023 26.301 23.7291 26.3061C24.0901 26.3207 24.5891 26.2973 24.5894 26.6586V34.9829C24.5894 35.218 24.4824 35.4403 24.2988 35.5871C24.0164 35.8128 23.6154 35.8128 23.333 35.5872L23.191 35.4737C22.9533 35.2838 22.8149 34.9961 22.8149 34.6918V26.6586C22.8151 26.4282 23.0015 26.2416 23.2319 26.2416ZM28.4272 26.5883C28.6543 26.5155 28.8968 26.647 28.9585 26.8773L29.909 30.4256C30.0002 30.7658 29.8812 31.1277 29.606 31.3475C29.1066 31.7462 28.3622 31.5015 28.1969 30.8842L27.2583 27.3793C27.2009 27.1644 27.322 26.9425 27.5337 26.8744L28.4272 26.5883ZM18.2671 26.5883L19.1606 26.8744C19.3724 26.9425 19.4934 27.1644 19.436 27.3793L18.6617 30.2683C18.4963 30.8855 17.7519 31.1301 17.2526 30.7314C16.9773 30.5116 16.8583 30.1496 16.9496 29.8093L17.7358 26.8773C17.7976 26.647 18.04 26.5155 18.2671 26.5883ZM10.7261 22.0902C10.8947 21.9216 11.1703 21.9283 11.3306 22.1049L11.9614 22.7992C12.1111 22.964 12.1051 23.2179 11.9478 23.3754L10.7739 24.5485C10.4547 24.8676 9.94679 24.8958 9.59421 24.6141C9.18124 24.2842 9.147 23.6685 9.52085 23.2948L10.7261 22.0902ZM36.7202 21.8959C36.8805 21.7194 37.1562 21.7126 37.3247 21.8812L38.459 23.0155C38.8327 23.3892 38.7984 24.0048 38.3855 24.3347C38.0328 24.6164 37.5247 24.5881 37.2056 24.2689L36.103 23.1664C35.9455 23.0089 35.9396 22.7551 36.0894 22.5902L36.7202 21.8959ZM45.5564 17.7537C45.8305 17.9727 45.8304 18.3894 45.5564 18.6082L44.8903 19.1402C44.6727 19.3139 44.4025 19.4086 44.1241 19.4086H39.3335C39.103 19.4086 38.9165 19.2211 38.9165 18.9906V18.0511C38.9167 17.8208 39.1031 17.6342 39.3335 17.6342H45.2151C45.3392 17.6342 45.4595 17.6763 45.5564 17.7537ZM10.4272 17.5297C10.6577 17.5297 10.845 17.7163 10.8452 17.9467V18.8861C10.8452 19.1166 10.6578 19.3041 10.4272 19.3041H3.33925C3.08454 19.3041 2.83739 19.2175 2.63836 19.0586L2.17674 18.6899C1.85027 18.4292 1.85025 17.9328 2.17668 17.6721C2.29211 17.5799 2.43545 17.5297 2.58318 17.5297H10.4272ZM13.0835 14.5385C13.2763 14.6498 13.3475 14.8932 13.2456 15.0912L12.8169 15.9252C12.7078 16.1371 12.4433 16.2151 12.2368 16.0961L8.66712 14.0358C8.12619 13.7236 8.06903 12.9649 8.55707 12.5751C8.84219 12.3474 9.23768 12.3177 9.55366 12.5001L13.0835 14.5385ZM39.0422 12.5506C39.5296 12.94 39.4725 13.6978 38.9322 14.0097L35.9146 15.7523C35.7217 15.8636 35.4755 15.8039 35.355 15.6166L34.8472 14.8275C34.7183 14.6271 34.7834 14.3598 34.9897 14.2406L38.0463 12.4756C38.362 12.2932 38.7573 12.323 39.0422 12.5506ZM20.0308 10.3461C20.1232 10.5486 20.041 10.7888 19.8433 10.891L19.0093 11.3207C18.7974 11.43 18.537 11.3403 18.438 11.1234L16.5705 7.03206C16.4019 6.66266 16.506 6.22592 16.8232 5.97237C17.2737 5.61224 17.9427 5.77177 18.1822 6.2964L20.0308 10.3461ZM31.2574 6.33186C31.5993 6.60509 31.6904 7.08717 31.4716 7.46628L29.3481 11.1459C29.2368 11.3387 28.9934 11.4108 28.7954 11.309L27.9614 10.8793C27.7497 10.77 27.6723 10.5056 27.7915 10.2992L29.9377 6.58099C30.2086 6.11156 30.8339 5.99352 31.2574 6.33186ZM24.1915 0.68801C24.509 0.941581 24.6938 1.32584 24.6938 1.73217V9.34186C24.6938 9.76701 24.2359 10.0586 23.8108 10.0597C23.3832 10.0607 22.9194 9.76839 22.9194 9.34078V1.76059C22.9194 1.34556 23.1083 0.953085 23.4326 0.694124L23.7985 0.401967C23.8035 0.398022 23.8096 0.395874 23.8159 0.395874C23.8222 0.395874 23.8284 0.398023 23.8333 0.401969L24.1915 0.68801Z"
+        fill="white"
+      />
+      <motion.path
+        animate={iris}
+        d="M23.8424 21.835C21.8553 21.835 20.2444 20.2873 20.2444 18.3781C20.2444 16.4689 21.8553 14.9211 23.8424 14.9211C25.8295 14.9211 27.4404 16.4689 27.4404 18.3781C27.4404 20.2873 25.8295 21.835 23.8424 21.835Z"
+        fill="white"
+      />
+      <motion.path
+        animate={topLeft}
+        d="M16.0222 11.6566C16.3425 12.0273 16.3016 12.5875 15.9309 12.9077C15.5602 13.228 15 13.1871 14.6798 12.8164L8.77895 5.98614C8.45869 5.61543 8.49958 5.0553 8.87028 4.73503C9.24099 4.41477 9.80113 4.45567 10.1214 4.82637L16.0222 11.6566Z"
+        fill="white"
+      />
+      <motion.path
+        animate={horizontalLeft}
+        d="M14.1428 17.6064C14.6326 17.6064 15.0298 18.0036 15.0298 18.4935C15.0298 18.9834 14.6326 19.3805 14.1428 19.3805H1.41143C0.921545 19.3805 0.524414 18.9834 0.524414 18.4935C0.524414 18.0036 0.921546 17.6064 1.41143 17.6064H14.1428Z"
+        fill="white"
+      />
+      <motion.path
+        animate={horizontalRight}
+        d="M47.2428 17.6064C47.7327 17.6064 48.1298 18.0036 48.1298 18.4935C48.1298 18.9834 47.7327 19.3805 47.2428 19.3805H32.6331C32.1432 19.3805 31.7461 18.9834 31.7461 18.4935C31.7461 18.0036 32.1432 17.6064 32.6331 17.6064H47.2428Z"
+        fill="white"
+      />
+      <motion.path
+        animate={verticalTop}
+        d="M22.876 1.27491C22.876 0.785024 23.2731 0.387894 23.763 0.387894C24.2529 0.387894 24.65 0.785024 24.65 1.27491L24.65 11.9191C24.65 12.409 24.2529 12.8062 23.763 12.8062C23.2731 12.8062 22.876 12.409 22.876 11.9191L22.876 1.27491Z"
+        fill="white"
+      />
+      <motion.path
+        animate={verticalBottom}
+        d="M22.876 26.0071C22.876 25.5172 23.2731 25.1201 23.763 25.1201C24.2529 25.1201 24.65 25.5172 24.65 26.0071L24.65 35.9208C24.65 36.4107 24.2529 36.8079 23.763 36.8079C23.2731 36.8079 22.876 36.4107 22.876 35.9208L22.876 26.0071Z"
+        fill="white"
+      />
+      <motion.path
+        animate={bottomRight}
+        d="M32.3794 25.9193C32.0591 25.5486 32.1 24.9884 32.4707 24.6682C32.8414 24.3479 33.4016 24.3888 33.7218 24.7595L39.6244 31.5917C39.9446 31.9624 39.9037 32.5226 39.533 32.8428C39.1623 33.1631 38.6022 33.1222 38.2819 32.7515L32.3794 25.9193Z"
+        fill="white"
+      />
+      <motion.path
+        animate={topRight}
+        d="M32.2049 11.8249C31.8847 12.1956 31.9256 12.7558 32.2963 13.076C32.667 13.3963 33.2271 13.3554 33.5474 12.9847L39.4022 6.2077C39.7225 5.83699 39.6816 5.27685 39.3109 4.95659C38.9402 4.63633 38.38 4.67722 38.0598 5.04793L32.2049 11.8249Z"
+        fill="white"
+      />
+      <motion.path
+        animate={bottomLeft}
+        d="M15.5182 26.2349C15.8385 25.8642 15.7976 25.304 15.4269 24.9838C15.0562 24.6635 14.4961 24.7044 14.1758 25.0751L8.09096 32.1184C7.7707 32.4891 7.81159 33.0492 8.1823 33.3695C8.553 33.6897 9.11314 33.6488 9.4334 33.2781L15.5182 26.2349Z"
+        fill="white"
+      />
+    </motion.svg>
+  )
+}
+
+export default Logo

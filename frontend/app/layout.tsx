@@ -44,7 +44,9 @@ export default function RootLayout({
           <div className="min-h-screen p-2 sm:p-6">
             <Nav />
 
-            <main className="p-2 mt-4 sm:p-4 sm:mt-8">{children}</main>
+            <main className="p-2 mt-4 sm:p-4 sm:mt-8 min-h-full">
+              {children}
+            </main>
           </div>
         </Providers>
       </body>

@@ -33,9 +33,9 @@ export const config = createConfig({
     porto(),
     metaMask(),
     coinbaseWallet(),
-    walletConnect({
-      projectId: '',
-    }),
+    // walletConnect({
+    //   projectId: '',
+    // }),
   ],
   transports: {
     [localChain.id]: http(localChain.rpcUrls.default.http[0], {
