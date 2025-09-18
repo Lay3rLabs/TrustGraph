@@ -254,6 +254,9 @@ jq -c '.components[]' "${COMPONENT_CONFIGS_FILE}" | while IFS= read -r component
     echo ""
 done
 
+# https://github.com/Lay3rLabs/WAVS/pull/902
+jq '.workflows |= with_entries(.value.submit.aggregator.signature_kind = {"algorithm":"secp256k1","prefix":"eip191"})' .docker/service.json > .docker/service_updated.json && mv .docker/service_updated.json .docker/service.json
+
 eval "$BASE_CMD manager set-evm --chain ${SUBMIT_CHAIN} --address `cast --to-checksum ${WAVS_SERVICE_MANAGER_ADDRESS}`" > /dev/null
 eval "$BASE_CMD validate" > /dev/null
 
