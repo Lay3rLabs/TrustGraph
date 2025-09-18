@@ -58,7 +58,7 @@ build_config_args() {
             value=$(echo "$line" | jq -r '.value')
             # Substitute variables in the value
             value=$(substitute_config_vars "$value")
-            args="${args} --config \"${key}=${value}\""
+            args="${args} --values \"${key}=${value}\""
         done < <(echo "$config_json" | jq -c 'to_entries[]')
     fi
 
@@ -214,11 +214,12 @@ jq -c '.components[]' "${COMPONENT_CONFIGS_FILE}" | while IFS= read -r component
         AGG_CONFIG_ARGS=$(build_config_args "$AGG_CONFIG_VALUES")
         if [ -n "$AGG_CONFIG_ARGS" ]; then
             echo "  📋 Configuring aggregator"
+            # NOTE: --values is already done in `build_config_args`.
             eval "$BASE_CMD workflow submit --id ${WORKFLOW_ID} component config ${AGG_CONFIG_ARGS}" > /dev/null
         fi
 
         # Configure routing
-         eval "$BASE_CMD workflow submit --id ${WORKFLOW_ID} component config --config \"${SUBMIT_CHAIN}=${COMP_SUBMIT_ADDRESS}\"" > /dev/null
+         eval "$BASE_CMD workflow submit --id ${WORKFLOW_ID} component config --values \"${SUBMIT_CHAIN}=${COMP_SUBMIT_ADDRESS}\"" > /dev/null
     else
         eval "$BASE_CMD workflow submit --id ${WORKFLOW_ID} set-none" > /dev/null
     fi
