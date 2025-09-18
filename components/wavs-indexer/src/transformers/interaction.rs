@@ -30,7 +30,7 @@ impl EventTransformer for InteractionTransformer {
             interaction.addr, interaction.interactionType, interaction.tags, interaction.data
         );
 
-        let chain = get_evm_chain_config(&event_data.chain_name).unwrap();
+        let chain = get_evm_chain_config(&event_data.chain).unwrap();
 
         let mut tags = vec![format!("type:{}", interaction.interactionType)];
         tags.extend(interaction.tags);

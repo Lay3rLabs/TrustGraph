@@ -34,3 +34,4 @@ foundry_nightly_linux_arm64.tar.gz
 schema_output.log
 .docker/component-upload-status
 script/post-deploy.sh
+Cargo-component.lock

@@ -33,4 +33,4 @@ lto = true
 
 [package.metadata.component]
 package = "component:prediction-market-oracle"
-target = "wavs:worker/wavs-world@0.5.1"
+target = "wavs:operator@0.6.0-alpha.12"

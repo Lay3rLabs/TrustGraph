@@ -147,23 +147,33 @@ if ! command -v warg >/dev/null 2>&1; then
 fi
 
 TOTAL_COMPONENTS=$(jq -r '.components | length' "$COMPONENT_CONFIGS_FILE")
+TOTAL_AGGREGATOR_COMPONENTS=$(jq -r '.aggregator_components | length' "$COMPONENT_CONFIGS_FILE")
 
-if [ $TOTAL_COMPONENTS -eq 0 ]; then
+if [ $TOTAL_COMPONENTS -eq 0 ] && [ $TOTAL_AGGREGATOR_COMPONENTS -eq 0 ]; then
     log "❌ No components found"
     echo "ERROR" > "$STATUS_FILE"
     exit 1
 fi
 
-log "📊 Found $TOTAL_COMPONENTS components"
+log "📊 Found $TOTAL_COMPONENTS components and $TOTAL_AGGREGATOR_COMPONENTS aggregator components"
 
 # Upload components in parallel
 pids=()
 component_num=0
+
+# Upload regular components
 while IFS= read -r component; do
     component_num=$((component_num + 1))
     upload_package "$component" "$component_num" &
     pids+=($!)
 done < <(jq -r '.components[] | @json' "$COMPONENT_CONFIGS_FILE")
+
+# Upload aggregator components
+while IFS= read -r component; do
+    component_num=$((component_num + 1))
+    upload_package "$component" "$component_num" &
+    pids+=($!)
+done < <(jq -r '.aggregator_components[] | @json' "$COMPONENT_CONFIGS_FILE")
 
 # Wait for all uploads
 successful=0

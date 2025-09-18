@@ -8,7 +8,7 @@ CARGO=cargo
 INPUT_DATA?=``
 COMPONENT_FILENAME?=wavs_eas_attest.wasm
 CREDENTIAL?=""
-DOCKER_IMAGE?=ghcr.io/lay3rlabs/wavs:0.5.5
+DOCKER_IMAGE?=ghcr.io/lay3rlabs/wavs:0.6.0-beta.2
 MIDDLEWARE_DOCKER_IMAGE?=ghcr.io/lay3rlabs/wavs-middleware:0.5.0-beta.10
 IPFS_ENDPOINT?=http://127.0.0.1:5001
 RPC_URL?=http://127.0.0.1:8545
@@ -126,7 +126,7 @@ deploy-service:
 	fi
 	@if [ -n "${WAVS_ENDPOINT}" ]; then \
 		echo "🔍 Checking WAVS service at ${WAVS_ENDPOINT}..."; \
-		if [ "$$(curl -s -o /dev/null -w "%{http_code}" ${WAVS_ENDPOINT}/app)" != "200" ]; then \
+		if [ "$$(curl -s -o /dev/null -w "%{http_code}" ${WAVS_ENDPOINT}/info)" != "200" ]; then \
 			echo "❌ WAVS service not reachable at ${WAVS_ENDPOINT}"; \
 			echo "💡 Re-try running in 1 second, if not then validate the wavs service is online / started."; \
 			exit 1; \

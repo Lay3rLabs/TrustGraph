@@ -1,5 +1,7 @@
-use crate::bindings::wavs::worker::input::{TriggerData, TriggerDataEvmContractEvent};
-use crate::bindings::WasmResponse;
+use crate::bindings::{
+    wavs::{operator::input::TriggerData, types::events::TriggerDataEvmContractEvent},
+    WasmResponse,
+};
 use anyhow::Result;
 use wavs_wasi_utils::decode_event_log_data;
 
@@ -25,7 +27,7 @@ pub fn decode_trigger_event(trigger_data: TriggerData) -> Result<(Attested, Dest
     match trigger_data {
         TriggerData::EvmContractEvent(TriggerDataEvmContractEvent { log, .. }) => {
             // Decode the Attested event
-            let event: Attested = decode_event_log_data!(log)?;
+            let event: Attested = decode_event_log_data!(log.data)?;
 
             println!(
                 "DEBUG: Event decoded - schema: {}, attester: {}, recipient: {}, uid: {}",

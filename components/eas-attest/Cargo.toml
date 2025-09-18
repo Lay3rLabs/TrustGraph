@@ -24,4 +24,4 @@ crate-type = ["cdylib"]
 
 [package.metadata.component]
 package = "component:wavs-eas-attest"
-target = "wavs:worker/wavs-world@0.5.1"
+target = "wavs:operator@0.6.0-alpha.12"

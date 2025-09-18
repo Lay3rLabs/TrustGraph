@@ -25,7 +25,7 @@ includes:
 
 vars:
   # Docker configuration
-  DOCKER_IMAGE: '{{.DOCKER_IMAGE | default "ghcr.io/lay3rlabs/wavs:0.5.5"}}'
+  DOCKER_IMAGE: '{{.DOCKER_IMAGE | default "ghcr.io/lay3rlabs/wavs:0.6.0-beta.2"}}'
   MIDDLEWARE_DOCKER_IMAGE: '{{.MIDDLEWARE_DOCKER_IMAGE | default "ghcr.io/lay3rlabs/wavs-middleware:0.5.0-beta.10"}}'
 
   # Check if user is in docker group to determine if sudo is needed
@@ -69,7 +69,6 @@ tasks:
   deploy-full:
     desc: "Run complete WAVS deployment pipeline"
     cmds:
-      - task: env:get-rpc
       - |
         export AGGREGATOR_URL={{.AGGREGATOR_URL}}
         bash ./script/deploy-script.sh
@@ -148,3 +147,10 @@ tasks:
           exit 1
         fi
         echo "✅ All requirements satisfied"
+
+  dos2unix:
+    desc: "Convert all script files to Unix line endings"
+    cmds:
+      - |
+        find script/ -type f -name "*.sh" -exec dos2unix {} \;
+        find script/ -type f -name "*.env*" -exec dos2unix {} \;

@@ -1,11 +1,11 @@
-use super::{utils, EventTransformer};
+use super::EventTransformer;
 use crate::bindings::host;
 use crate::bindings::wavs::types::service::{AggregatorSubmit, Submit};
 use crate::register_transformer;
 use crate::trigger::EventData;
 use crate::{bindings::host::get_evm_chain_config, solidity::IndexingPayload};
 use alloy_network::Ethereum;
-use alloy_primitives::{FixedBytes, U256};
+use alloy_primitives::{Address, FixedBytes, U256};
 use alloy_sol_types::SolEvent;
 use anyhow::Result;
 use wavs_indexer_api::query::WavsIndexerQuerier;
@@ -50,7 +50,7 @@ impl AttestationTransformer {
             attested.eas, attested.uid
         );
 
-        let chain = get_evm_chain_config(&event_data.chain_name).unwrap();
+        let chain = get_evm_chain_config(&event_data.chain).unwrap();
         let provider = new_evm_provider::<Ethereum>(chain.http_endpoint.unwrap());
 
         let eas = solidity::EAS::new(attested.eas, &provider);
@@ -92,19 +92,18 @@ impl AttestationTransformer {
 
         println!("Transforming AttestationRevoked event: eas={}, uid={}", revoked.eas, revoked.uid);
 
-        let wavs_indexer_address = match host::get_workflow().workflow.submit {
-            Submit::Aggregator(AggregatorSubmit { evm_contracts, .. }) => utils::from_evm_address(
-                &evm_contracts
-                    .ok_or(anyhow::anyhow!("EVM submission contracts not found"))?
-                    .first()
-                    .ok_or(anyhow::anyhow!("EVM submission contract not found"))?
-                    .address,
-            ),
+        let wavs_indexer_address: Address = match host::get_workflow().workflow.submit {
+            Submit::Aggregator(AggregatorSubmit { component, .. }) => component
+                .config
+                .first()
+                .ok_or(anyhow::anyhow!("Aggregator config not found"))?
+                .1
+                .parse()?,
             _ => return Err(anyhow::anyhow!("WavsIndexer address not found")),
         };
 
         let chain: crate::bindings::wavs::types::chain::EvmChainConfig =
-            get_evm_chain_config(&event_data.chain_name).unwrap();
+            get_evm_chain_config(&event_data.chain).unwrap();
         let indexer_querier =
             WavsIndexerQuerier::new(wavs_indexer_address, chain.http_endpoint.unwrap())
                 .await
