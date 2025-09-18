@@ -166,6 +166,29 @@ export const diagonalProd =
     } satisfies AnimationDefinition
   }
 
+export const diagonalWag =
+  (side: 'topLeft' | 'topRight' | 'bottomRight' | 'bottomLeft') =>
+  ({ duration = 0.4, repeat = 2 }: AnimateOptions = {}) => {
+    return {
+      scaleX: [1, 1.15, 0.9, 1],
+      scaleY: [1, 0.95, 1.1, 1],
+      transformOrigin:
+        side === 'topLeft'
+          ? 'bottom right'
+          : side === 'topRight'
+          ? 'bottom left'
+          : side === 'bottomRight'
+          ? 'top left'
+          : 'top right',
+      transition: {
+        duration,
+        repeat,
+        times: [0, 0.25, 0.75, 1],
+        ease: 'easeInOut',
+      },
+    } satisfies AnimationDefinition
+  }
+
 export const animations = {
   glow,
   blink,
@@ -174,10 +197,13 @@ export const animations = {
   pulse,
   wave,
   diagonalProd,
+  diagonalWag,
   stretch,
 }
 
-export type AnimatorTaskFunction = (animator: Animator) => void | Promise<void>
+export type AnimatorTaskFunction = (
+  animator: Animator
+) => void | Promise<void> | Promise<void[]>
 
 export class Animator {
   static _instance: Animator | null = null
@@ -285,7 +311,7 @@ export class Animator {
   /**
    * Run a task.
    */
-  runTask(name: string): void | Promise<void> {
+  runTask(name: string): ReturnType<AnimatorTaskFunction> {
     const task = this.tasks[name]
     if (!task) {
       throw new Error(`Task ${name} not found`)

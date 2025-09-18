@@ -52,6 +52,11 @@ const Logo = ({
       'prod',
       animations.diagonalProd('topLeft')
     )
+    animator.registerAnimation(
+      'topLeft',
+      'wag',
+      animations.diagonalWag('topLeft')
+    )
     animator.registerAnimation('topRight', 'wave', animations.wave('topRight'))
     animator.registerAnimation(
       'topRight',
@@ -59,14 +64,29 @@ const Logo = ({
       animations.diagonalProd('topRight')
     )
     animator.registerAnimation(
+      'topRight',
+      'wag',
+      animations.diagonalWag('topRight')
+    )
+    animator.registerAnimation(
       'bottomRight',
       'prod',
       animations.diagonalProd('bottomRight')
     )
     animator.registerAnimation(
+      'bottomRight',
+      'wag',
+      animations.diagonalWag('bottomRight')
+    )
+    animator.registerAnimation(
       'bottomLeft',
       'prod',
       animations.diagonalProd('bottomLeft')
+    )
+    animator.registerAnimation(
+      'bottomLeft',
+      'wag',
+      animations.diagonalWag('bottomLeft')
     )
     animator.registerAnimation('top', 'stretch', animations.stretch('top'))
     animator.registerAnimation(
@@ -78,17 +98,24 @@ const Logo = ({
     animator.registerAnimation('right', 'stretch', animations.stretch('right'))
 
     // Animation tasks.
-    animator.registerTask('thinking', ({ start }) => {
-      start('structure', 'pulse', { duration: 3, repeat: 3 })
-      start('logo', 'glow', { duration: 3, repeat: 3 })
-    })
-    animator.registerTask('wave', ({ start }) => {
-      start('topRight', 'wave')
-      start('topLeft', 'wave')
-    })
-    animator.registerTask('blink', ({ start }) => {
-      start('iris', 'blink')
-    })
+    animator.registerTask('thinking', ({ start }) =>
+      Promise.all([
+        start('structure', 'pulse', { duration: 3, repeat: 1 }),
+        start('logo', 'glow', { duration: 3, repeat: 1 }),
+      ])
+    )
+    animator.registerTask('wave', ({ start }) =>
+      Promise.all([start('topRight', 'wave'), start('topLeft', 'wave')])
+    )
+    animator.registerTask('wag', ({ start }) =>
+      Promise.all([
+        start('topRight', 'wag'),
+        start('topLeft', 'wag'),
+        start('bottomRight', 'wag'),
+        start('bottomLeft', 'wag'),
+      ])
+    )
+    animator.registerTask('blink', ({ start }) => start('iris', 'blink'))
 
     return animator
   }, [nav, typeof window])
@@ -189,7 +216,17 @@ const Logo = ({
       height={37}
       viewBox="0 0 49 37"
       fill="none"
-      onClick={() => animator?.runTask('wave')}
+      onClick={async () => {
+        await animator?.runTask('wave')
+        await new Promise((resolve) => setTimeout(resolve, 350))
+        await animator?.runTask('blink')
+        await new Promise((resolve) => setTimeout(resolve, 350))
+        await animator?.runTask('wag')
+        await new Promise((resolve) => setTimeout(resolve, 350))
+        await animator?.runTask('blink')
+        await new Promise((resolve) => setTimeout(resolve, 350))
+        await animator?.runTask('thinking')
+      }}
       className={className}
     >
       <motion.path
