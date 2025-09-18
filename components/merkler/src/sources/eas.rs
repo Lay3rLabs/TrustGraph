@@ -1,4 +1,5 @@
 use crate::{bindings::host::get_evm_chain_config, sources::SourceEvent};
+use alloy_dyn_abi::DynSolType;
 use alloy_network::Ethereum;
 use alloy_provider::{Provider, RootProvider};
 use alloy_rpc_types::TransactionInput;
@@ -6,7 +7,6 @@ use alloy_sol_types::{sol, SolCall};
 use anyhow::Result;
 use async_trait::async_trait;
 use serde::Serialize;
-use serde_json::Value;
 use std::collections::HashSet;
 use std::str::FromStr;
 use wavs_indexer_api::{IndexedAttestation, WavsIndexerQuerier};
@@ -48,8 +48,8 @@ pub struct EasSource {
 pub enum EasSummaryComputation {
     /// A constant string for each attestation.
     Constant(String),
-    /// The value of a string field in the attestation data JSON.
-    StringJsonDataField(String),
+    /// The value of a string field in the attestation ABI-encoded data.
+    StringAbiDataField { schema: String, index: usize },
 }
 
 /// How to compute points for a given attestation.
@@ -57,8 +57,8 @@ pub enum EasSummaryComputation {
 pub enum EasPointsComputation {
     /// A constant number of points for each attestation.
     Constant(U256),
-    /// The value of a numeric field in the attestation data JSON.
-    NumericJsonDataField(String),
+    /// The value of a uint field in the attestation ABI-encoded data.
+    UintAbiDataField { schema: String, index: usize },
 }
 
 impl EasSource {
@@ -133,28 +133,54 @@ impl Source for EasSource {
             .points_computation
         {
             EasPointsComputation::Constant(value) => Box::new(move |_| Ok(value.clone())),
-            EasPointsComputation::NumericJsonDataField(field_name) => {
+            EasPointsComputation::UintAbiDataField { schema, index } => {
+                let parsed_schema = DynSolType::parse(schema)
+                    .map_err(|e| anyhow::anyhow!("Failed to parse schema: {e}"))?;
                 Box::new(move |attestation| -> Result<U256> {
-                    let decoded =
-                        serde_json::from_slice::<serde_json::Value>(&attestation.event.data)?;
-                    let value = decoded.get(field_name).ok_or_else(|| {
-                        anyhow::anyhow!("Field {field_name} not found in attestation data")
-                    })?;
-
-                    match value {
-                        Value::String(v) => U256::from_str(v)
-                            .map_err(|e| anyhow::anyhow!("Failed to convert attestation data field {field_name} string to U256: {e}")),
-                        Value::Number(v) => v
-                            .as_u64()
-                            .map(U256::from)
-                            .ok_or_else(|| anyhow::anyhow!("Attestation data field {field_name} number is not a u64")),
-                        _ => Err(anyhow::anyhow!(
-                            "Attestation data field {field_name} is not a string or number"
-                        )),
-                    }
+                    parsed_schema
+                        .abi_decode_params(&attestation.event.data)
+                        .map_err(|e| anyhow::anyhow!("Failed to decode attestation data: {e}"))?
+                        .as_tuple()
+                        .ok_or_else(|| anyhow::anyhow!("Attestation data is not a tuple"))?
+                        .get(*index)
+                        .ok_or_else(|| {
+                            anyhow::anyhow!("Index {index} not found in attestation data")
+                        })?
+                        .as_uint()
+                        .ok_or_else(|| {
+                            anyhow::anyhow!("Attestation data field at index {index} is not a uint")
+                        })
+                        .map(|(value, _)| value)
                 })
             }
         };
+
+        let summary_for_attestation: Box<dyn Fn(&IndexedAttestation) -> Result<String>> =
+            match &self.summary_computation {
+                EasSummaryComputation::Constant(summary) => Box::new(move |_| Ok(summary.clone())),
+                EasSummaryComputation::StringAbiDataField { schema, index } => {
+                    let parsed_schema = DynSolType::parse(schema)
+                        .map_err(|e| anyhow::anyhow!("Failed to parse schema: {e}"))?;
+                    Box::new(move |attestation| -> Result<String> {
+                        parsed_schema
+                            .abi_decode_params(&attestation.event.data)
+                            .map_err(|e| anyhow::anyhow!("Failed to decode attestation data: {e}"))?
+                            .as_tuple()
+                            .ok_or_else(|| anyhow::anyhow!("Attestation data is not a tuple"))?
+                            .get(*index)
+                            .ok_or_else(|| {
+                                anyhow::anyhow!("Index {index} not found in attestation data")
+                            })?
+                            .as_str()
+                            .map(|s| s.to_string())
+                            .ok_or_else(|| {
+                                anyhow::anyhow!(
+                                    "Attestation data field at index {index} is not a string"
+                                )
+                            })
+                    })
+                }
+            };
 
         while start < attestation_count {
             let length = std::cmp::min(batch_size, attestation_count - start);
@@ -198,19 +224,15 @@ impl Source for EasSource {
                     }
                 };
 
-                let summary = match &self.summary_computation {
-                    EasSummaryComputation::Constant(summary) => summary.clone(),
-                    EasSummaryComputation::StringJsonDataField(field_name) => {
-                        let decoded =
-                            serde_json::from_slice::<serde_json::Value>(&attestation.event.data)?;
-                        decoded
-                            .get(field_name)
-                            .ok_or_else(|| {
-                                anyhow::anyhow!("Field {field_name} not found in attestation data")
-                            })?
-                            .as_str()
-                            .ok_or_else(|| anyhow::anyhow!("Field {field_name} is not a string"))?
-                            .to_string()
+                let summary = match summary_for_attestation(&attestation) {
+                    Ok(summary) => summary,
+                    // Log the error and continue if the summary is not found, so that formatting errors don't interrupt the flow.
+                    Err(e) => {
+                        println!(
+                            "⚠️  Failed to get summary for attestation {}: {}",
+                            attestation.uid, e
+                        );
+                        continue;
                     }
                 };
 

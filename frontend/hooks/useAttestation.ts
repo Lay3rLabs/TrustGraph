@@ -14,7 +14,7 @@ import { attestationKeys } from './useIndexer'
 interface NewAttestationData {
   schema: string
   recipient: string
-  data: Record<string, string>
+  data: Record<string, string | boolean>
 }
 
 export function useAttestation() {

@@ -101,8 +101,14 @@ impl Guest for Component {
             &indexer_address,
             &chain_name,
             sources::eas::EasSourceType::ReceivedAttestations(recognition_schema_uid),
-            sources::eas::EasSummaryComputation::StringJsonDataField("reason".to_string()),
-            sources::eas::EasPointsComputation::NumericJsonDataField("value".to_string()),
+            sources::eas::EasSummaryComputation::StringAbiDataField {
+                schema: "(string,uint256)".to_string(),
+                index: 0,
+            },
+            sources::eas::EasPointsComputation::UintAbiDataField {
+                schema: "(string,uint256)".to_string(),
+                index: 1,
+            },
         ));
 
         // Reward users for prediction market interactions (1 point per type+contract interacted with, so 2 if user trades and also redeems on same market, and 1 if only trades but no redeem)
