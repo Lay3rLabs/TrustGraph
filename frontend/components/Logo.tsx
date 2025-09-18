@@ -1,11 +1,15 @@
 import { motion, useIsomorphicLayoutEffect } from 'motion/react'
+import { nanoid } from 'nanoid'
 import { useEffect, useMemo, useRef } from 'react'
 
 import { Animator, animations } from '@/lib/animate'
 
 export type LogoProps = {
   className?: string
-  nav?: boolean
+  /**
+   * Globally unique animator label. Randomly generated if not provided.
+   */
+  animatorLabel?: string
   followMouse?: boolean
   blinkOnClick?: boolean
   blinkInterval?: boolean
@@ -13,17 +17,13 @@ export type LogoProps = {
 
 const Logo = ({
   className,
-  nav = false,
+  animatorLabel = nanoid(),
   followMouse = false,
   blinkOnClick = false,
   blinkInterval = true,
 }: LogoProps) => {
   const animator = useMemo(() => {
-    if (!nav || typeof window === 'undefined') {
-      return
-    }
-
-    const animator = Animator.instance
+    const animator = Animator.instance(animatorLabel)
 
     // Targets.
     animator.registerTarget('logo')
@@ -118,7 +118,7 @@ const Logo = ({
     animator.registerTask('blink', ({ start }) => start('iris', 'blink'))
 
     return animator
-  }, [nav, typeof window])
+  }, [animatorLabel])
 
   // Mount the animator targets when the component mounts, and unmount.
   useIsomorphicLayoutEffect(() => animator?.mount(), [animator])
@@ -169,7 +169,7 @@ const Logo = ({
     return () => {
       window.removeEventListener('mousemove', handleMouseMove)
     }
-  }, [followMouse])
+  }, [followMouse, animator])
 
   // Trigger eye blink animation every 20-40 seconds
   useEffect(() => {

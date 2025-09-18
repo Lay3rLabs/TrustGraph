@@ -36,7 +36,7 @@ export const Nav = () => {
       <Link href="/">
         <Logo
           className="w-14 h-14 cursor-pointer transition-opacity hover:opacity-80 active:opacity-70"
-          nav
+          animatorLabel="nav"
           blinkInterval
           blinkOnClick
         />

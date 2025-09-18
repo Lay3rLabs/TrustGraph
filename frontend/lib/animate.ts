@@ -206,12 +206,16 @@ export type AnimatorTaskFunction = (
 ) => void | Promise<void> | Promise<void[]>
 
 export class Animator {
-  static _instance: Animator | null = null
-  static get instance() {
-    if (!Animator._instance) {
-      Animator._instance = new Animator()
+  /**
+   * Labeled instances of the animator.
+   */
+  static _instances: Record<string, Animator> = {}
+
+  static instance(label: string) {
+    if (!Animator._instances[label]) {
+      Animator._instances[label] = new Animator(label)
     }
-    return Animator._instance
+    return Animator._instances[label]
   }
 
   /**
@@ -236,6 +240,13 @@ export class Animator {
    * Tasks that group animations together.
    */
   private tasks: Record<string, AnimatorTaskFunction> = {}
+
+  constructor(
+    /**
+     * Unique label of the animator.
+     */
+    private label: string
+  ) {}
 
   /**
    * Register a target that can be animated.
