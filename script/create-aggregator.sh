@@ -59,7 +59,7 @@ IPFS_GATEWAY=\${IPFS_GATEWAY:-"https://gateway.pinata.cloud/ipfs/"}
 docker kill \${INSTANCE} > /dev/null 2>&1 || true
 docker rm \${INSTANCE} > /dev/null 2>&1 || true
 
-docker run -d --name \${INSTANCE} --network host --stop-signal SIGKILL --env-file .env --user 1000:1000 -v .:/wavs \\
+docker run -d --name \${INSTANCE} --network host --stop-signal SIGKILL --env-file .env -v .:/wavs \\
   \${IMAGE} wavs-aggregator --log-level debug --host 0.0.0.0 --port 8001 --ipfs-gateway \${IPFS_GATEWAY}
 
 # give it a chance to start up
