@@ -126,7 +126,7 @@ deploy-service:
 	fi
 	@if [ -n "${WAVS_ENDPOINT}" ]; then \
 		echo "🔍 Checking WAVS service at ${WAVS_ENDPOINT}..."; \
-		if [ "$$(curl -s -o /dev/null -w "%{http_code}" ${WAVS_ENDPOINT}/app)" != "200" ]; then \
+		if [ "$$(curl -s -o /dev/null -w "%{http_code}" ${WAVS_ENDPOINT}/info)" != "200" ]; then \
 			echo "❌ WAVS service not reachable at ${WAVS_ENDPOINT}"; \
 			echo "💡 Re-try running in 1 second, if not then validate the wavs service is online / started."; \
 			exit 1; \

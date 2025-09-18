@@ -75,7 +75,7 @@ vars:
 
   SERVICE_INDEX: '{{.SERVICE_INDEX | default "0"}}'
   SERVICE_ID:
-    sh: curl -s http://localhost:8000/app | jq -r ".service_ids[{{.SERVICE_INDEX}}]"
+    sh: curl -s http://localhost:8000/services | jq -r ".service_ids[{{.SERVICE_INDEX}}]"
   WAVS_SERVICE_MANAGER_ADDRESS:
     sh: |
       if [ -n "${WAVS_SERVICE_MANAGER_ADDRESS}" ]; then
