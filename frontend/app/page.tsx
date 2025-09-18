@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { ChevronRight } from 'lucide-react'
+import { HTMLMotionProps, motion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import Markdown from 'react-markdown'
 
@@ -27,11 +28,6 @@ export default function EN0VAHome() {
       return
     }
 
-    // const lines = article.content
-    //   .split('\n')
-    //   .flatMap((line) => line.trim() || [])
-    //   .map((line) => `_EN0VA:_ ${line}`)
-
     let limit = 0
     let interval: NodeJS.Timeout
     const scrollInterval = setInterval(() => {
@@ -44,7 +40,7 @@ export default function EN0VAHome() {
       // }
     }, 100)
     const update = () => {
-      limit += 3
+      limit += 20
       setContent(article.content.slice(0, limit))
       if (limit >= article.content.length) {
         clearInterval(interval)
@@ -84,31 +80,26 @@ export default function EN0VAHome() {
     }
   }, [])
 
-  if (isLoading) {
-    return
-  }
-
   if (isError) {
     return <div>Error loading article: {error?.message}</div>
-  }
-
-  if (!article) {
-    return <div>Article not found</div>
   }
 
   return (
     <div className="space-y-4 bg-foreground/20 p-4 rounded-sm">
       <p>EN0VA:</p>
+
       <div className="pl-4 space-y-4 text-primary-foreground/60 text-xs">
-        <Markdown
-          components={{
-            p: ({ children }) => (
-              <p className="animate-in fade-in-0 duration-1000">{children}</p>
-            ),
-          }}
-        >
-          {content}
-        </Markdown>
+        {isLoading ? (
+          <BlinkingCursor />
+        ) : (
+          <Markdown
+            components={{
+              p: SlideFadeInParagraph as any,
+            }}
+          >
+            {content}
+          </Markdown>
+        )}
       </div>
 
       {/* <p>You:</p> */}
@@ -123,7 +114,22 @@ export default function EN0VAHome() {
           placeholder="Type your message..."
         />
       </div>
-      {/* <div className="overflow-y-scroll h-full">{content}</div> */}
     </div>
   )
 }
+
+const SlideFadeInParagraph = ({ children, ...props }: HTMLMotionProps<'p'>) => (
+  <motion.p
+    initial={{ opacity: 0, y: 5 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.4, ease: 'easeOut' }}
+    viewport={{ once: true }}
+    {...props}
+  >
+    {children}
+  </motion.p>
+)
+
+const BlinkingCursor = () => (
+  <p className="animate-pulse inline-block">&nbsp;</p>
+)
