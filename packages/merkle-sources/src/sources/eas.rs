@@ -1,7 +1,6 @@
-use crate::{bindings::host::get_evm_chain_config, sources::SourceEvent};
+use crate::sources::SourceEvent;
 use alloy_dyn_abi::DynSolType;
-use alloy_network::Ethereum;
-use alloy_provider::{Provider, RootProvider};
+use alloy_provider::Provider;
 use alloy_rpc_types::TransactionInput;
 use alloy_sol_types::{sol, SolCall};
 use anyhow::Result;
@@ -9,11 +8,8 @@ use async_trait::async_trait;
 use serde::Serialize;
 use std::collections::HashSet;
 use std::str::FromStr;
-use wavs_indexer_api::{IndexedAttestation, WavsIndexerQuerier};
-use wavs_wasi_utils::evm::{
-    alloy_primitives::{hex, Address, FixedBytes, TxKind, U256},
-    new_evm_provider,
-};
+use wavs_indexer_api::IndexedAttestation;
+use wavs_wasi_utils::evm::alloy_primitives::{hex, Address, FixedBytes, TxKind, U256};
 
 use super::Source;
 
@@ -28,12 +24,6 @@ pub enum EasSourceType {
 
 /// Compute points from EAS attestations.
 pub struct EasSource {
-    /// EAS contract address.
-    pub eas_address: Address,
-    /// WAVS indexer address (for queries)
-    pub indexer_address: Address,
-    /// Chain name for configuration.
-    pub chain_name: String,
     /// Type of EAS points to compute.
     pub source_type: EasSourceType,
     /// How to compute the summary for a given attestation.
@@ -63,34 +53,11 @@ pub enum EasPointsComputation {
 
 impl EasSource {
     pub fn new(
-        eas_address: &str,
-        indexer_address: &str,
-        chain_name: &str,
         source_type: EasSourceType,
         summary_computation: EasSummaryComputation,
         points_computation: EasPointsComputation,
     ) -> Self {
-        let eas_addr = Address::from_str(eas_address).unwrap();
-        let indexer_addr = Address::from_str(indexer_address).unwrap();
-
-        Self {
-            eas_address: eas_addr,
-            indexer_address: indexer_addr,
-            chain_name: chain_name.to_string(),
-            source_type,
-            summary_computation,
-            points_computation,
-        }
-    }
-
-    async fn indexer_querier(&self) -> Result<WavsIndexerQuerier> {
-        let chain_config = get_evm_chain_config(&self.chain_name)
-            .ok_or_else(|| anyhow::anyhow!("Failed to get chain config for {}", self.chain_name))?;
-        let indexer_querier =
-            WavsIndexerQuerier::new(self.indexer_address, chain_config.http_endpoint.unwrap())
-                .await
-                .map_err(|e| anyhow::anyhow!("Failed to create indexer querier: {}", e))?;
-        Ok(indexer_querier)
+        Self { source_type, summary_computation, points_computation }
     }
 }
 
@@ -100,28 +67,31 @@ impl Source for EasSource {
         "EAS"
     }
 
-    async fn get_accounts(&self) -> Result<Vec<String>> {
+    async fn get_accounts(&self, ctx: &super::SourceContext) -> Result<Vec<String>> {
         match &self.source_type {
             EasSourceType::ReceivedAttestations(schema_uid) => {
-                self.get_accounts_with_received_attestations(schema_uid).await
+                self.get_accounts_with_received_attestations(ctx, schema_uid).await
             }
             EasSourceType::SentAttestations(schema_uid) => {
-                self.get_accounts_with_sent_attestations(schema_uid).await
+                self.get_accounts_with_sent_attestations(ctx, schema_uid).await
             }
         }
     }
 
-    async fn get_events_and_value(&self, account: &str) -> Result<(Vec<SourceEvent>, U256)> {
+    async fn get_events_and_value(
+        &self,
+        ctx: &super::SourceContext,
+        account: &str,
+    ) -> Result<(Vec<SourceEvent>, U256)> {
         let address = Address::from_str(account)?;
-        let indexer_querier = self.indexer_querier().await?;
         let (schema_uid, attestation_count) = match &self.source_type {
             EasSourceType::ReceivedAttestations(schema_uid) => (
                 self.parse_schema_uid(schema_uid)?,
-                self.query_received_attestation_count(address, schema_uid).await?,
+                self.query_received_attestation_count(ctx, address, schema_uid).await?,
             ),
             EasSourceType::SentAttestations(schema_uid) => (
                 self.parse_schema_uid(schema_uid)?,
-                self.query_sent_attestation_count(address, schema_uid).await?,
+                self.query_sent_attestation_count(ctx, address, schema_uid).await?,
             ),
         };
 
@@ -187,7 +157,7 @@ impl Source for EasSource {
 
             let attestations = match &self.source_type {
                 EasSourceType::ReceivedAttestations(_) => {
-                    indexer_querier
+                    ctx.indexer_querier
                         .get_indexed_attestations_by_schema_and_recipient(
                             schema_uid,
                             address,
@@ -198,7 +168,7 @@ impl Source for EasSource {
                         .await
                 }
                 EasSourceType::SentAttestations(_) => {
-                    indexer_querier
+                    ctx.indexer_querier
                         .get_indexed_attestations_by_schema_and_attester(
                             schema_uid,
                             address,
@@ -258,7 +228,7 @@ impl Source for EasSource {
         Ok((source_events, total_value))
     }
 
-    async fn get_metadata(&self) -> Result<serde_json::Value> {
+    async fn get_metadata(&self, ctx: &super::SourceContext) -> Result<serde_json::Value> {
         let (source_type_str, schema_uid) = match &self.source_type {
             EasSourceType::ReceivedAttestations(schema) => {
                 ("received_attestations".to_string(), schema.clone())
@@ -269,9 +239,9 @@ impl Source for EasSource {
         };
 
         Ok(serde_json::json!({
-            "eas_address": self.eas_address.to_string(),
-            "indexer_address": self.indexer_address.to_string(),
-            "chain_name": self.chain_name,
+            "eas_address": ctx.eas_address.to_string(),
+            "indexer_address": ctx.indexer_address.to_string(),
+            "chain_name": ctx.chain_name,
             "source_type": source_type_str,
             "schema_uid": schema_uid,
             "summary_computation": serde_json::to_value(&self.summary_computation)?.to_string(),
@@ -281,17 +251,6 @@ impl Source for EasSource {
 }
 
 impl EasSource {
-    async fn create_provider(&self) -> Result<RootProvider<Ethereum>> {
-        let chain_config = get_evm_chain_config(&self.chain_name)
-            .ok_or_else(|| anyhow::anyhow!("Failed to get chain config for {}", self.chain_name))?;
-        let provider = new_evm_provider::<Ethereum>(
-            chain_config
-                .http_endpoint
-                .ok_or_else(|| anyhow::anyhow!("No HTTP endpoint configured"))?,
-        );
-        Ok(provider)
-    }
-
     fn parse_schema_uid(&self, schema_uid: &str) -> Result<FixedBytes<32>> {
         let schema_bytes = hex::decode(schema_uid.strip_prefix("0x").unwrap_or(schema_uid))?;
         if schema_bytes.len() != 32 {
@@ -304,12 +263,13 @@ impl EasSource {
 
     async fn query_received_attestation_count(
         &self,
+        ctx: &super::SourceContext,
         recipient: Address,
         schema_uid: &str,
     ) -> Result<u64> {
         let schema = self.parse_schema_uid(schema_uid)?;
-        let indexer_querier = self.indexer_querier().await?;
-        let count = indexer_querier
+        let count = ctx
+            .indexer_querier
             .get_attestation_count_by_schema_and_recipient(schema, recipient)
             .await
             .map_err(|e| anyhow::anyhow!("Failed to get received attestation count: {}", e))?;
@@ -318,12 +278,13 @@ impl EasSource {
 
     async fn query_sent_attestation_count(
         &self,
+        ctx: &super::SourceContext,
         attester: Address,
         schema_uid: &str,
     ) -> Result<u64> {
         let schema = self.parse_schema_uid(schema_uid)?;
-        let indexer_querier = self.indexer_querier().await?;
-        let count = indexer_querier
+        let count = ctx
+            .indexer_querier
             .get_attestation_count_by_schema_and_attester(schema, attester)
             .await
             .map_err(|e| anyhow::anyhow!("Failed to get sent attestation count: {}", e))?;
@@ -332,41 +293,48 @@ impl EasSource {
 
     async fn get_indexed_attestations(
         &self,
+        ctx: &super::SourceContext,
         schema_uid: &str,
         start: u64,
         length: u64,
     ) -> Result<Vec<IndexedAttestation>> {
         let schema = self.parse_schema_uid(schema_uid)?;
-        let indexer_querier = self.indexer_querier().await?;
-        let attestations = indexer_querier
+        let attestations = ctx
+            .indexer_querier
             .get_indexed_attestations_by_schema(schema, start, length, false)
             .await
             .map_err(|e| anyhow::anyhow!("Failed to get indexed schema attestations: {}", e))?;
         Ok(attestations)
     }
 
-    async fn get_total_schema_attestations(&self, schema_uid: &str) -> Result<u64> {
+    async fn get_total_schema_attestations(
+        &self,
+        ctx: &super::SourceContext,
+        schema_uid: &str,
+    ) -> Result<u64> {
         let schema = self.parse_schema_uid(schema_uid)?;
-        let indexer_querier = self.indexer_querier().await?;
-        let count = indexer_querier
+        let count = ctx
+            .indexer_querier
             .get_attestation_count_by_schema(schema)
             .await
             .map_err(|e| anyhow::anyhow!("Failed to get schema attestation count: {}", e))?;
         Ok(count.to::<u64>())
     }
 
-    async fn get_attestation_details(&self, uid: FixedBytes<32>) -> Result<(Address, Address)> {
+    async fn get_attestation_details(
+        &self,
+        ctx: &super::SourceContext,
+        uid: FixedBytes<32>,
+    ) -> Result<(Address, Address)> {
         // Query the EAS contract directly to get attestation details
-        let provider = self.create_provider().await?;
-
         let call = IEAS::getAttestationCall { uid };
         let tx = alloy_rpc_types::eth::TransactionRequest {
-            to: Some(TxKind::Call(self.eas_address)),
+            to: Some(TxKind::Call(ctx.eas_address)),
             input: TransactionInput { input: Some(call.abi_encode().into()), data: None },
             ..Default::default()
         };
 
-        let result = provider.call(tx).await?;
+        let result = ctx.provider.call(tx).await?;
 
         // The attestation struct is returned, we need the attester and recipient
         // For now, let's decode the basic fields we need
@@ -377,11 +345,12 @@ impl EasSource {
 
     async fn get_accounts_with_received_attestations(
         &self,
+        ctx: &super::SourceContext,
         schema_uid: &str,
     ) -> Result<Vec<String>> {
         println!("🔍 Querying accounts with received attestations for schema: {}", schema_uid);
 
-        let total_attestations = self.get_total_schema_attestations(schema_uid).await?;
+        let total_attestations = self.get_total_schema_attestations(ctx, schema_uid).await?;
         println!("📊 Total attestations for schema: {}", total_attestations);
 
         if total_attestations == 0 {
@@ -396,7 +365,8 @@ impl EasSource {
             let length = std::cmp::min(batch_size, total_attestations - start);
             println!("🔄 Fetching attestation UIDs batch: {} to {}", start, start + length - 1);
 
-            let attestations = self.get_indexed_attestations(schema_uid, start, length).await?;
+            let attestations =
+                self.get_indexed_attestations(ctx, schema_uid, start, length).await?;
 
             for attestation in attestations {
                 recipients.insert(attestation.recipient.to_string());
@@ -410,10 +380,14 @@ impl EasSource {
         Ok(result)
     }
 
-    async fn get_accounts_with_sent_attestations(&self, schema_uid: &str) -> Result<Vec<String>> {
+    async fn get_accounts_with_sent_attestations(
+        &self,
+        ctx: &super::SourceContext,
+        schema_uid: &str,
+    ) -> Result<Vec<String>> {
         println!("🔍 Querying accounts with sent attestations for schema: {}", schema_uid);
 
-        let total_attestations = self.get_total_schema_attestations(schema_uid).await?;
+        let total_attestations = self.get_total_schema_attestations(ctx, schema_uid).await?;
         println!("📊 Total attestations for schema: {}", total_attestations);
 
         if total_attestations == 0 {
@@ -428,7 +402,8 @@ impl EasSource {
             let length = std::cmp::min(batch_size, total_attestations - start);
             println!("🔄 Fetching attestation UIDs batch: {} to {}", start, start + length - 1);
 
-            let attestations = self.get_indexed_attestations(schema_uid, start, length).await?;
+            let attestations =
+                self.get_indexed_attestations(ctx, schema_uid, start, length).await?;
 
             for attestation in attestations {
                 attesters.insert(attestation.attester.to_string());

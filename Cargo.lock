@@ -4224,7 +4224,6 @@ dependencies = [
 name = "merkler"
 version = "0.5.5"
 dependencies = [
- "alloy-dyn-abi",
  "alloy-network",
  "alloy-provider",
  "alloy-rpc-types",
@@ -4240,6 +4239,7 @@ dependencies = [
  "serde",
  "serde_json",
  "wavs-indexer-api",
+ "wavs-merkle-sources",
  "wavs-wasi-utils",
  "wit-bindgen-rt 0.44.0",
  "wstd",
@@ -7521,6 +7521,31 @@ dependencies = [
  "serde_json",
  "thiserror 1.0.69",
  "tiny-keccak",
+ "wavs-wasi-utils",
+ "wit-bindgen",
+ "wit-bindgen-rt 0.44.0",
+ "wstd",
+]
+
+[[package]]
+name = "wavs-merkle-sources"
+version = "0.5.5"
+dependencies = [
+ "alloy-contract",
+ "alloy-dyn-abi",
+ "alloy-network",
+ "alloy-provider",
+ "alloy-rpc-types",
+ "alloy-sol-macro",
+ "alloy-sol-types",
+ "anyhow",
+ "async-trait",
+ "hex",
+ "mockall",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "wavs-indexer-api",
  "wavs-wasi-utils",
  "wit-bindgen",
  "wit-bindgen-rt 0.44.0",

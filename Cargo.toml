@@ -22,6 +22,7 @@ wavs-wasi-utils = "0.6.0-alpha.12"
 wavs-llm = { path = "./packages/llm" }
 wavs-eas = { path = "./packages/eas" }
 wavs-indexer-api = { path = "./packages/indexer-api" }
+wavs-merkle-sources = { path = "./packages/merkle-sources" }
 
 # Other
 schemars = "1.0.4"

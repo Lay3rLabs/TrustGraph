@@ -1,8 +1,6 @@
-use crate::bindings::host::get_evm_chain_config;
 use crate::pagerank::{AttestationGraph, PageRankRewardSource};
 use crate::sources::SourceEvent;
-use alloy_network::Ethereum;
-use alloy_provider::{Provider, RootProvider};
+use alloy_provider::Provider;
 use alloy_rpc_types::TransactionInput;
 use alloy_sol_types::{sol, SolCall};
 use anyhow::Result;
@@ -10,23 +8,14 @@ use async_trait::async_trait;
 use std::collections::HashMap;
 use std::str::FromStr;
 use wavs_indexer_api::solidity::IndexedEvent;
-use wavs_indexer_api::{IndexedAttestation, WavsIndexerQuerier};
-use wavs_wasi_utils::evm::{
-    alloy_primitives::{hex, Address, FixedBytes, TxKind, U256},
-    new_evm_provider,
-};
+use wavs_indexer_api::IndexedAttestation;
+use wavs_wasi_utils::evm::alloy_primitives::{hex, Address, FixedBytes, TxKind, U256};
 
 use super::Source;
 use std::sync::Mutex;
 
 /// EAS PageRank points source that calculates points based on PageRank algorithm
 pub struct EasPageRankSource {
-    /// EAS contract address
-    pub eas_address: Address,
-    /// WAVS indexer address (for queries)
-    pub indexer_address: Address,
-    /// Chain name for configuration
-    pub chain_name: String,
     /// PageRank points configuration
     pub pagerank_config: PageRankRewardSource,
     /// Cached points to avoid recalculation
@@ -34,17 +23,7 @@ pub struct EasPageRankSource {
 }
 
 impl EasPageRankSource {
-    pub fn new(
-        eas_address: &str,
-        indexer_address: &str,
-        chain_name: &str,
-        pagerank_config: PageRankRewardSource,
-    ) -> Result<Self> {
-        let eas_addr = Address::from_str(eas_address)
-            .map_err(|e| anyhow::anyhow!("Invalid EAS address: {}", e))?;
-        let indexer_addr = Address::from_str(indexer_address)
-            .map_err(|e| anyhow::anyhow!("Invalid indexer address: {}", e))?;
-
+    pub fn new(pagerank_config: PageRankRewardSource) -> Result<Self> {
         if pagerank_config.total_pool.is_zero() {
             return Err(anyhow::anyhow!("PageRank points pool cannot be zero"));
         }
@@ -64,34 +43,7 @@ impl EasPageRankSource {
             println!("📊 Standard PageRank (no trust seeds configured)");
         }
 
-        Ok(Self {
-            eas_address: eas_addr,
-            indexer_address: indexer_addr,
-            chain_name: chain_name.to_string(),
-            pagerank_config,
-            cached_points: Mutex::new(None),
-        })
-    }
-
-    async fn indexer_querier(&self) -> Result<WavsIndexerQuerier> {
-        let chain_config = get_evm_chain_config(&self.chain_name)
-            .ok_or_else(|| anyhow::anyhow!("Failed to get chain config for {}", self.chain_name))?;
-        let indexer_querier =
-            WavsIndexerQuerier::new(self.indexer_address, chain_config.http_endpoint.unwrap())
-                .await
-                .map_err(|e| anyhow::anyhow!("Failed to create indexer querier: {}", e))?;
-        Ok(indexer_querier)
-    }
-
-    async fn create_provider(&self) -> Result<RootProvider<Ethereum>> {
-        let chain_config = get_evm_chain_config(&self.chain_name)
-            .ok_or_else(|| anyhow::anyhow!("Failed to get chain config for {}", self.chain_name))?;
-        let provider = new_evm_provider::<Ethereum>(
-            chain_config
-                .http_endpoint
-                .ok_or_else(|| anyhow::anyhow!("No HTTP endpoint configured"))?,
-        );
-        Ok(provider)
+        Ok(Self { pagerank_config, cached_points: Mutex::new(None) })
     }
 
     fn parse_schema_uid(&self, schema_uid: &str) -> Result<FixedBytes<32>> {
@@ -104,10 +56,14 @@ impl EasPageRankSource {
         Ok(schema_array.into())
     }
 
-    async fn get_total_schema_attestations(&self, schema_uid: &str) -> Result<u64> {
+    async fn get_total_schema_attestations(
+        &self,
+        ctx: &super::SourceContext,
+        schema_uid: &str,
+    ) -> Result<u64> {
         let schema = self.parse_schema_uid(schema_uid)?;
-        let indexer_querier = self.indexer_querier().await?;
-        let count = indexer_querier
+        let count = ctx
+            .indexer_querier
             .get_attestation_count_by_schema(schema)
             .await
             .map_err(|e| anyhow::anyhow!("Failed to get schema attestation count: {}", e))?;
@@ -116,13 +72,14 @@ impl EasPageRankSource {
 
     async fn get_indexed_attestations(
         &self,
+        ctx: &super::SourceContext,
         schema_uid: &str,
         start: u64,
         length: u64,
     ) -> Result<Vec<IndexedAttestation>> {
         let schema = self.parse_schema_uid(schema_uid)?;
-        let indexer_querier = self.indexer_querier().await?;
-        let attestations = indexer_querier
+        let attestations = ctx
+            .indexer_querier
             .get_indexed_attestations_by_schema(schema, start, length, false)
             .await
             .map_err(|e| anyhow::anyhow!("Failed to get indexed schema attestations: {}", e))?;
@@ -131,29 +88,32 @@ impl EasPageRankSource {
 
     async fn get_attestation_details(
         &self,
+        ctx: &super::SourceContext,
         uid: FixedBytes<32>,
     ) -> Result<(Address, Address, Vec<u8>)> {
-        let provider = self.create_provider().await?;
-
         let call = IEAS::getAttestationCall { uid };
-        let tx = alloy_rpc_types::eth::TransactionRequest {
-            to: Some(TxKind::Call(self.eas_address)),
+        let tx: alloy_rpc_types::TransactionRequest = alloy_rpc_types::eth::TransactionRequest {
+            to: Some(TxKind::Call(ctx.eas_address)),
             input: TransactionInput { input: Some(call.abi_encode().into()), data: None },
             ..Default::default()
         };
 
-        let result = provider.call(tx).await?;
+        let result = ctx.provider.call(tx).await?;
+
         let decoded = IEAS::getAttestationCall::abi_decode_returns(&result)
             .map_err(|e| anyhow::anyhow!("Failed to decode attestation: {}", e))?;
         Ok((decoded.attester, decoded.recipient, decoded.data.to_vec()))
     }
 
     /// Build attestation graph from EAS data
-    async fn build_attestation_graph(&self) -> Result<AttestationGraph> {
+    async fn build_attestation_graph(
+        &self,
+        ctx: &super::SourceContext,
+    ) -> Result<AttestationGraph> {
         let schema_uid = &self.pagerank_config.schema_uid;
         println!("🏗️  Building attestation graph for schema: {}", schema_uid);
 
-        let total_attestations = self.get_total_schema_attestations(schema_uid).await?;
+        let total_attestations = self.get_total_schema_attestations(ctx, schema_uid).await?;
         println!("📊 Processing {} total attestations", total_attestations);
 
         if total_attestations == 0 {
@@ -171,7 +131,8 @@ impl EasPageRankSource {
             let length = std::cmp::min(batch_size, total_attestations - start);
             println!("🔄 Processing attestation batch: {} to {}", start, start + length - 1);
 
-            let attestations = self.get_indexed_attestations(schema_uid, start, length).await?;
+            let attestations =
+                self.get_indexed_attestations(ctx, schema_uid, start, length).await?;
 
             for IndexedAttestation {
                 uid,
@@ -267,8 +228,11 @@ impl EasPageRankSource {
     }
 
     /// Calculate PageRank scores and points
-    async fn calculate_pagerank_points(&self) -> Result<HashMap<Address, U256>> {
-        let graph = self.build_attestation_graph().await?;
+    async fn calculate_pagerank_points(
+        &self,
+        ctx: &super::SourceContext,
+    ) -> Result<HashMap<Address, U256>> {
+        let graph = self.build_attestation_graph(ctx).await?;
         let scores = graph.calculate_pagerank(&self.pagerank_config.config);
 
         println!("\n🎲 Raw PageRank scores:");
@@ -412,14 +376,18 @@ impl Source for EasPageRankSource {
         }
     }
 
-    async fn get_accounts(&self) -> Result<Vec<String>> {
-        let points = self.calculate_pagerank_points().await?;
+    async fn get_accounts(&self, ctx: &super::SourceContext) -> Result<Vec<String>> {
+        let points = self.calculate_pagerank_points(ctx).await?;
         Ok(points.keys().map(|addr| addr.to_string()).collect())
     }
 
-    async fn get_events_and_value(&self, account: &str) -> Result<(Vec<SourceEvent>, U256)> {
+    async fn get_events_and_value(
+        &self,
+        ctx: &super::SourceContext,
+        account: &str,
+    ) -> Result<(Vec<SourceEvent>, U256)> {
         let address = Address::from_str(account)?;
-        let points = self.calculate_pagerank_points().await?;
+        let points = self.calculate_pagerank_points(ctx).await?;
         let total_value = points.get(&address).copied().unwrap_or(U256::ZERO);
         let source_events: Vec<SourceEvent> = if !total_value.is_zero() {
             vec![SourceEvent {
@@ -434,7 +402,7 @@ impl Source for EasPageRankSource {
         Ok((source_events, total_value))
     }
 
-    async fn get_metadata(&self) -> Result<serde_json::Value> {
+    async fn get_metadata(&self, ctx: &super::SourceContext) -> Result<serde_json::Value> {
         let trust_info = if self.pagerank_config.config.has_trust_enabled() {
             serde_json::json!({
                 "enabled": true,
@@ -451,9 +419,9 @@ impl Source for EasPageRankSource {
         };
 
         Ok(serde_json::json!({
-            "eas_address": self.eas_address.to_string(),
-            "indexer_address": self.indexer_address.to_string(),
-            "chain_name": self.chain_name,
+            "eas_address": ctx.eas_address.to_string(),
+            "indexer_address": ctx.indexer_address.to_string(),
+            "chain_name": ctx.chain_name,
             "type": if self.pagerank_config.config.has_trust_enabled() {
                 "trust_aware_pagerank_attestations"
             } else {

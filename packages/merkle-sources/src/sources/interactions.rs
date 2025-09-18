@@ -1,20 +1,15 @@
-use crate::{bindings::host::get_evm_chain_config, sources::SourceEvent};
+use crate::sources::SourceEvent;
 use anyhow::Result;
 use async_trait::async_trait;
 use serde_json::json;
 use std::collections::HashSet;
 use std::str::FromStr;
-use wavs_indexer_api::WavsIndexerQuerier;
 use wavs_wasi_utils::evm::alloy_primitives::{Address, U256};
 
 use super::Source;
 
 /// Compute points from indexed interactions.
 pub struct InteractionsSource {
-    /// Chain name for configuration.
-    pub chain_name: String,
-    /// WAVS Indexer address.
-    pub indexer_address: Address,
     /// Interaction type.
     pub interaction_type: String,
     /// Points per interaction.
@@ -25,30 +20,15 @@ pub struct InteractionsSource {
 
 impl InteractionsSource {
     pub fn new(
-        chain_name: &str,
-        indexer_address: &str,
         interaction_type: &str,
         points_per_interaction: U256,
         one_per_contract: bool,
     ) -> Self {
-        let indexer_addr = Address::from_str(indexer_address).unwrap();
-
         Self {
-            indexer_address: indexer_addr,
-            chain_name: chain_name.to_string(),
             interaction_type: interaction_type.to_string(),
             points_per_interaction,
             one_per_contract,
         }
-    }
-
-    async fn indexer_querier(&self) -> Result<WavsIndexerQuerier> {
-        let chain_config = get_evm_chain_config(&self.chain_name)
-            .ok_or_else(|| anyhow::anyhow!("Failed to get chain config for {}", self.chain_name))?;
-
-        WavsIndexerQuerier::new(self.indexer_address, chain_config.http_endpoint.unwrap())
-            .await
-            .map_err(|e| anyhow::anyhow!("Failed to create indexer querier: {}", e))
     }
 }
 
@@ -58,10 +38,9 @@ impl Source for InteractionsSource {
         "Interactions"
     }
 
-    async fn get_accounts(&self) -> Result<Vec<String>> {
-        let indexer_querier = self.indexer_querier().await?;
-
-        let total_interactions = indexer_querier
+    async fn get_accounts(&self, ctx: &super::SourceContext) -> Result<Vec<String>> {
+        let total_interactions = ctx
+            .indexer_querier
             .get_interaction_count_by_type(&self.interaction_type)
             .await
             .map_err(|e| anyhow::anyhow!(e))?;
@@ -87,7 +66,8 @@ impl Source for InteractionsSource {
                 start + length - 1
             );
 
-            let events = indexer_querier
+            let events = ctx
+                .indexer_querier
                 .get_interactions_by_type(&self.interaction_type, start, length, false)
                 .await
                 .map_err(|e| anyhow::anyhow!(e))?;
@@ -114,10 +94,14 @@ impl Source for InteractionsSource {
         Ok(result)
     }
 
-    async fn get_events_and_value(&self, account: &str) -> Result<(Vec<SourceEvent>, U256)> {
+    async fn get_events_and_value(
+        &self,
+        ctx: &super::SourceContext,
+        account: &str,
+    ) -> Result<(Vec<SourceEvent>, U256)> {
         let address = Address::from_str(account)?;
-        let indexer_querier = self.indexer_querier().await?;
-        let interaction_count = indexer_querier
+        let interaction_count = ctx
+            .indexer_querier
             .get_interaction_count_by_type_and_address(&self.interaction_type, address)
             .await
             .map_err(|e| anyhow::anyhow!(e))?;
@@ -136,7 +120,8 @@ impl Source for InteractionsSource {
                 start + length - 1
             );
 
-            let events = indexer_querier
+            let events = ctx
+                .indexer_querier
                 .get_interactions_by_type_and_address(
                     &self.interaction_type,
                     address,
@@ -191,10 +176,10 @@ impl Source for InteractionsSource {
         Ok((source_events, total_value))
     }
 
-    async fn get_metadata(&self) -> Result<serde_json::Value> {
+    async fn get_metadata(&self, ctx: &super::SourceContext) -> Result<serde_json::Value> {
         Ok(serde_json::json!({
-            "indexer_address": self.indexer_address.to_string(),
-            "chain_name": self.chain_name,
+            "indexer_address": ctx.indexer_address.to_string(),
+            "chain_name": ctx.chain_name,
             "interaction_type": self.interaction_type,
             "points_per_interaction": self.points_per_interaction.to_string(),
             "one_per_contract": self.one_per_contract,

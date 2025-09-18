@@ -2,12 +2,14 @@
 pub mod bindings;
 mod ipfs;
 mod merkle;
-pub mod pagerank;
-mod sources;
 mod trigger;
 
-use crate::bindings::{export, host::config_var, Guest, TriggerAction};
-use crate::sources::{SourceEvent, SourceRegistry};
+use crate::bindings::{
+    export,
+    host::{config_var, get_evm_chain_config},
+    Guest, TriggerAction,
+};
+
 use bindings::WasmResponse;
 use merkle::get_merkle_tree;
 use merkle_tree_rs::standard::LeafType;
@@ -17,6 +19,7 @@ use std::fs::File;
 use std::path::Path;
 use std::str::FromStr;
 use trigger::{decode_trigger_event, encode_trigger_output};
+use wavs_merkle_sources::{pagerank, sources};
 use wavs_wasi_utils::evm::alloy_primitives::{hex, U256};
 use wit_bindgen_rt::async_support::futures;
 use wstd::runtime::block_on;
@@ -70,7 +73,7 @@ impl Guest for Component {
         let trigger = decode_trigger_event(action.data).map_err(|e| e.to_string())?;
         println!("🔧 Trigger: {:?}", trigger);
 
-        let mut registry = SourceRegistry::new();
+        let mut registry = sources::SourceRegistry::new();
 
         // Reward users for received attestations - 5e17 points per attestation
         // registry.add_source(sources::eas::EasSource::new(
@@ -91,15 +94,18 @@ impl Guest for Component {
         //     U256::from(3e17),
         // ));
 
+        let chain_config = get_evm_chain_config(&chain_name)
+            .ok_or_else(|| format!("Failed to get chain config for {chain_name}"))?;
+        let http_endpoint = chain_config
+            .http_endpoint
+            .ok_or_else(|| format!("Failed to get HTTP endpoint for {chain_name}"))?;
+
         // Reward users for receiving recognition attestations
         let recognition_schema_uid = config_var("recognition_schema_uid").ok_or_else(|| {
             "Failed to get recognition_schema_uid - this is required for EAS points"
         })?;
         println!("📋 Using recognition schema UID: {}", recognition_schema_uid);
         registry.add_source(sources::eas::EasSource::new(
-            &eas_address,
-            &indexer_address,
-            &chain_name,
             sources::eas::EasSourceType::ReceivedAttestations(recognition_schema_uid),
             sources::eas::EasSummaryComputation::StringAbiDataField {
                 schema: "(string,uint256)".to_string(),
@@ -113,15 +119,11 @@ impl Guest for Component {
 
         // Reward users for prediction market interactions (1 point per type+contract interacted with, so 2 if user trades and also redeems on same market, and 1 if only trades but no redeem)
         registry.add_source(sources::interactions::InteractionsSource::new(
-            &chain_name,
-            &indexer_address,
             "prediction_market_trade",
             U256::from(1),
             true,
         ));
         registry.add_source(sources::interactions::InteractionsSource::new(
-            &chain_name,
-            &indexer_address,
             "prediction_market_redeem",
             U256::from(1),
             true,
@@ -216,12 +218,7 @@ impl Guest for Component {
             .with_min_threshold(min_threshold);
 
             let has_trust = pagerank_source_config.has_trust_enabled();
-            match sources::eas_pagerank::EasPageRankSource::new(
-                &eas_address,
-                &indexer_address,
-                &chain_name,
-                pagerank_source_config,
-            ) {
+            match sources::eas_pagerank::EasPageRankSource::new(pagerank_source_config) {
                 Ok(pagerank_source) => {
                     registry.add_source(pagerank_source);
                     if has_trust {
@@ -254,8 +251,17 @@ impl Guest for Component {
         // }
 
         block_on(async move {
+            let ctx = sources::SourceContext::new(
+                &chain_name,
+                &http_endpoint,
+                &eas_address,
+                &indexer_address,
+            )
+            .await
+            .map_err(|e| e.to_string())?;
+
             println!("🔍 Fetching accounts from all sources...");
-            let accounts = registry.get_accounts().await.map_err(|e| e.to_string())?;
+            let accounts = registry.get_accounts(&ctx).await.map_err(|e| e.to_string())?;
             println!("👥 Found {} unique accounts", accounts.len());
 
             // each value is [address, amount]
@@ -263,12 +269,12 @@ impl Guest for Component {
                 .into_iter()
                 .map(|account| {
                     let registry = &registry;
-                    async move {
+                    async {
                         let (events, value) = registry
-                            .get_events_and_value(&account)
+                            .get_events_and_value(&ctx, &account)
                             .await
                             .map_err(|e| e.to_string())?;
-                        Ok::<(Vec<SourceEvent>, Vec<String>), String>((
+                        Ok::<(Vec<sources::SourceEvent>, Vec<String>), String>((
                             events,
                             vec![account, value.to_string()],
                         ))
@@ -330,7 +336,7 @@ impl Guest for Component {
             let root_bytes = hex::decode(&root).map_err(|e| e.to_string())?;
 
             let sources_with_metadata =
-                registry.get_sources_with_metadata().await.map_err(|e| e.to_string())?;
+                registry.get_sources_with_metadata(&ctx).await.map_err(|e| e.to_string())?;
 
             println!("🌳 Generated merkle tree with root: {}", root);
 
