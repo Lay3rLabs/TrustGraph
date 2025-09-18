@@ -94,9 +94,9 @@ export VOUCHING_SCHEMA_UID=$(jq -r '.eas.schemas.vouching' .docker/deployment_su
 
 # Determine chain name based on deployment environment
 if [ "$(task get-deploy-status)" = "TESTNET" ]; then
-    export CHAIN_NAME="sepolia"
+    export CHAIN_NAME="evm:11155111"
 else
-    export CHAIN_NAME="local"
+    export CHAIN_NAME="evm:31337"
 fi
 
 # Validate EAS addresses were extracted successfully
@@ -204,10 +204,10 @@ sleep 1
 bash ./script/create-aggregator.sh 1
 IPFS_GATEWAY=${IPFS_GATEWAY} bash ./infra/aggregator-1/start.sh
 sleep 3
-curl -s -H "Content-Type: application/json" -d "{
+curl -s -X POST -H "Content-Type: application/json" -d "{
   \"service_manager\": {
     \"evm\": {
-      \"chain_name\": \"${CHAIN_NAME}\",
+      \"chain\": \"${CHAIN_NAME}\",
       \"address\": \"${WAVS_SERVICE_MANAGER_ADDRESS}\"
     }
   }
