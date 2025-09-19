@@ -12,6 +12,7 @@ export type LogoProps = {
   animatorLabel?: string
   followMouse?: boolean
   blinkOnClick?: boolean
+  blinkOnHover?: boolean
   blinkInterval?: boolean
 }
 
@@ -20,6 +21,7 @@ const Logo = ({
   animatorLabel = nanoid(),
   followMouse = false,
   blinkOnClick = false,
+  blinkOnHover = false,
   blinkInterval = true,
 }: LogoProps) => {
   const animator = useMemo(() => {
@@ -216,16 +218,17 @@ const Logo = ({
       height={8486}
       viewBox="0 0 9559 8486"
       fill="none"
+      onHoverStart={blinkOnHover ? () => animator?.runTask('blink') : undefined}
       onClick={async () => {
         await animator?.runTask('wave')
-        await new Promise((resolve) => setTimeout(resolve, 350))
-        await animator?.runTask('blink')
-        await new Promise((resolve) => setTimeout(resolve, 350))
-        await animator?.runTask('wag')
-        await new Promise((resolve) => setTimeout(resolve, 350))
-        await animator?.runTask('blink')
-        await new Promise((resolve) => setTimeout(resolve, 350))
-        await animator?.runTask('thinking')
+        // await new Promise((resolve) => setTimeout(resolve, 350))
+        // await animator?.runTask('blink')
+        // await new Promise((resolve) => setTimeout(resolve, 350))
+        // await animator?.runTask('wag')
+        // await new Promise((resolve) => setTimeout(resolve, 350))
+        // await animator?.runTask('blink')
+        // await new Promise((resolve) => setTimeout(resolve, 350))
+        // await animator?.runTask('thinking')
       }}
       className={className}
     >
