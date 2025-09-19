@@ -18,7 +18,7 @@ use serde_json::json;
 use std::fs::File;
 use std::path::Path;
 use std::str::FromStr;
-use trigger::{decode_trigger_event, encode_trigger_output};
+use trigger::encode_trigger_output;
 use wavs_merkle_sources::{pagerank, sources};
 use wavs_wasi_utils::evm::alloy_primitives::{hex, U256};
 use wit_bindgen_rt::async_support::futures;
@@ -69,9 +69,6 @@ impl Guest for Component {
                 ("http://localhost:5001/api/v0/add".to_string(), None)
             }
         };
-
-        let trigger = decode_trigger_event(action.data).map_err(|e| e.to_string())?;
-        println!("🔧 Trigger: {:?}", trigger);
 
         let mut registry = sources::SourceRegistry::new();
 
@@ -388,7 +385,8 @@ impl Guest for Component {
             println!("✅ Successfully wrote account events");
 
             let ipfs_hash = cid.hash().digest();
-            let payload = encode_trigger_output(trigger, &root_bytes, ipfs_hash, cid.to_string())?;
+            let payload =
+                encode_trigger_output(&action, &root_bytes, ipfs_hash, cid.to_string()).await?;
 
             println!("🎉 Rewards component execution completed successfully");
             println!("📦 Final payload size: {} bytes", payload.len());

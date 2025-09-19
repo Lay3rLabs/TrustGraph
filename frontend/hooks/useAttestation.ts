@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
-import { Hex } from 'viem'
+import { Hex, WatchContractEventOnLogsFn, keccak256, stringToBytes } from 'viem'
 import {
   useAccount,
   useChainId,
@@ -10,7 +10,12 @@ import {
   useWatchContractEvent,
 } from 'wagmi'
 
-import { easAbi, easAddress, wavsIndexerConfig } from '@/lib/contracts'
+import {
+  easAbi,
+  easAddress,
+  wavsIndexerAbi,
+  wavsIndexerConfig,
+} from '@/lib/contracts'
 import { SchemaKey, SchemaManager } from '@/lib/schemas'
 import { txToast } from '@/lib/tx'
 import { localChain } from '@/lib/wagmi'
@@ -21,6 +26,9 @@ interface NewAttestationData {
   recipient: string
   data: Record<string, string | boolean>
 }
+
+const ATTESTATION_HASH = keccak256(stringToBytes('attestation'))
+console.log({ ATTESTATION_HASH })
 
 export function useAttestation() {
   const { address, isConnected } = useAccount()
@@ -34,19 +42,25 @@ export function useAttestation() {
   const [hash, setHash] = useState<`0x${string}` | null>(null)
 
   // Watch for EventIndexed events with eventType "attestation"
-  const handleEventIndexed = useCallback(() => {
-    console.log(
-      '🔍 EventIndexed event detected for attestation - invalidating queries'
+  const handleEventIndexed: WatchContractEventOnLogsFn<typeof wavsIndexerAbi> =
+    useCallback(
+      ([event]) => {
+        if (
+          event.eventName === 'EventIndexed' &&
+          event.args.eventType === ATTESTATION_HASH
+        ) {
+          console.log(
+            '🔍 EventIndexed event detected for attestation - invalidating queries'
+          )
+          queryClient.invalidateQueries({ queryKey: attestationKeys.all })
+        }
+      },
+      [queryClient]
     )
-    queryClient.invalidateQueries({ queryKey: attestationKeys.all })
-  }, [queryClient])
 
   useWatchContractEvent({
     ...wavsIndexerConfig,
     eventName: 'EventIndexed',
-    args: {
-      eventType: 'attestation',
-    },
     onLogs: handleEventIndexed,
     enabled: chainId === localChain.id,
   })

@@ -4246,6 +4246,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "merkler-pruner"
+version = "0.5.5"
+dependencies = [
+ "alloy-network",
+ "alloy-primitives",
+ "alloy-provider",
+ "alloy-rpc-types",
+ "alloy-sol-macro",
+ "alloy-sol-types",
+ "wavs-wasi-utils",
+ "wit-bindgen-rt 0.44.0",
+ "wstd",
+]
+
+[[package]]
 name = "mime"
 version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -165,6 +165,7 @@ pub async fn example_advanced_voting_power(
 
     // Calculate time-based factors
     let mut recency_bonus = 0.0;
+    // TODO: Get current time from block timestamp (cannot use SystemTime as it's not deterministic)
     let current_time =
         std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
 

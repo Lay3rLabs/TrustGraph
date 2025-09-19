@@ -108,7 +108,7 @@ fi
 
 TRIGGER_EVENT_HASH=`cast keccak ${TRIGGER_EVENT}`
 
-eval "${BASE_CMD} init --name demo"
+eval "${BASE_CMD} init --name en0va"
 
 # Process component configurations from JSON file
 if [ -z "${COMPONENT_CONFIGS_FILE}" ] || [ ! -f "${COMPONENT_CONFIGS_FILE}" ]; then
@@ -161,39 +161,48 @@ jq -c '.components[]' "${COMPONENT_CONFIGS_FILE}" | while IFS= read -r component
     COMP_FILENAME=$(echo "$component" | jq -r '.filename')
     COMP_PKG_NAME=$(echo "$component" | jq -r '.package_name')
     COMP_PKG_VERSION=$(echo "$component" | jq -r '.package_version')
-    COMP_TRIGGER_EVENT=$(echo "$component" | jq -r '.trigger_event')
-    COMP_TRIGGER_JSON_PATH=$(echo "$component" | jq -r '.trigger_json_path')
     COMP_SUBMIT_JSON_PATH=$(echo "$component" | jq -r '.submit_json_path')
+    COMP_TRIGGER_BLOCK_INTERVAL=$(echo "$component" | jq -r '.trigger_block_interval // ""')
 
     # Extract component-specific config values and env variables
     COMP_CONFIG_VALUES=$(echo "$component" | jq '.config_values // {}')
     COMP_ENV_VARIABLES=$(echo "$component" | jq '.env_variables // []')
 
-    # Extract addresses from JSON paths
-    COMP_TRIGGER_ADDRESS=`jq -r ".${COMP_TRIGGER_JSON_PATH}" .docker/deployment_summary.json`
-    COMP_SUBMIT_ADDRESS=`jq -r ".${COMP_SUBMIT_JSON_PATH}" .docker/deployment_summary.json`
-
-    # Validate addresses
-    if [ -z "$COMP_TRIGGER_ADDRESS" ] || [ "$COMP_TRIGGER_ADDRESS" == "null" ]; then
-        echo "❌ Trigger address not found for component: ${COMP_FILENAME} at path: ${COMP_TRIGGER_JSON_PATH}"
-        exit 1
-    fi
-    if [ -z "$COMP_SUBMIT_ADDRESS" ] || [ "$COMP_SUBMIT_ADDRESS" == "null" ]; then
-        echo "❌ Submit address not found for component: ${COMP_FILENAME} at path: ${COMP_SUBMIT_JSON_PATH}"
-        exit 1
-    fi
-
-    COMP_TRIGGER_EVENT_HASH=`cast keccak ${COMP_TRIGGER_EVENT}`
-
     echo "Creating workflow for component: ${COMP_FILENAME}"
+    WORKFLOW_ID=`eval "$BASE_CMD workflow add" | jq -r .workflow_id`
+
+    echo "  Workflow ID: ${WORKFLOW_ID}"
     echo "  Package: ${PKG_NAMESPACE}:${COMP_PKG_NAME}@${COMP_PKG_VERSION}"
-    echo "  Trigger: ${COMP_TRIGGER_ADDRESS} (${COMP_TRIGGER_EVENT})"
     echo "  Submit: ${COMP_SUBMIT_ADDRESS}"
 
-    WORKFLOW_ID=`eval "$BASE_CMD workflow add" | jq -r .workflow_id`
-    echo "  Workflow ID: ${WORKFLOW_ID}"
+    if [ -n "$COMP_TRIGGER_BLOCK_INTERVAL" ]; then
+        eval "$BASE_CMD workflow trigger --id ${WORKFLOW_ID} set-block-interval --chain ${TRIGGER_CHAIN} --n-blocks ${COMP_TRIGGER_BLOCK_INTERVAL}" > /dev/null
 
-    eval "$BASE_CMD workflow trigger --id ${WORKFLOW_ID} set-evm --address ${COMP_TRIGGER_ADDRESS} --chain ${TRIGGER_CHAIN} --event-hash ${COMP_TRIGGER_EVENT_HASH}" > /dev/null
+        echo "  Trigger block interval: ${COMP_TRIGGER_BLOCK_INTERVAL}"
+    else
+        COMP_TRIGGER_EVENT=$(echo "$component" | jq -r '.trigger_event')
+        COMP_TRIGGER_JSON_PATH=$(echo "$component" | jq -r '.trigger_json_path')
+
+        # Extract addresses from JSON paths
+        COMP_TRIGGER_ADDRESS=`jq -r ".${COMP_TRIGGER_JSON_PATH}" .docker/deployment_summary.json`
+        COMP_SUBMIT_ADDRESS=`jq -r ".${COMP_SUBMIT_JSON_PATH}" .docker/deployment_summary.json`
+
+        # Validate addresses
+        if [ -z "$COMP_TRIGGER_ADDRESS" ] || [ "$COMP_TRIGGER_ADDRESS" == "null" ]; then
+            echo "❌ Trigger address not found for component: ${COMP_FILENAME} at path: ${COMP_TRIGGER_JSON_PATH}"
+            exit 1
+        fi
+        if [ -z "$COMP_SUBMIT_ADDRESS" ] || [ "$COMP_SUBMIT_ADDRESS" == "null" ]; then
+            echo "❌ Submit address not found for component: ${COMP_FILENAME} at path: ${COMP_SUBMIT_JSON_PATH}"
+            exit 1
+        fi
+
+        COMP_TRIGGER_EVENT_HASH=`cast keccak ${COMP_TRIGGER_EVENT}`
+
+        echo "  Trigger: ${COMP_TRIGGER_ADDRESS} (${COMP_TRIGGER_EVENT})"
+
+        eval "$BASE_CMD workflow trigger --id ${WORKFLOW_ID} set-evm --address ${COMP_TRIGGER_ADDRESS} --chain ${TRIGGER_CHAIN} --event-hash ${COMP_TRIGGER_EVENT_HASH}" > /dev/null
+    fi
 
     # Set submit to use aggregator component
     if [ -n "$AGGREGATOR_URL" ]; then
@@ -233,10 +242,6 @@ jq -c '.components[]' "${COMPONENT_CONFIGS_FILE}" | while IFS= read -r component
     if [ -n "$ENV_ARGS" ]; then
         echo "  📋 Setting environment variables"
         eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} env ${ENV_ARGS}" > /dev/null
-    else
-        # Default env variables if none specified
-        echo "  📋 Setting default environment variables"
-        eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} env --values WAVS_ENV_SOME_SECRET" > /dev/null
     fi
 
     # Set component-specific config values

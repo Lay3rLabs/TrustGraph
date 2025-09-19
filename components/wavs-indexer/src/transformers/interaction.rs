@@ -1,4 +1,4 @@
-use super::{utils, EventTransformer};
+use super::EventTransformer;
 use crate::register_transformer;
 use crate::trigger::EventData;
 use crate::{bindings::host::get_evm_chain_config, solidity::IndexingPayload};
@@ -41,7 +41,7 @@ impl EventTransformer for InteractionTransformer {
             chainId: chain.chain_id,
             relevantContract: event_data.contract_address,
             blockNumber: U256::from(event_data.block_number),
-            timestamp: utils::get_current_timestamp(),
+            timestamp: event_data.block_timestamp as u128,
             eventType: "interaction".to_string(),
             tags,
             relevantAddresses: vec![interaction.addr],

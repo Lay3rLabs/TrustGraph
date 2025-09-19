@@ -37,7 +37,7 @@ ponder.on("marketMaker:AMMOutcomeTokenTrade", async ({ event, context }) => {
     event.args;
 
   const outcomeIndex = outcomeTokenAmounts.findIndex((amount) => amount !== 0n);
-  const outcome = outcomeIndex === 0 ? "yes" : "no";
+  const outcome = outcomeIndex === 1 ? "yes" : "no";
   const type = outcomeTokenAmounts[outcomeIndex]! > 0n ? "buy" : "sell";
 
   const amount =

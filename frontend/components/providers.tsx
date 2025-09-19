@@ -9,6 +9,7 @@ import { hashFn } from 'wagmi/query'
 import { ponderClient } from '@/lib/ponder'
 import { config } from '@/lib/wagmi'
 
+import { PointsNotifier } from './PointsNotifier'
 import { Toaster } from './toasts/Toaster'
 import { WalletConnectionProvider } from './WalletConnectionProvider'
 
@@ -53,6 +54,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             {children}
 
             <Toaster />
+            <PointsNotifier />
 
             {/* {process.env.NODE_ENV === "development" && (
           <ReactQueryDevtools initialIsOpen={false} />

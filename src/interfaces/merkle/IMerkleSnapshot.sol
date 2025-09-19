@@ -8,13 +8,14 @@ interface IMerkleSnapshot {
     error NoMerkleStateAtBlock(uint256 requested, uint256 firstBlock);
     error NoMerkleStateAtIndex(uint256 requested, uint256 total);
 
-    error InvalidCronTimestamp(uint64 given, uint64 last);
-    error InvalidTriggerId(uint64 actual, uint64 expected);
-
     error HookAlreadyAdded();
     error HookNotAdded();
 
-    event MerkleRootUpdated(bytes32 indexed root, bytes32 ipfsHash, string ipfsHashCid);
+    event MerkleRootUpdated(
+        bytes32 indexed root,
+        bytes32 ipfsHash,
+        string ipfsHashCid
+    );
 
     struct MerkleState {
         /// @notice The block number the merkle tree was set at

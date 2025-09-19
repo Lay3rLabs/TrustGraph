@@ -122,7 +122,6 @@ export function useRewards() {
     ...merkleSnapshotConfig,
     eventName: 'MerkleRootUpdated',
     onLogs: handleMerkleRootUpdated,
-    enabled: !!merkleSnapshotAddress,
   })
 
   // Fetch merkle data from IPFS

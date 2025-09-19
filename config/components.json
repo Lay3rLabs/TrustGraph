@@ -56,10 +56,37 @@
         "pagerank_trust_multiplier": "10.5",
         "pagerank_trust_boost": "0.99"
       },
-      "env_variables": [
-        "WAVS_ENV_PINATA_API_URL",
-        "WAVS_ENV_PINATA_API_KEY"
-      ]
+      "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
+    },
+    {
+      "filename": "merkler.wasm",
+      "package_name": "merkler",
+      "package_version": "0.1.0",
+      "trigger_event": "EventIndexed(bytes32,address,string,address[],string[])",
+      "trigger_json_path": "wavs_indexer",
+      "submit_json_path": "merkler.merkle_snapshot",
+      "config_values": {
+        "events_dir": "./events",
+        "eas_address": "${EAS_ADDRESS}",
+        "indexer_address": "${INDEXER_ADDRESS}",
+        "chain_name": "${CHAIN_NAME}",
+        "recognition_schema_uid": "${RECOGNITION_SCHEMA_UID}",
+        "vouching_schema_uid": "${VOUCHING_SCHEMA_UID}",
+        "pagerank_points_pool": "10000",
+        "pagerank_trusted_seeds": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        "pagerank_trust_multiplier": "10.5",
+        "pagerank_trust_boost": "0.99"
+      },
+      "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
+    },
+    {
+      "filename": "merkler_pruner.wasm",
+      "package_name": "merkler-pruner",
+      "package_version": "0.1.0",
+      "trigger_block_interval": "100",
+      "submit_json_path": "merkler.merkle_snapshot",
+      "config_values": {},
+      "env_variables": []
     },
     {
       "filename": "wavs_safe_signer_sync.wasm",
@@ -74,10 +101,7 @@
         "signer_module_address": "${SIGNER_MANAGER_ZODIAC_MODULE}",
         "chain_name": "${CHAIN_NAME}"
       },
-      "env_variables": [
-        "WAVS_ENV_PINATA_API_URL",
-        "WAVS_ENV_PINATA_API_KEY"
-      ]
+      "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
     },
     {
       "filename": "dao_agent.wasm",
@@ -87,10 +111,7 @@
       "trigger_json_path": "eas.contracts.attest_trigger",
       "submit_json_path": "zodiac_safes.safe2.wavs_module",
       "config_values": {},
-      "env_variables": [
-        "WAVS_ENV_PINATA_API_URL",
-        "WAVS_ENV_PINATA_API_KEY"
-      ]
+      "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
     },
     {
       "filename": "prediction_market_oracle.wasm",
@@ -202,9 +223,7 @@
       "filename": "en0va_aggregator.wasm",
       "package_name": "en0va-aggregator",
       "package_version": "0.1.0",
-      "env_variables": [
-        "WAVS_ENV_ETHERSCAN_API_KEY"
-      ]
+      "env_variables": ["WAVS_ENV_ETHERSCAN_API_KEY"]
     }
   ]
 }

@@ -21,6 +21,7 @@ pub struct EventData {
     pub contract_address: AlloyAddress,
     pub log: EvmEventLogData,
     pub block_number: u64,
+    pub block_timestamp: u64,
     pub chain: String,
 }
 
@@ -35,6 +36,7 @@ pub fn decode_trigger_event(trigger_data: TriggerData) -> Result<(EventData, Des
                 contract_address: alloy_address,
                 log: log.data,
                 block_number: log.block_number,
+                block_timestamp: log.block_timestamp,
                 chain,
             };
             Ok((event_data, Destination::Ethereum))
@@ -47,6 +49,7 @@ pub fn decode_trigger_event(trigger_data: TriggerData) -> Result<(EventData, Des
                 contract_address: AlloyAddress::ZERO,
                 log: dummy_log,
                 block_number: 0,
+                block_timestamp: 0,
                 chain: "test".to_string(),
             };
             Ok((event_data, Destination::CliOutput))

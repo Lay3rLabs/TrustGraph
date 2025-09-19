@@ -1,7 +1,6 @@
 'use client'
 
 import { usePonderQuery } from '@ponder/react'
-import clsx from 'clsx'
 import type React from 'react'
 import { formatUnits } from 'viem'
 import { useAccount, useReadContract } from 'wagmi'
@@ -125,13 +124,14 @@ export const PredictionMarketTradeHistory: React.FC<
                       }
                     )}
                   </td>
-                  <td
-                    className={clsx(
-                      'p-3 terminal-text font-mono',
-                      trade.type === 'buy' ? '!text-green' : '!text-pink'
-                    )}
-                  >
-                    {trade.type.toUpperCase()}{' '}
+                  <td className="p-3 terminal-dim font-mono">
+                    <span
+                      className={
+                        trade.type === 'buy' ? '!text-green' : '!text-pink'
+                      }
+                    >
+                      {trade.type.toUpperCase()}
+                    </span>{' '}
                     {Number(formatUnits(trade.cost, 18)).toLocaleString(
                       undefined,
                       {

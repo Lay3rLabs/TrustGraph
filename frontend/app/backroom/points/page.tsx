@@ -4,12 +4,12 @@ import { useQuery } from '@tanstack/react-query'
 import { DollarSign, Eye, FlaskConical, Hand } from 'lucide-react'
 import type React from 'react'
 import { ComponentType, useCallback, useMemo, useState } from 'react'
-import { hexToNumber } from 'viem'
+import { Hex } from 'viem'
 import { useAccount, useWatchContractEvent } from 'wagmi'
 
 import { Card } from '@/components/Card'
-import { wavsServiceId } from '@/lib/config'
 import { merkleSnapshotAddress, merkleSnapshotConfig } from '@/lib/contracts'
+import { pointsQueries } from '@/queries/points'
 
 const ActivityLabel: Record<string, string> = {
   joined: 'Joined',
@@ -32,14 +32,6 @@ const ActivitySummary: Record<string, string> = {
   prediction_market_redeem: 'Redeemed successful Hyperstition',
 }
 
-type Activity = {
-  id: string
-  type: string
-  timestamp?: Date
-  points: number
-  metadata?: Record<string, any>
-}
-
 export default function PointsPage() {
   const { address, isConnected } = useAccount()
   const [selectedType, setSelectedType] = useState<string>('ALL')
@@ -60,34 +52,7 @@ export default function PointsPage() {
   }
 
   const { data: activities = [], refetch: refetchActivities } = useQuery({
-    queryKey: ['events', address],
-    queryFn: async () => {
-      const response = await fetch(
-        `http://localhost:9090/${wavsServiceId}/events/${address}.json`
-      )
-      if (response.ok) {
-        const events = (await response.json()) as {
-          type: string
-          timestamp: number
-          value: string
-          metadata?: Record<string, any>
-        }[]
-
-        return events.map(
-          (event, index): Activity => ({
-            id: index.toString(),
-            type: event.type,
-            timestamp: event.timestamp ? new Date(event.timestamp) : undefined,
-            points: event.value.startsWith('0x')
-              ? hexToNumber(event.value as `0x${string}`)
-              : Number(event.value),
-            metadata: event.metadata,
-          })
-        )
-      }
-
-      return []
-    },
+    ...pointsQueries.events(address as Hex),
     enabled: !!address,
     refetchInterval: 30_000,
   })

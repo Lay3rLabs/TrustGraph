@@ -111,19 +111,3 @@ macro_rules! register_transformer {
         }));
     };
 }
-
-/// Utility functions for transformers
-pub mod utils {
-    use crate::bindings::wavs::types::chain::EvmAddress;
-    use alloy_primitives::Address;
-
-    /// Get current timestamp in milliseconds
-    pub fn get_current_timestamp() -> u128 {
-        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis()
-    }
-
-    /// Convert EvmAddress to alloy Address
-    pub fn from_evm_address(evm_address: &EvmAddress) -> Address {
-        Address::from_slice(&evm_address.raw_bytes)
-    }
-}

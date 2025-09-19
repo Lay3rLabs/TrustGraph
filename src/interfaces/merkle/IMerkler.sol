@@ -6,15 +6,15 @@ pragma solidity ^0.8.22;
 interface IMerkler {
     /**
      * @notice Struct to store merkler AVS output
-     * @param triggerId Unique identifier for the trigger (if manually triggered)
-     * @param cronNanos Cron nanoseconds (if triggered by cron)
-     * @param root Root of the merkle tree
-     * @param ipfsHash IPFS hash of the merkle tree
-     * @param ipfsHashCid IPFS hash CID of the merkle tree
+     * @param expiresAt Expiration time of the payload.
+     * @param prune The number of expired envelopes to prune. If greater than 0, pruning will be done and no merkle root update will be done.
+     * @param root Root of the merkle tree.
+     * @param ipfsHash IPFS hash of the merkle tree.
+     * @param ipfsHashCid IPFS hash CID of the merkle tree.
      */
     struct MerklerAvsOutput {
-        uint64 triggerId;
-        uint64 cronNanos;
+        uint256 expiresAt;
+        uint256 prune;
         bytes32 root;
         bytes32 ipfsHash;
         string ipfsHashCid;
