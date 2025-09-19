@@ -15,12 +15,13 @@ import {
 } from 'chart.js'
 import { DollarSign, Eye, FlaskConical, Hand } from 'lucide-react'
 import type React from 'react'
-import { ComponentType, useMemo, useState } from 'react'
+import { ComponentType, useCallback, useMemo, useState } from 'react'
 import { hexToNumber } from 'viem'
-import { useAccount } from 'wagmi'
+import { useAccount, useWatchContractEvent } from 'wagmi'
 
 import { Card } from '@/components/Card'
 import { wavsServiceId } from '@/lib/config'
+import { merkleSnapshotAddress, merkleSnapshotConfig } from '@/lib/contracts'
 
 import 'chartjs-adapter-luxon'
 
@@ -82,7 +83,7 @@ export default function PointsPage() {
     }
   }
 
-  const { data: activities = [] } = useQuery({
+  const { data: activities = [], refetch: refetchActivities } = useQuery({
     queryKey: ['events', address],
     queryFn: async () => {
       const response = await fetch(
@@ -113,6 +114,21 @@ export default function PointsPage() {
     },
     enabled: !!address,
     refetchInterval: 30_000,
+  })
+
+  // Watch for MerkleRootUpdated events to trigger data refresh
+  const handleMerkleRootUpdated = useCallback(() => {
+    console.log(
+      '🌳 MerkleRootUpdated event detected - refreshing activities data'
+    )
+    refetchActivities()
+  }, [refetchActivities])
+
+  useWatchContractEvent({
+    ...merkleSnapshotConfig,
+    eventName: 'MerkleRootUpdated',
+    onLogs: handleMerkleRootUpdated,
+    enabled: !!merkleSnapshotAddress,
   })
 
   const { types, cumulativePoints } = useMemo(() => {
