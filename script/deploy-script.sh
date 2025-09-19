@@ -1,5 +1,5 @@
 #!/bin/bash
-# set -e
+set -e
 # set -x
 
 STATUS_FILE=".docker/component-upload-status"

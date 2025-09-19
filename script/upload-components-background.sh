@@ -192,6 +192,7 @@ log "📊 Results: ✅ ${successful} success, ❌ ${failed} failed"
 
 if [ $failed -eq 0 ]; then
     log "🎉 All uploads completed!"
+    log "(( if this hangs it's the solidity, not the uploads! Wait a lil bit buddy... ))"
     echo "COMPLETED" > "$STATUS_FILE"
     exit 0
 else

@@ -126,12 +126,24 @@ deploy-service:
 	fi
 	@if [ -n "${WAVS_ENDPOINT}" ]; then \
 		echo "🔍 Checking WAVS service at ${WAVS_ENDPOINT}..."; \
-		if [ "$$(curl -s -o /dev/null -w "%{http_code}" ${WAVS_ENDPOINT}/info)" != "200" ]; then \
-			echo "❌ WAVS service not reachable at ${WAVS_ENDPOINT}"; \
-			echo "💡 Re-try running in 1 second, if not then validate the wavs service is online / started."; \
-			exit 1; \
-		fi; \
-		echo "✅ WAVS service is running"; \
+		attempt=1; \
+		max_attempts=3; \
+		while [ $$attempt -le $$max_attempts ]; do \
+			if [ "$$(curl -s -o /dev/null -w "%{http_code}" ${WAVS_ENDPOINT}/info)" = "200" ]; then \
+				echo "✅ WAVS service is running"; \
+				break; \
+			else \
+				echo "❌ WAVS service not reachable at ${WAVS_ENDPOINT} (attempt $$attempt/$$max_attempts)"; \
+				if [ $$attempt -lt $$max_attempts ]; then \
+					echo "⏳ Retrying in 5 seconds..."; \
+					sleep 5; \
+					attempt=$$((attempt + 1)); \
+				else \
+					echo "❌ Failed after $$max_attempts attempts. Please validate the WAVS service is online/started."; \
+					exit 1; \
+				fi; \
+			fi; \
+		done; \
 	fi
 	@echo "🚀 Deploying service from: ${SERVICE_URL}..."
 	@$(WAVS_CMD) deploy-service --service-url ${SERVICE_URL} --log-level=debug --data /data/.docker --home /data $(if $(WAVS_ENDPOINT),--wavs-endpoint $(WAVS_ENDPOINT),) $(if $(IPFS_GATEWAY),--ipfs-gateway $(IPFS_GATEWAY),)

@@ -213,7 +213,7 @@ jq -c '.components[]' "${COMPONENT_CONFIGS_FILE}" | while IFS= read -r component
         # Set aggregator component configuration
         AGG_CONFIG_ARGS=$(build_config_args "$AGG_CONFIG_VALUES")
         if [ -n "$AGG_CONFIG_ARGS" ]; then
-            echo "  📋 Configuring aggregator"
+            echo "  📋 Configuring aggregator (vars: ${AGG_CONFIG_ARGS})"
             # NOTE: --values is already done in `build_config_args`.
             eval "$BASE_CMD workflow submit --id ${WORKFLOW_ID} component config ${AGG_CONFIG_ARGS}" > /dev/null
         fi
