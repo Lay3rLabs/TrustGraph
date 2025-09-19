@@ -29,7 +29,7 @@ tasks:
         # Load deployment configuration
         EAS_ADDRESS=$(jq -r '.eas.contracts.eas' {{.DEPLOYMENT_FILE}})
         ATTESTER_ADDRESS=$(jq -r '.eas.contracts.attester' {{.DEPLOYMENT_FILE}})
-        VOUCHING_SCHEMA_ID=$(jq -r '.eas.schemas.vouching' {{.DEPLOYMENT_FILE}})
+        VOUCHING_SCHEMA_ID=$(jq -r '.eas.schemas.vouching.uid' {{.DEPLOYMENT_FILE}})
 
         echo -e "${BLUE}Configuration:${NC}"
         echo "EAS: $EAS_ADDRESS"
@@ -181,7 +181,7 @@ tasks:
         NC='\033[0m'
 
         EAS_ADDRESS=$(jq -r '.eas.contracts.eas' {{.DEPLOYMENT_FILE}})
-        VOUCHING_SCHEMA_ID=$(jq -r '.eas.schemas.vouching' {{.DEPLOYMENT_FILE}})
+        VOUCHING_SCHEMA_ID=$(jq -r '.eas.schemas.vouching.uid' {{.DEPLOYMENT_FILE}})
 
         echo -e "${CYAN}📊 Vouching Network Analysis${NC}"
         echo "==========================="
@@ -220,7 +220,7 @@ tasks:
         NC='\033[0m'
 
         EAS_ADDRESS=$(jq -r '.eas.contracts.eas' {{.DEPLOYMENT_FILE}})
-        VOUCHING_SCHEMA_ID=$(jq -r '.eas.schemas.vouching' {{.DEPLOYMENT_FILE}})
+        VOUCHING_SCHEMA_ID=$(jq -r '.eas.schemas.vouching.uid' {{.DEPLOYMENT_FILE}})
 
         echo -e "${YELLOW}🎯 Next Steps for PageRank Testing${NC}"
         echo ""

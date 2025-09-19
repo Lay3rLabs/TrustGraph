@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "format": "eslint . --fix",
     "start": "next start",
-    "config:update": "node scripts/update-config.js",
+    "config:update": "tsx scripts/update-config.ts",
     "claude-code": "docker compose -f .claude/docker-compose.claude.yml run --rm --remove-orphans -it claude-code-sandbox bash -c 'claude; exec'",
     "claude-code:unrestricted": "docker compose -f .claude/docker-compose.claude.yml run --rm --remove-orphans -it claude-code-sandbox bash -c 'claude --dangerously-skip-permissions; exec'",
     "wagmi:generate": "wagmi generate"
@@ -100,6 +100,7 @@
     "prettier": "^2.8.0",
     "svgr": "^1.10.0",
     "tailwindcss": "^4.1.9",
+    "tsx": "^4.20.5",
     "tw-animate-css": "1.3.3",
     "typescript": "5.5.4"
   }

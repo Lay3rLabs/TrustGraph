@@ -2,10 +2,9 @@
 
 import type React from 'react'
 import { useEffect, useRef, useState } from 'react'
-import { useAccount, useConnect, useDisconnect } from 'wagmi'
+import { useAccount, useConnect } from 'wagmi'
 
 import { useAttestation } from '@/hooks/useAttestation'
-import { schemas } from '@/lib/schemas'
 
 // Loading bar states for animation
 const loadingBars = [
@@ -147,7 +146,6 @@ export default function EN0VATerminal() {
 
   const { address, isConnected } = useAccount()
   const { connectors, connect } = useConnect()
-  const { disconnect } = useDisconnect()
   const { createAttestation, isLoading: attestationLoading } = useAttestation()
 
   const createCommandEntry = (cmd: string) => ({
@@ -312,7 +310,7 @@ export default function EN0VATerminal() {
 
       // Create attestation using the hook
       await createAttestation({
-        schema: schemas.statement,
+        schema: 'statement',
         recipient: address || '0x0000000000000000000000000000000000000000',
         data: {
           statement:

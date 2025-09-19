@@ -123,13 +123,9 @@ vars:
     sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market.oracle_controller' .docker/deployment_summary.json || echo ""
 
   # Schema UIDs (loaded from deployment summary)
-  VOUCH_SCHEMA_UID:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.vouching' .docker/deployment_summary.json || echo ""
-  BASIC_SCHEMA_UID:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.basic' .docker/deployment_summary.json || echo ""
-  COMPUTE_SCHEMA_UID:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.compute' .docker/deployment_summary.json || echo ""
+  VOUCHING_SCHEMA_ID:
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.vouching.uid' .docker/deployment_summary.json || echo ""
   STATEMENT_SCHEMA_UID:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.statement' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.statement.uid' .docker/deployment_summary.json || echo ""
   LIKE_SCHEMA_UID:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.like' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.like.uid' .docker/deployment_summary.json || echo ""

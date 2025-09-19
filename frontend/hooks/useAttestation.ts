@@ -1,18 +1,23 @@
 'use client'
 
 import { useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
-import { useAccount, useChainId, usePublicClient } from 'wagmi'
+import { useCallback, useState } from 'react'
+import { Hex } from 'viem'
+import {
+  useAccount,
+  useChainId,
+  usePublicClient,
+  useWatchContractEvent,
+} from 'wagmi'
 
-import { easAbi, easAddress } from '@/lib/contracts'
-import { encodeAttestationData } from '@/lib/schemas'
+import { easAbi, easAddress, wavsIndexerConfig } from '@/lib/contracts'
+import { SchemaKey, SchemaManager } from '@/lib/schemas'
 import { txToast } from '@/lib/tx'
 import { localChain } from '@/lib/wagmi'
-
-import { attestationKeys } from './useIndexer'
+import { attestationKeys } from '@/queries/attestation'
 
 interface NewAttestationData {
-  schema: string
+  schema: SchemaKey | Hex
   recipient: string
   data: Record<string, string | boolean>
 }
@@ -28,6 +33,24 @@ export function useAttestation() {
   const [error, setError] = useState<Error | null>(null)
   const [hash, setHash] = useState<`0x${string}` | null>(null)
 
+  // Watch for EventIndexed events with eventType "attestation"
+  const handleEventIndexed = useCallback(() => {
+    console.log(
+      '🔍 EventIndexed event detected for attestation - invalidating queries'
+    )
+    queryClient.invalidateQueries({ queryKey: attestationKeys.all })
+  }, [queryClient])
+
+  useWatchContractEvent({
+    ...wavsIndexerConfig,
+    eventName: 'EventIndexed',
+    args: {
+      eventType: 'attestation',
+    },
+    onLogs: handleEventIndexed,
+    enabled: chainId === localChain.id,
+  })
+
   const createAttestation = async (attestationData: NewAttestationData) => {
     if (!isConnected) {
       throw new Error('Please connect your wallet')
@@ -39,6 +62,10 @@ export function useAttestation() {
       )
     }
 
+    const schemaUid = attestationData.schema.startsWith('0x')
+      ? (attestationData.schema as Hex)
+      : SchemaManager.schemaForKey(attestationData.schema).uid
+
     setIsLoading(true)
     setIsSuccess(false)
     setError(null)
@@ -46,10 +73,7 @@ export function useAttestation() {
 
     try {
       // Validate input formats
-      if (
-        !attestationData.schema.startsWith('0x') ||
-        attestationData.schema.length !== 66
-      ) {
+      if (!schemaUid.startsWith('0x') || schemaUid.length !== 66) {
         throw new Error(`Invalid schema format: ${attestationData.schema}`)
       }
       if (
@@ -61,10 +85,7 @@ export function useAttestation() {
         )
       }
 
-      const encodedData = encodeAttestationData(
-        attestationData.schema,
-        attestationData.data
-      )
+      const encodedData = SchemaManager.encode(schemaUid, attestationData.data)
 
       // Helper function to execute transaction with fresh nonce
       const executeTransaction = async (retryCount = 0): Promise<void> => {
@@ -74,7 +95,7 @@ export function useAttestation() {
         })
 
         const attestationRequest = {
-          schema: attestationData.schema as `0x${string}`,
+          schema: schemaUid,
           data: {
             recipient: attestationData.recipient as `0x${string}`,
             expirationTime: BigInt(0),
@@ -121,9 +142,6 @@ export function useAttestation() {
         })
 
         console.log(`✅ Transaction confirmed: ${receipt.transactionHash}`)
-
-        // Invalidate all attestation-related queries to refresh the data
-        queryClient.invalidateQueries({ queryKey: attestationKeys.all })
 
         setIsSuccess(true)
       }

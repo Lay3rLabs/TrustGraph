@@ -13,7 +13,7 @@ tasks:
         forge script script/EASAttestTrigger.s.sol:EASAttestTriggerScript \
           --sig "triggerRawAttestation(string,string,string,string)" \
           "{{.EAS_ATTEST_TRIGGER_ADDR}}" \
-          "{{.VOUCH_SCHEMA_UID}}" \
+          "{{.VOUCHING_SCHEMA_ID}}" \
           "{{.WALLET_ADDRESS}}" \
           "{{.INPUT}}" \
           --rpc-url {{.RPC_URL}} --broadcast
@@ -62,7 +62,7 @@ tasks:
           --sig "queryAttestations(string,string,string,string,uint256)" \
           "{{.INDEXER_ADDR}}" \
           "{{.EAS_ADDR}}" \
-          "{{.VOUCH_SCHEMA_UID}}" \
+          "{{.VOUCHING_SCHEMA_ID}}" \
           "{{.WALLET_ADDRESS}}" \
           10 \
           --rpc-url {{.RPC_URL}}

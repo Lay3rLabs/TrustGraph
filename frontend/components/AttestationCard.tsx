@@ -1,7 +1,9 @@
 'use client'
 
-import { useIndividualAttestation } from '@/hooks/useIndexer'
-import { AttestationData, SCHEMA_OPTIONS } from '@/lib/schemas'
+import { useQuery } from '@tanstack/react-query'
+
+import { attestationQueries } from '@/queries/attestation'
+import { AttestationData, SchemaManager } from '@/lib/schemas'
 
 import { Card } from './Card'
 
@@ -10,7 +12,11 @@ interface AttestationCardProps {
 }
 
 export function AttestationCard({ uid }: AttestationCardProps) {
-  const { data: attestation, isLoading, error } = useIndividualAttestation(uid)
+  const {
+    data: attestation,
+    isLoading,
+    error,
+  } = useQuery(attestationQueries.get(uid))
 
   const formatTimestamp = (timestamp: number) => {
     const date = new Date(timestamp * 1000)
@@ -118,9 +124,9 @@ export function AttestationCard({ uid }: AttestationCardProps) {
   }
 
   const statusInfo = getAttestationStatus(attestation)
-  const schemaOptions = SCHEMA_OPTIONS.find(
-    (schema) => schema.uid === attestation.schema
-  )
+  const schemaName =
+    SchemaManager.maybeSchemaForUid(attestation.schema)?.name.toUpperCase() ||
+    'UNKNOWN'
 
   return (
     <Card type="primary" size="lg">
@@ -129,9 +135,7 @@ export function AttestationCard({ uid }: AttestationCardProps) {
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
             <span className="terminal-bright text-lg">◆</span>
-            <h3 className="terminal-bright text-base">
-              {schemaOptions?.name.split(' ')[0].toUpperCase()}
-            </h3>
+            <h3 className="terminal-bright text-base">{schemaName}</h3>
           </div>
           <div
             className={`px-3 py-1 border border-gray-700 rounded-sm text-xs ${statusInfo.color}`}

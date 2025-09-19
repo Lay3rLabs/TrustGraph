@@ -5,6 +5,7 @@ import {
   useAccount,
   useBalance,
   useReadContract,
+  useWatchContractEvent,
   useWriteContract,
 } from 'wagmi'
 
@@ -12,6 +13,7 @@ import {
   enovaAddress,
   merkleSnapshotAbi,
   merkleSnapshotAddress,
+  merkleSnapshotConfig,
   rewardDistributorAbi,
   rewardDistributorAddress,
 } from '@/lib/contracts'
@@ -63,24 +65,30 @@ export function useRewards() {
   const [tokenSymbol, setTokenSymbol] = useState<string>('TOKEN')
 
   // Read merkle root from contract
-  const { data: merkleRoot, isLoading: isLoadingRoot } = useReadContract({
+  const {
+    data: merkleRoot,
+    isLoading: isLoadingRoot,
+    refetch: refetchMerkleRoot,
+  } = useReadContract({
     address: rewardDistributorAddress,
     abi: rewardDistributorAbi,
     functionName: 'root',
     query: {
       enabled: !!rewardDistributorAddress,
-      refetchInterval: 60_000,
     },
   })
 
   // Read IPFS hash CID from contract
-  const { data: ipfsHashCid, isLoading: isLoadingHash } = useReadContract({
+  const {
+    data: ipfsHashCid,
+    isLoading: isLoadingHash,
+    refetch: refetchIpfsHash,
+  } = useReadContract({
     address: rewardDistributorAddress,
     abi: rewardDistributorAbi,
     functionName: 'ipfsHashCid',
     query: {
       enabled: !!rewardDistributorAddress,
-      refetchInterval: 60_000,
     },
   })
 
@@ -99,9 +107,22 @@ export function useRewards() {
   const { data: rewardBalance, refetch: refetchRewardBalance } = useBalance({
     address: address,
     token: enovaAddress,
-    query: {
-      refetchInterval: 3_000,
-    },
+  })
+
+  // Watch for MerkleRootUpdated events to trigger data refresh
+  const handleMerkleRootUpdated = useCallback(() => {
+    console.log('🌳 MerkleRootUpdated event detected - refreshing reward data')
+    refetchMerkleRoot()
+    refetchIpfsHash()
+    refetchClaimed()
+    refetchRewardBalance()
+  }, [refetchMerkleRoot, refetchIpfsHash, refetchClaimed, refetchRewardBalance])
+
+  useWatchContractEvent({
+    ...merkleSnapshotConfig,
+    eventName: 'MerkleRootUpdated',
+    onLogs: handleMerkleRootUpdated,
+    enabled: !!merkleSnapshotAddress,
   })
 
   // Fetch merkle data from IPFS
@@ -246,9 +267,13 @@ export function useRewards() {
   ])
 
   const refresh = useCallback(async () => {
-    await refetchClaimed()
-    await refetchRewardBalance()
-  }, [refetchClaimed, refetchRewardBalance])
+    await Promise.all([
+      refetchMerkleRoot(),
+      refetchIpfsHash(),
+      refetchClaimed(),
+      refetchRewardBalance(),
+    ])
+  }, [refetchMerkleRoot, refetchIpfsHash, refetchClaimed, refetchRewardBalance])
 
   return {
     // Loading states

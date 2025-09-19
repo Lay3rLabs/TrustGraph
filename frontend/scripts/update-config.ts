@@ -1,10 +1,9 @@
-#!/usr/bin/env node
 /**
  * Script to update wagmi.config.ts and schemas.ts with latest deployment data
  */
 
-const fs = require('fs')
-const path = require('path')
+import * as fs from 'fs'
+import * as path from 'path'
 
 // Path to deployment summary and config files
 const deploymentSummaryFile = path.join(
@@ -12,7 +11,7 @@ const deploymentSummaryFile = path.join(
   '../../.docker/deployment_summary.json'
 )
 const wagmiConfigFile = path.join(__dirname, '../wagmi.config.ts')
-const schemasFile = path.join(__dirname, '../lib/schemas.ts')
+const schemasFile = path.join(__dirname, '../lib/schemas.json')
 const configFile = path.join(__dirname, '../lib/config.ts')
 
 console.log('🔄 Updating config files with latest deployment data...')
@@ -114,7 +113,7 @@ ${contractNames
     (name) => `    {
       abi: ABI.${name}.abi,
       name: '${name}',
-      address: '${contractAddresses[name]}',
+      address: '${contractAddresses[name as keyof typeof contractAddresses]}',
     },`
   )
   .join('\n')}
@@ -133,43 +132,57 @@ ${contractNames
   // ========================================
 
   if (deployment.eas?.schemas) {
-    console.log('📋 Schema IDs:', deployment.eas.schemas)
+    fs.writeFileSync(
+      schemasFile,
+      JSON.stringify(
+        Object.entries(
+          deployment.eas.schemas as Record<
+            string,
+            {
+              uid: string
+              schema: string
+              resolver: string
+              revocable: boolean
+            }
+          >
+        )
+          .filter(([key]) => key !== '_')
+          .reduce((acc, [snakeCasedName, { uid, ...data }]) => {
+            const camelCasedName = snakeCasedName.replaceAll(
+              /_[a-z]/g,
+              (match) => match.slice(1).toUpperCase()
+            )
 
-    // Read current schemas file
-    let schemasContent = fs.readFileSync(schemasFile, 'utf8')
+            const titleCasedName =
+              camelCasedName.charAt(0).toUpperCase() + camelCasedName.slice(1)
 
-    // Update schema IDs
-    const schemaData = Object.entries(deployment.eas.schemas).map(
-      ([snakeCasedName, schemaId]) => [
-        snakeCasedName.replaceAll(/_[a-z]/g, (match) =>
-          match.slice(1).toUpperCase()
-        ),
-        schemaId,
-      ]
-    )
+            const fields = data.schema.split(',').map((field) => {
+              const [type, name] = field.split(' ')
+              return {
+                name,
+                type,
+              }
+            })
 
-    const schemaRegex = /const schemas = \{[^}]+\}/g
-    if (schemaRegex.test(schemasContent)) {
-      schemasContent = schemasContent.replace(
-        schemaRegex,
-        `
-const schemas = {
-${schemaData
-  .map(([name, id]) => `  ${name}:${name.length > 7 ? '\n    ' : ' '}'${id}',`)
-  .join('\n')}
-}`.trim()
+            return {
+              ...acc,
+              [camelCasedName]: {
+                uid,
+                name: titleCasedName,
+                ...data,
+                fields,
+              },
+            }
+          }, {}),
+        null,
+        2
       )
-
-      // Write updated schemas file
-      fs.writeFileSync(schemasFile, schemasContent)
-      console.log(`✅ Updated ${schemaData.length} schemas`)
-    } else {
-      throw new Error(`Could not find schemas variable`)
-    }
+    )
+    console.log('✅ Updated schemas config')
   }
 
   console.log('🚀 All config files updated! Now run: npm run wagmi:generate')
-} catch (error) {
+} catch (error: any) {
   console.error('❌ Error updating config files:', error.message)
   if (error.code === 'ENOENT') {
     console.error(

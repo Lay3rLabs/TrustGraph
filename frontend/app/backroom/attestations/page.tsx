@@ -1,16 +1,15 @@
 'use client'
 
+import { useQuery } from '@tanstack/react-query'
 import type React from 'react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { Hex } from 'viem'
 
 import { AttestationCard } from '@/components/AttestationCard'
 import { Card } from '@/components/Card'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
-import {
-  useIndividualAttestation,
-  useSchemaAttestations,
-} from '@/hooks/useIndexer'
-import { SCHEMA_OPTIONS, schemas } from '@/lib/schemas'
+import { SCHEMAS } from '@/lib/schemas'
+import { attestationQueries } from '@/queries/attestation'
 
 // Helper component to fetch attestation data for filtering
 function AttestationWithStatus({
@@ -20,7 +19,7 @@ function AttestationWithStatus({
   uid: `0x${string}`
   onStatusReady: (uid: string, status: string) => void
 }) {
-  const { data: attestationData } = useIndividualAttestation(uid)
+  const { data: attestationData } = useQuery(attestationQueries.get(uid))
 
   const getAttestationStatus = (attestation: any) => {
     if (!attestation) return 'loading'
@@ -48,117 +47,40 @@ export default function AttestationsPage() {
   const [selectedSchema, setSelectedSchema] = useState<string>('all')
   const [selectedStatus, setSelectedStatus] = useState<string>('all')
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest')
-  const [limit, setLimit] = useState(20)
+  const [limit, setLimit] = useState(50)
   const [attestationStatuses, setAttestationStatuses] = useState<
     Record<string, string>
   >({})
 
-  // Fetch attestations for all schemas or specific schema
-  const schemaQueries = useMemo(() => {
-    if (selectedSchema === 'all') {
-      return SCHEMA_OPTIONS.map((schema) => ({
-        schemaUID: schema.uid,
-        name: schema.name,
-      }))
-    }
-    const selectedSchemaOption = SCHEMA_OPTIONS.find(
-      (s) => s.uid === selectedSchema
-    )
-    return selectedSchemaOption
-      ? [{ schemaUID: selectedSchema, name: selectedSchemaOption.name }]
-      : []
-  }, [selectedSchema])
+  const allQuery = useQuery({
+    ...attestationQueries.uids({ limit, reverse: sortOrder === 'newest' }),
+    enabled: selectedSchema === 'all',
+  })
+  const allCountQuery = useQuery(attestationQueries.count)
+  const { data: totalAttestations = 0, isLoading: isLoadingTotalAttestations } =
+    allCountQuery
 
-  // Use hooks for each schema
-  const basicSchema = useSchemaAttestations(
-    schemas.basic,
-    selectedSchema === 'all' || selectedSchema === schemas.basic ? limit : 0
-  )
-  const computeSchema = useSchemaAttestations(
-    schemas.compute,
-    selectedSchema === 'all' || selectedSchema === schemas.compute ? limit : 0
-  )
-  const vouchingSchema = useSchemaAttestations(
-    schemas.vouching,
-    selectedSchema === 'all' || selectedSchema === schemas.vouching ? limit : 0
-  )
-  const recognitionSchema = useSchemaAttestations(
-    schemas.recognition,
-    selectedSchema === 'all' || selectedSchema === schemas.recognition
-      ? limit
-      : 0
-  )
+  const schemaQuery = useQuery({
+    ...attestationQueries.schemaUIDs(selectedSchema as Hex, {
+      limit,
+      reverse: sortOrder === 'newest',
+    }),
+    enabled: selectedSchema !== 'all' && selectedSchema.startsWith('0x'),
+  })
+  const schemaCountQuery = useQuery({
+    ...attestationQueries.schemaCount(selectedSchema as Hex),
+    enabled: selectedSchema !== 'all' && selectedSchema.startsWith('0x'),
+  })
+
+  const { data: attestationUIDs = [], isLoading: isLoadingUIDs } =
+    selectedSchema === 'all' ? allQuery : schemaQuery
+  const { data: currentTotal = 0, isLoading: isLoadingCurrentTotal } =
+    selectedSchema === 'all' ? allCountQuery : schemaCountQuery
 
   // Handle status updates from individual attestations
   const handleStatusReady = useCallback((uid: string, status: string) => {
     setAttestationStatuses((prev) => ({ ...prev, [uid]: status }))
   }, [])
-
-  // Combine all attestations
-  const allAttestationUIDs = useMemo(() => {
-    const uids: Array<{
-      uid: `0x${string}`
-      schema: `0x${string}`
-      timestamp: number
-    }> = []
-
-    if (selectedSchema === 'all' || selectedSchema === schemas.basic) {
-      basicSchema.attestationUIDs?.forEach(({ uid, timestamp }) =>
-        uids.push({ uid, schema: schemas.basic, timestamp })
-      )
-    }
-    if (selectedSchema === 'all' || selectedSchema === schemas.compute) {
-      computeSchema.attestationUIDs?.forEach(({ uid, timestamp }) =>
-        uids.push({ uid, schema: schemas.compute, timestamp })
-      )
-    }
-    if (selectedSchema === 'all' || selectedSchema === schemas.vouching) {
-      vouchingSchema.attestationUIDs?.forEach(({ uid, timestamp }) =>
-        uids.push({ uid, schema: schemas.vouching, timestamp })
-      )
-    }
-    if (selectedSchema === 'all' || selectedSchema === schemas.recognition) {
-      recognitionSchema.attestationUIDs?.forEach(({ uid, timestamp }) =>
-        uids.push({ uid, schema: schemas.recognition, timestamp })
-      )
-    }
-
-    if (sortOrder === 'newest') {
-      uids.sort((a, b) => b.timestamp - a.timestamp)
-    } else {
-      uids.sort((a, b) => a.timestamp - b.timestamp)
-    }
-
-    return uids
-  }, [
-    basicSchema.attestationUIDs,
-    computeSchema.attestationUIDs,
-    vouchingSchema.attestationUIDs,
-    recognitionSchema.attestationUIDs,
-    selectedSchema,
-    sortOrder,
-  ])
-
-  // Filter by status
-  const filteredAttestationUIDs = useMemo(() => {
-    if (selectedStatus === 'all') {
-      return allAttestationUIDs
-    }
-    return allAttestationUIDs.filter(
-      (item) => attestationStatuses[item.uid] === selectedStatus
-    )
-  }, [allAttestationUIDs, selectedStatus, attestationStatuses])
-
-  const isLoading =
-    basicSchema.isLoadingUIDs ||
-    computeSchema.isLoadingUIDs ||
-    vouchingSchema.isLoadingUIDs ||
-    recognitionSchema.isLoadingUIDs
-  const totalCount =
-    (basicSchema.totalCount || 0) +
-    (computeSchema.totalCount || 0) +
-    (vouchingSchema.totalCount || 0) +
-    (recognitionSchema.totalCount || 0)
 
   return (
     <div className="space-y-6">
@@ -183,9 +105,9 @@ export default function AttestationsPage() {
             className="w-full terminal-text text-sm p-2 rounded-sm bg-card-foreground/30 shadow-md"
           >
             <option value="all">ALL SCHEMAS</option>
-            {SCHEMA_OPTIONS.map((schema) => (
+            {SCHEMAS.map((schema) => (
               <option key={schema.uid} value={schema.uid}>
-                {schema.name.toUpperCase()}
+                {schema.name}
               </option>
             ))}
           </select>
@@ -223,31 +145,31 @@ export default function AttestationsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <Card type="detail" size="sm">
           <div className="terminal-bright text-lg">
-            {filteredAttestationUIDs.length}
+            {attestationUIDs.length}
           </div>
           <div className="terminal-dim text-xs">SHOWING</div>
         </Card>
         <Card type="detail" size="sm">
-          <div className="terminal-bright text-lg">
-            {allAttestationUIDs.length}
-          </div>
+          <div className="terminal-bright text-lg">{currentTotal}</div>
           <div className="terminal-dim text-xs">FETCHED</div>
         </Card>
         <Card type="detail" size="sm">
-          <div className="terminal-bright text-lg">{totalCount}</div>
+          <div className="terminal-bright text-lg">{totalAttestations}</div>
           <div className="terminal-dim text-xs">TOTAL</div>
         </Card>
         <Card type="detail" size="sm">
-          <div className="terminal-bright text-lg">{SCHEMA_OPTIONS.length}</div>
+          <div className="terminal-bright text-lg">{SCHEMAS.length}</div>
           <div className="terminal-dim text-xs">SCHEMAS</div>
         </Card>
       </div>
 
       {/* Loading State */}
-      {isLoading && (
+      {(isLoadingUIDs ||
+        isLoadingCurrentTotal ||
+        isLoadingTotalAttestations) && (
         <div className="text-center py-8">
           <div className="terminal-bright text-lg">
             ◉ LOADING ATTESTATIONS ◉
@@ -260,7 +182,7 @@ export default function AttestationsPage() {
 
       {/* Hidden components to fetch status data */}
       <div style={{ display: 'none' }}>
-        {allAttestationUIDs.map((item) => (
+        {attestationUIDs.map((item) => (
           <AttestationWithStatus
             key={`status-${item.uid}`}
             uid={item.uid}
@@ -271,15 +193,15 @@ export default function AttestationsPage() {
 
       {/* Attestations List */}
       <div className="space-y-4">
-        {!isLoading &&
-          filteredAttestationUIDs.map((item) => (
+        {!isLoadingUIDs &&
+          attestationUIDs.map((item) => (
             <AttestationCard key={item.uid} uid={item.uid} />
           ))}
       </div>
 
-      {!isLoading &&
-        filteredAttestationUIDs.length === 0 &&
-        allAttestationUIDs.length > 0 && (
+      {!isLoadingTotalAttestations &&
+        currentTotal === 0 &&
+        totalAttestations > 0 && (
           <div className="text-center py-12">
             <div className="terminal-dim text-sm">
               NO ATTESTATIONS MATCH CURRENT FILTERS
@@ -290,7 +212,7 @@ export default function AttestationsPage() {
           </div>
         )}
 
-      {!isLoading && allAttestationUIDs.length === 0 && (
+      {!isLoadingTotalAttestations && totalAttestations === 0 && (
         <div className="text-center py-12">
           <div className="terminal-dim text-sm">NO ATTESTATIONS FOUND</div>
           <div className="system-message text-xs mt-2">

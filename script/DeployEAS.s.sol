@@ -4,9 +4,7 @@ pragma solidity ^0.8.27;
 import {stdJson} from "forge-std/StdJson.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {console} from "forge-std/console.sol";
-import {
-    ISchemaRegistry, SchemaRegistry
-} from "@ethereum-attestation-service/eas-contracts/contracts/SchemaRegistry.sol";
+import {ISchemaRegistry, SchemaRegistry} from "@ethereum-attestation-service/eas-contracts/contracts/SchemaRegistry.sol";
 import {IEAS, EAS} from "@ethereum-attestation-service/eas-contracts/contracts/EAS.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/contracts/resolver/ISchemaResolver.sol";
 import {WavsAttester} from "../src/contracts/eas/WavsAttester.sol";
@@ -26,33 +24,19 @@ contract DeployEAS is Common {
     using stdJson for string;
 
     string public root = vm.projectRoot();
-    string public script_output_path = string.concat(root, "/.docker/eas_deploy.json");
-
-    struct EasDeployment {
-        address schemaRegistry;
-        address eas;
-        address attester;
-        address schemaRegistrar;
-        address indexerResolver;
-        address payableIndexerResolver;
-        address attesterIndexerResolver;
-        address easAttestTrigger;
-        bytes32 basicSchema;
-        bytes32 computeSchema;
-        bytes32 statementSchema;
-        bytes32 isTrueSchema;
-        bytes32 likeSchema;
-        bytes32 vouchingSchema;
-        bytes32 recognitionSchema;
-    }
+    string public script_output_path =
+        string.concat(root, "/.docker/eas_deploy.json");
 
     /// @notice Deploy EAS contracts and WAVS integration
     /// @param wavsServiceManagerAddr The WAVS service manager address
-    function run(string calldata wavsServiceManagerAddr) public returns (EasDeployment memory deployment) {
+    function run(string calldata wavsServiceManagerAddr) public {
         vm.startBroadcast(_privateKey);
 
         address serviceManager = vm.parseAddress(wavsServiceManagerAddr);
-        require(serviceManager != address(0), "Invalid service manager address");
+        require(
+            serviceManager != address(0),
+            "Invalid service manager address"
+        );
 
         console.log("Deploying EAS contracts...");
 
@@ -61,133 +45,172 @@ contract DeployEAS is Common {
 
         // 1. Deploy SchemaRegistry
         SchemaRegistry schemaRegistry = new SchemaRegistry();
-        deployment.schemaRegistry = address(schemaRegistry);
-        _contractsJson.serialize("schema_registry", Strings.toChecksumHexString(address(schemaRegistry)));
-        console.log("SchemaRegistry deployed at:", deployment.schemaRegistry);
+        _contractsJson.serialize(
+            "schema_registry",
+            Strings.toChecksumHexString(address(schemaRegistry))
+        );
+        console.log("SchemaRegistry deployed at:", address(schemaRegistry));
 
         // 2. Deploy EAS
-        EAS eas = new EAS(ISchemaRegistry(deployment.schemaRegistry));
-        deployment.eas = address(eas);
-        _contractsJson.serialize("eas", Strings.toChecksumHexString(address(eas)));
-        console.log("EAS deployed at:", deployment.eas);
+        EAS eas = new EAS(ISchemaRegistry(address(schemaRegistry)));
+        _contractsJson.serialize(
+            "eas",
+            Strings.toChecksumHexString(address(eas))
+        );
+        console.log("EAS deployed at:", address(eas));
 
         // 3. Deploy EASIndexerResolver
-        EASIndexerResolver indexerResolver = new EASIndexerResolver(IEAS(deployment.eas));
-        deployment.indexerResolver = address(indexerResolver);
-        _contractsJson.serialize("indexer_resolver", Strings.toChecksumHexString(address(indexerResolver)));
-        console.log("EASIndexerResolver deployed at:", deployment.indexerResolver);
+        EASIndexerResolver indexerResolver = new EASIndexerResolver(
+            IEAS(address(eas))
+        );
+        _contractsJson.serialize(
+            "indexer_resolver",
+            Strings.toChecksumHexString(address(indexerResolver))
+        );
+        console.log(
+            "EASIndexerResolver deployed at:",
+            address(indexerResolver)
+        );
 
         // 4. Deploy PayableEASIndexerResolver (0.001 ETH target value)
         PayableEASIndexerResolver payableIndexerResolver = new PayableEASIndexerResolver(
-            IEAS(deployment.eas),
-            0.001 ether, // Target value for attestations
-            msg.sender // Owner (deployer)
-        );
-        deployment.payableIndexerResolver = address(payableIndexerResolver);
+                IEAS(address(eas)),
+                0.001 ether, // Target value for attestations
+                msg.sender // Owner (deployer)
+            );
         _contractsJson.serialize(
-            "payable_indexer_resolver", Strings.toChecksumHexString(address(payableIndexerResolver))
+            "payable_indexer_resolver",
+            Strings.toChecksumHexString(address(payableIndexerResolver))
         );
-        console.log("PayableEASIndexerResolver deployed at:", deployment.payableIndexerResolver);
+        console.log(
+            "PayableEASIndexerResolver deployed at:",
+            address(payableIndexerResolver)
+        );
 
         // 5. Deploy SchemaRegistrar
-        SchemaRegistrar schemaRegistrar = new SchemaRegistrar(ISchemaRegistry(deployment.schemaRegistry));
-        deployment.schemaRegistrar = address(schemaRegistrar);
-        _contractsJson.serialize("schema_registrar", Strings.toChecksumHexString(address(schemaRegistrar)));
-        console.log("SchemaRegistrar deployed at:", deployment.schemaRegistrar);
+        SchemaRegistrar schemaRegistrar = new SchemaRegistrar(
+            ISchemaRegistry(address(schemaRegistry))
+        );
+        _contractsJson.serialize(
+            "schema_registrar",
+            Strings.toChecksumHexString(address(schemaRegistrar))
+        );
+        console.log("SchemaRegistrar deployed at:", address(schemaRegistrar));
 
         // 6. Deploy WavsAttester (main WAVS integration contract)
-        WavsAttester attester = new WavsAttester(IEAS(deployment.eas), IWavsServiceManager(serviceManager));
-        deployment.attester = address(attester);
-        _contractsJson.serialize("attester", Strings.toChecksumHexString(address(attester)));
-        console.log("WavsAttester deployed at:", deployment.attester);
+        WavsAttester attester = new WavsAttester(
+            IEAS(address(eas)),
+            IWavsServiceManager(serviceManager)
+        );
+        _contractsJson.serialize(
+            "attester",
+            Strings.toChecksumHexString(address(attester))
+        );
+        console.log("WavsAttester deployed at:", address(attester));
 
         // 7. Deploy AttesterEASIndexerResolver (targets WavsAttester)
         AttesterEASIndexerResolver attesterIndexerResolver = new AttesterEASIndexerResolver(
-            IEAS(deployment.eas),
-            deployment.attester, // Target the WavsAttester contract
-            msg.sender // Owner (deployer)
-        );
-        deployment.attesterIndexerResolver = address(attesterIndexerResolver);
+                IEAS(address(eas)),
+                address(attester), // Target the WavsAttester contract
+                msg.sender // Owner (deployer)
+            );
         _contractsJson.serialize(
-            "attester_indexer_resolver", Strings.toChecksumHexString(address(attesterIndexerResolver))
+            "attester_indexer_resolver",
+            Strings.toChecksumHexString(address(attesterIndexerResolver))
         );
-        console.log("AttesterEASIndexerResolver deployed at:", deployment.attesterIndexerResolver);
+        console.log(
+            "AttesterEASIndexerResolver deployed at:",
+            address(attesterIndexerResolver)
+        );
 
         // 8. Deploy EASAttestTrigger
         EASAttestTrigger easAttestTrigger = new EASAttestTrigger();
-        deployment.easAttestTrigger = address(easAttestTrigger);
-        string memory finalContractsJson =
-            _contractsJson.serialize("attest_trigger", Strings.toChecksumHexString(address(easAttestTrigger)));
-        console.log("EASAttestTrigger deployed at:", deployment.easAttestTrigger);
+        string memory finalContractsJson = _contractsJson.serialize(
+            "attest_trigger",
+            Strings.toChecksumHexString(address(easAttestTrigger))
+        );
+        console.log("EASAttestTrigger deployed at:", address(easAttestTrigger));
 
         // 9. Register basic schemas
         console.log("Registering schemas...");
 
         // Basic attestation schema for general data (with indexing)
-        deployment.basicSchema = schemaRegistrar.register(
+        createSchema(
+            schemaRegistrar,
+            _schemasJson,
+            address(indexerResolver),
+            "basic",
+            "General purpose attestation",
             "bytes32 triggerId,string data,uint256 timestamp",
-            ISchemaResolver(deployment.indexerResolver),
-            true // revocable
+            true
         );
-        _schemasJson.serialize("basic", vm.toString(deployment.basicSchema));
-        console.log("Basic Schema ID:", vm.toString(deployment.basicSchema));
-
         // Compute result schema for computation results (with indexing)
-        deployment.computeSchema = schemaRegistrar.register(
+        createSchema(
+            schemaRegistrar,
+            _schemasJson,
+            address(indexerResolver),
+            "compute",
+            "Computational verification",
             "bytes32 triggerId,string computation,bytes result,uint256 timestamp,address operator",
-            ISchemaResolver(deployment.indexerResolver),
-            true // revocable
+            true
         );
-        _schemasJson.serialize("compute", vm.toString(deployment.computeSchema));
-        console.log("Compute Schema ID:", vm.toString(deployment.computeSchema));
-
         // Statement schema for simple text statements
-        // This resolver requires payment
-        deployment.statementSchema = schemaRegistrar.register(
+        createSchema(
+            schemaRegistrar,
+            _schemasJson,
+            address(indexerResolver),
+            "statement",
+            "Make an arbitrary statement",
             "string statement",
-            ISchemaResolver(deployment.payableIndexerResolver),
-            true // revocable
+            true
         );
-        _schemasJson.serialize("statement", vm.toString(deployment.statementSchema));
-        console.log("Statement Schema ID:", vm.toString(deployment.statementSchema));
-
-        // IsTrue schema for boolean truth assertions
-        deployment.isTrueSchema = schemaRegistrar.register(
+        // isTrue schema for boolean truth assertions
+        createSchema(
+            schemaRegistrar,
+            _schemasJson,
+            address(indexerResolver),
+            "is_true",
+            "Boolean truth assertion",
             "bool isTrue",
-            ISchemaResolver(deployment.indexerResolver),
-            true // revocable
+            true
         );
-        _schemasJson.serialize("is_true", vm.toString(deployment.isTrueSchema));
-        console.log("IsTrue Schema ID:", vm.toString(deployment.isTrueSchema));
-
         // Like schema for simple like/dislike attestations
-        // Only the WavsAttester can attest to this schema
-        deployment.likeSchema = schemaRegistrar.register(
+        createSchema(
+            schemaRegistrar,
+            _schemasJson,
+            // Only the WavsAttester can attest to this schema
+            address(attesterIndexerResolver),
+            "like",
+            "Simple like/dislike assertion",
             "bool like",
-            ISchemaResolver(deployment.attesterIndexerResolver),
-            true // revocable
+            true
         );
-        _schemasJson.serialize("like", vm.toString(deployment.likeSchema));
-        console.log("Like Schema ID:", vm.toString(deployment.likeSchema));
-
         // Vouching schema for weighted endorsements
-        deployment.vouchingSchema = schemaRegistrar.register(
+        createSchema(
+            schemaRegistrar,
+            _schemasJson,
+            address(indexerResolver),
+            "vouching",
+            "Weighted endorsement",
             "uint256 weight",
-            ISchemaResolver(deployment.indexerResolver),
-            true // revocable
+            true
         );
-        _schemasJson.serialize("vouching", vm.toString(deployment.vouchingSchema));
-        console.log("Vouching Schema ID:", vm.toString(deployment.vouchingSchema));
-
         // Recognition schema for weighted endorsements
-        deployment.recognitionSchema = schemaRegistrar.register(
+        createSchema(
+            schemaRegistrar,
+            _schemasJson,
+            address(indexerResolver),
+            "recognition",
+            "Recognize contributions",
             "string reason,uint256 value",
-            ISchemaResolver(deployment.indexerResolver),
-            true // revocable
+            true
         );
-        string memory finalSchemasJson =
-            _schemasJson.serialize("recognition", vm.toString(deployment.recognitionSchema));
-        console.log("Recognition Schema ID:", vm.toString(deployment.recognitionSchema));
+
+        string memory finalSchemasJson = vm.serializeString(
+            _schemasJson,
+            "_",
+            "_"
+        );
 
         vm.stopBroadcast();
 
@@ -198,13 +221,50 @@ contract DeployEAS is Common {
 
         // Log deployment summary
         console.log("\n=== EAS Deployment Summary ===");
-        console.log("SchemaRegistry:", deployment.schemaRegistry);
-        console.log("EAS:", deployment.eas);
-        console.log("WavsAttester:", deployment.attester);
-        console.log("SchemaRegistrar:", deployment.schemaRegistrar);
-        console.log("EASIndexerResolver:", deployment.indexerResolver);
-        console.log("PayableEASIndexerResolver:", deployment.payableIndexerResolver);
-        console.log("AttesterEASIndexerResolver:", deployment.attesterIndexerResolver);
-        console.log("EASAttestTrigger:", deployment.easAttestTrigger);
+        console.log("SchemaRegistry:", address(schemaRegistry));
+        console.log("EAS:", address(eas));
+        console.log("WavsAttester:", address(attester));
+        console.log("SchemaRegistrar:", address(schemaRegistrar));
+        console.log("EASIndexerResolver:", address(indexerResolver));
+        console.log(
+            "PayableEASIndexerResolver:",
+            address(payableIndexerResolver)
+        );
+        console.log(
+            "AttesterEASIndexerResolver:",
+            address(attesterIndexerResolver)
+        );
+        console.log("EASAttestTrigger:", address(easAttestTrigger));
+    }
+
+    /// @notice Create a new schema
+    function createSchema(
+        SchemaRegistrar schemaRegistrar,
+        string memory schemasJson,
+        address resolverAddr,
+        string memory key,
+        string memory description,
+        string memory schema,
+        bool revocable
+    ) public returns (bytes32) {
+        string memory newSchemaJson = string.concat(key, "_json");
+
+        bytes32 uid = schemaRegistrar.register(
+            schema,
+            ISchemaResolver(resolverAddr),
+            revocable
+        );
+        console.log(key, "schema ID:", vm.toString(uid));
+
+        newSchemaJson.serialize("description", description);
+        newSchemaJson.serialize("schema", schema);
+        newSchemaJson.serialize("resolver", vm.toString(resolverAddr));
+        vm.serializeBool(newSchemaJson, "revocable", revocable);
+        newSchemaJson = newSchemaJson.serialize("uid", vm.toString(uid));
+
+        // Add the new schema to the schemas JSON
+        schemasJson.serialize(key, newSchemaJson);
+
+        return uid;
     }
 }

@@ -26,11 +26,11 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useAttestation } from '@/hooks/useAttestation'
-import { SCHEMA_OPTIONS, schemas } from '@/lib/schemas'
+import { SCHEMAS, SchemaKey, SchemaManager } from '@/lib/schemas'
 import { localChain } from '@/lib/wagmi'
 
 interface AttestationFormData {
-  schema: string
+  schema: SchemaKey
   recipient: string
   data: Record<string, string>
 }
@@ -57,20 +57,19 @@ export function CreateAttestationModal({
       setInternalIsOpen(value)
     }
   }
-  const [selectedSchema, setSelectedSchema] = useState<string>('')
+
+  const form = useForm<AttestationFormData>({
+    defaultValues: {
+      schema: 'recognition',
+      recipient: '',
+      data: {},
+    },
+  })
 
   const { isConnected, chain } = useAccount()
   const { connect } = useConnect()
   const { createAttestation, isLoading, isSuccess, error, hash } =
     useAttestation()
-
-  const form = useForm<AttestationFormData>({
-    defaultValues: {
-      schema: '',
-      recipient: '',
-      data: {},
-    },
-  })
 
   // Monitor transaction state
   useEffect(() => {
@@ -79,7 +78,6 @@ export function CreateAttestationModal({
       onSuccess?.()
       setIsOpen(false)
       form.reset()
-      setSelectedSchema('')
     }
   }, [hash, isSuccess, onSuccess, form])
 
@@ -99,28 +97,10 @@ export function CreateAttestationModal({
     }
   }
 
-  const selectedSchemaInfo = SCHEMA_OPTIONS.find(
-    (s) => s.uid === selectedSchema
-  )
-
-  const getSchemaHelperText = (schemaInfo: typeof selectedSchemaInfo) => {
-    if (!schemaInfo) return null
-
-    switch (schemaInfo.uid) {
-      case schemas.vouching:
-        return 'Enter a numeric weight value representing the strength of your vouch'
-      case schemas.basic:
-        return 'Enter any text-based attestation or message'
-      case schemas.compute:
-        return 'Provide computational verification data'
-      case schemas.recognition:
-        return 'Enter reason and an optional value'
-      case schemas.statement:
-        return 'Attest to an arbitrary statement'
-      default:
-        return null
-    }
-  }
+  const selectedSchemaKey = form.watch('schema')
+  const selectedSchemaInfo = selectedSchemaKey
+    ? SchemaManager.schemaForKey(selectedSchemaKey)
+    : undefined
 
   const defaultTrigger = (
     <Button
@@ -218,10 +198,7 @@ export function CreateAttestationModal({
                           SCHEMA TYPE
                         </FormLabel>
                         <Select
-                          onValueChange={(value) => {
-                            field.onChange(value)
-                            setSelectedSchema(value)
-                          }}
+                          onValueChange={(value) => field.onChange(value)}
                           value={field.value}
                         >
                           <FormControl>
@@ -230,8 +207,8 @@ export function CreateAttestationModal({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent className="border-gray-700 bg-black terminal-text">
-                            {SCHEMA_OPTIONS.map((schema) => (
-                              <SelectItem key={schema.uid} value={schema.uid}>
+                            {SCHEMAS.map((schema) => (
+                              <SelectItem key={schema.key} value={schema.key}>
                                 {schema.name}
                               </SelectItem>
                             ))}
@@ -245,7 +222,7 @@ export function CreateAttestationModal({
 
                 {selectedSchemaInfo && (
                   <div className="terminal-dim text-xs">
-                    {getSchemaHelperText(selectedSchemaInfo)}
+                    {SchemaManager.schemaHelperText(selectedSchemaInfo.key)}
                   </div>
                 )}
 
