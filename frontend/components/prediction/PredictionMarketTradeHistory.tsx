@@ -1,0 +1,171 @@
+'use client'
+
+import { usePonderQuery } from '@ponder/react'
+import clsx from 'clsx'
+import type React from 'react'
+import { formatUnits } from 'viem'
+import { useAccount, useReadContract } from 'wagmi'
+
+import { mockUsdcAbi, mockUsdcAddress } from '@/lib/contracts'
+
+import { HyperstitionMarket } from './PredictionMarketDetail'
+
+export type PredictionMarketTradeHistoryProps = {
+  market: HyperstitionMarket
+  window: ChartWindow
+  onlyMyTrades: boolean
+}
+
+enum ChartWindow {
+  Day = 'day',
+  Week = 'week',
+  Month = 'month',
+  All = 'all',
+}
+
+const windowAgo: Record<ChartWindow, number> = {
+  [ChartWindow.Day]: 60 * 60 * 24,
+  [ChartWindow.Week]: 60 * 60 * 24 * 7,
+  [ChartWindow.Month]: 60 * 60 * 24 * 30,
+  [ChartWindow.All]: Infinity,
+}
+
+export const PredictionMarketTradeHistory: React.FC<
+  PredictionMarketTradeHistoryProps
+> = ({ market, window, onlyMyTrades }) => {
+  const { address } = useAccount()
+
+  // Use mock USDC for collateral balance
+  const { data: collateralSymbol = 'USDC' } = useReadContract({
+    address: mockUsdcAddress,
+    abi: mockUsdcAbi,
+    functionName: 'symbol',
+  })
+
+  const {
+    data: tradeHistory,
+    isLoading: isLoadingTradeHistory,
+    isError: isErrorTradeHistory,
+    error: errorTradeHistory,
+  } = usePonderQuery({
+    queryFn: (db) =>
+      db.query.predictionMarketTrade.findMany({
+        orderBy: (t, { desc }) => desc(t.timestamp),
+        limit: 100,
+        where: (t, { and, eq, gte }) =>
+          and(
+            eq(t.marketAddress, market.marketMakerAddress),
+            ...(onlyMyTrades && address ? [eq(t.address, address)] : []),
+            ...(window !== ChartWindow.All
+              ? [
+                  gte(
+                    t.timestamp,
+                    BigInt(Math.floor(Date.now() / 1000 - windowAgo[window]))
+                  ),
+                ]
+              : [])
+          ),
+      }),
+  })
+
+  return isLoadingTradeHistory ? (
+    <div className="flex items-center justify-center py-8">
+      <div className="terminal-bright text-sm">◉ LOADING TRADE HISTORY ◉</div>
+    </div>
+  ) : isErrorTradeHistory ? (
+    <div className="flex flex-col items-center justify-center py-8">
+      <div className="terminal-bright text-sm">
+        ◉ ERROR LOADING TRADE HISTORY ◉
+      </div>
+      <div className="terminal-dim text-xs mt-1">
+        {errorTradeHistory?.message}
+      </div>
+    </div>
+  ) : !tradeHistory || tradeHistory.length === 0 ? (
+    <div className="flex items-center justify-center py-8">
+      <div className="terminal-dim text-sm">
+        {onlyMyTrades && address
+          ? 'No trades found for your wallet'
+          : !address && onlyMyTrades
+          ? 'Connect your wallet to view your trades'
+          : 'No trade history available'}
+      </div>
+    </div>
+  ) : (
+    <div className="border border-gray-600 rounded overflow-hidden min-w-0">
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="bg-gray-800/50 border-b border-gray-600">
+              <th className="text-left p-3 terminal-dim font-mono">TIME</th>
+              <th className="text-left p-3 terminal-dim font-mono">TRADE</th>
+              <th className="text-left p-3 terminal-dim font-mono">OUTCOME</th>
+              <th className="text-left p-3 terminal-dim font-mono">TRADER</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tradeHistory.map((trade, index) => {
+              const isUserTrade =
+                address && trade.address.toLowerCase() === address.toLowerCase()
+              return (
+                <tr
+                  key={trade.id}
+                  className={`border-b border-gray-700/50 hover:bg-gray-800/30 transition-colors ${
+                    index % 2 === 0 ? 'bg-gray-900/20' : ''
+                  }`}
+                >
+                  <td className="p-3 terminal-text">
+                    {new Date(Number(trade.timestamp) * 1000).toLocaleString(
+                      [],
+                      {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      }
+                    )}
+                  </td>
+                  <td
+                    className={clsx(
+                      'p-3 terminal-text font-mono',
+                      trade.type === 'buy' ? '!text-green' : '!text-pink'
+                    )}
+                  >
+                    {trade.type.toUpperCase()}{' '}
+                    {Number(formatUnits(trade.cost, 18)).toLocaleString(
+                      undefined,
+                      {
+                        maximumFractionDigits: 3,
+                      }
+                    )}
+                  </td>
+                  <td className="p-3 terminal-text">
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-mono ${
+                        trade.outcome === 'yes'
+                          ? 'bg-green/20 text-green border border-green/30'
+                          : 'bg-pink/20 text-pink border border-pink/30'
+                      }`}
+                    >
+                      {trade.outcome.toUpperCase()}
+                    </span>
+                  </td>
+                  <td className="p-3 terminal-dim font-mono">
+                    {isUserTrade ? (
+                      <span className="font-semibold">YOU</span>
+                    ) : (
+                      <>
+                        {trade.address.slice(0, 6)}...
+                        {trade.address.slice(-4)}
+                      </>
+                    )}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}

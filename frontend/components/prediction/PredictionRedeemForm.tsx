@@ -19,7 +19,7 @@ interface PredictionRedeemFormProps {
   onSuccess?: () => void
 }
 
-const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
+export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
   market,
   onSuccess,
 }) => {
@@ -128,29 +128,34 @@ const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
     query: { enabled: !!address && !!noPositionId },
   })
 
-  // Determine which position the user has (if any)
-  const userPosition = React.useMemo(() => {
-    if (!yesBalance && !noBalance) return null
-
+  // Determine which positions the user has (can have both YES and NO)
+  const userPositions = React.useMemo(() => {
     const yesAmount = yesBalance || BigInt(0)
     const noAmount = noBalance || BigInt(0)
 
+    const positions = []
+
     if (yesAmount > BigInt(0)) {
-      return {
+      positions.push({
         outcome: 'YES' as const,
         amount: yesAmount,
         canRedeem: market.isResolved || false,
-      }
-    } else if (noAmount > BigInt(0)) {
-      return {
+      })
+    }
+
+    if (noAmount > BigInt(0)) {
+      positions.push({
         outcome: 'NO' as const,
         amount: noAmount,
         canRedeem: market.isResolved || false,
-      }
+      })
     }
 
-    return null
+    return positions
   }, [yesBalance, noBalance, market.isResolved])
+
+  // Legacy single position for backwards compatibility (unused but kept for potential future use)
+  const _userPosition = userPositions.length > 0 ? userPositions[0] : null
 
   // Get payout denominator
   const { data: payoutDenominator } = useReadContract({
@@ -158,7 +163,7 @@ const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
     abi: conditionalTokensAbi,
     functionName: 'payoutDenominator',
     args: conditionId ? [conditionId] : undefined,
-    query: { enabled: !!conditionId && !!market.isResolved },
+    query: { enabled: !!conditionId },
   })
 
   // Get payout numerators for YES outcome (index 1)
@@ -167,7 +172,7 @@ const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
     abi: conditionalTokensAbi,
     functionName: 'payoutNumerators',
     args: conditionId ? [conditionId, BigInt(1)] : undefined,
-    query: { enabled: !!conditionId && !!market.isResolved },
+    query: { enabled: !!conditionId },
   })
 
   // Get payout numerators for NO outcome (index 0)
@@ -176,32 +181,77 @@ const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
     abi: conditionalTokensAbi,
     functionName: 'payoutNumerators',
     args: conditionId ? [conditionId, BigInt(0)] : undefined,
-    query: { enabled: !!conditionId && !!market.isResolved },
+    query: { enabled: !!conditionId },
   })
 
-  // Calculate expected payout
+  // Determine if the market is actually resolved by checking if payout numerators exist
+  const isMarketResolved = React.useMemo(() => {
+    return (
+      payoutDenominator !== undefined &&
+      yesPayoutNumerator !== undefined &&
+      noPayoutNumerator !== undefined &&
+      payoutDenominator > BigInt(0)
+    )
+  }, [payoutDenominator, yesPayoutNumerator, noPayoutNumerator])
+
+  // Determine the actual market outcome from the contract
+  const marketOutcome = React.useMemo(() => {
+    if (!isMarketResolved) return null
+
+    // YES outcome wins if yesPayoutNumerator > 0 and noPayoutNumerator = 0
+    // NO outcome wins if noPayoutNumerator > 0 and yesPayoutNumerator = 0
+    // Could also be a draw if both are equal and > 0
+    if (yesPayoutNumerator! > BigInt(0) && noPayoutNumerator === BigInt(0)) {
+      return 'YES'
+    } else if (
+      noPayoutNumerator! > BigInt(0) &&
+      yesPayoutNumerator === BigInt(0)
+    ) {
+      return 'NO'
+    } else {
+      // This handles draws or other edge cases
+      return null
+    }
+  }, [isMarketResolved, yesPayoutNumerator, noPayoutNumerator])
+
+  // Calculate expected payout for all positions
   useEffect(() => {
     if (
-      !userPosition ||
+      userPositions.length === 0 ||
+      !isMarketResolved ||
       !payoutDenominator ||
-      (!yesPayoutNumerator && !noPayoutNumerator)
+      (yesPayoutNumerator === undefined && noPayoutNumerator === undefined)
     ) {
+      setExpectedPayout(null)
       return
     }
 
     try {
-      const payoutNumerator =
-        userPosition.outcome === 'YES' ? yesPayoutNumerator : noPayoutNumerator
-      if (!payoutNumerator) return
+      let totalPayout = BigInt(0)
 
-      // Calculate payout: (position.amount * payoutNumerator) / payoutDenominator
-      const payoutAmount =
-        (userPosition.amount * payoutNumerator) / payoutDenominator
-      setExpectedPayout(formatUnits(payoutAmount, 18))
+      for (const position of userPositions) {
+        const payoutNumerator =
+          position.outcome === 'YES' ? yesPayoutNumerator : noPayoutNumerator
+        if (payoutNumerator !== undefined) {
+          // Calculate payout: (position.amount * payoutNumerator) / payoutDenominator
+          const positionPayout =
+            (position.amount * payoutNumerator) / payoutDenominator
+          totalPayout += positionPayout
+        }
+      }
+
+      setExpectedPayout(formatUnits(totalPayout, 18))
     } catch (err) {
       console.error('Error calculating expected payout:', err)
+      setExpectedPayout(null)
     }
-  }, [userPosition, payoutDenominator, yesPayoutNumerator, noPayoutNumerator])
+  }, [
+    userPositions,
+    isMarketResolved,
+    payoutDenominator,
+    yesPayoutNumerator,
+    noPayoutNumerator,
+  ])
 
   const handleRedeem = async () => {
     if (!isConnected || !address) {
@@ -209,12 +259,12 @@ const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
       return
     }
 
-    if (!userPosition) {
-      setError('No position found to redeem')
+    if (userPositions.length === 0) {
+      setError('No positions found to redeem')
       return
     }
 
-    if (!market.isResolved) {
+    if (!isMarketResolved) {
       setError('Market must be resolved before redeeming')
       return
     }
@@ -223,12 +273,13 @@ const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
     setSuccess(null)
 
     try {
-      // Create index sets for redemption
+      // Create index sets for redemption - include all positions the user has
       // Index set 1 = binary 01 = decimal 1 (represents NO)
       // Index set 2 = binary 10 = decimal 2 (represents YES)
-      const indexSets = [userPosition.outcome === 'YES' ? BigInt(2) : BigInt(1)]
+      const indexSets = userPositions.map((pos) =>
+        pos.outcome === 'YES' ? BigInt(2) : BigInt(1)
+      )
 
-      // Redeem position
       // Make sure we have a condition ID
       if (!conditionId) {
         throw new Error('Condition ID not found')
@@ -246,11 +297,12 @@ const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
         ],
       })
 
-      setSuccess(
-        `Successfully redeemed ${formatUnits(userPosition.amount, 18)} ${
-          userPosition.outcome
-        } tokens!`
-      )
+      // Create success message with all positions
+      const positionDetails = userPositions
+        .map((pos) => `${formatUnits(pos.amount, 18)} ${pos.outcome}`)
+        .join(' + ')
+
+      setSuccess(`Successfully redeemed ${positionDetails} tokens!`)
 
       // Refresh balances
       refetchYesBalance()
@@ -263,8 +315,9 @@ const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
     }
   }
 
-  const isWinningPosition =
-    userPosition && market.result === (userPosition.outcome === 'YES')
+  // Legacy code - keeping for potential backwards compatibility
+  // const isWinningPosition =
+  //   userPosition && market.result === (userPosition.outcome === 'YES')
 
   // Show loading state while fetching position data
   if (!address || !isConnected) {
@@ -285,7 +338,7 @@ const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
 
   // Show no position message if user has no tokens
   if (
-    userPosition === null &&
+    userPositions.length === 0 &&
     yesBalance !== undefined &&
     noBalance !== undefined
   ) {
@@ -309,7 +362,7 @@ const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
   }
 
   // Show loading while position data is being fetched
-  if (!userPosition) {
+  if (userPositions.length === 0) {
     return (
       <div className="space-y-6">
         <div className="space-y-2">
@@ -334,33 +387,66 @@ const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
       </div>
 
       <div className="bg-black/20 border border-gray-600 p-4 rounded-sm">
-        <div className="flex justify-between items-center">
-          <div>
-            <div className="terminal-dim text-xs">YOUR POSITION</div>
-            <div className="terminal-bright text-base">
-              {formatUnits(userPosition.amount, 18)} {userPosition.outcome}{' '}
-              TOKENS
-            </div>
-          </div>
+        <div className="space-y-3">
+          <div className="terminal-dim text-xs">YOUR POSITIONS</div>
 
-          <div
-            className={`text-sm font-bold px-3 py-1 rounded ${
-              isWinningPosition
-                ? 'text-green-400 bg-green-900/30 border border-green-500'
-                : 'text-red-400 bg-red-900/30 border border-red-500'
-            }`}
-          >
-            {isWinningPosition ? 'WINNING' : 'LOSING'}
-          </div>
+          {userPositions.map((position) => {
+            const isWinning =
+              isMarketResolved && marketOutcome === position.outcome
+            const isLosing =
+              isMarketResolved &&
+              marketOutcome !== null &&
+              marketOutcome !== position.outcome
+
+            return (
+              <div
+                key={position.outcome}
+                className="flex justify-between items-center gap-4"
+              >
+                <div className="flex-1">
+                  <div className="terminal-bright text-base">
+                    {Number(formatUnits(position.amount, 18)).toLocaleString(
+                      undefined,
+                      {
+                        maximumFractionDigits: 3,
+                      }
+                    )}{' '}
+                    {position.outcome} shares
+                  </div>
+                </div>
+
+                {isMarketResolved ? (
+                  <div
+                    className={`text-xs font-bold px-2 py-1 rounded ${
+                      isWinning
+                        ? 'text-green-400 bg-green-900/30 border border-green-500'
+                        : isLosing
+                        ? 'text-red-400 bg-red-900/30 border border-red-500'
+                        : 'text-gray-400 bg-gray-900/30 border border-gray-500'
+                    }`}
+                  >
+                    {isWinning ? 'WON' : isLosing ? 'LOST' : 'DRAW'}
+                  </div>
+                ) : (
+                  <div className="text-xs font-bold px-2 py-1 rounded text-gray-400 bg-gray-900/30 border border-gray-500">
+                    PENDING
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
 
         {expectedPayout !== null && (
           <div className="mt-4 pt-4 border-t border-gray-800">
             <div className="terminal-dim text-xs">
-              EXPECTED REDEMPTION AMOUNT
+              TOTAL EXPECTED REDEMPTION
             </div>
             <div className="terminal-bright text-base text-green-400">
-              {expectedPayout} USDC
+              {Number(expectedPayout).toLocaleString(undefined, {
+                maximumFractionDigits: 3,
+              })}{' '}
+              USDC
             </div>
           </div>
         )}
@@ -380,12 +466,7 @@ const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
 
       <Button
         onClick={handleRedeem}
-        disabled={
-          !isConnected ||
-          !market.isResolved ||
-          !userPosition.canRedeem ||
-          isWriting
-        }
+        disabled={!isConnected || !isMarketResolved || isWriting}
         className="w-full mobile-terminal-btn"
       >
         {isWriting ? (
@@ -395,19 +476,21 @@ const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
             REDEEM FOR {expectedPayout} USDC
           </span>
         ) : (
-          <span className="terminal-command">REDEEM POSITION</span>
+          <span className="terminal-command">REDEEM POSITIONS</span>
         )}
       </Button>
 
       <div className="terminal-dim text-xs">
-        When you redeem your position, you'll receive collateral tokens based on
-        the market outcome.
-        {isWinningPosition
-          ? ' Since you bet on the correct outcome, you can redeem your tokens for collateral.'
+        When you redeem your positions, you&apos;ll receive collateral tokens
+        based on the market outcome.{' '}
+        {!isMarketResolved
+          ? 'The market is not yet resolved, so no redemption is possible.'
+          : userPositions.some((pos) => marketOutcome === pos.outcome)
+          ? userPositions.some((pos) => marketOutcome !== pos.outcome)
+            ? ' You have both winning and losing positions - only winning positions will yield collateral.'
+            : ' Since you bet on the correct outcome, you can redeem your tokens for collateral.'
           : ' Since you bet on the incorrect outcome, your tokens are now worthless.'}
       </div>
     </div>
   )
 }
-
-export default PredictionRedeemForm

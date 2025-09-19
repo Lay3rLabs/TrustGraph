@@ -544,7 +544,7 @@ export default function EN0VATerminal() {
         {isLoading && (
           <div className="terminal-dim select-text">
             <span
-              className="inline-block w-3 h-4 bg-current animate-pulse"
+              className="inline-block w-3 h-4 bg-current animate-blink"
               style={{
                 boxShadow: '0 0 8px currentColor',
               }}
@@ -575,7 +575,7 @@ export default function EN0VATerminal() {
 
         {(isAttesting || attestationLoading) && (
           <div className="terminal-dim mt-4 select-text">
-            <span className="animate-pulse">
+            <span className="animate-blink">
               Processing blockchain transaction...
             </span>
           </div>
