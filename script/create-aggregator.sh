@@ -52,7 +52,7 @@ cat > "${AGG_LOC}/start.sh" << EOF
 #!/bin/bash
 cd \$(dirname "\$0") || return
 
-IMAGE=ghcr.io/lay3rlabs/wavs:0.6.0-beta.2
+IMAGE=ghcr.io/lay3rlabs/wavs:1.0.0
 INSTANCE=wavs-aggregator-${AGGREGATOR_INDEX}
 IPFS_GATEWAY=\${IPFS_GATEWAY:-"https://gateway.pinata.cloud/ipfs/"}
 

@@ -27,4 +27,4 @@ crate-type = ["cdylib"]
 
 [package.metadata.component]
 package = "component:wavs-safe-signer-sync"
-target = "wavs:operator@0.6.0-alpha.15"
+target = "wavs:operator@=1.0.0"

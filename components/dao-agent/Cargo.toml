@@ -39,4 +39,4 @@ lto = true
 
 [package.metadata.component]
 package = "component:dao-agent"
-target = "wavs:operator@0.6.0-alpha.15"
+target = "wavs:operator@=1.0.0"
