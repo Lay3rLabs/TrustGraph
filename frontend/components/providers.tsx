@@ -1,9 +1,12 @@
 'use client'
 
+import { PonderProvider } from '@ponder/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React from 'react'
 import { WagmiProvider } from 'wagmi'
+import { hashFn } from 'wagmi/query'
 
+import { ponderClient } from '@/lib/ponder'
 import { config } from '@/lib/wagmi'
 
 import { Toaster } from './toasts/Toaster'
@@ -21,6 +24,8 @@ const queryClient = new QueryClient({
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
       // Refetch on window focus for real-time blockchain data
       refetchOnWindowFocus: true,
+      // Serialize BigInts in parameters
+      queryKeyHashFn: hashFn,
     },
     mutations: {
       // Retry mutations once on failure
@@ -42,17 +47,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
-        <WalletConnectionProvider>
-          {children}
+      <PonderProvider client={ponderClient}>
+        <QueryClientProvider client={queryClient}>
+          <WalletConnectionProvider>
+            {children}
 
-          <Toaster />
+            <Toaster />
 
-          {/* {process.env.NODE_ENV === "development" && (
+            {/* {process.env.NODE_ENV === "development" && (
           <ReactQueryDevtools initialIsOpen={false} />
         )} */}
-        </WalletConnectionProvider>
-      </QueryClientProvider>
+          </WalletConnectionProvider>
+        </QueryClientProvider>
+      </PonderProvider>
     </WagmiProvider>
   )
 }

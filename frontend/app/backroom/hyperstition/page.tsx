@@ -7,7 +7,8 @@ import { Card } from '@/components/Card'
 import {
   HyperstitionMarket,
   PredictionMarketDetail,
-} from '@/components/PredictionMarketDetail'
+} from '@/components/prediction/PredictionMarketDetail'
+import { lmsrMarketMakerAddress } from '@/lib/contracts'
 
 const markets: HyperstitionMarket[] = [
   {
@@ -24,6 +25,7 @@ const markets: HyperstitionMarket[] = [
     status: 'active',
     icon: '◉',
     unit: 'followers',
+    marketMakerAddress: lmsrMarketMakerAddress,
   },
   {
     id: '2',
@@ -40,6 +42,7 @@ const markets: HyperstitionMarket[] = [
     status: 'active',
     icon: '▲',
     unit: 'stars',
+    marketMakerAddress: lmsrMarketMakerAddress,
   },
   {
     id: '3',
@@ -55,6 +58,7 @@ const markets: HyperstitionMarket[] = [
     status: 'active',
     icon: '◈',
     unit: 'impressions',
+    marketMakerAddress: lmsrMarketMakerAddress,
   },
   {
     id: '4',
@@ -70,6 +74,7 @@ const markets: HyperstitionMarket[] = [
     status: 'active',
     icon: '◆',
     unit: 'USD',
+    marketMakerAddress: lmsrMarketMakerAddress,
   },
   {
     id: '5',
@@ -85,6 +90,7 @@ const markets: HyperstitionMarket[] = [
     status: 'active',
     icon: '∞',
     unit: 'citations',
+    marketMakerAddress: lmsrMarketMakerAddress,
   },
   {
     id: '6',
@@ -100,6 +106,7 @@ const markets: HyperstitionMarket[] = [
     status: 'active',
     icon: '◢◤',
     unit: 'merge',
+    marketMakerAddress: lmsrMarketMakerAddress,
   },
 ]
 
@@ -194,12 +201,8 @@ export default function HyperstitionPage() {
       <Card type="primary" size="lg" className="space-y-2">
         <div className="terminal-command text-lg">HYPERSTITION MARKET</div>
         <div className="system-message">
-          ▲▼ Where collective belief shapes reality through prediction markets
-          ▲▼
-        </div>
-        <div className="terminal-text text-sm">
           Manifest reality through coordinated belief. Achieve hyperstitions,
-          unlock $EN0 incentives.
+          earn points.
         </div>
       </Card>
 

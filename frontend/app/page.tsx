@@ -131,5 +131,5 @@ const SlideFadeInParagraph = ({ children, ...props }: HTMLMotionProps<'p'>) => (
 )
 
 const BlinkingCursor = () => (
-  <p className="animate-pulse inline-block">&nbsp;</p>
+  <p className="animate-blink inline-block">&nbsp;</p>
 )

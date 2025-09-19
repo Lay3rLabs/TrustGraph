@@ -70,18 +70,10 @@ fi
 
 echo "Using component configuration from: $COMPONENT_CONFIGS_FILE"
 
-export PKG_VERSION="0.1.0"
-if [ "$(task get-deploy-status)" = "TESTNET" ]; then
-    read -p "Enter the package version (default: ${PKG_VERSION}): " input_pkg_version
-    if [ -n "$input_pkg_version" ]; then
-        export PKG_VERSION="$input_pkg_version"
-    fi
-fi
-
 # Testnet: set values (default: local if not set)
 if [ "$(task get-deploy-status)" = "TESTNET" ]; then
-    export TRIGGER_CHAIN=sepolia
-    export SUBMIT_CHAIN=sepolia
+    export TRIGGER_CHAIN=evm:11155111
+    export SUBMIT_CHAIN=evm:11155111
 fi
 
 export INDEXER_ADDRESS=$(jq -r '.wavs_indexer' .docker/deployment_summary.json)
@@ -94,9 +86,9 @@ export VOUCHING_SCHEMA_UID=$(jq -r '.eas.schemas.vouching.uid' .docker/deploymen
 
 # Determine chain name based on deployment environment
 if [ "$(task get-deploy-status)" = "TESTNET" ]; then
-    export CHAIN_NAME="evm:11155111"
+    export CHAIN_NAME=evm:11155111 # sepolia
 else
-    export CHAIN_NAME="evm:31337"
+    export CHAIN_NAME=evm:31337 # local
 fi
 
 # Validate EAS addresses were extracted successfully
@@ -172,12 +164,28 @@ sleep 7
 echo "Creating service with multiple component workflows..."
 export COMPONENT_CONFIGS_FILE="$COMPONENT_CONFIGS_FILE"
 # All required variables are now exported for component-specific substitution
-REGISTRY=`task get-registry` source ./script/build-service.sh
+REGISTRY=$(task get-registry) source ./script/build-service.sh
 sleep 1
 
 # === Upload service.json to IPFS ===
 # local: 127.0.0.1:5001 | testnet: https://app.pinata.cloud/. set PINATA_API_KEY to JWT token in .env
 echo "Uploading to IPFS..."
+
+export PINATA_API_KEY=$(grep ^WAVS_ENV_PINATA_API_KEY= .env | cut -d '=' -f2-)
+# if not LOCAL, ensure PINATA_API_KEY is set or PINATA_API_KEY. If neither, require input
+if [ "$(task get-deploy-status)" != "LOCAL" ]; then
+    if [ -z "$PINATA_API_KEY" ]; then
+        read -p "Enter your Pinata JWT API Key (or set WAVS_ENV_PINATA_API_KEY in .env): " PINATA_API_KEY
+        if [ -z "$PINATA_API_KEY" ]; then
+            echo "❌ Pinata API Key is required for TESTNET deployments."
+            exit 1
+        fi
+        export PINATA_API_KEY
+    fi
+
+    read -p "Make any changes you want to the service.json now. Press [Enter] to continue upload to IPFS..."
+fi
+
 export ipfs_cid=`SERVICE_FILE=.docker/service.json make upload-to-ipfs`
 # LOCAL: http://127.0.0.1:8080 | TESTNET: https://gateway.pinata.cloud/
 export IPFS_GATEWAY="$(task get-ipfs-gateway)"
@@ -187,6 +195,14 @@ echo "IPFS_URL=${IPFS_URL}"
 
 echo "Querying to verify IPFS upload... (120 second timeout)"
 curl ${IPFS_URL} --connect-timeout 120 --max-time 120 --show-error --fail
+while [ $? -ne 0 ]; do
+    echo "IPFS upload not yet available. Please ensure the CID is correct and try again."
+    read -p "Enter the IPFS URI (e.g., ipfs://bafkreicglpmavzsomzghbmemauv4i4jkxgaxsqefruxtplulul7o2sg33e): " IPFS_URI
+    ipfs_cid=$(echo $IPFS_URI | sed 's|ipfs://||')
+    IPFS_URL="${IPFS_GATEWAY}${ipfs_cid}"
+    curl ${IPFS_URL} --connect-timeout 120 --max-time 120 --show-error --fail
+done
+
 
 if [ "$FUNDED_KEY" ]; then
     echo ""
@@ -256,7 +272,7 @@ fi
 
 # Reset registry after deployment is complete
 echo "Cleaning up registry data..."
-REGISTRY=`task get-registry`
+REGISTRY=$(task get-registry)
 if [ -n "$REGISTRY" ]; then
     PROTOCOL="https"
     if [[ "$REGISTRY" == *"localhost"* ]] || [[ "$REGISTRY" == *"127.0.0.1"* ]]; then

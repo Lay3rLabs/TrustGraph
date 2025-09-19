@@ -16,6 +16,8 @@ if [ -z "$FUNDED_KEY" ]; then
     export FUNDED_KEY=$(task config:funded-key)
 fi
 
+export DEPLOY_ENV=`task get-deploy-status`
+
 # CRITICAL: Export FUNDED_KEY for Forge scripts to use. Without this the first run will get 'server returned an error response: error code -32003: Insufficient funds for gas * price + value'
 # export FUNDED_KEY="${FUNDED_KEY}"
 
@@ -35,18 +37,16 @@ forge script script/DeployEAS.s.sol:DeployEAS \
     --private-key "${FUNDED_KEY}" \
     --broadcast
 
-echo "🏛️  Deploying Governance contracts..."
-
-# Deploy Governance contracts using Foundry script
-forge script script/DeployGovernance.s.sol:DeployGovernance \
-    --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
-    --rpc-url "${RPC_URL}" \
-    --private-key "${FUNDED_KEY}" \
-    --broadcast
+if [ "$DEPLOY_ENV" = "LOCAL" ]; then
+    echo "🏛️  Deploying Governance contracts..."
+    forge script script/DeployGovernance.s.sol:DeployGovernance \
+        --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
+        --rpc-url "${RPC_URL}" \
+        --private-key "${FUNDED_KEY}" \
+        --broadcast
+fi
 
 echo "💰 Deploying Merkler contracts..."
-
-# Deploy Merkler contracts using Foundry script
 forge script script/DeployMerkler.s.sol:DeployScript \
     --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
     --rpc-url "${RPC_URL}" \
@@ -54,26 +54,29 @@ forge script script/DeployMerkler.s.sol:DeployScript \
     --broadcast
 
 echo "🎲 Deploying Prediction Market contracts..."
-
-# Deploy Prediction Market contracts using Foundry script
 forge script script/DeployPredictionMarket.s.sol:DeployScript \
     --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
     --rpc-url "${RPC_URL}" \
     --private-key "${FUNDED_KEY}" \
     --broadcast
 
-echo "🔐 Deploying Zodiac-enabled Safes with modules..."
+if [ "$DEPLOY_ENV" = "LOCAL" ]; then
+    echo "🔐 Deploying Zodiac-enabled Safes with modules..."
 
-# Deploy Zodiac Safes using Foundry script. MUST RUN AFTER MERKLER DEPLOYMENT.
-export MERKLE_SNAPSHOT_ADDR=`task config:merkle-snapshot-address`
-forge script script/DeployZodiacSafes.s.sol:DeployZodiacSafes \
-    --sig 'run(string,string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" "${MERKLE_SNAPSHOT_ADDR}" \
-    --rpc-url "${RPC_URL}" \
-    --private-key "${FUNDED_KEY}" \
-    --broadcast
+    # MUST RUN AFTER MERKLER DEPLOYMENT.
+    export MERKLE_SNAPSHOT_ADDR=`task config:merkle-snapshot-address`
+    forge script script/DeployZodiacSafes.s.sol:DeployZodiacSafes \
+        --sig 'run(string,string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" "${MERKLE_SNAPSHOT_ADDR}" \
+        --rpc-url "${RPC_URL}" \
+        --private-key "${FUNDED_KEY}" \
+        --broadcast
+fi
 
-echo "🌊 Deploying Geyser contracts..."
-forge create Geyser --json --rpc-url ${RPC_URL} --broadcast --private-key $FUNDED_KEY --constructor-args "${WAVS_SERVICE_MANAGER_ADDRESS}" > .docker/geyser_deploy.json
+if [ "$DEPLOY_ENV" = "LOCAL" ]; then
+    echo "🌊 Deploying Geyser contracts..."
+    forge create Geyser --json --rpc-url ${RPC_URL} --broadcast --private-key $FUNDED_KEY \
+        --constructor-args "${WAVS_SERVICE_MANAGER_ADDRESS}" > .docker/geyser_deploy.json
+fi
 
 echo "🌐 Deploying WavsIndexer contract..."
 
@@ -84,14 +87,15 @@ forge script script/DeployWavsIndexer.s.sol:DeployWavsIndexer \
     --private-key "${FUNDED_KEY}" \
     --broadcast
 
-echo "🏛️  Deploying DAICO contracts..."
 
-# Deploy DAICO contracts using Foundry script
-forge script script/DeployDAICO.s.sol:DeployScript \
-    --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
-    --rpc-url "${RPC_URL}" \
-    --private-key "${FUNDED_KEY}" \
-    --broadcast
+if [ "$DEPLOY_ENV" = "LOCAL" ]; then
+    echo "🏛️  Deploying DAICO contracts..."
+    forge script script/DeployDAICO.s.sol:DeployScript \
+        --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
+        --rpc-url "${RPC_URL}" \
+        --private-key "${FUNDED_KEY}" \
+        --broadcast
+fi
 
 # Combine all deployment JSON files into a single deployment summary.
 

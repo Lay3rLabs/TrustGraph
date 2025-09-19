@@ -202,7 +202,7 @@ export default function EN0VAPage() {
                   {message.timestamp.toLocaleTimeString()}
                 </span>
                 {message.typing && (
-                  <span className="text-green-400 animate-pulse text-xs">
+                  <span className="text-green-400 animate-blink text-xs">
                     ●●●
                   </span>
                 )}

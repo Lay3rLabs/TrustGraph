@@ -118,6 +118,8 @@
 
   --color-green: var(--green);
   --color-pink: var(--pink);
+
+  --breakpoint-xs: 410px;
 }
 
 @layer base {
@@ -368,6 +370,16 @@
   }
 }
 
+@keyframes pulse {
+  50% {
+    opacity: .5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
 /* Enhanced terminal cursor animations */
 @keyframes blink {
   0%,
@@ -384,7 +396,7 @@
   }
 }
 
-.animate-pulse {
+.animate-blink {
   animation: blink 1.2s infinite;
 }
 
@@ -474,15 +486,16 @@
 .mobile-terminal-btn {
   background: linear-gradient(
     135deg,
-    rgba(17, 24, 39, 0.9) 0%,
-    rgba(0, 0, 0, 0.8) 100%
+    rgba(55, 65, 81, 0.8) 0%,
+    rgba(31, 41, 55, 0.7) 100%
   );
-  border: 1px solid rgba(156, 163, 175, 0.3);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   color: #9ca3af;
   font-family: 'Roboto Mono', 'Courier New', 'Lucida Console', monospace;
   font-size: 10px;
   padding: 8px 4px;
-  border-radius: 4px;
+  border-radius: 6px;
+  border: none;
   cursor: pointer;
   transition: all 0.15s ease;
   min-height: 40px;
@@ -499,25 +512,23 @@
 .mobile-terminal-btn:hover {
   background: linear-gradient(
     135deg,
-    rgba(31, 41, 55, 0.9) 0%,
-    rgba(17, 24, 39, 0.8) 100%
+    rgba(75, 85, 99, 0.9) 0%,
+    rgba(55, 65, 81, 0.8) 100%
   );
-  border-color: rgba(209, 213, 219, 0.5);
   color: #f9fafb;
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
 .mobile-terminal-btn:active {
   background: linear-gradient(
     135deg,
-    rgba(55, 65, 81, 0.9) 0%,
-    rgba(31, 41, 55, 0.8) 100%
+    rgba(107, 114, 128, 0.9) 0%,
+    rgba(75, 85, 99, 0.8) 100%
   );
-  border-color: rgba(255, 255, 255, 0.6);
   color: #ffffff;
   transform: translateY(0px);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
 /* Terminal glow effect for mobile buttons */

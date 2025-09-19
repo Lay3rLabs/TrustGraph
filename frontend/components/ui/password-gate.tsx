@@ -58,7 +58,7 @@ export function PasswordGate({
         <div className="text-center space-y-6">
           {/* Glitch Effect Header */}
           <div className="space-y-2">
-            <h1 className="text-red-400 text-xl font-mono tracking-wider animate-pulse">
+            <h1 className="text-red-400 text-xl font-mono tracking-wider animate-blink">
               ⚠️ {title} ⚠️
             </h1>
             <div className="text-xs terminal-dim">{message}</div>
@@ -85,7 +85,7 @@ export function PasswordGate({
                   maxLength={20}
                 />
                 {error && (
-                  <div className="text-red-400 text-xs font-mono animate-pulse">
+                  <div className="text-red-400 text-xs font-mono animate-blink">
                     {error}
                   </div>
                 )}
@@ -101,7 +101,7 @@ export function PasswordGate({
             </form>
           ) : (
             <div className="space-y-4">
-              <div className="text-red-500 text-xs font-mono animate-pulse">
+              <div className="text-red-500 text-xs font-mono animate-blink">
                 🚨 SYSTEM LOCKED 🚨
               </div>
               <div className="text-gray-500 text-xs">

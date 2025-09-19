@@ -39,6 +39,7 @@ export const Nav = () => {
           animatorLabel="nav"
           blinkInterval
           blinkOnClick
+          blinkOnHover
         />
       </Link>
 
