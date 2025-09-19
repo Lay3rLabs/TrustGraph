@@ -43,7 +43,7 @@ tasks:
           cast rpc anvil_setBalance ${OPERATOR_ADDRESS} $(cast to-hex 100000000000000000) --rpc-url {{.RPC_URL}}
         fi
 
-        echo "📝 Registering operator in WAVS Service Manager..."
+        echo "📝 Whitelisting (registering) operator in WAVS Service Manager..."
         cast send {{.WAVS_SERVICE_MANAGER_ADDRESS}} "registerOperator(address,uint256)" ${OPERATOR_ADDRESS} {{.OPERATOR_WEIGHT}} \
           --private-key ${PRIVATE_KEY} \
           --rpc-url {{.RPC_URL}}

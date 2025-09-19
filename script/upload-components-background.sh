@@ -120,7 +120,7 @@ upload_package() {
     # Create unique temp directory for warg storage (bypasses locking)
     local temp_home=$(mktemp -d -t warg_home_XXXXXX)
 
-    log "[$num] 🚀 Uploading ${PKG_NAME}..."
+    log "[$num] 🚀 Uploading ${PKG_NAME} (${FULL_PKG_NAME}@${PKG_VERSION}) to ${REGISTRY_URL}..."
 
     # Set environment to use isolated storage (avoids .lock files)
     export WARG_HOME="${temp_home}"
