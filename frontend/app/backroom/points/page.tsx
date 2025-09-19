@@ -233,6 +233,10 @@ export default function PointsPage() {
     spanGaps: true,
   }
 
+  const filteredActivities = activities.filter(
+    (activity) => selectedType === 'ALL' || activity.type === selectedType
+  )
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -274,74 +278,87 @@ export default function PointsPage() {
               </div>
             </div> */}
 
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white">RECENT ACTIVITY</h2>
-              <select
-                value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value)}
-                className="font-mono text-xs px-3 py-2 cursor-pointer bg-card-foreground/30 shadow-md"
-              >
-                <option value="ALL">All</option>
-                {types.map((type) => (
-                  <option key={type} value={type}>
-                    {type.toUpperCase()}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {activities.length > 0 && (
+              <>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-bold text-white">
+                    RECENT ACTIVITY
+                  </h2>
+                  <select
+                    value={selectedType}
+                    onChange={(e) => setSelectedType(e.target.value)}
+                    className="font-mono text-xs px-3 py-2 cursor-pointer bg-card-foreground/30 shadow-md"
+                  >
+                    <option value="ALL">All</option>
+                    {types.map((type) => (
+                      <option key={type} value={type}>
+                        {type.toUpperCase()}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-            <div className="space-y-2">
-              {activities
-                .filter(
-                  (activity) =>
-                    selectedType === 'ALL' || activity.type === selectedType
-                )
-                .map((activity) => {
-                  const Icon = ActivityIcon[activity.type]
-                  const label = ActivityLabel[activity.type] || activity.type
-                  const summary =
-                    activity.metadata?.summary || ActivitySummary[activity.type]
-                  return (
-                    <Card
-                      key={activity.id}
-                      type="detail"
-                      size="sm"
-                      className="flex items-center justify-between"
-                    >
-                      <div className="flex items-center space-x-4">
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            {Icon && <Icon className="w-4 h-4" />}
-                            <div className="text-white font-medium text-sm">
-                              {label.toUpperCase()}
+                {filteredActivities.length > 0 ? (
+                  <div className="space-y-2">
+                    {filteredActivities.map((activity) => {
+                      const Icon = ActivityIcon[activity.type]
+                      const label =
+                        ActivityLabel[activity.type] || activity.type
+                      const summary =
+                        activity.metadata?.summary ||
+                        ActivitySummary[activity.type]
+                      return (
+                        <Card
+                          key={activity.id}
+                          type="detail"
+                          size="sm"
+                          className="flex items-center justify-between"
+                        >
+                          <div className="flex items-center space-x-4">
+                            <div>
+                              <div className="flex items-center space-x-2">
+                                {Icon && <Icon className="w-4 h-4" />}
+                                <div className="text-white font-medium text-sm">
+                                  {label.toUpperCase()}
+                                </div>
+                              </div>
+                              {summary && (
+                                <div className="text-xs text-gray-400 mt-1">
+                                  {summary}
+                                </div>
+                              )}
+                              {activity.timestamp && (
+                                <div className="text-xs text-gray-400 mt-1">
+                                  {formatTimeAgo(activity.timestamp)}
+                                </div>
+                              )}
                             </div>
                           </div>
-                          {summary && (
-                            <div className="text-xs text-gray-400 mt-1">
-                              {summary}
+                          <div className="text-right">
+                            <div className="text-green-400 font-bold">
+                              +{activity.points.toLocaleString()}
                             </div>
-                          )}
-                          {activity.timestamp && (
-                            <div className="text-xs text-gray-400 mt-1">
-                              {formatTimeAgo(activity.timestamp)}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-green-400 font-bold">
-                          +{activity.points.toLocaleString()}
-                        </div>
-                        <div className="text-xs text-gray-500">points</div>
-                      </div>
-                    </Card>
-                  )
-                })}
-            </div>
+                            <div className="text-xs text-gray-500">points</div>
+                          </div>
+                        </Card>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <div className="terminal-dim text-base">
+                      NO MATCHING ACTIVITIES FOUND
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
 
             {/* Points Earning Guide Card */}
             <h2 className="text-lg font-bold text-white mt-8">
-              EARN MORE POINTS
+              {activities.length > 0
+                ? 'EARN MORE POINTS'
+                : 'HOW TO EARN POINTS'}
             </h2>
             <Card
               type="detail"
