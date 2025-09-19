@@ -52,20 +52,10 @@ export interface HyperstitionMarket {
   title: string
   description: string
   targetValue: number
-  currentValue: number
   incentivePool: number
-  probability: number
   deadline: string
-  category?: string
-  participants: number
   status: 'active' | 'achieved' | 'failed' | 'pending'
-  icon: string
-  unit: string
   marketMakerAddress: `0x${string}`
-  collateralTokenAddress?: `0x${string}`
-  conditionId?: `0x${string}`
-  isResolved?: boolean
-  result?: boolean
 }
 
 export type PredictionMarketDetailProps = {

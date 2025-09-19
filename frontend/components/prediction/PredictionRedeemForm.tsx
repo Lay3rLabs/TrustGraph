@@ -128,35 +128,6 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
     query: { enabled: !!address && !!noPositionId },
   })
 
-  // Determine which positions the user has (can have both YES and NO)
-  const userPositions = React.useMemo(() => {
-    const yesAmount = yesBalance || BigInt(0)
-    const noAmount = noBalance || BigInt(0)
-
-    const positions = []
-
-    if (yesAmount > BigInt(0)) {
-      positions.push({
-        outcome: 'YES' as const,
-        amount: yesAmount,
-        canRedeem: market.isResolved || false,
-      })
-    }
-
-    if (noAmount > BigInt(0)) {
-      positions.push({
-        outcome: 'NO' as const,
-        amount: noAmount,
-        canRedeem: market.isResolved || false,
-      })
-    }
-
-    return positions
-  }, [yesBalance, noBalance, market.isResolved])
-
-  // Legacy single position for backwards compatibility (unused but kept for potential future use)
-  const _userPosition = userPositions.length > 0 ? userPositions[0] : null
-
   // Get payout denominator
   const { data: payoutDenominator } = useReadContract({
     address: conditionalTokensAddress,
@@ -213,6 +184,30 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
       return null
     }
   }, [isMarketResolved, yesPayoutNumerator, noPayoutNumerator])
+
+  // Determine which positions the user has (can have both YES and NO)
+  const userPositions = React.useMemo(() => {
+    const yesAmount = yesBalance || BigInt(0)
+    const noAmount = noBalance || BigInt(0)
+
+    const positions = []
+
+    if (yesAmount > BigInt(0)) {
+      positions.push({
+        outcome: 'YES' as const,
+        amount: yesAmount,
+      })
+    }
+
+    if (noAmount > BigInt(0)) {
+      positions.push({
+        outcome: 'NO' as const,
+        amount: noAmount,
+      })
+    }
+
+    return positions
+  }, [yesBalance, noBalance])
 
   // Calculate expected payout for all positions
   useEffect(() => {

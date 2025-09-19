@@ -14,7 +14,6 @@ import {
   conditionalTokensAbi,
   conditionalTokensAddress,
   lmsrMarketMakerAbi,
-  lmsrMarketMakerAddress,
   mockUsdcAddress,
   predictionMarketFactoryAddress,
 } from '@/lib/contracts'
@@ -58,9 +57,6 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
       },
     })
 
-  // Use the deployed market maker address
-  const marketMakerAddress = market.marketMakerAddress || lmsrMarketMakerAddress
-
   // Binary search to find the exact collateral amount for the specified shares
   const [estimatedCollateralAmount, setEstimatedCollateralAmount] =
     useState<string>('0')
@@ -91,7 +87,7 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
       try {
         const cost = (await queryClient.fetchQuery(
           readContractQueryOptions(config, {
-            address: marketMakerAddress,
+            address: market.marketMakerAddress,
             abi: lmsrMarketMakerAbi,
             functionName: 'calcNetCost',
             args: [outcomeTokenAmounts],
@@ -128,7 +124,7 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
         return (bestCollateralAmount * BigInt(95)) / BigInt(100)
       }
     },
-    [marketMakerAddress, queryClient]
+    [market.marketMakerAddress, queryClient]
   )
 
   // Effect to calculate collateral output when share amount or outcome changes
@@ -156,7 +152,7 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
     queryClient
       .fetchQuery(
         readContractQueryOptions(config, {
-          address: marketMakerAddress,
+          address: market.marketMakerAddress,
           abi: lmsrMarketMakerAbi,
           functionName: 'calcNetCost',
           args: [outcomeTokenAmounts],
@@ -177,7 +173,12 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
         setCollateralEstimate(null)
         setIsCalculating(false)
       })
-  }, [formData.shareAmount, formData.outcome, marketMakerAddress, queryClient])
+  }, [
+    formData.shareAmount,
+    formData.outcome,
+    market.marketMakerAddress,
+    queryClient,
+  ])
 
   // Get the condition ID from the conditional tokens contract
   const { data: conditionId } = useReadContract({
@@ -320,14 +321,14 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
             address: conditionalTokensAddress,
             abi: conditionalTokensAbi,
             functionName: 'setApprovalForAll',
-            args: [marketMakerAddress, true],
+            args: [market.marketMakerAddress, true],
           },
           successMessage: 'Token approval granted!',
         },
         // Execute sell trade
         {
           tx: {
-            address: marketMakerAddress,
+            address: market.marketMakerAddress,
             abi: lmsrMarketMakerAbi,
             functionName: 'trade',
             args: [outcomeTokenAmounts, -minCollateral], // negative for minimum collateral to receive

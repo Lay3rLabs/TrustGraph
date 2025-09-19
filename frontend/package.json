@@ -80,6 +80,7 @@
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
+    "use-local-storage-state": "^19.5.0",
     "viem": "^2.21.53",
     "wagmi": "^2.16.3",
     "zod": "3.25.67"

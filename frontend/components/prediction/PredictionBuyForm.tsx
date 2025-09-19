@@ -15,7 +15,6 @@ import {
   conditionalTokensAbi,
   conditionalTokensAddress,
   lmsrMarketMakerAbi,
-  lmsrMarketMakerAddress,
   mockUsdcAbi,
   mockUsdcAddress,
   predictionMarketFactoryAddress,
@@ -58,9 +57,6 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
       },
     })
 
-  // Use the deployed market maker address
-  const marketMakerAddress = market.marketMakerAddress || lmsrMarketMakerAddress
-
   // Binary search to find the exact token amount for the specified collateral
   const [estimatedTokenAmount, setEstimatedTokenAmount] = useState<string>('0')
 
@@ -87,7 +83,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
       try {
         const cost = (await queryClient.fetchQuery(
           readContractQueryOptions(config, {
-            address: marketMakerAddress,
+            address: market.marketMakerAddress,
             abi: lmsrMarketMakerAbi,
             functionName: 'calcNetCost',
             args: [outcomeTokenAmounts],
@@ -121,7 +117,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
         return (bestTokenAmount * BigInt(95)) / BigInt(100)
       }
     },
-    [marketMakerAddress, queryClient]
+    [market.marketMakerAddress, queryClient]
   )
 
   // Store reference to the latest collateral amount so we can interrupt async binary search if the collateral amount changes.
@@ -171,7 +167,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
 
   // Calculate YES token cost for 1 token
   const { data: yesCostData, refetch: refetchYesCost } = useReadContract({
-    address: marketMakerAddress,
+    address: market.marketMakerAddress,
     abi: lmsrMarketMakerAbi,
     functionName: 'calcNetCost',
     args: [[BigInt(0), parseUnits('1', 18)]],
@@ -180,7 +176,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
 
   // Calculate NO token cost for 1 token
   const { data: noCostData, refetch: refetchNoCost } = useReadContract({
-    address: marketMakerAddress,
+    address: market.marketMakerAddress,
     abi: lmsrMarketMakerAbi,
     functionName: 'calcNetCost',
     args: [[parseUnits('1', 18), BigInt(0)]],
@@ -325,14 +321,14 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
             address: mockUsdcAddress,
             abi: mockUsdcAbi,
             functionName: 'approve',
-            args: [marketMakerAddress, collateralLimit],
+            args: [market.marketMakerAddress, collateralLimit],
           },
           successMessage: 'Spend approved!',
         },
         // Execute trade
         {
           tx: {
-            address: marketMakerAddress,
+            address: market.marketMakerAddress,
             abi: lmsrMarketMakerAbi,
             functionName: 'trade',
             args: [outcomeTokenAmounts, collateralLimit],
