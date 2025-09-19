@@ -72,8 +72,8 @@ echo "Using component configuration from: $COMPONENT_CONFIGS_FILE"
 
 # Testnet: set values (default: local if not set)
 if [ "$(task get-deploy-status)" = "TESTNET" ]; then
-    export TRIGGER_CHAIN=evm:11155111
-    export SUBMIT_CHAIN=evm:11155111
+    export TRIGGER_CHAIN=evm:$(task get-chain-id)
+    export SUBMIT_CHAIN=evm:$(task get-chain-id)
 fi
 
 export INDEXER_ADDRESS=$(jq -r '.wavs_indexer' .docker/deployment_summary.json)
@@ -86,7 +86,7 @@ export VOUCHING_SCHEMA_UID=$(jq -r '.eas.schemas.vouching.uid' .docker/deploymen
 
 # Determine chain name based on deployment environment
 if [ "$(task get-deploy-status)" = "TESTNET" ]; then
-    export CHAIN_NAME=evm:11155111 # sepolia
+    export CHAIN_NAME=evm:$(task get-chain-id)
 else
     export CHAIN_NAME=evm:31337 # local
 fi
@@ -207,6 +207,7 @@ done
 if [ "$FUNDED_KEY" ]; then
     echo ""
     echo "Setting service URI on WAVS Service Manager..."
+    # if ` Error: Failed to estimate gas: server returned an error response: error code 3: execution reverted, data: "0x"`, then ServiceManager upload failed. retry
     cast send ${WAVS_SERVICE_MANAGER_ADDRESS} 'setServiceURI(string)' "${IPFS_URI}" -r ${RPC_URL} --private-key ${FUNDED_KEY}
 fi
 
@@ -255,11 +256,11 @@ mv .docker/deployment_summary.json.tmp .docker/deployment_summary.json
 # OPERATOR_PRIVATE_KEY, AVS_SIGNING_ADDRESS
 eval "$(task setup-avs-signing HD_INDEX=1 | tail -4)"
 
-# TODO: move this check into the middleware (?)
+# TODO: move this check into the middleware / a task file function to use elsewhere too (?)
 if [ "$(task get-deploy-status)" = "TESTNET" ]; then
     export OPERATOR_ADDRESS=$(cast wallet address --private-key ${OPERATOR_PRIVATE_KEY})
     while true; do
-        BALANCE=$(cast balance ${OPERATOR_ADDRESS} --rpc-url ${RPC_URL} --ether)
+        BALANCE=$(cast balance --rpc-url ${RPC_URL} --ether ${OPERATOR_ADDRESS})
         if [ "$BALANCE" != "0" ]; then
             echo "OPERATOR_ADDRESS has balance: $BALANCE"
             break

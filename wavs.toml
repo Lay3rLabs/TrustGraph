@@ -56,10 +56,10 @@ ws_endpoint = "wss://ethereum-holesky-rpc.publicnode.com"
 http_endpoint = "https://ethereum-holesky-rpc.publicnode.com"
 poll_interval_ms = 7000
 
-[default.chains.evm.11155111] # Testnet: Sepolia | https://sepolia-faucet.pk910.de/
-ws_endpoint = "wss://ethereum-sepolia-rpc.publicnode.com"
-http_endpoint = "https://ethereum-sepolia-rpc.publicnode.com"
-poll_interval_ms = 7000
+# [default.chains.evm.11155111] # Testnet: Sepolia | https://sepolia-faucet.pk910.de/
+# ws_endpoint = "wss://ethereum-sepolia-rpc.publicnode.com"
+# http_endpoint = "https://ethereum-sepolia-rpc.publicnode.com"
+# poll_interval_ms = 7000
 
 [default.chains.evm.8453] # Base L2 Mainnet | https://superbridge.app/base
 ws_endpoint = "wss://base-rpc.publicnode.com"
