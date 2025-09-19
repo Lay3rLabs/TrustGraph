@@ -137,7 +137,8 @@ export const PredictionMarketTradeHistory: React.FC<
                       {
                         maximumFractionDigits: 3,
                       }
-                    )}
+                    )}{' '}
+                    ${collateralSymbol}
                   </td>
                   <td className="p-3 terminal-text">
                     <span

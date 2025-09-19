@@ -10,7 +10,7 @@ import { useAccount, useBalance, useReadContract } from 'wagmi'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-// Removed Select imports - using custom buttons instead
+import { useUpdatingRef } from '@/hooks/useUpdatingRef'
 import {
   conditionalTokensAbi,
   conditionalTokensAddress,
@@ -124,6 +124,9 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     [marketMakerAddress, queryClient]
   )
 
+  // Store reference to the latest collateral amount so we can interrupt async binary search if the collateral amount changes.
+  const currentCollateralAmount = useUpdatingRef(formData.collateralAmount)
+
   // Effect to run binary search when collateral amount or outcome changes
   useEffect(() => {
     if (
@@ -143,12 +146,22 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     // Run binary search
     performBinarySearch(targetCollateral, formData.outcome)
       .then((result) => {
+        // If the collateral amount has changed since we started this search, do not update the estimates.
+        if (currentCollateralAmount.current !== formData.collateralAmount) {
+          return
+        }
+
         const formattedResult = formatUnits(result, 18)
         setEstimatedTokenAmount(formattedResult)
         setTokensEstimate(formattedResult)
         setIsCalculating(false)
       })
       .catch((error) => {
+        // If the collateral amount has changed since we started this search, do not update the estimates.
+        if (currentCollateralAmount.current !== formData.collateralAmount) {
+          return
+        }
+
         console.error('Binary search failed:', error)
         setEstimatedTokenAmount('0')
         setTokensEstimate(null)
@@ -349,17 +362,21 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     }
   }
 
-  const yesTokenBalance = yesTokenBalanceData
-    ? formatUnits(yesTokenBalanceData, 18)
-    : null
+  const yesTokenBalance =
+    yesTokenBalanceData !== undefined
+      ? formatUnits(yesTokenBalanceData, 18)
+      : null
 
-  const noTokenBalance = noTokenBalanceData
-    ? formatUnits(noTokenBalanceData, 18)
-    : null
+  const noTokenBalance =
+    noTokenBalanceData !== undefined
+      ? formatUnits(noTokenBalanceData, 18)
+      : null
 
-  const yesCostEstimate = yesCostData ? formatUnits(yesCostData, 18) : null
+  const yesCostEstimate =
+    yesCostData !== undefined ? formatUnits(yesCostData, 18) : null
 
-  const noCostEstimate = noCostData ? formatUnits(noCostData, 18) : null
+  const noCostEstimate =
+    noCostData !== undefined ? formatUnits(noCostData, 18) : null
 
   const hasEnoughCollateral =
     collateralBalance && formData.collateralAmount

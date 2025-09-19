@@ -7,12 +7,19 @@ import { Hex, parseUnits } from "viem";
 ponder.on("marketMaker:setup", async ({ context }) => {
   const marketAddress = context.contracts.marketMaker.address as Hex;
 
-  const yesPrice = await context.client.readContract({
-    address: marketAddress,
-    abi: lmsrMarketMakerAbi,
-    functionName: "calcNetCost",
-    args: [[0n, parseUnits("1", 18)]],
-  });
+  // During setup, the market maker contract may not exist yet.
+  let yesPrice: bigint;
+  try {
+    yesPrice = await context.client.readContract({
+      address: marketAddress,
+      abi: lmsrMarketMakerAbi,
+      functionName: "calcNetCost",
+      args: [[0n, parseUnits("1", 18)]],
+      retryEmptyResponse: false,
+    });
+  } catch (error) {
+    return;
+  }
 
   await context.db.insert(predictionMarketPrice).values({
     id: "init",

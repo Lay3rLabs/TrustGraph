@@ -355,13 +355,15 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
     }
   }
 
-  const yesTokenBalance = yesTokenBalanceData
-    ? formatUnits(yesTokenBalanceData, 18)
-    : null
+  const yesTokenBalance =
+    yesTokenBalanceData !== undefined
+      ? formatUnits(yesTokenBalanceData, 18)
+      : null
 
-  const noTokenBalance = noTokenBalanceData
-    ? formatUnits(noTokenBalanceData, 18)
-    : null
+  const noTokenBalance =
+    noTokenBalanceData !== undefined
+      ? formatUnits(noTokenBalanceData, 18)
+      : null
 
   // Check if user has enough shares to sell
   const currentBalance =

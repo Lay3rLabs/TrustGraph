@@ -26,8 +26,8 @@ export default createConfig({
   contracts: {
     marketMaker: {
       abi: lmsrMarketMakerAbi,
-      startBlock: 50,
       // startBlock: "latest",
+      startBlock: 1,
       chain: {
         // mainnet: { address: "0x0000000000000000000000000000000000000000" },
         // base: { address: "0x4200000000000000000000000000000000000006" },
