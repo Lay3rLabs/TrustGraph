@@ -3,6 +3,7 @@
 import 'chartjs-adapter-luxon'
 
 import { usePonderQuery } from '@ponder/react'
+import { useQuery } from '@tanstack/react-query'
 import {
   CategoryScale,
   ChartData,
@@ -16,8 +17,7 @@ import {
   TimeScale,
   Tooltip,
 } from 'chart.js'
-import type React from 'react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Line } from 'react-chartjs-2'
 import { formatUnits, parseUnits } from 'viem'
 import { useAccount, useReadContract } from 'wagmi'
@@ -32,6 +32,7 @@ import {
 import { useResponsiveMount } from '@/hooks/useResponsiveMount'
 import { lmsrMarketMakerAbi } from '@/lib/contracts'
 import { formatNumber } from '@/lib/utils'
+import { ponderQueries } from '@/queries/ponder'
 
 import { PredictionMarketForms } from './PredictionMarketForms'
 import { PredictionMarketTradeHistory } from './PredictionMarketTradeHistory'
@@ -93,9 +94,9 @@ const getStatusColor = (status: string): string => {
   }
 }
 
-export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
+export const PredictionMarketDetail = ({
   market,
-}) => {
+}: PredictionMarketDetailProps) => {
   const { address } = useAccount()
   const [_activeTab, _setActiveTab] = useState<'buy' | 'redeem'>('buy')
   const [window, setWindow] = useState<ChartWindow>(ChartWindow.All)
@@ -124,6 +125,16 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
           ),
       }),
   })
+
+  const { data: followerHistory } = useQuery(
+    ponderQueries.followerCounts(
+      window !== ChartWindow.All
+        ? {
+            minTimestamp: Math.floor(Date.now() / 1000 - windowAgo[window]),
+          }
+        : undefined
+    )
+  )
 
   // Calculate YES token cost for 1 token
   const { data: yesCostData } = useReadContract({
@@ -162,15 +173,65 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
     return gradient
   }
 
+  // Synchronize the datasets - show all price data and extend follower data
+  const syncedData = useMemo(() => {
+    if (!priceHistory?.length) {
+      return {
+        priceData: [],
+        followerData: [],
+      }
+    }
+
+    // Convert price timestamps to milliseconds for chart (show ALL price data)
+    const priceData = priceHistory.map(({ timestamp, price }) => ({
+      timestamp: Number(timestamp), // Convert BigInt to number (seconds)
+      x: Number(timestamp * 1000n), // Convert to milliseconds for chart
+      y: Number(formatUnits(price, 18)),
+    }))
+
+    // If no follower history, return empty follower data
+    if (!followerHistory?.followers?.length) {
+      return {
+        priceData: priceData.map(({ x, y }) => ({ x, y })),
+        followerData: [],
+      }
+    }
+
+    const followerPoints = followerHistory.followers.map((point) => ({
+      timestamp: point.timestamp, // Already in seconds
+      x: point.timestamp * 1000, // Convert to milliseconds for chart
+      y: point.followers,
+    }))
+
+    // Extend follower data to match the full price timeline
+    const extendedFollowerData: { x: number; y: number }[] = []
+
+    // Find the last known follower count before or at each price timestamp
+    for (const pricePoint of priceData) {
+      // Find the most recent follower count at or before this price timestamp
+      const relevantFollowerPoint = followerPoints
+        .filter((f) => f.timestamp <= pricePoint.timestamp)
+        .pop() // Get the last (most recent) one
+
+      if (relevantFollowerPoint) {
+        extendedFollowerData.push({
+          x: pricePoint.x, // Use the same x timestamp as price
+          y: relevantFollowerPoint.y, // Use the last known follower count
+        })
+      }
+    }
+
+    return {
+      priceData: priceData.map(({ x, y }) => ({ x, y })),
+      followerData: extendedFollowerData,
+    }
+  }, [priceHistory, followerHistory])
+
   const chartData: ChartData<'line'> = {
     datasets: [
       {
         label: 'Market Value',
-        data:
-          priceHistory?.map(({ timestamp, price }) => ({
-            x: Number(timestamp * 1000n),
-            y: Number(formatUnits(price, 18)),
-          })) || [],
+        data: syncedData.priceData,
         borderWidth: 4,
         pointRadius: 0,
         pointHoverRadius: 0,
@@ -204,23 +265,20 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
           },
         },
       },
-      // {
-      //   label: 'Followers',
-      //   data: historyData.map((point) => ({
-      //     x: point.timestamp,
-      //     y: point.followers,
-      //   })),
-      //   borderWidth: 3,
-      //   pointRadius: 0,
-      //   pointHoverRadius: 0,
-      //   pointBackgroundColor: '#666',
-      //   fill: false,
-      //   yAxisID: 'yFollowers',
-      //   borderColor: '#666',
-      //   backgroundColor: '#666',
-      //   borderDash: [5, 5],
-      //   tension: 0.1,
-      // },
+      {
+        label: 'Followers',
+        data: syncedData.followerData,
+        borderWidth: 3,
+        pointRadius: 0,
+        pointHoverRadius: 0,
+        pointBackgroundColor: '#666',
+        fill: false,
+        yAxisID: 'yFollowers',
+        borderColor: '#666',
+        backgroundColor: '#666',
+        borderDash: [5, 5],
+        tension: 0.1,
+      },
     ],
   }
 
@@ -290,7 +348,7 @@ export const PredictionMarketDetail: React.FC<PredictionMarketDetailProps> = ({
         display: true,
         position: 'right',
         min: 0,
-        max: 10_000,
+        max: Math.max(market.targetValue, followerHistory?.max || 0),
         grid: {
           drawOnChartArea: false, // Only want the grid lines for one axis to show up
         },

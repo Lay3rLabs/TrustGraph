@@ -16,7 +16,7 @@ const markets: HyperstitionMarket[] = [
     id: '1',
     title: 'EN0VA Twitter Ascension',
     description: 'EN0VA collective reaches 10,000 Twitter followers',
-    targetValue: 10000,
+    targetValue: 1337,
     incentivePool: 10000,
     deadline: '2024.06.01',
     status: 'active',

@@ -1,14 +1,14 @@
 import { createClient } from '@ponder/client'
 
-import * as ponderSchema from '../ponder.schema'
+import * as schema from '../ponder.schema'
 import { APIS } from './config'
 
 export const ponderClient = createClient(APIS.ponder + '/sql', {
-  schema: ponderSchema,
+  schema,
 })
 
 declare module '@ponder/react' {
   interface Register {
-    schema: typeof ponderSchema
+    schema: typeof schema
   }
 }
