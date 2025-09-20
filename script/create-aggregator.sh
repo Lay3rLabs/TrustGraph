@@ -29,6 +29,18 @@ TEMP_FILENAME=".docker/tmp.json"
 cast wallet new-mnemonic --json > ${TEMP_FILENAME}
 export AGG_MNEMONIC=`jq -r .mnemonic ${TEMP_FILENAME}`
 export AGG_PK=`jq -r .accounts[0].private_key ${TEMP_FILENAME}`
+
+# if its not a LOCAL deploy, we will see if the user wants to override. if they do, we do.
+if [ "$DEPLOY_ENV" != "LOCAL" ]; then
+  read -p "Enter aggregator mnemonic (leave blank to generate a new one): " INPUT_MNEMONIC
+  if [ ! -z "$INPUT_MNEMONIC" ]; then
+    export AGG_MNEMONIC="$INPUT_MNEMONIC"
+  else
+    echo "Generating new mnemonic..."
+  fi
+
+  export AGG_PK=$(cast wallet private-key --mnemonic "$AGG_MNEMONIC")
+fi
 AGGREGATOR_ADDR=`cast wallet address $AGG_PK`
 
 # == infra files ==

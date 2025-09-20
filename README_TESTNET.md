@@ -1,13 +1,17 @@
 ## Testnet
 
 ```bash
+echo "COMPLETED" > .docker/component-upload-status
+
+# TODO: in v1.0.0 I had to replace time_limit_seconds: null, -> time_limit_seconds: 60, in the service.json. Fixed in latest v1.X patch
+
 # TESTNET
 export WAVS_SERVICE_MANAGER_ADDRESS=`task config:service-manager-address`
+export RPC_URL=`task get-rpc`
 
 # Update IPFS service
 export PINATA_API_KEY=$(grep ^WAVS_ENV_PINATA_API_KEY= .env | cut -d '=' -f2-)
 export ipfs_cid=`SERVICE_FILE=.docker/service.json PINATA_API_KEY=${PINATA_API_KEY} make upload-to-ipfs`
-export IPFS_URI=
 cast send `task config:service-manager-address` 'setServiceURI(string)' "ipfs://${ipfs_cid}" -r `task get-rpc` --private-key `task config:funded-key`
 cast call ${WAVS_SERVICE_MANAGER_ADDRESS} "getServiceURI()(string)" --rpc-url ${RPC_URL}
 
