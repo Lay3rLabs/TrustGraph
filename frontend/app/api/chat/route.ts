@@ -78,10 +78,10 @@ export async function POST(request: NextRequest) {
             } satisfies ChatCompletionAssistantMessageParam)
           : ({
               role,
-              content: `mind --chat="${content.replaceAll(
+              content: `mind -d -n --response-char-limit=150 --ascii -o=markdown --chat="${content.replaceAll(
                 '"',
                 '\\"'
-              )}" -d -n --response-char-limit=150 --ascii -o=markdown`,
+              )}"`,
             } satisfies ChatCompletionUserMessageParam)
       ),
     ]
