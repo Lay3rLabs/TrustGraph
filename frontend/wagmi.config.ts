@@ -1,6 +1,6 @@
 import { defineConfig } from '@wagmi/cli'
 
-import { contracts } from './config.json'
+const { contracts } = require('./config.json')
 
 export default defineConfig({
   out: 'lib/contracts.ts',
