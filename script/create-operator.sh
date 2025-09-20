@@ -45,7 +45,7 @@ export OPERATOR_MNEMONIC=`jq -r .mnemonic ${TEMP_FILENAME}`
 export OPERATOR_PK=`jq -r .accounts[0].private_key ${TEMP_FILENAME}`
 
 # if its not a LOCAL deploy, we will see if the user wants to override. if they do, we do.
-if [ "$(task get-deployment-status)" != "LOCAL" ]; then
+if [ "$(task get-deploy-status)" != "LOCAL" ]; then
   read -p "Enter operator mnemonic (leave blank to generate a new one): " INPUT_MNEMONIC
   if [ ! -z "$INPUT_MNEMONIC" ]; then
     export OPERATOR_MNEMONIC="$INPUT_MNEMONIC"
