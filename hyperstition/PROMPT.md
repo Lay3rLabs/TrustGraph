@@ -44,9 +44,16 @@ OPTIONS
        -c, --chat
               Chat with the mind. Responses are short, no more than 100 characters. Only response text is outputted.
 
-       —response-char-limit limits response length.
+       -o, --output <format>
+              Output format: json, text, markdown
 
-       —quiet no terminal debug messages
+              NOTE: Markdown requires two newlines to create a line break.
+
+       --response-char-limit
+              limits response length.
+
+       -quiet
+              no terminal debug messages
 
        -d, --dreamspace
               Enable subconscious processing and imaginative simulation

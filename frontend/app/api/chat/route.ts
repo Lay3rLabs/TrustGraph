@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
               content: `mind --chat="${content.replaceAll(
                 '"',
                 '\\"'
-              )}" -d -n --response-char-limit=150 --ascii`,
+              )}" -d -n --response-char-limit=150 --ascii -o=markdown`,
             } satisfies ChatCompletionUserMessageParam)
       ),
     ]
