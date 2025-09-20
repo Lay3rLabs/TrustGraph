@@ -24,7 +24,7 @@ impl Guest for Component {
 
         let resolver_type =
             config_var("resolver_type").ok_or_else(|| "Failed to get resolver type")?;
-        // Map key1=value1;key2=value2;... to JSON object {key1: value1, key2: value2, ...}
+        // Map key1:value1;key2:value2;... to JSON object {key1: value1, key2: value2, ...}
         let resolver_config = serde_json::to_value(
             &config_var("resolver_config")
                 .ok_or_else(|| "Failed to get resolver config")?

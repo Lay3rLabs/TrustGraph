@@ -16,6 +16,10 @@ pub fn decode_trigger_event(trigger_data: TriggerData) -> Result<solidity::Trigg
 
             Ok(trigger_info)
         }
+        // CLI testing
+        TriggerData::Raw(_) => {
+            Ok(solidity::TriggerInfo { triggerId: 0, creator: Address::ZERO, data: vec![].into() })
+        }
         _ => Err("Unsupported trigger data type".to_string()),
     }
 }
