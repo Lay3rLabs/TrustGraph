@@ -76,7 +76,7 @@ export const Nav = () => {
               className="absolute top-4 right-4"
               onClick={() => setOpenRef.current?.(false)}
             >
-              <Fullscreen className="w-6 h-6 transition-opacity text-primary-foreground/80 hover:opacity-80 active:opacity-70" />
+              <Fullscreen className="w-5 h-5 transition-opacity text-primary-foreground/60 hover:opacity-80 active:opacity-70" />
             </Link>
           </>
         )}
