@@ -1,8 +1,9 @@
 import { createClient } from '@ponder/client'
 
 import * as ponderSchema from '../ponder.schema'
+import { APIS } from './config'
 
-export const ponderClient = createClient('http://localhost:42069/sql', {
+export const ponderClient = createClient(APIS.ponder + '/sql', {
   schema: ponderSchema,
 })
 
