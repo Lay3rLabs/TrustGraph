@@ -36,7 +36,7 @@
     "@gnosis.pm/safe-contracts": "^1.3.0",
     "@lay3rlabs/conditional-tokens-contracts": "github:lay3rlabs/conditional-tokens-contracts#v0.1.1",
     "@lay3rlabs/conditional-tokens-market-makers": "github:lay3rlabs/conditional-tokens-market-makers#v0.1.1",
-    "@lay3rlabs/poa-middleware": "github:lay3rlabs/poa-middleware#v0.2.0",
+    "@lay3rlabs/poa-middleware": "github:lay3rlabs/poa-middleware#v1.0.0",
     "@morpho-org/universal-rewards-distributor": "github:lay3rlabs/universal-rewards-distributor#0de86bde8f949b35fdc61e533cc240fa541e27fe",
     "@openzeppelin/contracts": "^5.2.0",
     "@openzeppelin/contracts-upgradeable": "^5.2.0",

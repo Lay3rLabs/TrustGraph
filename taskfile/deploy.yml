@@ -96,7 +96,7 @@ tasks:
         echo "Deploying single operator with POA..."
 
         # Register operator with initial weight using owner operation
-        PRIVATE_KEY=`task config:funded-key` OPERATOR_NUM=1 OPERATOR_WEIGHT=100 task operator:register
+        PRIVATE_KEY=`task config:funded-key` OPERATOR_NUM=1 OPERATOR_WEIGHT=1000 task operator:register
 
         # Update signing key for the operator
         OPERATOR_NUM=1 task operator:update-signing-key

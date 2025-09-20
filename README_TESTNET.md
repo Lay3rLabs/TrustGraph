@@ -26,8 +26,17 @@ export op_addr=$(cast wallet address --private-key $op_priv_key) && echo $op_add
 export op_signing_key_1=$(cast wallet address --mnemonic "$op_mnemonic" --mnemonic-index 1) && echo $op_signing_key_1
 cast send --rpc-url `task get-rpc` $WAVS_SERVICE_MANAGER_ADDRESS "registerOperator(address,uint256)" "${op_addr}" 1000 --private-key `task config:funded-key`
 # cast send ${op_addr} --value 0.001ether -r `task get-rpc` --private-key `task config:funded-key` # if you forgot to fund
-cast send --rpc-url `task get-rpc` $WAVS_SERVICE_MANAGER_ADDRESS "updateOperatorSigningKey(address)" "${op_signing_key_1}" --private-key $op_priv_key
-# cast call $WAVS_SERVICE_MANAGER_ADDRESS "getLastCheckpointOperatorWeight(address)(uint256)" ${op_addr} --rpc-url `task get-rpc`
+
+# the operator must sign they own their signing key to prove they own it
+encoded_operator_address=$(cast abi-encode "f(address)" "$op_addr")
+signing_message=$(cast keccak "$encoded_operator_address")
+signing_signature=$(cast wallet sign --no-hash --mnemonic "$op_mnemonic" --mnemonic-index 1 "$signing_message")
+echo "Signing signature: $signing_signature"
+
+# NOTE: if `Out of gas: gas required exceeds allowance: 0`, give funds to op_addr
+cast send $WAVS_SERVICE_MANAGER_ADDRESS "updateOperatorSigningKey(address,bytes)" "${op_signing_key_1}" "${signing_signature}" --rpc-url `task get-rpc` --private-key $op_priv_key
+
+# cast call $WAVS_SERVICE_MANAGER_ADDRESS "getOperatorWeight(address)(uint256)" ${op_addr} --rpc-url `task get-rpc`
 
 # ----
 
