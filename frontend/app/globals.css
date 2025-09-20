@@ -574,3 +574,8 @@
     min-height: 38px;
   }
 }
+
+pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
