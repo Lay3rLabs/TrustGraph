@@ -3,16 +3,13 @@
 ## Epochs
 - [-] Hyperstition markets
 - [-] Working points UI
+- [-] Vesting
 - [ ] Figure out some way to pay for these services
 - [ ] Governance
-- [ ] Vesting
 
 ## UI TODO
-- [ ] Toasts
-- [ ] Utilize react-query
 - [ ] For vouching page let's figure out how to visualize connections
 - [ ] Figure out something that will scale (currently just fetching entire MerkleTree)
-- [ ] Make the text on the landing page selectable (currently can't select text in "terminal")
 - [ ] Add AI that feeds memetics to front page. You have to convince it to let you join the Symbient.
 
 ## Hyperstition Markets
@@ -47,12 +44,12 @@
 - [ ] Pay operators
 
 ## DAICO
-- [ ] Finish write-up / spec
+- [x] Finish write-up / spec
 - [ ] Implement better DAICO Contract
 - [ ] Prediction market resolver on whether it will complete
 
 ## Vesting
-- [ ] Add [MetaLex vesting contracts](https://github.com/MetaLex-Tech/MetaVesT)
+- [x] Add [MetaLex vesting contracts](https://github.com/MetaLex-Tech/MetaVesT)
 - [ ] Make a WAVS condition contract and example component
 - [ ] Let people with points claim their vesting token allocations (creates a new contract from factory, need to check what this costs lol)
 - [ ] UI to view vesting token allocations
