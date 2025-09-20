@@ -84,10 +84,15 @@ tasks:
           {{if .IPFS_GATEWAY}}--ipfs-gateway {{.IPFS_GATEWAY}}{{end}}
         echo "✅ Service deployed successfully"
 
-  single-operator-poa:
+  single-operator-poa-local:
     desc: "Deploy a single operator with POA"
     cmds:
       - |
+        if [ "$(task get-deploy-status)" != "LOCAL" ]; then
+          echo "Not in LOCAL mode, skipping single operator PoA. Register manually in ServiceManager (README_TESTNET.md)."
+          exit 0
+        fi
+
         echo "Deploying single operator with POA..."
 
         # Register operator with initial weight using owner operation

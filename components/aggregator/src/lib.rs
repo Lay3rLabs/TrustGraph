@@ -94,7 +94,10 @@ fn process_submission(packet: Packet, validate_tx: bool) -> Result<Vec<Aggregato
         } else if host::get_cosmos_chain_config(&chain_key).is_some() {
             todo!("Cosmos support coming soon...")
         } else {
-            return Err(format!("Could not get chain config for chain {chain_key}"));
+            // return Err(format!("Could not get chain config for chain {chain_key}"));
+
+            // just continue, not all config values are chains
+            continue;
         }
     }
 
