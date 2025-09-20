@@ -7,7 +7,7 @@ export default defineConfig({
   contracts: Object.entries(CONTRACT_CONFIG)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([name, address]) => ({
-      abi: require(`../out/${name}.sol/${name}.json`).abi,
+      abi: require(`./abis/${name}.json`).abi,
       name,
       address: address as `0x${string}`,
     })),

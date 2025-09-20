@@ -62,7 +62,7 @@ try {
     SignerManagerModule: deployment.zodiac_safes.safe1.signer_module,
   }
 
-  // Make sure ABIs exist for all contracts.
+  // Make sure ABIs exist for all contracts, and copy them to the frontend.
   Object.keys(configOutput.contracts)
     .sort()
     .forEach((name) => {
@@ -73,6 +73,8 @@ try {
           `Could not find ABI for ${name} at ${abiPath}. Please ensure the contract name and file name match.`
         )
       }
+
+      fs.copyFileSync(abiPath, path.join(__dirname, `../abis/${name}.json`))
     })
 
   configOutput.schemas = Object.entries(
