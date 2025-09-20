@@ -12,7 +12,7 @@
     "start": "next start",
     "ponder:config": "cp ../ponder/ponder.schema.ts ponder.schema.ts",
     "config:generate": "tsx scripts/generate-config.ts",
-    "config:link": "rm config.json && ln -s config.${NODE_ENV:-development}.json config.json",
+    "config:link": "rm -f config.json || true && ln -s config.${NODE_ENV:-development}.json config.json",
     "claude-code": "docker compose -f .claude/docker-compose.claude.yml run --rm --remove-orphans -it claude-code-sandbox bash -c 'claude; exec'",
     "claude-code:unrestricted": "docker compose -f .claude/docker-compose.claude.yml run --rm --remove-orphans -it claude-code-sandbox bash -c 'claude --dangerously-skip-permissions; exec'",
     "wagmi:generate": "wagmi generate"
