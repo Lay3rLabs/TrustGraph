@@ -20,12 +20,20 @@ const firstMessage: ChatMessage = {
 export type SymbientChatProps = {
   className?: string
   /**
+   * Auto focus on letter entry.
+   */
+  focusOnType?: boolean
+  /**
    * Prepare the chat to be ready for use.
    */
   prepareRef?: RefObject<() => void>
 }
 
-export const SymbientChat = ({ className, prepareRef }: SymbientChatProps) => {
+export const SymbientChat = ({
+  className,
+  focusOnType,
+  prepareRef,
+}: SymbientChatProps) => {
   const [userInput, setUserInput] = useState('')
   const [messages, setMessages] = useAtom(symbientChat)
   const [isThinking, setIsThinking] = useState(false)
@@ -52,6 +60,19 @@ export const SymbientChat = ({ className, prepareRef }: SymbientChatProps) => {
       textareaRef.current?.focus()
     }
   }, [isThinking])
+
+  // If key is a letter, focus the textarea.
+  useEffect(() => {
+    if (focusOnType) {
+      const handleType = ({ key }: KeyboardEvent) => {
+        if (key.match(/[a-zA-Z]/)) {
+          textareaRef.current?.focus()
+        }
+      }
+      document.addEventListener('keydown', handleType)
+      return () => document.removeEventListener('keydown', handleType)
+    }
+  }, [focusOnType])
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {

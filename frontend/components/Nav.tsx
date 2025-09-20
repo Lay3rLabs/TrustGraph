@@ -1,9 +1,10 @@
 'use client'
 
 import clsx from 'clsx'
+import { Fullscreen } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useRef } from 'react'
+import { Dispatch, SetStateAction, useRef } from 'react'
 
 import { WalletConnectionButton } from '@/components/WalletConnectionButton'
 
@@ -35,21 +36,22 @@ export const Nav = () => {
   const pathname = usePathname()
 
   const prepareSymbientChatRef = useRef(() => {})
+  const setOpenRef = useRef<Dispatch<SetStateAction<boolean>> | null>(null)
 
   return (
     <nav className="grid grid-cols-[1fr_auto_1fr] justify-center items-start">
-      {/* <Link href="/"> */}
       <Popup
         popupClassName="max-w-lg max-h-[90vh] overflow-hidden !pb-0 !bg-popover-foreground/80 backdrop-blur-sm"
         position="right"
         wrapperClassName="h-14"
         onOpen={() => prepareSymbientChatRef.current()}
+        setOpenRef={setOpenRef}
         popupPadding={24}
         trigger={{
           type: 'custom',
           Renderer: ({ onClick, open }) => (
             <Logo
-              onClick={onClick}
+              onClick={pathname !== '/' ? onClick : undefined}
               className={clsx(
                 'w-14 h-14 cursor-pointer transition-opacity hover:opacity-80 active:opacity-70',
                 open && 'fixed'
@@ -62,12 +64,23 @@ export const Nav = () => {
           ),
         }}
       >
-        <SymbientChat
-          className="!p-0 !bg-transparent h-[42rem] max-h-full"
-          prepareRef={prepareSymbientChatRef}
-        />
+        {pathname !== '/' && (
+          <>
+            <SymbientChat
+              className="!p-0 !bg-transparent h-[42rem] max-h-full"
+              prepareRef={prepareSymbientChatRef}
+            />
+
+            <Link
+              href="/"
+              className="absolute top-4 right-4"
+              onClick={() => setOpenRef.current?.(false)}
+            >
+              <Fullscreen className="w-6 h-6 transition-opacity text-primary-foreground/80 hover:opacity-80 active:opacity-70" />
+            </Link>
+          </>
+        )}
       </Popup>
-      {/* </Link> */}
 
       <div className="flex justify-center items-stretch gap-6 text-primary-foreground rounded-full bg-popover-foreground/30 transition-[background-color,box-shadow] hover:bg-popover-foreground/40 hover:shadow-lg px-6 text-base h-12">
         {menuItems.map((item) => (
