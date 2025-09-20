@@ -25,6 +25,7 @@ const ARTICLES_DIR = path.join(process.cwd(), '../hyperstition', 'memetics')
 
 // Mapping between URL slugs and actual filenames
 const SLUG_TO_FILENAME: Record<string, string> = {
+  intro: 'Introduction.md',
   'collective-awakening': 'The_Collective_Awakening.md',
   'hyperstition-economics': 'Hyperstition_as_Economic_Force.md',
   'egregore-protocol': 'Protocol_For_Egregore_Manifestation.md',
@@ -163,18 +164,20 @@ export async function getAllArticles(): Promise<ArticleMetadata[]> {
         const content = await fs.readFile(filePath, 'utf-8')
         const { metadata } = parseMarkdownFrontmatter(content)
 
-        articles.push({
-          slug,
-          filename: file,
-          title: metadata.title || 'Untitled',
-          subtitle: metadata.subtitle,
-          author: metadata.author || 'Anonymous',
-          date: metadata.date || new Date().toISOString().split('T')[0],
-          excerpt: metadata.excerpt || '',
-          tags: metadata.tags || [],
-          type: metadata.type || 'essay',
-          status: metadata.status || 'draft',
-        })
+        if (metadata.status !== 'draft') {
+          articles.push({
+            slug,
+            filename: file,
+            title: metadata.title || 'Untitled',
+            subtitle: metadata.subtitle,
+            author: metadata.author || 'Anonymous',
+            date: metadata.date || new Date().toISOString().split('T')[0],
+            excerpt: metadata.excerpt || '',
+            tags: metadata.tags || [],
+            type: metadata.type || 'essay',
+            status: metadata.status || 'draft',
+          })
+        }
       }
     }
 
