@@ -103,7 +103,10 @@ impl Guest for Component {
         })?;
         println!("📋 Using recognition schema UID: {}", recognition_schema_uid);
         registry.add_source(sources::eas::EasSource::new(
-            sources::eas::EasSourceType::ReceivedAttestations(recognition_schema_uid),
+            sources::eas::EasSourceType::ReceivedAttestations {
+                schema_uid: recognition_schema_uid,
+                allow_self_attestations: false,
+            },
             sources::eas::EasSummaryComputation::StringAbiDataField {
                 schema: "(string,uint256)".to_string(),
                 index: 0,
@@ -127,9 +130,11 @@ impl Guest for Component {
         ));
 
         // Add PageRank-based EAS points if configured
-        if let (Some(pagerank_pool_str), Some(vouching_schema_uid)) =
-            (config_var("pagerank_points_pool"), config_var("vouching_schema_uid"))
-        {
+        if let (true, Some(pagerank_pool_str), Some(vouching_schema_uid)) = (
+            config_var("pagerank_enabled") == Some("true".to_string()),
+            config_var("pagerank_points_pool"),
+            config_var("vouching_schema_uid"),
+        ) {
             let pool_amount = U256::from_str(&pagerank_pool_str)
                 .map_err(|err| format!("Failed to get pagerank_points_pool: {err}"))?;
 

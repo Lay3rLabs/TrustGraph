@@ -17,9 +17,9 @@ use super::Source;
 #[derive(Clone, Debug)]
 pub enum EasSourceType {
     /// Points based on received attestations count for a specific schema.
-    ReceivedAttestations(String),
+    ReceivedAttestations { schema_uid: String, allow_self_attestations: bool },
     /// Points based on sent attestations count for a specific schema.
-    SentAttestations(String),
+    SentAttestations { schema_uid: String, allow_self_attestations: bool },
 }
 
 /// Compute points from EAS attestations.
@@ -69,10 +69,10 @@ impl Source for EasSource {
 
     async fn get_accounts(&self, ctx: &super::SourceContext) -> Result<Vec<String>> {
         match &self.source_type {
-            EasSourceType::ReceivedAttestations(schema_uid) => {
+            EasSourceType::ReceivedAttestations { schema_uid, .. } => {
                 self.get_accounts_with_received_attestations(ctx, schema_uid).await
             }
-            EasSourceType::SentAttestations(schema_uid) => {
+            EasSourceType::SentAttestations { schema_uid, .. } => {
                 self.get_accounts_with_sent_attestations(ctx, schema_uid).await
             }
         }
@@ -85,11 +85,11 @@ impl Source for EasSource {
     ) -> Result<(Vec<SourceEvent>, U256)> {
         let address = Address::from_str(account)?;
         let (schema_uid, attestation_count) = match &self.source_type {
-            EasSourceType::ReceivedAttestations(schema_uid) => (
+            EasSourceType::ReceivedAttestations { schema_uid, .. } => (
                 self.parse_schema_uid(schema_uid)?,
                 self.query_received_attestation_count(ctx, address, schema_uid).await?,
             ),
-            EasSourceType::SentAttestations(schema_uid) => (
+            EasSourceType::SentAttestations { schema_uid, .. } => (
                 self.parse_schema_uid(schema_uid)?,
                 self.query_sent_attestation_count(ctx, address, schema_uid).await?,
             ),
@@ -155,8 +155,8 @@ impl Source for EasSource {
         while start < attestation_count {
             let length = std::cmp::min(batch_size, attestation_count - start);
 
-            let attestations = match &self.source_type {
-                EasSourceType::ReceivedAttestations(_) => {
+            let (attestations, allow_self_attestations) = match &self.source_type {
+                EasSourceType::ReceivedAttestations { allow_self_attestations, .. } => (
                     ctx.indexer_querier
                         .get_indexed_attestations_by_schema_and_recipient(
                             schema_uid,
@@ -166,8 +166,10 @@ impl Source for EasSource {
                             false,
                         )
                         .await
-                }
-                EasSourceType::SentAttestations(_) => {
+                        .map_err(|e| anyhow::anyhow!(e))?,
+                    *allow_self_attestations,
+                ),
+                EasSourceType::SentAttestations { allow_self_attestations, .. } => (
                     ctx.indexer_querier
                         .get_indexed_attestations_by_schema_and_attester(
                             schema_uid,
@@ -177,11 +179,17 @@ impl Source for EasSource {
                             false,
                         )
                         .await
-                }
-            }
-            .map_err(|e| anyhow::anyhow!(e))?;
+                        .map_err(|e| anyhow::anyhow!(e))?,
+                    *allow_self_attestations,
+                ),
+            };
 
             for attestation in attestations {
+                // Skip self-attestations if not allowed.
+                if !allow_self_attestations && attestation.attester == attestation.recipient {
+                    continue;
+                }
+
                 let value = match value_for_attestation(&attestation) {
                     Ok(value) => value,
                     // Log the error and continue if the value is not found, so that formatting errors don't interrupt the flow.
@@ -230,11 +238,11 @@ impl Source for EasSource {
 
     async fn get_metadata(&self, ctx: &super::SourceContext) -> Result<serde_json::Value> {
         let (source_type_str, schema_uid) = match &self.source_type {
-            EasSourceType::ReceivedAttestations(schema) => {
-                ("received_attestations".to_string(), schema.clone())
+            EasSourceType::ReceivedAttestations { schema_uid, .. } => {
+                ("received_attestations".to_string(), schema_uid.clone())
             }
-            EasSourceType::SentAttestations(schema) => {
-                ("sent_attestations".to_string(), schema.clone())
+            EasSourceType::SentAttestations { schema_uid, .. } => {
+                ("sent_attestations".to_string(), schema_uid.clone())
             }
         };
 
