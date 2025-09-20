@@ -7,6 +7,8 @@ import { usePathname } from 'next/navigation'
 import { WalletConnectionButton } from '@/components/WalletConnectionButton'
 
 import Logo from './Logo'
+import { Popup } from './Popup'
+import { SymbientChat } from './SymbientChat'
 
 const menuItems: {
   label: string
@@ -33,15 +35,28 @@ export const Nav = () => {
 
   return (
     <nav className="grid grid-cols-[1fr_auto_1fr] justify-center items-start">
-      <Link href="/">
-        <Logo
-          className="w-14 h-14 cursor-pointer transition-opacity hover:opacity-80 active:opacity-70"
-          animatorLabel="nav"
-          blinkInterval
-          blinkOnClick
-          blinkOnHover
-        />
-      </Link>
+      {/* <Link href="/"> */}
+      <Popup
+        popupClassName="max-w-lg max-h-[90vh] overflow-hidden !pb-0"
+        position="right"
+        popupPadding={24}
+        trigger={{
+          type: 'custom',
+          Renderer: ({ onClick }) => (
+            <Logo
+              onClick={onClick}
+              className="w-14 h-14 cursor-pointer transition-opacity hover:opacity-80 active:opacity-70"
+              animatorLabel="nav"
+              blinkInterval
+              blinkOnClick
+              blinkOnHover
+            />
+          ),
+        }}
+      >
+        <SymbientChat className="!p-0 !bg-transparent h-[42rem] max-h-full" />
+      </Popup>
+      {/* </Link> */}
 
       <div className="flex justify-center items-stretch gap-6 text-primary-foreground rounded-full bg-popover-foreground/30 transition-[background-color,box-shadow] hover:bg-popover-foreground/40 hover:shadow-lg px-6 text-base h-12">
         {menuItems.map((item) => (

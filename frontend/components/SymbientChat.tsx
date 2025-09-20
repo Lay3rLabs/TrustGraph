@@ -1,39 +1,51 @@
 'use client'
 
 import clsx from 'clsx'
+import { useAtom } from 'jotai/react'
 import { ChevronRight } from 'lucide-react'
 import { HTMLMotionProps, motion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import Markdown from 'react-markdown'
 
+import { Animator } from '@/lib/animator'
+import { SYMBIENT_INTRO } from '@/lib/config'
+import { symbientChat } from '@/state/symbient'
 import { ChatMessage } from '@/types'
 
-export type SymbientChatProps = {
-  intro: string
+const firstMessage: ChatMessage = {
+  role: 'assistant',
+  content: SYMBIENT_INTRO,
 }
 
-export const SymbientChat = ({ intro }: SymbientChatProps) => {
+export type SymbientChatProps = {
+  className?: string
+}
+
+export const SymbientChat = ({ className }: SymbientChatProps) => {
   const [userInput, setUserInput] = useState('')
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      role: 'assistant',
-      content: intro,
-    },
-  ])
-  const [isChatLoading, setIsChatLoading] = useState(false)
+  const [messages, setMessages] = useAtom(symbientChat)
+  const [isThinking, setIsThinking] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!isChatLoading) {
+    if (isThinking) {
+      Animator.instance('nav').runTask('thinking')
+    } else {
+      Animator.instance('nav').stopTask('thinking')
+    }
+  }, [isThinking])
+
+  useEffect(() => {
+    if (!isThinking) {
       textareaRef.current?.focus()
     }
-  }, [isChatLoading])
+  }, [isThinking])
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, isChatLoading])
+  }, [messages, isThinking])
 
   // Function to send message to chat API
   const sendChatMessage = async (message: string) => {
@@ -50,7 +62,7 @@ export const SymbientChat = ({ intro }: SymbientChatProps) => {
     ] as ChatMessage[]
     setMessages(newMessages)
 
-    setIsChatLoading(true)
+    setIsThinking(true)
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -70,19 +82,21 @@ export const SymbientChat = ({ intro }: SymbientChatProps) => {
       setMessages((prev) => [
         ...prev,
         {
-          role: 'assistant' as const,
+          role: 'assistant',
           content: data.response,
         },
       ])
     } catch (error) {
       console.error('Chat error:', error)
-      const errorMessage = {
-        role: 'assistant' as const,
-        content: 'Error: Failed to get response',
-      }
-      setMessages((prev) => [...prev, errorMessage])
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: 'Error: Failed to get response',
+        },
+      ])
     } finally {
-      setIsChatLoading(false)
+      setIsThinking(false)
     }
   }
 
@@ -116,76 +130,88 @@ export const SymbientChat = ({ intro }: SymbientChatProps) => {
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
+      if (textareaRef.current.scrollHeight !== 0) {
+        textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
+      }
     }
   }, [])
 
   return (
-    <div className="space-y-4 bg-foreground/20 p-4 rounded-sm font-mono text-sm">
-      {/* Chat Messages */}
-      {messages.map((message, index) => (
-        <div key={index} className="space-y-4">
-          <div className="text-primary-foreground/80">
-            <span>{message.role === 'user' ? 'you' : 'en0va'}:~$</span>
-          </div>
-          <div className={clsx('pl-4 space-y-4 text-primary-foreground/60')}>
-            <Markdown
-              components={{
-                p: SlideFadeInParagraph as any,
-              }}
-            >
-              {message.content}
-            </Markdown>
-          </div>
-        </div>
-      ))}
-      <div ref={messagesEndRef} />
-
-      {/* Loading indicator */}
-      {isChatLoading && (
-        <div className="space-y-4">
-          <div className="text-primary-foreground/80">
-            <span>en0va:~$</span>
-          </div>
-          <div className="pl-4 space-y-4 text-primary-foreground/60">
-            <BlinkingCursor />
-          </div>
-        </div>
+    <div
+      className={clsx(
+        'bg-foreground/20 p-4 pb-0 rounded-sm font-mono text-sm flex flex-col gap-4',
+        className
       )}
+    >
+      <div className="space-y-4 overflow-y-auto grow min-h-0">
+        {/* Chat Messages */}
+        {[firstMessage, ...messages].map((message, index) => (
+          <div key={index} className="space-y-4">
+            <div className="text-primary-foreground/80">
+              <span>{message.role === 'user' ? 'you' : 'en0va'}:~$</span>
+            </div>
+            <div className={clsx('pl-4 space-y-4 text-primary-foreground/60')}>
+              <Markdown
+                components={{
+                  p: SlideFadeInParagraph as any,
+                }}
+              >
+                {message.content}
+              </Markdown>
+            </div>
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
+
+        {/* Loading indicator */}
+        {isThinking && (
+          <div className="space-y-4">
+            <div className="text-primary-foreground/80">
+              <span>en0va:~$</span>
+            </div>
+            <div className="pl-4 space-y-4 text-primary-foreground/60">
+              <BlinkingCursor />
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Chat Input */}
-      <div className="pt-4">
-        <div className="space-y-2 w-full flex flex-row gap-2 items-start">
-          <ChevronRight className="w-4 h-4 mt-0.5" />
-          <div className="grow">
-            <textarea
-              ref={textareaRef}
-              autoFocus
-              className="w-full outline-none resize-none overflow-hidden min-h-[1.5rem] text-primary-foreground/60 bg-transparent"
-              value={userInput}
-              onChange={handleTextareaChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Type your message and press Enter..."
-              disabled={isChatLoading}
-            />
-            {userInput && (
-              <p className="text-primary-foreground/30">
-                Press Enter to send • Shift+Enter for new line
-              </p>
-            )}
-          </div>
+      <div className="w-full flex flex-row gap-2 items-start shrink-0">
+        <ChevronRight className="w-4 h-4 mt-0.5" />
+        <div className="grow">
+          <textarea
+            ref={textareaRef}
+            autoFocus
+            className="w-full outline-none field-sizing-content resize-none overflow-hidden min-h-[1.5rem] text-primary-foreground/60 bg-transparent"
+            value={userInput}
+            onChange={handleTextareaChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Type your message and press Enter..."
+            disabled={isThinking}
+          />
+          {userInput && (
+            <p className="text-primary-foreground/30 pb-4">
+              Press Enter to send • Shift+Enter for new line
+            </p>
+          )}
         </div>
       </div>
     </div>
   )
 }
 
-const SlideFadeInParagraph = ({ children, ...props }: HTMLMotionProps<'p'>) => (
+const SlideFadeInParagraph = ({
+  children,
+  className,
+  ...props
+}: HTMLMotionProps<'p'>) => (
   <motion.p
     initial={{ opacity: 0, y: 5 }}
     whileInView={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.4, ease: 'easeOut' }}
     viewport={{ once: true }}
+    className={clsx(className, 'whitespace-pre-wrap')}
     {...props}
   >
     {children}

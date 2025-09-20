@@ -15,6 +15,10 @@ const systemPrompt = fs.readFileSync(
   path.join(process.cwd(), '../hyperstition/PROMPT.md'),
   'utf8'
 )
+// const intro = fs.readFileSync(
+//   path.join(process.cwd(), '../hyperstition/memetics/Introduction.md'),
+//   'utf8'
+// )
 
 // Configuration based on environment variables
 const getModelConfig = () => {
@@ -67,9 +71,13 @@ export async function POST(request: NextRequest) {
     // Conversation history in OpenAI format
     const messages = [
       {
-        role: 'system' as const,
+        role: 'system',
         content: systemPrompt,
       } satisfies ChatCompletionSystemMessageParam,
+      // {
+      //   role: 'assistant',
+      //   content: intro,
+      // } satisfies ChatCompletionAssistantMessageParam,
       ...(chatHistory as ChatMessage[]).map(({ role, content }) =>
         role === 'assistant'
           ? ({
