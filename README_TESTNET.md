@@ -1,13 +1,17 @@
 ## Testnet
 
 ```bash
+echo "COMPLETED" > .docker/component-upload-status
+
+# TODO: in v1.0.0 I had to replace time_limit_seconds: null, -> time_limit_seconds: 60, in the service.json. Fixed in latest v1.X patch
+
 # TESTNET
 export WAVS_SERVICE_MANAGER_ADDRESS=`task config:service-manager-address`
+export RPC_URL=`task get-rpc`
 
 # Update IPFS service
 export PINATA_API_KEY=$(grep ^WAVS_ENV_PINATA_API_KEY= .env | cut -d '=' -f2-)
 export ipfs_cid=`SERVICE_FILE=.docker/service.json PINATA_API_KEY=${PINATA_API_KEY} make upload-to-ipfs`
-export IPFS_URI=
 cast send `task config:service-manager-address` 'setServiceURI(string)' "ipfs://${ipfs_cid}" -r `task get-rpc` --private-key `task config:funded-key`
 cast call ${WAVS_SERVICE_MANAGER_ADDRESS} "getServiceURI()(string)" --rpc-url ${RPC_URL}
 
@@ -22,8 +26,17 @@ export op_addr=$(cast wallet address --private-key $op_priv_key) && echo $op_add
 export op_signing_key_1=$(cast wallet address --mnemonic "$op_mnemonic" --mnemonic-index 1) && echo $op_signing_key_1
 cast send --rpc-url `task get-rpc` $WAVS_SERVICE_MANAGER_ADDRESS "registerOperator(address,uint256)" "${op_addr}" 1000 --private-key `task config:funded-key`
 # cast send ${op_addr} --value 0.001ether -r `task get-rpc` --private-key `task config:funded-key` # if you forgot to fund
-cast send --rpc-url `task get-rpc` $WAVS_SERVICE_MANAGER_ADDRESS "updateOperatorSigningKey(address)" "${op_signing_key_1}" --private-key $op_priv_key
-# cast call $WAVS_SERVICE_MANAGER_ADDRESS "getLastCheckpointOperatorWeight(address)(uint256)" ${op_addr} --rpc-url `task get-rpc`
+
+# the operator must sign they own their signing key to prove they own it
+encoded_operator_address=$(cast abi-encode "f(address)" "$op_addr")
+signing_message=$(cast keccak "$encoded_operator_address")
+signing_signature=$(cast wallet sign --no-hash --mnemonic "$op_mnemonic" --mnemonic-index 1 "$signing_message")
+echo "Signing signature: $signing_signature"
+
+# NOTE: if `Out of gas: gas required exceeds allowance: 0`, give funds to op_addr
+cast send $WAVS_SERVICE_MANAGER_ADDRESS "updateOperatorSigningKey(address,bytes)" "${op_signing_key_1}" "${signing_signature}" --rpc-url `task get-rpc` --private-key $op_priv_key
+
+# cast call $WAVS_SERVICE_MANAGER_ADDRESS "getOperatorWeight(address)(uint256)" ${op_addr} --rpc-url `task get-rpc`
 
 # ----
 

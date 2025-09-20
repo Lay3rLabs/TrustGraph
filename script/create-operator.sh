@@ -39,15 +39,27 @@ cp ./script/template/.env.example.operator ${ENV_FILENAME}
 
 TEMP_FILENAME=".docker/tmp.json"
 
+# creates a new wallet no matter what
 cast wallet new-mnemonic --json > ${TEMP_FILENAME}
 export OPERATOR_MNEMONIC=`jq -r .mnemonic ${TEMP_FILENAME}`
 export OPERATOR_PK=`jq -r .accounts[0].private_key ${TEMP_FILENAME}`
+
+# if its not a LOCAL deploy, we will see if the user wants to override. if they do, we do.
+if [ "$(task get-deploy-status)" != "LOCAL" ]; then
+  read -p "Enter operator mnemonic (leave blank to generate a new one): " INPUT_MNEMONIC
+  if [ ! -z "$INPUT_MNEMONIC" ]; then
+    export OPERATOR_MNEMONIC="$INPUT_MNEMONIC"
+  else
+    echo "Generating new mnemonic..."
+  fi
+
+  export OPERATOR_PK=$(cast wallet private-key --mnemonic "$OPERATOR_MNEMONIC")
+fi
 
 sed -i${SP}'' -e "s/^WAVS_SUBMISSION_MNEMONIC=.*$/WAVS_SUBMISSION_MNEMONIC=\"$OPERATOR_MNEMONIC\"/" ${ENV_FILENAME}
 sed -i${SP}'' -e "s/^WAVS_CLI_EVM_CREDENTIAL=.*$/WAVS_CLI_EVM_CREDENTIAL=\"$OPERATOR_PK\"/" ${ENV_FILENAME}
 
 rm ${TEMP_FILENAME}
-
 
 # Create startup script
 cat > "${OPERATOR_LOC}/start.sh" << EOF

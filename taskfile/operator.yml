@@ -5,7 +5,7 @@ silent: true
 vars:
   RPC_URL: '{{.RPC_URL | default "http://localhost:8545"}}'
   OPERATOR_NUM: '{{.OPERATOR_NUM}}'
-  OPERATOR_WEIGHT: '{{.OPERATOR_WEIGHT | default "1"}}'
+  OPERATOR_WEIGHT: '{{.OPERATOR_WEIGHT | default "1000"}}'
   WAVS_ENV_FILE: 'infra/wavs-{{.OPERATOR_NUM}}/.env'
 
   # Common shell script snippets
@@ -25,6 +25,7 @@ vars:
     source {{.WAVS_ENV_FILE}}
     OPERATOR_KEY=$(cast wallet private-key --mnemonic "$WAVS_SUBMISSION_MNEMONIC" --mnemonic-index 0)
     OPERATOR_ADDRESS=$(cast wallet address ${OPERATOR_KEY})
+    OPERATOR_MNEMONIC="$WAVS_SUBMISSION_MNEMONIC"
     WAVS_SIGNING_KEY=$(cast wallet address --mnemonic "$WAVS_SUBMISSION_MNEMONIC" --mnemonic-index 1)
 
 tasks:
@@ -64,8 +65,13 @@ tasks:
         echo "🔑 Operator Address: ${OPERATOR_ADDRESS}"
         echo "🔑 New Signing Key: ${WAVS_SIGNING_KEY}"
 
+        encoded_operator_address=$(cast abi-encode "f(address)" "$OPERATOR_ADDRESS")
+        signing_message=$(cast keccak "$encoded_operator_address")
+        signing_signature=$(cast wallet sign --no-hash --mnemonic "$OPERATOR_MNEMONIC" --mnemonic-index 1 "$signing_message")
+        echo "Signing signature: $signing_signature"
+
         echo "🔐 Updating signing key..."
-        cast send {{.WAVS_SERVICE_MANAGER_ADDRESS}} "updateOperatorSigningKey(address)" ${WAVS_SIGNING_KEY} \
+        cast send {{.WAVS_SERVICE_MANAGER_ADDRESS}} "updateOperatorSigningKey(address,bytes)" ${WAVS_SIGNING_KEY} ${signing_signature} \
           --private-key ${OPERATOR_KEY} \
           --rpc-url {{.RPC_URL}}
 
