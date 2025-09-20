@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useReadContract } from 'wagmi'
 
-import { poaServiceManagerAddress } from '@/lib/contracts'
+import { iWavsServiceManagerAddress } from '@/lib/contracts'
 
 interface Operator {
   address: string
@@ -14,7 +14,7 @@ interface Operator {
 export function useOperators() {
   // Get total operator count
   const { data: operatorCount } = useReadContract({
-    address: poaServiceManagerAddress,
+    address: iWavsServiceManagerAddress,
     abi: [
       {
         inputs: [],
@@ -29,7 +29,7 @@ export function useOperators() {
 
   // Get service URI
   const { data: serviceURI } = useReadContract({
-    address: poaServiceManagerAddress,
+    address: iWavsServiceManagerAddress,
     abi: [
       {
         inputs: [],
@@ -44,7 +44,7 @@ export function useOperators() {
 
   // Get total weight
   const { data: totalWeight } = useReadContract({
-    address: poaServiceManagerAddress,
+    address: iWavsServiceManagerAddress,
     abi: [
       {
         inputs: [],
@@ -63,7 +63,7 @@ export function useOperators() {
     isLoading,
     error,
   } = useReadContract({
-    address: poaServiceManagerAddress,
+    address: iWavsServiceManagerAddress,
     abi: [
       {
         inputs: [

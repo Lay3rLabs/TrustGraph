@@ -41,7 +41,6 @@ export function ProposalCard({
   const state = proposal.state
   const isActive = state === ProposalState.Active
   const isSucceeded = state === ProposalState.Succeeded
-  const isQueued = state === ProposalState.Queued
   const canVote = isActive && userVotingPower && Number(userVotingPower) > 0
 
   // Calculate total votes and percentages

@@ -2,8 +2,8 @@
 
 import { useQuery } from '@tanstack/react-query'
 
-import { attestationQueries } from '@/queries/attestation'
 import { AttestationData, SchemaManager } from '@/lib/schemas'
+import { attestationQueries } from '@/queries/attestation'
 
 import { Card } from './Card'
 

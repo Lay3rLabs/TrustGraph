@@ -2833,6 +2833,147 @@ export const gnosisSafeProxyConfig = {
 } as const
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// IWavsServiceManager
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const iWavsServiceManagerAbi = [
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getAllocationManager',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getDelegationManager',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'signingKeyAddress', internalType: 'address', type: 'address' },
+    ],
+    name: 'getLatestOperatorForSigningKey',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'operator', internalType: 'address', type: 'address' }],
+    name: 'getOperatorWeight',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getServiceURI',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getStakeRegistry',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '_serviceURI', internalType: 'string', type: 'string' }],
+    name: 'setServiceURI',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      {
+        name: 'envelope',
+        internalType: 'struct IWavsServiceHandler.Envelope',
+        type: 'tuple',
+        components: [
+          { name: 'eventId', internalType: 'bytes20', type: 'bytes20' },
+          { name: 'ordering', internalType: 'bytes12', type: 'bytes12' },
+          { name: 'payload', internalType: 'bytes', type: 'bytes' },
+        ],
+      },
+      {
+        name: 'signatureData',
+        internalType: 'struct IWavsServiceHandler.SignatureData',
+        type: 'tuple',
+        components: [
+          { name: 'signers', internalType: 'address[]', type: 'address[]' },
+          { name: 'signatures', internalType: 'bytes[]', type: 'bytes[]' },
+          { name: 'referenceBlock', internalType: 'uint32', type: 'uint32' },
+        ],
+      },
+    ],
+    name: 'validate',
+    outputs: [],
+    stateMutability: 'view',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'numerator',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: true,
+      },
+      {
+        name: 'denominator',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: true,
+      },
+    ],
+    name: 'QuorumThresholdUpdated',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'serviceURI',
+        internalType: 'string',
+        type: 'string',
+        indexed: false,
+      },
+    ],
+    name: 'ServiceURIUpdated',
+  },
+  {
+    type: 'error',
+    inputs: [
+      { name: 'signerWeight', internalType: 'uint256', type: 'uint256' },
+      { name: 'thresholdWeight', internalType: 'uint256', type: 'uint256' },
+      { name: 'totalWeight', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'InsufficientQuorum',
+  },
+  { type: 'error', inputs: [], name: 'InsufficientQuorumZero' },
+  { type: 'error', inputs: [], name: 'InvalidQuorumParameters' },
+  { type: 'error', inputs: [], name: 'InvalidSignature' },
+  { type: 'error', inputs: [], name: 'InvalidSignatureBlock' },
+  { type: 'error', inputs: [], name: 'InvalidSignatureLength' },
+  { type: 'error', inputs: [], name: 'InvalidSignatureOrder' },
+] as const
+
+export const iWavsServiceManagerAddress =
+  '0xD91954d72046a1558481dD9b0cC7B8C33D118dF0' as const
+
+export const iWavsServiceManagerConfig = {
+  address: iWavsServiceManagerAddress,
+  abi: iWavsServiceManagerAbi,
+} as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // LMSRMarketMaker
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

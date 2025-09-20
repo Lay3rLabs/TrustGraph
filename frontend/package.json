@@ -3,13 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "prebuild": "npm run config:link && npm run wagmi:generate",
     "build": "next build",
+    "predev": "npm run config:generate && npm run config:link && npm run wagmi:generate",
     "dev": "next dev",
-    "predev": "npm run config:update && npm run wagmi:generate",
     "lint": "eslint .",
     "format": "eslint . --fix",
     "start": "next start",
-    "config:update": "tsx scripts/update-config.ts",
+    "config:generate": "tsx scripts/generate-config.ts",
+    "config:link": "rm config.json && ln -s config.${NODE_ENV:-development}.json config.json",
     "claude-code": "docker compose -f .claude/docker-compose.claude.yml run --rm --remove-orphans -it claude-code-sandbox bash -c 'claude; exec'",
     "claude-code:unrestricted": "docker compose -f .claude/docker-compose.claude.yml run --rm --remove-orphans -it claude-code-sandbox bash -c 'claude --dangerously-skip-permissions; exec'",
     "wagmi:generate": "wagmi generate"

@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { useAccount } from 'wagmi'
 
 import { useServiceData } from '@/hooks/useServiceData'
-import { poaServiceManagerAddress } from '@/lib/contracts'
+import { iWavsServiceManagerAddress } from '@/lib/contracts'
 
 export default function ExplorerServicesPage() {
   const { isConnected } = useAccount()
@@ -73,7 +73,7 @@ export default function ExplorerServicesPage() {
             Service URI: {serviceURI || 'Not set'}
           </div>
           <div className="text-xs text-gray-500 mt-1">
-            Contract: {poaServiceManagerAddress}
+            Contract: {iWavsServiceManagerAddress}
           </div>
         </div>
       </div>
@@ -101,8 +101,8 @@ export default function ExplorerServicesPage() {
           WAVS SERVICE DIRECTORY
         </div>
         <div className="system-message text-sm">
-          ◈ {serviceData.name.toUpperCase()} SERVICE • STATUS:{' '}
-          {serviceData.status.toUpperCase()} ◈
+          ◈ {serviceData?.name.toUpperCase()} SERVICE • STATUS:{' '}
+          {serviceData?.status.toUpperCase()} ◈
         </div>
         {serviceURI && (
           <div className="text-xs text-gray-400 mt-2">
@@ -168,7 +168,7 @@ export default function ExplorerServicesPage() {
         </div>
         <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
           <div className="terminal-bright text-xs font-mono break-all">
-            {serviceData.manager?.evm?.address || 'N/A'}
+            {serviceData?.manager?.evm?.address || 'N/A'}
           </div>
           <div className="terminal-dim text-xs">MANAGER</div>
         </div>
@@ -363,7 +363,7 @@ export default function ExplorerServicesPage() {
         <div className="system-message text-center text-sm">
           <div>∞ WAVS NETWORK ∞</div>
           <div className="font-mono text-xs mt-1 break-all">
-            MANAGER: {serviceData.manager?.evm?.address || 'N/A'}
+            MANAGER: {serviceData?.manager?.evm?.address || 'N/A'}
           </div>
         </div>
       </div>

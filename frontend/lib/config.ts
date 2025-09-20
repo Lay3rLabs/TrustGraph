@@ -1,5 +1,6 @@
-/**
- * The ID of the WAVS service.
- */
-export const wavsServiceId =
-  '90995a6101fd701849761dec965472ae959e273d6fd622913cd2785db3a6edb0'
+import CONFIG from '../config.json'
+export { CONFIG }
+
+export const WAVS_SERVICE_ID = CONFIG.wavsServiceId
+export const SCHEMA_CONFIG = CONFIG.schemas
+export const CONTRACT_CONFIG = CONFIG.contracts

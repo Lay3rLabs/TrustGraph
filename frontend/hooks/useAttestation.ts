@@ -28,7 +28,6 @@ interface NewAttestationData {
 }
 
 const ATTESTATION_HASH = keccak256(stringToBytes('attestation'))
-console.log({ ATTESTATION_HASH })
 
 export function useAttestation() {
   const { address, isConnected } = useAccount()

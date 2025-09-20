@@ -3,7 +3,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { useReadContract } from 'wagmi'
 
-import { poaServiceManagerAbi, poaServiceManagerAddress } from '@/lib/contracts'
+import {
+  iWavsServiceManagerAbi,
+  iWavsServiceManagerAddress,
+} from '@/lib/contracts'
 
 interface ServiceWorkflow {
   id: string
@@ -43,8 +46,8 @@ export function useServiceData() {
     isLoading: isServiceURILoading,
     error: serviceURIError,
   } = useReadContract({
-    address: poaServiceManagerAddress,
-    abi: poaServiceManagerAbi,
+    address: iWavsServiceManagerAddress,
+    abi: iWavsServiceManagerAbi,
     functionName: 'getServiceURI',
   })
 

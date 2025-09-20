@@ -4,11 +4,11 @@
 import { SchemaEncoder } from '@ethereum-attestation-service/eas-sdk'
 import { Hex, stringToHex, toHex } from 'viem'
 
-import SCHEMA_MAP from './schemas.json'
+import { SCHEMA_CONFIG } from './config'
 
-export type SchemaKey = keyof typeof SCHEMA_MAP
+export type SchemaKey = keyof typeof SCHEMA_CONFIG
 
-export const SCHEMAS = Object.entries(SCHEMA_MAP).map(
+export const SCHEMAS = Object.entries(SCHEMA_CONFIG).map(
   ([key, schema]) =>
     ({
       key,
