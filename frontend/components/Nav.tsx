@@ -16,13 +16,13 @@ const menuItems: {
 }[] = [
   {
     label: 'Hyperstition',
-    href: '/backroom/hyperstition',
+    href: '/hyperstition',
     icon: '/pyramid.svg',
     iconClassName: 'w-5 h-5',
   },
   {
     label: 'Points',
-    href: '/backroom/points',
+    href: '/points',
     icon: '/points.svg',
     iconClassName: 'w-6 h-6',
   },

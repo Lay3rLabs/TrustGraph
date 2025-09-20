@@ -360,7 +360,7 @@ export default function EN0VATerminal() {
 
       // Redirect after a delay
       setTimeout(() => {
-        window.location.href = '/backroom/points'
+        window.location.href = '/points'
       }, 3000)
     } catch (error) {
       console.error('Failed to sign oath:', error)
