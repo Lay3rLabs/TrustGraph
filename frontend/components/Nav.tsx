@@ -3,6 +3,7 @@
 import clsx from 'clsx'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useRef } from 'react'
 
 import { WalletConnectionButton } from '@/components/WalletConnectionButton'
 
@@ -33,19 +34,26 @@ const menuItems: {
 export const Nav = () => {
   const pathname = usePathname()
 
+  const prepareSymbientChatRef = useRef(() => {})
+
   return (
     <nav className="grid grid-cols-[1fr_auto_1fr] justify-center items-start">
       {/* <Link href="/"> */}
       <Popup
-        popupClassName="max-w-lg max-h-[90vh] overflow-hidden !pb-0"
+        popupClassName="max-w-lg max-h-[90vh] overflow-hidden !pb-0 !bg-popover-foreground/80 backdrop-blur-sm"
         position="right"
+        wrapperClassName="h-14"
+        onOpen={() => prepareSymbientChatRef.current()}
         popupPadding={24}
         trigger={{
           type: 'custom',
-          Renderer: ({ onClick }) => (
+          Renderer: ({ onClick, open }) => (
             <Logo
               onClick={onClick}
-              className="w-14 h-14 cursor-pointer transition-opacity hover:opacity-80 active:opacity-70"
+              className={clsx(
+                'w-14 h-14 cursor-pointer transition-opacity hover:opacity-80 active:opacity-70',
+                open && 'fixed'
+              )}
               animatorLabel="nav"
               blinkInterval
               blinkOnClick
@@ -54,7 +62,10 @@ export const Nav = () => {
           ),
         }}
       >
-        <SymbientChat className="!p-0 !bg-transparent h-[42rem] max-h-full" />
+        <SymbientChat
+          className="!p-0 !bg-transparent h-[42rem] max-h-full"
+          prepareRef={prepareSymbientChatRef}
+        />
       </Popup>
       {/* </Link> */}
 

@@ -160,7 +160,8 @@ export const Popup = ({
       // If clicked on an element that is not a descendant of the popup
       // wrapper or the dropdown, close it.
       if (
-        !wrapperRef.current?.contains(event.target) &&
+        (!wrapperRef.current?.contains(event.target) ||
+          wrapperRef.current === event.target) &&
         !dropdownRef.current?.contains(event.target)
       ) {
         setOpen(false)

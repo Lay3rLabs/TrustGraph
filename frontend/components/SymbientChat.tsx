@@ -4,7 +4,7 @@ import clsx from 'clsx'
 import { useAtom } from 'jotai/react'
 import { ChevronRight } from 'lucide-react'
 import { HTMLMotionProps, motion } from 'motion/react'
-import { useEffect, useRef, useState } from 'react'
+import { RefObject, useEffect, useRef, useState } from 'react'
 import Markdown from 'react-markdown'
 
 import { Animator } from '@/lib/animator'
@@ -19,14 +19,25 @@ const firstMessage: ChatMessage = {
 
 export type SymbientChatProps = {
   className?: string
+  /**
+   * Prepare the chat to be ready for use.
+   */
+  prepareRef?: RefObject<() => void>
 }
 
-export const SymbientChat = ({ className }: SymbientChatProps) => {
+export const SymbientChat = ({ className, prepareRef }: SymbientChatProps) => {
   const [userInput, setUserInput] = useState('')
   const [messages, setMessages] = useAtom(symbientChat)
   const [isThinking, setIsThinking] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  if (prepareRef) {
+    prepareRef.current = () => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      textareaRef.current?.focus()
+    }
+  }
 
   useEffect(() => {
     if (isThinking) {
