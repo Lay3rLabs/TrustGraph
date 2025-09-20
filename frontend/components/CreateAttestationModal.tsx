@@ -27,7 +27,6 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { useAttestation } from '@/hooks/useAttestation'
 import { SCHEMAS, SchemaKey, SchemaManager } from '@/lib/schemas'
-import { localChain } from '@/lib/wagmi'
 
 interface AttestationFormData {
   schema: SchemaKey
@@ -66,7 +65,7 @@ export function CreateAttestationModal({
     },
   })
 
-  const { isConnected, chain } = useAccount()
+  const { isConnected } = useAccount()
   const { connect } = useConnect()
   const { createAttestation, isLoading, isSuccess, error, hash } =
     useAttestation()
@@ -327,17 +326,6 @@ export function CreateAttestationModal({
                         ✓ Attestation created! Tx: {hash.slice(0, 10)}...
                         {hash.slice(-8)}
                       </div>
-                      {chain?.id === localChain.id && (
-                        <div className="opacity-75">
-                          Local network transaction confirmed
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {isLoading && chain?.id === localChain.id && (
-                    <div className="terminal-dim text-xs">
-                      🔄 Processing on local Anvil network...
                     </div>
                   )}
                 </div>

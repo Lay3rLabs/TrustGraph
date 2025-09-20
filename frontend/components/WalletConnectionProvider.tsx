@@ -1,34 +1,30 @@
 import { useEffect } from 'react'
-import { toHex } from 'viem'
 import { useAccount, useSwitchChain } from 'wagmi'
 
-import { localChain } from '@/lib/wagmi'
+import {
+  createNetworkAddParams,
+  getTargetChainConfig,
+  getTargetChainId,
+} from '@/lib/wagmi'
 
 export const WalletConnectionProvider = ({
   children,
 }: {
   children: React.ReactNode
 }) => {
-  const addLocalNetwork = async () => {
+  const addTargetNetwork = async () => {
     try {
+      const chainConfig = getTargetChainConfig()
+      const networkParams = createNetworkAddParams(chainConfig)
+
       await window.ethereum?.request({
         method: 'wallet_addEthereumChain',
-        params: [
-          {
-            chainId: toHex(localChain.id),
-            chainName: 'Local Anvil',
-            nativeCurrency: {
-              name: 'Ether',
-              symbol: 'ETH',
-              decimals: 18,
-            },
-            rpcUrls: ['http://localhost:8545'],
-            blockExplorerUrls: ['http://localhost:8545'],
-          },
-        ],
+        params: [networkParams],
       })
+
+      console.log(`Added network: ${chainConfig.name} (${chainConfig.id})`)
     } catch (err) {
-      console.error('Failed to add local network:', err)
+      console.error('Failed to add target network:', err)
       throw err
     }
   }
@@ -36,29 +32,34 @@ export const WalletConnectionProvider = ({
   const { switchChain } = useSwitchChain()
   const { isConnected, chain } = useAccount()
 
-  const handleSwitchToLocal = async () => {
+  const handleSwitchToTarget = async () => {
     try {
-      switchChain({ chainId: localChain.id })
+      const targetChainId = getTargetChainId()
+      switchChain({ chainId: targetChainId })
     } catch (err) {
       console.error('Failed to switch network:', err)
       try {
-        await addLocalNetwork()
-        switchChain({ chainId: localChain.id })
+        await addTargetNetwork()
+        const targetChainId = getTargetChainId()
+        switchChain({ chainId: targetChainId })
       } catch (addErr) {
         console.error('Failed to add and switch network:', addErr)
       }
     }
   }
 
-  // Auto-switch to local network when connected to wrong chain
+  // Auto-switch to target network when connected to wrong chain
   useEffect(() => {
-    if (isConnected && (!chain || chain.id !== localChain.id)) {
+    const targetChainId = getTargetChainId()
+    const targetChainConfig = getTargetChainConfig()
+
+    if (isConnected && (!chain || chain.id !== targetChainId)) {
       console.log(
-        `Current chain: ${chain?.id || 'unknown'}, switching to local chain: ${
-          localChain.id
-        }`
+        `Current chain: ${chain?.id || 'unknown'}, switching to target chain: ${
+          targetChainConfig.name
+        } (${targetChainId})`
       )
-      handleSwitchToLocal()
+      handleSwitchToTarget()
     }
   }, [isConnected, chain])
 

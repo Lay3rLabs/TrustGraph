@@ -1,4 +1,5 @@
 {
+  "chain": "local",
   "wavsServiceId": "90995a6101fd701849761dec965472ae959e273d6fd622913cd2785db3a6edb0",
   "contracts": {
     "IWavsServiceManager": "0xd91954d72046a1558481dd9b0cc7b8c33d118df0",

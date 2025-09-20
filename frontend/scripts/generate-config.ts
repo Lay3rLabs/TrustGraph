@@ -23,6 +23,10 @@ try {
 
   console.log('📋 Found deployment data')
 
+  // Set chain based on environment
+  configOutput.chain =
+    env === 'development' ? 'local' : env === 'production' ? 'base' : ''
+
   // Update WAVS service ID
   configOutput.wavsServiceId = deployment.service_id
 

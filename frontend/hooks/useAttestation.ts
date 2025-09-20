@@ -3,12 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
 import { Hex, WatchContractEventOnLogsFn, keccak256, stringToBytes } from 'viem'
-import {
-  useAccount,
-  useChainId,
-  usePublicClient,
-  useWatchContractEvent,
-} from 'wagmi'
+import { useAccount, usePublicClient, useWatchContractEvent } from 'wagmi'
 
 import {
   easAbi,
@@ -18,7 +13,6 @@ import {
 } from '@/lib/contracts'
 import { SchemaKey, SchemaManager } from '@/lib/schemas'
 import { txToast } from '@/lib/tx'
-import { localChain } from '@/lib/wagmi'
 import { attestationKeys } from '@/queries/attestation'
 
 interface NewAttestationData {
@@ -31,7 +25,6 @@ const ATTESTATION_HASH = keccak256(stringToBytes('attestation'))
 
 export function useAttestation() {
   const { address, isConnected } = useAccount()
-  const chainId = useChainId()
   const publicClient = usePublicClient()
   const queryClient = useQueryClient()
 
@@ -61,18 +54,11 @@ export function useAttestation() {
     ...wavsIndexerConfig,
     eventName: 'EventIndexed',
     onLogs: handleEventIndexed,
-    enabled: chainId === localChain.id,
   })
 
   const createAttestation = async (attestationData: NewAttestationData) => {
     if (!isConnected) {
       throw new Error('Please connect your wallet')
-    }
-
-    if (chainId !== localChain.id) {
-      throw new Error(
-        `Please switch to the local network (chain ID ${localChain.id})`
-      )
     }
 
     const schemaUid = attestationData.schema.startsWith('0x')

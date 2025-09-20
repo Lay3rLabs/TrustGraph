@@ -3,7 +3,7 @@ import { WaitForTransactionReceiptReturnType } from 'viem'
 
 import { parseErrorMessage } from './error'
 import { writeEthContractAndWait } from './utils'
-import { config, localChain } from './wagmi'
+import { config } from './wagmi'
 
 export type TransactionToast = {
   /**
@@ -38,7 +38,7 @@ export const txToast = async (...txs: TransactionToast[]) => {
     const confirmations =
       _confirmations ??
       // On localhost, just wait for 1 confirmation.
-      (config.chains.length === 1 && config.chains[0].id === localChain.id
+      (config.chains.length === 1 && config.chains[0].id === 31337
         ? 1
         : // Use 1 for all preceding transactions, and 3 for the last one.
         index < txs.length - 1
