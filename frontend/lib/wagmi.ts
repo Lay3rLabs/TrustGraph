@@ -1,7 +1,12 @@
 import { porto } from 'porto/wagmi'
 import { base } from 'viem/chains'
 import { createConfig, http } from 'wagmi'
-import { coinbaseWallet, injected, metaMask } from 'wagmi/connectors'
+import {
+  coinbaseWallet,
+  injected,
+  metaMask,
+  walletConnect,
+} from 'wagmi/connectors'
 
 import { CHAIN } from './config'
 
@@ -62,9 +67,9 @@ export const config = createConfig({
     porto(),
     metaMask(),
     coinbaseWallet(),
-    // walletConnect({
-    //   projectId: '',
-    // }),
+    walletConnect({
+      projectId: 'c6abc47a50f2aebfc9cbd1cac562759c',
+    }),
   ],
   transports: supportedChains.reduce((acc, chain) => {
     acc[chain.id] = http(chain.rpcUrls.default.http[0], {
