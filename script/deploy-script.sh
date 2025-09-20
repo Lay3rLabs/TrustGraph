@@ -87,8 +87,10 @@ export VOUCHING_SCHEMA_UID=$(jq -r '.eas.schemas.vouching.uid' .docker/deploymen
 # Determine chain name based on deployment environment
 if [ "$(task get-deploy-status)" = "TESTNET" ]; then
     export CHAIN_NAME=evm:$(task get-chain-id)
+    export AGGREGATOR_TIMER_DELAYER_SECS=3 # base wait ~1 block
 else
     export CHAIN_NAME=evm:31337 # local
+    export AGGREGATOR_TIMER_DELAYER_SECS=0
 fi
 
 # Validate EAS addresses were extracted successfully

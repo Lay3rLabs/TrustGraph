@@ -219,16 +219,13 @@ jq -c '.components[]' "${COMPONENT_CONFIGS_FILE}" | while IFS= read -r component
             eval "$BASE_CMD workflow submit --id ${WORKFLOW_ID} component env ${AGG_ENV_ARGS}" > /dev/null
         fi
 
-        # Set aggregator component configuration
+        # Set aggregator component configuration routing
+        # (( --values is found in ${AGG_CONFIG_ARGS} already ))
         AGG_CONFIG_ARGS=$(build_config_args "$AGG_CONFIG_VALUES")
         if [ -n "$AGG_CONFIG_ARGS" ]; then
             echo "  📋 Configuring aggregator (vars: ${AGG_CONFIG_ARGS})"
-            # NOTE: --values is already done in `build_config_args`.
-            eval "$BASE_CMD workflow submit --id ${WORKFLOW_ID} component config ${AGG_CONFIG_ARGS}" > /dev/null
         fi
-
-        # Configure routing
-         eval "$BASE_CMD workflow submit --id ${WORKFLOW_ID} component config --values \"${SUBMIT_CHAIN}=${COMP_SUBMIT_ADDRESS}\"" > /dev/null
+        eval "$BASE_CMD workflow submit --id ${WORKFLOW_ID} component config --values \"${SUBMIT_CHAIN}=${COMP_SUBMIT_ADDRESS}\" ${AGG_CONFIG_ARGS}" > /dev/null
     else
         eval "$BASE_CMD workflow submit --id ${WORKFLOW_ID} set-none" > /dev/null
     fi

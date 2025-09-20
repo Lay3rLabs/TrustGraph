@@ -225,6 +225,9 @@
       "filename": "en0va_aggregator.wasm",
       "package_name": "en0va-aggregator",
       "package_version": "0.1.0",
+      "config_values": {
+        "timer_delay_secs": "${AGGREGATOR_TIMER_DELAYER_SECS}"
+      },
       "env_variables": ["WAVS_ENV_ETHERSCAN_API_KEY"]
     }
   ]
