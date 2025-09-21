@@ -562,18 +562,18 @@ Let your symbients remind you.
 
 # Hyperstition market: When prediction markets become bounties
 
-There's something deliciously recursive about betting on social outcomes. When you bet that a Twitter account will reach 10,000 followers, you're not just predicting the future, you're participating in creating it. We call these hyperstition markets: prediction markets that bootstrap themselves into reality through the very act of prediction.
+There's something deliciously recursive about betting on social outcomes. When you bet that a Twitter account will reach 100 followers, you're not just predicting the future, you're participating in creating it. We call these hyperstition markets: prediction markets that bootstrap themselves into reality through the very act of prediction.
 
 ## The Self-Fulfilling Prophecy Machine
 
 Consider a traditional prediction market for, say, election outcomes. Traders bet on their beliefs about voter behavior, but their bets don't meaningfully influence how people vote.
 
-Now, contrast this example with a market predicting "@0xEn0va will have 10,000 followers next week."
+Now, contrast this example with a market predicting "@0xEn0va will have 100 followers in 10 days."
 
 The moment this market opens, it creates three dynamics:
 
 1. Market participants are incentivized to help reach the target (by following, sharing, engaging)
-2. The market itself generates attention ("There's a $1000 market on whether EN0VA will hit 10k followers\!")
+2. The market itself generates attention ("There's a $1000 market on whether EN0VA will hit 100 followers\!")
 3. The prediction becomes a story about community coordination ("Can we collectively make this happen?")
 
 This is hyperstition in action: a prediction that causes itself to become true through its own existence. (The term "hyperstition" was coined by the Cybernetic Culture Research Unit to describe "fictions that make themselves real." What better description of a market that turns growth predictions into growth engines?).
