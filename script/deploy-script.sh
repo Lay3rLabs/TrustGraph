@@ -5,8 +5,10 @@ set -e
 STATUS_FILE=".docker/component-upload-status"
 
 # Store the PID of the background process
-bash script/upload-components-background.sh &
-UPLOAD_PID=$!
+if [[ "${SKIP_COMPONENT_UPLOAD}" != "true" ]]; then
+    bash script/upload-components-background.sh &
+    UPLOAD_PID=$!
+fi
 
 # Function to clean up on exit
 cleanup() {
@@ -40,13 +42,15 @@ fi
 bash ./script/create-deployer.sh
 export FUNDED_KEY=$(task config:funded-key)
 
-echo "🟢 Deploying POA Service Manager..."
-POA_MIDDLEWARE="docker run --rm --network host -v ./.nodes:/root/.nodes --env-file .env ghcr.io/lay3rlabs/poa-middleware:1.0.1"
-$POA_MIDDLEWARE deploy
-sleep 1 # for Base
-$POA_MIDDLEWARE owner_operation updateStakeThreshold 1000
-sleep 1 # for Base
-$POA_MIDDLEWARE owner_operation updateQuorum 2 3
+if [[ "${SKIP_CONTRACT_UPLOAD}" != "true" ]]; then
+    echo "🟢 Deploying POA Service Manager..."
+    POA_MIDDLEWARE="docker run --rm --network host -v ./.nodes:/root/.nodes --env-file .env ghcr.io/lay3rlabs/poa-middleware:1.0.1"
+    $POA_MIDDLEWARE deploy
+    sleep 1 # for Base
+    $POA_MIDDLEWARE owner_operation updateStakeThreshold 1000
+    sleep 1 # for Base
+    $POA_MIDDLEWARE owner_operation updateQuorum 2 3
+fi
 
 if [ "$(task get-deploy-status)" = "LOCAL" ]; then
     # required for the checkpoint stuff, ref: aurtur / https://github.com/Lay3rLabs/EN0VA/pull/31/commits/d205e9c65f91fb5b0b5bca672d8d28d6c7f672f9#diff-e3d8246ec3421fa3a204fe7a8f0586acfad4888ae82f5b8c6d130cb907705c80R75-R78
@@ -60,8 +64,10 @@ echo "ℹ️ Using WAVS Service Manager address: ${WAVS_SERVICE_MANAGER_ADDRESS}
 ### === Deploy Contracts === ###
 
 # Deploy Contracts
-source script/deploy-contracts.sh
-sleep 1
+if [[ "${SKIP_CONTRACT_UPLOAD}" != "true" ]]; then
+    source script/deploy-contracts.sh
+    sleep 1
+fi
 
 ### === Deploy Services ===
 
@@ -150,23 +156,25 @@ export SIGNER_MANAGER_ZODIAC_MODULE=`jq -r '.zodiac_safes.safe1.signer_module' "
 echo "📋 All configuration variables exported for component-specific substitution"
 
 # wait for STATUS_FILE to contain the status COMPLETED in its content, check every 0.5 seconds for up to 60 seconds then error
-echo "Waiting for component uploads to complete..."
-timeout 300 bash -c "
-    trap 'exit 130' INT TERM
-    while ! grep -q 'COMPLETED' '$STATUS_FILE' 2>/dev/null; do
-        sleep 0.5
-    done
-"
-if [ $? -ne 0 ]; then
-    echo "❌ Component uploads did not complete in time or failed."
-    exit 1
-fi
-echo "✅ All components uploaded successfully"
-# clear tmp file
-rm -f $STATUS_FILE
+if [[ "${SKIP_COMPONENT_UPLOAD}" != "true" ]]; then
+    echo "Waiting for component uploads to complete..."
+    timeout 300 bash -c "
+        trap 'exit 130' INT TERM
+        while ! grep -q 'COMPLETED' '$STATUS_FILE' 2>/dev/null; do
+            sleep 0.5
+        done
+    "
+    if [ $? -ne 0 ]; then
+        echo "❌ Component uploads did not complete in time or failed."
+        exit 1
+    fi
+    echo "✅ All components uploaded successfully"
+    # clear tmp file
+    rm -f $STATUS_FILE
 
-echo "Waiting for 5 seconds for registry to update..."
-sleep 7
+    echo "Waiting for 5 seconds for registry to update..."
+    sleep 7
+fi
 
 # Create service with multiple workflows
 echo "Creating service with multiple component workflows..."
