@@ -12,11 +12,17 @@ This paper serves to outline the approach we'll take with the EN0VA DAICO.
 
 **How it works (high level):**
 - Project creates a DAICO contract, funds it with project tokens, and configures a sale mechanism (bonding curve, dutch auction, etc.)
-- Users put funds in in the DAICO contract, get $vTokens representing their contribution share
+- Users put funds in in the DAICO contract, get $NFT cards representing their contribution share
 - DAICO vests funds to project, project vests project tokens to DAICO contributors
 - At any point they can burn their $vTokens for their share of what's left of the DAICO treasury, or exchange them to claim vested project tokens
 - Two governance actions are supported, voting to increase the `tap` rate and voting to dissolve the DAICO entirely and return everyone their funds.
 - If project fails to meet minimum fundraising goals after a certain period, contributors can withdraw their funds.
+
+Funds from the DAICO are put in a liquidity pool, which can be used to provide liquidity for the project's token.
+
+The project is getting vested LP tokens.
+
+You lock them for weight in the DAO.
 
 ## EN0VA DAICO Spec
 

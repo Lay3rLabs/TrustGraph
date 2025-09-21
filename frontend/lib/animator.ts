@@ -239,7 +239,10 @@ export class Animator {
   /**
    * Tasks that group animations together.
    */
-  private tasks: Record<string, AnimatorTaskFunction> = {}
+  private tasks: Record<
+    string,
+    { task: AnimatorTaskFunction; stop?: AnimatorTaskFunction }
+  > = {}
 
   constructor(
     /**
@@ -315,8 +318,12 @@ export class Animator {
   /**
    * Register a task that groups animations together.
    */
-  registerTask(name: string, task: AnimatorTaskFunction) {
-    this.tasks[name] = task
+  registerTask(
+    name: string,
+    task: AnimatorTaskFunction,
+    stop?: AnimatorTaskFunction
+  ) {
+    this.tasks[name] = { task, stop }
   }
 
   /**
@@ -327,7 +334,21 @@ export class Animator {
     if (!task) {
       throw new Error(`Task ${name} not found`)
     }
-    return task(this)
+    return task.task(this)
+  }
+
+  /**
+   * Stop running a task.
+   */
+  stopTask(name: string): ReturnType<AnimatorTaskFunction> {
+    const task = this.tasks[name]
+    if (!task) {
+      throw new Error(`Task ${name} not found`)
+    }
+    if (!task.stop) {
+      throw new Error(`Task ${name} does not have a stop function`)
+    }
+    return task.stop(this)
   }
 
   /**
@@ -347,5 +368,16 @@ export class Animator {
     }
 
     return targetControls.start(animationFn(options))
+  }
+
+  /**
+   * Stop all animations on a target.
+   */
+  stop = (target: string) => {
+    const targetControls = this.target(target)
+    if (!this.targetMounted[target]) {
+      throw new Error(`Target ${target} not mounted`)
+    }
+    return targetControls.stop()
   }
 }

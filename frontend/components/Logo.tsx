@@ -2,10 +2,11 @@ import { motion, useIsomorphicLayoutEffect } from 'motion/react'
 import { nanoid } from 'nanoid'
 import { useEffect, useMemo, useRef } from 'react'
 
-import { Animator, animations } from '@/lib/animate'
+import { Animator, animations } from '@/lib/animator'
 
 export type LogoProps = {
   className?: string
+  onClick?: () => void
   /**
    * Globally unique animator label. Randomly generated if not provided.
    */
@@ -18,6 +19,7 @@ export type LogoProps = {
 
 const Logo = ({
   className,
+  onClick,
   animatorLabel = nanoid(),
   followMouse = false,
   blinkOnClick = false,
@@ -100,11 +102,25 @@ const Logo = ({
     animator.registerAnimation('right', 'stretch', animations.stretch('right'))
 
     // Animation tasks.
-    animator.registerTask('thinking', ({ start }) =>
-      Promise.all([
-        start('structure', 'pulse', { duration: 3, repeat: 1 }),
-        start('logo', 'glow', { duration: 3, repeat: 1 }),
-      ])
+    animator.registerTask(
+      'thinking',
+      ({ start }) =>
+        Promise.all([
+          start('structure', 'pulse', { duration: 3, repeat: Infinity }),
+          start('logo', 'glow', { duration: 3, repeat: Infinity }),
+          start('topRight', 'wag', { duration: 0.4, repeat: Infinity }),
+          start('topLeft', 'wag', { duration: 0.4, repeat: Infinity }),
+          start('bottomRight', 'wag', { duration: 0.4, repeat: Infinity }),
+          start('bottomLeft', 'wag', { duration: 0.4, repeat: Infinity }),
+        ]),
+      ({ stop }) => {
+        stop('structure')
+        stop('logo')
+        stop('topRight')
+        stop('topLeft')
+        stop('bottomRight')
+        stop('bottomLeft')
+      }
     )
     animator.registerTask('wave', ({ start }) =>
       Promise.all([start('topRight', 'wave'), start('topLeft', 'wave')])
@@ -118,6 +134,17 @@ const Logo = ({
       ])
     )
     animator.registerTask('blink', ({ start }) => start('iris', 'blink'))
+    animator.registerTask('reset', ({ start }) =>
+      Promise.all([
+        start('iris', 'blink', {
+          duration: 5,
+        }),
+        start('structure', 'pulse', {
+          duration: 5,
+          repeat: 0,
+        }),
+      ])
+    )
 
     return animator
   }, [animatorLabel])
@@ -220,6 +247,8 @@ const Logo = ({
       fill="none"
       onHoverStart={blinkOnHover ? () => animator?.runTask('blink') : undefined}
       onClick={async () => {
+        onClick?.()
+
         await animator?.runTask('wave')
         // await new Promise((resolve) => setTimeout(resolve, 350))
         // await animator?.runTask('blink')

@@ -65,7 +65,7 @@ export function Modal({
         type="popover"
         size="md"
         className={clsx(
-          'relative z-50 w-full max-w-md mx-4 !p-0',
+          'relative z-50 w-full max-w-md max-h-[90vh] overflow-y-auto mx-4 !p-0',
           isOpen ? 'animate-in zoom-in-95' : 'animate-out zoom-out-95',
           className
         )}
