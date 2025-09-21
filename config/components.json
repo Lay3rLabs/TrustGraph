@@ -57,7 +57,10 @@
         "pagerank_trust_multiplier": "10.5",
         "pagerank_trust_boost": "0.99"
       },
-      "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
+      "env_variables": [
+        "WAVS_ENV_PINATA_API_URL",
+        "WAVS_ENV_PINATA_API_KEY"
+      ]
     },
     {
       "filename": "merkler.wasm",
@@ -79,7 +82,10 @@
         "pagerank_trust_multiplier": "10.5",
         "pagerank_trust_boost": "0.99"
       },
-      "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
+      "env_variables": [
+        "WAVS_ENV_PINATA_API_URL",
+        "WAVS_ENV_PINATA_API_KEY"
+      ]
     },
     {
       "filename": "merkler_pruner.wasm",
@@ -103,7 +109,10 @@
         "signer_module_address": "${SIGNER_MANAGER_ZODIAC_MODULE}",
         "chain_name": "${CHAIN_NAME}"
       },
-      "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
+      "env_variables": [
+        "WAVS_ENV_PINATA_API_URL",
+        "WAVS_ENV_PINATA_API_KEY"
+      ]
     },
     {
       "filename": "dao_agent.wasm",
@@ -113,7 +122,10 @@
       "trigger_json_path": "eas.contracts.attest_trigger",
       "submit_json_path": "zodiac_safes.safe2.wavs_module",
       "config_values": {},
-      "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
+      "env_variables": [
+        "WAVS_ENV_PINATA_API_URL",
+        "WAVS_ENV_PINATA_API_KEY"
+      ]
     },
     {
       "filename": "prediction_market_oracle.wasm",
@@ -127,7 +139,8 @@
         "conditional_tokens": "${CONDITIONAL_TOKENS_ADDRESS}",
         "chain_name": "${CHAIN_NAME}",
         "resolver_type": "twitter_followers",
-        "resolver_config": "account:\"0xEN0VA\";threshold:7"
+        "resolver_config": "account:\"0xEN0VA\";threshold:7",
+        "execute_after": 1758458572406137856
       }
     },
     {
@@ -228,7 +241,9 @@
       "config_values": {
         "timer_delay_secs": "${AGGREGATOR_TIMER_DELAYER_SECS}"
       },
-      "env_variables": ["WAVS_ENV_ETHERSCAN_API_KEY"]
+      "env_variables": [
+        "WAVS_ENV_ETHERSCAN_API_KEY"
+      ]
     }
   ]
 }
