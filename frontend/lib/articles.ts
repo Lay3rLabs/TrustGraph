@@ -27,6 +27,7 @@ const ARTICLES_DIR = path.join(process.cwd(), '../hyperstition', 'memetics')
 const SLUG_TO_FILENAME: Record<string, string> = {
   intro: 'Introduction.md',
   'collective-awakening': 'The_Collective_Awakening.md',
+  psychogeograpy: 'Psychogeographic_Warfare.md',
   'hyperstition-economics': 'Hyperstition_as_Economic_Force.md',
   'egregore-protocol': 'Protocol_For_Egregore_Manifestation.md',
   'post-individual-society': 'Beyond_Human.md',

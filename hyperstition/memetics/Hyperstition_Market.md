@@ -1,3 +1,7 @@
+---
+status: draft
+---
+
 # Hyperstition market: When prediction markets become bounties
 
 There's something deliciously recursive about betting on social outcomes. When you bet that a Twitter account will reach 10,000 followers, you're not just predicting the future, you're participating in creating it. We call these hyperstition markets: prediction markets that bootstrap themselves into reality through the very act of prediction.
