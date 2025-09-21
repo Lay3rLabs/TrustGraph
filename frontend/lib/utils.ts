@@ -27,16 +27,30 @@ export const formatBigNumber = (
   decimals?: number
 ): string => {
   num = Number(decimals ? formatUnits(BigInt(num), decimals) : num)
-  if (num >= 1000000)
-    return `${(num / 1000000).toLocaleString(undefined, {
+  if (num >= 1e9) {
+    return `${(num / 1e9).toLocaleString(undefined, {
+      notation: 'standard',
+      maximumFractionDigits: 3,
+    })}B`
+  }
+  if (num >= 1e6) {
+    return `${(num / 1e6).toLocaleString(undefined, {
       notation: 'standard',
       maximumFractionDigits: 3,
     })}M`
-  if (num >= 1000)
-    return `${(num / 1000).toLocaleString(undefined, {
+  }
+  if (num >= 1e3) {
+    return `${(num / 1e3).toLocaleString(undefined, {
       notation: 'standard',
       maximumFractionDigits: 3,
     })}K`
+  }
+  if (num < 1) {
+    return num.toLocaleString(undefined, {
+      notation: 'standard',
+      maximumSignificantDigits: 5,
+    })
+  }
   return num.toLocaleString(undefined, {
     notation: 'standard',
     maximumFractionDigits: 3,

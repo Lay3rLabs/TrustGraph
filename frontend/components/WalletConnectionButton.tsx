@@ -116,7 +116,8 @@ export const WalletConnectionButton = ({
                     ? '...'
                     : ethBalance
                     ? formatBigNumber(ethBalance.value, ethBalance.decimals)
-                    : '?'}
+                    : '?'}{' '}
+                  {ethBalance?.symbol}
                 </p>
               </div>
 
@@ -127,7 +128,8 @@ export const WalletConnectionButton = ({
                     ? '...'
                     : usdcBalance
                     ? formatBigNumber(usdcBalance.value, usdcBalance.decimals)
-                    : '?'}
+                    : '?'}{' '}
+                  {usdcBalance?.symbol}
                 </p>
               </div>
             </div>
