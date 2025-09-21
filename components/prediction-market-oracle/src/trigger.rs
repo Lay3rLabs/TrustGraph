@@ -30,17 +30,14 @@ pub fn encode_trigger_output(
     conditional_tokens: Address,
     result: bool,
 ) -> Vec<u8> {
-    solidity::Data {
-        data: solidity::PredictionMarketOracleAvsOutput {
-            lmsrMarketMaker: lmsr_market_maker,
-            conditionalTokens: conditional_tokens,
-            result,
-        }
-        .abi_encode()
-        .to_vec()
-        .into(),
+    solidity::PredictionMarketOracleAvsOutput {
+        lmsrMarketMaker: lmsr_market_maker,
+        conditionalTokens: conditional_tokens,
+        result,
     }
     .abi_encode()
+    .to_vec()
+    .into()
 }
 
 mod solidity {
