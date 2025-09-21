@@ -72,12 +72,9 @@ contract PredictionMarket is Common {
         vm.startBroadcast(_privateKey);
 
         // Add trigger (sends 0.1 ETH)
-        ITypes.TriggerId triggerId = oracle.addTrigger();
+        oracle.trigger();
 
         vm.stopBroadcast();
-
-        uint64 tid = ITypes.TriggerId.unwrap(triggerId);
-        console.log("Trigger ID:", tid);
     }
 
     function redeem(

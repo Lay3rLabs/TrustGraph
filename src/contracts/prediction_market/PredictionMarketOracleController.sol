@@ -64,7 +64,7 @@ contract PredictionMarketOracleController is
     /**
      * @dev Emit NewTrigger event.
      */
-    function addTrigger() external {
+    function trigger() external {
         emit NewTrigger();
     }
 

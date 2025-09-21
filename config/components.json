@@ -140,7 +140,7 @@
         "chain_name": "${CHAIN_NAME}",
         "resolver_type": "twitter_followers",
         "resolver_config": "account:\"0xEN0VA\";threshold:7",
-        "execute_after": 1758458572406137856
+        "resolve_after": 1758458572
       }
     },
     {

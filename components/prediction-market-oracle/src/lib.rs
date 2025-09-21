@@ -25,12 +25,12 @@ impl Guest for Component {
         let resolver_type =
             config_var("resolver_type").ok_or_else(|| "Failed to get resolver type")?;
 
-        // UTC timestamp in nanoseconds since UNIX epoch
-        // Cannot execute the service handler before this
-        let execute_after: u64 = config_var("execute_after")
-            .ok_or_else(|| "Failed to get execute_after time")?
+        // UTC timestamp in seconds since UNIX epoch
+        // Cannot resolve the market before this
+        let resolve_after: u64 = config_var("resolve_after")
+            .ok_or_else(|| "Failed to get resolve_after time")?
             .parse()
-            .map_err(|e| format!("Could not parse execute_after: {e}"))?;
+            .map_err(|e| format!("Could not parse resolve_after: {e}"))?;
 
         // Map key1:value1;key2:value2;... to JSON object {key1: value1, key2: value2, ...}
         let resolver_config = serde_json::to_value(
@@ -47,10 +47,10 @@ impl Guest for Component {
 
         let trigger_info = decode_trigger_event(action.data)?;
 
-        if trigger_info.execution_time < execute_after {
+        if trigger_info.execution_time_seconds < resolve_after {
             return Err(format!(
-                "Execution is allowed after {execute_after}. (current execution time is {0})",
-                trigger_info.execution_time
+                "Market resolution is allowed after {resolve_after}. (current time is {})",
+                trigger_info.execution_time_seconds
             ));
         }
 

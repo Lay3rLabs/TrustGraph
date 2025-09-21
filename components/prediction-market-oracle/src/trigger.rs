@@ -7,20 +7,24 @@ use anyhow::Result;
 use wavs_wasi_utils::evm::alloy_primitives::Address;
 
 pub struct TriggerInfo {
-    // Execution time in nanos
-    pub execution_time: u64,
+    pub execution_time_seconds: u64,
 }
 
 pub fn decode_trigger_event(trigger_data: TriggerData) -> Result<TriggerInfo, String> {
     match trigger_data {
         TriggerData::EvmContractEvent(TriggerDataEvmContractEvent { log, .. }) => {
-            Ok(TriggerInfo { execution_time: log.block_timestamp.saturating_mul(1_000_000_000) })
+            Ok(TriggerInfo { execution_time_seconds: log.block_timestamp })
         }
         TriggerData::Cron(TriggerDataCron { trigger_time }) => {
-            Ok(TriggerInfo { execution_time: trigger_time.nanos })
+            Ok(TriggerInfo { execution_time_seconds: trigger_time.nanos / 1_000_000_000 })
         }
         // CLI testing
-        TriggerData::Raw(_) => Ok(TriggerInfo { execution_time: 0 }),
+        TriggerData::Raw(_) => Ok(TriggerInfo {
+            execution_time_seconds: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+        }),
         _ => Err("Unsupported trigger data type".to_string()),
     }
 }
