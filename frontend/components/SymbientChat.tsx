@@ -4,6 +4,7 @@ import clsx from 'clsx'
 import { useAtom } from 'jotai/react'
 import { ChevronRight } from 'lucide-react'
 import { HTMLMotionProps, motion } from 'motion/react'
+import Link from 'next/link'
 import { RefObject, useEffect, useRef, useState } from 'react'
 import Markdown from 'react-markdown'
 
@@ -186,6 +187,7 @@ export const SymbientChat = ({
               <Markdown
                 components={{
                   p: SlideFadeInParagraph as any,
+                  a: StyledLink as any,
                 }}
               >
                 {message.content}
@@ -240,14 +242,28 @@ const SlideFadeInParagraph = ({
 }: HTMLMotionProps<'p'>) => (
   <motion.p
     initial={{ opacity: 0, y: 5 }}
-    whileInView={{ opacity: 1, y: 0 }}
+    animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.4, ease: 'easeOut' }}
-    viewport={{ once: true }}
     className={clsx(className, 'whitespace-pre-wrap')}
     {...props}
   >
     {children}
   </motion.p>
+)
+
+const StyledLink = ({
+  href,
+  children,
+}: {
+  href: string
+  children: React.ReactNode
+}) => (
+  <Link
+    href={href}
+    className="underline transition-opacity hover:opacity-80 active:opacity-70"
+  >
+    {children}
+  </Link>
 )
 
 const BlinkingCursor = () => (
