@@ -5,7 +5,7 @@ export const predictionMarketPrice = onchainTable(
   (t) => ({
     id: t.text().primaryKey(),
     marketAddress: t.hex().notNull(),
-    price: t.bigint().notNull(),
+    price: t.real().notNull(),
     timestamp: t.bigint().notNull(),
   }),
   (t) => ({

@@ -1,22 +1,27 @@
 import { ponder } from "ponder:registry";
 import { predictionMarketPrice, predictionMarketTrade } from "ponder:schema";
 import { lmsrMarketMakerAbi } from "../../frontend/lib/contracts";
-import { Hex, parseUnits } from "viem";
+import { Hex, hexToNumber } from "viem";
+
+const PRICE_DIVISOR = hexToNumber("0x10000000000000000");
 
 // Calculate initial price.
 ponder.on("marketMaker:setup", async ({ context }) => {
   const marketAddress = context.contracts.marketMaker.address as Hex;
 
   // During setup, the market maker contract may not exist yet.
-  let yesPrice: bigint;
+  let yesPrice: number;
   try {
-    yesPrice = await context.client.readContract({
-      address: marketAddress,
-      abi: lmsrMarketMakerAbi,
-      functionName: "calcNetCost",
-      args: [[0n, parseUnits("1", 6)]],
-      retryEmptyResponse: false,
-    });
+    yesPrice =
+      Number(
+        await context.client.readContract({
+          address: marketAddress,
+          abi: lmsrMarketMakerAbi,
+          functionName: "calcMarginalPrice",
+          args: [1],
+          retryEmptyResponse: false,
+        })
+      ) / PRICE_DIVISOR;
   } catch (error) {
     return;
   }
@@ -63,12 +68,15 @@ ponder.on("marketMaker:AMMOutcomeTokenTrade", async ({ event, context }) => {
 
   // Update price after each trade.
 
-  const yesPrice = await context.client.readContract({
-    address: marketAddress,
-    abi: lmsrMarketMakerAbi,
-    functionName: "calcNetCost",
-    args: [[0n, parseUnits("1", 6)]],
-  });
+  const yesPrice =
+    Number(
+      await context.client.readContract({
+        address: marketAddress,
+        abi: lmsrMarketMakerAbi,
+        functionName: "calcMarginalPrice",
+        args: [1],
+      })
+    ) / PRICE_DIVISOR;
 
   await context.db
     .insert(predictionMarketPrice)

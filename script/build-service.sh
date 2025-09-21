@@ -158,6 +158,11 @@ echo "📋 Available configuration variables:"
 echo ""
 
 jq -c '.components[]' "${COMPONENT_CONFIGS_FILE}" | while IFS= read -r component; do
+    COMP_DISABLED=$(echo "$component" | jq -r '.disabled // false')
+    if [ "$COMP_DISABLED" = "true" ]; then
+        continue
+    fi
+
     COMP_FILENAME=$(echo "$component" | jq -r '.filename')
     COMP_PKG_NAME=$(echo "$component" | jq -r '.package_name')
     COMP_PKG_VERSION=$(echo "$component" | jq -r '.package_version')

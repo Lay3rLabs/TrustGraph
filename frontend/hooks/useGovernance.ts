@@ -216,11 +216,11 @@ export function useGovernance() {
           core: {
             id: BigInt(proposalId),
             proposer: '0x0000000000000000000000000000000000000000',
-            startBlock: BigInt(0),
-            endBlock: BigInt(0),
-            forVotes: BigInt(0),
-            againstVotes: BigInt(0),
-            abstainVotes: BigInt(0),
+            startBlock: 0n,
+            endBlock: 0n,
+            forVotes: 0n,
+            againstVotes: 0n,
+            abstainVotes: 0n,
             executed: false,
             cancelled: false,
             merkleRoot:

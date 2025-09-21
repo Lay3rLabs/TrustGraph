@@ -1,15 +1,15 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { useAccount, useReadContract, useWriteContract } from 'wagmi'
+import { useAccount, useWriteContract } from 'wagmi'
 
 import { Button } from '@/components/ui/button'
+import { useCollateralToken } from '@/hooks/useCollateralToken'
+import { usePredictionMarket } from '@/hooks/usePredictionMarket'
 import {
   conditionalTokensAbi,
   conditionalTokensAddress,
-  erc20Abi,
   erc20Address,
-  predictionMarketControllerAddress,
 } from '@/lib/contracts'
 import { formatBigNumber } from '@/lib/utils'
 
@@ -31,147 +31,18 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
   const [success, setSuccess] = useState<string | null>(null)
   const [expectedPayout, setExpectedPayout] = useState<bigint | null>(null)
 
-  const { data: collateralSymbol = 'USDC' } = useReadContract({
-    address: erc20Address,
-    abi: erc20Abi,
-    functionName: 'symbol',
-  })
-  const { data: collateralDecimals = 0 } = useReadContract({
-    address: erc20Address,
-    abi: erc20Abi,
-    functionName: 'decimals',
-  })
-
-  // Get the condition ID - using the factory as oracle (as in the scripts)
-  const { data: conditionId } = useReadContract({
-    address: conditionalTokensAddress,
-    abi: conditionalTokensAbi,
-    functionName: 'getConditionId',
-    args: [
-      predictionMarketControllerAddress, // oracle (factory, not market maker)
-      '0x0000000000000000000000000000000000000000000000000000000000000000' as `0x${string}`, // questionId (bytes32(0))
-      BigInt(2), // outcomeSlotCount (YES/NO = 2 outcomes)
-    ],
-    query: { enabled: !!address },
-  })
-
-  // Get collection IDs for YES/NO positions
-  const { data: yesCollectionId } = useReadContract({
-    address: conditionalTokensAddress,
-    abi: conditionalTokensAbi,
-    functionName: 'getCollectionId',
-    args: conditionId
-      ? [
-          '0x0000000000000000000000000000000000000000000000000000000000000000' as `0x${string}`, // parentCollectionId
-          conditionId,
-          BigInt(2), // indexSet for YES (binary 10 = decimal 2)
-        ]
-      : undefined,
-    query: { enabled: !!conditionId },
-  })
-
-  const { data: noCollectionId } = useReadContract({
-    address: conditionalTokensAddress,
-    abi: conditionalTokensAbi,
-    functionName: 'getCollectionId',
-    args: conditionId
-      ? [
-          '0x0000000000000000000000000000000000000000000000000000000000000000' as `0x${string}`, // parentCollectionId
-          conditionId,
-          BigInt(1), // indexSet for NO (binary 01 = decimal 1)
-        ]
-      : undefined,
-    query: { enabled: !!conditionId },
-  })
-
-  // Get position IDs for YES/NO tokens
-  const { data: yesPositionId } = useReadContract({
-    address: conditionalTokensAddress,
-    abi: conditionalTokensAbi,
-    functionName: 'getPositionId',
-    args: yesCollectionId
-      ? [
-          erc20Address, // collateralToken
-          yesCollectionId,
-        ]
-      : undefined,
-    query: { enabled: !!yesCollectionId },
-  })
-
-  const { data: noPositionId } = useReadContract({
-    address: conditionalTokensAddress,
-    abi: conditionalTokensAbi,
-    functionName: 'getPositionId',
-    args: noCollectionId
-      ? [
-          erc20Address, // collateralToken
-          noCollectionId,
-        ]
-      : undefined,
-    query: { enabled: !!noCollectionId },
-  })
-
-  // Get user's token balances
-  const { data: yesBalance, refetch: refetchYesBalance } = useReadContract({
-    address: conditionalTokensAddress,
-    abi: conditionalTokensAbi,
-    functionName: 'balanceOf',
-    args: [
-      address ||
-        ('0x0000000000000000000000000000000000000000' as `0x${string}`),
-      yesPositionId || BigInt(0),
-    ],
-    query: { enabled: !!address && !!yesPositionId },
-  })
-
-  const { data: noBalance, refetch: refetchNoBalance } = useReadContract({
-    address: conditionalTokensAddress,
-    abi: conditionalTokensAbi,
-    functionName: 'balanceOf',
-    args: [
-      address ||
-        ('0x0000000000000000000000000000000000000000' as `0x${string}`),
-      noPositionId || BigInt(0),
-    ],
-    query: { enabled: !!address && !!noPositionId },
-  })
-
-  // Get payout denominator
-  const { data: payoutDenominator } = useReadContract({
-    address: conditionalTokensAddress,
-    abi: conditionalTokensAbi,
-    functionName: 'payoutDenominator',
-    args: conditionId ? [conditionId] : undefined,
-    query: { enabled: !!conditionId },
-  })
-
-  // Get payout numerators for YES outcome (index 1)
-  const { data: yesPayoutNumerator } = useReadContract({
-    address: conditionalTokensAddress,
-    abi: conditionalTokensAbi,
-    functionName: 'payoutNumerators',
-    args: conditionId ? [conditionId, BigInt(1)] : undefined,
-    query: { enabled: !!conditionId },
-  })
-
-  // Get payout numerators for NO outcome (index 0)
-  const { data: noPayoutNumerator } = useReadContract({
-    address: conditionalTokensAddress,
-    abi: conditionalTokensAbi,
-    functionName: 'payoutNumerators',
-    args: conditionId ? [conditionId, BigInt(0)] : undefined,
-    query: { enabled: !!conditionId },
-  })
-
-  // Determine if the market is actually resolved by checking if payout numerators exist
-  const isMarketResolved = React.useMemo(() => {
-    return (
-      payoutDenominator !== undefined &&
-      yesPayoutNumerator !== undefined &&
-      noPayoutNumerator !== undefined &&
-      payoutDenominator > BigInt(0)
-    )
-  }, [payoutDenominator, yesPayoutNumerator, noPayoutNumerator])
+  const { symbol: collateralSymbol, decimals: collateralDecimals } =
+    useCollateralToken()
+  const {
+    yesShares,
+    noShares,
+    yesPayoutNumerator,
+    noPayoutNumerator,
+    payoutDenominator,
+    isMarketResolved,
+    conditionId,
+    refetch: refetchPredictionMarket,
+  } = usePredictionMarket(market)
 
   // Determine the actual market outcome from the contract
   const marketOutcome = React.useMemo(() => {
@@ -180,12 +51,9 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
     // YES outcome wins if yesPayoutNumerator > 0 and noPayoutNumerator = 0
     // NO outcome wins if noPayoutNumerator > 0 and yesPayoutNumerator = 0
     // Could also be a draw if both are equal and > 0
-    if (yesPayoutNumerator! > BigInt(0) && noPayoutNumerator === BigInt(0)) {
+    if (yesPayoutNumerator! > 0n && noPayoutNumerator === 0n) {
       return 'YES'
-    } else if (
-      noPayoutNumerator! > BigInt(0) &&
-      yesPayoutNumerator === BigInt(0)
-    ) {
+    } else if (noPayoutNumerator! > 0n && yesPayoutNumerator === 0n) {
       return 'NO'
     } else {
       // This handles draws or other edge cases
@@ -195,19 +63,19 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
 
   // Determine which positions the user has (can have both YES and NO)
   const userPositions = React.useMemo(() => {
-    const yesAmount = yesBalance || BigInt(0)
-    const noAmount = noBalance || BigInt(0)
+    const yesAmount = yesShares || 0n
+    const noAmount = noShares || 0n
 
     const positions = []
 
-    if (yesAmount > BigInt(0)) {
+    if (yesAmount > 0n) {
       positions.push({
         outcome: 'YES' as const,
         amount: yesAmount,
       })
     }
 
-    if (noAmount > BigInt(0)) {
+    if (noAmount > 0n) {
       positions.push({
         outcome: 'NO' as const,
         amount: noAmount,
@@ -215,7 +83,7 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
     }
 
     return positions
-  }, [yesBalance, noBalance])
+  }, [yesShares, noShares])
 
   // Calculate expected payout for all positions
   useEffect(() => {
@@ -230,7 +98,7 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
     }
 
     try {
-      let totalPayout = BigInt(0)
+      let totalPayout = 0n
 
       for (const position of userPositions) {
         const payoutNumerator =
@@ -280,10 +148,9 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
       // Index set 1 = binary 01 = decimal 1 (represents NO)
       // Index set 2 = binary 10 = decimal 2 (represents YES)
       const indexSets = userPositions.map((pos) =>
-        pos.outcome === 'YES' ? BigInt(2) : BigInt(1)
+        pos.outcome === 'YES' ? BigInt(2) : 1n
       )
 
-      // Make sure we have a condition ID
       if (!conditionId) {
         throw new Error('Condition ID not found')
       }
@@ -311,8 +178,7 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
       setSuccess(`Successfully redeemed ${positionDetails} tokens!`)
 
       // Refresh balances
-      refetchYesBalance()
-      refetchNoBalance()
+      refetchPredictionMarket()
 
       if (onSuccess) onSuccess()
     } catch (err: any) {
@@ -345,8 +211,8 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
   // Show no position message if user has no tokens
   if (
     userPositions.length === 0 &&
-    yesBalance !== undefined &&
-    noBalance !== undefined
+    yesShares !== undefined &&
+    noShares !== undefined
   ) {
     return (
       <div className="space-y-6">

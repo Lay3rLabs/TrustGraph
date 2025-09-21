@@ -6,19 +6,14 @@ import clsx from 'clsx'
 import { LoaderCircle } from 'lucide-react'
 import React, { useCallback, useEffect, useState } from 'react'
 import { formatUnits, parseUnits } from 'viem'
-import { useAccount, useBalance, useReadContract } from 'wagmi'
+import { useAccount } from 'wagmi'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useCollateralToken } from '@/hooks/useCollateralToken'
+import { usePredictionMarket } from '@/hooks/usePredictionMarket'
 import { useUpdatingRef } from '@/hooks/useUpdatingRef'
-import {
-  conditionalTokensAbi,
-  conditionalTokensAddress,
-  erc20Abi,
-  erc20Address,
-  lmsrMarketMakerAbi,
-  predictionMarketControllerAddress,
-} from '@/lib/contracts'
+import { erc20Abi, erc20Address, lmsrMarketMakerAbi } from '@/lib/contracts'
 import { txToast } from '@/lib/tx'
 import { formatBigNumber } from '@/lib/utils'
 import { config } from '@/lib/wagmi'
@@ -48,17 +43,6 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
   const [tokensEstimate, setTokensEstimate] = useState<string | null>(null)
   const [isCalculating, setIsCalculating] = useState<boolean>(false)
 
-  // Use mock USDC for collateral balance
-  const { data: collateralBalance, refetch: refetchCollateralBalance } =
-    useBalance({
-      address: address,
-      token: erc20Address,
-      query: {
-        refetchInterval: 3_000,
-      },
-    })
-  const collateralDecimals = collateralBalance?.decimals || 0
-
   // Binary search to find the exact token amount for the specified collateral
   const [estimatedTokenAmount, setEstimatedTokenAmount] = useState<string>('0')
 
@@ -67,9 +51,9 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     async (
       targetCollateral: bigint,
       outcome: 'YES' | 'NO',
-      low: bigint = BigInt(0),
+      low: bigint = 0n,
       high: bigint = targetCollateral * BigInt(10),
-      bestTokenAmount: bigint = BigInt(0),
+      bestTokenAmount: bigint = 0n,
       iteration: number = 0
     ): Promise<bigint> => {
       // Base case: stop after 15 iterations or when range is too small
@@ -79,8 +63,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
       }
 
       const mid = (low + high) / BigInt(2)
-      const outcomeTokenAmounts =
-        outcome === 'YES' ? [BigInt(0), mid] : [mid, BigInt(0)]
+      const outcomeTokenAmounts = outcome === 'YES' ? [0n, mid] : [mid, 0n]
 
       try {
         const cost = (await queryClient.fetchQuery(
@@ -97,7 +80,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
           return performBinarySearch(
             targetCollateral,
             outcome,
-            mid + BigInt(1),
+            mid + 1n,
             high,
             mid, // This is our new best amount
             iteration + 1
@@ -108,7 +91,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
             targetCollateral,
             outcome,
             low,
-            mid - BigInt(1),
+            mid - 1n,
             bestTokenAmount,
             iteration + 1
           )
@@ -170,117 +153,22 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
       })
   }, [formData.collateralAmount, formData.outcome, performBinarySearch])
 
-  // Calculate YES token cost for 1 token
-  const { data: yesCostData, refetch: refetchYesCost } = useReadContract({
-    address: market.marketMakerAddress,
-    abi: lmsrMarketMakerAbi,
-    functionName: 'calcNetCost',
-    args: [[BigInt(0), parseUnits('1', collateralDecimals)]],
-    query: { enabled: true, refetchInterval: 3_000 },
-  })
-
-  // Calculate NO token cost for 1 token
-  const { data: noCostData, refetch: refetchNoCost } = useReadContract({
-    address: market.marketMakerAddress,
-    abi: lmsrMarketMakerAbi,
-    functionName: 'calcNetCost',
-    args: [[parseUnits('1', collateralDecimals), BigInt(0)]],
-    query: { enabled: true, refetchInterval: 3_000 },
-  })
-
-  // Get the condition ID from the conditional tokens contract (same approach as PredictionRedeemForm)
-  const { data: conditionId } = useReadContract({
-    address: conditionalTokensAddress,
-    abi: conditionalTokensAbi,
-    functionName: 'getConditionId',
-    args: [
-      predictionMarketControllerAddress, // oracle
-      '0x0000000000000000000000000000000000000000000000000000000000000000' as `0x${string}`, // questionId
-      BigInt(2), // outcomeSlotCount (YES/NO = 2 outcomes)
-    ],
-    query: { enabled: !!address },
-  })
-
-  // Get collection IDs for YES/NO positions
-  const { data: yesCollectionId } = useReadContract({
-    address: conditionalTokensAddress,
-    abi: conditionalTokensAbi,
-    functionName: 'getCollectionId',
-    args: conditionId
-      ? [
-          '0x0000000000000000000000000000000000000000000000000000000000000000' as `0x${string}`, // parentCollectionId
-          conditionId,
-          BigInt(2), // indexSet for YES (binary 10 = decimal 2)
-        ]
-      : undefined,
-    query: { enabled: !!conditionId },
-  })
-
-  const { data: noCollectionId } = useReadContract({
-    address: conditionalTokensAddress,
-    abi: conditionalTokensAbi,
-    functionName: 'getCollectionId',
-    args: conditionId
-      ? [
-          '0x0000000000000000000000000000000000000000000000000000000000000000' as `0x${string}`, // parentCollectionId
-          conditionId,
-          BigInt(1), // indexSet for NO (binary 01 = decimal 1)
-        ]
-      : undefined,
-    query: { enabled: !!conditionId },
-  })
-
-  // Get position IDs for YES/NO tokens
-  const { data: yesPositionId } = useReadContract({
-    address: conditionalTokensAddress,
-    abi: conditionalTokensAbi,
-    functionName: 'getPositionId',
-    args: yesCollectionId
-      ? [
-          erc20Address, // collateralToken
-          yesCollectionId,
-        ]
-      : undefined,
-    query: { enabled: !!yesCollectionId },
-  })
-
-  const { data: noPositionId } = useReadContract({
-    address: conditionalTokensAddress,
-    abi: conditionalTokensAbi,
-    functionName: 'getPositionId',
-    args: noCollectionId
-      ? [
-          erc20Address, // collateralToken
-          noCollectionId,
-        ]
-      : undefined,
-    query: { enabled: !!noCollectionId },
-  })
-
-  // Get user's token balances using the position IDs
-  const { data: yesTokenBalanceData, refetch: refetchYesTokenBalance } =
-    useReadContract({
-      address: conditionalTokensAddress,
-      abi: conditionalTokensAbi,
-      functionName: 'balanceOf',
-      args: address && yesPositionId ? [address, yesPositionId] : undefined,
-      query: {
-        enabled: !!address && !!yesPositionId,
-        refetchInterval: 3_000,
-      },
-    })
-
-  const { data: noTokenBalanceData, refetch: refetchNoTokenBalance } =
-    useReadContract({
-      address: conditionalTokensAddress,
-      abi: conditionalTokensAbi,
-      functionName: 'balanceOf',
-      args: address && noPositionId ? [address, noPositionId] : undefined,
-      query: {
-        enabled: !!address && !!noPositionId,
-        refetchInterval: 3_000,
-      },
-    })
+  const {
+    yesCost,
+    formattedYesShares,
+    isLoadingYesShares,
+    noCost,
+    formattedNoShares,
+    isLoadingNoShares,
+    refetch: refetchPredictionMarket,
+  } = usePredictionMarket(market)
+  const {
+    symbol: collateralSymbol,
+    decimals: collateralDecimals,
+    balance: collateralBalance,
+    formattedBalance: collateralFormattedBalance,
+    refetchBalance: refetchCollateralBalance,
+  } = useCollateralToken()
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -318,9 +206,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
       // Use the estimated token amount for the trade
       const tokenAmount = parseUnits(estimatedTokenAmount, collateralDecimals)
       const outcomeTokenAmounts =
-        formData.outcome === 'YES'
-          ? [BigInt(0), tokenAmount]
-          : [tokenAmount, BigInt(0)]
+        formData.outcome === 'YES' ? [0n, tokenAmount] : [tokenAmount, 0n]
 
       await txToast(
         // Approve market maker to spend collateral
@@ -353,10 +239,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
       if (onSuccess) {
         onSuccess()
         refetchCollateralBalance()
-        refetchYesCost()
-        refetchNoCost()
-        refetchYesTokenBalance()
-        refetchNoTokenBalance()
+        refetchPredictionMarket()
       }
     } catch (err: any) {
       console.error('Error buying prediction tokens:', err)
@@ -366,33 +249,11 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     }
   }
 
-  const yesTokenBalance =
-    yesTokenBalanceData !== undefined
-      ? formatUnits(yesTokenBalanceData, collateralDecimals)
-      : null
-
-  const noTokenBalance =
-    noTokenBalanceData !== undefined
-      ? formatUnits(noTokenBalanceData, collateralDecimals)
-      : null
-
-  const yesCostEstimate =
-    yesCostData !== undefined
-      ? formatUnits(yesCostData, collateralDecimals)
-      : null
-
-  const noCostEstimate =
-    noCostData !== undefined
-      ? formatUnits(noCostData, collateralDecimals)
-      : null
-
   const hasEnoughCollateral =
-    collateralBalance && formData.collateralAmount
-      ? collateralBalance.value >=
-        parseUnits(formData.collateralAmount, collateralBalance.decimals)
+    collateralBalance !== undefined && formData.collateralAmount
+      ? collateralBalance >=
+        parseUnits(formData.collateralAmount, collateralDecimals)
       : true
-
-  const collateralSymbol = collateralBalance?.symbol || 'USDC'
 
   return (
     <div className="space-y-6">
@@ -401,29 +262,25 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
         <p className="terminal-text text-sm">{market.description}</p>
       </div>
 
-      {isConnected &&
-        address &&
-        (yesTokenBalance !== null || noTokenBalance !== null) && (
-          <Card size="sm" type="detail">
-            <div className="terminal-dim text-xs text-center">
-              YOUR POSITION
-            </div>
-            <div className="grid grid-cols-2 gap-4 mt-2">
-              <div className="flex flex-col items-center">
-                <div className="text-[#05df72] text-sm font-bold">
-                  {yesTokenBalance ? formatBigNumber(yesTokenBalance) : '0.000'}
-                </div>
-                <div className="terminal-dim text-xs">YES shares</div>
+      {isConnected && address && !isLoadingYesShares && !isLoadingNoShares && (
+        <Card size="sm" type="detail">
+          <div className="terminal-dim text-xs text-center">YOUR POSITION</div>
+          <div className="grid grid-cols-2 gap-4 mt-2">
+            <div className="flex flex-col items-center">
+              <div className="text-[#05df72] text-sm font-bold">
+                {formatBigNumber(formattedYesShares)}
               </div>
-              <div className="flex flex-col items-center">
-                <div className="text-[#dd70d4] text-sm font-bold">
-                  {noTokenBalance ? formatBigNumber(noTokenBalance) : '0.000'}
-                </div>
-                <div className="terminal-dim text-xs">NO shares</div>
-              </div>
+              <div className="terminal-dim text-xs">YES shares</div>
             </div>
-          </Card>
-        )}
+            <div className="flex flex-col items-center">
+              <div className="text-[#dd70d4] text-sm font-bold">
+                {formatBigNumber(formattedNoShares)}
+              </div>
+              <div className="terminal-dim text-xs">NO shares</div>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {error && (
         <div className="bg-red-900/30 border border-red-500 p-3 rounded-sm">
@@ -457,11 +314,9 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
               >
                 YES
               </div>
-              {yesCostEstimate && (
-                <div className="text-xs terminal-dim">
-                  {Number(yesCostEstimate).toFixed(3)} ${collateralSymbol}
-                </div>
-              )}
+              <div className="text-xs terminal-dim">
+                {yesCost.toFixed(3)} ${collateralSymbol}
+              </div>
             </button>
 
             <button
@@ -480,11 +335,9 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
               >
                 NO
               </div>
-              {noCostEstimate && (
-                <div className="text-xs terminal-dim">
-                  {Number(noCostEstimate).toFixed(3)} ${collateralSymbol}
-                </div>
-              )}
+              <div className="text-xs terminal-dim">
+                {noCost.toFixed(3)} ${collateralSymbol}
+              </div>
             </button>
           </div>
         </div>
@@ -509,16 +362,15 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
               />
             </div>
 
-            {collateralBalance && (
+            {!!collateralFormattedBalance && (
               <p
                 className={clsx(
                   '-mt-2 terminal-bright text-xs',
                   !hasEnoughCollateral && '!text-red-400'
                 )}
               >
-                BALANCE:{' '}
-                {formatBigNumber(collateralBalance.value, collateralDecimals)}{' '}
-                {collateralBalance.symbol}
+                BALANCE: {formatBigNumber(collateralFormattedBalance)}{' '}
+                {collateralSymbol}
               </p>
             )}
           </div>

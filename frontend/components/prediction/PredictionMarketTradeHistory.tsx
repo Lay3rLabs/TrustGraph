@@ -2,9 +2,9 @@
 
 import { usePonderQuery } from '@ponder/react'
 import type React from 'react'
-import { useAccount, useReadContract } from 'wagmi'
+import { useAccount } from 'wagmi'
 
-import { erc20Abi, erc20Address } from '@/lib/contracts'
+import { useCollateralToken } from '@/hooks/useCollateralToken'
 import { formatBigNumber } from '@/lib/utils'
 
 import { HyperstitionMarket } from './PredictionMarketDetail'
@@ -35,16 +35,8 @@ export const PredictionMarketTradeHistory: React.FC<
   const { address } = useAccount()
 
   // Use mock USDC for collateral balance
-  const { data: collateralSymbol = 'USDC' } = useReadContract({
-    address: erc20Address,
-    abi: erc20Abi,
-    functionName: 'symbol',
-  })
-  const { data: collateralDecimals = 0 } = useReadContract({
-    address: erc20Address,
-    abi: erc20Abi,
-    functionName: 'decimals',
-  })
+  const { symbol: collateralSymbol, decimals: collateralDecimals } =
+    useCollateralToken()
 
   const {
     data: tradeHistory,

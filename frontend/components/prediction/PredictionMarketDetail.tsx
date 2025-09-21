@@ -19,8 +19,7 @@ import {
 } from 'chart.js'
 import { useMemo, useState } from 'react'
 import { Line } from 'react-chartjs-2'
-import { formatUnits, parseUnits } from 'viem'
-import { useAccount, useReadContract } from 'wagmi'
+import { useAccount } from 'wagmi'
 
 import {
   Select,
@@ -29,8 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { usePredictionMarket } from '@/hooks/usePredictionMarket'
 import { useResponsiveMount } from '@/hooks/useResponsiveMount'
-import { erc20Abi, erc20Address, lmsrMarketMakerAbi } from '@/lib/contracts'
 import { formatBigNumber } from '@/lib/utils'
 import { ponderQueries } from '@/queries/ponder'
 
@@ -136,21 +135,7 @@ export const PredictionMarketDetail = ({
     )
   )
 
-  // Calculate YES token cost for 1 token
-  const { data: yesCostData } = useReadContract({
-    address: market.marketMakerAddress,
-    abi: lmsrMarketMakerAbi,
-    functionName: 'calcNetCost',
-    args: [[BigInt(0), parseUnits('1', 18)]],
-    query: { enabled: true, refetchInterval: 3_000 },
-  })
-
-  // Calculate decimals for collateral token
-  const { data: collateralDecimals = 0 } = useReadContract({
-    address: erc20Address,
-    abi: erc20Abi,
-    functionName: 'decimals',
-  })
+  const { yesCost } = usePredictionMarket(market)
 
   const greenColor = getComputedStyle(document.documentElement)
     .getPropertyValue('--green')
@@ -193,7 +178,7 @@ export const PredictionMarketDetail = ({
     const priceData = priceHistory.map(({ timestamp, price }) => ({
       timestamp: Number(timestamp), // Convert BigInt to number (seconds)
       x: Number(timestamp * 1000n), // Convert to milliseconds for chart
-      y: Number(formatUnits(price, collateralDecimals)),
+      y: price,
     }))
 
     // If no follower history, return empty follower data
@@ -483,10 +468,7 @@ export const PredictionMarketDetail = ({
                 </div>
                 <div className="text-right">
                   <div className="terminal-bright text-sm">
-                    {yesCostData
-                      ? (Number(yesCostData / BigInt(1e14)) / 1e2).toFixed(2) +
-                        '%'
-                      : '...'}
+                    {yesCost ? (yesCost * 100).toFixed(2) + '%' : '...'}
                   </div>
                   <div className="terminal-dim text-xs">BELIEF LEVEL</div>
                 </div>

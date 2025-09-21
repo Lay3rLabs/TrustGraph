@@ -134,12 +134,12 @@ impl Guest for Component {
         // Reward users for prediction market interactions (1 point per type+contract interacted with, so 2 if user trades and also redeems on same market, and 1 if only trades but no redeem)
         registry.add_source(sources::interactions::InteractionsSource::new(
             "prediction_market_trade",
-            U256::from(1),
+            U256::from(25),
             true,
         ));
         registry.add_source(sources::interactions::InteractionsSource::new(
             "prediction_market_redeem",
-            U256::from(1),
+            U256::from(50),
             true,
         ));
 

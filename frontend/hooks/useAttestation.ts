@@ -97,12 +97,12 @@ export function useAttestation() {
           schema: schemaUid,
           data: {
             recipient: attestationData.recipient as `0x${string}`,
-            expirationTime: BigInt(0),
+            expirationTime: 0n,
             revocable: true,
             refUID:
               '0x0000000000000000000000000000000000000000000000000000000000000000' as `0x${string}`,
             data: encodedData,
-            value: BigInt(0),
+            value: 0n,
           },
         }
 

@@ -139,6 +139,7 @@
       "env_variables": ["WAVS_ENV_TWITTERAPI_TOKEN"]
     },
     {
+      "disabled": true,
       "filename": "prediction_market_oracle.wasm",
       "package_name": "predictionmarketoracle",
       "package_version": "0.1.0",
