@@ -163,6 +163,9 @@ jq -c '.components[]' "${COMPONENT_CONFIGS_FILE}" | while IFS= read -r component
     COMP_PKG_VERSION=$(echo "$component" | jq -r '.package_version')
     COMP_SUBMIT_JSON_PATH=$(echo "$component" | jq -r '.submit_json_path')
     COMP_TRIGGER_BLOCK_INTERVAL=$(echo "$component" | jq -r '.trigger_block_interval // ""')
+    COMP_TRIGGER_CRON_SCHEDULE=$(echo "$component" | jq -r '.trigger_cron.schedule // ""')
+    COMP_TRIGGER_CRON_START_TIME=$(echo "$component" | jq -r '.trigger_cron.start_time // ""')
+    COMP_TRIGGER_CRON_END_TIME=$(echo "$component" | jq -r '.trigger_cron.end_time // ""')
 
     # Extract component-specific config values and env variables
     COMP_CONFIG_VALUES=$(echo "$component" | jq '.config_values // {}')
@@ -179,6 +182,27 @@ jq -c '.components[]' "${COMPONENT_CONFIGS_FILE}" | while IFS= read -r component
         eval "$BASE_CMD workflow trigger --id ${WORKFLOW_ID} set-block-interval --chain ${TRIGGER_CHAIN} --n-blocks ${COMP_TRIGGER_BLOCK_INTERVAL}" > /dev/null
 
         echo "  Trigger block interval: ${COMP_TRIGGER_BLOCK_INTERVAL}"
+    elif [ -n "$COMP_TRIGGER_CRON_SCHEDULE" ]; then
+        # Build cron command arguments
+        CRON_CMD_ARGS="--schedule '${COMP_TRIGGER_CRON_SCHEDULE}'"
+
+        if [ "$COMP_TRIGGER_CRON_START_TIME" != "null" ] && [ -n "$COMP_TRIGGER_CRON_START_TIME" ]; then
+            CRON_CMD_ARGS="${CRON_CMD_ARGS} --start-time ${COMP_TRIGGER_CRON_START_TIME}"
+        fi
+
+        if [ "$COMP_TRIGGER_CRON_END_TIME" != "null" ] && [ -n "$COMP_TRIGGER_CRON_END_TIME" ]; then
+            CRON_CMD_ARGS="${CRON_CMD_ARGS} --end-time ${COMP_TRIGGER_CRON_END_TIME}"
+        fi
+
+        eval "$BASE_CMD workflow trigger --id ${WORKFLOW_ID} set-cron ${CRON_CMD_ARGS}" > /dev/null
+
+        echo "  Trigger cron: ${COMP_TRIGGER_CRON_SCHEDULE}"
+        if [ "$COMP_TRIGGER_CRON_START_TIME" != "null" ] && [ -n "$COMP_TRIGGER_CRON_START_TIME" ]; then
+            echo "  Start time: ${COMP_TRIGGER_CRON_START_TIME}"
+        fi
+        if [ "$COMP_TRIGGER_CRON_END_TIME" != "null" ] && [ -n "$COMP_TRIGGER_CRON_END_TIME" ]; then
+            echo "  End time: ${COMP_TRIGGER_CRON_END_TIME}"
+        fi
     else
         COMP_TRIGGER_EVENT=$(echo "$component" | jq -r '.trigger_event')
         COMP_TRIGGER_JSON_PATH=$(echo "$component" | jq -r '.trigger_json_path')

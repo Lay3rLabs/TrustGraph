@@ -133,6 +133,11 @@
       "package_version": "0.1.0",
       "trigger_event": "NewTrigger(bytes)",
       "trigger_json_path": "prediction_market.oracle_controller",
+      "trigger_cron": {
+        "schedule": "*/30 * * * * *",
+        "start_time": 1758458572406137856,
+        "end_time": 1758458572406137856
+      },
       "submit_json_path": "prediction_market.oracle_controller",
       "config_values": {
         "market_maker": "${MARKET_MAKER_ADDRESS}",
