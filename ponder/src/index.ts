@@ -14,7 +14,7 @@ ponder.on("marketMaker:setup", async ({ context }) => {
       address: marketAddress,
       abi: lmsrMarketMakerAbi,
       functionName: "calcNetCost",
-      args: [[0n, parseUnits("1", 18)]],
+      args: [[0n, parseUnits("1", 6)]],
       retryEmptyResponse: false,
     });
   } catch (error) {
@@ -67,7 +67,7 @@ ponder.on("marketMaker:AMMOutcomeTokenTrade", async ({ event, context }) => {
     address: marketAddress,
     abi: lmsrMarketMakerAbi,
     functionName: "calcNetCost",
-    args: [[0n, parseUnits("1", 18)]],
+    args: [[0n, parseUnits("1", 6)]],
   });
 
   await context.db

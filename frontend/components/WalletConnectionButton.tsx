@@ -1,15 +1,26 @@
 'use client'
 
 import clsx from 'clsx'
-import { Check, Copy, LoaderCircle, LogOut, Wallet } from 'lucide-react'
+import {
+  ArrowRightLeft,
+  Check,
+  Copy,
+  LoaderCircle,
+  LogOut,
+  Wallet,
+} from 'lucide-react'
 import type React from 'react'
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import { useAccount, useConnect, useDisconnect } from 'wagmi'
+import { useAccount, useBalance, useConnect, useDisconnect } from 'wagmi'
 
+import { mockUsdcAddress } from '@/lib/contracts'
 import { parseErrorMessage } from '@/lib/error'
+import { formatBigNumber } from '@/lib/utils'
 
 import { Popup } from './Popup'
+import { EthIcon } from './tokens/EthIcon'
+import { UsdcIcon } from './tokens/UsdcIcon'
 
 export interface WalletConnectionButtonProps {
   className?: string
@@ -38,14 +49,31 @@ export const WalletConnectionButton = ({
 
   const setOpenRef = useRef<Dispatch<SetStateAction<boolean>> | null>(null)
 
+  // Use mock USDC for collateral balance
+  const { data: usdcBalance, isLoading: isLoadingUsdcBalance } = useBalance({
+    address: address,
+    token: mockUsdcAddress,
+    query: {
+      enabled: !!address,
+      refetchInterval: 30_000,
+    },
+  })
+  const { data: ethBalance, isLoading: isLoadingEthBalance } = useBalance({
+    address: address,
+    query: {
+      enabled: !!address,
+      refetchInterval: 30_000,
+    },
+  })
+
   return (
     <>
       <Popup
-        position={isConnected ? 'same' : 'left'}
+        position="left"
         setOpenRef={setOpenRef}
         popupPadding={24}
-        popupClassName={clsx('!p-2', isConnected && '!rounded-full')}
-        sideOffset={isConnected ? 0 : 4}
+        popupClassName={isConnected ? '!p-3' : '!p-2'}
+        sideOffset={4}
         wrapperClassName={className}
         trigger={{
           type: 'custom',
@@ -79,29 +107,67 @@ export const WalletConnectionButton = ({
         }}
       >
         {isConnected && address ? (
-          <div className="flex flex-row justify-around items-center px-2 gap-1">
-            <button
-              className="flex flex-row items-center gap-2 cursor-pointer p-2 transition-opacity hover:opacity-80 active:opacity-70"
-              onClick={(e) => {
-                navigator.clipboard.writeText(address)
-                setCopied(true)
-                // Don't close the popup. Updating the copied state causes this to re-render, which causes the original event target to no longer be contained by the popup, which causes the popup to close.
-                e.stopPropagation()
-              }}
-            >
-              <CopyIcon className="w-4 h-4 text-primary-foreground/80" />
-            </button>
+          <div className="flex flex-col gap-3 text-sm">
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-row items-center gap-2">
+                <EthIcon className="w-5 h-5" />
+                <p>
+                  {isLoadingEthBalance
+                    ? '...'
+                    : ethBalance
+                    ? formatBigNumber(ethBalance.value, ethBalance.decimals)
+                    : '?'}
+                </p>
+              </div>
 
-            <button
-              onClick={() => {
-                setOpenRef.current?.(false)
-                // Wait for the popup to close before disconnecting to avoid flickering as the popup classes change.
-                setTimeout(() => disconnect(), 200)
-              }}
-              className="flex items-center justify-center shrink-0 p-2 transition-opacity hover:opacity-80 active:opacity-70"
-            >
-              <LogOut className="w-4 h-4 text-destructive-foreground" />
-            </button>
+              <div className="flex flex-row items-center gap-2">
+                <UsdcIcon className="w-5 h-5" />
+                <p>
+                  {isLoadingUsdcBalance
+                    ? '...'
+                    : usdcBalance
+                    ? formatBigNumber(usdcBalance.value, usdcBalance.decimals)
+                    : '?'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col">
+              <a
+                href="https://superbridge.app/base"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-row items-center gap-3 p-2 rounded-sm bg-transparent text-primary-foreground transition-colors hover:bg-primary/70 active:bg-primary/90"
+              >
+                <ArrowRightLeft className="w-4 h-4 text-primary-foreground/80" />
+                <p>Bridge to Base</p>
+              </a>
+
+              <button
+                className="flex flex-row items-center gap-3 p-2 rounded-sm bg-transparent text-primary-foreground transition-colors hover:bg-primary/70 active:bg-primary/90"
+                onClick={(e) => {
+                  navigator.clipboard.writeText(address)
+                  setCopied(true)
+                  // Don't close the popup. Updating the copied state causes this to re-render, which causes the original event target to no longer be contained by the popup, which causes the popup to close.
+                  e.stopPropagation()
+                }}
+              >
+                <CopyIcon className="w-4 h-4 text-primary-foreground/80" />
+                <p>Copy address</p>
+              </button>
+
+              <button
+                className="flex flex-row items-center gap-3 p-2 rounded-sm bg-transparent text-primary-foreground transition-colors hover:bg-primary/70 active:bg-primary/90"
+                onClick={() => {
+                  setOpenRef.current?.(false)
+                  // Wait for the popup to close before disconnecting to avoid flickering as the popup classes change.
+                  setTimeout(() => disconnect(), 200)
+                }}
+              >
+                <LogOut className="w-4 h-4 text-destructive-foreground" />
+                <p className="text-destructive-foreground">Disconnect</p>
+              </button>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">

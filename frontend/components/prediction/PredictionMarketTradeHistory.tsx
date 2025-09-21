@@ -2,10 +2,10 @@
 
 import { usePonderQuery } from '@ponder/react'
 import type React from 'react'
-import { formatUnits } from 'viem'
 import { useAccount, useReadContract } from 'wagmi'
 
 import { mockUsdcAbi, mockUsdcAddress } from '@/lib/contracts'
+import { formatBigNumber } from '@/lib/utils'
 
 import { HyperstitionMarket } from './PredictionMarketDetail'
 
@@ -39,6 +39,11 @@ export const PredictionMarketTradeHistory: React.FC<
     address: mockUsdcAddress,
     abi: mockUsdcAbi,
     functionName: 'symbol',
+  })
+  const { data: collateralDecimals = 0 } = useReadContract({
+    address: mockUsdcAddress,
+    abi: mockUsdcAbi,
+    functionName: 'decimals',
   })
 
   const {
@@ -132,13 +137,8 @@ export const PredictionMarketTradeHistory: React.FC<
                     >
                       {trade.type.toUpperCase()}
                     </span>{' '}
-                    {Number(formatUnits(trade.cost, 18)).toLocaleString(
-                      undefined,
-                      {
-                        maximumFractionDigits: 3,
-                      }
-                    )}{' '}
-                    ${collateralSymbol}
+                    {formatBigNumber(trade.cost, collateralDecimals)} $
+                    {collateralSymbol}
                   </td>
                   <td className="p-3 terminal-text">
                     <span

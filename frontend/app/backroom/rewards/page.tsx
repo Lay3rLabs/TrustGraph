@@ -140,7 +140,10 @@ export default function RewardsPage() {
                   <div className="space-y-1">
                     <div className="terminal-dim text-xs">AMOUNT CLAIMED</div>
                     <div className="terminal-text text-sm">
-                      {(Number(claim.claimed) / Math.pow(10, 18)).toFixed(6)}{' '}
+                      {(
+                        Number(claim.claimed) /
+                        Math.pow(10, rewardBalance?.decimals || 0)
+                      ).toFixed(6)}{' '}
                       {tokenSymbol}
                     </div>
                   </div>

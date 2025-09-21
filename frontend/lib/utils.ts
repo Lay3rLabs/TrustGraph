@@ -6,7 +6,12 @@ import {
 } from '@wagmi/core'
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { Abi, ContractFunctionArgs, ContractFunctionName } from 'viem'
+import {
+  Abi,
+  ContractFunctionArgs,
+  ContractFunctionName,
+  formatUnits,
+} from 'viem'
 
 import { config } from './wagmi'
 
@@ -14,10 +19,28 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export const formatNumber = (num: number): string => {
-  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
-  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
-  return num.toString()
+export const formatBigNumber = (
+  num: bigint | number | string,
+  /**
+   * If decimals are passed, the number must be an integer.
+   */
+  decimals?: number
+): string => {
+  num = Number(decimals ? formatUnits(BigInt(num), decimals) : num)
+  if (num >= 1000000)
+    return `${(num / 1000000).toLocaleString(undefined, {
+      notation: 'standard',
+      maximumFractionDigits: 3,
+    })}M`
+  if (num >= 1000)
+    return `${(num / 1000).toLocaleString(undefined, {
+      notation: 'standard',
+      maximumFractionDigits: 3,
+    })}K`
+  return num.toLocaleString(undefined, {
+    notation: 'standard',
+    maximumFractionDigits: 3,
+  })
 }
 
 /**

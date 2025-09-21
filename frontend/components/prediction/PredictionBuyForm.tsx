@@ -20,6 +20,7 @@ import {
   predictionMarketFactoryAddress,
 } from '@/lib/contracts'
 import { txToast } from '@/lib/tx'
+import { formatBigNumber } from '@/lib/utils'
 import { config } from '@/lib/wagmi'
 
 import { Card } from '../Card'
@@ -56,6 +57,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
         refetchInterval: 3_000,
       },
     })
+  const collateralDecimals = collateralBalance?.decimals || 0
 
   // Binary search to find the exact token amount for the specified collateral
   const [estimatedTokenAmount, setEstimatedTokenAmount] = useState<string>('0')
@@ -136,7 +138,10 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
       return
     }
 
-    const targetCollateral = parseUnits(formData.collateralAmount, 18)
+    const targetCollateral = parseUnits(
+      formData.collateralAmount,
+      collateralDecimals
+    )
     setIsCalculating(true)
 
     // Run binary search
@@ -147,7 +152,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
           return
         }
 
-        const formattedResult = formatUnits(result, 18)
+        const formattedResult = formatUnits(result, collateralDecimals)
         setEstimatedTokenAmount(formattedResult)
         setTokensEstimate(formattedResult)
         setIsCalculating(false)
@@ -170,7 +175,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     address: market.marketMakerAddress,
     abi: lmsrMarketMakerAbi,
     functionName: 'calcNetCost',
-    args: [[BigInt(0), parseUnits('1', 18)]],
+    args: [[BigInt(0), parseUnits('1', collateralDecimals)]],
     query: { enabled: true, refetchInterval: 3_000 },
   })
 
@@ -179,7 +184,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     address: market.marketMakerAddress,
     abi: lmsrMarketMakerAbi,
     functionName: 'calcNetCost',
-    args: [[parseUnits('1', 18), BigInt(0)]],
+    args: [[parseUnits('1', collateralDecimals), BigInt(0)]],
     query: { enabled: true, refetchInterval: 3_000 },
   })
 
@@ -306,9 +311,12 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     setSuccess(null)
 
     try {
-      const collateralLimit = parseUnits(formData.collateralAmount, 18)
+      const collateralLimit = parseUnits(
+        formData.collateralAmount,
+        collateralDecimals
+      )
       // Use the estimated token amount for the trade
-      const tokenAmount = parseUnits(estimatedTokenAmount, 18)
+      const tokenAmount = parseUnits(estimatedTokenAmount, collateralDecimals)
       const outcomeTokenAmounts =
         formData.outcome === 'YES'
           ? [BigInt(0), tokenAmount]
@@ -360,23 +368,28 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
 
   const yesTokenBalance =
     yesTokenBalanceData !== undefined
-      ? formatUnits(yesTokenBalanceData, 18)
+      ? formatUnits(yesTokenBalanceData, collateralDecimals)
       : null
 
   const noTokenBalance =
     noTokenBalanceData !== undefined
-      ? formatUnits(noTokenBalanceData, 18)
+      ? formatUnits(noTokenBalanceData, collateralDecimals)
       : null
 
   const yesCostEstimate =
-    yesCostData !== undefined ? formatUnits(yesCostData, 18) : null
+    yesCostData !== undefined
+      ? formatUnits(yesCostData, collateralDecimals)
+      : null
 
   const noCostEstimate =
-    noCostData !== undefined ? formatUnits(noCostData, 18) : null
+    noCostData !== undefined
+      ? formatUnits(noCostData, collateralDecimals)
+      : null
 
   const hasEnoughCollateral =
     collateralBalance && formData.collateralAmount
-      ? collateralBalance.value >= parseUnits(formData.collateralAmount, 18)
+      ? collateralBalance.value >=
+        parseUnits(formData.collateralAmount, collateralBalance.decimals)
       : true
 
   const collateralSymbol = collateralBalance?.symbol || 'USDC'
@@ -398,21 +411,13 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
             <div className="grid grid-cols-2 gap-4 mt-2">
               <div className="flex flex-col items-center">
                 <div className="text-[#05df72] text-sm font-bold">
-                  {yesTokenBalance
-                    ? Number(yesTokenBalance).toLocaleString(undefined, {
-                        maximumFractionDigits: 3,
-                      })
-                    : '0.000'}
+                  {yesTokenBalance ? formatBigNumber(yesTokenBalance) : '0.000'}
                 </div>
                 <div className="terminal-dim text-xs">YES shares</div>
               </div>
               <div className="flex flex-col items-center">
                 <div className="text-[#dd70d4] text-sm font-bold">
-                  {noTokenBalance
-                    ? Number(noTokenBalance).toLocaleString(undefined, {
-                        maximumFractionDigits: 3,
-                      })
-                    : '0.000'}
+                  {noTokenBalance ? formatBigNumber(noTokenBalance) : '0.000'}
                 </div>
                 <div className="terminal-dim text-xs">NO shares</div>
               </div>
@@ -511,7 +516,8 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
                   !hasEnoughCollateral && '!text-red-400'
                 )}
               >
-                BALANCE: {formatUnits(collateralBalance.value, 18)}{' '}
+                BALANCE:{' '}
+                {formatBigNumber(collateralBalance.value, collateralDecimals)}{' '}
                 {collateralBalance.symbol}
               </p>
             )}
@@ -547,10 +553,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
                   >
                     {tokensEstimate ? (
                       <>
-                        {Number(tokensEstimate).toLocaleString(undefined, {
-                          maximumFractionDigits: 3,
-                        })}{' '}
-                        ${collateralSymbol}
+                        {formatBigNumber(tokensEstimate)} ${collateralSymbol}
                       </>
                     ) : isCalculating ? (
                       <div className="flex items-center space-x-2">
@@ -581,8 +584,8 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
             <span className="terminal-dim">Processing...</span>
           ) : (
             <span className="terminal-command">
-              SPEND {formData.collateralAmount || '0'} ${collateralSymbol} ON{' '}
-              {formData.outcome}
+              SPEND {formatBigNumber(formData.collateralAmount || 0)} $
+              {collateralSymbol} ON {formData.outcome}
             </span>
           )}
         </Button>

@@ -30,8 +30,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useResponsiveMount } from '@/hooks/useResponsiveMount'
-import { lmsrMarketMakerAbi } from '@/lib/contracts'
-import { formatNumber } from '@/lib/utils'
+import {
+  lmsrMarketMakerAbi,
+  mockUsdcAbi,
+  mockUsdcAddress,
+} from '@/lib/contracts'
+import { formatBigNumber } from '@/lib/utils'
 import { ponderQueries } from '@/queries/ponder'
 
 import { PredictionMarketForms } from './PredictionMarketForms'
@@ -145,6 +149,13 @@ export const PredictionMarketDetail = ({
     query: { enabled: true, refetchInterval: 3_000 },
   })
 
+  // Calculate decimals for collateral token
+  const { data: collateralDecimals = 0 } = useReadContract({
+    address: mockUsdcAddress,
+    abi: mockUsdcAbi,
+    functionName: 'decimals',
+  })
+
   const greenColor = getComputedStyle(document.documentElement)
     .getPropertyValue('--green')
     .trim()
@@ -186,7 +197,7 @@ export const PredictionMarketDetail = ({
     const priceData = priceHistory.map(({ timestamp, price }) => ({
       timestamp: Number(timestamp), // Convert BigInt to number (seconds)
       x: Number(timestamp * 1000n), // Convert to milliseconds for chart
-      y: Number(formatUnits(price, 18)),
+      y: Number(formatUnits(price, collateralDecimals)),
     }))
 
     // If no follower history, return empty follower data
@@ -462,7 +473,7 @@ export const PredictionMarketDetail = ({
               <div className="flex items-center justify-between">
                 <div>
                   <div className="terminal-bright text-lg flex items-center gap-2">
-                    {formatNumber(market.incentivePool)}
+                    {formatBigNumber(market.incentivePool)}
                     <img
                       src="/points.svg"
                       alt="Points"

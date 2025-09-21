@@ -1,16 +1,17 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { formatUnits } from 'viem'
 import { useAccount, useReadContract, useWriteContract } from 'wagmi'
 
 import { Button } from '@/components/ui/button'
 import {
   conditionalTokensAbi,
   conditionalTokensAddress,
+  mockUsdcAbi,
   mockUsdcAddress,
   predictionMarketFactoryAddress,
 } from '@/lib/contracts'
+import { formatBigNumber } from '@/lib/utils'
 
 import { HyperstitionMarket } from './PredictionMarketDetail'
 
@@ -28,11 +29,22 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
 
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const [expectedPayout, setExpectedPayout] = useState<string | null>(null)
+  const [expectedPayout, setExpectedPayout] = useState<bigint | null>(null)
 
   // Use the factory address as the oracle (as seen in the deployment scripts)
   // This matches how the contracts are actually set up
   const factoryAddress = predictionMarketFactoryAddress
+
+  const { data: collateralSymbol = 'USDC' } = useReadContract({
+    address: mockUsdcAddress,
+    abi: mockUsdcAbi,
+    functionName: 'symbol',
+  })
+  const { data: collateralDecimals = 0 } = useReadContract({
+    address: mockUsdcAddress,
+    abi: mockUsdcAbi,
+    functionName: 'decimals',
+  })
 
   // Get the condition ID - using the factory as oracle (as in the scripts)
   const { data: conditionId } = useReadContract({
@@ -235,7 +247,7 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
         }
       }
 
-      setExpectedPayout(formatUnits(totalPayout, 18))
+      setExpectedPayout(totalPayout)
     } catch (err) {
       console.error('Error calculating expected payout:', err)
       setExpectedPayout(null)
@@ -294,7 +306,10 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
 
       // Create success message with all positions
       const positionDetails = userPositions
-        .map((pos) => `${formatUnits(pos.amount, 18)} ${pos.outcome}`)
+        .map(
+          (pos) =>
+            `${formatBigNumber(pos.amount, collateralDecimals)} ${pos.outcome}`
+        )
         .join(' + ')
 
       setSuccess(`Successfully redeemed ${positionDetails} tokens!`)
@@ -400,12 +415,7 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
               >
                 <div className="flex-1">
                   <div className="terminal-bright text-base">
-                    {Number(formatUnits(position.amount, 18)).toLocaleString(
-                      undefined,
-                      {
-                        maximumFractionDigits: 3,
-                      }
-                    )}{' '}
+                    {formatBigNumber(position.amount, collateralDecimals)}{' '}
                     {position.outcome} shares
                   </div>
                 </div>
@@ -438,10 +448,8 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
               TOTAL EXPECTED REDEMPTION
             </div>
             <div className="terminal-bright text-base text-green-400">
-              {Number(expectedPayout).toLocaleString(undefined, {
-                maximumFractionDigits: 3,
-              })}{' '}
-              USDC
+              {formatBigNumber(expectedPayout, collateralDecimals)} $
+              {collateralSymbol}
             </div>
           </div>
         )}
@@ -468,7 +476,8 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
           <span className="terminal-dim">Processing...</span>
         ) : expectedPayout ? (
           <span className="terminal-command">
-            REDEEM FOR {expectedPayout} USDC
+            REDEEM FOR {formatBigNumber(expectedPayout, collateralDecimals)} $
+            {collateralSymbol}
           </span>
         ) : (
           <span className="terminal-command">REDEEM POSITIONS</span>
