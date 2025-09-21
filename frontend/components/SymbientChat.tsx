@@ -2,6 +2,7 @@
 
 import clsx from 'clsx'
 import { useAtom } from 'jotai/react'
+import { useResetAtom } from 'jotai/utils'
 import { ChevronRight } from 'lucide-react'
 import { HTMLMotionProps, motion } from 'motion/react'
 import Link from 'next/link'
@@ -37,6 +38,7 @@ export const SymbientChat = ({
 }: SymbientChatProps) => {
   const [userInput, setUserInput] = useState('')
   const [messages, setMessages] = useAtom(symbientChat)
+  const resetMessages = useResetAtom(symbientChat)
   const [isThinking, setIsThinking] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -144,10 +146,18 @@ export const SymbientChat = ({
     textarea.style.height = `${textarea.scrollHeight}px`
   }
 
+  const isClear = userInput.trim().startsWith('/clear')
+
   // Handle Enter key to send message
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
+      if (isClear) {
+        setUserInput('')
+        resetMessages()
+        Animator.instance('nav').runTask('reset')
+        return
+      }
       if (userInput.trim()) {
         sendChatMessage(userInput)
         setUserInput('')
@@ -217,7 +227,10 @@ export const SymbientChat = ({
           <textarea
             ref={textareaRef}
             autoFocus
-            className="w-full outline-none field-sizing-content resize-none overflow-hidden min-h-[1.5rem] text-primary-foreground/60 bg-transparent"
+            className={clsx(
+              'w-full outline-none field-sizing-content resize-none overflow-hidden min-h-[1.5rem] text-primary-foreground/60 bg-transparent',
+              isClear && 'text-red-400/60'
+            )}
             value={userInput}
             onChange={handleTextareaChange}
             onKeyDown={handleKeyDown}
@@ -225,9 +238,16 @@ export const SymbientChat = ({
             disabled={isThinking}
           />
           {userInput && (
-            <p className="text-primary-foreground/30 pb-4">
-              Press Enter to send • Shift+Enter for new line
-            </p>
+            <div className="flex flex-row gap-2 flex-wrap text-primary-foreground/30 pb-4">
+              <p>Press Enter to send</p>
+              <p>• Shift+Enter for new line</p>
+              <p>
+                •{' '}
+                <span className={clsx(isClear && 'text-red-400/60')}>
+                  /clear to start over
+                </span>
+              </p>
+            </div>
           )}
         </div>
       </div>

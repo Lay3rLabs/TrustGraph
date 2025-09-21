@@ -73,7 +73,7 @@ export const Nav = () => {
 
             <Link
               href="/"
-              className="absolute top-4 right-4"
+              className="absolute top-4 right-4 p-1 rounded-sm bg-popover-foreground/90"
               onClick={() => setOpenRef.current?.(false)}
             >
               <Fullscreen className="w-5 h-5 transition-opacity text-primary-foreground/60 hover:opacity-80 active:opacity-70" />

@@ -134,6 +134,17 @@ const Logo = ({
       ])
     )
     animator.registerTask('blink', ({ start }) => start('iris', 'blink'))
+    animator.registerTask('reset', ({ start }) =>
+      Promise.all([
+        start('iris', 'blink', {
+          duration: 5,
+        }),
+        start('structure', 'pulse', {
+          duration: 5,
+          repeat: 0,
+        }),
+      ])
+    )
 
     return animator
   }, [animatorLabel])
