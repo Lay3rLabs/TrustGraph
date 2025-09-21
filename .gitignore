@@ -6,7 +6,9 @@ broadcast/
 node_modules/
 
 # WAVS
+!.env.example
 .env
+.env.*
 .env-e
 .env.pagerank
 compiled/*.wasm
