@@ -14,7 +14,7 @@ pub struct TriggerInfo {
 pub fn decode_trigger_event(trigger_data: TriggerData) -> Result<TriggerInfo, String> {
     match trigger_data {
         TriggerData::EvmContractEvent(TriggerDataEvmContractEvent { log, .. }) => {
-            Ok(TriggerInfo { execution_time: log.block_timestamp.saturating_mul(1000) })
+            Ok(TriggerInfo { execution_time: log.block_timestamp.saturating_mul(1_000_000_000) })
         }
         TriggerData::Cron(TriggerDataCron { trigger_time }) => {
             Ok(TriggerInfo { execution_time: trigger_time.nanos })
