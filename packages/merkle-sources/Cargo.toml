@@ -25,6 +25,7 @@ hex = { workspace = true }
 thiserror = { workspace = true }
 async-trait = { workspace = true }
 wavs-indexer-api = { workspace = true }
+futures = { workspace = true }
 
 [dev-dependencies]
 mockall = { workspace = true }

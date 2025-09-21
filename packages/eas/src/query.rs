@@ -185,7 +185,7 @@ pub async fn query_sent_attestation_count(
     let config = config.unwrap_or_default();
     let indexer_querier = config.indexer_querier().await?;
     let attestation_count =
-        indexer_querier.get_attestation_count_by_schema_and_attester(schema_uid, attester).await?;
+        indexer_querier.get_attestation_count_by_schema_and_attester(schema_uid, &attester).await?;
 
     println!(
         "Found {} sent attestations for attester {} and schema {}",
@@ -209,7 +209,7 @@ pub async fn query_sent_attestation_uids(
     let uids = indexer_querier
         .get_indexed_attestations_by_schema_and_attester(
             schema_uid,
-            attester,
+            &attester,
             start,
             length,
             reverse_order,

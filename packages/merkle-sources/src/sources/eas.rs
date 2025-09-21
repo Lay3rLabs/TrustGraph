@@ -17,7 +17,12 @@ use super::Source;
 #[derive(Clone, Debug)]
 pub enum EasSourceType {
     /// Points based on received attestations count for a specific schema.
-    ReceivedAttestations { schema_uid: String, allow_self_attestations: bool },
+    ReceivedAttestations {
+        schema_uid: String,
+        allow_self_attestations: bool,
+        /// Optionally, only count attestations from trusted attesters.
+        trusted_attesters: Option<Vec<Address>>,
+    },
     /// Points based on sent attestations count for a specific schema.
     SentAttestations { schema_uid: String, allow_self_attestations: bool },
 }
@@ -69,8 +74,17 @@ impl Source for EasSource {
 
     async fn get_accounts(&self, ctx: &super::SourceContext) -> Result<Vec<String>> {
         match &self.source_type {
-            EasSourceType::ReceivedAttestations { schema_uid, .. } => {
-                self.get_accounts_with_received_attestations(ctx, schema_uid).await
+            EasSourceType::ReceivedAttestations { schema_uid, trusted_attesters, .. } => {
+                if let Some(trusted_attesters) = trusted_attesters {
+                    self.get_accounts_with_received_attestations_from_trusted_attesters(
+                        ctx,
+                        schema_uid,
+                        trusted_attesters,
+                    )
+                    .await
+                } else {
+                    self.get_accounts_with_received_attestations(ctx, schema_uid).await
+                }
             }
             EasSourceType::SentAttestations { schema_uid, .. } => {
                 self.get_accounts_with_sent_attestations(ctx, schema_uid).await
@@ -91,7 +105,7 @@ impl Source for EasSource {
             ),
             EasSourceType::SentAttestations { schema_uid, .. } => (
                 self.parse_schema_uid(schema_uid)?,
-                self.query_sent_attestation_count(ctx, address, schema_uid).await?,
+                self.query_sent_attestation_count(ctx, &address, schema_uid).await?,
             ),
         };
 
@@ -155,8 +169,13 @@ impl Source for EasSource {
         while start < attestation_count {
             let length = std::cmp::min(batch_size, attestation_count - start);
 
-            let (attestations, allow_self_attestations) = match &self.source_type {
-                EasSourceType::ReceivedAttestations { allow_self_attestations, .. } => (
+            let (attestations, allow_self_attestations, trusted_attesters) = match &self.source_type
+            {
+                EasSourceType::ReceivedAttestations {
+                    allow_self_attestations,
+                    trusted_attesters,
+                    ..
+                } => (
                     ctx.indexer_querier
                         .get_indexed_attestations_by_schema_and_recipient(
                             schema_uid,
@@ -168,12 +187,13 @@ impl Source for EasSource {
                         .await
                         .map_err(|e| anyhow::anyhow!(e))?,
                     *allow_self_attestations,
+                    trusted_attesters.clone(),
                 ),
                 EasSourceType::SentAttestations { allow_self_attestations, .. } => (
                     ctx.indexer_querier
                         .get_indexed_attestations_by_schema_and_attester(
                             schema_uid,
-                            address,
+                            &address,
                             U256::from(start),
                             U256::from(length),
                             false,
@@ -181,6 +201,7 @@ impl Source for EasSource {
                         .await
                         .map_err(|e| anyhow::anyhow!(e))?,
                     *allow_self_attestations,
+                    None,
                 ),
             };
 
@@ -188,6 +209,13 @@ impl Source for EasSource {
                 // Skip self-attestations if not allowed.
                 if !allow_self_attestations && attestation.attester == attestation.recipient {
                     continue;
+                }
+
+                // Skip if the attester is not a trusted attester.
+                if let Some(trusted_attesters) = &trusted_attesters {
+                    if !trusted_attesters.contains(&attestation.attester) {
+                        continue;
+                    }
                 }
 
                 let value = match value_for_attestation(&attestation) {
@@ -287,7 +315,7 @@ impl EasSource {
     async fn query_sent_attestation_count(
         &self,
         ctx: &super::SourceContext,
-        attester: Address,
+        attester: &Address,
         schema_uid: &str,
     ) -> Result<u64> {
         let schema = self.parse_schema_uid(schema_uid)?;
@@ -310,6 +338,29 @@ impl EasSource {
         let attestations = ctx
             .indexer_querier
             .get_indexed_attestations_by_schema(schema, start, length, false)
+            .await
+            .map_err(|e| anyhow::anyhow!("Failed to get indexed schema attestations: {}", e))?;
+        Ok(attestations)
+    }
+
+    async fn get_indexed_attestations_by_schema_and_attester(
+        &self,
+        ctx: &super::SourceContext,
+        attester: &Address,
+        schema_uid: &str,
+        start: u64,
+        length: u64,
+    ) -> Result<Vec<IndexedAttestation>> {
+        let schema = self.parse_schema_uid(schema_uid)?;
+        let attestations = ctx
+            .indexer_querier
+            .get_indexed_attestations_by_schema_and_attester(
+                schema,
+                attester,
+                U256::from(start),
+                U256::from(length),
+                false,
+            )
             .await
             .map_err(|e| anyhow::anyhow!("Failed to get indexed schema attestations: {}", e))?;
         Ok(attestations)
@@ -371,7 +422,7 @@ impl EasSource {
 
         while start < total_attestations {
             let length = std::cmp::min(batch_size, total_attestations - start);
-            println!("🔄 Fetching attestation UIDs batch: {} to {}", start, start + length - 1);
+            println!("🔄 Fetching attestation batch: {} to {}", start, start + length - 1);
 
             let attestations =
                 self.get_indexed_attestations(ctx, schema_uid, start, length).await?;
@@ -408,7 +459,7 @@ impl EasSource {
 
         while start < total_attestations {
             let length = std::cmp::min(batch_size, total_attestations - start);
-            println!("🔄 Fetching attestation UIDs batch: {} to {}", start, start + length - 1);
+            println!("🔄 Fetching attestation batch: {} to {}", start, start + length - 1);
 
             let attestations =
                 self.get_indexed_attestations(ctx, schema_uid, start, length).await?;
@@ -422,6 +473,64 @@ impl EasSource {
 
         let result: Vec<String> = attesters.into_iter().collect();
         println!("✅ Found {} unique attesters", result.len());
+        Ok(result)
+    }
+
+    async fn get_accounts_with_received_attestations_from_trusted_attesters(
+        &self,
+        ctx: &super::SourceContext,
+        schema_uid: &str,
+        trusted_attesters: &Vec<Address>,
+    ) -> Result<Vec<String>> {
+        println!(
+            "🔍 Querying accounts with received attestations from {} trusted attesters for schema: {}",
+            trusted_attesters.len(),
+            schema_uid
+        );
+
+        let mut recipients: HashSet<String> = HashSet::new();
+
+        for attester in trusted_attesters {
+            let total_sent_by_attester =
+                self.query_sent_attestation_count(ctx, attester, schema_uid).await?;
+
+            println!(
+                "📊 Total attestations for schema from attester {}: {}",
+                attester, total_sent_by_attester
+            );
+
+            if total_sent_by_attester == 0 {
+                continue;
+            }
+
+            let batch_size = 100u64;
+            let mut start = 0u64;
+
+            while start < total_sent_by_attester {
+                let length = std::cmp::min(batch_size, total_sent_by_attester - start);
+                println!(
+                    "🔄 Fetching attestations from attester {} attestation batch: {} to {}",
+                    attester,
+                    start,
+                    start + length - 1
+                );
+
+                let attestations = self
+                    .get_indexed_attestations_by_schema_and_attester(
+                        ctx, attester, schema_uid, start, length,
+                    )
+                    .await?;
+
+                for attestation in attestations {
+                    recipients.insert(attestation.recipient.to_string());
+                }
+
+                start += length;
+            }
+        }
+
+        let result: Vec<String> = recipients.into_iter().collect();
+        println!("✅ Found {} unique recipients from trusted attesters", result.len());
         Ok(result)
     }
 }

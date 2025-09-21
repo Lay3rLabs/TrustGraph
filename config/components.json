@@ -55,7 +55,8 @@
         "pagerank_points_pool": "10000",
         "pagerank_trusted_seeds": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
         "pagerank_trust_multiplier": "10.5",
-        "pagerank_trust_boost": "0.99"
+        "pagerank_trust_boost": "0.99",
+        "trusted_recognizers": "0x45CbC00e0618880bfB2dBDdEAed1ef1411dd5eeE,0x7d7ec12d1252Ac65bb2a5f1dA75d415b665c5a42,0xD2C392084761cb6E44c544B6f39dcc001fDe9775"
       },
       "env_variables": [
         "WAVS_ENV_PINATA_API_URL",
@@ -80,7 +81,8 @@
         "pagerank_points_pool": "10000",
         "pagerank_trusted_seeds": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
         "pagerank_trust_multiplier": "10.5",
-        "pagerank_trust_boost": "0.99"
+        "pagerank_trust_boost": "0.99",
+        "trusted_recognizers": "0x45CbC00e0618880bfB2dBDdEAed1ef1411dd5eeE,0x7d7ec12d1252Ac65bb2a5f1dA75d415b665c5a42,0xD2C392084761cb6E44c544B6f39dcc001fDe9775"
       },
       "env_variables": [
         "WAVS_ENV_PINATA_API_URL",
@@ -91,7 +93,7 @@
       "filename": "merkler_pruner.wasm",
       "package_name": "merkler-pruner",
       "package_version": "0.1.0",
-      "trigger_block_interval": "100",
+      "trigger_block_interval": "1000",
       "submit_json_path": "merkler.merkle_snapshot",
       "config_values": {},
       "env_variables": []
@@ -131,7 +133,7 @@
       "filename": "prediction_market_oracle.wasm",
       "package_name": "predictionmarketoracle",
       "package_version": "0.1.0",
-      "trigger_event": "NewTrigger(bytes)",
+      "trigger_event": "NewTrigger()",
       "trigger_json_path": "prediction_market.oracle_controller",
       "submit_json_path": "prediction_market.oracle_controller",
       "config_values": {
@@ -140,7 +142,7 @@
         "chain_name": "${CHAIN_NAME}",
         "resolver_type": "twitter_followers",
         "resolver_config": "account:\"0xEN0VA\";threshold:7",
-        "resolve_after": 1758458572
+        "resolve_after": 1758473405
       }
     },
     {
@@ -149,8 +151,8 @@
       "package_version": "0.1.0",
       "trigger_cron": {
         "schedule": "*/30 * * * * *",
-        "start_time": 1758458572406137856,
-        "end_time": 1758458572406137856
+        "start_time": 1758473405000000001,
+        "end_time": 1758473450000000001
       },
       "submit_json_path": "prediction_market.oracle_controller",
       "config_values": {
@@ -159,7 +161,7 @@
         "chain_name": "${CHAIN_NAME}",
         "resolver_type": "twitter_followers",
         "resolver_config": "account:\"0xEN0VA\";threshold:7",
-        "execute_after": 1758458572406137856
+        "resolve_after": 1758473405
       }
     },
     {

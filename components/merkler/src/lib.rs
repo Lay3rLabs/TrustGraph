@@ -20,8 +20,7 @@ use std::path::Path;
 use std::str::FromStr;
 use trigger::encode_trigger_output;
 use wavs_merkle_sources::{pagerank, sources};
-use wavs_wasi_utils::evm::alloy_primitives::{hex, U256};
-use wit_bindgen_rt::async_support::futures;
+use wavs_wasi_utils::evm::alloy_primitives::{hex, Address, U256};
 use wstd::runtime::block_on;
 
 struct Component;
@@ -101,11 +100,25 @@ impl Guest for Component {
         let recognition_schema_uid = config_var("recognition_schema_uid").ok_or_else(|| {
             "Failed to get recognition_schema_uid - this is required for EAS points"
         })?;
+        let trusted_recognizers = config_var("trusted_recognizers")
+            .unwrap_or_default()
+            .split(",")
+            .map(|s| {
+                Address::from_str(s).map_err(|e| {
+                    format!("Failed to parse trusted recognizer address ({}): {}", s, e)
+                })
+            })
+            .collect::<Result<Vec<Address>, _>>()?;
+        if trusted_recognizers.is_empty() {
+            return Err("No trusted recognizers configured. UNSAFE!!".to_string());
+        }
+
         println!("📋 Using recognition schema UID: {}", recognition_schema_uid);
         registry.add_source(sources::eas::EasSource::new(
             sources::eas::EasSourceType::ReceivedAttestations {
                 schema_uid: recognition_schema_uid,
                 allow_self_attestations: false,
+                trusted_attesters: Some(trusted_recognizers),
             },
             sources::eas::EasSummaryComputation::StringAbiDataField {
                 schema: "(string,uint256)".to_string(),
