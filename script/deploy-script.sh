@@ -272,21 +272,6 @@ mv .docker/deployment_summary.json.tmp .docker/deployment_summary.json
 # OPERATOR_PRIVATE_KEY, AVS_SIGNING_ADDRESS
 eval "$(task setup-avs-signing HD_INDEX=1 | tail -4)"
 
-# TODO: move this check into the middleware / a task file function to use elsewhere too (?)
-if [ "$(task get-deploy-status)" = "TESTNET" ]; then
-    export OPERATOR_ADDRESS=$(cast wallet address --private-key ${OPERATOR_PRIVATE_KEY})
-    while true; do
-        BALANCE=$(cast balance --rpc-url ${RPC_URL} --ether ${OPERATOR_ADDRESS})
-        if [ "$BALANCE" != "0" ]; then
-            echo "OPERATOR_ADDRESS has balance: $BALANCE"
-            break
-        else
-            echo "Waiting for ${OPERATOR_ADDRESS} (operator) to have a balance..."
-            sleep 5
-        fi
-    done
-fi
-
 # Reset registry after deployment is complete
 echo "Cleaning up registry data..."
 REGISTRY=$(task get-registry)
