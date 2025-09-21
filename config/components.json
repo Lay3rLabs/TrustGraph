@@ -133,6 +133,20 @@
       "package_version": "0.1.0",
       "trigger_event": "NewTrigger(bytes)",
       "trigger_json_path": "prediction_market.oracle_controller",
+      "submit_json_path": "prediction_market.oracle_controller",
+      "config_values": {
+        "market_maker": "${MARKET_MAKER_ADDRESS}",
+        "conditional_tokens": "${CONDITIONAL_TOKENS_ADDRESS}",
+        "chain_name": "${CHAIN_NAME}",
+        "resolver_type": "twitter_followers",
+        "resolver_config": "account:\"0xEN0VA\";threshold:7",
+        "execute_after": 1758458572406137856
+      }
+    },
+    {
+      "filename": "prediction_market_oracle.wasm",
+      "package_name": "predictionmarketoracle",
+      "package_version": "0.1.0",
       "trigger_cron": {
         "schedule": "*/30 * * * * *",
         "start_time": 1758458572406137856,
