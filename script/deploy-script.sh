@@ -41,7 +41,7 @@ bash ./script/create-deployer.sh
 export FUNDED_KEY=$(task config:funded-key)
 
 echo "🟢 Deploying POA Service Manager..."
-POA_MIDDLEWARE="docker run --rm --network host -v ./.nodes:/root/.nodes --env-file .env ghcr.io/lay3rlabs/poa-middleware:1.0.0"
+POA_MIDDLEWARE="docker run --rm --network host -v ./.nodes:/root/.nodes --env-file .env ghcr.io/lay3rlabs/poa-middleware:1.0.1"
 $POA_MIDDLEWARE deploy
 sleep 1 # for Base
 $POA_MIDDLEWARE owner_operation updateStakeThreshold 1000
