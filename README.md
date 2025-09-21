@@ -75,6 +75,7 @@ task start-all-local
 This script automates the complete WAVS deployment process in a single command:
 
 ```bash
+# export SKIP_COMPONENT_UPLOAD=true && export SKIP_CONTRACT_UPLOAD=true
 task deploy:full && task deploy:single-operator-poa-local
 ```
 
