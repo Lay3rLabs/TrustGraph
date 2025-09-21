@@ -183,7 +183,7 @@ impl Source for HyperstitionSource {
                     let value = self.points_pool * payout / collateral_available;
 
                     let source_events = vec![SourceEvent {
-                        r#type: "hyperstition".to_string(),
+                        r#type: "hyperstition_realized".to_string(),
                         timestamp: redemption_event.timestamp,
                         value,
                         metadata: Some(json!({

@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { DollarSign, Eye, FlaskConical, Hand } from 'lucide-react'
+import { DollarSign, Eye, FlaskConical, Hand, Sparkles } from 'lucide-react'
 import type React from 'react'
 import { ComponentType, useCallback, useMemo, useState } from 'react'
 import { Hex } from 'viem'
@@ -14,13 +14,15 @@ import { pointsQueries } from '@/queries/points'
 const ActivityLabel: Record<string, string> = {
   joined: 'Joined',
   attestation: 'Attestation',
-  prediction_market_trade: 'Hyperstition',
+  hyperstition_realized: 'Hyperstition Realized',
+  prediction_market_trade: 'Hyperstition Participation',
   prediction_market_redeem: 'Hyperstition Redemption',
 }
 
 const ActivityIcon: Record<string, ComponentType<{ className?: string }>> = {
   joined: FlaskConical,
   attestation: Hand,
+  hyperstition_realized: Sparkles,
   prediction_market_trade: Eye,
   prediction_market_redeem: DollarSign,
 }
@@ -28,8 +30,9 @@ const ActivityIcon: Record<string, ComponentType<{ className?: string }>> = {
 const ActivitySummary: Record<string, string> = {
   joined: 'Joined the experiment',
   attestation: 'Received an attestation',
-  prediction_market_trade: 'Participated in a collective Hyperstition',
-  prediction_market_redeem: 'Redeemed successful Hyperstition',
+  hyperstition_realized: 'Collectively realized a Hyperstition',
+  prediction_market_trade: 'Participated in a Hyperstition',
+  prediction_market_redeem: 'Redeemed a Hyperstition',
 }
 
 export default function PointsPage() {
