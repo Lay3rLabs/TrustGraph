@@ -13,4 +13,9 @@ interface IPredictionMarketOracleController {
         address conditionalTokens;
         bool result;
     }
+
+    /**
+     * @notice Event emitted when a new trigger is created
+     */
+    event NewTrigger();
 }

@@ -24,6 +24,14 @@ impl Guest for Component {
 
         let resolver_type =
             config_var("resolver_type").ok_or_else(|| "Failed to get resolver type")?;
+
+        // UTC timestamp in nanoseconds since UNIX epoch
+        // Cannot execute the service handler before this
+        let execute_after: u64 = config_var("execute_after")
+            .ok_or_else(|| "Failed to get execute_after time")?
+            .parse()
+            .map_err(|e| format!("Could not parse execute_after: {e}"))?;
+
         // Map key1:value1;key2:value2;... to JSON object {key1: value1, key2: value2, ...}
         let resolver_config = serde_json::to_value(
             &config_var("resolver_config")
@@ -39,13 +47,19 @@ impl Guest for Component {
 
         let trigger_info = decode_trigger_event(action.data)?;
 
+        if trigger_info.execution_time < execute_after {
+            return Err(format!(
+                "Execution is allowed after {execute_after}. (current execution time is {0})",
+                trigger_info.execution_time
+            ));
+        }
+
         let resolver = ResolverRegistry::all().create_resolver(&resolver_type, resolver_config)?;
 
         let result = block_on(resolver.resolve())?;
 
         Ok(Some(WasmResponse {
             payload: encode_trigger_output(
-                trigger_info.triggerId,
                 Address::from_str(&market_maker_address).unwrap(),
                 Address::from_str(&conditional_tokens_address).unwrap(),
                 result,
