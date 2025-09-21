@@ -217,7 +217,7 @@ export async function POST(request: NextRequest) {
             } satisfies ChatCompletionAssistantMessageParam)
           : ({
               role,
-              content: `mind -d -n -o=text --chat="${content.replaceAll(
+              content: `mind -d -t -n --ascii -o=text --response-char-limit=222 --chat="${content.replaceAll(
                 '"',
                 '\\"'
               )}"`,
