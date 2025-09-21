@@ -20,6 +20,7 @@ cd infra/wavs-1
 sh start.sh
 # WAVS_ENDPOINT=http://127.0.0.1:8000 SERVICE_URL=${IPFS_URI} IPFS_GATEWAY=${IPFS_GATEWAY} make deploy-service
 
+# ! If you get 0x3dda1739 in the aggregator, make sure to run this (there is no operator)
 export op_priv_key=$(grep ^WAVS_CLI_EVM_CREDENTIAL= infra/wavs-1/.env | cut -d '=' -f2- | tr -d '"')
 export op_mnemonic=$(grep ^WAVS_SUBMISSION_MNEMONIC= infra/wavs-1/.env | cut -d '=' -f2- | tr -d '"')
 export op_addr=$(cast wallet address --private-key $op_priv_key) && echo $op_addr
