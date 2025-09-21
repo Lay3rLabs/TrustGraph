@@ -15,12 +15,15 @@ use wavs_wasi_utils::evm::{
 pub mod eas;
 pub mod eas_pagerank;
 pub mod erc721;
+pub mod hyperstition;
 pub mod interactions;
 
 /// Shared context for all sources providing common chain access.
 pub struct SourceContext {
     /// Chain name (e.g., "ethereum", "local")
     pub chain_name: String,
+    /// Chain ID
+    pub chain_id: String,
     /// HTTP endpoint for the chain
     pub http_endpoint: String,
     /// EVM provider for making blockchain calls
@@ -37,6 +40,7 @@ impl SourceContext {
     /// Create a new SourceContext from configuration
     pub async fn new(
         chain_name: &str,
+        chain_id: &str,
         http_endpoint: &str,
         eas_address: &str,
         indexer_address: &str,
@@ -53,22 +57,13 @@ impl SourceContext {
 
         Ok(Self {
             chain_name: chain_name.to_string(),
+            chain_id: chain_id.to_string(),
             http_endpoint: http_endpoint.to_string(),
             provider,
             eas_address: eas_addr,
             indexer_address: indexer_addr,
             indexer_querier,
         })
-    }
-
-    /// Create a SourceContext using host chain config
-    pub async fn from_chain_config(
-        chain_name: &str,
-        http_endpoint: &str,
-        eas_address: &str,
-        indexer_address: &str,
-    ) -> Result<Self> {
-        Self::new(chain_name, http_endpoint, eas_address, indexer_address).await
     }
 }
 
@@ -104,6 +99,8 @@ pub trait Source {
     /// Get metadata about the source.
     async fn get_metadata(&self, ctx: &SourceContext) -> Result<serde_json::Value>;
 }
+
+// TODO: only pass accounts into a source that were returned by that source
 
 /// A registry that manages multiple value sources.
 pub struct SourceRegistry {

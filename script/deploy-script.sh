@@ -132,17 +132,14 @@ echo "✅ Recognition Schema UID: ${RECOGNITION_SCHEMA_UID}"
 echo "✅ Vouching Schema UID: ${VOUCHING_SCHEMA_UID}"
 echo "✅ Chain Name: ${CHAIN_NAME}"
 
-export REWARDS_TOKEN_ADDRESS=$(jq -r '.merkler.reward_token' .docker/deployment_summary.json)
-
 # === Prediction Market Oracle ===
-export ORACLE_CONTROLLER_ADDRESS=`jq -r '.prediction_market.oracle_controller' "./.docker/deployment_summary.json"`
+export PREDICTION_CONTROLLER_ADDRESS=`jq -r '.prediction_market.controller' "./.docker/deployment_summary.json"`
 export MARKET_MAKER_ADDRESS=`jq -r '.prediction_market.market_maker' "./.docker/deployment_summary.json"`
 export CONDITIONAL_TOKENS_ADDRESS=`jq -r '.prediction_market.conditional_tokens' "./.docker/deployment_summary.json"`
 
-echo "✅ Oracle Controller Address: ${ORACLE_CONTROLLER_ADDRESS}"
+echo "✅ Prediction Market Controller Address: ${PREDICTION_CONTROLLER_ADDRESS}"
 echo "✅ Market Maker Address: ${MARKET_MAKER_ADDRESS}"
 echo "✅ Conditional Tokens Address: ${CONDITIONAL_TOKENS_ADDRESS}"
-echo "✅ Rewards Token Address: ${REWARDS_TOKEN_ADDRESS}"
 
 # Export additional configuration values that components might need
 export PAGERANK_REWARD_POOL="1000000000000000000000"

@@ -13,9 +13,9 @@ import { Input } from '@/components/ui/input'
 import {
   conditionalTokensAbi,
   conditionalTokensAddress,
+  erc20Address,
   lmsrMarketMakerAbi,
-  mockUsdcAddress,
-  predictionMarketFactoryAddress,
+  predictionMarketControllerAddress,
 } from '@/lib/contracts'
 import { txToast } from '@/lib/tx'
 import { formatBigNumber } from '@/lib/utils'
@@ -52,7 +52,7 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
   const { data: collateralBalance, refetch: refetchCollateralBalance } =
     useBalance({
       address: address,
-      token: mockUsdcAddress,
+      token: erc20Address,
       query: {
         refetchInterval: 3_000,
       },
@@ -191,7 +191,7 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
     abi: conditionalTokensAbi,
     functionName: 'getConditionId',
     args: [
-      predictionMarketFactoryAddress, // oracle
+      predictionMarketControllerAddress, // oracle
       '0x0000000000000000000000000000000000000000000000000000000000000000' as `0x${string}`, // questionId
       BigInt(2), // outcomeSlotCount (YES/NO = 2 outcomes)
     ],
@@ -234,7 +234,7 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
     functionName: 'getPositionId',
     args: yesCollectionId
       ? [
-          mockUsdcAddress, // collateralToken
+          erc20Address, // collateralToken
           yesCollectionId,
         ]
       : undefined,
@@ -247,7 +247,7 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
     functionName: 'getPositionId',
     args: noCollectionId
       ? [
-          mockUsdcAddress, // collateralToken
+          erc20Address, // collateralToken
           noCollectionId,
         ]
       : undefined,

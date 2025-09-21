@@ -47,7 +47,7 @@ pub fn encode_trigger_output(
 mod solidity {
     use alloy_sol_macro::sol;
 
-    pub use IPredictionMarketOracleController::*;
+    pub use IPredictionMarketController::*;
     // imports PredictionMarketOracleAvsOutput
-    sol!("../../src/interfaces/IPredictionMarketOracleController.sol");
+    sol!("../../src/interfaces/IPredictionMarketController.sol");
 }

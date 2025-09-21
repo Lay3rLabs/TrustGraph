@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button'
 import {
   conditionalTokensAbi,
   conditionalTokensAddress,
-  mockUsdcAbi,
-  mockUsdcAddress,
-  predictionMarketFactoryAddress,
+  erc20Abi,
+  erc20Address,
+  predictionMarketControllerAddress,
 } from '@/lib/contracts'
 import { formatBigNumber } from '@/lib/utils'
 
@@ -31,18 +31,14 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
   const [success, setSuccess] = useState<string | null>(null)
   const [expectedPayout, setExpectedPayout] = useState<bigint | null>(null)
 
-  // Use the factory address as the oracle (as seen in the deployment scripts)
-  // This matches how the contracts are actually set up
-  const factoryAddress = predictionMarketFactoryAddress
-
   const { data: collateralSymbol = 'USDC' } = useReadContract({
-    address: mockUsdcAddress,
-    abi: mockUsdcAbi,
+    address: erc20Address,
+    abi: erc20Abi,
     functionName: 'symbol',
   })
   const { data: collateralDecimals = 0 } = useReadContract({
-    address: mockUsdcAddress,
-    abi: mockUsdcAbi,
+    address: erc20Address,
+    abi: erc20Abi,
     functionName: 'decimals',
   })
 
@@ -52,7 +48,7 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
     abi: conditionalTokensAbi,
     functionName: 'getConditionId',
     args: [
-      factoryAddress, // oracle (factory, not market maker)
+      predictionMarketControllerAddress, // oracle (factory, not market maker)
       '0x0000000000000000000000000000000000000000000000000000000000000000' as `0x${string}`, // questionId (bytes32(0))
       BigInt(2), // outcomeSlotCount (YES/NO = 2 outcomes)
     ],
@@ -95,7 +91,7 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
     functionName: 'getPositionId',
     args: yesCollectionId
       ? [
-          mockUsdcAddress, // collateralToken
+          erc20Address, // collateralToken
           yesCollectionId,
         ]
       : undefined,
@@ -108,7 +104,7 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
     functionName: 'getPositionId',
     args: noCollectionId
       ? [
-          mockUsdcAddress, // collateralToken
+          erc20Address, // collateralToken
           noCollectionId,
         ]
       : undefined,
@@ -297,7 +293,7 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
         abi: conditionalTokensAbi,
         functionName: 'redeemPositions',
         args: [
-          mockUsdcAddress, // collateralToken
+          erc20Address, // collateralToken
           '0x0000000000000000000000000000000000000000000000000000000000000000' as `0x${string}`, // parentCollectionId
           conditionId,
           indexSets,

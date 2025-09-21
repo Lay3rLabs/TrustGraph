@@ -408,4 +408,46 @@ impl WavsIndexerQuerier {
         .await
         .map_err(|e| format!("Failed to get interactions by type and address: {}", e))
     }
+
+    pub async fn get_interaction_count_by_contract_and_type(
+        &self,
+        chain_id: &str,
+        contract: &Address,
+        interaction_type: &str,
+    ) -> Result<u64, String> {
+        Ok(self
+            .getEventCountByContractAndTypeAndTag(
+                chain_id.to_string(),
+                *contract,
+                "interaction".to_string(),
+                format!("type:{}", interaction_type),
+            )
+            .call()
+            .await
+            .map_err(|e| format!("Failed to get interaction count by contract and type: {}", e))?
+            .to::<u64>())
+    }
+
+    pub async fn get_interactions_by_contract_and_type(
+        &self,
+        interaction_type: &str,
+        chain_id: &str,
+        contract: &Address,
+        start: u64,
+        length: u64,
+        reverse_order: bool,
+    ) -> Result<Vec<IndexedEvent>, String> {
+        self.getEventsByContractAndTypeAndTag(
+            chain_id.to_string(),
+            *contract,
+            "interaction".to_string(),
+            format!("type:{}", interaction_type),
+            U256::from(start),
+            U256::from(length),
+            reverse_order,
+        )
+        .call()
+        .await
+        .map_err(|e| format!("Failed to get interactions by contract and type: {}", e))
+    }
 }

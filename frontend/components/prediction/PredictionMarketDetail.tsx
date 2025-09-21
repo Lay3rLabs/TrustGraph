@@ -30,11 +30,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useResponsiveMount } from '@/hooks/useResponsiveMount'
-import {
-  lmsrMarketMakerAbi,
-  mockUsdcAbi,
-  mockUsdcAddress,
-} from '@/lib/contracts'
+import { erc20Abi, erc20Address, lmsrMarketMakerAbi } from '@/lib/contracts'
 import { formatBigNumber } from '@/lib/utils'
 import { ponderQueries } from '@/queries/ponder'
 
@@ -151,8 +147,8 @@ export const PredictionMarketDetail = ({
 
   // Calculate decimals for collateral token
   const { data: collateralDecimals = 0 } = useReadContract({
-    address: mockUsdcAddress,
-    abi: mockUsdcAbi,
+    address: erc20Address,
+    abi: erc20Abi,
     functionName: 'decimals',
   })
 

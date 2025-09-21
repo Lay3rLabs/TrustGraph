@@ -14,7 +14,7 @@ import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAccount, useBalance, useConnect, useDisconnect } from 'wagmi'
 
-import { mockUsdcAddress } from '@/lib/contracts'
+import { erc20Address } from '@/lib/contracts'
 import { parseErrorMessage } from '@/lib/error'
 import { formatBigNumber } from '@/lib/utils'
 
@@ -52,7 +52,7 @@ export const WalletConnectionButton = ({
   // Use mock USDC for collateral balance
   const { data: usdcBalance, isLoading: isLoadingUsdcBalance } = useBalance({
     address: address,
-    token: mockUsdcAddress,
+    token: erc20Address,
     query: {
       enabled: !!address,
       refetchInterval: 30_000,

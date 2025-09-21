@@ -14,10 +14,10 @@ import { useUpdatingRef } from '@/hooks/useUpdatingRef'
 import {
   conditionalTokensAbi,
   conditionalTokensAddress,
+  erc20Abi,
+  erc20Address,
   lmsrMarketMakerAbi,
-  mockUsdcAbi,
-  mockUsdcAddress,
-  predictionMarketFactoryAddress,
+  predictionMarketControllerAddress,
 } from '@/lib/contracts'
 import { txToast } from '@/lib/tx'
 import { formatBigNumber } from '@/lib/utils'
@@ -52,7 +52,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
   const { data: collateralBalance, refetch: refetchCollateralBalance } =
     useBalance({
       address: address,
-      token: mockUsdcAddress,
+      token: erc20Address,
       query: {
         refetchInterval: 3_000,
       },
@@ -194,7 +194,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     abi: conditionalTokensAbi,
     functionName: 'getConditionId',
     args: [
-      predictionMarketFactoryAddress, // oracle
+      predictionMarketControllerAddress, // oracle
       '0x0000000000000000000000000000000000000000000000000000000000000000' as `0x${string}`, // questionId
       BigInt(2), // outcomeSlotCount (YES/NO = 2 outcomes)
     ],
@@ -237,7 +237,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     functionName: 'getPositionId',
     args: yesCollectionId
       ? [
-          mockUsdcAddress, // collateralToken
+          erc20Address, // collateralToken
           yesCollectionId,
         ]
       : undefined,
@@ -250,7 +250,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     functionName: 'getPositionId',
     args: noCollectionId
       ? [
-          mockUsdcAddress, // collateralToken
+          erc20Address, // collateralToken
           noCollectionId,
         ]
       : undefined,
@@ -326,8 +326,8 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
         // Approve market maker to spend collateral
         {
           tx: {
-            address: mockUsdcAddress,
-            abi: mockUsdcAbi,
+            address: erc20Address,
+            abi: erc20Abi,
             functionName: 'approve',
             args: [market.marketMakerAddress, collateralLimit],
           },

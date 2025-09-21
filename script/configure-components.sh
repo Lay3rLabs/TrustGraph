@@ -284,7 +284,7 @@ add_component_interactive() {
     echo "  governance.voting_power"
     echo "  merkler.merkle_snapshot"
     echo "  merkler.reward_distributor"
-    echo "  prediction_market.oracle_controller"
+    echo "  prediction_market.controller"
     read -p "Trigger address JSON path: " trigger_path
 
     echo ""
@@ -293,7 +293,7 @@ add_component_interactive() {
     echo "  governance.voting_power"
     echo "  merkler.merkle_snapshot"
     echo "  merkler.reward_distributor"
-    echo "  prediction_market.oracle_controller"
+    echo "  prediction_market.controller"
     read -p "Submit address JSON path: " submit_path
 
     echo ""

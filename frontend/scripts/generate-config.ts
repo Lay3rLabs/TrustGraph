@@ -55,11 +55,9 @@ try {
     ENOVA: deployment.merkler.reward_token,
 
     // Prediction market
-    MockUSDC: deployment.prediction_market.collateral_token,
+    ERC20: deployment.prediction_market.collateral_token,
     ConditionalTokens: deployment.prediction_market.conditional_tokens,
-    PredictionMarketFactory: deployment.prediction_market.factory,
-    PredictionMarketOracleController:
-      deployment.prediction_market.oracle_controller,
+    PredictionMarketController: deployment.prediction_market.controller,
     LMSRMarketMaker: deployment.prediction_market.market_maker,
 
     // Zodiac safes

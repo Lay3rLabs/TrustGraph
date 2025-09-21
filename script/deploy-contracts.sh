@@ -9,6 +9,9 @@ echo "🚀 Starting WAVS EAS contract deployment..."
 
 export WAVS_SERVICE_MANAGER_ADDRESS=${WAVS_SERVICE_MANAGER_ADDRESS:-`task config:service-manager-address`}
 
+# Base chain USDC contract address
+export BASE_USDC_CONTRACT_ADDR="0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+
 # Get RPC URL and deployer key
 export RPC_URL=$(task get-rpc)
 # Use FUNDED_KEY from environment if set (from create-deployer.sh), otherwise read from .env
@@ -37,7 +40,7 @@ forge script script/DeployEAS.s.sol:DeployEAS \
     --private-key "${FUNDED_KEY}" \
     --broadcast
 
-if [ "$DEPLOY_ENV" = "LOCAL" ]; then
+if [ "$DEPLOY_ENV" == "LOCAL" ]; then
     echo "🏛️  Deploying Governance contracts..."
     forge script script/DeployGovernance.s.sol:DeployGovernance \
         --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
@@ -46,21 +49,31 @@ if [ "$DEPLOY_ENV" = "LOCAL" ]; then
         --broadcast
 fi
 
+DEPLOY_REWARD_DISTRIBUTOR=false
+if [ "$DEPLOY_ENV" == "LOCAL" ]; then
+    DEPLOY_REWARD_DISTRIBUTOR=true
+fi
+
 echo "💰 Deploying Merkler contracts..."
 forge script script/DeployMerkler.s.sol:DeployScript \
-    --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
+    --sig 'run(string,bool)' "${WAVS_SERVICE_MANAGER_ADDRESS}" "${DEPLOY_REWARD_DISTRIBUTOR}" \
     --rpc-url "${RPC_URL}" \
     --private-key "${FUNDED_KEY}" \
     --broadcast
+
+USDC_COLLATERAL_TOKEN_ADDR="0x0000000000000000000000000000000000000000"
+if [ "$DEPLOY_ENV" != "LOCAL" ]; then
+    USDC_COLLATERAL_TOKEN_ADDR=${BASE_USDC_CONTRACT_ADDR}
+fi
 
 echo "🎲 Deploying Prediction Market contracts..."
 forge script script/DeployPredictionMarket.s.sol:DeployScript \
-    --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
+    --sig 'run(string,string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" "${USDC_COLLATERAL_TOKEN_ADDR}" \
     --rpc-url "${RPC_URL}" \
     --private-key "${FUNDED_KEY}" \
     --broadcast
 
-if [ "$DEPLOY_ENV" = "LOCAL" ]; then
+if [ "$DEPLOY_ENV" == "LOCAL" ]; then
     echo "🔐 Deploying Zodiac-enabled Safes with modules..."
 
     # MUST RUN AFTER MERKLER DEPLOYMENT.
@@ -72,7 +85,7 @@ if [ "$DEPLOY_ENV" = "LOCAL" ]; then
         --broadcast
 fi
 
-if [ "$DEPLOY_ENV" = "LOCAL" ]; then
+if [ "$DEPLOY_ENV" == "LOCAL" ]; then
     echo "🌊 Deploying Geyser contracts..."
     forge create Geyser --json --rpc-url ${RPC_URL} --broadcast --private-key $FUNDED_KEY \
         --constructor-args "${WAVS_SERVICE_MANAGER_ADDRESS}" > .docker/geyser_deploy.json
@@ -87,8 +100,7 @@ forge script script/DeployWavsIndexer.s.sol:DeployWavsIndexer \
     --private-key "${FUNDED_KEY}" \
     --broadcast
 
-
-if [ "$DEPLOY_ENV" = "LOCAL" ]; then
+if [ "$DEPLOY_ENV" == "LOCAL" ]; then
     echo "🏛️  Deploying DAICO contracts..."
     forge script script/DeployDAICO.s.sol:DeployScript \
         --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \

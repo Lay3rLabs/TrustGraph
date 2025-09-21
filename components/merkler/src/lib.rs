@@ -92,6 +92,7 @@ impl Guest for Component {
 
         let chain_config = get_evm_chain_config(&chain_name)
             .ok_or_else(|| format!("Failed to get chain config for {chain_name}"))?;
+        let chain_id = chain_config.chain_id;
         let http_endpoint = chain_config
             .http_endpoint
             .ok_or_else(|| format!("Failed to get HTTP endpoint for {chain_name}"))?;
@@ -141,6 +142,19 @@ impl Guest for Component {
             U256::from(1),
             true,
         ));
+
+        let prediction_markets =
+            config_var("prediction_markets").ok_or_else(|| "Failed to get prediction_markets")?;
+        let hyperstition_points_pool: U256 = config_var("hyperstition_points_pool")
+            .ok_or_else(|| "Failed to get hyperstition_points_pool")?
+            .parse()
+            .map_err(|e| format!("Failed to parse hyperstition_points_pool as u256: {e}"))?;
+        for market in prediction_markets.split(",") {
+            registry.add_source(sources::hyperstition::HyperstitionSource::new(
+                market,
+                hyperstition_points_pool,
+            )?);
+        }
 
         // Add PageRank-based EAS points if configured
         if let (true, Some(pagerank_pool_str), Some(vouching_schema_uid)) = (
@@ -268,6 +282,7 @@ impl Guest for Component {
         block_on(async move {
             let ctx = sources::SourceContext::new(
                 &chain_name,
+                &chain_id,
                 &http_endpoint,
                 &eas_address,
                 &indexer_address,

@@ -39,9 +39,12 @@ impl Guest for Component {
                 .split(';')
                 .map(|s| {
                     let parts = s.split(':').collect::<Vec<&str>>();
-                    (parts[0], serde_json::from_str(parts[1]).unwrap())
+                    let value = serde_json::from_str(parts[1]).map_err(|e| {
+                        format!("Failed to parse resolver config value {}: {e}", parts[1])
+                    })?;
+                    Ok((parts[0], value))
                 })
-                .collect::<HashMap<&str, serde_json::Value>>(),
+                .collect::<Result<HashMap<&str, serde_json::Value>, String>>()?,
         )
         .map_err(|e| format!("Failed to parse resolver config: {}", e))?;
 

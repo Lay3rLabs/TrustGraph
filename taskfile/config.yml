@@ -13,6 +13,12 @@ tasks:
       - 'echo "{{.FUNDED_KEY}}"'
     silent: true
 
+  prediction-controller-address:
+    desc: "Get the prediction market controller address"
+    cmds:
+      - 'echo "{{.PREDICTION_MARKET_CONTROLLER_ADDRESS}}"'
+    silent: true
+
   indexer-address:
     desc: "Get the indexer address"
     cmds:
@@ -111,16 +117,14 @@ vars:
     sh: test -f .docker/merkler_deploy.json && jq -r '.merkle_snapshot' .docker/merkler_deploy.json || echo ""
 
   # Prediction Market contract addresses (loaded from deployment summary)
-  PREDICTION_MARKET_FACTORY_ADDRESS:
-    sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market.factory' .docker/deployment_summary.json || echo ""
   MARKET_MAKER_ADDRESS:
     sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market.market_maker' .docker/deployment_summary.json || echo ""
   CONDITIONAL_TOKENS_ADDRESS:
     sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market.conditional_tokens' .docker/deployment_summary.json || echo ""
   COLLATERAL_TOKEN_ADDRESS:
     sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market.collateral_token' .docker/deployment_summary.json || echo ""
-  PREDICTION_MARKET_ORACLE_CONTROLLER_ADDRESS:
-    sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market.oracle_controller' .docker/deployment_summary.json || echo ""
+  PREDICTION_MARKET_CONTROLLER_ADDRESS:
+    sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market.controller' .docker/deployment_summary.json || echo ""
 
   # Schema UIDs (loaded from deployment summary)
   VOUCHING_SCHEMA_ID:

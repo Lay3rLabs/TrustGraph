@@ -10,3 +10,7 @@ sol!(
 pub use IWavsIndexer::*;
 
 sol!("../../src/interfaces/IIndexedEvents.sol");
+
+sol!("../../src/interfaces/IPredictionMarketController.sol");
+
+pub use IPredictionMarketController::MarketResolved;
