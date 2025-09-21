@@ -11,8 +11,8 @@ use super::Resolver;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TwitterFollowersConfig {
-    /// Twitter account to resolve.
-    pub twitter_account: String,
+    /// Account to resolve.
+    pub account: String,
     /// Required number of followers.
     pub threshold: u64,
 }
@@ -35,7 +35,7 @@ impl TwitterFollowersResolver {
 
         let mut req = http_request_get(&format!(
             "https://api.twitterapi.io/twitter/user/info?userName={}",
-            self.config.twitter_account
+            self.config.account
         ))
         .map_err(|e| format!("Failed to construct followers request: {}", e))?;
 
