@@ -10,7 +10,7 @@ import { RefObject, useEffect, useRef, useState } from 'react'
 import Markdown from 'react-markdown'
 
 import { Animator } from '@/lib/animator'
-import { SYMBIENT_INTRO } from '@/lib/config'
+import { MAX_CHAT_MESSAGE_LENGTH, SYMBIENT_INTRO } from '@/lib/config'
 import { symbientChat } from '@/state/symbient'
 import { ChatMessage } from '@/types'
 
@@ -38,6 +38,7 @@ export const SymbientChat = ({
 }: SymbientChatProps) => {
   const [userInput, setUserInput] = useState('')
   const [messages, setMessages] = useAtom(symbientChat)
+  const [error, setError] = useState<string | null>(null)
   const resetMessages = useResetAtom(symbientChat)
   const [isThinking, setIsThinking] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -90,12 +91,27 @@ export const SymbientChat = ({
       return
     }
 
+    if (message.length > MAX_CHAT_MESSAGE_LENGTH) {
+      setError(
+        `Message exceeds maximum length of ${MAX_CHAT_MESSAGE_LENGTH} characters`
+      )
+      return
+    }
+
     // Add user message to history
     const newMessages = [
       ...messages,
       { role: 'user', content: message },
     ] as ChatMessage[]
     setMessages(newMessages)
+    setUserInput('')
+    setError(null)
+
+    const undoWithError = (error: string) => {
+      setMessages((prev) => prev.slice(0, -1))
+      setUserInput(message)
+      setError(error)
+    }
 
     setIsThinking(true)
     try {
@@ -108,7 +124,24 @@ export const SymbientChat = ({
       })
 
       if (!response.ok) {
-        throw new Error('Failed to send message')
+        if (response.status === 429) {
+          const retryInSeconds = Number(
+            response.headers.get('Retry-After') || 0
+          )
+          const retryInMinutes =
+            retryInSeconds && Math.ceil(retryInSeconds / 60)
+          undoWithError(
+            `Rate limit exceeded. ${
+              retryInMinutes && retryInMinutes !== 60
+                ? `Try again in ${retryInMinutes} minutes.`
+                : 'Try again in an hour.'
+            }`
+          )
+          return
+        }
+
+        undoWithError('Failed to send message')
+        return
       }
 
       const data = await response.json()
@@ -123,13 +156,7 @@ export const SymbientChat = ({
       ])
     } catch (error) {
       console.error('Chat error:', error)
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: 'Error: Failed to get response',
-        },
-      ])
+      undoWithError('Failed to get response')
     } finally {
       setIsThinking(false)
     }
@@ -160,7 +187,6 @@ export const SymbientChat = ({
       }
       if (userInput.trim()) {
         sendChatMessage(userInput)
-        setUserInput('')
         // Reset textarea height
         if (textareaRef.current) {
           textareaRef.current.style.height = 'auto'
@@ -193,7 +219,7 @@ export const SymbientChat = ({
             <div className="text-primary-foreground/80">
               <span>{message.role === 'user' ? 'you' : 'en0va'}:~$</span>
             </div>
-            <div className={clsx('pl-4 space-y-4 text-primary-foreground/60')}>
+            <div className={clsx('px-4 space-y-4 text-primary-foreground/60')}>
               <Markdown
                 components={{
                   p: SlideFadeInParagraph as any,
@@ -233,10 +259,14 @@ export const SymbientChat = ({
             )}
             value={userInput}
             onChange={handleTextareaChange}
+            maxLength={MAX_CHAT_MESSAGE_LENGTH}
             onKeyDown={handleKeyDown}
             placeholder="Type your message and press Enter..."
             disabled={isThinking}
           />
+          {error && (
+            <p className="text-red-400 text-xs font-mono pb-4">{error}</p>
+          )}
           {userInput && (
             <div className="flex flex-row gap-2 flex-wrap text-primary-foreground/30 pb-4">
               <p>Press Enter to send</p>
@@ -246,6 +276,17 @@ export const SymbientChat = ({
                 <span className={clsx(isClear && 'text-red-400/60')}>
                   /clear to start over
                 </span>
+              </p>
+              <p
+                className={clsx(
+                  userInput.length === MAX_CHAT_MESSAGE_LENGTH
+                    ? 'text-red-400/60'
+                    : userInput.length > MAX_CHAT_MESSAGE_LENGTH * 0.9
+                    ? 'text-yellow-400/60'
+                    : undefined
+                )}
+              >
+                • {userInput.length}/{MAX_CHAT_MESSAGE_LENGTH}
               </p>
             </div>
           )}
@@ -264,7 +305,7 @@ const SlideFadeInParagraph = ({
     initial={{ opacity: 0, y: 5 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.4, ease: 'easeOut' }}
-    className={clsx(className, 'whitespace-pre-wrap')}
+    className={clsx(className, 'whitespace-pre-wrap break-words')}
     {...props}
   >
     {children}

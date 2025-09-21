@@ -9,7 +9,100 @@ import {
   ChatCompletionUserMessageParam,
 } from 'openai/resources/index.mjs'
 
+import { MAX_CHAT_MESSAGE_LENGTH } from '@/lib/config'
 import { ChatMessage } from '@/types'
+
+// Rate limiting configuration
+const RATE_LIMIT_REQUESTS = 300
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000 // 1 hour in milliseconds
+
+// In-memory storage for rate limiting
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
+
+// Cleanup old entries every 10 minutes
+setInterval(() => {
+  const now = Date.now()
+  for (const [ip, data] of rateLimitStore.entries()) {
+    if (now > data.resetTime) {
+      rateLimitStore.delete(ip)
+    }
+  }
+}, 10 * 60 * 1000)
+
+const getRealIP = (request: NextRequest): string => {
+  // Try various headers that might contain the real IP
+  const forwarded = request.headers.get('x-forwarded-for')
+  const realIP = request.headers.get('x-real-ip')
+  const cfConnectingIP = request.headers.get('cf-connecting-ip')
+
+  if (forwarded) {
+    return forwarded.split(',')[0].trim()
+  }
+  if (realIP) {
+    return realIP
+  }
+  if (cfConnectingIP) {
+    return cfConnectingIP
+  }
+
+  // Fallback to unknown since NextRequest doesn't have ip property
+  return 'unknown'
+}
+
+const checkRateLimit = (
+  ip: string
+): {
+  allowed: boolean
+  resetTime: number
+  remaining: number
+} => {
+  const now = Date.now()
+  const userLimit = rateLimitStore.get(ip)
+
+  if (!userLimit || now > userLimit.resetTime) {
+    // First request or window expired, reset the counter
+    const resetTime = now + RATE_LIMIT_WINDOW_MS
+    rateLimitStore.set(ip, { count: 1, resetTime })
+    return {
+      allowed: true,
+      resetTime,
+      remaining: RATE_LIMIT_REQUESTS - 1,
+    }
+  }
+
+  if (userLimit.count >= RATE_LIMIT_REQUESTS) {
+    // Rate limit exceeded
+    return { allowed: false, resetTime: userLimit.resetTime, remaining: 0 }
+  }
+
+  // Increment counter
+  userLimit.count++
+  return {
+    allowed: true,
+    resetTime: userLimit.resetTime,
+    remaining: RATE_LIMIT_REQUESTS - userLimit.count,
+  }
+}
+
+const validateMessageLength = (
+  messages: ChatMessage[]
+): {
+  valid: boolean
+  error?: string
+} => {
+  for (const message of messages) {
+    if (
+      message.role === 'user' &&
+      message.content.length > MAX_CHAT_MESSAGE_LENGTH
+    ) {
+      return {
+        valid: false,
+        error: `Message exceeds maximum length of ${MAX_CHAT_MESSAGE_LENGTH} characters (current: ${message.content.length})`,
+      }
+    }
+  }
+  return { valid: true }
+}
 
 const systemPrompt = fs.readFileSync(
   path.join(process.cwd(), '../hyperstition/PROMPT.md'),
@@ -56,11 +149,49 @@ const getModelConfig = () => {
 
 export async function POST(request: NextRequest) {
   try {
+    // Get client IP for rate limiting
+    const clientIP = getRealIP(request)
+
+    // Check rate limit
+    const rateLimitResult = checkRateLimit(clientIP)
+    if (!rateLimitResult.allowed) {
+      const retryAfter = Math.ceil(
+        (rateLimitResult.resetTime - Date.now()) / 1000
+      )
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded. Please try again later.',
+          retryAfter,
+          resetTime: rateLimitResult.resetTime,
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': retryAfter.toString(),
+            'X-RateLimit-Limit': RATE_LIMIT_REQUESTS.toString(),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': Math.ceil(
+              rateLimitResult.resetTime / 1000
+            ).toString(),
+          },
+        }
+      )
+    }
+
     const { messages: chatHistory } = await request.json()
 
     if (!chatHistory || !Array.isArray(chatHistory)) {
       return NextResponse.json(
         { error: 'Messages are required' },
+        { status: 400 }
+      )
+    }
+
+    // Validate message length
+    const validationResult = validateMessageLength(chatHistory as ChatMessage[])
+    if (!validationResult.valid) {
+      return NextResponse.json(
+        { error: validationResult.error },
         { status: 400 }
       )
     }
@@ -103,12 +234,23 @@ export async function POST(request: NextRequest) {
 
     const responseText = chatCompletion.choices[0]?.message?.content || ''
 
-    return NextResponse.json({
-      response: responseText,
-      success: true,
-      provider: process.env.MODEL_PROVIDER || 'anthropic',
-      model: model,
-    })
+    return NextResponse.json(
+      {
+        response: responseText,
+        success: true,
+        provider: process.env.MODEL_PROVIDER || 'anthropic',
+        model: model,
+      },
+      {
+        headers: {
+          'X-RateLimit-Limit': RATE_LIMIT_REQUESTS.toString(),
+          'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+          'X-RateLimit-Reset': Math.ceil(
+            rateLimitResult.resetTime / 1000
+          ).toString(),
+        },
+      }
+    )
   } catch (error) {
     console.error('Chat API error:', error)
     return NextResponse.json(
