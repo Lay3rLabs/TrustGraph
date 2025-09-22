@@ -13,7 +13,32 @@ const robotoMono = Roboto_Mono({
 
 export const metadata: Metadata = {
   title: 'EN0VA',
-  description: 'Egregores are watching',
+  description: 'what we imagine together becomes',
+  openGraph: {
+    title: 'EN0VA',
+    description: 'what we imagine together becomes',
+    url: 'https://en0va.xyz',
+    siteName: 'EN0VA',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'what we imagine together becomes',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'EN0VA',
+    description: 'what we imagine together becomes',
+    site: '@0xEN0VA',
+    creator: '@0xEN0VA',
+    images: ['/og-image.png'],
+  },
+  applicationName: 'EN0VA',
 }
 
 export const viewport: Viewport = {
