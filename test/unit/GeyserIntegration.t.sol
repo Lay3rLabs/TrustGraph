@@ -21,16 +21,9 @@ contract GeyserIntegrationTest is Test {
         address poaStakeRegistryProxy = UpgradeableProxyLib.setUpEmptyProxy(owner);
         address poaStakeRegistryImpl = address(new POAStakeRegistry());
 
-        bytes memory poaStakeRegistryInitCall = abi.encodeCall(
-            POAStakeRegistry.initialize,
-            (owner, 1000, 2, 3)
-        );
+        bytes memory poaStakeRegistryInitCall = abi.encodeCall(POAStakeRegistry.initialize, (owner, 1000, 2, 3));
 
-        UpgradeableProxyLib.upgradeAndCall(
-            poaStakeRegistryProxy,
-            poaStakeRegistryImpl,
-            poaStakeRegistryInitCall
-        );
+        UpgradeableProxyLib.upgradeAndCall(poaStakeRegistryProxy, poaStakeRegistryImpl, poaStakeRegistryInitCall);
 
         poaStakeRegistry = POAStakeRegistry(poaStakeRegistryProxy);
 
@@ -55,13 +48,8 @@ contract GeyserIntegrationTest is Test {
 
         // Set signing key for the operator with proper signature
         vm.startPrank(operator);
-        // Generate the message hash that needs to be signed by the new signing key
-        bytes32 messageHash = keccak256(abi.encode(operator));
-        // Sign the message with the signing key's private key
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(signingKeyPrivateKey, messageHash);
-        bytes memory signingKeySignature = abi.encodePacked(r, s, v);
         // Update the signing key with the signature
-        poaStakeRegistry.updateOperatorSigningKey(signingKey, signingKeySignature);
+        poaStakeRegistry.updateOperatorSigningKey(signingKey);
         vm.stopPrank();
 
         // Transfer ownership to Geyser
@@ -83,8 +71,10 @@ contract GeyserIntegrationTest is Test {
         // Create the signature using the already set signing key
         // The signature should be from the signingKey we already set up
         bytes32 correctMessageHash = keccak256(abi.encode(envelope));
-        bytes32 correctEthSignedMessageHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", correctMessageHash));
-        (uint8 vCorrect, bytes32 rCorrect, bytes32 sCorrect) = vm.sign(signingKeyPrivateKey, correctEthSignedMessageHash);
+        bytes32 correctEthSignedMessageHash =
+            keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", correctMessageHash));
+        (uint8 vCorrect, bytes32 rCorrect, bytes32 sCorrect) =
+            vm.sign(signingKeyPrivateKey, correctEthSignedMessageHash);
         signatures[0] = abi.encodePacked(rCorrect, sCorrect, vCorrect);
 
         vm.roll(block.number + 1);
