@@ -161,12 +161,8 @@
                 rgba(17, 24, 39, 0.5) 50%,
                 rgba(0, 0, 0, 0.6) 100%
             ),*/
-        /* Background image */ url('/background.png');
-  background-size:
-    cover,
-    4px 4px,
-    cover,
-    cover;
+        /* Background image */ url('/background.jpg');
+  background-size: cover, 4px 4px, cover, cover;
   background-position: center center;
   background-attachment: fixed;
   /*animation:
@@ -372,7 +368,7 @@
 
 @keyframes pulse {
   50% {
-    opacity: .5;
+    opacity: 0.5;
   }
 }
 
@@ -428,9 +424,7 @@
 
 .ascii-art-title {
   color: #d1d5db;
-  text-shadow:
-    0 0 4px rgba(209, 213, 219, 0.3),
-    0 0 1px rgba(0, 0, 0, 0.9);
+  text-shadow: 0 0 4px rgba(209, 213, 219, 0.3), 0 0 1px rgba(0, 0, 0, 0.9);
   font-family: 'Roboto Mono', 'Courier New', 'Lucida Console', monospace;
   font-size: 2.5rem;
   font-weight: bold;
@@ -457,9 +451,7 @@
 
 .terminal-command {
   color: #ffffff;
-  text-shadow:
-    0 0 1px rgba(255, 255, 255, 0.2),
-    0 0 1px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.2), 0 0 1px rgba(0, 0, 0, 0.8);
   font-family: 'Roboto Mono', 'Courier New', 'Lucida Console', monospace;
 }
 
