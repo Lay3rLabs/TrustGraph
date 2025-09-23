@@ -26,8 +26,14 @@ try {
   // Set chain based on environment
   configOutput.chain = env === 'development' ? 'local' : 'base'
   configOutput.apis = {
-    ponder: env === 'development' ? 'http://localhost:42069' : '',
-    wavs: env === 'development' ? 'http://localhost:9090' : '',
+    ponder:
+      env === 'development'
+        ? 'http://localhost:65421'
+        : 'https://infra.en0va.xyz/ponder',
+    pointsEvents:
+      env === 'development'
+        ? 'http://localhost:9090'
+        : 'https://infra.en0va.xyz/wavs',
   }
 
   // Update WAVS service ID

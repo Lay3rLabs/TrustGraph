@@ -12,28 +12,28 @@ export default createConfig({
     //   rpc: process.env.PONDER_RPC_URL_1,
     //   ws: process.env.PONDER_WS_URL_1,
     // },
-    // base: {
-    //   id: 8453,
-    //   rpc: process.env.PONDER_RPC_URL_8453,
-    //   ws: process.env.PONDER_WS_URL_8453,
-    // },
-    local: {
-      id: 31337,
-      rpc: "http://localhost:8545",
-      ws: "ws://localhost:8546",
+    base: {
+      id: 8453,
+      rpc: process.env.PONDER_RPC_URL_8453,
+      ws: process.env.PONDER_WS_URL_8453,
     },
+    // local: {
+    //   id: 31337,
+    //   rpc: "http://localhost:8545",
+    //   ws: "ws://localhost:8546",
+    // },
   },
   contracts: {
     marketMaker: {
       abi: lmsrMarketMakerAbi,
       // startBlock: "latest",
-      startBlock: 1,
+      startBlock: 35855002,
       chain: {
         // mainnet: { address: "0x0000000000000000000000000000000000000000" },
-        // base: { address: "0x4200000000000000000000000000000000000006" },
-        local: {
-          address: deploymentSummary.prediction_market.market_maker as Hex,
-        },
+        base: { address: deploymentSummary.prediction_market.market_maker as Hex },
+        // local: {
+        //   address: deploymentSummary.prediction_market.market_maker as Hex,
+        // },
       },
     },
   },

@@ -47,7 +47,14 @@ export const localChain: NetworkConfig = {
 // Environment-based network configuration
 export const getNetworkConfig = (): NetworkConfig => {
   if (CHAIN === 'base') {
-    return base
+    return {
+      ...base,
+      rpcUrls: {
+        default: {
+          http: ['/api/rpc/8453'],
+        },
+      },
+    }
   } else if (CHAIN === 'local') {
     return localChain
   } else {

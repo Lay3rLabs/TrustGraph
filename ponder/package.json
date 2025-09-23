@@ -4,8 +4,8 @@
   "type": "module",
   "scripts": {
     "predev": "npm run db:migrate",
-    "dev": "ponder dev",
-    "start": "ponder start",
+    "dev": "ponder dev -p 65421",
+    "start": "ponder start -p 65421",
     "db": "ponder db",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

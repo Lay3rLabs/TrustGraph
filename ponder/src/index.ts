@@ -42,16 +42,21 @@ ponder.on("marketMaker:AMMOutcomeTokenTrade", async ({ event, context }) => {
     event.args;
 
   const outcomeIndex = outcomeTokenAmounts.findIndex((amount) => amount !== 0n);
+  // Not sure why but sometimes this event is fired and all fields are zero (except the transactor).
+  if (outcomeIndex === -1) {
+    return;
+  }
+
   const outcome = outcomeIndex === 1 ? "yes" : "no";
   const type = outcomeTokenAmounts[outcomeIndex]! > 0n ? "buy" : "sell";
 
   const amount =
-    outcomeTokenAmounts[outcomeIndex]! > 0n
+    outcomeTokenAmounts[outcomeIndex]! >= 0n
       ? outcomeTokenAmounts[outcomeIndex]!
       : -outcomeTokenAmounts[outcomeIndex]!;
 
   const cost =
-    outcomeTokenNetCost > 0n ? outcomeTokenNetCost : -outcomeTokenNetCost;
+    outcomeTokenNetCost >= 0n ? outcomeTokenNetCost : -outcomeTokenNetCost;
 
   // Record trade.
   await context.db.insert(predictionMarketTrade).values({

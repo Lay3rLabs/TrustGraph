@@ -3,7 +3,7 @@
 import { queryOptions } from '@tanstack/react-query'
 import { hexToNumber } from 'viem'
 
-import { APIS, WAVS_SERVICE_ID } from '@/lib/config'
+import { APIS } from '@/lib/config'
 
 // Query keys for consistent caching
 export const pointsKeys = {
@@ -25,9 +25,7 @@ export const pointsQueries = {
     queryOptions({
       queryKey: pointsKeys.events(address),
       queryFn: async () => {
-        const response = await fetch(
-          `${APIS.wavs}/${WAVS_SERVICE_ID}/events/${address}.json`
-        )
+        const response = await fetch(`${APIS.pointsEvents}/${address}.json`)
 
         if (response.ok) {
           const events = (await response.json()) as {
@@ -42,7 +40,7 @@ export const pointsQueries = {
               id: index.toString(),
               type: event.type,
               timestamp: event.timestamp
-                ? new Date(event.timestamp * 1000)
+                ? new Date(event.timestamp)
                 : undefined,
               points: event.value.startsWith('0x')
                 ? hexToNumber(event.value as `0x${string}`)
