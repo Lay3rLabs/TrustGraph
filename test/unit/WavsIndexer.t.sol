@@ -187,6 +187,27 @@ contract WavsIndexerTest is Test {
     // Query Function Tests
     // ================================
 
+    function testGetEvent() public {
+        // Get event
+        vm.expectRevert(IWavsIndexer.EventDoesNotExist.selector);
+        wavsIndexer.getEvent(_generateEventId(1, 0));
+
+        // Create event
+        IWavsIndexer.IndexedEvent[] memory events = new IWavsIndexer.IndexedEvent[](1);
+        events[0] = _createMockEvent(0, abi.encode(123), "attestation");
+
+        IWavsIndexer.IndexingPayload memory payload = _createPayload(events, new bytes32[](0));
+
+        (IWavsServiceHandler.Envelope memory envelope, IWavsServiceHandler.SignatureData memory signatureData) =
+            _createEnvelopeAndSignature(payload);
+
+        wavsIndexer.handleSignedEnvelope(envelope, signatureData);
+
+        // Get event
+        IWavsIndexer.IndexedEvent memory ev = wavsIndexer.getEvent(_generateEventId(1, 0));
+        assertEq(ev.data, abi.encode(123));
+    }
+
     function testGetEventsByChainId() public {
         // Create events for different chains
         IWavsIndexer.IndexedEvent[] memory events = new IWavsIndexer.IndexedEvent[](3);

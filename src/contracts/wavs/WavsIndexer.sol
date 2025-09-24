@@ -187,6 +187,18 @@ contract WavsIndexer is IWavsServiceHandler, IWavsIndexer, Semver {
         return eventExists[eventId] && events[eventId].deleted;
     }
 
+    /// @notice Gets an event by ID
+    /// @param eventId The ID of the event to get
+    /// @return The event
+    function getEvent(
+        bytes32 eventId
+    ) external view returns (IndexedEvent memory) {
+        if (!eventExists[eventId]) {
+            revert EventDoesNotExist();
+        }
+        return events[eventId];
+    }
+
     /// @notice Gets events by chain ID
     /// @param chainId The chain ID to filter by
     /// @param start The offset to start from
