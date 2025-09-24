@@ -118,6 +118,16 @@ const getModelConfig = () => {
   const provider = process.env.MODEL_PROVIDER?.toLowerCase() || 'anthropic'
 
   switch (provider) {
+    case 'helicone':
+      return {
+        client: new OpenAI({
+          baseURL: 'https://ai-gateway.helicone.ai',
+          apiKey: process.env.HELICONE_API_KEY,
+        }),
+        model: process.env.HELICONE_MODEL || 'claude-sonnet-4',
+        maxTokens: 300,
+        temperature: 0.7,
+      }
     case 'huggingface':
     case 'hf':
       return {
