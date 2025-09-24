@@ -40,3 +40,46 @@ export const predictionMarketTrade = onchainTable(
     timestampIdx: index().on(t.timestamp),
   })
 )
+
+export const predictionMarketRedemption = onchainTable(
+  'prediction_market_redemption',
+  (t) => ({
+    id: t.text().primaryKey(),
+    address: t.hex().notNull(),
+    marketAddress: t.hex().notNull(),
+    collateralToken: t.hex().notNull(),
+    conditionId: t.hex().notNull(),
+    indexSets: t.bigint().array().notNull(),
+    payout: t.bigint().notNull(),
+    timestamp: t.bigint().notNull(),
+  }),
+  (t) => ({
+    addressIdx: index().on(t.address),
+    marketAddressIdx: index().on(t.marketAddress),
+    timestampIdx: index().on(t.timestamp),
+  })
+)
+
+export const wavsIndexerEvent = onchainTable(
+  'wavs_indexer_event',
+  (t) => ({
+    id: t.hex().primaryKey(),
+    chainId: t.text().notNull(),
+    relevantContract: t.hex().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.bigint().notNull(),
+    type: t.text().notNull(),
+    data: t.hex().notNull(),
+    tags: t.text().array().notNull(),
+    relevantAddresses: t.hex().array().notNull(),
+    metadata: t.hex().notNull(),
+    deleted: t.boolean().notNull(),
+  }),
+  (t) => ({
+    typeIdx: index().on(t.type),
+    chainIdIdx: index().on(t.chainId),
+    relevantContractIdx: index().on(t.relevantContract),
+    blockNumberIdx: index().on(t.blockNumber),
+    timestampIdx: index().on(t.timestamp),
+  })
+)

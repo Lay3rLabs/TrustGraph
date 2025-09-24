@@ -1,6 +1,14 @@
 import { ponder } from "ponder:registry";
-import { predictionMarketPrice, predictionMarketTrade } from "ponder:schema";
-import { lmsrMarketMakerAbi } from "../../frontend/lib/contracts";
+import {
+  predictionMarketPrice,
+  predictionMarketRedemption,
+  predictionMarketTrade,
+  wavsIndexerEvent,
+} from "ponder:schema";
+import {
+  lmsrMarketMakerAbi,
+  wavsIndexerAbi,
+} from "../../frontend/lib/contracts";
 import { Hex, hexToNumber } from "viem";
 
 const PRICE_DIVISOR = hexToNumber("0x10000000000000000");
@@ -31,6 +39,36 @@ ponder.on("marketMaker:setup", async ({ context }) => {
     price: yesPrice,
     marketAddress,
     timestamp: BigInt(Math.floor(Date.now() / 1000)),
+  });
+});
+
+ponder.on("conditionalTokens:PayoutRedemption", async ({ event, context }) => {
+  const marketAddress = context.contracts.marketMaker.address as Hex;
+
+  const {
+    redeemer,
+    collateralToken,
+    parentCollectionId,
+    conditionId,
+    indexSets,
+    payout,
+  } = event.args;
+
+  // If not a root redemption (parentCollectionId is not all zeroes), return. We only care about redemptions that output collateral tokens.
+  if (!/^0x0+$/.test(parentCollectionId)) {
+    return;
+  }
+
+  // Record redemption.
+  await context.db.insert(predictionMarketRedemption).values({
+    id: event.id,
+    address: redeemer,
+    marketAddress,
+    collateralToken,
+    conditionId,
+    indexSets: indexSets as bigint[],
+    payout,
+    timestamp: event.block.timestamp,
   });
 });
 
@@ -91,9 +129,59 @@ ponder.on("marketMaker:AMMOutcomeTokenTrade", async ({ event, context }) => {
       marketAddress,
       timestamp: event.block.timestamp,
     })
-    .onConflictDoUpdate((row) => ({
-      price: row.price,
-      marketAddress: row.marketAddress,
-      timestamp: row.timestamp,
-    }));
+    .onConflictDoUpdate({
+      price: yesPrice,
+      marketAddress,
+      timestamp: event.block.timestamp,
+    });
+});
+
+ponder.on("wavsIndexer:EventIndexed", async ({ event, context }) => {
+  // Get the entire indexed event.
+  const {
+    eventId,
+    chainId,
+    relevantContract,
+    blockNumber,
+    timestamp,
+    eventType,
+    data,
+    tags,
+    relevantAddresses,
+    metadata,
+    deleted,
+  } = await context.client.readContract({
+    address: context.contracts.wavsIndexer.address as Hex,
+    abi: wavsIndexerAbi,
+    functionName: "getEvent",
+    args: [event.args.eventId],
+  });
+
+  const values = {
+    chainId,
+    relevantContract,
+    blockNumber,
+    timestamp,
+    type: eventType,
+    data,
+    tags: tags as string[],
+    relevantAddresses: relevantAddresses as Hex[],
+    metadata,
+    deleted,
+  };
+
+  // Add or update the indexed event.
+  await context.db
+    .insert(wavsIndexerEvent)
+    .values({
+      id: eventId,
+      ...values,
+    })
+    .onConflictDoUpdate(values);
+});
+
+ponder.on("wavsIndexer:EventDeleted", async ({ event, context }) => {
+  await context.db
+    .update(wavsIndexerEvent, { id: event.args.eventId })
+    .set({ deleted: true });
 });

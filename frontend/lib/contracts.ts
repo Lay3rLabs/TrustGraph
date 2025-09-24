@@ -5006,6 +5006,40 @@ export const wavsIndexerAbi = [
   },
   {
     type: 'function',
+    inputs: [{ name: 'eventId', internalType: 'bytes32', type: 'bytes32' }],
+    name: 'getEvent',
+    outputs: [
+      {
+        name: '',
+        internalType: 'struct IWavsIndexer.IndexedEvent',
+        type: 'tuple',
+        components: [
+          { name: 'eventId', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'chainId', internalType: 'string', type: 'string' },
+          {
+            name: 'relevantContract',
+            internalType: 'address',
+            type: 'address',
+          },
+          { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
+          { name: 'timestamp', internalType: 'uint128', type: 'uint128' },
+          { name: 'eventType', internalType: 'string', type: 'string' },
+          { name: 'data', internalType: 'bytes', type: 'bytes' },
+          { name: 'tags', internalType: 'string[]', type: 'string[]' },
+          {
+            name: 'relevantAddresses',
+            internalType: 'address[]',
+            type: 'address[]',
+          },
+          { name: 'metadata', internalType: 'bytes', type: 'bytes' },
+          { name: 'deleted', internalType: 'bool', type: 'bool' },
+        ],
+      },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
     inputs: [{ name: 'addr', internalType: 'address', type: 'address' }],
     name: 'getEventCountByAddress',
     outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
