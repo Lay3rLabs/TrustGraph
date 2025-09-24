@@ -4912,6 +4912,9 @@ dependencies = [
 name = "prediction-market-oracle"
 version = "0.5.5"
 dependencies = [
+ "alloy-network",
+ "alloy-provider",
+ "alloy-rpc-types",
  "alloy-sol-macro",
  "alloy-sol-types",
  "anyhow",

@@ -81,7 +81,7 @@ build_env_args() {
     echo "$args"
 }
 
-BASE_CMD="docker run --rm --network host -w /data -v $(pwd):/data ghcr.io/lay3rlabs/wavs:1.1.0 wavs-cli service --json true --home /data --file /data/${FILE_LOCATION}"
+BASE_CMD="docker run --rm --network host -w /data -v $(pwd):/data ghcr.io/lay3rlabs/wavs:1.3.0 wavs-cli service --json true --home /data --file /data/${FILE_LOCATION}"
 
 if [ -z "$WAVS_SERVICE_MANAGER_ADDRESS" ]; then
     export WAVS_SERVICE_MANAGER_ADDRESS=$(jq -r '.contract' .docker/poa_sm_deploy.json)

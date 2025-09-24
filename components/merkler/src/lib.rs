@@ -58,6 +58,7 @@ impl Guest for Component {
         // Try to use Pinata first, fallback to local IPFS if API key is not available
         let (ipfs_url, ipfs_api_key) = match std::env::var("WAVS_ENV_PINATA_API_KEY") {
             Ok(api_key) => {
+                // TODO: this is different from gateway. Need to rechange this
                 let url = std::env::var("WAVS_ENV_PINATA_API_URL")
                     .unwrap_or_else(|_| "https://uploads.pinata.cloud/v3/files".to_string());
                 println!("🌐 Using Pinata IPFS service");

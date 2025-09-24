@@ -42,4 +42,4 @@ lto = true
 
 [package.metadata.component]
 package = "component:geyser"
-target = "wavs:operator@=1.0.0"
+target = "wavs:operator@=1.2.0"

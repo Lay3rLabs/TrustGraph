@@ -6,7 +6,7 @@ mod resolvers;
 
 use bindings::{export, host::config_var, Guest, TriggerAction, WasmResponse};
 mod trigger;
-use trigger::{decode_trigger_event, encode_trigger_output};
+use trigger::encode_trigger_output;
 use wavs_wasi_utils::evm::alloy_primitives::Address;
 use wstd::runtime::block_on;
 
@@ -48,26 +48,29 @@ impl Guest for Component {
         )
         .map_err(|e| format!("Failed to parse resolver config: {}", e))?;
 
-        let trigger_info = decode_trigger_event(action.data)?;
+        block_on(async move {
+            let execution_time_seconds = action.execution_timestamp_seconds().await?;
 
-        if trigger_info.execution_time_seconds < resolve_after {
-            return Err(format!(
-                "Market resolution is allowed after {resolve_after}. (current time is {})",
-                trigger_info.execution_time_seconds
-            ));
-        }
+            if execution_time_seconds < resolve_after {
+                return Err(format!(
+                    "Market resolution is allowed after {resolve_after}. (current time is {})",
+                    execution_time_seconds
+                ));
+            }
 
-        let resolver = ResolverRegistry::all().create_resolver(&resolver_type, resolver_config)?;
+            let resolver =
+                ResolverRegistry::all().create_resolver(&resolver_type, resolver_config)?;
 
-        let result = block_on(resolver.resolve())?;
+            let result = resolver.resolve().await?;
 
-        Ok(Some(WasmResponse {
-            payload: encode_trigger_output(
-                Address::from_str(&market_maker_address).unwrap(),
-                Address::from_str(&conditional_tokens_address).unwrap(),
-                result,
-            ),
-            ordering: None,
-        }))
+            Ok(Some(WasmResponse {
+                payload: encode_trigger_output(
+                    Address::from_str(&market_maker_address).unwrap(),
+                    Address::from_str(&conditional_tokens_address).unwrap(),
+                    result,
+                ),
+                ordering: None,
+            }))
+        })
     }
 }

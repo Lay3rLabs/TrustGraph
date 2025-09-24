@@ -21,7 +21,7 @@ impl Guest for Component {
         println!("WAVS Indexer: Processing trigger action");
 
         // Decode the trigger event
-        let (event_data, dest) = decode_trigger_event(action.data)
+        let (event_data, dest) = block_on(async move { decode_trigger_event(action).await })
             .map_err(|e| format!("Failed to decode trigger event: {}", e))?;
 
         println!(

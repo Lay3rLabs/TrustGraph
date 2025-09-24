@@ -17,6 +17,9 @@ alloy-sol-macro = { workspace = true }
 alloy-sol-types = { workspace = true }
 async-trait = { workspace = true }
 inventory = { workspace = true }
+alloy-network = { workspace = true }
+alloy-rpc-types = { workspace = true }
+alloy-provider = { workspace = true }
 
 [dev-dependencies]
 mockall = "0.11"
@@ -33,4 +36,4 @@ lto = true
 
 [package.metadata.component]
 package = "component:prediction-market-oracle"
-target = "wavs:operator@=1.0.0"
+target = "wavs:operator@=1.2.0"
