@@ -166,14 +166,14 @@ while IFS= read -r component; do
     component_num=$((component_num + 1))
     upload_package "$component" "$component_num" &
     pids+=($!)
-done < <(jq -r '.components[] | @json' "$COMPONENT_CONFIGS_FILE")
+done < <(jq -r '.components | unique_by(.filename)[] | @json' "$COMPONENT_CONFIGS_FILE")
 
 # Upload aggregator components
 while IFS= read -r component; do
     component_num=$((component_num + 1))
     upload_package "$component" "$component_num" &
     pids+=($!)
-done < <(jq -r '.aggregator_components[] | @json' "$COMPONENT_CONFIGS_FILE")
+done < <(jq -r '.aggregator_components | unique_by(.filename)[] | @json' "$COMPONENT_CONFIGS_FILE")
 
 # Wait for all uploads
 successful=0
