@@ -2,6 +2,7 @@
 
 import { usePonderQuery } from '@ponder/react'
 import type React from 'react'
+import { useMemo } from 'react'
 import { useAccount } from 'wagmi'
 
 import { useCollateralToken } from '@/hooks/useCollateralToken'
@@ -38,6 +39,11 @@ export const PredictionMarketTradeHistory: React.FC<
   const { symbol: collateralSymbol, decimals: collateralDecimals } =
     useCollateralToken()
 
+  // Keep the start timestamp for the window constant when it changes, to prevent re-fetching on every re-render.
+  const windowStartTimestamp = useMemo(
+    () => BigInt(Math.floor(Date.now() / 1000 - windowAgo[window])),
+    [window]
+  )
   const {
     data: tradeHistory,
     isLoading: isLoadingTradeHistory,
@@ -53,12 +59,7 @@ export const PredictionMarketTradeHistory: React.FC<
             eq(t.marketAddress, market.marketMakerAddress),
             ...(onlyMyTrades && address ? [eq(t.address, address)] : []),
             ...(window !== ChartWindow.All
-              ? [
-                  gte(
-                    t.timestamp,
-                    BigInt(Math.floor(Date.now() / 1000 - windowAgo[window]))
-                  ),
-                ]
+              ? [gte(t.timestamp, windowStartTimestamp)]
               : [])
           ),
       }),

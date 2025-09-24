@@ -101,6 +101,11 @@ export const PredictionMarketDetail = ({
   const [window, setWindow] = useState<ChartWindow>(ChartWindow.All)
   const [tradeFilter, setTradeFilter] = useState<'all' | 'my'>('all')
 
+  // Keep the start timestamp for the window constant when it changes, to prevent re-fetching on every re-render.
+  const windowStartTimestamp = useMemo(
+    () => BigInt(Math.floor(Date.now() / 1000 - windowAgo[window])),
+    [window]
+  )
   const {
     data: priceHistory,
     isLoading: isLoadingPriceHistory,
@@ -114,12 +119,7 @@ export const PredictionMarketDetail = ({
           and(
             eq(t.marketAddress, market.marketMakerAddress),
             ...(window !== ChartWindow.All
-              ? [
-                  gte(
-                    t.timestamp,
-                    BigInt(Math.floor(Date.now() / 1000 - windowAgo[window]))
-                  ),
-                ]
+              ? [gte(t.timestamp, windowStartTimestamp)]
               : [])
           ),
       }),
