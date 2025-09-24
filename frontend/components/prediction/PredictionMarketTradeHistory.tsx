@@ -2,7 +2,6 @@
 
 import { usePonderQuery } from '@ponder/react'
 import type React from 'react'
-import { useMemo } from 'react'
 import { useAccount } from 'wagmi'
 
 import { useCollateralToken } from '@/hooks/useCollateralToken'
@@ -12,38 +11,19 @@ import { HyperstitionMarket } from './PredictionMarketDetail'
 
 export type PredictionMarketTradeHistoryProps = {
   market: HyperstitionMarket
-  window: ChartWindow
+  windowStartTimestamp: bigint
   onlyMyTrades: boolean
-}
-
-enum ChartWindow {
-  Day = 'day',
-  Week = 'week',
-  Month = 'month',
-  All = 'all',
-}
-
-const windowAgo: Record<ChartWindow, number> = {
-  [ChartWindow.Day]: 60 * 60 * 24,
-  [ChartWindow.Week]: 60 * 60 * 24 * 7,
-  [ChartWindow.Month]: 60 * 60 * 24 * 30,
-  [ChartWindow.All]: Infinity,
 }
 
 export const PredictionMarketTradeHistory: React.FC<
   PredictionMarketTradeHistoryProps
-> = ({ market, window, onlyMyTrades }) => {
+> = ({ market, windowStartTimestamp, onlyMyTrades }) => {
   const { address } = useAccount()
 
   // Use mock USDC for collateral balance
   const { symbol: collateralSymbol, decimals: collateralDecimals } =
     useCollateralToken()
 
-  // Keep the start timestamp for the window constant when it changes, to prevent re-fetching on every re-render.
-  const windowStartTimestamp = useMemo(
-    () => BigInt(Math.floor(Date.now() / 1000 - windowAgo[window])),
-    [window]
-  )
   const {
     data: tradeHistory,
     isLoading: isLoadingTradeHistory,
@@ -58,7 +38,7 @@ export const PredictionMarketTradeHistory: React.FC<
           and(
             eq(t.marketAddress, market.marketMakerAddress),
             ...(onlyMyTrades && address ? [eq(t.address, address)] : []),
-            ...(window !== ChartWindow.All
+            ...(windowStartTimestamp > 0n
               ? [gte(t.timestamp, windowStartTimestamp)]
               : [])
           ),

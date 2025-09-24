@@ -103,7 +103,10 @@ export const PredictionMarketDetail = ({
 
   // Keep the start timestamp for the window constant when it changes, to prevent re-fetching on every re-render.
   const windowStartTimestamp = useMemo(
-    () => BigInt(Math.floor(Date.now() / 1000 - windowAgo[window])),
+    () =>
+      window === ChartWindow.All
+        ? 0n
+        : BigInt(Math.floor(Date.now() / 1000 - windowAgo[window])),
     [window]
   )
   const {
@@ -118,7 +121,7 @@ export const PredictionMarketDetail = ({
         where: (t, { and, eq, gte }) =>
           and(
             eq(t.marketAddress, market.marketMakerAddress),
-            ...(window !== ChartWindow.All
+            ...(windowStartTimestamp > 0n
               ? [gte(t.timestamp, windowStartTimestamp)]
               : [])
           ),
@@ -491,7 +494,7 @@ export const PredictionMarketDetail = ({
 
                 <PredictionMarketTradeHistory
                   market={market}
-                  window={window}
+                  windowStartTimestamp={windowStartTimestamp}
                   onlyMyTrades={tradeFilter === 'my'}
                 />
               </div>
@@ -514,7 +517,7 @@ export const PredictionMarketDetail = ({
 
             <PredictionMarketTradeHistory
               market={market}
-              window={window}
+              windowStartTimestamp={windowStartTimestamp}
               onlyMyTrades={tradeFilter === 'my'}
             />
           </div>
