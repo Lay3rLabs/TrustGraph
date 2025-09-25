@@ -6,7 +6,7 @@ import useLocalStorageState from 'use-local-storage-state'
 
 import { Card } from '@/components/Card'
 import { PredictionMarketDetail } from '@/components/prediction/PredictionMarketDetail'
-import { lmsrMarketMakerAddress } from '@/lib/contracts'
+import { lmsrMarketMakerAddress, predictionMarketControllerAddress } from '@/lib/contracts'
 import { HyperstitionMarket } from '@/types'
 
 const deadline = new Date(1759514400 * 1e3)
@@ -23,6 +23,7 @@ const markets: HyperstitionMarket[] = [
     incentivePool: 10_000,
     deadline,
     marketMakerAddress: lmsrMarketMakerAddress,
+    controllerAddress: predictionMarketControllerAddress,
   },
 ]
 

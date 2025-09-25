@@ -7,6 +7,7 @@ import {ConditionalTokens} from "@lay3rlabs/conditional-tokens-contracts/Conditi
 import {LMSRMarketMaker} from "@lay3rlabs/conditional-tokens-market-makers/LMSRMarketMaker.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {Whitelist} from "@lay3rlabs/conditional-tokens-market-makers/Whitelist.sol";
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
 
@@ -16,10 +17,14 @@ import {IPredictionMarketController} from "interfaces/IPredictionMarketControlle
 contract PredictionMarketController is
     IPredictionMarketController,
     IWavsServiceHandler,
-    Ownable
+    Ownable,
+    IERC1155Receiver
 {
     // The implementation master for the LMSR market maker that will be cloned.
     LMSRMarketMaker public implementationMaster;
+
+    // The market maker that is currently being closed.
+    address private _closingMarketMaker;
 
     IWavsServiceManager public serviceManager;
 
@@ -180,8 +185,10 @@ contract PredictionMarketController is
         bytes32 questionId,
         bool result
     ) internal {
-        // close the market maker, which this factory owns
+        // Close the market maker, which this controller owns.
+        _closingMarketMaker = address(lmsrMarketMaker);
         lmsrMarketMaker.close();
+        _closingMarketMaker = address(0);
 
         uint256[] memory payouts = new uint256[](2);
         // the first outcome slot is NO
@@ -241,5 +248,44 @@ contract PredictionMarketController is
             unusedCollateral,
             collectedFees
         );
+    }
+
+    // Allow us to receive conditional tokens when closing a market and redeem the unused collateral to send to the owner.
+
+    function supportsInterface(
+        bytes4 interfaceId
+    ) external pure returns (bool) {
+        return interfaceId == type(IERC1155Receiver).interfaceId;
+    }
+
+    function onERC1155Received(
+        address operator,
+        address /*from*/,
+        uint256 /*id*/,
+        uint256 /*value*/,
+        bytes calldata /*data*/
+    ) public view returns (bytes4) {
+        if (
+            operator == _closingMarketMaker && _closingMarketMaker != address(0)
+        ) {
+            return this.onERC1155Received.selector;
+        }
+        return 0x0;
+    }
+
+    function onERC1155BatchReceived(
+        address _operator,
+        address /*from*/,
+        uint256[] calldata /*ids*/,
+        uint256[] calldata /*values*/,
+        bytes calldata /*data*/
+    ) public view returns (bytes4) {
+        if (
+            _operator == _closingMarketMaker &&
+            _closingMarketMaker != address(0)
+        ) {
+            return this.onERC1155BatchReceived.selector;
+        }
+        return 0x0;
     }
 }

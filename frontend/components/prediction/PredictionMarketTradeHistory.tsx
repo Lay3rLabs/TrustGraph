@@ -44,6 +44,24 @@ export const PredictionMarketTradeHistory: React.FC<
       }),
   })
 
+  const { data: redemptionHistory = [] } = usePonderQuery({
+    queryFn: (db) =>
+      db.query.predictionMarketRedemption.findMany({
+        orderBy: (t, { desc }) => desc(t.timestamp),
+        limit: 100,
+        where: (t, { and, eq, not, gte }) =>
+          and(
+            eq(t.marketAddress, market.marketMakerAddress),
+            // Controller "redeems" unused collateral on market resolution, no need to show it.
+            not(eq(t.address, market.controllerAddress)),
+            ...(onlyMyTrades && address ? [eq(t.address, address)] : []),
+            ...(windowStartTimestamp > 0n
+              ? [gte(t.timestamp, windowStartTimestamp)]
+              : [])
+          ),
+      }),
+  })
+
   return isLoadingTradeHistory ? (
     <div className="flex items-center justify-center py-8">
       <div className="terminal-bright text-sm">◉ LOADING TRADE HISTORY ◉</div>
@@ -80,6 +98,47 @@ export const PredictionMarketTradeHistory: React.FC<
             </tr>
           </thead>
           <tbody>
+            {redemptionHistory.map((redemption, index) => {
+              const isUserRedemption =
+                address &&
+                redemption.address.toLowerCase() === address.toLowerCase()
+
+              return (
+                <tr
+                  key={redemption.id}
+                  className={`border-b border-gray-700/50 hover:bg-gray-800/30 transition-colors ${
+                    index % 2 === 0 ? 'bg-gray-900/20' : ''
+                  }`}
+                >
+                  <td className="p-3 terminal-text">
+                    {new Date(
+                      Number(redemption.timestamp) * 1000
+                    ).toLocaleString([], {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </td>
+                  <td className="p-3 terminal-dim font-mono">
+                    <span className={'!text-green'}>REDEEM</span>{' '}
+                    {formatBigNumber(redemption.payout, collateralDecimals)} $
+                    {collateralSymbol}
+                  </td>
+                  <td></td>
+                  <td className="p-3 terminal-dim font-mono">
+                    {isUserRedemption ? (
+                      <span className="font-semibold">YOU</span>
+                    ) : (
+                      <>
+                        {redemption.address.slice(0, 6)}...
+                        {redemption.address.slice(-4)}
+                      </>
+                    )}
+                  </td>
+                </tr>
+              )
+            })}
             {tradeHistory.map((trade, index) => {
               const isUserTrade =
                 address && trade.address.toLowerCase() === address.toLowerCase()

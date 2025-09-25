@@ -200,13 +200,17 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h3 className="terminal-command text-lg">Redeem Your Position</h3>
+        <h3 className="terminal-command text-lg">
+          {isMarketResolved && redemption
+            ? 'Your Redemption'
+            : 'Redeem Your Position'}
+        </h3>
         <p className="terminal-text text-sm">{market.title}</p>
       </div>
 
       {isConnected ? (
         <>
-          {isLoadingShares || isLoadingRedemption ? (
+          {isLoadingShares ? (
             <div className="bg-black/20 border border-gray-600 p-4 rounded-sm">
               <div className="text-center py-8">
                 <div className="terminal-bright text-sm">
@@ -312,10 +316,18 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
                   : ' Since you bet on the incorrect outcome, your tokens are now worthless.'}
               </div>
             </>
+          ) : isLoadingRedemption ? (
+            <div className="bg-black/20 border border-gray-600 p-4 rounded-sm">
+              <div className="text-center py-8">
+                <div className="terminal-bright text-sm">
+                  ◉ LOADING YOUR WINNINGS ◉
+                </div>
+              </div>
+            </div>
           ) : redemption ? (
             <div className="bg-black/20 border border-gray-600 p-4 rounded-sm">
               <div className="space-y-3">
-                <div className="terminal-dim text-xs">YOUR WINNINGS</div>
+                <div className="terminal-dim text-xs">WINNINGS</div>
                 <div className="terminal-bright text-base !text-green-400">
                   {formatBigNumber(redemption.payout, collateralDecimals)} $
                   {collateralSymbol}

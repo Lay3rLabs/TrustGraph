@@ -10,6 +10,7 @@ export type HyperstitionMarket = {
   incentivePool: number
   deadline: Date
   marketMakerAddress: `0x${string}`
+  controllerAddress: `0x${string}`
 }
 
 export type HyperstitionMarketStatus =

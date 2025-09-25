@@ -84,7 +84,7 @@ tasks:
     cmds:
       - |
         echo "Triggering oracle AVS to resolve market..."
-        echo "Oracle Controller: {{.PREDICTION_MARKET_CONTROLLER_ADDRESS}}"
+        echo "Controller: {{.PREDICTION_MARKET_CONTROLLER_ADDRESS}}"
         forge script ./script/PredictionMarket.s.sol \
           --sig "trigger(string)" \
           "{{.PREDICTION_MARKET_CONTROLLER_ADDRESS}}" \
