@@ -26,12 +26,14 @@ impl EventTransformer for MarketResolutionTransformer {
         let market_resolved: MarketResolved = decode_event_log_data!(event_data.log)?;
 
         println!(
-            "Transforming MarketResolved event: controller={}, lmsrMarketMaker={}, conditionalTokens={}, result={}, collateralAvailable={}",
+            "Transforming MarketResolved event: controller={}, lmsrMarketMaker={}, conditionalTokens={}, questionId={}, result={}, redeemableCollateral={}, unusedCollateral={}",
             event_data.contract_address,
             market_resolved.lmsrMarketMaker,
             market_resolved.conditionalTokens,
+            market_resolved.questionId,
             market_resolved.result,
-            market_resolved.collateralAvailable
+            market_resolved.redeemableCollateral,
+            market_resolved.unusedCollateral
         );
 
         let chain = get_evm_chain_config(&event_data.chain).unwrap();
@@ -39,11 +41,20 @@ impl EventTransformer for MarketResolutionTransformer {
         let mut tags = vec![
             format!("marketMaker:{}", market_resolved.lmsrMarketMaker),
             format!("conditionalTokens:{}", market_resolved.conditionalTokens),
+            format!("questionId:{}", market_resolved.questionId),
+            format!(
+                "marketMaker:{}/questionId:{}",
+                market_resolved.lmsrMarketMaker, market_resolved.questionId
+            ),
             format!("result:{}", market_resolved.result),
         ];
 
         if market_resolved.result {
             tags.push(format!("marketMaker:{}/success", market_resolved.lmsrMarketMaker));
+            tags.push(format!(
+                "marketMaker:{}/questionId:{}/success",
+                market_resolved.lmsrMarketMaker, market_resolved.questionId
+            ));
         }
 
         // Create IndexedEvent
@@ -56,8 +67,8 @@ impl EventTransformer for MarketResolutionTransformer {
             eventType: "market_resolution".to_string(),
             tags,
             relevantAddresses: vec![],
-            data: market_resolved.collateralAvailable.to_be_bytes_vec().into(),
-            metadata: Vec::new().into(),
+            data: market_resolved.redeemableCollateral.to_be_bytes_vec().into(),
+            metadata: market_resolved.encode_data().into(),
             deleted: false,
         };
 

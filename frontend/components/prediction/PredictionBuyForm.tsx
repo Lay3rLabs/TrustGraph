@@ -52,17 +52,17 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
       targetCollateral: bigint,
       outcome: 'YES' | 'NO',
       low: bigint = 0n,
-      high: bigint = targetCollateral * BigInt(10),
+      high: bigint = targetCollateral * 10n,
       bestTokenAmount: bigint = 0n,
       iteration: number = 0
     ): Promise<bigint> => {
       // Base case: stop after 15 iterations or when range is too small
       if (high <= low || iteration >= 15) {
         // Apply 5% safety buffer to ensure transaction success
-        return (bestTokenAmount * BigInt(95)) / BigInt(100)
+        return (bestTokenAmount * 95n) / 100n
       }
 
-      const mid = (low + high) / BigInt(2)
+      const mid = (low + high) / 2n
       const outcomeTokenAmounts = outcome === 'YES' ? [0n, mid] : [mid, 0n]
 
       try {
@@ -99,7 +99,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
       } catch (error) {
         console.error('Error in binary search iteration:', error)
         // Return best amount found so far
-        return (bestTokenAmount * BigInt(95)) / BigInt(100)
+        return (bestTokenAmount * 95n) / 100n
       }
     },
     [market.marketMakerAddress, queryClient]

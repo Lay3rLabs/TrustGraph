@@ -155,7 +155,7 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
       // Index set 1 = binary 01 = decimal 1 (represents NO)
       // Index set 2 = binary 10 = decimal 2 (represents YES)
       const indexSets = userPositions.map((pos) =>
-        pos.outcome === 'YES' ? BigInt(2) : 1n
+        pos.outcome === 'YES' ? 2n : 1n
       )
 
       if (!conditionId) {

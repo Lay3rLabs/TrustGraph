@@ -131,7 +131,7 @@ export function useAttestation() {
             abi: easAbi,
             functionName: 'attest',
             args: [attestationRequest],
-            gas: (gasEstimate * BigInt(120)) / BigInt(100),
+            gas: (gasEstimate * 120n) / 100n,
             gasPrice: gasPrice,
             nonce,
             type: 'legacy',

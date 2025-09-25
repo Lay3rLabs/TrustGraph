@@ -1,13 +1,13 @@
 #[allow(warnings)]
 #[rustfmt::skip]
 mod bindings;
-use std::{collections::HashMap, str::FromStr};
+use std::collections::HashMap;
 mod resolvers;
 
 use bindings::{export, host::config_var, Guest, TriggerAction, WasmResponse};
 mod trigger;
 use trigger::encode_trigger_output;
-use wavs_wasi_utils::evm::alloy_primitives::Address;
+use wavs_wasi_utils::evm::alloy_primitives::{Address, FixedBytes};
 use wstd::runtime::block_on;
 
 use crate::resolvers::ResolverRegistry;
@@ -17,10 +17,18 @@ export!(Component with_types_in bindings);
 
 impl Guest for Component {
     fn run(action: TriggerAction) -> std::result::Result<Option<WasmResponse>, String> {
-        let market_maker_address =
-            config_var("market_maker").ok_or_else(|| "Failed to get market maker address")?;
-        let conditional_tokens_address = config_var("conditional_tokens")
-            .ok_or_else(|| "Failed to get conditional tokens address")?;
+        let market_maker_address: Address = config_var("market_maker")
+            .ok_or_else(|| "Failed to get market maker address")?
+            .parse()
+            .map_err(|e| format!("Failed to parse market maker address: {}", e))?;
+        let conditional_tokens_address: Address = config_var("conditional_tokens")
+            .ok_or_else(|| "Failed to get conditional tokens address")?
+            .parse()
+            .map_err(|e| format!("Failed to parse conditional tokens address: {}", e))?;
+        let question_id: FixedBytes<32> = config_var("question_id")
+            .ok_or_else(|| "Failed to get question ID")?
+            .parse()
+            .map_err(|e| format!("Failed to parse question ID: {}", e))?;
 
         let resolver_type =
             config_var("resolver_type").ok_or_else(|| "Failed to get resolver type")?;
@@ -65,8 +73,9 @@ impl Guest for Component {
 
             Ok(Some(WasmResponse {
                 payload: encode_trigger_output(
-                    Address::from_str(&market_maker_address).unwrap(),
-                    Address::from_str(&conditional_tokens_address).unwrap(),
+                    market_maker_address,
+                    conditional_tokens_address,
+                    question_id,
                     result,
                 ),
                 ordering: None,

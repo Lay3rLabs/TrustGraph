@@ -399,6 +399,11 @@ export const PredictionMarketDetail = ({
     market.targetValue
   )
 
+  const twitterAccount = market.description.match(/@(\w+)/)?.[1]
+  const description = market.description
+    .replace(`@${twitterAccount}`, '')
+    .trim()
+
   return (
     <>
       <div className="space-y-8">
@@ -409,7 +414,17 @@ export const PredictionMarketDetail = ({
                 <div>
                   <h3 className="terminal-command text-base">{market.title}</h3>
                   <p className="terminal-text text-sm mt-1">
-                    {market.description}
+                    {twitterAccount && (
+                      <a
+                        href={`https://x.com/${twitterAccount}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline"
+                      >
+                        @{twitterAccount}
+                      </a>
+                    )}{' '}
+                    <span>{description}</span>
                   </p>
                 </div>
               </div>

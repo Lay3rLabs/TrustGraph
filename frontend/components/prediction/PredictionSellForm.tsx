@@ -64,17 +64,17 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
       targetShares: bigint,
       outcome: 'YES' | 'NO',
       low: bigint = 0n,
-      high: bigint = targetShares * BigInt(2),
+      high: bigint = targetShares * 2n,
       bestCollateralAmount: bigint = 0n,
       iteration: number = 0
     ): Promise<bigint> => {
       // Base case: stop after 15 iterations or when range is too small
       if (high <= low || iteration >= 15) {
         // Apply 5% safety buffer to ensure transaction success
-        return (bestCollateralAmount * BigInt(95)) / BigInt(100)
+        return (bestCollateralAmount * 95n) / 100n
       }
 
-      const mid = (low + high) / BigInt(2)
+      const mid = (low + high) / 2n
       // For selling, we use negative amounts
       const outcomeTokenAmounts =
         outcome === 'YES' ? [0n, -targetShares] : [-targetShares, 0n]
@@ -116,7 +116,7 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
       } catch (error) {
         console.error('Error in sell binary search iteration:', error)
         // Return best amount found so far
-        return (bestCollateralAmount * BigInt(95)) / BigInt(100)
+        return (bestCollateralAmount * 95n) / 100n
       }
     },
     [market.marketMakerAddress, queryClient]
@@ -226,7 +226,7 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
         estimatedCollateralAmount,
         collateralDecimals
       )
-      const minCollateral = (estimatedCollateral * BigInt(95)) / BigInt(100)
+      const minCollateral = (estimatedCollateral * 95n) / 100n
 
       await txToast(
         // Approve market maker to spend conditional tokens

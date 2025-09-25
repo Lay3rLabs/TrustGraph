@@ -1,12 +1,13 @@
 import { useCallback } from 'react'
 import { formatUnits, hexToNumber } from 'viem'
-import { useAccount, useReadContract } from 'wagmi'
+import { useAccount, useReadContract, useWatchContractEvent } from 'wagmi'
 
 import {
   conditionalTokensConfig,
   erc20Address,
   lmsrMarketMakerAbi,
   predictionMarketControllerAddress,
+  predictionMarketControllerConfig,
 } from '@/lib/contracts'
 import { HyperstitionMarket, HyperstitionMarketStatus } from '@/types'
 
@@ -226,6 +227,13 @@ export const usePredictionMarket = ({
     refetchYesPayoutNumerator,
     refetchNoPayoutNumerator,
   ])
+
+  // Refresh when the market resolves.
+  useWatchContractEvent({
+    ...predictionMarketControllerConfig,
+    eventName: 'MarketResolved',
+    onLogs: refetch,
+  })
 
   return {
     status,

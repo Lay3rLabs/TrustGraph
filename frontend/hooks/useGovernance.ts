@@ -420,7 +420,7 @@ export function useGovernance() {
             abi: merkleGovModuleAbi,
             functionName: 'propose',
             args: [targets, values, calldatas, operations, description],
-            gas: (gasEstimate * BigInt(120)) / BigInt(100), // Add 20% buffer
+            gas: (gasEstimate * 120n) / 100n, // Add 20% buffer
             gasPrice,
             nonce,
             type: 'legacy',
@@ -521,7 +521,7 @@ export function useGovernance() {
               enovaAddress,
               userVotingPower.proof as `0x${string}`[],
             ],
-            gas: (gasEstimate * BigInt(120)) / BigInt(100),
+            gas: (gasEstimate * 120n) / 100n,
             gasPrice,
             nonce,
             type: 'legacy',
@@ -605,7 +605,7 @@ export function useGovernance() {
             abi: merkleGovModuleAbi,
             functionName: 'execute',
             args: [BigInt(proposalId)],
-            gas: (gasEstimate * BigInt(120)) / BigInt(100),
+            gas: (gasEstimate * 120n) / 100n,
             gasPrice,
             nonce,
             type: 'legacy',

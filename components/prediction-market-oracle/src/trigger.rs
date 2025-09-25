@@ -2,16 +2,18 @@ use crate::bindings::TriggerAction;
 use alloy_provider::Provider;
 use alloy_sol_types::SolValue;
 use anyhow::Result;
-use wavs_wasi_utils::evm::alloy_primitives::Address;
+use wavs_wasi_utils::evm::alloy_primitives::{Address, FixedBytes};
 
 pub fn encode_trigger_output(
     lmsr_market_maker: Address,
     conditional_tokens: Address,
+    question_id: FixedBytes<32>,
     result: bool,
 ) -> Vec<u8> {
-    solidity::PredictionMarketOracleAvsOutput {
+    solidity::PredictionMarketOracleOutput {
         lmsrMarketMaker: lmsr_market_maker,
         conditionalTokens: conditional_tokens,
+        questionId: question_id,
         result,
     }
     .abi_encode()
@@ -23,7 +25,7 @@ mod solidity {
     use alloy_sol_macro::sol;
 
     pub use IPredictionMarketController::*;
-    // imports PredictionMarketOracleAvsOutput
+    // imports PredictionMarketOracleOutput
     sol!("../../src/interfaces/IPredictionMarketController.sol");
 }
 

@@ -3928,6 +3928,40 @@ export const predictionMarketControllerAbi = [
     stateMutability: 'nonpayable',
   },
   {
+    type: 'function',
+    inputs: [
+      { name: 'lmsrMarketMaker', internalType: 'address', type: 'address' },
+    ],
+    name: 'withdrawFees',
+    outputs: [{ name: 'fees', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'lmsrMarketMaker',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+      {
+        name: 'collector',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+      {
+        name: 'fees',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'FeesWithdrawn',
+  },
+  {
     type: 'event',
     anonymous: false,
     inputs: [
@@ -3944,7 +3978,7 @@ export const predictionMarketControllerAbi = [
         indexed: false,
       },
       {
-        name: 'pmSystem',
+        name: 'conditionalTokens',
         internalType: 'address',
         type: 'address',
         indexed: false,
@@ -3953,6 +3987,12 @@ export const predictionMarketControllerAbi = [
         name: 'collateralToken',
         internalType: 'address',
         type: 'address',
+        indexed: false,
+      },
+      {
+        name: 'questionId',
+        internalType: 'bytes32',
+        type: 'bytes32',
         indexed: false,
       },
       {
@@ -3987,9 +4027,27 @@ export const predictionMarketControllerAbi = [
         type: 'address',
         indexed: false,
       },
+      {
+        name: 'questionId',
+        internalType: 'bytes32',
+        type: 'bytes32',
+        indexed: false,
+      },
       { name: 'result', internalType: 'bool', type: 'bool', indexed: false },
       {
-        name: 'collateralAvailable',
+        name: 'redeemableCollateral',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+      {
+        name: 'unusedCollateral',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+      {
+        name: 'collectedFees',
         internalType: 'uint256',
         type: 'uint256',
         indexed: false,

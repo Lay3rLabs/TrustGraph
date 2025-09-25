@@ -9,14 +9,19 @@ import { PredictionMarketDetail } from '@/components/prediction/PredictionMarket
 import { lmsrMarketMakerAddress } from '@/lib/contracts'
 import { HyperstitionMarket } from '@/types'
 
+const deadline = new Date(1759514400 * 1e3)
 const markets: HyperstitionMarket[] = [
   {
     title: 'EN0VA Twitter Ascension',
     description:
-      'EN0VA collective reaches 100 Twitter followers by 2025-09-24 23:59:59 UTC',
+      '@0xEN0VA reaches 50 Twitter followers by ' +
+      deadline.toLocaleString(undefined, {
+        dateStyle: 'short',
+        timeStyle: 'long',
+      }),
     targetValue: 100,
-    incentivePool: 10000,
-    deadline: new Date('2025-10-01 23:59:59 UTC'),
+    incentivePool: 10_000,
+    deadline,
     marketMakerAddress: lmsrMarketMakerAddress,
   },
 ]
