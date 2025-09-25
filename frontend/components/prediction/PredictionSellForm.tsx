@@ -20,9 +20,9 @@ import {
 import { txToast } from '@/lib/tx'
 import { formatBigNumber } from '@/lib/utils'
 import { config } from '@/lib/wagmi'
+import { HyperstitionMarket } from '@/types'
 
 import { Card } from '../Card'
-import { HyperstitionMarket } from './PredictionMarketDetail'
 
 interface PredictionSellFormProps {
   market: HyperstitionMarket
@@ -176,6 +176,8 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
   ])
 
   const {
+    isMarketResolved,
+    isLoadingResolution,
     yesShares,
     formattedYesShares,
     isLoadingYesShares,
@@ -444,7 +446,9 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
             !isConnected ||
             isSelling ||
             !formData.shareAmount ||
-            !hasEnoughShares
+            !hasEnoughShares ||
+            isLoadingResolution ||
+            isMarketResolved
           }
           className="w-full mobile-terminal-btn"
         >

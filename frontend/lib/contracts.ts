@@ -5795,7 +5795,7 @@ export const wavsIndexerAbi = [
 ] as const
 
 export const wavsIndexerAddress =
-  '0x8c149834A2bac0cbbC2096E9f8B4179B0E52d9a1' as const
+  '0x1DE794179f32D564d15A6F72127888F81BdC9E03' as const
 
 export const wavsIndexerConfig = {
   address: wavsIndexerAddress,

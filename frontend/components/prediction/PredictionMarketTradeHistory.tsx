@@ -6,8 +6,7 @@ import { useAccount } from 'wagmi'
 
 import { useCollateralToken } from '@/hooks/useCollateralToken'
 import { formatBigNumber } from '@/lib/utils'
-
-import { HyperstitionMarket } from './PredictionMarketDetail'
+import { HyperstitionMarket } from '@/types'
 
 export type PredictionMarketTradeHistoryProps = {
   market: HyperstitionMarket

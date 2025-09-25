@@ -7,6 +7,8 @@ import { APIS } from '@/lib/config'
 // Query keys for consistent caching
 export const ponderKeys = {
   all: ['ponder'] as const,
+  latestFollowerCount: () =>
+    [...ponderKeys.all, 'latestFollowerCount'] as const,
   followerCounts: (options?: { minTimestamp?: number }) =>
     [...ponderKeys.all, 'followerCounts', options] as const,
 }
@@ -18,6 +20,27 @@ export type FollowerCount = {
 }
 
 export const ponderQueries = {
+  latestFollowerCount: queryOptions({
+    queryKey: ponderKeys.latestFollowerCount(),
+    queryFn: async () => {
+      const response = await fetch(`${APIS.ponder}/latest-follower-count`)
+
+      if (response.ok) {
+        const { latestFollowerCount, timestamp } = (await response.json()) as {
+          latestFollowerCount: number
+          timestamp: number
+        }
+
+        return { latestFollowerCount, timestamp }
+      } else {
+        throw new Error(
+          `Failed to fetch follower counts: ${response.status} ${
+            response.statusText
+          } (${await response.text()})`
+        )
+      }
+    },
+  }),
   followerCounts: (options?: { minTimestamp?: number }) =>
     queryOptions({
       queryKey: ponderKeys.followerCounts(options),

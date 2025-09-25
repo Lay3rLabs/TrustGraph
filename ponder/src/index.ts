@@ -42,36 +42,6 @@ ponder.on("marketMaker:setup", async ({ context }) => {
   });
 });
 
-ponder.on("conditionalTokens:PayoutRedemption", async ({ event, context }) => {
-  const marketAddress = context.contracts.marketMaker.address as Hex;
-
-  const {
-    redeemer,
-    collateralToken,
-    parentCollectionId,
-    conditionId,
-    indexSets,
-    payout,
-  } = event.args;
-
-  // If not a root redemption (parentCollectionId is not all zeroes), return. We only care about redemptions that output collateral tokens.
-  if (!/^0x0+$/.test(parentCollectionId)) {
-    return;
-  }
-
-  // Record redemption.
-  await context.db.insert(predictionMarketRedemption).values({
-    id: event.id,
-    address: redeemer,
-    marketAddress,
-    collateralToken,
-    conditionId,
-    indexSets: indexSets as bigint[],
-    payout,
-    timestamp: event.block.timestamp,
-  });
-});
-
 // Update price after each trade.
 ponder.on("marketMaker:AMMOutcomeTokenTrade", async ({ event, context }) => {
   const marketAddress = context.contracts.marketMaker.address as Hex;
@@ -134,6 +104,36 @@ ponder.on("marketMaker:AMMOutcomeTokenTrade", async ({ event, context }) => {
       marketAddress,
       timestamp: event.block.timestamp,
     });
+});
+
+ponder.on("conditionalTokens:PayoutRedemption", async ({ event, context }) => {
+  const marketAddress = context.contracts.marketMaker.address as Hex;
+
+  const {
+    redeemer,
+    collateralToken,
+    parentCollectionId,
+    conditionId,
+    indexSets,
+    payout,
+  } = event.args;
+
+  // If not a root redemption (parentCollectionId is not all zeroes), return. We only care about redemptions that output collateral tokens.
+  if (!/^0x0+$/.test(parentCollectionId)) {
+    return;
+  }
+
+  // Record redemption.
+  await context.db.insert(predictionMarketRedemption).values({
+    id: event.id,
+    address: redeemer,
+    marketAddress,
+    collateralToken,
+    conditionId,
+    indexSets: indexSets as bigint[],
+    payout,
+    timestamp: event.block.timestamp,
+  });
 });
 
 ponder.on("wavsIndexer:EventIndexed", async ({ event, context }) => {

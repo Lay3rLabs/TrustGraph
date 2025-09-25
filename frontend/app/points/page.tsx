@@ -9,6 +9,7 @@ import { useAccount, useWatchContractEvent } from 'wagmi'
 
 import { Card } from '@/components/Card'
 import { merkleSnapshotAddress, merkleSnapshotConfig } from '@/lib/contracts'
+import { formatTimeAgo } from '@/lib/utils'
 import { pointsQueries } from '@/queries/points'
 
 const ActivityLabel: Record<string, string> = {
@@ -38,21 +39,6 @@ const ActivitySummary: Record<string, string> = {
 export default function PointsPage() {
   const { address, isConnected } = useAccount()
   const [selectedType, setSelectedType] = useState<string>('ALL')
-
-  const formatTimeAgo = (timestamp: Date) => {
-    const now = new Date()
-    const diffInMinutes = Math.floor(
-      (now.getTime() - timestamp.getTime()) / (1000 * 60)
-    )
-
-    if (diffInMinutes < 60) {
-      return `${diffInMinutes}m ago`
-    } else if (diffInMinutes < 1440) {
-      return `${Math.floor(diffInMinutes / 60)}h ago`
-    } else {
-      return `${Math.floor(diffInMinutes / 1440)}d ago`
-    }
-  }
 
   const { data: activities = [], refetch: refetchActivities } = useQuery({
     ...pointsQueries.events(address as Hex),

@@ -1,23 +1,44 @@
 'use client'
 
+import clsx from 'clsx'
 import { useState } from 'react'
+
+import { HyperstitionMarket } from '@/types'
 
 import { Card } from '../Card'
 import { PredictionBuyForm } from './PredictionBuyForm'
-import { HyperstitionMarket } from './PredictionMarketDetail'
 import { PredictionRedeemForm } from './PredictionRedeemForm'
 import { PredictionSellForm } from './PredictionSellForm'
 
 export type PredictionMarketFormsProps = {
   market: HyperstitionMarket
+  isMarketResolved: boolean
   className?: string
 }
 
 export const PredictionMarketForms = ({
   market,
+  isMarketResolved,
   className,
 }: PredictionMarketFormsProps) => {
-  const [activeTab, setActiveTab] = useState<'buy' | 'sell' | 'redeem'>('buy')
+  const [_activeTab, setActiveTab] = useState<'buy' | 'sell' | 'redeem'>('buy')
+
+  const activeTab = isMarketResolved ? 'redeem' : _activeTab
+
+  const redeemButton = (
+    <button
+      onClick={() => setActiveTab('redeem')}
+      className={clsx(
+        'text-xs font-mono transition-colors',
+        activeTab === 'redeem'
+          ? 'terminal-command'
+          : 'terminal-dim hover:terminal-bright',
+        !isMarketResolved && '!opacity-50 cursor-not-allowed'
+      )}
+    >
+      REDEEM
+    </button>
+  )
 
   return (
     <Card size="lg" type="primary" className={className}>
@@ -25,36 +46,34 @@ export const PredictionMarketForms = ({
       <div className="border-b border-gray-700 pb-4 mb-6">
         <div className="flex items-center justify-between">
           <div className="flex space-x-6">
+            {isMarketResolved && redeemButton}
             <button
               onClick={() => setActiveTab('buy')}
-              className={`text-xs font-mono transition-colors ${
+              disabled={isMarketResolved}
+              className={clsx(
+                'text-xs font-mono transition-colors',
                 activeTab === 'buy'
                   ? 'terminal-command'
-                  : 'terminal-dim hover:terminal-bright'
-              }`}
+                  : 'terminal-dim hover:terminal-bright',
+                isMarketResolved && '!opacity-50 cursor-not-allowed'
+              )}
             >
               BUY
             </button>
             <button
               onClick={() => setActiveTab('sell')}
-              className={`text-xs font-mono transition-colors ${
+              disabled={isMarketResolved}
+              className={clsx(
+                'text-xs font-mono transition-colors',
                 activeTab === 'sell'
                   ? 'terminal-command'
-                  : 'terminal-dim hover:terminal-bright'
-              }`}
+                  : 'terminal-dim hover:terminal-bright',
+                isMarketResolved && '!opacity-50 cursor-not-allowed'
+              )}
             >
               SELL
             </button>
-            <button
-              onClick={() => setActiveTab('redeem')}
-              className={`text-xs font-mono transition-colors ${
-                activeTab === 'redeem'
-                  ? 'terminal-command'
-                  : 'terminal-dim hover:terminal-bright'
-              }`}
-            >
-              REDEEM
-            </button>
+            {!isMarketResolved && redeemButton}
           </div>
         </div>
       </div>

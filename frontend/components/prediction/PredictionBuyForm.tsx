@@ -17,9 +17,9 @@ import { erc20Abi, erc20Address, lmsrMarketMakerAbi } from '@/lib/contracts'
 import { txToast } from '@/lib/tx'
 import { formatBigNumber } from '@/lib/utils'
 import { config } from '@/lib/wagmi'
+import { HyperstitionMarket } from '@/types'
 
 import { Card } from '../Card'
-import { HyperstitionMarket } from './PredictionMarketDetail'
 
 interface PredictionBuyFormProps {
   market: HyperstitionMarket
@@ -154,6 +154,8 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
   }, [formData.collateralAmount, formData.outcome, performBinarySearch])
 
   const {
+    isMarketResolved,
+    isLoadingResolution,
     yesCost,
     formattedYesShares,
     isLoadingYesShares,
@@ -428,7 +430,9 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
             !isConnected ||
             isBuying ||
             !formData.collateralAmount ||
-            !hasEnoughCollateral
+            !hasEnoughCollateral ||
+            isLoadingResolution ||
+            isMarketResolved
           }
           className="w-full mobile-terminal-btn"
         >

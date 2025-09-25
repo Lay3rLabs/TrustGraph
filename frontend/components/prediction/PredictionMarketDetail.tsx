@@ -30,8 +30,9 @@ import {
 } from '@/components/ui/select'
 import { usePredictionMarket } from '@/hooks/usePredictionMarket'
 import { useResponsiveMount } from '@/hooks/useResponsiveMount'
-import { formatBigNumber } from '@/lib/utils'
+import { formatBigNumber, formatTimeAgo } from '@/lib/utils'
 import { ponderQueries } from '@/queries/ponder'
+import { HyperstitionMarket, HyperstitionMarketStatus } from '@/types'
 
 import { PredictionMarketForms } from './PredictionMarketForms'
 import { PredictionMarketTradeHistory } from './PredictionMarketTradeHistory'
@@ -46,17 +47,6 @@ ChartJS.register(
   CategoryScale,
   TimeScale
 )
-
-export interface HyperstitionMarket {
-  id: string
-  title: string
-  description: string
-  targetValue: number
-  incentivePool: number
-  deadline: string
-  status: 'active' | 'achieved' | 'failed' | 'pending'
-  marketMakerAddress: `0x${string}`
-}
 
 export type PredictionMarketDetailProps = {
   market: HyperstitionMarket
@@ -76,11 +66,11 @@ const windowAgo: Record<ChartWindow, number> = {
   [ChartWindow.All]: Infinity,
 }
 
-const _getProgressPercentage = (current: number, target: number): number => {
+const getProgressPercentage = (current: number, target: number): number => {
   return Math.min((current / target) * 100, 100)
 }
 
-const getStatusColor = (status: string): string => {
+const getStatusColor = (status: HyperstitionMarketStatus): string => {
   switch (status) {
     case 'achieved':
       return 'text-green'
@@ -97,7 +87,6 @@ export const PredictionMarketDetail = ({
   market,
 }: PredictionMarketDetailProps) => {
   const { address } = useAccount()
-  const [_activeTab, _setActiveTab] = useState<'buy' | 'redeem'>('buy')
   const [window, setWindow] = useState<ChartWindow>(ChartWindow.All)
   const [tradeFilter, setTradeFilter] = useState<'all' | 'my'>('all')
 
@@ -138,7 +127,12 @@ export const PredictionMarketDetail = ({
     )
   )
 
-  const { yesCost } = usePredictionMarket(market)
+  const { data: { latestFollowerCount = 0 } = {} } = useQuery({
+    ...ponderQueries.latestFollowerCount,
+    refetchInterval: 30_000,
+  })
+
+  const { status, isMarketResolved, yesCost } = usePredictionMarket(market)
 
   const greenColor = getComputedStyle(document.documentElement)
     .getPropertyValue('--green')
@@ -400,6 +394,11 @@ export const PredictionMarketDetail = ({
 
   const isLarge = useResponsiveMount('lg')
 
+  const followerProgress = getProgressPercentage(
+    latestFollowerCount,
+    market.targetValue
+  )
+
   return (
     <>
       <div className="space-y-8">
@@ -416,10 +415,10 @@ export const PredictionMarketDetail = ({
               </div>
               <div
                 className={`px-3 py-1 border rounded-sm text-xs ${getStatusColor(
-                  market.status
+                  status
                 )}`}
               >
-                {market.status.toUpperCase()}
+                {status.toUpperCase()}
               </div>
             </div>
             {/* Chart */}
@@ -478,9 +477,39 @@ export const PredictionMarketDetail = ({
               </div>
             </Card>
 
+            {/* Progress Bar */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="terminal-dim">PROGRESS</span>
+                <span className="terminal-bright">
+                  {latestFollowerCount
+                    ? formatBigNumber(latestFollowerCount)
+                    : '...'}
+                  {' / '}
+                  {formatBigNumber(market.targetValue)}
+                </span>
+              </div>
+              <div className="bg-gray-600 h-3 rounded">
+                <div
+                  className="bg-gradient-to-r from-muted-foreground to-white h-3 rounded transition-all duration-300"
+                  style={{
+                    width: `${followerProgress}%`,
+                  }}
+                ></div>
+              </div>
+              <div className="flex justify-between text-xs">
+                <div className="text-xs terminal-dim">
+                  {followerProgress.toFixed(1)}% Complete
+                </div>
+                <div className="terminal-dim">
+                  {formatTimeAgo(market.deadline)}
+                </div>
+              </div>
+            </div>
+
             {/* Trade History on larger screens */}
             {isLarge && (
-              <div className="flex flex-col gap-4 items-stretch">
+              <div className="flex flex-col gap-4 items-stretch mt-8">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <h4 className="terminal-command text-sm">TRADE HISTORY</h4>
                   <div className="flex flex-col sm:flex-row gap-3">
@@ -502,6 +531,7 @@ export const PredictionMarketDetail = ({
           </div>
 
           <PredictionMarketForms
+            isMarketResolved={isMarketResolved}
             className="max-w-full lg:max-w-sm grow shrink-0"
             market={market}
           />
@@ -526,62 +556,3 @@ export const PredictionMarketDetail = ({
     </>
   )
 }
-
-// /* Progress Bar */
-// <div className="space-y-2">
-//   <div className="flex justify-between text-sm">
-//     <span className="terminal-dim">PROGRESS</span>
-//     <span className="terminal-bright">
-//       {formatNumber(market.currentValue)} /{" "}
-//       {formatNumber(market.targetValue)} {market.unit}
-//     </span>
-//   </div>
-//   <div className="bg-gray-700 h-3 rounded">
-//     <div
-//       className="bg-gradient-to-r from-gray-500 to-white h-3 rounded transition-all duration-300"
-//       style={{
-//         width: `${getProgressPercentage(market.currentValue, market.targetValue)}%`,
-//       }}
-//     ></div>
-//   </div>
-//   <div className="text-xs terminal-dim">
-//     {getProgressPercentage(
-//       market.currentValue,
-//       market.targetValue
-//     ).toFixed(1)}
-//     % Complete
-//   </div>
-// </div>
-
-// /* Market Stats */
-// <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs">
-//   <div>
-//     <div className="terminal-dim">PARTICIPANTS</div>
-//     <div className="terminal-text">{market.participants}</div>
-//   </div>
-//   <div>
-//     <div className="terminal-dim">DEADLINE</div>
-//     <div className="terminal-text">{market.deadline}</div>
-//   </div>
-//   <div className="hidden md:block">
-//     <div className="terminal-dim">MANIFESTATION</div>
-//     <div className="terminal-bright">
-//       {getProgressPercentage(
-//         market.currentValue,
-//         market.targetValue
-//       ) > 75
-//         ? 'IMMINENT'
-//         : getProgressPercentage(
-//             market.currentValue,
-//             market.targetValue
-//           ) > 50
-//         ? 'PROBABLE'
-//         : getProgressPercentage(
-//             market.currentValue,
-//             market.targetValue
-//           ) > 25
-//         ? 'POSSIBLE'
-//         : 'DISTANT'}
-//     </div>
-//   </div>
-// </div>

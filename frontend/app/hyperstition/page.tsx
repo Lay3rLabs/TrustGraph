@@ -5,21 +5,18 @@ import { useRef } from 'react'
 import useLocalStorageState from 'use-local-storage-state'
 
 import { Card } from '@/components/Card'
-import {
-  HyperstitionMarket,
-  PredictionMarketDetail,
-} from '@/components/prediction/PredictionMarketDetail'
+import { PredictionMarketDetail } from '@/components/prediction/PredictionMarketDetail'
 import { lmsrMarketMakerAddress } from '@/lib/contracts'
+import { HyperstitionMarket } from '@/types'
 
 const markets: HyperstitionMarket[] = [
   {
-    id: '1',
     title: 'EN0VA Twitter Ascension',
-    description: 'EN0VA collective reaches 100 Twitter followers',
+    description:
+      'EN0VA collective reaches 100 Twitter followers by 2025-09-24 23:59:59 UTC',
     targetValue: 100,
     incentivePool: 10000,
-    deadline: '2024.06.01',
-    status: 'active',
+    deadline: new Date('2025-10-01 23:59:59 UTC'),
     marketMakerAddress: lmsrMarketMakerAddress,
   },
 ]

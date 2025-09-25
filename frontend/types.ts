@@ -2,3 +2,18 @@ export type ChatMessage = {
   role: 'user' | 'assistant'
   content: string
 }
+
+export type HyperstitionMarket = {
+  title: string
+  description: string
+  targetValue: number
+  incentivePool: number
+  deadline: Date
+  marketMakerAddress: `0x${string}`
+}
+
+export type HyperstitionMarketStatus =
+  | 'active'
+  | 'achieved'
+  | 'failed'
+  | 'loading'

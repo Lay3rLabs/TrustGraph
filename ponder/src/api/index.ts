@@ -100,4 +100,20 @@ app.get("/followers", async (c) => {
   return c.json({ followers });
 });
 
+app.get("/latest-follower-count", async (c) => {
+  const latestFollowerCount = await offchainDb.query.followerCount.findFirst({
+    where: (t, { eq }) => eq(t.twitterAccount, twitterAccount),
+    orderBy: (t, { desc }) => desc(t.timestamp),
+  });
+
+  if (!latestFollowerCount) {
+    return c.json({ error: "Latest follower count not found" }, 404);
+  }
+
+  return c.json({
+    latestFollowerCount: latestFollowerCount.followers,
+    timestamp: latestFollowerCount.timestamp,
+  });
+});
+
 export default app;

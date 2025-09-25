@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { AttestationData, SchemaManager } from '@/lib/schemas'
+import { formatTimeAgo } from '@/lib/utils'
 import { attestationQueries } from '@/queries/attestation'
 
 import { Card } from './Card'
@@ -21,16 +22,6 @@ export function AttestationCard({ uid }: AttestationCardProps) {
   const formatTimestamp = (timestamp: number) => {
     const date = new Date(timestamp * 1000)
     return date.toISOString().replace('T', ' ').split('.')[0]
-  }
-
-  const formatTimeAgo = (timestamp: number) => {
-    const now = Math.floor(Date.now() / 1000)
-    const diff = now - timestamp
-
-    if (diff < 60) return `${diff} seconds ago`
-    if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`
-    if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`
-    return `${Math.floor(diff / 86400)} days ago`
   }
 
   const getAttestationStatus = (attestation: AttestationData) => {
@@ -189,7 +180,7 @@ export function AttestationCard({ uid }: AttestationCardProps) {
           <div>
             <div className="terminal-dim text-xs mb-1">TIME AGO</div>
             <div className="terminal-text text-xs">
-              {formatTimeAgo(Number(attestation.time))}
+              {formatTimeAgo(Number(attestation.time) * 1e3)}
             </div>
           </div>
           {Number(attestation.expirationTime) > 0 && (

@@ -7,7 +7,7 @@
   "wavsServiceId": "88c1170909ea589d0a2922e686b369f1adf34cc4e3d5e77a2f2190c4d6c63bcb",
   "contracts": {
     "IWavsServiceManager": "0x3dfde7df7a007de402882048d8a957a0edc3cb20",
-    "WavsIndexer": "0x8c149834A2bac0cbbC2096E9f8B4179B0E52d9a1",
+    "WavsIndexer": "0x1DE794179f32D564d15A6F72127888F81BdC9E03",
     "EASAttestTrigger": "0x43306B89290dc28118c53816D09b214c6Ef8Fa51",
     "WavsAttester": "0x278c1877d5ac1a5B6271c536Da08635f8854a176",
     "EAS": "0x40fD82507BdD3142C00a032745f708EDb26ff240",

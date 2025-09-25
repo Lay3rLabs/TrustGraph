@@ -8,19 +8,9 @@ import {
   lmsrMarketMakerAbi,
   predictionMarketControllerAddress,
 } from '@/lib/contracts'
+import { HyperstitionMarket, HyperstitionMarketStatus } from '@/types'
 
 import { useCollateralToken } from './useCollateralToken'
-
-export interface HyperstitionMarket {
-  id: string
-  title: string
-  description: string
-  targetValue: number
-  incentivePool: number
-  deadline: string
-  status: 'active' | 'achieved' | 'failed' | 'pending'
-  marketMakerAddress: `0x${string}`
-}
 
 const PRICE_DIVISOR = hexToNumber('0x10000000000000000')
 
@@ -59,67 +49,72 @@ export const usePredictionMarket = ({
 
   const { decimals: collateralDecimals } = useCollateralToken()
 
-  const { data: conditionId } = useReadContract({
-    ...conditionalTokensConfig,
-    functionName: 'getConditionId',
-    args: [
-      predictionMarketControllerAddress, // oracle
-      '0x0000000000000000000000000000000000000000000000000000000000000000' as `0x${string}`, // questionId
-      2n, // outcomeSlotCount (YES/NO = 2 outcomes)
-    ],
-  })
+  const { data: conditionId, isLoading: isLoadingConditionId } =
+    useReadContract({
+      ...conditionalTokensConfig,
+      functionName: 'getConditionId',
+      args: [
+        predictionMarketControllerAddress, // oracle
+        '0x0000000000000000000000000000000000000000000000000000000000000000' as `0x${string}`, // questionId
+        2n, // outcomeSlotCount (YES/NO = 2 outcomes)
+      ],
+    })
 
   // Get collection IDs for YES/NO positions
-  const { data: yesCollectionId } = useReadContract({
-    ...conditionalTokensConfig,
-    functionName: 'getCollectionId',
-    args: conditionId
-      ? [
-          '0x0000000000000000000000000000000000000000000000000000000000000000' as `0x${string}`, // parentCollectionId
-          conditionId,
-          2n, // indexSet for YES (binary 10 = decimal 2)
-        ]
-      : undefined,
-    query: { enabled: !!conditionId },
-  })
+  const { data: yesCollectionId, isLoading: isLoadingYesCollectionId } =
+    useReadContract({
+      ...conditionalTokensConfig,
+      functionName: 'getCollectionId',
+      args: conditionId
+        ? [
+            '0x0000000000000000000000000000000000000000000000000000000000000000' as `0x${string}`, // parentCollectionId
+            conditionId,
+            2n, // indexSet for YES (binary 10 = decimal 2)
+          ]
+        : undefined,
+      query: { enabled: !!conditionId },
+    })
 
-  const { data: noCollectionId } = useReadContract({
-    ...conditionalTokensConfig,
-    functionName: 'getCollectionId',
-    args: conditionId
-      ? [
-          '0x0000000000000000000000000000000000000000000000000000000000000000' as `0x${string}`, // parentCollectionId
-          conditionId,
-          1n, // indexSet for NO (binary 01 = decimal 1)
-        ]
-      : undefined,
-    query: { enabled: !!conditionId },
-  })
+  const { data: noCollectionId, isLoading: isLoadingNoCollectionId } =
+    useReadContract({
+      ...conditionalTokensConfig,
+      functionName: 'getCollectionId',
+      args: conditionId
+        ? [
+            '0x0000000000000000000000000000000000000000000000000000000000000000' as `0x${string}`, // parentCollectionId
+            conditionId,
+            1n, // indexSet for NO (binary 01 = decimal 1)
+          ]
+        : undefined,
+      query: { enabled: !!conditionId },
+    })
 
   // Get position IDs for YES/NO tokens
-  const { data: yesPositionId } = useReadContract({
-    ...conditionalTokensConfig,
-    functionName: 'getPositionId',
-    args: yesCollectionId
-      ? [
-          erc20Address, // collateralToken
-          yesCollectionId,
-        ]
-      : undefined,
-    query: { enabled: !!yesCollectionId },
-  })
+  const { data: yesPositionId, isLoading: isLoadingYesPositionId } =
+    useReadContract({
+      ...conditionalTokensConfig,
+      functionName: 'getPositionId',
+      args: yesCollectionId
+        ? [
+            erc20Address, // collateralToken
+            yesCollectionId,
+          ]
+        : undefined,
+      query: { enabled: !!yesCollectionId },
+    })
 
-  const { data: noPositionId } = useReadContract({
-    ...conditionalTokensConfig,
-    functionName: 'getPositionId',
-    args: noCollectionId ? [erc20Address, noCollectionId] : undefined,
-    query: { enabled: !!noCollectionId },
-  })
+  const { data: noPositionId, isLoading: isLoadingNoPositionId } =
+    useReadContract({
+      ...conditionalTokensConfig,
+      functionName: 'getPositionId',
+      args: noCollectionId ? [erc20Address, noCollectionId] : undefined,
+      query: { enabled: !!noCollectionId },
+    })
 
   // Get user's token balances using the position IDs
   const {
     data: yesShares,
-    isLoading: isLoadingYesShares,
+    isLoading: _isLoadingYesShares,
     refetch: refetchYesShares,
   } = useReadContract({
     ...conditionalTokensConfig,
@@ -131,13 +126,19 @@ export const usePredictionMarket = ({
     },
   })
 
+  const isLoadingYesShares =
+    isLoadingConditionId ||
+    isLoadingYesCollectionId ||
+    isLoadingYesPositionId ||
+    _isLoadingYesShares
+
   const formattedYesShares = yesShares
     ? formatUnits(yesShares, collateralDecimals)
     : '0'
 
   const {
     data: noShares,
-    isLoading: isLoadingNoShares,
+    isLoading: _isLoadingNoShares,
     refetch: refetchNoShares,
   } = useReadContract({
     ...conditionalTokensConfig,
@@ -148,6 +149,12 @@ export const usePredictionMarket = ({
       refetchInterval: 3_000,
     },
   })
+
+  const isLoadingNoShares =
+    isLoadingConditionId ||
+    isLoadingNoCollectionId ||
+    isLoadingNoPositionId ||
+    _isLoadingNoShares
 
   const formattedNoShares = noShares
     ? formatUnits(noShares, collateralDecimals)
@@ -191,6 +198,17 @@ export const usePredictionMarket = ({
     yesPayoutNumerator !== undefined &&
     noPayoutNumerator !== undefined
 
+  const status: HyperstitionMarketStatus = isMarketResolved
+    ? yesPayoutNumerator > 0n
+      ? 'achieved'
+      : 'failed'
+    : isLoadingPayoutDenominator ||
+      isLoadingYesPayoutNumerator ||
+      isLoadingNoPayoutNumerator ||
+      isLoadingConditionId
+    ? 'loading'
+    : 'active'
+
   const refetch = useCallback(() => {
     refetchYesCost()
     refetchNoCost()
@@ -210,6 +228,8 @@ export const usePredictionMarket = ({
   ])
 
   return {
+    status,
+
     yesCost,
     isLoadingYesCost,
     refetchYesCost,
@@ -217,6 +237,8 @@ export const usePredictionMarket = ({
     noCost,
     isLoadingNoCost,
     refetchNoCost,
+
+    isLoadingCost: isLoadingYesCost || isLoadingNoCost,
 
     yesShares,
     formattedYesShares,
@@ -228,6 +250,8 @@ export const usePredictionMarket = ({
     isLoadingNoShares,
     refetchNoShares,
 
+    isLoadingShares: isLoadingYesShares || isLoadingNoShares,
+
     refetch,
 
     conditionId,
@@ -236,11 +260,12 @@ export const usePredictionMarket = ({
     yesPositionId,
     noPositionId,
 
+    isMarketResolved,
     yesPayoutNumerator,
     noPayoutNumerator,
     payoutDenominator,
-    isMarketResolved,
     isLoadingResolution:
+      isLoadingConditionId ||
       isLoadingPayoutDenominator ||
       isLoadingYesPayoutNumerator ||
       isLoadingNoPayoutNumerator,

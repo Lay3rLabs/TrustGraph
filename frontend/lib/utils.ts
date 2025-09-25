@@ -57,6 +57,26 @@ export const formatBigNumber = (
   })
 }
 
+export const formatTimeAgo = (timestampOrMs: Date | number) => {
+  if (timestampOrMs instanceof Date) {
+    timestampOrMs = timestampOrMs.getTime()
+  }
+
+  const now = Date.now()
+  const diffInSeconds = Math.abs(Math.floor((now - timestampOrMs) / 1000))
+  const suffix = timestampOrMs < now ? 'ago' : 'remaining'
+
+  if (diffInSeconds < 60) {
+    return `<1m ${suffix}`
+  } else if (diffInSeconds < 3600) {
+    return `${Math.floor(diffInSeconds / 60)}m ${suffix}`
+  } else if (diffInSeconds < 86400) {
+    return `${Math.floor(diffInSeconds / 3600)}h ${suffix}`
+  } else {
+    return `${Math.floor(diffInSeconds / 86400)}d ${suffix}`
+  }
+}
+
 /**
  * Write a contract and wait for it to be confirmed.
  *
