@@ -40,7 +40,7 @@ export const pointsQueries = {
               id: index.toString(),
               type: event.type,
               timestamp: event.timestamp
-                ? new Date(event.timestamp)
+                ? new Date(event.timestamp * 1e3)
                 : undefined,
               points: event.value.startsWith('0x')
                 ? hexToNumber(event.value as `0x${string}`)
