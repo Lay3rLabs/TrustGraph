@@ -45,23 +45,24 @@ contract PredictionMarketController is
     ) external override {
         serviceManager.validate(envelope, signatureData);
 
-        PredictionMarketOracleAvsOutput memory returnData = abi.decode(
+        PredictionMarketOracleOutput memory output = abi.decode(
             envelope.payload,
-            (PredictionMarketOracleAvsOutput)
+            (PredictionMarketOracleOutput)
         );
 
         // Prevent replay attacks.
-        if (resolvedMarkets[returnData.lmsrMarketMaker]) {
+        if (resolvedMarkets[output.lmsrMarketMaker]) {
             revert MarketAlreadyResolved();
         }
 
         _resolveMarket(
-            LMSRMarketMaker(returnData.lmsrMarketMaker),
-            ConditionalTokens(returnData.conditionalTokens),
-            returnData.result
+            LMSRMarketMaker(output.lmsrMarketMaker),
+            ConditionalTokens(output.conditionalTokens),
+            output.questionId,
+            output.result
         );
 
-        resolvedMarkets[returnData.lmsrMarketMaker] = true;
+        resolvedMarkets[output.lmsrMarketMaker] = true;
     }
 
     /**
@@ -141,10 +142,33 @@ contract PredictionMarketController is
             address(lmsrMarketMaker),
             address(conditionalTokens),
             address(collateralToken),
+            questionId,
             conditionIds,
             fee,
             funding
         );
+    }
+
+    /**
+     * @notice Withdraws the fees from the market maker and sends them to the owner.
+     * @param lmsrMarketMaker The address of the LMSR market maker.
+     * @return fees The amount of fees withdrawn.
+     */
+    function withdrawFees(
+        address lmsrMarketMaker
+    ) public returns (uint256 fees) {
+        IERC20 collateralToken = LMSRMarketMaker(lmsrMarketMaker)
+            .collateralToken();
+        fees = LMSRMarketMaker(lmsrMarketMaker).withdrawFees();
+        if (fees > 0) {
+            address collector = owner();
+
+            if (!collateralToken.transfer(collector, fees)) {
+                revert TransferFailed();
+            }
+
+            emit FeesWithdrawn(lmsrMarketMaker, collector, fees);
+        }
     }
 
     /**
@@ -153,10 +177,11 @@ contract PredictionMarketController is
     function _resolveMarket(
         LMSRMarketMaker lmsrMarketMaker,
         ConditionalTokens conditionalTokens,
+        bytes32 questionId,
         bool result
     ) internal {
-        // pause the market maker, which this factory owns
-        lmsrMarketMaker.pause();
+        // close the market maker, which this factory owns
+        lmsrMarketMaker.close();
 
         uint256[] memory payouts = new uint256[](2);
         // the first outcome slot is NO
@@ -164,19 +189,57 @@ contract PredictionMarketController is
         // the second outcome slot is YES
         payouts[1] = result ? 1 : 0;
 
-        // resolve the token
-        conditionalTokens.reportPayouts(bytes32(0), payouts);
+        // resolve the condition so people can redeem
+        conditionalTokens.reportPayouts(questionId, payouts);
 
-        // In a binary market, the total supply of either outcome is equal to the total amount of collateral held by the conditional tokens contract.
-        uint256 collateralAvailable = lmsrMarketMaker
-            .collateralToken()
-            .balanceOf(address(conditionalTokens));
+        IERC20 collateralToken = lmsrMarketMaker.collateralToken();
+
+        // Redeem remaining unused collateral, and transfer the withdrawn collateral to the owner.
+
+        uint256 prevCollateralBalance = collateralToken.balanceOf(
+            address(this)
+        );
+
+        bytes32 conditionId = conditionalTokens.getConditionId(
+            address(this),
+            questionId,
+            2
+        );
+        uint256[] memory indexSets = new uint256[](1);
+        indexSets[0] = result ? 2 : 1;
+        conditionalTokens.redeemPositions(
+            collateralToken,
+            bytes32(0),
+            conditionId,
+            indexSets
+        );
+
+        uint256 newCollateralBalance = collateralToken.balanceOf(address(this));
+
+        // Transfer the withdrawn collateral to the owner.
+        uint256 unusedCollateral = newCollateralBalance - prevCollateralBalance;
+        if (unusedCollateral > 0) {
+            if (!collateralToken.transfer(owner(), unusedCollateral)) {
+                revert TransferFailed();
+            }
+        }
+
+        // In a binary market, the total supply of either outcome is equal to the total amount of collateral held by the conditional tokens contract (after withdrawing unused collateral).
+        uint256 redeemableCollateral = collateralToken.balanceOf(
+            address(conditionalTokens)
+        );
+
+        // Withdraw fees from the market maker to the owner.
+        uint256 collectedFees = withdrawFees(address(lmsrMarketMaker));
 
         emit MarketResolved(
             address(lmsrMarketMaker),
             address(conditionalTokens),
+            questionId,
             result,
-            collateralAvailable
+            redeemableCollateral,
+            unusedCollateral,
+            collectedFees
         );
     }
 }

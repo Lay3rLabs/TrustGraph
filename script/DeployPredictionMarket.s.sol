@@ -37,8 +37,8 @@ contract DeployScript is Common {
 
         // Market parameters
         uint64 fee = 1e16; // 1% fee
-        uint256 funding = 1_000e6; // 1,000 collateral tokens
-        string memory uri = "ipfs://QmXxx"; // Placeholder URI for market metadata
+        uint256 funding = 100e6; // 100 collateral tokens
+        string memory uri = ""; // Market metadata URI
         bytes32 questionId = bytes32(0);
 
         vm.startBroadcast(_privateKey);

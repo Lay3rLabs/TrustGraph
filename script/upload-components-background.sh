@@ -91,8 +91,15 @@ upload_package() {
     local component_json="$1"
     local num="$2"
 
-    local COMPONENT_FILENAME=$(echo "$component_json" | jq -r '.filename')
+    local DISABLED=$(echo "$component_json" | jq -r '.disabled // false')
     local PKG_NAME=$(echo "$component_json" | jq -r '.package_name')
+
+    if [ "$DISABLED" = "true" ]; then
+        log "[$num] ⚠️  ${PKG_NAME} is disabled, skipping upload"
+        return 0
+    fi
+
+    local COMPONENT_FILENAME=$(echo "$component_json" | jq -r '.filename')
     local PKG_VERSION=$(echo "$component_json" | jq -r '.package_version')
     local component_file="./compiled/${COMPONENT_FILENAME}"
 

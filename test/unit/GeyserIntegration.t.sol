@@ -4,7 +4,6 @@ pragma solidity ^0.8.27;
 import {Test} from "forge-std/Test.sol";
 import {POAStakeRegistry} from "@lay3rlabs/poa-middleware/src/ecdsa/POAStakeRegistry.sol";
 import {Geyser} from "src/contracts/wavs/Geyser.sol";
-import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
 import {UpgradeableProxyLib} from "@lay3rlabs/poa-middleware/script/ecdsa/utils/UpgradeableProxyLib.sol";
 
 contract GeyserIntegrationTest is Test {

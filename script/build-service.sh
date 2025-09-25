@@ -20,7 +20,6 @@ sh ./build_service.sh
 FUEL_LIMIT=${FUEL_LIMIT:-1000000000000}
 MAX_GAS=${MAX_GAS:-5000000}
 FILE_LOCATION=${FILE_LOCATION:-".docker/service.json"}
-TRIGGER_EVENT=${TRIGGER_EVENT:-"AttestationRequested(address,bytes32,address,bytes)"}
 TRIGGER_CHAIN=${TRIGGER_CHAIN:-"evm:31337"}
 SUBMIT_CHAIN=${SUBMIT_CHAIN:-"evm:31337"}
 AGGREGATOR_URL=${AGGREGATOR_URL:-""}
@@ -105,8 +104,6 @@ if [ -z "$PKG_NAMESPACE" ]; then
         exit 1
     fi
 fi
-
-TRIGGER_EVENT_HASH=`cast keccak ${TRIGGER_EVENT}`
 
 eval "${BASE_CMD} init --name en0va"
 
@@ -217,11 +214,11 @@ jq -c '.components[]' "${COMPONENT_CONFIGS_FILE}" | while IFS= read -r component
         COMP_SUBMIT_ADDRESS=`jq -r ".${COMP_SUBMIT_JSON_PATH}" .docker/deployment_summary.json`
 
         # Validate addresses
-        if [ -z "$COMP_TRIGGER_ADDRESS" ] || [ "$COMP_TRIGGER_ADDRESS" == "null" ]; then
+        if [ -z "$COMP_TRIGGER_ADDRESS" ] || [ "$COMP_TRIGGER_ADDRESS" = "null" ]; then
             echo "❌ Trigger address not found for component: ${COMP_FILENAME} at path: ${COMP_TRIGGER_JSON_PATH}"
             exit 1
         fi
-        if [ -z "$COMP_SUBMIT_ADDRESS" ] || [ "$COMP_SUBMIT_ADDRESS" == "null" ]; then
+        if [ -z "$COMP_SUBMIT_ADDRESS" ] || [ "$COMP_SUBMIT_ADDRESS" = "null" ]; then
             echo "❌ Submit address not found for component: ${COMP_FILENAME} at path: ${COMP_SUBMIT_JSON_PATH}"
             exit 1
         fi
@@ -275,8 +272,8 @@ jq -c '.components[]' "${COMPONENT_CONFIGS_FILE}" | while IFS= read -r component
     if [ -n "$CONFIG_ARGS" ]; then
         echo "  📋 Configuring component"
         eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} config ${CONFIG_ARGS}" > /dev/null
-    else
-        echo "  ⚠️  No configuration values specified for ${COMP_FILENAME}"
+    # else
+    #     echo "  ⚠️  No configuration values specified for ${COMP_FILENAME}"
     fi
 
     eval "$BASE_CMD workflow component --id ${WORKFLOW_ID} fuel-limit --fuel ${FUEL_LIMIT}" > /dev/null
