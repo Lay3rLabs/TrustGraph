@@ -451,32 +451,6 @@ export const PredictionMarketDetail = ({
               </div>
             )}
 
-            {/* Incentive Pool */}
-            <Card size="sm" type="detail">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="terminal-bright text-lg flex items-center gap-2">
-                    {formatBigNumber(market.incentivePool)}
-                    <img
-                      src="/points.svg"
-                      alt="Points"
-                      className="ml-1 w-5 h-5 -mr-1"
-                    />
-                    <span>POINTS</span>
-                  </div>
-                  <div className="terminal-dim text-xs">
-                    YES OUTCOME INCENTIVE POOL
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="terminal-bright text-sm">
-                    {yesCost ? (yesCost * 100).toFixed(2) + '%' : '...'}
-                  </div>
-                  <div className="terminal-dim text-xs">BELIEF LEVEL</div>
-                </div>
-              </div>
-            </Card>
-
             {/* Progress Bar */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
@@ -506,6 +480,32 @@ export const PredictionMarketDetail = ({
                 </div>
               </div>
             </div>
+
+            {/* Incentive Pool */}
+            <Card size="sm" type="detail">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="terminal-bright text-lg flex items-center gap-2">
+                    {formatBigNumber(market.incentivePool)}
+                    <img
+                      src="/points.svg"
+                      alt="Points"
+                      className="ml-1 w-5 h-5 -mr-1"
+                    />
+                    <span>POINTS</span>
+                  </div>
+                  <div className="terminal-dim text-xs">
+                    YES OUTCOME INCENTIVE POOL
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="terminal-bright text-sm">
+                    {yesCost ? (yesCost * 100).toFixed(2) + '%' : '...'}
+                  </div>
+                  <div className="terminal-dim text-xs">BELIEF LEVEL</div>
+                </div>
+              </div>
+            </Card>
 
             {/* Trade History on larger screens */}
             {isLarge && (
