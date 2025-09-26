@@ -22,7 +22,7 @@ const markets: HyperstitionMarket[] = [
         dateStyle: 'short',
         timeStyle: 'long',
       }),
-    targetValue: 100,
+    targetValue: 50,
     incentivePool: 10_000,
     deadline,
     marketMakerAddress: lmsrMarketMakerAddress,
