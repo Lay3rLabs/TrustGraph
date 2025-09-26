@@ -79,5 +79,6 @@
       "overrideName": true
     }
   },
+  "eslint.workingDirectories": ["frontend", "ponder"],
   "makefile.configureOnOpen": false
 }
