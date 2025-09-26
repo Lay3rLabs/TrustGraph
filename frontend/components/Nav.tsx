@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation'
 import { Dispatch, SetStateAction, useRef } from 'react'
 
 import { WalletConnectionButton } from '@/components/WalletConnectionButton'
+import { useResponsiveMount } from '@/hooks/useResponsiveMount'
 
 import Logo from './Logo'
 import { Popup } from './Popup'
@@ -38,6 +39,8 @@ export const Nav = () => {
   const prepareSymbientChatRef = useRef(() => {})
   const setOpenRef = useRef<Dispatch<SetStateAction<boolean>> | null>(null)
 
+  const isAtLeastSmall = useResponsiveMount('sm')
+
   return (
     <nav className="grid grid-cols-[1fr_auto_1fr] justify-center items-start">
       <Popup
@@ -53,7 +56,8 @@ export const Nav = () => {
             <Logo
               onClick={pathname !== '/' ? onClick : undefined}
               className={clsx(
-                'w-14 h-14 cursor-pointer transition-opacity hover:opacity-80 active:opacity-70',
+                'cursor-pointer transition-opacity hover:opacity-80 active:opacity-70',
+                isAtLeastSmall ? 'w-14 h-14' : 'w-10 h-10',
                 open && 'fixed'
               )}
               animatorLabel="nav"
@@ -73,16 +77,16 @@ export const Nav = () => {
 
             <Link
               href="/"
-              className="absolute top-4 right-4 p-1 rounded-sm bg-popover-foreground/90"
+              className="absolute top-2 right-2 sm:top-4 sm:right-4 p-1 rounded-sm bg-popover-foreground/90"
               onClick={() => setOpenRef.current?.(false)}
             >
-              <Fullscreen className="w-5 h-5 transition-opacity text-primary-foreground/60 hover:opacity-80 active:opacity-70" />
+              <Fullscreen className="w-4 h-4 sm:w-5 sm:h-5 transition-opacity text-primary-foreground/60 hover:opacity-80 active:opacity-70" />
             </Link>
           </>
         )}
       </Popup>
 
-      <div className="flex justify-center items-stretch gap-6 text-primary-foreground rounded-full bg-popover-foreground/30 transition-[background-color,box-shadow] hover:bg-popover-foreground/40 hover:shadow-lg px-6 text-base h-12">
+      <div className="flex justify-center items-stretch gap-4 sm:gap-6 text-primary-foreground rounded-full bg-popover-foreground/30 transition-[background-color,box-shadow] hover:bg-popover-foreground/40 hover:shadow-lg px-4 sm:px-6 text-base h-10 sm:h-12">
         {menuItems.map((item) => (
           <Link
             key={item.href}
@@ -100,7 +104,7 @@ export const Nav = () => {
               alt={item.label}
               className={item.iconClassName}
             />
-            {item.label}
+            <span className="hidden sm:block">{item.label}</span>
           </Link>
         ))}
       </div>

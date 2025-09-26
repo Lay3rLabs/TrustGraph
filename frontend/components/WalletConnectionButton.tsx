@@ -81,7 +81,7 @@ export const WalletConnectionButton = ({
             <button
               onClick={onClick}
               className={clsx(
-                'flex items-center gap-2.5 rounded-full transition-[background-color,box-shadow] hover:shadow-lg px-5 text-sm text-primary-foreground h-12',
+                'flex items-center gap-2.5 rounded-full transition-[background-color,box-shadow] hover:shadow-lg px-4 sm:px-5 text-sm text-primary-foreground h-10 sm:h-12',
                 open
                   ? 'bg-popover-foreground'
                   : 'bg-popover-foreground/30 hover:bg-popover-foreground/40'
@@ -95,7 +95,7 @@ export const WalletConnectionButton = ({
               ) : (
                 <Wallet className="w-5 h-5 text-primary-foreground/80" />
               )}
-              <span>
+              <span className="hidden sm:block">
                 {isConnected && address
                   ? formatAddress(address)
                   : isConnecting

@@ -219,7 +219,11 @@ export const SymbientChat = ({
             <div className="text-primary-foreground/80">
               <span>{message.role === 'user' ? 'you' : 'en0va'}:~$</span>
             </div>
-            <div className={clsx('px-4 space-y-4 text-primary-foreground/60')}>
+            <div
+              className={clsx(
+                'px-2 sm:px-4 space-y-2 sm:space-y-4 text-primary-foreground/60'
+              )}
+            >
               <Markdown
                 components={{
                   p: SlideFadeInParagraph as any,
