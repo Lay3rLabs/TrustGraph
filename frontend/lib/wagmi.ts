@@ -1,6 +1,6 @@
 import { porto } from 'porto/wagmi'
 import { base } from 'viem/chains'
-import { createConfig, http } from 'wagmi'
+import { createConfig, fallback, http, webSocket } from 'wagmi'
 import {
   coinbaseWallet,
   injected,
@@ -19,7 +19,10 @@ export type NetworkConfig = {
     symbol: string
   }
   rpcUrls: {
-    default: { http: string[] | readonly string[] }
+    default: {
+      http: string[] | readonly string[]
+      webSocket?: string[] | readonly string[]
+    }
   }
   blockExplorers?: {
     default: { name: string; url: string }
@@ -37,6 +40,7 @@ export const localChain: NetworkConfig = {
   rpcUrls: {
     default: {
       http: ['http://localhost:8545'],
+      webSocket: ['ws://localhost:8545'],
     },
   },
   blockExplorers: {
@@ -47,11 +51,13 @@ export const localChain: NetworkConfig = {
 // Environment-based network configuration
 export const getNetworkConfig = (): NetworkConfig => {
   if (CHAIN === 'base') {
+    const webSocketUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL_8453
     return {
       ...base,
       rpcUrls: {
         default: {
           http: ['/api/rpc/8453'],
+          ...(webSocketUrl && { webSocket: [webSocketUrl] }),
         },
       },
     }
@@ -79,10 +85,17 @@ export const config = createConfig({
     }),
   ],
   transports: supportedChains.reduce((acc, chain) => {
-    acc[chain.id] = http(chain.rpcUrls.default.http[0], {
+    const webSocketUrl = chain.rpcUrls.default.webSocket?.[0]
+    const httpUrl = chain.rpcUrls.default.http[0]
+    const httpTransport = http(httpUrl, {
       retryCount: 3,
-      timeout: 60000,
+      timeout: 30_000,
     })
+    const transport = webSocketUrl
+      ? fallback([webSocket(webSocketUrl), httpTransport])
+      : httpTransport
+
+    acc[chain.id] = transport
     return acc
   }, {} as Record<number, any>),
 })

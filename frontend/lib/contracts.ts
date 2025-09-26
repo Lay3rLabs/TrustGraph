@@ -572,7 +572,7 @@ export const conditionalTokensAbi = [
 ] as const
 
 export const conditionalTokensAddress =
-  '0xA1aB3Cdd86bE0437849B995153161575aB54Eb9a' as const
+  '0xbf61305E6c8a8DE9b72ffdf1C54d71846015F285' as const
 
 export const conditionalTokensConfig = {
   address: conditionalTokensAddress,
@@ -2787,7 +2787,7 @@ export const lmsrMarketMakerAbi = [
 ] as const
 
 export const lmsrMarketMakerAddress =
-  '0x9D0BD7853e3d9E6806DFA038CE7e6b949a9d5d4E' as const
+  '0x3A43304bC8f37828A905fE4909Bb8F8Ffed79D08' as const
 
 export const lmsrMarketMakerConfig = {
   address: lmsrMarketMakerAddress,
@@ -3879,6 +3879,32 @@ export const predictionMarketControllerAbi = [
   },
   {
     type: 'function',
+    inputs: [
+      { name: '_operator', internalType: 'address', type: 'address' },
+      { name: '', internalType: 'address', type: 'address' },
+      { name: '', internalType: 'uint256[]', type: 'uint256[]' },
+      { name: '', internalType: 'uint256[]', type: 'uint256[]' },
+      { name: '', internalType: 'bytes', type: 'bytes' },
+    ],
+    name: 'onERC1155BatchReceived',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'operator', internalType: 'address', type: 'address' },
+      { name: '', internalType: 'address', type: 'address' },
+      { name: '', internalType: 'uint256', type: 'uint256' },
+      { name: '', internalType: 'uint256', type: 'uint256' },
+      { name: '', internalType: 'bytes', type: 'bytes' },
+    ],
+    name: 'onERC1155Received',
+    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
     inputs: [],
     name: 'owner',
     outputs: [{ name: '', internalType: 'address', type: 'address' }],
@@ -3912,6 +3938,13 @@ export const predictionMarketControllerAbi = [
       },
     ],
     stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'interfaceId', internalType: 'bytes4', type: 'bytes4' }],
+    name: 'supportsInterface',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'pure',
   },
   {
     type: 'function',
@@ -4100,7 +4133,7 @@ export const predictionMarketControllerAbi = [
 ] as const
 
 export const predictionMarketControllerAddress =
-  '0xA93E238859668beCB9576731Fa280aa6909FF16F' as const
+  '0xbe48E9EBE087E58e9eD00531B7FBAd1b8fb8C141' as const
 
 export const predictionMarketControllerConfig = {
   address: predictionMarketControllerAddress,

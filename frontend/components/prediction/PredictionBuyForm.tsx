@@ -42,6 +42,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
   const [success, setSuccess] = useState<string | null>(null)
   const [tokensEstimate, setTokensEstimate] = useState<string | null>(null)
   const [isCalculating, setIsCalculating] = useState<boolean>(false)
+  const [slippage, setSlippage] = useState<number>(2)
 
   // Binary search to find the exact token amount for the specified collateral
   const [estimatedTokenAmount, setEstimatedTokenAmount] = useState<string>('0')
@@ -58,15 +59,14 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     ): Promise<bigint> => {
       // Base case: stop after 15 iterations or when range is too small
       if (high <= low || iteration >= 15) {
-        // Apply 5% safety buffer to ensure transaction success
-        return (bestTokenAmount * 95n) / 100n
+        return bestTokenAmount
       }
 
       const mid = (low + high) / 2n
       const outcomeTokenAmounts = outcome === 'YES' ? [0n, mid] : [mid, 0n]
 
       try {
-        const cost = (await queryClient.fetchQuery(
+        const netCost = (await queryClient.fetchQuery(
           readContractQueryOptions(config, {
             address: market.marketMakerAddress,
             abi: lmsrMarketMakerAbi,
@@ -75,7 +75,20 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
           })
         )) as bigint
 
-        if (cost <= targetCollateral) {
+        // Calculate market fee (same logic as in the contract)
+        const fee = (await queryClient.fetchQuery(
+          readContractQueryOptions(config, {
+            address: market.marketMakerAddress,
+            abi: lmsrMarketMakerAbi,
+            functionName: 'calcMarketFee',
+            args: [netCost > 0n ? netCost : -netCost],
+          })
+        )) as bigint
+
+        // Total cost including fee
+        const totalCost = netCost + fee
+
+        if (totalCost <= targetCollateral) {
           // Cost is within budget, try for more tokens
           return performBinarySearch(
             targetCollateral,
@@ -99,7 +112,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
       } catch (error) {
         console.error('Error in binary search iteration:', error)
         // Return best amount found so far
-        return (bestTokenAmount * 95n) / 100n
+        return bestTokenAmount
       }
     },
     [market.marketMakerAddress, queryClient]
@@ -168,7 +181,6 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     symbol: collateralSymbol,
     decimals: collateralDecimals,
     balance: collateralBalance,
-    formattedBalance: collateralFormattedBalance,
     refetchBalance: refetchCollateralBalance,
   } = useCollateralToken()
 
@@ -201,10 +213,12 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     setSuccess(null)
 
     try {
-      const collateralLimit = parseUnits(
-        formData.collateralAmount,
-        collateralDecimals
-      )
+      // Apply slippage tolerance to a slightly higher collateral amount
+      const collateralLimit =
+        (parseUnits(formData.collateralAmount, collateralDecimals) *
+          (100n + BigInt(slippage))) /
+        100n
+
       // Use the estimated token amount for the trade
       const tokenAmount = parseUnits(estimatedTokenAmount, collateralDecimals)
       const outcomeTokenAmounts =
@@ -364,14 +378,15 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
               />
             </div>
 
-            {!!collateralFormattedBalance && (
+            {collateralBalance !== undefined && (
               <p
                 className={clsx(
                   '-mt-2 terminal-bright text-xs',
                   !hasEnoughCollateral && '!text-red-400'
                 )}
               >
-                BALANCE: {formatBigNumber(collateralFormattedBalance)}{' '}
+                BALANCE:{' '}
+                {formatBigNumber(collateralBalance, collateralDecimals, true)}{' '}
                 {collateralSymbol}
               </p>
             )}
@@ -422,6 +437,26 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
                 </div>
               </div>
             )}
+
+          <div className="space-y-2">
+            <label className="terminal-dim text-xs">SLIPPAGE TOLERANCE</label>
+            <div className="grid grid-cols-4 gap-2">
+              {[1, 2, 3, 5].map((percentage) => (
+                <button
+                  key={percentage}
+                  type="button"
+                  onClick={() => setSlippage(percentage)}
+                  className={`p-2 border rounded-sm text-xs transition-all duration-200 ${
+                    slippage === percentage
+                      ? 'border-blue-500 bg-blue-500/20 text-blue-400'
+                      : 'border-gray-600 bg-black/20 text-gray-400 hover:border-gray-500'
+                  }`}
+                >
+                  {percentage}%
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         <Button
@@ -432,12 +467,15 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
             !formData.collateralAmount ||
             !hasEnoughCollateral ||
             isLoadingResolution ||
-            isMarketResolved
+            isMarketResolved ||
+            isCalculating
           }
           className="w-full mobile-terminal-btn"
         >
           {isBuying ? (
             <span className="terminal-dim">Processing...</span>
+          ) : isCalculating ? (
+            <span className="terminal-dim">Calculating output...</span>
           ) : (
             <span className="terminal-command">
               SPEND {formatBigNumber(formData.collateralAmount || 0)} $
@@ -449,7 +487,8 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
         <div className="terminal-dim text-xs">
           By buying shares, you're getting exposure to the outcome of this
           market. If your prediction is correct, you'll be able to redeem your
-          shares for ${collateralSymbol} when the market resolves.
+          shares for ${collateralSymbol} when the market resolves ({slippage}%
+          slippage tolerance).
         </div>
       </form>
     </div>

@@ -24,36 +24,39 @@ export const formatBigNumber = (
   /**
    * If decimals are passed, the number must be an integer.
    */
-  decimals?: number
+  decimals?: number,
+  showFull?: boolean
 ): string => {
+  const maxDigits = showFull ? decimals ?? 18 : 3
   num = Number(decimals ? formatUnits(BigInt(num), decimals) : num)
+
   if (num >= 1e9) {
     return `${(num / 1e9).toLocaleString(undefined, {
       notation: 'standard',
-      maximumFractionDigits: 3,
+      maximumFractionDigits: maxDigits,
     })}B`
   }
   if (num >= 1e6) {
     return `${(num / 1e6).toLocaleString(undefined, {
       notation: 'standard',
-      maximumFractionDigits: 3,
+      maximumFractionDigits: maxDigits,
     })}M`
   }
   if (num >= 1e3) {
     return `${(num / 1e3).toLocaleString(undefined, {
       notation: 'standard',
-      maximumFractionDigits: 3,
+      maximumFractionDigits: maxDigits,
     })}K`
   }
   if (num < 1) {
     return num.toLocaleString(undefined, {
       notation: 'standard',
-      maximumSignificantDigits: 5,
+      maximumSignificantDigits: maxDigits,
     })
   }
   return num.toLocaleString(undefined, {
     notation: 'standard',
-    maximumFractionDigits: 3,
+    maximumFractionDigits: maxDigits,
   })
 }
 

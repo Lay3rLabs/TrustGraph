@@ -122,8 +122,12 @@ export const PredictionMarketTradeHistory: React.FC<
                   </td>
                   <td className="p-3 terminal-dim font-mono">
                     <span className={'!text-green'}>REDEEM</span>{' '}
-                    {formatBigNumber(redemption.payout, collateralDecimals)} $
-                    {collateralSymbol}
+                    {formatBigNumber(
+                      redemption.payout,
+                      collateralDecimals,
+                      true
+                    )}{' '}
+                    ${collateralSymbol}
                   </td>
                   <td></td>
                   <td className="p-3 terminal-dim font-mono">
@@ -168,8 +172,13 @@ export const PredictionMarketTradeHistory: React.FC<
                     >
                       {trade.type.toUpperCase()}
                     </span>{' '}
-                    {formatBigNumber(trade.cost, collateralDecimals)} $
-                    {collateralSymbol}
+                    {formatBigNumber(
+                      trade.cost +
+                        (trade.type === 'buy' ? trade.fees : -trade.fees),
+                      collateralDecimals,
+                      true
+                    )}{' '}
+                    ${collateralSymbol}
                   </td>
                   <td className="p-3 terminal-text">
                     <span

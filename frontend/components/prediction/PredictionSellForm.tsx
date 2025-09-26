@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { readContractQueryOptions } from '@wagmi/core/query'
 import clsx from 'clsx'
 import { LoaderCircle } from 'lucide-react'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { formatUnits, parseUnits } from 'viem'
 import { useAccount } from 'wagmi'
 
@@ -47,6 +47,7 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
     null
   )
   const [isCalculating, setIsCalculating] = useState<boolean>(false)
+  const [slippage, setSlippage] = useState<number>(2)
 
   const {
     symbol: collateralSymbol,
@@ -57,70 +58,6 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
   // Binary search to find the exact collateral amount for the specified shares
   const [estimatedCollateralAmount, setEstimatedCollateralAmount] =
     useState<string>('0')
-
-  // Recursive binary search function for selling (calcNetCost with negative amounts)
-  const performSellBinarySearch = useCallback(
-    async (
-      targetShares: bigint,
-      outcome: 'YES' | 'NO',
-      low: bigint = 0n,
-      high: bigint = targetShares * 2n,
-      bestCollateralAmount: bigint = 0n,
-      iteration: number = 0
-    ): Promise<bigint> => {
-      // Base case: stop after 15 iterations or when range is too small
-      if (high <= low || iteration >= 15) {
-        // Apply 5% safety buffer to ensure transaction success
-        return (bestCollateralAmount * 95n) / 100n
-      }
-
-      const mid = (low + high) / 2n
-      // For selling, we use negative amounts
-      const outcomeTokenAmounts =
-        outcome === 'YES' ? [0n, -targetShares] : [-targetShares, 0n]
-
-      try {
-        const cost = (await queryClient.fetchQuery(
-          readContractQueryOptions(config, {
-            address: market.marketMakerAddress,
-            abi: lmsrMarketMakerAbi,
-            functionName: 'calcNetCost',
-            args: [outcomeTokenAmounts],
-          })
-        )) as bigint
-
-        // For selling, cost should be negative (we receive collateral)
-        const collateralReceived = cost < 0 ? -cost : 0n
-
-        if (collateralReceived >= mid) {
-          // We can get at least this much collateral, try for more
-          return performSellBinarySearch(
-            targetShares,
-            outcome,
-            mid + 1n,
-            high,
-            collateralReceived,
-            iteration + 1
-          )
-        } else {
-          // We get less collateral, try with lower expectation
-          return performSellBinarySearch(
-            targetShares,
-            outcome,
-            low,
-            mid - 1n,
-            bestCollateralAmount,
-            iteration + 1
-          )
-        }
-      } catch (error) {
-        console.error('Error in sell binary search iteration:', error)
-        // Return best amount found so far
-        return (bestCollateralAmount * 95n) / 100n
-      }
-    },
-    [market.marketMakerAddress, queryClient]
-  )
 
   // Effect to calculate collateral output when share amount or outcome changes
   useEffect(() => {
@@ -135,13 +72,13 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
       return
     }
 
-    const targetShares = parseUnits(formData.shareAmount, 18)
-    setIsCalculating(true)
+    const targetShares = parseUnits(formData.shareAmount, collateralDecimals)
 
     // Calculate collateral output directly using calcNetCost with negative amounts
     const outcomeTokenAmounts =
       formData.outcome === 'YES' ? [0n, -targetShares] : [-targetShares, 0n]
 
+    setIsCalculating(true)
     queryClient
       .fetchQuery(
         readContractQueryOptions(config, {
@@ -151,21 +88,40 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
           args: [outcomeTokenAmounts],
         })
       )
-      .then((cost) => {
-        // For selling, cost should be negative (we receive collateral)
-        const collateralReceived = (cost as bigint) < 0 ? -(cost as bigint) : 0n
-        const formattedResult = formatUnits(
-          collateralReceived,
-          collateralDecimals
-        )
+      .then(async (netCost) => {
+        // For selling, netCost should be negative (we receive collateral)
+        const outcomeTokenNetCost = netCost as bigint
+        if (outcomeTokenNetCost >= 0n) {
+          // This shouldn't happen for selling, but handle gracefully
+          setEstimatedCollateralAmount('0')
+          setCollateralEstimate(null)
+          setIsCalculating(false)
+          return
+        }
+
+        // Calculate market fee (same logic as in the contract)
+        const fee = (await queryClient.fetchQuery(
+          readContractQueryOptions(config, {
+            address: market.marketMakerAddress,
+            abi: lmsrMarketMakerAbi,
+            functionName: 'calcMarketFee',
+            args: [-outcomeTokenNetCost], // Use positive value for fee calculation
+          })
+        )) as bigint
+
+        // Total amount received after fee (netCost is negative, fee is positive)
+        const totalReceived = -outcomeTokenNetCost - fee
+
+        const formattedResult = formatUnits(totalReceived, collateralDecimals)
         setEstimatedCollateralAmount(formattedResult)
         setCollateralEstimate(formattedResult)
-        setIsCalculating(false)
       })
       .catch((error) => {
         console.error('Sell calculation failed:', error)
         setEstimatedCollateralAmount('0')
         setCollateralEstimate(null)
+      })
+      .finally(() => {
         setIsCalculating(false)
       })
   }, [
@@ -221,12 +177,13 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
       const outcomeTokenAmounts =
         formData.outcome === 'YES' ? [0n, -shareAmount] : [-shareAmount, 0n]
 
-      // Calculate minimum collateral to receive (with 5% slippage tolerance)
+      // Calculate minimum collateral to receive (with 2% slippage tolerance)
       const estimatedCollateral = parseUnits(
         estimatedCollateralAmount,
         collateralDecimals
       )
-      const minCollateral = (estimatedCollateral * 95n) / 100n
+      const minCollateral =
+        (estimatedCollateral * (100n - BigInt(slippage))) / 100n
 
       await txToast(
         // Approve market maker to spend conditional tokens
@@ -388,7 +345,8 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
                   !hasEnoughShares && '!text-red-400'
                 )}
               >
-                BALANCE: {formatBigNumber(currentBalance, collateralDecimals)}{' '}
+                BALANCE:{' '}
+                {formatBigNumber(currentBalance, collateralDecimals, true)}{' '}
                 {formData.outcome} shares
               </p>
             )}
@@ -438,6 +396,26 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
               </div>
             </div>
           )}
+
+          <div className="space-y-2">
+            <label className="terminal-dim text-xs">SLIPPAGE TOLERANCE</label>
+            <div className="grid grid-cols-4 gap-2">
+              {[1, 2, 3, 5].map((percentage) => (
+                <button
+                  key={percentage}
+                  type="button"
+                  onClick={() => setSlippage(percentage)}
+                  className={`p-2 border rounded-sm text-xs transition-all duration-200 ${
+                    slippage === percentage
+                      ? 'border-blue-500 bg-blue-500/20 text-blue-400'
+                      : 'border-gray-600 bg-black/20 text-gray-400 hover:border-gray-500'
+                  }`}
+                >
+                  {percentage}%
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         <Button
@@ -448,12 +426,15 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
             !formData.shareAmount ||
             !hasEnoughShares ||
             isLoadingResolution ||
-            isMarketResolved
+            isMarketResolved ||
+            isCalculating
           }
           className="w-full mobile-terminal-btn"
         >
           {isSelling ? (
             <span className="terminal-dim">Processing...</span>
+          ) : isCalculating ? (
+            <span className="terminal-dim">Calculating output...</span>
           ) : (
             <span className="terminal-command">
               SELL {formatBigNumber(formData.shareAmount || 0)}{' '}
@@ -465,7 +446,7 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
         <div className="terminal-dim text-xs">
           By selling your shares, you'll receive ${collateralSymbol} based on
           current market prices. The final amount may vary slightly due to
-          market conditions and slippage.
+          market conditions and slippage ({slippage}% tolerance).
         </div>
       </form>
     </div>
