@@ -212,7 +212,7 @@ export const SymbientChat = ({
         className
       )}
     >
-      <div className="space-y-4 overflow-y-auto grow min-h-0">
+      <div className="space-y-4 overflow-y-auto grow min-h-0 grayscale-100">
         {/* Chat Messages */}
         {[firstMessage, ...messages].map((message, index) => (
           <div key={index} className="space-y-4">
