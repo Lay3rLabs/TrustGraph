@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createPublicClient, http, isAddress } from 'viem'
 
 import { enovaAbi } from '@/lib/contracts'
-import { getNetworkConfig } from '@/lib/wagmi'
+import { getCurrentChainConfig } from '@/lib/wagmi'
 
 // Create a public client for reading contract data
 const publicClient = createPublicClient({
-  chain: getNetworkConfig(),
+  chain: getCurrentChainConfig(),
   transport: http(),
 })
 

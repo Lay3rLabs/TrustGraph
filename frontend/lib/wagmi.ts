@@ -1,4 +1,5 @@
 import { porto } from 'porto/wagmi'
+import { Chain } from 'viem'
 import { base } from 'viem/chains'
 import { createConfig, fallback, http, webSocket } from 'wagmi'
 import {
@@ -10,26 +11,7 @@ import {
 
 import { CHAIN } from './config'
 
-export type NetworkConfig = {
-  id: number
-  name: string
-  nativeCurrency: {
-    decimals: number
-    name: string
-    symbol: string
-  }
-  rpcUrls: {
-    default: {
-      http: string[] | readonly string[]
-      webSocket?: string[] | readonly string[]
-    }
-  }
-  blockExplorers?: {
-    default: { name: string; url: string }
-  }
-}
-
-export const localChain: NetworkConfig = {
+export const localChain: Chain = {
   id: 31337, // Anvil default chain ID
   name: 'Local Anvil',
   nativeCurrency: {
@@ -49,7 +31,7 @@ export const localChain: NetworkConfig = {
 }
 
 // Environment-based network configuration
-export const getNetworkConfig = (): NetworkConfig => {
+export const getCurrentChainConfig = (): Chain => {
   if (CHAIN === 'base') {
     const webSocketUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL_8453
     return {
@@ -69,15 +51,17 @@ export const getNetworkConfig = (): NetworkConfig => {
 }
 
 // Get the current network configuration
-export const currentNetworkConfig = getNetworkConfig()
+export const currentNetworkConfig = getCurrentChainConfig()
 
-const supportedChains = [currentNetworkConfig]
+const supportedChains = [currentNetworkConfig] as readonly [Chain, ...Chain[]]
 
 export const config = createConfig({
-  chains: supportedChains as any,
+  chains: supportedChains,
   connectors: [
     injected(),
-    porto(),
+    porto({
+      chains: supportedChains,
+    }),
     metaMask(),
     coinbaseWallet(),
     walletConnect({
@@ -105,11 +89,11 @@ export const getTargetChainId = (): number => {
   return currentNetworkConfig.id
 }
 
-export const getTargetChainConfig = (): NetworkConfig => {
+export const getTargetChainConfig = (): Chain => {
   return currentNetworkConfig
 }
 
-export const createNetworkAddParams = (config: NetworkConfig) => {
+export const createNetworkAddParams = (config: Chain) => {
   return {
     chainId: `0x${config.id.toString(16)}`,
     chainName: config.name,
