@@ -8,7 +8,8 @@ export type HyperstitionMarket = {
   description: string
   targetValue: number
   incentivePool: number
-  deadline: Date
+  startDate: Date
+  endDate: Date
   marketMakerAddress: `0x${string}`
   controllerAddress: `0x${string}`
 }

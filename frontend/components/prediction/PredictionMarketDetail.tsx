@@ -117,15 +117,16 @@ export const PredictionMarketDetail = ({
       }),
   })
 
-  const { data: followerHistory } = useQuery(
-    ponderQueries.followerCounts(
-      window !== ChartWindow.All
-        ? {
-            minTimestamp: Math.floor(Date.now() / 1000 - windowAgo[window]),
-          }
-        : undefined
+  const { data: { followers: followerHistory, max: followerMax = 0 } = {} } =
+    useQuery(
+      ponderQueries.followerCounts(
+        window !== ChartWindow.All
+          ? {
+              minTimestamp: Math.floor(Date.now() / 1000 - windowAgo[window]),
+            }
+          : undefined
+      )
     )
-  )
 
   const { data: { latestFollowerCount = 0 } = {} } = useQuery({
     ...ponderQueries.latestFollowerCount,
@@ -162,57 +163,76 @@ export const PredictionMarketDetail = ({
     return gradient
   }
 
-  // Synchronize the datasets - show all price data and extend follower data
-  const syncedData = useMemo(() => {
+  // Synchronize the datasets - extend whichever dataset is shorter
+  const { priceData, followerData, numDays } = useMemo(() => {
     if (!priceHistory?.length) {
       return {
         priceData: [],
         followerData: [],
+        numDays: 0,
       }
     }
 
-    // Convert price timestamps to milliseconds for chart (show ALL price data)
-    const priceData = priceHistory.map(({ timestamp, price }) => ({
-      timestamp: Number(timestamp), // Convert BigInt to number (seconds)
-      x: Number(timestamp * 1000n), // Convert to milliseconds for chart
-      y: price,
-    }))
+    const pricePoints = priceHistory
+      .map(({ timestamp, price }) => ({
+        x: Number(timestamp * 1000n),
+        y: price,
+      }))
+      .sort((a, b) => a.x - b.x)
 
-    // If no follower history, return empty follower data
-    if (!followerHistory?.followers?.length) {
-      return {
-        priceData: priceData.map(({ x, y }) => ({ x, y })),
-        followerData: [],
-      }
-    }
+    const followerPoints =
+      followerHistory
+        ?.map((point) => ({
+          x: point.timestamp * 1000,
+          y: point.followers,
+        }))
+        .sort((a, b) => a.x - b.x) || []
 
-    const followerPoints = followerHistory.followers.map((point) => ({
-      timestamp: point.timestamp, // Already in seconds
-      x: point.timestamp * 1000, // Convert to milliseconds for chart
-      y: point.followers,
-    }))
+    const firstTimestamp = market.startDate.getTime()
+    const lastTimestamp = Math.max(
+      pricePoints.length > 0
+        ? pricePoints[pricePoints.length - 1]?.x ?? 0
+        : firstTimestamp,
+      followerPoints.length > 0
+        ? followerPoints[followerPoints.length - 1]?.x ?? 0
+        : firstTimestamp
+    )
 
-    // Extend follower data to match the full price timeline
-    const extendedFollowerData: { x: number; y: number }[] = []
+    const numHours = Math.ceil((lastTimestamp - firstTimestamp) / 1000 / 3600)
+    const timestamps = [
+      ...new Set([
+        // Add a point at every price change.
+        ...pricePoints.map((p) => p.x),
+        // Add a point at every hour mark between the first and last timestamp.
+        ...[...Array(numHours)].map((_, i) => firstTimestamp + i * 3600 * 1000),
+      ]),
+    ].sort((a, b) => a - b)
 
-    // Find the last known follower count before or at each price timestamp
-    for (const pricePoint of priceData) {
-      // Find the most recent follower count at or before this price timestamp
-      const relevantFollowerPoint = followerPoints
-        .filter((f) => f.timestamp <= pricePoint.timestamp)
-        .pop() // Get the last (most recent) one
+    // Create a point per hour between the first and last timestamp.
+    const priceData = timestamps
+      .map((x) => ({
+        x,
+        y: pricePoints.filter((p) => p.x <= x).pop()?.y || pricePoints[0]?.y,
+      }))
+      .filter((p) => p.y !== undefined)
+    const followerData = timestamps
+      .map((x) => ({
+        x,
+        y:
+          followerPoints.filter((p) => p.x <= x).pop()?.y ||
+          followerPoints[0]?.y,
+      }))
+      .filter((p) => p.y !== undefined)
 
-      if (relevantFollowerPoint) {
-        extendedFollowerData.push({
-          x: pricePoint.x, // Use the same x timestamp as price
-          y: relevantFollowerPoint.y, // Use the last known follower count
-        })
-      }
-    }
+    // How many days are between the first and last timestamp?
+    const numDays = Math.ceil(
+      (lastTimestamp - firstTimestamp) / 1000 / 3600 / 24
+    )
 
     return {
-      priceData: priceData.map(({ x, y }) => ({ x, y })),
-      followerData: extendedFollowerData,
+      priceData,
+      followerData,
+      numDays,
     }
   }, [priceHistory, followerHistory])
 
@@ -220,7 +240,7 @@ export const PredictionMarketDetail = ({
     datasets: [
       {
         label: 'Market Value',
-        data: syncedData.priceData,
+        data: priceData,
         borderWidth: 4,
         pointRadius: 0,
         pointHoverRadius: 0,
@@ -256,7 +276,7 @@ export const PredictionMarketDetail = ({
       },
       {
         label: 'Followers',
-        data: syncedData.followerData,
+        data: followerData,
         borderWidth: 3,
         pointRadius: 0,
         pointHoverRadius: 0,
@@ -283,15 +303,22 @@ export const PredictionMarketDetail = ({
         display: false,
       },
       tooltip: {
+        mode: 'index',
         intersect: false,
         usePointStyle: true,
         callbacks: {
           title: (context) => {
-            return new Date(context[0].parsed.x).toLocaleDateString()
+            return new Date(context[0].parsed.x).toLocaleString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              hour: 'numeric',
+              minute: 'numeric',
+              timeZoneName: 'short',
+            })
           },
           label: (context) => {
             if (context.datasetIndex === 0) {
-              return ` ${(context.parsed.y * 100).toFixed(1)}%`
+              return ` Hyperstition: ${(context.parsed.y * 100).toFixed(1)}%`
             } else {
               return ` Followers: ${context.parsed.y.toLocaleString()}`
             }
@@ -303,8 +330,13 @@ export const PredictionMarketDetail = ({
       x: {
         type: 'time',
         time: {
-          unit: 'day',
-          tooltipFormat: 'DD T',
+          unit:
+            (window === ChartWindow.All ||
+              window === ChartWindow.Week ||
+              window === ChartWindow.Month) &&
+            numDays > 3
+              ? 'day'
+              : 'hour',
         },
         grid: {
           color: 'rgba(255, 255, 255, 0.1)',
@@ -337,7 +369,7 @@ export const PredictionMarketDetail = ({
         display: true,
         position: 'right',
         min: 0,
-        max: Math.max(market.targetValue, followerHistory?.max || 0),
+        max: Math.max(market.targetValue, followerMax),
         grid: {
           drawOnChartArea: false, // Only want the grid lines for one axis to show up
         },
@@ -491,7 +523,7 @@ export const PredictionMarketDetail = ({
                   {followerProgress.toFixed(1)}% Complete
                 </div>
                 <div className="terminal-dim">
-                  {formatTimeAgo(market.deadline)}
+                  {formatTimeAgo(market.endDate)}
                 </div>
               </div>
             </div>
