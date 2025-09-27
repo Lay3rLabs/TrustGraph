@@ -10,14 +10,18 @@ import {
 } from 'wagmi'
 
 import {
-  enovaAddress,
+  // enovaAddress,
   merkleSnapshotAbi,
   merkleSnapshotAddress,
   merkleSnapshotConfig,
-  rewardDistributorAbi,
-  rewardDistributorAddress,
+  // rewardDistributorAbi,
+  // rewardDistributorAddress,
 } from '@/lib/contracts'
 import { txToast } from '@/lib/tx'
+
+const rewardDistributorAddress = '0x0000000000000000000000000000000000000000'
+const rewardDistributorAbi = [] as any
+const enovaAddress = '0x0000000000000000000000000000000000000000'
 
 interface MerkleTreeData {
   tree: Array<{

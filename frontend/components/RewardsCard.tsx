@@ -3,7 +3,9 @@
 import type React from 'react'
 
 import { Button } from '@/components/ui/button'
-import { enovaAddress } from '@/lib/contracts'
+// import { enovaAddress } from '@/lib/contracts'
+
+const enovaAddress = '0x0000000000000000000000000000000000000000'
 
 interface RewardsCardProps {
   merkleRoot?: string

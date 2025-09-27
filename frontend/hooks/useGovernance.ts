@@ -10,11 +10,13 @@ import {
 } from 'wagmi'
 
 import {
-  enovaAddress,
+  // enovaAddress,
   merkleGovModuleAbi,
   merkleGovModuleAddress,
 } from '@/lib/contracts'
 import { txToast } from '@/lib/tx'
+
+const enovaAddress = '0x0000000000000000000000000000000000000000'
 
 // Types matching the MerkleGovModule contract structs
 export interface ProposalAction {

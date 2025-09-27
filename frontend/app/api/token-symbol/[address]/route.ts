@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createPublicClient, http, isAddress } from 'viem'
 
-import { enovaAbi } from '@/lib/contracts'
+// import { enovaAbi } from '@/lib/contracts'
 import { getCurrentChainConfig } from '@/lib/wagmi'
 
 // Create a public client for reading contract data
@@ -25,11 +25,12 @@ export async function GET(
     }
 
     // Read token symbol from contract
-    const symbol = await publicClient.readContract({
-      address: address as `0x${string}`,
-      abi: enovaAbi,
-      functionName: 'symbol',
-    })
+    // const symbol = await publicClient.readContract({
+    //   address: address as `0x${string}`,
+    //   abi: enovaAbi,
+    //   functionName: 'symbol',
+    // })
+    const symbol = 'EN0'
 
     return NextResponse.json({ symbol })
   } catch (error: any) {

@@ -3,11 +3,15 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useReadContract } from 'wagmi'
 
-import {
-  enovaAddress,
-  rewardDistributorAbi,
-  rewardDistributorAddress,
-} from '@/lib/contracts'
+// import {
+//   enovaAddress,
+//   rewardDistributorAbi,
+//   rewardDistributorAddress,
+// } from '@/lib/contracts'
+
+const enovaAddress = '0x0000000000000000000000000000000000000000'
+const rewardDistributorAddress = '0x0000000000000000000000000000000000000000'
+const rewardDistributorAbi = [] as any
 
 interface LeaderboardEntry {
   account: string

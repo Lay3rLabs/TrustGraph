@@ -2,7 +2,9 @@
 
 import type React from 'react'
 
-import { enovaAddress } from '@/lib/contracts'
+// import { enovaAddress } from '@/lib/contracts'
+
+const enovaAddress = '0x0000000000000000000000000000000000000000'
 
 interface VotingPowerCardProps {
   userVotingPower?: string
