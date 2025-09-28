@@ -65,7 +65,6 @@ poll_interval_ms = 7000
 ws_endpoint = "wss://base-rpc.publicnode.com"
 http_endpoint = "https://base-rpc.publicnode.com"
 poll_interval_ms = 7000
-# 100,000KB = 100MB
 event_channel_size = 100000
 
 # [default.chains.dev.holesky-fork]
