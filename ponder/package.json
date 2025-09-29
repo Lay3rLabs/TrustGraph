@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "postinstall": "patch-package",
     "predev": "npm run db:migrate",
     "dev": "ponder dev -p 65421",
     "start": "ponder start -p 65421",
@@ -10,7 +11,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "codegen": "ponder codegen",
-    "serve": "ponder serve",
+    "serve": "ponder serve -p 65421",
     "lint": "eslint .",
     "typecheck": "tsc"
   },
@@ -29,6 +30,7 @@
     "drizzle-kit": "^0.31.4",
     "eslint": "^8.54.0",
     "eslint-config-ponder": "^0.12.26",
+    "patch-package": "^8.0.1",
     "typescript": "^5.3.2"
   },
   "engines": {

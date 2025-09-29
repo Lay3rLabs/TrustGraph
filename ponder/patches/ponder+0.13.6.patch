@@ -1,0 +1,32 @@
+diff --git a/node_modules/ponder/dist/esm/client/index.js b/node_modules/ponder/dist/esm/client/index.js
+index e39b8ce..8b0cf7a 100644
+--- a/node_modules/ponder/dist/esm/client/index.js
++++ b/node_modules/ponder/dist/esm/client/index.js
+@@ -116,9 +116,10 @@ export const client = ({ db, }) => {
+                 try {
+                     await validateQuery(query.sql);
+                     await client.query("BEGIN READ ONLY");
+-                    const result = await session
+-                        .prepareQuery(query, undefined, undefined, false)
+-                        .execute();
++                    const result = await client.query({
++                        text: query.sql,
++                        values: query.params,
++                    });
+                     return c.json(result);
+                 }
+                 catch (error) {
+diff --git a/node_modules/ponder/dist/esm/utils/pg.js b/node_modules/ponder/dist/esm/utils/pg.js
+index 0095ab1..84feeb3 100644
+--- a/node_modules/ponder/dist/esm/utils/pg.js
++++ b/node_modules/ponder/dist/esm/utils/pg.js
+@@ -118,6 +118,9 @@ export function createReadonlyPool(config, logger, namespace) {
+         // @ts-expect-error: The custom Client is an undocumented option.
+         Client: ReadonlyClient,
+         ...config,
++
++        // Prevent all connections from hanging if queries are slow.
++        connectionTimeoutMillis: 30 * 1000,
+     });
+     function onPoolError(error) {
+         const client = error.client;
