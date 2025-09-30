@@ -3,6 +3,7 @@ import './globals.css'
 import type { Metadata, Viewport } from 'next'
 import { Roboto_Mono } from 'next/font/google'
 
+import { DisclaimerModal } from '@/components/DisclaimerModal'
 import { Nav } from '@/components/Nav'
 import { Providers } from '@/components/providers'
 
@@ -77,6 +78,8 @@ export default function RootLayout({
             <main className="p-2 mt-4 sm:p-4 sm:mt-8 min-h-full">
               {children}
             </main>
+
+            <DisclaimerModal />
           </div>
         </Providers>
       </body>

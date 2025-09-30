@@ -1,16 +1,18 @@
 'use client'
 
 import clsx from 'clsx'
-import { useEffect, useRef } from 'react'
+import { ReactNode, useEffect, useRef } from 'react'
 
 import { Card } from '../Card'
 
 interface ModalProps {
   isOpen: boolean
-  onClose: () => void
+  onClose?: () => void
   children: React.ReactNode
   title?: string
   className?: string
+  contentClassName?: string
+  footer?: ReactNode
 }
 
 export function Modal({
@@ -19,11 +21,17 @@ export function Modal({
   children,
   title,
   className,
+  contentClassName,
+  footer,
 }: ModalProps) {
   useEffect(() => {
+    if (!onClose) {
+      return
+    }
+
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose()
+        onClose?.()
       }
     }
 
@@ -65,26 +73,36 @@ export function Modal({
         type="popover"
         size="md"
         className={clsx(
-          'relative z-50 w-full max-w-md max-h-[90vh] overflow-y-auto mx-4 !p-0',
+          'relative z-50 w-full max-w-md max-h-[90vh] mx-4 !p-0 flex flex-col overflow-hidden',
           isOpen ? 'animate-in zoom-in-95' : 'animate-out zoom-out-95',
           className
         )}
       >
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between p-4 border-b border-gray-700">
+          <div className="flex items-center justify-between p-4 border-b border-gray-700 shrink09">
             <h2 className="terminal-bright text-sm">{title}</h2>
-            <button
-              onClick={onClose}
-              className="terminal-dim hover:terminal-bright transition-colors text-lg"
-            >
-              ×
-            </button>
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="terminal-dim hover:terminal-bright transition-colors text-lg"
+              >
+                ×
+              </button>
+            )}
           </div>
         )}
 
         {/* Content */}
-        <div className="p-4">{children}</div>
+        <div
+          className={clsx('p-4 overflow-y-auto grow min-h-0', contentClassName)}
+        >
+          {children}
+        </div>
+
+        {footer && (
+          <div className="p-4 border-t border-gray-700 shrink-0">{footer}</div>
+        )}
       </Card>
     </div>
   )

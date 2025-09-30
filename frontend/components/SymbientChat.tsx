@@ -4,15 +4,14 @@ import clsx from 'clsx'
 import { useAtom } from 'jotai/react'
 import { useResetAtom } from 'jotai/utils'
 import { ChevronRight } from 'lucide-react'
-import { HTMLMotionProps, motion } from 'motion/react'
-import Link from 'next/link'
 import { RefObject, useEffect, useRef, useState } from 'react'
-import Markdown from 'react-markdown'
 
 import { Animator } from '@/lib/animator'
 import { MAX_CHAT_MESSAGE_LENGTH, SYMBIENT_INTRO } from '@/lib/config'
 import { symbientChat } from '@/state/symbient'
 import { ChatMessage } from '@/types'
+
+import { Markdown } from './Markdown'
 
 const firstMessage: ChatMessage = {
   role: 'assistant',
@@ -224,14 +223,7 @@ export const SymbientChat = ({
                 'px-2 sm:px-4 space-y-2 sm:space-y-4 text-primary-foreground/60'
               )}
             >
-              <Markdown
-                components={{
-                  p: SlideFadeInParagraph as any,
-                  a: StyledLink as any,
-                }}
-              >
-                {message.content}
-              </Markdown>
+              <Markdown textFade>{message.content}</Markdown>
             </div>
           </div>
         ))}
@@ -300,75 +292,6 @@ export const SymbientChat = ({
   )
 }
 
-const SlideFadeInParagraph = ({
-  children,
-  className,
-  ...props
-}: HTMLMotionProps<'p'>) => (
-  <motion.p
-    initial={{ opacity: 0, y: 5 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.4, ease: 'easeOut' }}
-    className={clsx(className, 'whitespace-pre-wrap break-words')}
-    {...props}
-  >
-    {children}
-  </motion.p>
-)
-
-const StyledLink = ({
-  href,
-  children,
-}: {
-  href: string
-  children: React.ReactNode
-}) => (
-  <Link
-    href={href}
-    className="underline transition-opacity hover:opacity-80 active:opacity-70"
-  >
-    {children}
-  </Link>
-)
-
 const BlinkingCursor = () => (
   <p className="animate-blink inline-block">&nbsp;</p>
 )
-
-// useEffect(() => {
-//   if (!article) {
-//     return
-//   }
-
-//   let limit = 0
-//   let interval: NodeJS.Timeout
-//   const scrollInterval = setInterval(() => {
-//     // Only scroll if already scrolled to the bottom
-//     // if () {
-//     window.scrollTo({
-//       top: document.body.scrollHeight,
-//       behavior: 'smooth',
-//     })
-//     // }
-//   }, 100)
-//   const update = () => {
-//     limit += 20
-//     setContent(article.content.slice(0, limit))
-//     if (limit >= article.content.length) {
-//       clearInterval(interval)
-//       clearInterval(scrollInterval)
-//     }
-//   }
-//   interval = setInterval(update, 1)
-
-//   window.addEventListener('keydown', (e) => {
-//     if (e.key === 'Tab') {
-//       limit = article.content.length
-//     }
-//   })
-
-//   return () => {
-//     clearInterval(interval)
-//     clearInterval(scrollInterval)
-//   }
-// }, [article])
