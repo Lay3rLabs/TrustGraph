@@ -344,9 +344,17 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
                   '-mt-2 terminal-bright text-xs',
                   !hasEnoughShares && '!text-red-400'
                 )}
+                onClick={() =>
+                  handleInputChange(
+                    'shareAmount',
+                    formatUnits(currentBalance, collateralDecimals)
+                  )
+                }
               >
                 BALANCE:{' '}
-                {formatBigNumber(currentBalance, collateralDecimals, true)}{' '}
+                <span className="underline cursor-pointer transition-opacity hover:opacity-80 active:opacity-70">
+                  {formatBigNumber(currentBalance, collateralDecimals, true)}
+                </span>{' '}
                 {formData.outcome} shares
               </p>
             )}
