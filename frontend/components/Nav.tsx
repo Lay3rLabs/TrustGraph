@@ -1,35 +1,33 @@
 'use client'
 
 import clsx from 'clsx'
-import { Fullscreen } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
-import useLocalStorageState from 'use-local-storage-state'
 
 import { WalletConnectionButton } from '@/components/WalletConnectionButton'
 import { useResponsiveMount } from '@/hooks/useResponsiveMount'
 
 import Logo from './Logo'
-import { Popup } from './Popup'
-import { SymbientChat } from './SymbientChat'
 
 const menuItems: {
   label: string
   href: string
-  icon: string
+  icon?: string
   iconClassName?: string
 }[] = [
   {
-    label: 'Hyperstition',
-    href: '/hyperstition',
-    icon: '/pyramid.svg',
+    label: 'Attestations',
+    href: '/attestations',
     iconClassName: 'w-5 h-5',
   },
   {
-    label: 'Points',
-    href: '/points',
-    icon: '/points.svg',
+    label: 'Governance',
+    href: '/governance',
+    iconClassName: 'w-6 h-6',
+  },
+  {
+    label: 'Network',
+    href: '/network',
     iconClassName: 'w-6 h-6',
   },
 ]
@@ -40,9 +38,6 @@ export const Nav = () => {
     useLocalStorageState('has_opened_symbient_chat', {
       defaultValue: false,
     })
-
-  const prepareSymbientChatRef = useRef(() => {})
-  const setOpenRef = useRef<Dispatch<SetStateAction<boolean>> | null>(null)
 
   const isAtLeastSmall = useResponsiveMount('sm')
 
@@ -62,53 +57,15 @@ export const Nav = () => {
 
   return (
     <nav className="grid grid-cols-[1fr_auto_1fr] justify-center items-start">
-      <Popup
-        popupClassName="max-w-lg max-h-[90vh] overflow-hidden !pb-0 !bg-popover-foreground/80 backdrop-blur-sm"
-        position="right"
-        wrapperClassName="h-14"
-        onOpen={() => {
-          prepareSymbientChatRef.current()
-          setHasOpenedSymbientChat(true)
-        }}
-        setOpenRef={setOpenRef}
-        popupPadding={24}
-        trigger={{
-          type: 'custom',
-          Renderer: ({ onClick, open }) => (
-            <Logo
-              onClick={pathname !== '/symbient' ? onClick : undefined}
-              className={clsx(
-                'cursor-pointer transition-opacity hover:opacity-80 active:opacity-70',
-                isAtLeastSmall ? 'w-14 h-14' : 'w-10 h-10',
-                open && 'fixed'
-              )}
-              animatorLabel="nav"
-              blinkInterval
-              blinkOnClick
-              blinkOnHover
-            />
-          ),
-        }}
-      >
-        {pathname !== '/symbient' && (
-          <>
-            <SymbientChat
-              className="!p-0 !bg-transparent h-[42rem] max-h-full"
-              prepareRef={prepareSymbientChatRef}
-            />
+      <Link href="/">
+        <Logo
+          className={clsx(
+            isAtLeastSmall ? 'w-14 h-14' : 'w-10 h-10'
+          )}
+        />
+      </Link>
 
-            <Link
-              href="/symbient"
-              className="absolute top-2 right-2 sm:top-4 sm:right-4 p-1 rounded-sm bg-popover-foreground/90"
-              onClick={() => setOpenRef.current?.(false)}
-            >
-              <Fullscreen className="w-4 h-4 sm:w-5 sm:h-5 transition-opacity text-primary-foreground/60 hover:opacity-80 active:opacity-70" />
-            </Link>
-          </>
-        )}
-      </Popup>
-
-      <div className="flex justify-center items-stretch gap-4 sm:gap-6 text-primary-foreground rounded-full bg-popover-foreground/30 transition-[background-color,box-shadow] hover:bg-popover-foreground/40 hover:shadow-lg px-4 sm:px-6 text-base h-10 sm:h-12">
+      <div className="flex justify-center items-stretch gap-4 sm:gap-6 text-foreground rounded-full bg-card border border-border transition-[background-color,box-shadow] hover:shadow-md px-4 sm:px-6 text-base h-10 sm:h-12">
         {menuItems.map((item) => (
           <Link
             key={item.href}
@@ -121,11 +78,13 @@ export const Nav = () => {
                 : 'opacity-50'
             )}
           >
-            <img
-              src={item.icon}
-              alt={item.label}
-              className={item.iconClassName}
-            />
+            {item.icon && (
+              <img
+                src={item.icon}
+                alt={item.label}
+                className={item.iconClassName}
+              />
+            )}
             <span className="hidden sm:block">{item.label}</span>
           </Link>
         ))}

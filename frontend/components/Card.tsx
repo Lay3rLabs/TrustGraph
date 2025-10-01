@@ -6,13 +6,13 @@ export type CardProps = ComponentProps<'div'> & {
   size: 'sm' | 'md' | 'lg'
 }
 
-const baseClasses = 'rounded-sm'
+const baseClasses = 'rounded-md border border-border'
 const typeClassesMap = {
   primary:
-    'bg-card-foreground/60 rounded-md transition-shadow shadow-lg hover:shadow-xl',
-  accent: 'bg-accent-foreground',
-  detail: 'bg-card-foreground/30 shadow-md',
-  popover: 'bg-popover-foreground shadow-2xl',
+    'bg-card transition-shadow shadow-sm hover:shadow-md',
+  accent: 'bg-accent',
+  detail: 'bg-muted shadow-sm',
+  popover: 'bg-popover shadow-lg',
 }
 const sizeClassesMap = {
   sm: 'px-4 py-3',

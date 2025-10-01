@@ -62,13 +62,7 @@ try {
     // Merkler
     MerkleSnapshot: deployment.merkler.merkle_snapshot,
     RewardDistributor: deployment.merkler.reward_distributor,
-    ENOVA: deployment.merkler.reward_token,
-
-    // Prediction market
-    ERC20: deployment.prediction_market.collateral_token,
-    ConditionalTokens: deployment.prediction_market.conditional_tokens,
-    PredictionMarketController: deployment.prediction_market.controller,
-    LMSRMarketMaker: deployment.prediction_market.market_maker,
+    TEST: deployment.merkler.reward_token,
 
     // Zodiac safes
     GnosisSafe: deployment.zodiac_safes.safe_singleton,

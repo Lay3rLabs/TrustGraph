@@ -26,9 +26,7 @@ export function CreateProposalForm({
   isLoading = false,
   formatVotingPower = (amount) => amount,
 }: CreateProposalFormProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   // Form state
@@ -113,18 +111,11 @@ export function CreateProposalForm({
 
       setIsSubmitting(true)
       setError(null)
-      setSuccessMessage(null)
 
       try {
-        console.log('Submitting proposal with:', { actions, description })
-
         const hash = await onCreateProposal(actions, description)
-        console.log('Received hash from createProposal:', hash)
 
         if (hash && hash !== 'undefined') {
-          setSuccessMessage(
-            `Proposal created successfully! Transaction: ${hash}`
-          )
           // Reset form
           setDescription('')
           setActions([
@@ -136,8 +127,6 @@ export function CreateProposalForm({
               description: '',
             },
           ])
-          setIsExpanded(false)
-          setTimeout(() => setSuccessMessage(null), 5000)
         } else {
           setError('Transaction failed - no hash returned')
         }
@@ -151,98 +140,33 @@ export function CreateProposalForm({
     [onCreateProposal, canCreateProposal, actions, description, validateForm]
   )
 
-  if (!isExpanded) {
-    return (
-      <div className="border border-gray-700 bg-black/10 p-6 rounded-sm space-y-4">
-        <div className="space-y-2">
-          <div className="ascii-art-title text-lg">CREATE NEW PROPOSAL</div>
-          <div className="terminal-dim text-sm">
-            ◢◤ Submit proposals for community governance ◢◤
-          </div>
-        </div>
-
-        {successMessage && (
-          <div className="border border-green-700 bg-green-900/10 p-3 rounded-sm">
-            <div className="text-green-400 text-sm">✓ {successMessage}</div>
-          </div>
-        )}
-
-        <div className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div className="space-y-1">
-              <div className="terminal-dim text-xs">YOUR VOTING POWER</div>
-              <div className="terminal-text">
-                {userVotingPower ? formatVotingPower(userVotingPower) : '0'}
-              </div>
-            </div>
-            <div className="space-y-1">
-              <div className="terminal-dim text-xs">REQUIRED THRESHOLD</div>
-              <div className="terminal-text">
-                {proposalThreshold ? formatVotingPower(proposalThreshold) : '0'}
-              </div>
-            </div>
-          </div>
-
-          {canCreateProposal ? (
-            <Button
-              onClick={() => setIsExpanded(true)}
-              className="w-full sm:w-auto mobile-terminal-btn !px-4 !py-2"
-            >
-              <span className="terminal-command text-xs">CREATE PROPOSAL</span>
-            </Button>
-          ) : (
-            <div className="space-y-2">
-              <Button
-                disabled
-                className="w-full sm:w-auto mobile-terminal-btn !px-4 !py-2 opacity-50 cursor-not-allowed"
-              >
-                <span className="terminal-command text-xs">
-                  CREATE PROPOSAL
-                </span>
-              </Button>
-              <div className="terminal-dim text-xs">
-                Governance not initialized. Merkle root required.
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="border border-gray-700 bg-black/10 p-6 rounded-sm space-y-4">
+    <div className="border border-border bg-card p-6 rounded-md space-y-4">
       <div className="space-y-2">
-        <div className="ascii-art-title text-lg">CREATE NEW PROPOSAL</div>
-        <div className="terminal-dim text-sm">
-          ◢◤ Submit proposals for community governance ◢◤
+        <div className="text-lg font-semibold">Create Proposal</div>
+        <div className="text-muted-foreground text-sm">
+          Submit a new proposal for the community to vote on
         </div>
       </div>
 
       {error && (
-        <div className="border border-red-700 bg-red-900/10 p-3 rounded-sm">
-          <div className="text-red-400 text-sm">⚠️ {error}</div>
-        </div>
-      )}
-
-      {successMessage && (
-        <div className="border border-green-700 bg-green-900/10 p-3 rounded-sm">
-          <div className="text-green-400 text-sm">✓ {successMessage}</div>
+        <div className="border border-destructive/50 bg-destructive/10 p-3 rounded-md">
+          <div className="text-destructive text-sm font-medium">⚠️ {error}</div>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Proposal Description */}
         <div className="space-y-2">
-          <div className="terminal-bright text-sm">PROPOSAL DESCRIPTION</div>
-          <div className="terminal-dim text-xs">
+          <div className="text-sm font-medium">Proposal Description</div>
+          <div className="text-muted-foreground text-xs">
             Provide a clear, comprehensive description of your proposal
           </div>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Describe your proposal in detail..."
-            className="w-full bg-black/20 border border-gray-700 rounded-sm p-3 text-sm text-gray-300 placeholder-gray-500 min-h-24 focus:border-gray-500 focus:outline-none"
+            className="w-full bg-background border border-input rounded-md p-3 text-sm text-foreground placeholder:text-muted-foreground min-h-24 focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20"
             required
           />
         </div>
@@ -250,7 +174,7 @@ export function CreateProposalForm({
         {/* Actions */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <div className="terminal-bright text-sm">PROPOSAL ACTIONS</div>
+            <div className="text-sm font-medium">Proposal Actions</div>
             <div className="flex gap-2">
               <Button
                 type="button"
@@ -267,47 +191,48 @@ export function CreateProposalForm({
                   setDescription('Send ETH from treasury')
                 }}
                 variant="outline"
-                className="border-blue-700 text-blue-400 hover:bg-blue-900/20 text-xs"
+                size="sm"
               >
-                ETH SEND
+                ETH Send
               </Button>
               <Button
                 type="button"
                 onClick={addAction}
                 variant="outline"
-                className="border-gray-700 text-gray-400 hover:bg-gray-900/20 text-xs"
+                size="sm"
               >
-                ADD ACTION
+                Add Action
               </Button>
             </div>
           </div>
 
-          <div className="terminal-dim text-xs">
+          <div className="text-muted-foreground text-xs">
             Define the on-chain actions to execute if proposal passes
           </div>
 
           {actions.map((action, index) => (
             <div
               key={index}
-              className="border border-gray-700 p-4 rounded-sm space-y-3"
+              className="border border-border p-4 rounded-md space-y-3 bg-muted/30"
             >
               <div className="flex items-center justify-between">
-                <div className="terminal-dim text-xs">ACTION #{index + 1}</div>
+                <div className="text-muted-foreground text-xs font-medium">Action #{index + 1}</div>
                 {actions.length > 1 && (
                   <Button
                     type="button"
                     onClick={() => removeAction(index)}
                     variant="outline"
-                    className="border-red-700 text-red-400 hover:bg-red-900/20 text-xs px-2 py-1"
+                    size="sm"
+                    className="text-destructive hover:bg-destructive/10"
                   >
-                    REMOVE
+                    Remove
                   </Button>
                 )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <div className="terminal-dim text-xs">TARGET CONTRACT</div>
+                  <div className="text-muted-foreground text-xs font-medium">Target Contract</div>
                   <input
                     type="text"
                     value={action.target}
@@ -315,13 +240,13 @@ export function CreateProposalForm({
                       updateAction(index, 'target', e.target.value)
                     }
                     placeholder="0x..."
-                    className="w-full bg-black/20 border border-gray-700 rounded-sm p-2 text-sm text-gray-300 placeholder-gray-500 font-mono focus:border-gray-500 focus:outline-none"
+                    className="w-full bg-background border border-input rounded-md p-2 text-sm text-foreground placeholder:text-muted-foreground font-mono focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <div className="terminal-dim text-xs">ETH VALUE</div>
+                  <div className="text-muted-foreground text-xs font-medium">ETH Value</div>
                   <input
                     type="text"
                     value={action.value}
@@ -329,18 +254,18 @@ export function CreateProposalForm({
                       updateAction(index, 'value', e.target.value)
                     }
                     placeholder="0"
-                    className="w-full bg-black/20 border border-gray-700 rounded-sm p-2 text-sm text-gray-300 placeholder-gray-500 focus:border-gray-500 focus:outline-none"
+                    className="w-full bg-background border border-input rounded-md p-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <div className="terminal-dim text-xs">OPERATION TYPE</div>
+                  <div className="text-muted-foreground text-xs font-medium">Operation Type</div>
                   <select
                     value={action.operation || 0}
                     onChange={(e) =>
                       updateAction(index, 'operation', e.target.value)
                     }
-                    className="w-full bg-black/20 border border-gray-700 rounded-sm p-2 text-sm text-gray-300 focus:border-gray-500 focus:outline-none"
+                    className="w-full bg-background border border-input rounded-md p-2 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20"
                   >
                     <option value={0}>Call</option>
                     <option value={1}>DelegateCall</option>
@@ -349,7 +274,7 @@ export function CreateProposalForm({
               </div>
 
               <div className="space-y-2">
-                <div className="terminal-dim text-xs">ACTION DESCRIPTION</div>
+                <div className="text-muted-foreground text-xs font-medium">Action Description</div>
                 <input
                   type="text"
                   value={action.description}
@@ -357,18 +282,18 @@ export function CreateProposalForm({
                     updateAction(index, 'description', e.target.value)
                   }
                   placeholder="Describe what this action does"
-                  className="w-full bg-black/20 border border-gray-700 rounded-sm p-2 text-sm text-gray-300 placeholder-gray-500 focus:border-gray-500 focus:outline-none"
+                  className="w-full bg-background border border-input rounded-md p-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <div className="terminal-dim text-xs">CALLDATA (OPTIONAL)</div>
+                <div className="text-muted-foreground text-xs font-medium">Calldata (Optional)</div>
                 <textarea
                   value={action.data}
                   onChange={(e) => updateAction(index, 'data', e.target.value)}
                   placeholder="0x"
-                  className="w-full bg-black/20 border border-gray-700 rounded-sm p-2 text-sm text-gray-300 placeholder-gray-500 font-mono focus:border-gray-500 focus:outline-none"
+                  className="w-full bg-background border border-input rounded-md p-2 text-sm text-foreground placeholder:text-muted-foreground font-mono focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20"
                   rows={2}
                 />
               </div>
@@ -376,34 +301,15 @@ export function CreateProposalForm({
           ))}
         </div>
 
-        {/* Submit Buttons */}
-        <div className="border-t border-gray-700 pt-4 flex flex-col sm:flex-row gap-3">
+        {/* Submit Button */}
+        <div className="border-t border-border pt-4">
           <Button
             type="submit"
             disabled={isSubmitting || isLoading || !canCreateProposal}
-            className="flex-1 mobile-terminal-btn !px-4 !py-2"
+            className="w-full px-4 py-2"
           >
-            <span className="terminal-command text-xs">
-              {isSubmitting ? 'SUBMITTING...' : 'SUBMIT PROPOSAL'}
-            </span>
+            {isSubmitting ? 'Submitting...' : 'Submit Proposal'}
           </Button>
-
-          <Button
-            type="button"
-            onClick={() => {
-              setIsExpanded(false)
-              setError(null)
-            }}
-            variant="outline"
-            className="border-gray-700 text-gray-400 hover:bg-gray-900/20 flex-1"
-          >
-            <span className="text-xs">CANCEL</span>
-          </Button>
-        </div>
-
-        {/* Requirements Note */}
-        <div className="terminal-dim text-xs text-center">
-          Anyone can create proposals when merkle root is set
         </div>
       </form>
     </div>

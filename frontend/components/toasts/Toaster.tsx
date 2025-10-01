@@ -8,17 +8,23 @@ export const Toaster = () => (
   <HotToaster
     position="bottom-right"
     reverseOrder
+    gutter={12}
+    containerStyle={{
+      bottom: 20,
+      right: 20,
+    }}
     toastOptions={{
       duration: 6000,
-      // Show for entire duration of promise.
+      // Show for entire duration of promise
       loading: {
         duration: Infinity,
       },
+      // Remove default styles to let our Card component handle styling
       style: {
-        borderRadius: '0',
         background: 'none',
-        color: '#fff',
         boxShadow: 'none',
+        padding: 0,
+        margin: 0,
       },
     }}
   >

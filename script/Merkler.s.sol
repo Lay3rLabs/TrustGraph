@@ -8,7 +8,7 @@ import {Common} from "script/Common.s.sol";
 
 import {MerkleSnapshot} from "contracts/merkle/MerkleSnapshot.sol";
 import {RewardDistributor} from "contracts/rewards/RewardDistributor.sol";
-import {ENOVA} from "contracts/tokens/ENOVA.sol";
+import {TEST} from "contracts/tokens/TEST.sol";
 
 /// @dev Combined script to update merkle tree and claim rewards
 contract Merkler is Common {
@@ -27,7 +27,7 @@ contract Merkler is Common {
 
     /// @dev Claim rewards using merkle proof
     /// @param rewardDistributorAddr Address of the RewardDistributor contract
-    /// @param rewardTokenAddr Address of the reward token (ENOVA) contract
+    /// @param rewardTokenAddr Address of the reward token (TEST) contract
     function claimRewards(string calldata rewardDistributorAddr, string calldata rewardTokenAddr) public {
         address rewardTokenAddress = vm.parseAddress(rewardTokenAddr);
 
@@ -68,7 +68,7 @@ contract Merkler is Common {
         console.log("Claimable:", claimable);
 
         // Claim rewards with proof
-        ENOVA rewardToken = ENOVA(rewardTokenAddress);
+        TEST rewardToken = TEST(rewardTokenAddress);
         uint256 balanceBefore = rewardToken.balanceOf(claimer);
         uint256 claimed = rewardDistributor.claim(claimer, rewardTokenAddress, claimable, proof);
         uint256 balanceAfter = rewardToken.balanceOf(claimer);
@@ -83,7 +83,7 @@ contract Merkler is Common {
     /// @dev Combined function to update rewards and then claim them
     /// @param merkleSnapshotAddr Address of the MerkleSnapshot contract
     /// @param rewardDistributorAddr Address of the RewardDistributor contract
-    /// @param rewardTokenAddr Address of the reward token (ENOVA) contract
+    /// @param rewardTokenAddr Address of the reward token (TEST) contract
     function updateAndClaimRewards(
         string calldata merkleSnapshotAddr,
         string calldata rewardDistributorAddr,
@@ -157,7 +157,7 @@ contract Merkler is Common {
         address accountAddr = vm.parseAddress(account);
         address rewardTokenAddress = vm.parseAddress(rewardTokenAddr);
 
-        ENOVA rewardToken = ENOVA(rewardTokenAddress);
+        TEST rewardToken = TEST(rewardTokenAddress);
         uint256 balance = rewardToken.balanceOf(accountAddr);
 
         console.log("=== Token Balance ===");

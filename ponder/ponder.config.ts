@@ -1,6 +1,6 @@
 import { createConfig } from "ponder";
 
-import { conditionalTokensAbi, easAbi, lmsrMarketMakerAbi, merkleSnapshotAbi, wavsIndexerAbi } from "../frontend/lib/contracts";
+import { wavsIndexerAbi } from "../frontend/lib/contracts";
 import deploymentSummary from "../.docker/deployment_summary.json";
 import { Hex } from "viem";
 
@@ -20,23 +20,6 @@ export default createConfig({
     },
   },
   contracts: {
-    marketMaker: {
-      abi: lmsrMarketMakerAbi,
-      startBlock: 1,
-      // startBlock: "latest",
-      // startBlock: 35855002,
-      chain: {
-        [CHAIN]: { address: deploymentSummary.prediction_market.market_maker as Hex },
-      },
-    },
-    conditionalTokens: {
-      abi: conditionalTokensAbi,
-      startBlock: 1,
-      // startBlock: 35855002,
-      chain: {
-        [CHAIN]: { address: deploymentSummary.prediction_market.conditional_tokens as Hex },
-      },
-    },
     wavsIndexer: {
       abi: wavsIndexerAbi,
       startBlock: 1,

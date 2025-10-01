@@ -21,11 +21,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `bash ./script/deploy-script.sh` - Complete WAVS deployment pipeline
 - `make setup` - Install initial dependencies (npm + forge)
 
-### Component Development
-- `make validate-component COMPONENT=component-name` - Validate component against best practices
-- `make wasi-exec COMPONENT_FILENAME=component.wasm INPUT_DATA="test-string"` - Execute component locally
-- Component files are generated with: `mkdir -p components/name/src && cp components/evm-price-oracle/src/bindings.rs components/name/src/ && cp components/evm-price-oracle/config.json components/name/ && cp components/evm-price-oracle/Makefile components/name/`
-
 ### Lint and Format Commands
 - `npm run lint:check` - Check Solidity linting and formatting
 - `npm run lint:fix` - Fix linting and formatting issues
@@ -51,12 +46,6 @@ Three main components that handle different aspects of the attestation workflow:
 - `eas-compute/`: Computes voting power and updates based on attestation data
 - `merkler/`: Calculates a merkle tree based on attestation activity
 
-#### Smart Contracts (`src/contracts/`)
-- `WavsAttester.sol`: Main attestation request handler
-- `VotingPower.sol`: Manages voting power based on attestations
-- `RewardDistributor.sol`: Handles reward distribution logic
-- `EASAttestTrigger.sol`: Event emission for off-chain component triggers
-- `Governor.sol`: Governance implementation using attestation-based voting
 
 #### Service Architecture
 The system operates as an AVS (Actively Validated Service) where:

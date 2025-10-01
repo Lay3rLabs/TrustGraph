@@ -11,6 +11,6 @@ pub use IWavsIndexer::*;
 
 sol!("../../src/interfaces/IIndexedEvents.sol");
 
-sol!("../../src/interfaces/IPredictionMarketController.sol");
+// sol!("../../src/interfaces/IPredictionMarketController.sol");
 
-pub use IPredictionMarketController::MarketResolved;
+// pub use IPredictionMarketController::MarketResolved;

@@ -53,7 +53,6 @@ if [[ "${SKIP_CONTRACT_UPLOAD}" != "true" ]]; then
 fi
 
 if [ "$(task get-deploy-status)" = "LOCAL" ]; then
-    # required for the checkpoint stuff, ref: aurtur / https://github.com/Lay3rLabs/EN0VA/pull/31/commits/d205e9c65f91fb5b0b5bca672d8d28d6c7f672f9#diff-e3d8246ec3421fa3a204fe7a8f0586acfad4888ae82f5b8c6d130cb907705c80R75-R78
     cast rpc anvil_mine --rpc-url $(task get-rpc)
 fi
 
@@ -131,15 +130,6 @@ echo "✅ Indexer Address: ${INDEXER_ADDRESS}"
 echo "✅ Recognition Schema UID: ${RECOGNITION_SCHEMA_UID}"
 echo "✅ Vouching Schema UID: ${VOUCHING_SCHEMA_UID}"
 echo "✅ Chain Name: ${CHAIN_NAME}"
-
-# === Prediction Market Oracle ===
-export PREDICTION_CONTROLLER_ADDRESS=`jq -r '.prediction_market.controller' "./.docker/deployment_summary.json"`
-export MARKET_MAKER_ADDRESS=`jq -r '.prediction_market.market_maker' "./.docker/deployment_summary.json"`
-export CONDITIONAL_TOKENS_ADDRESS=`jq -r '.prediction_market.conditional_tokens' "./.docker/deployment_summary.json"`
-
-echo "✅ Prediction Market Controller Address: ${PREDICTION_CONTROLLER_ADDRESS}"
-echo "✅ Market Maker Address: ${MARKET_MAKER_ADDRESS}"
-echo "✅ Conditional Tokens Address: ${CONDITIONAL_TOKENS_ADDRESS}"
 
 # Export additional configuration values that components might need
 export PAGERANK_REWARD_POOL="1000000000000000000000"

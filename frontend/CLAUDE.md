@@ -1,48 +1,322 @@
-# CLAUDE.md
+# CLAUDE.md - Frontend
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working with the frontend Next.js application.
 
-## Project Overview
+## Project Structure
 
-EN0VA is a Next.js 15 web application with Web3/blockchain integration, built using the v0.dev platform. It features a terminal/cyberpunk aesthetic and includes a dashboard ("backroom") with multiple sections for attestations, governance, hyperstition markets, ICO functionality, and more.
+### Tech Stack
+- **Framework**: Next.js 15.2.4 (App Router)
+- **React**: React 19 with TypeScript
+- **Styling**: Tailwind CSS 4.x with shadcn/ui components
+- **State Management**: Jotai for global state, React Hook Form for forms
+- **Blockchain**: Wagmi v2 + Viem for Ethereum interactions
+- **Data Fetching**: TanStack Query (React Query) v5 + Ponder client for indexer queries
+- **UI Libraries**: Radix UI primitives, Lucide icons, Chart.js for visualizations
+- **Attestations**: Ethereum Attestation Service (EAS) SDK
+
+### Directory Structure
+```
+frontend/
+├── app/                    # Next.js App Router pages
+│   ├── api/               # API routes (IPFS, RPC proxy, token data)
+│   ├── attestations/      # Attestation management page
+│   ├── governance/        # Governance proposals page
+│   ├── leaderboard/       # Leaderboard page
+│   ├── operators/         # Operator management page
+│   ├── profile/           # User profile page
+│   ├── rewards/           # Rewards tracking page
+│   ├── services/          # WAVS services page
+│   ├── layout.tsx         # Root layout with providers
+│   └── page.tsx           # Home page
+├── components/            # React components
+│   ├── ui/               # shadcn/ui components
+│   ├── toasts/           # Toast notification components
+│   └── *.tsx             # Feature components (cards, modals, forms)
+├── hooks/                 # Custom React hooks
+│   ├── useAttestation.ts # EAS attestation management
+│   ├── useGovernance.ts  # Governance proposals
+│   ├── useOperators.ts   # Operator data
+│   ├── useRewards.ts     # Rewards calculations
+│   ├── useServiceData.ts # WAVS service data
+│   └── useLeaderboard.ts # Leaderboard data
+├── lib/                   # Utility libraries
+│   ├── config.ts         # Config file import and exports
+│   ├── wagmi.ts          # Wagmi/Viem setup
+│   ├── ponder.ts         # Ponder client setup
+│   ├── tx.ts             # Transaction helpers
+│   ├── error.ts          # Error handling utilities
+│   ├── schemas.ts        # Zod validation schemas
+│   └── utils.ts          # General utilities (cn, formatters)
+├── queries/               # Data fetching queries
+│   ├── ponder.ts         # Ponder indexer queries
+│   └── attestation.ts    # EAS attestation queries
+├── state/                 # Global state (Jotai atoms)
+├── abis/                  # Contract ABI files (JSON)
+├── public/                # Static assets
+└── config.json           # Symlink to config.{environment}.json
+```
 
 ## Development Commands
 
-- `npm run dev` - Start development server (Next.js)
-- `npm run build` - Build the application 
-- `npm run start` - Start production server
-- `npm run lint` - Run Next.js linting
+### Setup and Development
+```bash
+npm install              # Install dependencies
+npm run dev             # Start development server (runs predev hooks)
+npm run build           # Build for production (runs prebuild hooks)
+npm run start           # Start production server
+npm run lint            # Check linting issues
+npm run format          # Fix linting and formatting issues
+```
 
-## Architecture
+### Build Hooks (Auto-run)
+- `predev`/`prebuild` automatically run:
+  - `ponder:config` - Copy Ponder schemas from ../ponder/
+  - `config:generate` - Generate config file from deployment
+  - `config:link` - Symlink config.{NODE_ENV}.json to config.json
+  - `wagmi:generate` - Generate Wagmi hooks from ABIs
 
-### Framework Stack
-- **Next.js 15** with React 19 and TypeScript
-- **App Router** architecture (not pages router)
-- **Tailwind CSS v4** for styling
-- **Web3 Integration**: wagmi v2 + viem for Ethereum interaction
-- **UI Components**: Extensive use of Radix UI primitives
-- **State Management**: @tanstack/react-query for server state
+### Configuration Commands
+```bash
+npm run ponder:config     # Copy Ponder schema files
+npm run config:generate   # Generate config from contracts
+npm run config:link       # Link environment-specific config
+npm run wagmi:generate    # Generate typed contract hooks
+```
 
-### Key Structure
-- `app/` - Next.js app router pages and layouts
-  - `backroom/` - Main dashboard area with protected sections
-- `components/` - Reusable UI components and providers
-- `lib/` - Utilities including wagmi configuration
-- Global styling uses monospace fonts (Roboto Mono) with terminal theme
+## Key Configuration Files
 
-### Web3 Configuration
-- Configured for Ethereum mainnet and Sepolia testnet
-- Uses injected and MetaMask connectors via wagmi
-- Wallet connection state managed in backroom layout
+### Environment Variables (.env.local)
+- `NEXT_PUBLIC_WEBSOCKET_URL_8453` - Base network WebSocket RPC
+- `NEXT_PUBLIC_IPFS_GATEWAY` - IPFS gateway URL
+- `NODE_ENV` - Controls which config.{env}.json is used
 
-### Styling Approach
-- Terminal/cyberpunk aesthetic with custom CSS classes
-- Responsive design with mobile-first approach
-- Uses backdrop blur effects and dark theme throughout
+### Config System
+- **config.json**: Symlink to `config.development.json` or `config.production.json`
+- Contains chain config, API endpoints, contract addresses, schema UIDs
+- Imported via `lib/config.ts` and re-exported as constants
+- Generated by `scripts/generate-config.ts` from deployment data
+
+### TypeScript Configuration
+- Path alias: `@/*` maps to root directory
+- Strict mode enabled
+- Target: ES2020
+- Module resolution: bundler (Next.js default)
+
+## Development Patterns
+
+### Component Guidelines
+1. **Use shadcn/ui components** from `components/ui/` for UI primitives
+2. **Radix UI** for accessible component behavior
+3. **Tailwind + CVA** for styling with `class-variance-authority`
+4. **Client components** need `"use client"` directive when using hooks/state
+5. **Server components** by default in App Router
+
+### State Management
+- **Global state**: Jotai atoms in `state/` directory
+- **Server state**: TanStack Query with Ponder/RPC queries
+- **Form state**: React Hook Form with Zod validation
+- **Local storage**: `use-local-storage-state` for persistence
+
+### Blockchain Interactions
+```typescript
+// 1. Import generated hooks from wagmi
+import { useReadContract, useWriteContract } from 'wagmi'
+
+// 2. Use contract config from lib/config.ts
+import { CONTRACT_CONFIG } from '@/lib/config'
+
+// 3. Read contract data
+const { data } = useReadContract({
+  address: CONTRACT_CONFIG.MyContract.address,
+  abi: CONTRACT_CONFIG.MyContract.abi,
+  functionName: 'getValue',
+})
+
+// 4. Write transactions with error handling
+const { writeContractAsync } = useWriteContract()
+try {
+  const hash = await writeContractAsync({
+    address: CONTRACT_CONFIG.MyContract.address,
+    abi: CONTRACT_CONFIG.MyContract.abi,
+    functionName: 'setValue',
+    args: [newValue],
+  })
+  toast.success('Transaction submitted!')
+} catch (error) {
+  toast.error(extractError(error))
+}
+```
+
+### Data Fetching Patterns
+```typescript
+// Ponder indexer queries (for indexed on-chain data)
+import { ponderQuery } from '@/queries/ponder'
+import { useQuery } from '@tanstack/react-query'
+
+const { data, isLoading } = useQuery({
+  queryKey: ['attestations', address],
+  queryFn: () => ponderQuery.findMany.attestation({
+    where: { attester: address },
+    orderBy: { timestamp: 'desc' },
+  }),
+})
+
+// Direct RPC queries (for current on-chain state)
+import { useReadContract } from 'wagmi'
+const { data } = useReadContract({
+  address: CONTRACT_CONFIG.Contract.address,
+  abi: CONTRACT_CONFIG.Contract.abi,
+  functionName: 'getState',
+})
+```
+
+### EAS Attestation Pattern
+```typescript
+import { EAS } from '@ethereum-attestation-service/eas-sdk'
+import { useSigner } from 'wagmi'
+
+const eas = new EAS(CONTRACT_CONFIG.EAS.address)
+const signer = useSigner()
+eas.connect(signer)
+
+const tx = await eas.attest({
+  schema: SCHEMA_CONFIG.MySchema.uid,
+  data: {
+    recipient: address,
+    expirationTime: 0n,
+    revocable: true,
+    data: encodedData,
+  },
+})
+```
+
+### Error Handling
+```typescript
+import { extractError } from '@/lib/error'
+import toast from 'react-hot-toast'
+
+try {
+  await someBlockchainOperation()
+} catch (error) {
+  // extractError handles Wagmi/Viem errors nicely
+  toast.error(extractError(error))
+  console.error('Operation failed:', error)
+}
+```
+
+### Toast Notifications
+```typescript
+import toast from 'react-hot-toast'
+
+toast.success('Operation completed!')
+toast.error('Operation failed!')
+toast.loading('Processing...')
+toast.custom(<CustomToastComponent />)
+```
+
+## Important Conventions
+
+### File Naming
+- **Components**: PascalCase (e.g., `AttestationCard.tsx`)
+- **Hooks**: camelCase with `use` prefix (e.g., `useAttestation.ts`)
+- **Utilities**: camelCase (e.g., `config.ts`, `utils.ts`)
+- **Pages**: lowercase (App Router convention)
+
+### Import Patterns
+```typescript
+// 1. External dependencies
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+
+// 2. Wagmi/Viem
+import { useAccount, useReadContract } from 'wagmi'
+import { formatEther } from 'viem'
+
+// 3. Internal with @ alias
+import { CONFIG, CONTRACT_CONFIG } from '@/lib/config'
+import { AttestationCard } from '@/components/AttestationCard'
+
+// 4. Relative for same directory
+import { localFunction } from './helpers'
+```
+
+### Styling with Tailwind
+```typescript
+import { cn } from '@/lib/utils'
+
+// Use cn() for conditional classes
+<div className={cn(
+  "base-classes",
+  condition && "conditional-classes",
+  className // Allow prop-based overrides
+)}>
+```
+
+### Type Safety
+- **Contract types**: Generated by Wagmi CLI from ABIs
+- **API responses**: Define types in component or hook files
+- **Form schemas**: Zod schemas in `lib/schemas.ts`
+- **Ponder types**: Auto-generated from `ponder.schema.ts`
+
+## Common Tasks
+
+### Adding a New Page
+1. Create directory in `app/new-page/`
+2. Add `page.tsx` with component
+3. Update navigation in `layout.tsx` if needed
+4. Add data fetching hooks in `hooks/`
+5. Create queries in `queries/` if needed
+
+### Adding a New Contract Interaction
+1. Add ABI to `abis/` directory
+2. Run `npm run wagmi:generate` to generate hooks
+3. Update `config.json` with contract address (or regenerate)
+4. Import generated hooks and use in components
+5. Add error handling with `extractError()`
+
+### Adding a New Schema/Attestation Type
+1. Deploy schema on-chain (via separate script)
+2. Update `config.json` with schema UID
+3. Add schema interface in `types.ts`
+4. Create encoding/decoding helpers in `lib/` or hook
+5. Use in components via `useAttestation` hook
+
+### Debugging Tips
+- **React Query Devtools**: Enabled in dev mode (bottom-right corner)
+- **Network tab**: Check RPC/API calls
+- **Console errors**: Wagmi errors often have nested `.cause` properties
+- **Ponder queries**: Check Ponder GraphQL endpoint directly
+- **Config issues**: Verify `config.json` symlink and contents
+
+## API Routes
+
+### `/api/ipfs/[cid]`
+- Proxies IPFS content to avoid CORS issues
+- Used for fetching service configurations
+
+### `/api/rpc/[chainId]`
+- Proxies RPC requests to avoid exposing API keys
+- Used for Base network RPC calls
+
+### `/api/token-symbol/[address]`
+- Fetches ERC20 token symbol
+- Cached responses
+
+## Testing
+
+Currently no automated tests configured. Manual testing workflow:
+1. Run local development environment (`make start-all-local` in root)
+2. Deploy contracts (`bash ./script/deploy-script.sh` in root)
+3. Start frontend dev server (`npm run dev`)
+4. Test features manually in browser
+5. Check console for errors
 
 ## Important Notes
 
-- ESLint and TypeScript errors are ignored during builds (see next.config.mjs)
-- Images are unoptimized in Next.js config
-- Project auto-syncs with v0.dev deployments
-- Uses absolute imports with `@/*` path mapping
+- **Never commit** `.env.local` (contains sensitive keys)
+- **Always run** `npm run config:link` after changing NODE_ENV
+- **ABIs must match** deployed contracts - regenerate if contracts change
+- **Ponder schemas** are copied from `../ponder/` - keep in sync
+- **Config file** is generated from deployment - don't edit manually unless necessary
+- **TypeScript errors** are ignored in build (`ignoreBuildErrors: true`) - fix them anyway!
+- **ESLint errors** are ignored in build (`ignoreDuringBuilds: true`) - run `npm run format` before committing

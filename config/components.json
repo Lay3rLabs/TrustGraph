@@ -14,7 +14,7 @@
         "chain_name": "${CHAIN_NAME}",
         "recognition_schema_uid": "${RECOGNITION_SCHEMA_UID}",
         "vouching_schema_uid": "${VOUCHING_SCHEMA_UID}",
-        "pagerank_enabled": "false",
+        "pagerank_enabled": "true",
         "pagerank_points_pool": "10000",
         "pagerank_trusted_seeds": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
         "pagerank_trust_multiplier": "10.5",
@@ -41,7 +41,7 @@
         "chain_name": "${CHAIN_NAME}",
         "recognition_schema_uid": "${RECOGNITION_SCHEMA_UID}",
         "vouching_schema_uid": "${VOUCHING_SCHEMA_UID}",
-        "pagerank_enabled": "false",
+        "pagerank_enabled": "true",
         "pagerank_points_pool": "10000",
         "pagerank_trusted_seeds": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
         "pagerank_trust_multiplier": "10.5",
@@ -64,45 +64,6 @@
       "env_variables": []
     },
     {
-      "filename": "prediction_market_oracle.wasm",
-      "package_name": "prediction-market-oracle",
-      "package_version": "0.3.4",
-      "trigger_event": "NewTrigger()",
-      "trigger_json_path": "prediction_market.controller",
-      "submit_json_path": "prediction_market.controller",
-      "config_values": {
-        "market_maker": "${MARKET_MAKER_ADDRESS}",
-        "conditional_tokens": "${CONDITIONAL_TOKENS_ADDRESS}",
-        "question_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
-        "chain_name": "${CHAIN_NAME}",
-        "resolver_type": "twitter_followers",
-        "resolver_config": "account:\\\"0xEN0VA\\\";threshold:50",
-        "resolve_after": 1759514400
-      },
-      "env_variables": ["WAVS_ENV_TWITTERAPI_TOKEN"]
-    },
-    {
-      "filename": "prediction_market_oracle.wasm",
-      "package_name": "prediction-market-oracle",
-      "package_version": "0.3.4",
-      "trigger_cron": {
-        "schedule": "*/30 * * * * *",
-        "start_time": 1759514400000000001,
-        "end_time": 1759514445000000001
-      },
-      "submit_json_path": "prediction_market.controller",
-      "config_values": {
-        "market_maker": "${MARKET_MAKER_ADDRESS}",
-        "conditional_tokens": "${CONDITIONAL_TOKENS_ADDRESS}",
-        "question_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
-        "chain_name": "${CHAIN_NAME}",
-        "resolver_type": "twitter_followers",
-        "resolver_config": "account:\\\"0xEN0VA\\\";threshold:50",
-        "resolve_after": 1759514400
-      },
-      "env_variables": ["WAVS_ENV_TWITTERAPI_TOKEN"]
-    },
-    {
       "filename": "wavs_indexer.wasm",
       "package_name": "wavs-indexer",
       "package_version": "0.3.4",
@@ -151,71 +112,6 @@
       "submit_json_path": "wavs_indexer"
     },
     {
-      "filename": "wavs_indexer.wasm",
-      "package_name": "wavs-indexer",
-      "package_version": "0.3.4",
-      "trigger_event": "Interaction(address,string,string[],bytes)",
-      "trigger_json_path": "prediction_market.conditional_tokens",
-      "submit_json_path": "wavs_indexer"
-    },
-    {
-      "filename": "wavs_indexer.wasm",
-      "package_name": "wavs-indexer",
-      "package_version": "0.3.4",
-      "trigger_event": "Interaction(address,string,string[],bytes)",
-      "trigger_json_path": "prediction_market.market_maker",
-      "submit_json_path": "wavs_indexer"
-    },
-    {
-      "filename": "wavs_indexer.wasm",
-      "package_name": "wavs-indexer",
-      "package_version": "0.3.4",
-      "trigger_event": "MarketResolved(address,address,bytes32,bool,uint256,uint256,uint256)",
-      "trigger_json_path": "prediction_market.controller",
-      "submit_json_path": "wavs_indexer"
-    },
-    {
-      "disabled": true,
-      "filename": "geyser.wasm",
-      "package_name": "geyser",
-      "package_version": "0.1.0",
-      "trigger_event": "UpdateService(string)",
-      "trigger_json_path": "geyser.trigger",
-      "submit_json_path": "geyser.trigger",
-      "config_values": {
-        "chain_name": "${CHAIN_NAME}"
-      }
-    },
-    {
-      "disabled": true,
-      "filename": "wavs_eas_attest.wasm",
-      "package_name": "wavs-eas-attest",
-      "package_version": "0.1.0",
-      "trigger_event": "AttestationRequested(address,bytes32,address,bytes)",
-      "trigger_json_path": "eas.contracts.attest_trigger",
-      "submit_json_path": "eas.contracts.attester",
-      "config_values": {
-        "eas_address": "${EAS_ADDRESS}",
-        "indexer_address": "${INDEXER_ADDRESS}",
-        "chain_name": "${CHAIN_NAME}"
-      }
-    },
-    {
-      "disabled": true,
-      "filename": "wavs_eas_compute.wasm",
-      "package_name": "wavs-eas-compute",
-      "package_version": "0.1.0",
-      "trigger_event": "Attested(address,address,bytes32,bytes32)",
-      "trigger_json_path": "eas.contracts.indexer_resolver",
-      "submit_json_path": "governance.voting_power",
-      "config_values": {
-        "eas_address": "${EAS_ADDRESS}",
-        "indexer_address": "${INDEXER_ADDRESS}",
-        "chain_name": "${CHAIN_NAME}"
-      }
-    },
-    {
-      "disabled": true,
       "filename": "wavs_safe_signer_sync.wasm",
       "package_name": "wavs-safe-signer-sync",
       "package_version": "0.1.0",
@@ -231,7 +127,6 @@
       "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
     },
     {
-      "disabled": true,
       "filename": "dao_agent.wasm",
       "package_name": "dao-agent",
       "package_version": "0.1.0",
@@ -242,7 +137,6 @@
       "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
     },
     {
-      "disabled": true,
       "filename": "llm_attester.wasm",
       "package_name": "llm-attester",
       "package_version": "0.1.0",
@@ -270,8 +164,8 @@
   ],
   "aggregator_components": [
     {
-      "filename": "en0va_aggregator.wasm",
-      "package_name": "en0va-aggregator",
+      "filename": "wavs_gov_aggregator.wasm",
+      "package_name": "wavs-gov-aggregator",
       "package_version": "0.3.4",
       "config_values": {
         "timer_delay_secs": "${AGGREGATOR_TIMER_DELAYER_SECS}"

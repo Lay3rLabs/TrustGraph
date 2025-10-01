@@ -1,27 +1,19 @@
 'use client'
 
 import clsx from 'clsx'
-import {
-  ArrowRightLeft,
-  Check,
-  Copy,
-  LoaderCircle,
-  LogOut,
-  Wallet,
-} from 'lucide-react'
-import { usePlausible } from 'next-plausible'
+import { Check, Copy, LoaderCircle, LogOut, Wallet } from 'lucide-react'
 import type React from 'react'
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAccount, useBalance, useConnect, useDisconnect } from 'wagmi'
 
-import { erc20Address } from '@/lib/contracts'
 import { parseErrorMessage } from '@/lib/error'
 import { formatBigNumber } from '@/lib/utils'
 
 import { Popup } from './Popup'
 import { EthIcon } from './tokens/EthIcon'
 import { UsdcIcon } from './tokens/UsdcIcon'
+import { testAddress } from '@/lib/contracts'
 
 export interface WalletConnectionButtonProps {
   className?: string
@@ -54,7 +46,7 @@ export const WalletConnectionButton = ({
   // Use mock USDC for collateral balance
   const { data: usdcBalance, isLoading: isLoadingUsdcBalance } = useBalance({
     address: address,
-    token: erc20Address,
+    token: testAddress,
     query: {
       enabled: !!address,
       refetchInterval: 30_000,
@@ -90,19 +82,19 @@ export const WalletConnectionButton = ({
             <button
               onClick={onClick}
               className={clsx(
-                'flex items-center gap-2.5 rounded-full transition-[background-color,box-shadow] hover:shadow-lg px-4 sm:px-5 text-sm text-primary-foreground h-10 sm:h-12',
+                'flex items-center gap-2.5 rounded-full transition-[background-color,box-shadow] hover:shadow-md px-4 sm:px-5 text-sm text-foreground h-10 sm:h-12 border border-border',
                 open
-                  ? 'bg-popover-foreground'
-                  : 'bg-popover-foreground/30 hover:bg-popover-foreground/40'
+                  ? 'bg-card shadow-md'
+                  : 'bg-card hover:bg-muted/50'
               )}
             >
               {isConnecting ? (
                 <LoaderCircle
                   size={20}
-                  className="animate-spin text-primary-foreground/80"
+                  className="animate-spin text-muted-foreground"
                 />
               ) : (
-                <Wallet className="w-5 h-5 text-primary-foreground/80" />
+                <Wallet className="w-5 h-5 text-muted-foreground" />
               )}
               <span className="hidden sm:block">
                 {isConnected && address
@@ -148,18 +140,8 @@ export const WalletConnectionButton = ({
             </div>
 
             <div className="flex flex-col">
-              <a
-                href="https://superbridge.app/base"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-row items-center gap-3 p-2 rounded-sm bg-transparent text-primary-foreground transition-colors hover:bg-primary/70 active:bg-primary/90"
-              >
-                <ArrowRightLeft className="w-4 h-4 text-primary-foreground/80" />
-                <p>Bridge to Base</p>
-              </a>
-
               <button
-                className="flex flex-row items-center gap-3 p-2 rounded-sm bg-transparent text-primary-foreground transition-colors hover:bg-primary/70 active:bg-primary/90"
+                className="flex flex-row items-center gap-3 p-2 rounded-md bg-transparent text-foreground transition-colors hover:bg-muted active:bg-muted"
                 onClick={(e) => {
                   navigator.clipboard.writeText(address)
                   setCopied(true)
@@ -167,20 +149,20 @@ export const WalletConnectionButton = ({
                   e.stopPropagation()
                 }}
               >
-                <CopyIcon className="w-4 h-4 text-primary-foreground/80" />
+                <CopyIcon className="w-4 h-4 text-muted-foreground" />
                 <p>Copy address</p>
               </button>
 
               <button
-                className="flex flex-row items-center gap-3 p-2 rounded-sm bg-transparent text-primary-foreground transition-colors hover:bg-primary/70 active:bg-primary/90"
+                className="flex flex-row items-center gap-3 p-2 rounded-md bg-transparent text-foreground transition-colors hover:bg-destructive/10 active:bg-destructive/20"
                 onClick={() => {
                   setOpenRef.current?.(false)
                   // Wait for the popup to close before disconnecting to avoid flickering as the popup classes change.
                   setTimeout(() => disconnect(), 200)
                 }}
               >
-                <LogOut className="w-4 h-4 text-destructive-foreground" />
-                <p className="text-destructive-foreground">Disconnect</p>
+                <LogOut className="w-4 h-4 text-destructive" />
+                <p className="text-destructive">Disconnect</p>
               </button>
             </div>
           </div>
@@ -191,7 +173,7 @@ export const WalletConnectionButton = ({
                 {connectors.map((connector) => (
                   <button
                     key={connector.id}
-                    className="flex flex-row gap-2 p-2 rounded-sm bg-transparent text-primary-foreground transition-colors hover:bg-primary/70 active:bg-primary/90"
+                    className="flex flex-row gap-2 p-2 rounded-md bg-transparent text-foreground transition-colors hover:bg-muted active:bg-muted"
                     onClick={() => {
                       // Close the popup as connection begins.
                       setOpenRef.current?.(false)
@@ -226,7 +208,7 @@ export const WalletConnectionButton = ({
                 ))}
               </div>
             ) : (
-              <div className="terminal-dim text-xs">No wallets detected.</div>
+              <div className="text-muted-foreground text-sm">No wallets detected.</div>
             )}
           </div>
         )}

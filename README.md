@@ -1,6 +1,8 @@
-# [WAVS](https://docs.wavs.xyz) Symbient
+# [WAVS](https://docs.wavs.xyz) Gov
 
-TOP SECRET: a collection of fundraising, governance, and incentive mechanisms for cybernetic organisms.
+Some next-gen attestation-based governance tools.
+
+**Status:** HIGHLY EXPERIMENTL! Please experiment with us.
 
 ### Solidity
 
@@ -10,7 +12,7 @@ Install the required packages to build the Solidity contracts. This project supp
 # Install packages (npm & submodules)
 task setup
 
-# Build the contracts
+# Build the contracts (`forge build` also works)
 task build:forge
 
 # Run the solidity tests
@@ -33,12 +35,6 @@ Now build the WASI components into the `compiled` output directory.
 
 ```bash
 task build:wasi
-```
-
-## Testing the Price Feed Component Locally
-
-```bash
-# task wasi:exec COMPONENT_FILENAME=component.wasm INPUT_DATA="test-string"
 ```
 
 ## WAVS
@@ -181,119 +177,6 @@ Wait a bit for the component to run.
 Verify funds were sent:
 ```bash
 cast balance 0xDf3679681B87fAE75CE185e4f01d98b64Ddb64a3 --rpc-url http://localhost:8545
-```
-
-## Prediction Market Demo
-
-### Option 1: Complete Demo Flow
-
-Run all steps automatically:
-
-```bash
-task prediction-market:full-demo
-```
-
-This will:
-1. Check initial balances
-2. Buy YES outcome tokens
-3. Trigger the oracle AVS to resolve the market
-4. Redeem outcome tokens for collateral
-5. Check final balances
-
-### Option 2: Step-by-Step Execution
-
-#### Step 1: Check Initial Balances
-
-```bash
-task prediction-market:query-balances
-```
-
-This shows your current collateral and conditional token balances.
-
-#### Step 2: Buy Outcome Tokens
-
-Buy YES tokens (betting Bitcoin price is over $1):
-```bash
-task prediction-market:buy-yes
-```
-
-Or buy NO tokens (betting Bitcoin price is not over $1):
-```bash
-task prediction-market:buy-no
-```
-
-> **Note**: You start with 1e18 collateral tokens. When buying YES shares, you'll purchase 1e18 YES shares for approximately 5.25e17 collateral tokens, leaving approximately 4.75e17 collateral tokens remaining.
-
-#### Step 3: Query Market State (Optional)
-
-Check the current market state:
-```bash
-task prediction-market:query-market
-```
-
-#### Step 4: Trigger Oracle Resolution
-
-Run the AVS service to resolve the market:
-```bash
-task prediction-market:trigger-oracle
-```
-
-This triggers the oracle AVS which will:
-- Fetch the current Bitcoin price
-- Determine if it's over $1 (it will be!)
-- Resolve the market accordingly
-
-The task automatically waits 3 seconds for the component to execute.
-
-#### Step 5: Redeem Outcome Tokens
-
-Redeem your winning outcome tokens for collateral:
-```bash
-task prediction-market:redeem-tokens
-```
-
-#### Step 6: Check Final Balances
-
-Verify your tokens were successfully redeemed:
-```bash
-task prediction-market:query-balances
-```
-
-## Geyser (Factory Pattern) - optional
-
-```bash
-(cd components/geyser && make wasi-build)
-# manually test geyser
-export ipfs_cid=$(SERVICE_FILE=.docker/service.json make upload-to-ipfs)
-
-# escaped like the contract was / is
-COMPONENT_WORKFLOW='{\"trigger\":{\"evm_contract_event\":{\"address\":\"0x227db69d4b5e53357c71eea4475437f82ca605c3\",\"chain_name\":\"local\",\"event_hash\":\"0x3458a6422cada5bac0a323427c37ac55fede4fae5bd976fde40536903086999e\"}},\"component\":{\"source\":{\"Registry\":{\"registry\":{\"digest\":\"daa622d209437fefac4bdfbf1f21ba036e9af22b1864156663b6aa372942f13c\",\"domain\":\"localhost:8090\",\"version\":\"0.1.0\",\"package\":\"example:geyser\"}}},\"permissions\":{\"allowed_http_hosts\":\"all\",\"file_system\":true},\"fuel_limit\":1000000000000,\"time_limit_seconds\":30,\"config\":{\"chain_name\":\"local\"},\"env_keys\":[\"WAVS_ENV_SOME_SECRET\"]},\"submit\":{\"aggregator\":{\"url\":\"http:\/\/localhost:8001\",\"component\":null,\"evm_contracts\":[{\"chain_name\":\"local\",\"address\":\"0x227db69d4b5e53357c71eea4475437f82ca605c3\",\"max_gas\":5000000}],\"cosmos_contracts\":null}}}'
-
-make wasi-exec COMPONENT_FILENAME=geyser.wasm INPUT_DATA="${ipfs_cid}___${COMPONENT_WORKFLOW}"
-```
-
-```bash
-# execute againt the WAVS trigger for the deployment summary
-GYSER_ADDR=`jq -rc .geyser.trigger .docker/deployment_summary.json`
-WAVS_SERVICE_MANAGER_ADDRESS=`task config:service-manager-address`
-
-# just for debugging
-IPFS_URL=$(cast call --rpc-url http://localhost:8545 $WAVS_SERVICE_MANAGER_ADDRESS "getServiceURI()(string)" | tr -d '"' | tr -d '\')
-echo "IPFS URL: ${IPFS_URL}"
-cid=$(echo $IPFS_URL | cut -d'/' -f3)
-curl http://127.0.0.1:8080/ipfs/${cid} | jq -rc '.'
-
-# take the current owner (funded key) and transfer the ownership to the geyser handler. This way the handler can call the updateServiceUri method
-export FUNDED_KEY=`task config:funded-key`
-# change owner of the service manager -> the GYSER_ADDR, from funded key
-cast send ${WAVS_SERVICE_MANAGER_ADDRESS} 'transferOwnership(address)' "${GYSER_ADDR}" --rpc-url http://localhost:8545 --private-key $FUNDED_KEY
-
-COMPONENT_WORKFLOW='{"trigger":{"evm_contract_event":{"address":"0x227db69d4b5e53357c71eea4475437f82ca605c3","chain_name":"local","event_hash":"0x3458a6422cada5bac0a323427c37ac55fede4fae5bd976fde40536903086999e"}},"component":{"source":{"Registry":{"registry":{"digest":"daa622d209437fefac4bdfbf1f21ba036e9af22b1864156663b6aa372942f13c","domain":"localhost:8090","version":"0.1.0","package":"example:geyser"}}},"permissions":{"allowed_http_hosts":"all","file_system":true},"fuel_limit":1000000000000,"time_limit_seconds":30,"config":{"chain_name":"local"},"env_keys":["WAVS_ENV_SOME_SECRET"]},"submit":{"aggregator":{"url":"http://localhost:8001","component":null,"evm_contracts":[{"chain_name":"local","address":"0x227db69d4b5e53357c71eea4475437f82ca605c3","max_gas":5000000}],"cosmos_contracts":null}}}'
-
-cast send --rpc-url http://localhost:8545 --private-key $FUNDED_KEY $GYSER_ADDR "updateExample(string)" "${COMPONENT_WORKFLOW}"
-
-docker logs wavs-1 # 'assertion `left == right` failed' error is okay.
-cast call --rpc-url http://localhost:8545 $WAVS_SERVICE_MANAGER_ADDRESS "getServiceURI()(string)"
 ```
 
 ## AI Coding Agents

@@ -1,6 +1,7 @@
 import clsx from 'clsx'
 import { ReactNode, cloneElement } from 'react'
 import { Toast, ToastBar, toast as hotToast } from 'react-hot-toast'
+import { X } from 'lucide-react'
 
 import { Card } from '../Card'
 
@@ -21,16 +22,23 @@ export const ToastCard = ({
         type="popover"
         size="md"
         className={clsx(
-          'relative flex min-w-0 flex-row items-start gap-3 text-sm text-primary-foreground',
+          'relative flex min-w-0 flex-row items-start gap-3 text-sm',
           toast.type !== 'loading' && 'pr-10',
           containerClassName
         )}
       >
         {preMessage}
 
-        <div className="min-w-0 grow break-words">
+        <div
+          className={clsx(
+            'min-w-0 grow break-words',
+            toast.type === 'error'
+              ? 'text-destructive-foreground'
+              : 'text-popover-foreground'
+          )}
+        >
           {!message || typeof message === 'string' ? (
-            <p>{message}</p>
+            <p className="m-0">{message}</p>
           ) : (
             cloneElement(message, {
               className: '!block !m-0 break-words',
@@ -42,11 +50,14 @@ export const ToastCard = ({
           <button
             onClick={() => hotToast.dismiss(toast.id)}
             className={clsx(
-              'terminal-dim hover:terminal-bright transition-colors absolute top-4 right-4 text-lg leading-5',
-              toast.type === 'error' && '!text-primary-foreground'
+              'absolute top-3 right-3 transition-colors p-1 rounded-sm',
+              toast.type === 'error'
+                ? 'text-destructive-foreground/70 hover:text-destructive-foreground hover:bg-destructive-foreground/10'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
             )}
+            aria-label="Dismiss"
           >
-            ×
+            <X size={16} />
           </button>
         )}
       </Card>

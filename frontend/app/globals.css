@@ -4,42 +4,45 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  /* Light mode - grayscale focused */
+  --background: oklch(0.98 0 0); /* Off-white */
+  --foreground: oklch(0.2 0 0); /* Near-black */
+  --card: oklch(1 0 0); /* Pure white */
+  --card-foreground: oklch(0.2 0 0);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --popover-foreground: oklch(0.2 0 0);
+  --primary: oklch(0.3 0 0); /* Dark gray */
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.94 0 0); /* Light gray */
+  --secondary-foreground: oklch(0.2 0 0);
+  --muted: oklch(0.95 0 0); /* Very light gray */
+  --muted-foreground: oklch(0.5 0 0); /* Medium gray */
+  --accent: oklch(0.92 0 0);
+  --accent-foreground: oklch(0.2 0 0);
+  --destructive: oklch(0.5 0.18 30); /* Subtle red */
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.88 0 0); /* Light gray border */
+  --input: oklch(0.92 0 0);
+  --ring: oklch(0.5 0 0); /* Medium gray focus ring */
+  --chart-1: oklch(0.4 0 0); /* Dark gray */
+  --chart-2: oklch(0.5 0 0);
+  --chart-3: oklch(0.6 0 0);
+  --chart-4: oklch(0.35 0 0);
+  --chart-5: oklch(0.7 0 0);
+  --radius: 0.5rem;
+  --sidebar: oklch(0.96 0 0);
+  --sidebar-foreground: oklch(0.2 0 0);
+  --sidebar-primary: oklch(0.3 0 0);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.92 0 0);
+  --sidebar-accent-foreground: oklch(0.2 0 0);
+  --sidebar-border: oklch(0.88 0 0);
+  --sidebar-ring: oklch(0.5 0 0);
 
-  --green: #05df72;
-  --pink: #dd70d4;
+  /* Trust indicators */
+  --trust-high: oklch(0.4 0 0);
+  --trust-medium: oklch(0.6 0 0);
+  --trust-low: oklch(0.8 0 0);
 }
 
 .dark {
@@ -127,239 +130,73 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
   }
   button {
     @apply cursor-pointer;
   }
 }
 
-/* Sophisticated terminal background with image */
+/* Clean light background */
 .dynamic-bg {
   position: relative;
-  background:
-        /* Terminal screen effect */
-        /*repeating-linear-gradient(
-            0deg,
-            transparent,
-            transparent 2px,
-            rgba(156, 163, 175, 0.015) 2px,
-            rgba(156, 163, 175, 0.015) 4px
-        ),*/
-        /* Noise pattern for terminal authenticity */
-            /*radial-gradient(
-                circle at 100% 50%,
-                transparent 20%,
-                rgba(255, 255, 255, 0.003) 21%,
-                rgba(255, 255, 255, 0.003) 34%,
-                transparent 35%
-            ),*/
-        /* Lighter overlay for readability */
-            /*linear-gradient(
-                135deg,
-                rgba(0, 0, 0, 0.4) 0%,
-                rgba(17, 24, 39, 0.5) 50%,
-                rgba(0, 0, 0, 0.6) 100%
-            ),*/
-        /* Background image */ url('/background.jpg');
-  background-size: cover, 4px 4px, cover, cover;
-  background-position: center center;
-  background-attachment: fixed;
-  /*animation:
-        terminalGlow 25s ease-in-out infinite,
-        terminalFlicker 4s ease-in-out infinite;*/
+  background: linear-gradient(
+    135deg,
+    oklch(0.98 0 0) 0%,
+    oklch(0.96 0 0) 100%
+  );
+  min-height: 100vh;
 }
 
-/*.dynamic-bg::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    background:
-        /* Enhanced atmospheric particles over background image */
-/*radial-gradient(
-            circle at 25% 75%,
-            rgba(156, 163, 175, 0.025) 0%,
-            transparent 35%
-        ),
-        radial-gradient(
-            circle at 75% 25%,
-            rgba(209, 213, 219, 0.015) 0%,
-            transparent 45%
-        ),
-        radial-gradient(
-            circle at 50% 50%,
-            rgba(107, 114, 128, 0.02) 0%,
-            transparent 60%
-        ),
-        /* Very subtle vignette effect */
-/*radial-gradient(
-                ellipse at center,
-                transparent 50%,
-                rgba(0, 0, 0, 0.05) 85%,
-                rgba(0, 0, 0, 0.1) 100%
-            );*/
-/* animation:
-        particleFloat1 35s ease-in-out infinite,
-        particleFloat2 45s ease-in-out infinite reverse;
-    z-index: -1;
-}*/
 
-@keyframes terminalGlow {
-  0%,
-  100% {
-    filter: brightness(1) contrast(1.05) saturate(0.9);
-  }
-  25% {
-    filter: brightness(1.02) contrast(1.08) saturate(0.85);
-  }
-  50% {
-    filter: brightness(0.98) contrast(1.1) saturate(0.95);
-  }
-  75% {
-    filter: brightness(1.01) contrast(1.03) saturate(0.9);
-  }
-}
-
-@keyframes terminalFlicker {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  98% {
-    opacity: 1;
-  }
-  99% {
-    opacity: 0.98;
-  }
-  99.5% {
-    opacity: 1;
-  }
-}
-
-@keyframes textReveal {
-  0% {
+@keyframes fadeIn {
+  from {
     opacity: 0;
     transform: translateY(10px);
   }
-  100% {
+  to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-@keyframes ghostType {
-  0% {
-    opacity: 0;
-    width: 0;
-  }
-  100% {
-    opacity: 1;
-    width: 100%;
-  }
-}
-
-@keyframes cursorPulse {
-  0%,
-  50% {
-    opacity: 1;
-    box-shadow: 0 0 5px rgba(0, 255, 65, 0.8);
-  }
-  51%,
-  100% {
-    opacity: 0.3;
-    box-shadow: 0 0 2px rgba(0, 255, 65, 0.4);
-  }
-}
-
-@keyframes particleFloat1 {
-  0%,
-  100% {
-    transform: translateX(0) translateY(0);
-  }
-  25% {
-    transform: translateX(-20px) translateY(-30px);
-  }
-  50% {
-    transform: translateX(40px) translateY(20px);
-  }
-  75% {
-    transform: translateX(-10px) translateY(-15px);
-  }
-}
-
-@keyframes particleFloat2 {
-  0%,
-  100% {
-    transform: translateX(0) translateY(0) rotate(0deg);
-  }
-  33% {
-    transform: translateX(30px) translateY(-40px) rotate(120deg);
-  }
-  66% {
-    transform: translateX(-25px) translateY(35px) rotate(240deg);
-  }
-}
-
-/* Sophisticated grey scrollbar */
+/* Light mode scrollbar */
 .scrollbar-thin {
   scrollbar-width: thin;
 }
 
-.scrollbar-track-gray-900 {
-  scrollbar-color: rgba(156, 163, 175, 0.6) rgba(0, 0, 0, 0.9);
-}
-
-.scrollbar-thumb-green-600 {
-  scrollbar-color: rgba(156, 163, 175, 0.6) rgba(0, 0, 0, 0.9);
-}
-
 /* Webkit scrollbar for better browser support */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.9);
-  border: 1px solid rgba(75, 85, 99, 0.2);
+  background: oklch(0.95 0 0);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(
-    180deg,
-    rgba(156, 163, 175, 0.7) 0%,
-    rgba(107, 114, 128, 0.5) 100%
-  );
+  background: oklch(0.7 0 0);
   border-radius: 4px;
-  border: 1px solid rgba(156, 163, 175, 0.3);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(
-    180deg,
-    rgba(209, 213, 219, 0.8) 0%,
-    rgba(156, 163, 175, 0.7) 100%
-  );
-  box-shadow: 0 0 3px rgba(156, 163, 175, 0.4);
+  background: oklch(0.5 0 0);
 }
 
 /* Mobile-specific styles */
 @media (max-width: 640px) {
   ::-webkit-scrollbar {
-    width: 4px;
+    width: 6px;
   }
 
   /* Prevent zoom on input focus on iOS */
-  input[type='text'] {
+  input[type='text'],
+  input[type='email'],
+  input[type='number'],
+  textarea {
     font-size: 16px;
   }
-}
 
-/* Ensure proper text wrapping on mobile */
-@media (max-width: 640px) {
   .break-words {
     word-break: break-word;
     overflow-wrap: break-word;
@@ -376,196 +213,6 @@
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Enhanced terminal cursor animations */
-@keyframes blink {
-  0%,
-  50% {
-    opacity: 1;
-    background-color: rgba(229, 231, 235, 0.9);
-    box-shadow: 0 0 6px rgba(229, 231, 235, 0.4);
-  }
-  51%,
-  100% {
-    opacity: 0.3;
-    background-color: rgba(156, 163, 175, 0.5);
-    box-shadow: 0 0 2px rgba(156, 163, 175, 0.3);
-  }
-}
-
-.animate-blink {
-  animation: blink 1.2s infinite;
-}
-
-/* Terminal cursor */
-.terminal-cursor {
-  display: inline-block;
-  width: 8px;
-  height: 1em;
-  background-color: #e5e7eb;
-  animation: blink 1s infinite;
-}
-
-/* Terminal-specific enhancements */
-.terminal-text {
-  color: #d1d5db;
-  font-family: 'Roboto Mono', 'Courier New', 'Lucida Console', monospace;
-  letter-spacing: 0.3px;
-  white-space: break-spaces;
-  text-shadow: 0 0 1px rgba(0, 0, 0, 0.8);
-}
-
-.memetics-text {
-  color: #d1d5db;
-  font-family: 'Roboto Mono', 'Courier New', 'Lucida Console', monospace;
-  letter-spacing: 0.3px;
-  white-space: initial;
-  text-shadow: 0 0 1px rgba(0, 0, 0, 0.8);
-}
-
-.ascii-art-title {
-  color: #d1d5db;
-  text-shadow: 0 0 4px rgba(209, 213, 219, 0.3), 0 0 1px rgba(0, 0, 0, 0.9);
-  font-family: 'Roboto Mono', 'Courier New', 'Lucida Console', monospace;
-  font-size: 2.5rem;
-  font-weight: bold;
-  letter-spacing: 0.15em;
-}
-
-.terminal-dim {
-  color: #9ca3af;
-  opacity: 0.9;
-  font-family: 'Roboto Mono', 'Courier New', 'Lucida Console', monospace;
-}
-
-.terminal-bright {
-  color: #f9fafb;
-  text-shadow: 0 0 3px rgba(249, 250, 251, 0.2);
-  font-family: 'Roboto Mono', 'Courier New', 'Lucida Console', monospace;
-}
-
-.terminal-prompt {
-  color: #e5e7eb;
-  text-shadow: 0 0 2px rgba(229, 231, 235, 0.3);
-  font-family: 'Roboto Mono', 'Courier New', 'Lucida Console', monospace;
-}
-
-.terminal-command {
-  color: #ffffff;
-  text-shadow: 0 0 1px rgba(255, 255, 255, 0.2), 0 0 1px rgba(0, 0, 0, 0.8);
-  font-family: 'Roboto Mono', 'Courier New', 'Lucida Console', monospace;
-}
-
-.ascii-art {
-  color: #d1d5db;
-  text-shadow: 0 0 4px rgba(209, 213, 219, 0.3);
-  font-family: 'Roboto Mono', 'Courier New', 'Lucida Console', monospace;
-  white-space: break-spaces;
-}
-
-.system-message {
-  color: #9ca3af;
-  text-shadow: 0 0 2px rgba(156, 163, 175, 0.2);
-  font-family: 'Roboto Mono', 'Courier New', 'Lucida Console', monospace;
-}
-
-.error-text {
-  color: #6b7280;
-  text-shadow: 0 0 2px rgba(107, 114, 128, 0.3);
-  font-family: 'Roboto Mono', 'Courier New', 'Lucida Console', monospace;
-}
-
-/* Mobile terminal buttons */
-.mobile-terminal-btn {
-  background: linear-gradient(
-    135deg,
-    rgba(55, 65, 81, 0.8) 0%,
-    rgba(31, 41, 55, 0.7) 100%
-  );
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  color: #9ca3af;
-  font-family: 'Roboto Mono', 'Courier New', 'Lucida Console', monospace;
-  font-size: 10px;
-  padding: 8px 4px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  min-height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  user-select: none;
-  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-  position: relative;
-  overflow: hidden;
-}
-
-.mobile-terminal-btn:hover {
-  background: linear-gradient(
-    135deg,
-    rgba(75, 85, 99, 0.9) 0%,
-    rgba(55, 65, 81, 0.8) 100%
-  );
-  color: #f9fafb;
-  transform: translateY(-1px);
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-}
-
-.mobile-terminal-btn:active {
-  background: linear-gradient(
-    135deg,
-    rgba(107, 114, 128, 0.9) 0%,
-    rgba(75, 85, 99, 0.8) 100%
-  );
-  color: #ffffff;
-  transform: translateY(0px);
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-}
-
-/* Terminal glow effect for mobile buttons */
-.mobile-terminal-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.1),
-    transparent
-  );
-  transition: left 0.5s ease;
-}
-
-.mobile-terminal-btn:active::before {
-  left: 100%;
-}
-
-/* Mobile-specific terminal improvements */
-@media (max-width: 768px) {
-  .terminal-text {
-    font-size: 14px;
-    line-height: 1.4;
-  }
-
-  .ascii-art-title {
-    font-size: 1.8rem;
-    text-align: center;
-  }
-
-  .terminal-command {
-    font-size: 14px;
-  }
-
-  .mobile-terminal-btn {
-    font-size: 9px;
-    padding: 6px 3px;
-    min-height: 38px;
-  }
-}
 
 pre {
   white-space: pre-wrap;

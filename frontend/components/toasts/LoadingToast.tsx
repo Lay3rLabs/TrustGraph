@@ -9,7 +9,12 @@ export interface LoadingToastProps {
 
 export const LoadingToast = (props: LoadingToastProps) => (
   <ToastCard
-    preMessage={<LoaderCircle size={20} className="animate-spin" />}
+    preMessage={
+      <LoaderCircle
+        size={20}
+        className="animate-spin text-muted-foreground flex-shrink-0"
+      />
+    }
     {...props}
   />
 )

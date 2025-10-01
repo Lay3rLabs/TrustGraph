@@ -115,57 +115,22 @@ impl Guest for Component {
             return Err("No trusted recognizers configured. UNSAFE!!".to_string());
         }
 
-        println!("📋 Using recognition schema UID: {}", recognition_schema_uid);
-        registry.add_source(sources::eas::EasSource::new(
-            sources::eas::EasSourceType::ReceivedAttestations {
-                schema_uid: recognition_schema_uid,
-                allow_self_attestations: false,
-                trusted_attesters: Some(trusted_recognizers),
-            },
-            sources::eas::EasSummaryComputation::StringAbiDataField {
-                schema: "(string,uint256)".to_string(),
-                index: 0,
-            },
-            sources::eas::EasPointsComputation::UintAbiDataField {
-                schema: "(string,uint256)".to_string(),
-                index: 1,
-            },
-        ));
-
-        // Reward users for hyperstition market interactions
-
-        let hyperstition_trade_points: U256 = config_var("hyperstition_trade_points")
-            .ok_or_else(|| "Failed to get hyperstition_trade_points")?
-            .parse()
-            .map_err(|e| format!("Failed to parse hyperstition_trade_points as u256: {e}"))?;
-        registry.add_source(sources::interactions::InteractionsSource::new(
-            "prediction_market_trade",
-            hyperstition_trade_points,
-            true,
-        ));
-
-        let hyperstition_redeem_points: U256 = config_var("hyperstition_redeem_points")
-            .ok_or_else(|| "Failed to get hyperstition_redeem_points")?
-            .parse()
-            .map_err(|e| format!("Failed to parse hyperstition_redeem_points as u256: {e}"))?;
-        registry.add_source(sources::interactions::InteractionsSource::new(
-            "prediction_market_redeem",
-            hyperstition_redeem_points,
-            true,
-        ));
-
-        let hyperstition_market_makers = config_var("hyperstition_market_makers")
-            .ok_or_else(|| "Failed to get hyperstition_market_makers")?;
-        let hyperstition_points_pool: U256 = config_var("hyperstition_points_pool")
-            .ok_or_else(|| "Failed to get hyperstition_points_pool")?
-            .parse()
-            .map_err(|e| format!("Failed to parse hyperstition_points_pool as u256: {e}"))?;
-        for market in hyperstition_market_makers.split(",") {
-            registry.add_source(sources::hyperstition::HyperstitionSource::new(
-                market,
-                hyperstition_points_pool,
-            )?);
-        }
+        // println!("📋 Using recognition schema UID: {}", recognition_schema_uid);
+        // registry.add_source(sources::eas::EasSource::new(
+        //     sources::eas::EasSourceType::ReceivedAttestations {
+        //         schema_uid: recognition_schema_uid,
+        //         allow_self_attestations: false,
+        //         trusted_attesters: Some(trusted_recognizers),
+        //     },
+        //     sources::eas::EasSummaryComputation::StringAbiDataField {
+        //         schema: "(string,uint256)".to_string(),
+        //         index: 0,
+        //     },
+        //     sources::eas::EasPointsComputation::UintAbiDataField {
+        //         schema: "(string,uint256)".to_string(),
+        //         index: 1,
+        //     },
+        // ));
 
         // Add PageRank-based EAS points if configured
         if let (true, Some(pagerank_pool_str), Some(vouching_schema_uid)) = (

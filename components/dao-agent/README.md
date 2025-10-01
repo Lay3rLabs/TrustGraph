@@ -1,6 +1,8 @@
 # DAO Agent Component
 
-A WASI-based agent that controls a Gnosis Safe Module. This component uses an LLM to make financial decisions and execute transactions on behalf of a DAO.
+WARNING: highly experimental. Do not use in production or with real funds.
+
+A WASI-based agent that controls a Gnosis Safe Zodiac Module. This component uses an LLM to make financial decisions and execute transactions on behalf of a DAO.
 
 ## Overview
 

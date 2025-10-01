@@ -202,8 +202,142 @@ export function useAttestation() {
     }
   }
 
+  const revokeAttestation = async (uid: Hex, schemaUid: Hex) => {
+    if (!isConnected) {
+      throw new Error('Please connect your wallet')
+    }
+
+    setIsLoading(true)
+    setIsSuccess(false)
+    setError(null)
+    setHash(null)
+
+    try {
+      // Validate input formats
+      if (!uid.startsWith('0x') || uid.length !== 66) {
+        throw new Error(`Invalid attestation UID format: ${uid}`)
+      }
+      if (!schemaUid.startsWith('0x') || schemaUid.length !== 66) {
+        throw new Error(`Invalid schema UID format: ${schemaUid}`)
+      }
+
+      // Helper function to execute transaction with fresh nonce
+      const executeTransaction = async (retryCount = 0): Promise<void> => {
+        const nonce = await publicClient!.getTransactionCount({
+          address: address!,
+          blockTag: retryCount === 0 ? 'pending' : 'latest',
+        })
+
+        const revocationRequest = {
+          schema: schemaUid,
+          data: {
+            uid: uid,
+            value: 0n,
+          },
+        }
+
+        // Estimate gas and simulate
+        const gasEstimate = await publicClient!.estimateContractGas({
+          address: easAddress,
+          abi: easAbi,
+          functionName: 'revoke',
+          args: [revocationRequest],
+          account: address!,
+        })
+
+        await publicClient!.simulateContract({
+          address: easAddress as `0x${string}`,
+          abi: easAbi,
+          functionName: 'revoke',
+          args: [revocationRequest],
+          account: address!,
+        })
+
+        const gasPrice = await publicClient!.getGasPrice()
+
+        const [receipt] = await txToast({
+          tx: {
+            address: easAddress as `0x${string}`,
+            abi: easAbi,
+            functionName: 'revoke',
+            args: [revocationRequest],
+            gas: (gasEstimate * 120n) / 100n,
+            gasPrice: gasPrice,
+            nonce,
+            type: 'legacy',
+          },
+          onTransactionSent: setHash,
+          successMessage: 'Attestation revoked!',
+        })
+
+        console.log(`✅ Transaction confirmed: ${receipt.transactionHash}`)
+
+        setIsSuccess(true)
+
+        // Invalidate queries to refresh the attestation data
+        queryClient.invalidateQueries({ queryKey: attestationKeys.all })
+      }
+
+      // Execute transaction with retry logic
+      try {
+        await executeTransaction()
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message.toLowerCase() : ''
+
+        // Don't retry if user rejected the transaction
+        if (
+          errorMessage.includes('user rejected') ||
+          errorMessage.includes('user denied')
+        ) {
+          throw error
+        }
+
+        // Check if we should retry (actual nonce conflicts or Anvil errors)
+        const shouldRetry =
+          errorMessage.includes('nonce too low') ||
+          errorMessage.includes('nonce too high') ||
+          errorMessage.includes('transaction underpriced') ||
+          errorMessage.includes('replacement transaction underpriced') ||
+          errorMessage.includes('internal json-rpc error') ||
+          errorMessage.includes('internal error')
+
+        if (shouldRetry) {
+          console.warn(
+            'Transaction failed, retrying with fresh nonce:',
+            errorMessage
+          )
+
+          // Test Anvil responsiveness for internal errors
+          if (errorMessage.includes('internal')) {
+            try {
+              await publicClient!.getBlockNumber()
+              await new Promise((resolve) => setTimeout(resolve, 1000))
+            } catch (nodeErr) {
+              throw new Error(
+                'Anvil node appears unresponsive. Please restart anvil and try again.'
+              )
+            }
+          }
+
+          // Retry once with fresh nonce
+          await executeTransaction(1)
+        } else {
+          throw error
+        }
+      }
+    } catch (err) {
+      console.error('Error revoking attestation:', err)
+      setError(err instanceof Error ? err : new Error(String(err)))
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return {
     createAttestation,
+    revokeAttestation,
     isLoading,
     isSuccess,
     error,

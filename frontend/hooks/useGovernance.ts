@@ -9,14 +9,8 @@ import {
   useWriteContract,
 } from 'wagmi'
 
-import {
-  // enovaAddress,
-  merkleGovModuleAbi,
-  merkleGovModuleAddress,
-} from '@/lib/contracts'
+import { merkleGovModuleAbi, merkleGovModuleAddress } from '@/lib/contracts'
 import { txToast } from '@/lib/tx'
-
-const enovaAddress = '0x0000000000000000000000000000000000000000'
 
 // Types matching the MerkleGovModule contract structs
 export interface ProposalAction {
@@ -180,6 +174,8 @@ export function useGovernance() {
 
         const data: MerkleTreeData = await response.json()
         setMerkleData(data)
+
+        console.log(address, data)
 
         // Find voting power for current user
         if (address && data.tree) {
@@ -482,7 +478,6 @@ export function useGovernance() {
           proposalId: BigInt(proposalId),
           voteType: support,
           votingPower: userVotingPower.value,
-          rewardToken: enovaAddress,
           proof: userVotingPower.proof,
         })
 
@@ -501,7 +496,7 @@ export function useGovernance() {
             BigInt(proposalId),
             support,
             BigInt(userVotingPower.value),
-            enovaAddress,
+            '0x0000000000000000000000000000000000000000',
             userVotingPower.proof as `0x${string}`[],
           ],
           account: address,
@@ -520,7 +515,7 @@ export function useGovernance() {
               BigInt(proposalId),
               support,
               BigInt(userVotingPower.value),
-              enovaAddress,
+              '0x0000000000000000000000000000000000000000',
               userVotingPower.proof as `0x${string}`[],
             ],
             gas: (gasEstimate * 120n) / 100n,

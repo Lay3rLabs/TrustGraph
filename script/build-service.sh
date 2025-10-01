@@ -105,7 +105,7 @@ if [ -z "$PKG_NAMESPACE" ]; then
     fi
 fi
 
-eval "${BASE_CMD} init --name en0va"
+eval "${BASE_CMD} init --name wavs-gov"
 
 # Process component configurations from JSON file
 if [ -z "${COMPONENT_CONFIGS_FILE}" ] || [ ! -f "${COMPONENT_CONFIGS_FILE}" ]; then

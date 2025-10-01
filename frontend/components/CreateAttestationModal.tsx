@@ -103,10 +103,10 @@ export function CreateAttestationModal({
 
   const defaultTrigger = (
     <Button
-      className="mobile-terminal-btn !px-6 !py-2"
+      className="px-6 py-2"
       onClick={() => setIsOpen(true)}
     >
-      <span className="terminal-command text-xs">CREATE ATTESTATION</span>
+      Create Attestation
     </Button>
   )
 
@@ -123,30 +123,28 @@ export function CreateAttestationModal({
       <Modal
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
-        title="ATTESTATION CREATION PROTOCOL"
+        title="Create Attestation"
         className="max-w-2xl max-h-[90vh] overflow-y-auto"
       >
         <div className="space-y-1 mb-6">
-          <div className="system-message text-sm">
-            ◢◤ Create verifiable on-chain attestations ◢◤
+          <div className="text-muted-foreground text-sm">
+            Create verifiable on-chain attestations
           </div>
         </div>
 
         <div className="space-y-6">
           {/* Wallet Connection Status */}
           {!isConnected && (
-            <div className="border border-gray-700 bg-black/10 p-4 rounded-sm">
+            <div className="border border-border bg-muted p-4 rounded-md">
               <div className="flex flex-col space-y-3">
-                <div className="terminal-text text-center">
-                  WALLET CONNECTION REQUIRED
+                <div className="text-foreground text-center">
+                  Wallet connection required
                 </div>
                 <Button
                   onClick={handleConnect}
-                  className="mobile-terminal-btn !px-4 !py-2"
+                  className="px-4 py-2"
                 >
-                  <span className="terminal-command text-xs">
-                    CONNECT WALLET
-                  </span>
+                  Connect Wallet
                 </Button>
               </div>
             </div>
@@ -172,17 +170,17 @@ export function CreateAttestationModal({
                     }}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="terminal-dim text-xs">
-                          RECIPIENT ADDRESS
+                        <FormLabel className="text-sm font-medium">
+                          Recipient Address
                         </FormLabel>
                         <FormControl>
                           <Input
                             {...field}
                             placeholder="0x..."
-                            className="border-gray-700 bg-black/10 terminal-text text-xs"
+                            className="text-sm"
                           />
                         </FormControl>
-                        <FormMessage className="error-text text-xs" />
+                        <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
@@ -193,19 +191,19 @@ export function CreateAttestationModal({
                     rules={{ required: 'Schema selection is required' }}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="terminal-dim text-xs">
-                          SCHEMA TYPE
+                        <FormLabel className="text-sm font-medium">
+                          Schema Type
                         </FormLabel>
                         <Select
                           onValueChange={(value) => field.onChange(value)}
                           value={field.value}
                         >
                           <FormControl>
-                            <SelectTrigger className="border-gray-700 bg-black/10 terminal-text text-xs">
+                            <SelectTrigger className="text-sm">
                               <SelectValue placeholder="Select schema..." />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent className="border-gray-700 bg-black terminal-text">
+                          <SelectContent>
                             {SCHEMAS.map((schema) => (
                               <SelectItem key={schema.key} value={schema.key}>
                                 {schema.name}
@@ -213,14 +211,14 @@ export function CreateAttestationModal({
                             ))}
                           </SelectContent>
                         </Select>
-                        <FormMessage className="error-text text-xs" />
+                        <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
                 </div>
 
                 {selectedSchemaInfo && (
-                  <div className="terminal-dim text-xs">
+                  <div className="text-muted-foreground text-sm">
                     {SchemaManager.schemaHelperText(selectedSchemaInfo.key)}
                   </div>
                 )}
@@ -233,8 +231,8 @@ export function CreateAttestationModal({
                     rules={{ required: `Field ${name} is required` }}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="terminal-dim text-xs">
-                          {name.toUpperCase()}
+                        <FormLabel className="text-sm font-medium">
+                          {name.charAt(0).toUpperCase() + name.slice(1).replace(/([A-Z])/g, ' $1')}
                         </FormLabel>
 
                         <FormControl>
@@ -242,54 +240,52 @@ export function CreateAttestationModal({
                             <Input
                               {...field}
                               type="number"
-                              className="border-gray-700 bg-black/10 terminal-text text-xs"
+                              className="text-sm"
                               required
                             />
                           ) : (
                             <Textarea
                               {...field}
-                              className="border-gray-700 bg-black/10 terminal-text text-xs min-h-20"
+                              className="text-sm min-h-20"
                               required
                             />
                           )}
                         </FormControl>
-                        <FormMessage className="error-text text-xs" />
+                        <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
                 )) || (
-                  <p className="error-text text-xs">
+                  <p className="text-muted-foreground text-sm">
                     Select a schema to attest to.
                   </p>
                 )}
 
-                <div className="pt-4 border-t border-gray-700 space-y-3">
+                <div className="pt-4 border-t border-border space-y-3">
                   <div className="flex space-x-3">
                     <Button
                       type="button"
                       variant="outline"
                       onClick={() => setIsOpen(false)}
                       disabled={isLoading}
-                      className="!bg-black border-gray-700 text-gray-400 px-6 py-2 rounded-sm hover:text-gray-300 hover:border-gray-500"
+                      className="px-6 py-2"
                     >
-                      <span className="text-xs">CANCEL</span>
+                      Cancel
                     </Button>
                     <Button
                       type="submit"
                       disabled={isLoading}
-                      className="mobile-terminal-btn !px-6 !py-2 flex-1"
+                      className="px-6 py-2 flex-1"
                     >
-                      <span className="terminal-command text-xs">
-                        {isLoading ? 'CREATING...' : 'CREATE ATTESTATION'}
-                      </span>
+                      {isLoading ? 'Creating...' : 'Create Attestation'}
                     </Button>
                   </div>
 
                   {error && (
-                    <div className="error-text text-xs">
+                    <div className="text-destructive text-sm border border-destructive/50 bg-destructive/10 p-3 rounded-md">
                       {error.message.toLowerCase().includes('nonce') ? (
                         <div className="space-y-1">
-                          <div>⚠️ Nonce Conflict Detected</div>
+                          <div className="font-medium">⚠️ Nonce Conflict Detected</div>
                           <div className="text-xs opacity-75">
                             Local network transaction ordering issue - retrying
                             automatically...
@@ -302,14 +298,14 @@ export function CreateAttestationModal({
                           .toLowerCase()
                           .includes('internal error') ? (
                         <div className="space-y-1">
-                          <div>🔧 Anvil Node Error</div>
+                          <div className="font-medium">🔧 Anvil Node Error</div>
                           <div className="text-xs opacity-75">
                             Local blockchain node issue - attempting automatic
                             recovery...
                           </div>
-                          <div className="text-xs opacity-50 mt-1">
+                          <div className="text-xs opacity-75 mt-1">
                             If this persists, restart anvil with:{' '}
-                            <code className="bg-gray-800 px-1 rounded">
+                            <code className="bg-muted px-1 rounded">
                               make start-all-local
                             </code>
                           </div>
@@ -321,7 +317,7 @@ export function CreateAttestationModal({
                   )}
 
                   {isSuccess && hash && (
-                    <div className="terminal-text text-green-400 text-xs space-y-1">
+                    <div className="text-sm border border-green-600 bg-green-50 text-green-700 p-3 rounded-md">
                       <div>
                         ✓ Attestation created! Tx: {hash.slice(0, 10)}...
                         {hash.slice(-8)}
