@@ -1,6 +1,7 @@
 'use client'
 
 import { usePonderQuery } from '@ponder/react'
+import clsx from 'clsx'
 import type React from 'react'
 import { useAccount } from 'wagmi'
 
@@ -88,29 +89,28 @@ export const PredictionMarketTradeHistory: React.FC<
   ) : (
     <div className="border border-gray-600 rounded overflow-hidden min-w-0">
       <div className="overflow-x-auto">
-        <table className="w-full text-xs">
-          <thead>
-            <tr className="bg-gray-800/50 border-b border-gray-600">
-              <th className="text-left p-3 terminal-dim font-mono">TIME</th>
-              <th className="text-left p-3 terminal-dim font-mono">TRADE</th>
-              <th className="text-left p-3 terminal-dim font-mono">OUTCOME</th>
-              <th className="text-left p-3 terminal-dim font-mono">TRADER</th>
-            </tr>
-          </thead>
-          <tbody>
+        <div className="w-full text-xs">
+          <div className="w-full bg-gray-800/50 border-b border-gray-600 grid grid-cols-[1fr_1fr_1fr_1fr] text-left terminal-dim font-mono">
+            <p className="p-3">TIME</p>
+            <p className="p-3">TRADE</p>
+            <p className="p-3">OUTCOME</p>
+            <p className="p-3">TRADER</p>
+          </div>
+          <div className="w-full overflow-y-auto max-h-[min(32rem,90vh)]">
             {redemptionHistory.map((redemption, index) => {
               const isUserRedemption =
                 address &&
                 redemption.address.toLowerCase() === address.toLowerCase()
 
               return (
-                <tr
+                <div
                   key={redemption.id}
-                  className={`border-b border-gray-700/50 hover:bg-gray-800/30 transition-colors ${
-                    index % 2 === 0 ? 'bg-gray-900/20' : ''
-                  }`}
+                  className={clsx(
+                    'w-full grid grid-cols-[1fr_1fr_1fr_1fr] border-b border-gray-700/50 hover:bg-gray-800/30 transition-colors',
+                    index % 2 === 0 && 'bg-gray-900/20'
+                  )}
                 >
-                  <td className="p-3 terminal-text">
+                  <div className="p-3 terminal-text">
                     {new Date(
                       Number(redemption.timestamp) * 1000
                     ).toLocaleString([], {
@@ -119,8 +119,8 @@ export const PredictionMarketTradeHistory: React.FC<
                       hour: '2-digit',
                       minute: '2-digit',
                     })}
-                  </td>
-                  <td className="p-3 terminal-dim font-mono">
+                  </div>
+                  <div className="p-3 terminal-dim font-mono">
                     <span className={'!text-green'}>REDEEM</span>{' '}
                     {formatBigNumber(
                       redemption.payout,
@@ -128,9 +128,9 @@ export const PredictionMarketTradeHistory: React.FC<
                       true
                     )}{' '}
                     ${collateralSymbol}
-                  </td>
-                  <td></td>
-                  <td className="p-3 terminal-dim font-mono">
+                  </div>
+                  <div></div>
+                  <div className="p-3 terminal-dim font-mono">
                     {isUserRedemption ? (
                       <span className="font-semibold">YOU</span>
                     ) : (
@@ -139,21 +139,22 @@ export const PredictionMarketTradeHistory: React.FC<
                         {redemption.address.slice(-4)}
                       </>
                     )}
-                  </td>
-                </tr>
+                  </div>
+                </div>
               )
             })}
             {tradeHistory.map((trade, index) => {
               const isUserTrade =
                 address && trade.address.toLowerCase() === address.toLowerCase()
               return (
-                <tr
+                <div
                   key={trade.id}
-                  className={`border-b border-gray-700/50 hover:bg-gray-800/30 transition-colors ${
-                    index % 2 === 0 ? 'bg-gray-900/20' : ''
-                  }`}
+                  className={clsx(
+                    'w-full grid grid-cols-[1fr_1fr_1fr_1fr] border-b border-gray-700/50 hover:bg-gray-800/30 transition-colors',
+                    index % 2 === 0 && 'bg-gray-900/20'
+                  )}
                 >
-                  <td className="p-3 terminal-text">
+                  <div className="p-3 terminal-text">
                     {new Date(Number(trade.timestamp) * 1000).toLocaleString(
                       [],
                       {
@@ -163,8 +164,8 @@ export const PredictionMarketTradeHistory: React.FC<
                         minute: '2-digit',
                       }
                     )}
-                  </td>
-                  <td className="p-3 terminal-dim font-mono">
+                  </div>
+                  <div className="p-3 terminal-dim font-mono">
                     <span
                       className={
                         trade.type === 'buy' ? '!text-green' : '!text-pink'
@@ -179,8 +180,8 @@ export const PredictionMarketTradeHistory: React.FC<
                       true
                     )}{' '}
                     ${collateralSymbol}
-                  </td>
-                  <td className="p-3 terminal-text">
+                  </div>
+                  <div className="p-3 terminal-text">
                     <span
                       className={`px-2 py-1 rounded text-xs font-mono ${
                         trade.outcome === 'yes'
@@ -190,8 +191,8 @@ export const PredictionMarketTradeHistory: React.FC<
                     >
                       {trade.outcome.toUpperCase()}
                     </span>
-                  </td>
-                  <td className="p-3 terminal-dim font-mono">
+                  </div>
+                  <div className="p-3 terminal-dim font-mono">
                     {isUserTrade ? (
                       <span className="font-semibold">YOU</span>
                     ) : (
@@ -200,12 +201,12 @@ export const PredictionMarketTradeHistory: React.FC<
                         {trade.address.slice(-4)}
                       </>
                     )}
-                  </td>
-                </tr>
+                  </div>
+                </div>
               )
             })}
-          </tbody>
-        </table>
+          </div>
+        </div>
       </div>
     </div>
   )
