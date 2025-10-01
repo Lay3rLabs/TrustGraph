@@ -107,12 +107,39 @@ export const SymbientChat = ({
     setError(null)
 
     const undoWithError = (error: string) => {
-      setMessages((prev) => prev.slice(0, -1))
+      setMessages((prev) => {
+        const lastMessage = prev[prev.length - 1]
+        const isEmptyAssistantMessage =
+          lastMessage.role === 'assistant' && !lastMessage.content
+        return isEmptyAssistantMessage ? prev.slice(0, -1) : prev
+      })
       setUserInput(message)
       setError(error)
     }
 
-    setIsThinking(true)
+    const assistantMessageIndex = newMessages.length
+
+    let startedAssistantMessage = false
+    const startResponseIfNotStarted = () => {
+      if (startedAssistantMessage) {
+        return
+      }
+      startedAssistantMessage = true
+
+      // Add a placeholder assistant message that we'll update as we stream
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: '',
+        },
+      ])
+      setIsThinking(true)
+    }
+
+    // Start response in 300ms if chat request hasn't finished.
+    const timeout = setTimeout(startResponseIfNotStarted, 300)
+
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -121,6 +148,10 @@ export const SymbientChat = ({
         },
         body: JSON.stringify({ messages: newMessages }),
       })
+
+      // Start response if not already started.
+      clearTimeout(timeout)
+      startResponseIfNotStarted()
 
       if (!response.ok) {
         if (response.status === 429) {
@@ -143,16 +174,59 @@ export const SymbientChat = ({
         return
       }
 
-      const data = await response.json()
+      // Handle streaming response
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+      let accumulatedContent = ''
 
-      // Add assistant response to history
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: data.response,
-        },
-      ])
+      if (!reader) {
+        undoWithError('Failed to get response stream')
+        return
+      }
+
+      while (true) {
+        const { done, value } = await reader.read()
+
+        if (done) {
+          break
+        }
+
+        const chunk = decoder.decode(value, { stream: true })
+        const lines = chunk.split('\n')
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim()
+
+            if (data === '[DONE]') {
+              return
+            }
+
+            try {
+              const parsed = JSON.parse(data)
+              if (parsed.content) {
+                accumulatedContent += parsed.content
+
+                // Update the assistant message with accumulated content
+                setMessages((prev) => {
+                  const updated = [...prev]
+                  updated[assistantMessageIndex] = {
+                    role: 'assistant',
+                    content: accumulatedContent,
+                  }
+                  return updated
+                })
+              }
+            } catch (parseError) {
+              // Ignore parsing errors for incomplete chunks
+              console.debug(
+                'Parse error (likely incomplete chunk):',
+                parseError
+              )
+            }
+          }
+        }
+      }
     } catch (error) {
       console.error('Chat error:', error)
       undoWithError('Failed to get response')
@@ -223,23 +297,17 @@ export const SymbientChat = ({
                 'px-2 sm:px-4 space-y-2 sm:space-y-4 text-primary-foreground/60'
               )}
             >
-              <Markdown textFade>{message.content}</Markdown>
+              {message.content ? (
+                <Markdown textFade>{message.content}</Markdown>
+              ) : (
+                message.role === 'assistant' &&
+                isThinking &&
+                index === messages.length && <BlinkingCursor />
+              )}
             </div>
           </div>
         ))}
         <div ref={messagesEndRef} />
-
-        {/* Loading indicator */}
-        {isThinking && (
-          <div className="space-y-4">
-            <div className="text-primary-foreground/80">
-              <span>en0va:~$</span>
-            </div>
-            <div className="pl-4 space-y-4 text-primary-foreground/60">
-              <BlinkingCursor />
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Chat Input */}

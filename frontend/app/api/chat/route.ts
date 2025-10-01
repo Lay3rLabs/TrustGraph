@@ -235,32 +235,49 @@ export async function POST(request: NextRequest) {
       ),
     ]
 
-    const chatCompletion = await client.chat.completions.create({
+    const stream = await client.chat.completions.create({
       model,
       messages,
       max_tokens: maxTokens,
       temperature,
+      stream: true,
     })
 
-    const responseText = chatCompletion.choices[0]?.message?.content || ''
-
-    return NextResponse.json(
-      {
-        response: responseText,
-        success: true,
-        provider: process.env.MODEL_PROVIDER || 'anthropic',
-        model: model,
+    // Create a ReadableStream to handle the streaming response
+    const encoder = new TextEncoder()
+    const readable = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of stream) {
+            const content = chunk.choices[0]?.delta?.content || ''
+            if (content) {
+              // Send the content as Server-Sent Events format
+              const data = `data: ${JSON.stringify({ content })}\n\n`
+              controller.enqueue(encoder.encode(data))
+            }
+          }
+          // Send the final event to indicate completion
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+          controller.close()
+        } catch (error) {
+          console.error('Streaming error:', error)
+          controller.error(error)
+        }
       },
-      {
-        headers: {
-          'X-RateLimit-Limit': RATE_LIMIT_REQUESTS.toString(),
-          'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-          'X-RateLimit-Reset': Math.ceil(
-            rateLimitResult.resetTime / 1000
-          ).toString(),
-        },
-      }
-    )
+    })
+
+    return new Response(readable, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+        'X-RateLimit-Limit': RATE_LIMIT_REQUESTS.toString(),
+        'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+        'X-RateLimit-Reset': Math.ceil(
+          rateLimitResult.resetTime / 1000
+        ).toString(),
+      },
+    })
   } catch (error) {
     console.error('Chat API error:', error)
     return NextResponse.json(
