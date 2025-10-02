@@ -120,15 +120,15 @@ export function ProposalCard({
   }, [onExecute, proposalId])
 
   return (
-    <div className="border border-gray-700 bg-black/10 p-6 rounded-sm space-y-4">
+    <div className="border border-gray-300 bg-white p-6 rounded-sm space-y-4 shadow-sm">
       {/* Header */}
       <div className="space-y-2">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
-            <div className="ascii-art-title text-lg">
+            <div className="ascii-art-title text-lg text-gray-900">
               PROPOSAL #{proposalId}
             </div>
-            <div className="terminal-dim text-xs">
+            <div className="terminal-dim text-xs text-gray-600">
               Proposer: {proposal.proposer.slice(0, 10)}...
               {proposal.proposer.slice(-8)}
             </div>
@@ -137,67 +137,67 @@ export function ProposalCard({
             <div
               className={`text-xs px-2 py-1 rounded border ${
                 isActive
-                  ? 'border-green-700 bg-green-900/20 text-green-400'
+                  ? 'border-green-500 bg-green-50 text-green-700'
                   : state === ProposalState.Succeeded
-                  ? 'border-blue-700 bg-blue-900/20 text-blue-400'
+                  ? 'border-blue-500 bg-blue-50 text-blue-700'
                   : state === ProposalState.Executed
-                  ? 'border-purple-700 bg-purple-900/20 text-purple-400'
-                  : 'border-gray-700 bg-gray-900/20 text-gray-400'
+                  ? 'border-purple-500 bg-purple-50 text-purple-700'
+                  : 'border-gray-400 bg-gray-50 text-gray-700'
               }`}
             >
               {getProposalStateText(state)}
             </div>
             {getTimeLeft() && (
-              <div className="terminal-dim text-xs">{getTimeLeft()}</div>
+              <div className="terminal-dim text-xs text-gray-600">{getTimeLeft()}</div>
             )}
           </div>
         </div>
 
-        <div className="terminal-text text-sm">{proposal.description}</div>
+        <div className="terminal-text text-sm text-gray-800">{proposal.description}</div>
       </div>
 
       {/* Success Message */}
       {successMessage && (
-        <div className="border border-green-700 bg-green-900/10 p-3 rounded-sm">
-          <div className="text-green-400 text-sm">✓ {successMessage}</div>
+        <div className="border border-green-500 bg-green-50 p-3 rounded-sm">
+          <div className="text-green-700 text-sm">✓ {successMessage}</div>
         </div>
       )}
 
       {/* Actions */}
       {actions.length > 0 && (
-        <div className="border-t border-gray-700 pt-4 space-y-3">
-          <div className="terminal-bright text-sm">PROPOSED ACTIONS</div>
+        <div className="border-t border-gray-300 pt-4 space-y-3">
+          <div className="terminal-bright text-sm font-semibold text-gray-900">PROPOSED ACTIONS</div>
           {actions.map((action, index) => (
             <div
               key={index}
-              className="border border-gray-700 p-3 rounded-sm space-y-2"
+              className="border border-gray-300 bg-gray-50 p-3 rounded-sm space-y-2"
             >
               <div className="flex justify-between items-start">
-                <div className="terminal-dim text-xs">ACTION #{index + 1}</div>
+                <div className="terminal-dim text-xs text-gray-600">ACTION #{index + 1}</div>
                 {action.value !== '0' && (
-                  <div className="terminal-text text-xs">
+                  <div className="terminal-text text-xs text-gray-800">
                     {formatVotingPower(action.value)} ETH
                   </div>
                 )}
               </div>
               <div className="space-y-1">
-                <div className="terminal-dim text-xs">TARGET</div>
-                <div className="terminal-text text-sm font-mono break-all">
+                <div className="terminal-dim text-xs text-gray-600">TARGET</div>
+                <div className="terminal-text text-sm font-mono break-all text-gray-800">
                   {action.target}
                 </div>
               </div>
               {action.description && (
                 <div className="space-y-1">
-                  <div className="terminal-dim text-xs">DESCRIPTION</div>
-                  <div className="terminal-text text-sm">
+                  <div className="terminal-dim text-xs text-gray-600">DESCRIPTION</div>
+                  <div className="terminal-text text-sm text-gray-800">
                     {action.description}
                   </div>
                 </div>
               )}
               {action.data !== '0x' && (
                 <div className="space-y-1">
-                  <div className="terminal-dim text-xs">CALLDATA</div>
-                  <div className="terminal-text text-xs font-mono break-all">
+                  <div className="terminal-dim text-xs text-gray-600">CALLDATA</div>
+                  <div className="terminal-text text-xs font-mono break-all text-gray-800">
                     {action.data.slice(0, 100)}...
                   </div>
                 </div>
@@ -208,79 +208,79 @@ export function ProposalCard({
       )}
 
       {/* Vote Results */}
-      <div className="border-t border-gray-700 pt-4 space-y-3">
-        <div className="terminal-bright text-sm">VOTING RESULTS</div>
+      <div className="border-t border-gray-300 pt-4 space-y-3">
+        <div className="terminal-bright text-sm font-semibold text-gray-900">VOTING RESULTS</div>
         <div className="grid grid-cols-3 gap-4 text-xs">
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="terminal-dim">FOR</span>
-              <span className="terminal-text">
-                {formatVotingPower(proposal.forVotes.toString())}
+              <span className="terminal-dim text-gray-600">FOR</span>
+              <span className="terminal-text text-gray-800">
+                {proposal.forVotes.toString()}
               </span>
             </div>
-            <div className="bg-gray-700 h-2 rounded">
+            <div className="bg-gray-200 h-2 rounded">
               <div
-                className="bg-green-500 h-2 rounded transition-all"
+                className="bg-green-600 h-2 rounded transition-all"
                 style={{ width: `${forPercentage}%` }}
               />
             </div>
-            <div className="terminal-dim text-center">
+            <div className="terminal-dim text-center text-gray-600">
               {forPercentage.toFixed(1)}%
             </div>
           </div>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="terminal-dim">AGAINST</span>
-              <span className="terminal-text">
-                {formatVotingPower(proposal.againstVotes.toString())}
+              <span className="terminal-dim text-gray-600">AGAINST</span>
+              <span className="terminal-text text-gray-800">
+                {proposal.againstVotes.toString()}
               </span>
             </div>
-            <div className="bg-gray-700 h-2 rounded">
+            <div className="bg-gray-200 h-2 rounded">
               <div
-                className="bg-red-500 h-2 rounded transition-all"
+                className="bg-red-600 h-2 rounded transition-all"
                 style={{ width: `${againstPercentage}%` }}
               />
             </div>
-            <div className="terminal-dim text-center">
+            <div className="terminal-dim text-center text-gray-600">
               {againstPercentage.toFixed(1)}%
             </div>
           </div>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="terminal-dim">ABSTAIN</span>
-              <span className="terminal-text">
-                {formatVotingPower(proposal.abstainVotes.toString())}
+              <span className="terminal-dim text-gray-600">ABSTAIN</span>
+              <span className="terminal-text text-gray-800">
+                {proposal.abstainVotes.toString()}
               </span>
             </div>
-            <div className="bg-gray-700 h-2 rounded">
+            <div className="bg-gray-200 h-2 rounded">
               <div
-                className="bg-yellow-500 h-2 rounded transition-all"
+                className="bg-yellow-600 h-2 rounded transition-all"
                 style={{ width: `${abstainPercentage}%` }}
               />
             </div>
-            <div className="terminal-dim text-center">
+            <div className="terminal-dim text-center text-gray-600">
               {abstainPercentage.toFixed(1)}%
             </div>
           </div>
         </div>
-        <div className="terminal-dim text-xs text-center">
-          Total: {formatVotingPower(totalVotes.toString())} votes
+        <div className="terminal-dim text-xs text-center text-gray-600">
+          Total: {totalVotes.toString()} votes
         </div>
       </div>
 
       {/* Voting Buttons */}
       {canVote && (
-        <div className="border-t border-gray-700 pt-4 space-y-3">
-          <div className="terminal-bright text-sm">CAST YOUR VOTE</div>
-          <div className="terminal-dim text-xs">
-            Your voting power: {formatVotingPower(userVotingPower!)}
+        <div className="border-t border-gray-300 pt-4 space-y-3">
+          <div className="terminal-bright text-sm font-semibold text-gray-900">CAST YOUR VOTE</div>
+          <div className="terminal-dim text-xs text-gray-600">
+            Your voting power: {userVotingPower!}
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
             <Button
               onClick={() => handleVote(VoteType.For)}
               disabled={isVoting || isLoading}
               variant="outline"
-              className="flex-1 border-green-700 text-green-400 hover:bg-green-900/20 mobile-terminal-btn !px-4 !py-2"
+              className="flex-1 border-green-600 text-green-700 hover:bg-green-50 mobile-terminal-btn !px-4 !py-2"
             >
               <span className="terminal-command text-xs">VOTE FOR</span>
             </Button>
@@ -288,7 +288,7 @@ export function ProposalCard({
               onClick={() => handleVote(VoteType.Against)}
               disabled={isVoting || isLoading}
               variant="outline"
-              className="flex-1 border-red-700 text-red-400 hover:bg-red-900/20 mobile-terminal-btn !px-4 !py-2"
+              className="flex-1 border-red-600 text-red-700 hover:bg-red-50 mobile-terminal-btn !px-4 !py-2"
             >
               <span className="terminal-command text-xs">VOTE AGAINST</span>
             </Button>
@@ -296,7 +296,7 @@ export function ProposalCard({
               onClick={() => handleVote(VoteType.Abstain)}
               disabled={isVoting || isLoading}
               variant="outline"
-              className="flex-1 border-gray-700 text-gray-400 hover:bg-gray-900/20 mobile-terminal-btn !px-4 !py-2"
+              className="flex-1 border-gray-500 text-gray-700 hover:bg-gray-50 mobile-terminal-btn !px-4 !py-2"
             >
               <span className="terminal-command text-xs">ABSTAIN</span>
             </Button>
@@ -306,9 +306,9 @@ export function ProposalCard({
 
       {/* Admin Actions */}
       {isSucceeded && (
-        <div className="border-t border-gray-700 pt-4 space-y-3">
-          <div className="terminal-bright text-sm">PROPOSAL EXECUTION</div>
-          <div className="terminal-dim text-xs mb-3">
+        <div className="border-t border-gray-300 pt-4 space-y-3">
+          <div className="terminal-bright text-sm font-semibold text-gray-900">PROPOSAL EXECUTION</div>
+          <div className="terminal-dim text-xs mb-3 text-gray-600">
             Succeeded proposals can be executed immediately
           </div>
           <div className="flex gap-3">
@@ -317,7 +317,7 @@ export function ProposalCard({
                 onClick={handleExecute}
                 disabled={isLoading}
                 variant="outline"
-                className="border-purple-700 text-purple-400 hover:bg-purple-900/20 mobile-terminal-btn !px-4 !py-2"
+                className="border-purple-600 text-purple-700 hover:bg-purple-50 mobile-terminal-btn !px-4 !py-2"
               >
                 <span className="terminal-command text-xs">
                   EXECUTE PROPOSAL
@@ -330,9 +330,9 @@ export function ProposalCard({
 
       {/* No Voting Power Message */}
       {isActive && (!userVotingPower || Number(userVotingPower) === 0) && (
-        <div className="border-t border-gray-700 pt-4 text-center">
-          <div className="terminal-dim text-sm">NO VOTING POWER</div>
-          <div className="system-message text-xs mt-2">
+        <div className="border-t border-gray-300 pt-4 text-center">
+          <div className="terminal-dim text-sm text-gray-600">NO VOTING POWER</div>
+          <div className="system-message text-xs mt-2 text-gray-700">
             ◆ YOU NEED VOTING POWER TO PARTICIPATE IN GOVERNANCE ◆
           </div>
         </div>

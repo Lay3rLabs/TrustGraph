@@ -1,5 +1,9 @@
 # The Plan
 
+## Frontend
+- formatVotingPower is baddly named
+- create proposal doesn't submit amount as big int
+
 ## Indexer TODO
 
 We need to extend the Ponder indexer to index Merkle Tree data when the MerkleSnapshot contract updates.
@@ -20,3 +24,7 @@ We need to be able to show a list of network membership with:
 - [ ] A DAO needs to be able to update it's own service configuration (related to Gyser?)
 - [ ] Make contract proxies
 - [ ] AI audit
+
+### Changes needed
+- [ ] Merkle snapshot needs to have some notion of "total", the the total value (very much needed in the voting power case)
+- [ ] How do we make a nice api that works for rewards (which has reward token for multitoken distribution), governance and potentially other usecases?

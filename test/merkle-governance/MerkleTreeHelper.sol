@@ -11,16 +11,15 @@ import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProo
 contract MerkleTreeHelper {
     struct AccountData {
         address account;
-        address rewardToken;
         uint256 votingPower;
     }
 
     /**
      * @notice Generate a merkle leaf for an account
-     * @dev Uses double keccak256 pattern matching RewardDistributor
+     * @dev Uses double keccak256 pattern for merkle tree construction
      */
-    function generateLeaf(address account, address rewardToken, uint256 votingPower) public pure returns (bytes32) {
-        return keccak256(bytes.concat(keccak256(abi.encode(account, rewardToken, votingPower))));
+    function generateLeaf(address account, uint256 votingPower) public pure returns (bytes32) {
+        return keccak256(bytes.concat(keccak256(abi.encode(account, votingPower))));
     }
 
     /**
@@ -34,7 +33,7 @@ contract MerkleTreeHelper {
 
         if (accounts.length == 1) {
             bytes32[] memory tree = new bytes32[](1);
-            tree[0] = generateLeaf(accounts[0].account, accounts[0].rewardToken, accounts[0].votingPower);
+            tree[0] = generateLeaf(accounts[0].account, accounts[0].votingPower);
             return (tree[0], tree);
         }
 
@@ -43,7 +42,7 @@ contract MerkleTreeHelper {
         if (accounts.length == 5) {
             bytes32[] memory leaves = new bytes32[](5);
             for (uint256 i = 0; i < 5; i++) {
-                leaves[i] = generateLeaf(accounts[i].account, accounts[i].rewardToken, accounts[i].votingPower);
+                leaves[i] = generateLeaf(accounts[i].account, accounts[i].votingPower);
             }
 
             // Build tree manually for 5 leaves
@@ -75,7 +74,7 @@ contract MerkleTreeHelper {
         if (accounts.length == 2) {
             bytes32[] memory leaves = new bytes32[](2);
             for (uint256 i = 0; i < 2; i++) {
-                leaves[i] = generateLeaf(accounts[i].account, accounts[i].rewardToken, accounts[i].votingPower);
+                leaves[i] = generateLeaf(accounts[i].account, accounts[i].votingPower);
             }
 
             root = _hashPair(leaves[0], leaves[1]);
@@ -113,7 +112,7 @@ contract MerkleTreeHelper {
         if (accounts.length == 5) {
             bytes32[] memory leaves = new bytes32[](5);
             for (uint256 i = 0; i < 5; i++) {
-                leaves[i] = generateLeaf(accounts[i].account, accounts[i].rewardToken, accounts[i].votingPower);
+                leaves[i] = generateLeaf(accounts[i].account, accounts[i].votingPower);
             }
 
             bytes32 node01 = _hashPair(leaves[0], leaves[1]);
@@ -159,9 +158,9 @@ contract MerkleTreeHelper {
         if (accounts.length == 2) {
             proof = new bytes32[](1);
             if (targetIndex == 0) {
-                proof[0] = generateLeaf(accounts[1].account, accounts[1].rewardToken, accounts[1].votingPower);
+                proof[0] = generateLeaf(accounts[1].account, accounts[1].votingPower);
             } else {
-                proof[0] = generateLeaf(accounts[0].account, accounts[0].rewardToken, accounts[0].votingPower);
+                proof[0] = generateLeaf(accounts[0].account, accounts[0].votingPower);
             }
             return proof;
         }
@@ -173,19 +172,16 @@ contract MerkleTreeHelper {
      * @notice Verify a merkle proof
      * @param root The merkle root
      * @param account The account address
-     * @param rewardToken The reward token address
      * @param votingPower The voting power amount
      * @param proof The merkle proof
      * @return valid Whether the proof is valid
      */
-    function verifyProof(
-        bytes32 root,
-        address account,
-        address rewardToken,
-        uint256 votingPower,
-        bytes32[] memory proof
-    ) public pure returns (bool valid) {
-        bytes32 leaf = generateLeaf(account, rewardToken, votingPower);
+    function verifyProof(bytes32 root, address account, uint256 votingPower, bytes32[] memory proof)
+        public
+        pure
+        returns (bool valid)
+    {
+        bytes32 leaf = generateLeaf(account, votingPower);
         return MerkleProof.verify(proof, root, leaf);
     }
 

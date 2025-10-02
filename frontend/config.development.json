@@ -5,30 +5,30 @@
     "pointsEvents": "http://localhost:9090",
     "ipfsGateway": "http://localhost:8080/ipfs/"
   },
-  "wavsServiceId": "e7de13420d2f97b66314637a1bb5857be9b219d5678ba9ea7ee51607f96ab523",
+  "wavsServiceId": "fd9708757b542fc2bb793242270a0e7989b5413a9ed3d8f0f4db15b9bf8c7c09",
   "contracts": {
-    "IWavsServiceManager": "0x9662296a4a5a149026a98ad64785749cea980572",
-    "WavsIndexer": "0xA581642C83c9dCe9E005053F775008822acf1046",
-    "EASAttestTrigger": "0x256716589F60183f049C2D35Fa595C015b7FBcbe",
-    "WavsAttester": "0x24E9F51dE726933C3cCCda83fF13Dd06dC4BfFCf",
-    "EAS": "0x619122e56264bfB0a4Cd3cf536F7347E1DD5952e",
-    "EASIndexerResolver": "0x059B2041C1cFe2Be2859363328bA12d60A36fB57",
-    "SchemaRegistrar": "0x84AbaFf00fFfA8A80087D4B88784eeF08C39b512",
-    "SchemaRegistry": "0xEf69d53f6F9A860f706573Ae2388bFc5539762b1",
-    "MerkleSnapshot": "0x3D652975E472f4E65600432b716b8d6a32C6A4c3",
-    "RewardDistributor": "0x5A778a0c90a8D713AeB99D944B9A0b2513AcE5D0",
-    "TEST": "0xc1b67F7Df872F61710e25F0fE3c0Abc8992De359",
-    "GnosisSafe": "0x8A291E2222B0cF9E0fAf867cCd757323bfb22713",
-    "GnosisSafeProxy": "0x0Dc2230374D715F93A2CBA3DdBc62C4Df854e5CF",
-    "MerkleGovModule": "0x79B5E8aF93327317bd049553893913Fb93efD7d6",
-    "SignerManagerModule": "0xdc9275942e53cDf9a0902234766228f5E26f59A9"
+    "IWavsServiceManager": "0x9a96d659c16bdf83f9eed127e9eaaa97639aa055",
+    "WavsIndexer": "0xa44E7B70dbD9916ED9aC6dAF7fB3DD5A3d71d812",
+    "EASAttestTrigger": "0x439DcAa42cf8E82089cd27Ece6F8EEC6db7EEAc9",
+    "WavsAttester": "0x45C9889E09383daceE8aaEE181bD9A3848451461",
+    "EAS": "0xeA212f5518359A75a253DC0333bc07BC7D05B403",
+    "EASIndexerResolver": "0x56F02291ab74AA78336946B2003d9279b016949B",
+    "SchemaRegistrar": "0x95d0eA2F779eE959CbA2E8099207bF2E83C540A0",
+    "SchemaRegistry": "0x24C8cCE077d90BD443F7D35EDb91e6f9dBf9A10B",
+    "MerkleSnapshot": "0x706281A8d8DEA65Ef65449aBD721A79e2a069A90",
+    "RewardDistributor": "0x998Eb1dd66cd7ded9052B69198a9B3df4cF252b4",
+    "TEST": "0xE27a5d18c24E6F62518A1599d35210C245900F65",
+    "GnosisSafe": "0x0fBb67F26DC7bAA3e8E8b5b8F57a486D5D8B0749",
+    "GnosisSafeProxy": "0xa5D760550ca4B24E133267F28014e3eaf0C1399C",
+    "MerkleGovModule": "0x6eFF713AE0A3DdaDB8F9FcdD8AC9Da791122724b",
+    "SignerManagerModule": "0x9c8034e778Cc2de7483867cbF8BE1f5808CE0b43"
   },
   "schemas": {
     "basic": {
-      "uid": "0xa6ecff1943434c582f993cf8477adec15a4f7e34f9d768b6fe659f0803321ca4",
+      "uid": "0x06ee33a5deadef7b4e3f947ab555f8b79aaa159145bd7f53114406825c915816",
       "name": "Basic",
       "description": "General purpose attestation",
-      "resolver": "0x059B2041C1cFe2Be2859363328bA12d60A36fB57",
+      "resolver": "0x56F02291ab74AA78336946B2003d9279b016949B",
       "revocable": true,
       "schema": "bytes32 triggerId,string data,uint256 timestamp",
       "fields": [
@@ -47,17 +47,10 @@
       ]
     },
     "compute": {
-<<<<<<< HEAD
       "uid": "0x0d25a50b6891c37edefbf88da4a91516d0eb9b45c7b29a4d2e2994584c61400c",
       "name": "Compute",
       "description": "Computational verification",
       "resolver": "0x6bb38cAc051ced245Fab4C0dCfE69bed38DA7758",
-=======
-      "uid": "0xb80677949c9772d17d97aac9c68e795af6f971669ccc2e4d4a3127eedf3af425",
-      "name": "Compute",
-      "description": "Computational verification",
-      "resolver": "0x059B2041C1cFe2Be2859363328bA12d60A36fB57",
->>>>>>> f9dd41f (Trust Graph)
       "revocable": true,
       "schema": "bytes32 triggerId,string computation,bytes result,uint256 timestamp,address operator",
       "fields": [
@@ -84,17 +77,10 @@
       ]
     },
     "isTrue": {
-<<<<<<< HEAD
       "uid": "0xe5704bdbf062a384554dbf73aa261137c3b7bab011d2f73c62d5d122ec6d7b95",
       "name": "IsTrue",
       "description": "Boolean truth assertion",
       "resolver": "0x6bb38cAc051ced245Fab4C0dCfE69bed38DA7758",
-=======
-      "uid": "0x61b327bc14a4c413d76fd7df0565da70cb9da8a2aa797a1481a1a11ce0972065",
-      "name": "IsTrue",
-      "description": "Boolean truth assertion",
-      "resolver": "0x059B2041C1cFe2Be2859363328bA12d60A36fB57",
->>>>>>> f9dd41f (Trust Graph)
       "revocable": true,
       "schema": "bool isTrue",
       "fields": [
@@ -105,17 +91,10 @@
       ]
     },
     "like": {
-<<<<<<< HEAD
       "uid": "0xea3f1b829f92e41a6a89be82b94698a763aaf58e9b14ea45ee25df8dcee2f101",
       "name": "Like",
       "description": "Simple like/dislike assertion",
       "resolver": "0x4E960CF0c7ECaA2F951e3Ec247B0B40531626A37",
-=======
-      "uid": "0x40635404a5b4ce1630750318cd84c88c70871b4ae082bdf9ce8bb1141fc39923",
-      "name": "Like",
-      "description": "Simple like/dislike assertion",
-      "resolver": "0x45367bd23cf555443a10a3A114Fb7FA0C100aEBd",
->>>>>>> f9dd41f (Trust Graph)
       "revocable": true,
       "schema": "bool like",
       "fields": [
@@ -126,17 +105,10 @@
       ]
     },
     "recognition": {
-<<<<<<< HEAD
       "uid": "0xe3f1b4d68e01f1efcb7ddf7a48342f908a97545b4b9ac05ed393d243d0a7d71f",
       "name": "Recognition",
       "description": "Recognize contributions",
       "resolver": "0x6bb38cAc051ced245Fab4C0dCfE69bed38DA7758",
-=======
-      "uid": "0xe6edce6b507df8c40b7704865f939d2be64c4806009d4550794812f297988f5f",
-      "name": "Recognition",
-      "description": "Recognize contributions",
-      "resolver": "0x059B2041C1cFe2Be2859363328bA12d60A36fB57",
->>>>>>> f9dd41f (Trust Graph)
       "revocable": true,
       "schema": "string reason,uint256 value",
       "fields": [
@@ -151,17 +123,10 @@
       ]
     },
     "statement": {
-<<<<<<< HEAD
       "uid": "0x072f1ddd76566a68ce7bb4b3ac5934c3237db01ad5b7db9ba675fbeda11765c8",
       "name": "Statement",
       "description": "Make an arbitrary statement",
       "resolver": "0x6bb38cAc051ced245Fab4C0dCfE69bed38DA7758",
-=======
-      "uid": "0x84e18f0d4de5319361f59d31d1f7eca341fe168c9ca7ccefaaa4e4849b2ee3ec",
-      "name": "Statement",
-      "description": "Make an arbitrary statement",
-      "resolver": "0x059B2041C1cFe2Be2859363328bA12d60A36fB57",
->>>>>>> f9dd41f (Trust Graph)
       "revocable": true,
       "schema": "string statement",
       "fields": [
@@ -172,17 +137,10 @@
       ]
     },
     "vouching": {
-<<<<<<< HEAD
       "uid": "0xbd4a0330195fd810e1265cfc4455a914c22d0a707734b7225387655bea90dbb9",
       "name": "Vouching",
       "description": "Weighted endorsement",
       "resolver": "0x6bb38cAc051ced245Fab4C0dCfE69bed38DA7758",
-=======
-      "uid": "0xb2e34d34e54ed412c8673e3bf53dde6f38d0b2aaa79b6517bfbd2d960bd85540",
-      "name": "Vouching",
-      "description": "Weighted endorsement",
-      "resolver": "0x059B2041C1cFe2Be2859363328bA12d60A36fB57",
->>>>>>> f9dd41f (Trust Graph)
       "revocable": true,
       "schema": "uint256 weight",
       "fields": [

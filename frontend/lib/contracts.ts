@@ -3593,7 +3593,6 @@ export const merkleGovModuleAbi = [
         type: 'uint8',
       },
       { name: 'votingPower', internalType: 'uint256', type: 'uint256' },
-      { name: 'rewardToken', internalType: 'address', type: 'address' },
       { name: 'proof', internalType: 'bytes32[]', type: 'bytes32[]' },
     ],
     name: 'castVote',
@@ -6203,7 +6202,7 @@ export const testAbi = [
   },
 ] as const
 
-export const testAddress = '0xc1b67F7Df872F61710e25F0fE3c0Abc8992De359' as const
+export const testAddress = '0xE27a5d18c24E6F62518A1599d35210C245900F65' as const
 
 export const testConfig = { address: testAddress, abi: testAbi } as const
 

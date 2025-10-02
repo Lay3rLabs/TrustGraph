@@ -44,11 +44,11 @@ export default function NetworkPage() {
 
       {/* Wallet Connection */}
       {!isConnected && (
-        <div className="border border-gray-700 bg-black/10 p-6 rounded-sm text-center space-y-4">
-          <div className="terminal-text text-lg">
+        <div className="border border-gray-300 bg-white p-6 rounded-sm text-center space-y-4 shadow-sm">
+          <div className="terminal-text text-lg text-gray-900">
             WALLET CONNECTION REQUIRED
           </div>
-          <div className="terminal-dim text-sm">
+          <div className="terminal-dim text-sm text-gray-600">
             Connect your wallet to view the Merkle
           </div>
           <Button
@@ -65,10 +65,10 @@ export default function NetworkPage() {
           {/* Loading State */}
           {isLoading && (
             <div className="text-center py-8">
-              <div className="terminal-bright text-sm">
+              <div className="terminal-bright text-sm text-gray-900">
                 ◉ LOADING MERKLE DATA ◉
               </div>
-              <div className="terminal-dim text-xs mt-2">
+              <div className="terminal-dim text-xs mt-2 text-gray-600">
                 Fetching latest reputation scores from IPFS...
               </div>
             </div>
@@ -76,8 +76,8 @@ export default function NetworkPage() {
 
           {/* Error State */}
           {error && (
-            <div className="border border-red-700 bg-red-900/10 p-4 rounded-sm">
-              <div className="error-text text-sm">⚠️ {error}</div>
+            <div className="border border-red-500 bg-red-50 p-4 rounded-sm">
+              <div className="error-text text-sm text-red-700">⚠️ {error}</div>
               <Button
                 onClick={refresh}
                 className="mt-3 mobile-terminal-btn !px-4 !py-2"
@@ -90,32 +90,32 @@ export default function NetworkPage() {
           {/* Statistics */}
           {!isLoading && MerkleData && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="border border-gray-700 bg-black/10 p-4 rounded-sm">
+              <div className="border border-gray-300 bg-white p-4 rounded-sm shadow-sm">
                 <div className="space-y-2">
-                  <div className="terminal-dim text-xs">MEMBERS</div>
-                  <div className="terminal-bright text-2xl">
+                  <div className="terminal-dim text-xs text-gray-600">MEMBERS</div>
+                  <div className="terminal-bright text-2xl text-gray-900">
                     {totalParticipants}
                   </div>
                 </div>
               </div>
 
-              <div className="border border-gray-700 bg-black/10 p-4 rounded-sm">
+              <div className="border border-gray-300 bg-white p-4 rounded-sm shadow-sm">
                 <div className="space-y-2">
-                  <div className="terminal-dim text-xs">
+                  <div className="terminal-dim text-xs text-gray-600">
                     TOTAL REPUTATION POINTS
                   </div>
-                  <div className="terminal-bright text-2xl">
+                  <div className="terminal-bright text-2xl text-gray-900">
                     {formatAmount(totalRewards)}
                   </div>
                 </div>
               </div>
 
-              <div className="border border-gray-700 bg-black/10 p-4 rounded-sm">
+              <div className="border border-gray-300 bg-white p-4 rounded-sm shadow-sm">
                 <div className="space-y-2">
-                  <div className="terminal-dim text-xs">
+                  <div className="terminal-dim text-xs text-gray-600">
                     AVERAGE TRUST SCORE
                   </div>
-                  <div className="terminal-bright text-2xl">
+                  <div className="terminal-bright text-2xl text-gray-900">
                     {totalParticipants > 0
                       ? formatAmount(
                           (
@@ -131,12 +131,12 @@ export default function NetworkPage() {
 
           {/* Merkle Table */}
           {!isLoading && MerkleData && MerkleData.length > 0 && (
-            <div className="border border-gray-700 bg-black/10 rounded-sm">
-              <div className="border-b border-gray-700 p-4">
-                <div className="ascii-art-title text-lg mb-1">
+            <div className="border border-gray-300 bg-white rounded-sm shadow-sm">
+              <div className="border-b border-gray-300 p-4">
+                <div className="ascii-art-title text-lg mb-1 text-gray-900">
                   NETWORK MEMBERSHIP
                 </div>
-                <div className="terminal-dim text-sm">
+                <div className="terminal-dim text-sm text-gray-600">
                   ◢◤ Ranked by reputation ◢◤
                 </div>
               </div>
@@ -144,14 +144,14 @@ export default function NetworkPage() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-700">
-                      <th className="text-left p-4 terminal-dim text-xs">
+                    <tr className="border-b border-gray-300">
+                      <th className="text-left p-4 terminal-dim text-xs text-gray-600">
                         RANK
                       </th>
-                      <th className="text-left p-4 terminal-dim text-xs">
+                      <th className="text-left p-4 terminal-dim text-xs text-gray-600">
                         ACCOUNT
                       </th>
-                      <th className="text-left p-4 terminal-dim text-xs">
+                      <th className="text-left p-4 terminal-dim text-xs text-gray-600">
                         SCORE
                       </th>
                     </tr>
@@ -160,25 +160,25 @@ export default function NetworkPage() {
                     {MerkleData.map((entry, index) => (
                       <tr
                         key={entry.account}
-                        className={`border-b border-gray-700/50 ${
+                        className={`border-b border-gray-200 ${
                           index < 3
-                            ? 'bg-black/20'
+                            ? 'bg-gray-50'
                             : index < 10
-                            ? 'bg-black/10'
+                            ? 'bg-gray-25'
                             : ''
                         }`}
                       >
                         <td className="p-4">
                           <div className="flex items-center space-x-2">
                             <span
-                              className={`text-sm ${
+                              className={`text-sm font-semibold ${
                                 index === 0
-                                  ? 'text-yellow-400'
+                                  ? 'text-yellow-600'
                                   : index === 1
-                                  ? 'text-gray-300'
+                                  ? 'text-gray-500'
                                   : index === 2
-                                  ? 'text-amber-600'
-                                  : 'terminal-text'
+                                  ? 'text-amber-700'
+                                  : 'text-gray-800'
                               }`}
                             >
                               #{index + 1}
@@ -191,12 +191,12 @@ export default function NetworkPage() {
                           </div>
                         </td>
                         <td className="p-4">
-                          <div className="terminal-text text-sm font-mono break-all">
+                          <div className="terminal-text text-sm font-mono break-all text-gray-800">
                             {entry.account}
                           </div>
                         </td>
                         <td className="p-4">
-                          <div className="terminal-bright text-sm">
+                          <div className="terminal-bright text-sm text-gray-900">
                             {formatAmount(entry.value)}
                           </div>
                         </td>
@@ -210,11 +210,11 @@ export default function NetworkPage() {
 
           {/* No Data Message */}
           {!isLoading && (!MerkleData || MerkleData.length === 0) && !error && (
-            <div className="text-center py-8 border border-gray-700 bg-black/10 rounded-sm">
-              <div className="terminal-dim text-sm">
+            <div className="text-center py-8 border border-gray-300 bg-white rounded-sm shadow-sm">
+              <div className="terminal-dim text-sm text-gray-600">
                 NO MERKLE DATA AVAILABLE
               </div>
-              <div className="system-message text-xs mt-2">
+              <div className="system-message text-xs mt-2 text-gray-700">
                 ◆ PARTICIPATE IN ATTESTATIONS TO APPEAR ON Merkle ◆
               </div>
             </div>

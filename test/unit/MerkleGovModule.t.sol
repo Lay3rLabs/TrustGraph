@@ -32,10 +32,6 @@ contract MerkleGovModuleTest is Test {
     address public dave = address(0x5555555555555555555555555555555555555555);
     address public eve = address(0x6666666666666666666666666666666666666666);
 
-    // Test token
-    address public constant REWARD_TOKEN =
-        address(0x7777777777777777777777777777777777777777);
-
     // Merkle tree data
     bytes32 public merkleRoot;
     MerkleTreeHelper.AccountData[] public accounts;
@@ -116,41 +112,11 @@ contract MerkleGovModuleTest is Test {
 
     function _setupMerkleTree() internal {
         // Create voting power distribution
-        accounts.push(
-            MerkleTreeHelper.AccountData({
-                account: alice,
-                rewardToken: REWARD_TOKEN,
-                votingPower: 100e18
-            })
-        );
-        accounts.push(
-            MerkleTreeHelper.AccountData({
-                account: bob,
-                rewardToken: REWARD_TOKEN,
-                votingPower: 200e18
-            })
-        );
-        accounts.push(
-            MerkleTreeHelper.AccountData({
-                account: charlie,
-                rewardToken: REWARD_TOKEN,
-                votingPower: 150e18
-            })
-        );
-        accounts.push(
-            MerkleTreeHelper.AccountData({
-                account: dave,
-                rewardToken: REWARD_TOKEN,
-                votingPower: 50e18
-            })
-        );
-        accounts.push(
-            MerkleTreeHelper.AccountData({
-                account: eve,
-                rewardToken: REWARD_TOKEN,
-                votingPower: 75e18
-            })
-        );
+        accounts.push(MerkleTreeHelper.AccountData({account: alice, votingPower: 100e18}));
+        accounts.push(MerkleTreeHelper.AccountData({account: bob, votingPower: 200e18}));
+        accounts.push(MerkleTreeHelper.AccountData({account: charlie, votingPower: 150e18}));
+        accounts.push(MerkleTreeHelper.AccountData({account: dave, votingPower: 50e18}));
+        accounts.push(MerkleTreeHelper.AccountData({account: eve, votingPower: 75e18}));
 
         // Build merkle tree
         (merkleRoot, ) = merkleHelper.buildMerkleTree(accounts);
@@ -300,13 +266,7 @@ contract MerkleGovModuleTest is Test {
         );
 
         vm.prank(alice);
-        govModule.castVote(
-            proposalId,
-            MerkleGovModule.VoteType.For,
-            votingPowers[alice],
-            REWARD_TOKEN,
-            proofs[alice]
-        );
+        govModule.castVote(proposalId, MerkleGovModule.VoteType.For, votingPowers[alice], proofs[alice]);
 
         // Bob votes Against
         vm.expectEmit(true, true, false, true);
@@ -318,13 +278,7 @@ contract MerkleGovModuleTest is Test {
         );
 
         vm.prank(bob);
-        govModule.castVote(
-            proposalId,
-            MerkleGovModule.VoteType.Against,
-            votingPowers[bob],
-            REWARD_TOKEN,
-            proofs[bob]
-        );
+        govModule.castVote(proposalId, MerkleGovModule.VoteType.Against, votingPowers[bob], proofs[bob]);
 
         // Charlie abstains
         vm.expectEmit(true, true, false, true);
@@ -336,13 +290,7 @@ contract MerkleGovModuleTest is Test {
         );
 
         vm.prank(charlie);
-        govModule.castVote(
-            proposalId,
-            MerkleGovModule.VoteType.Abstain,
-            votingPowers[charlie],
-            REWARD_TOKEN,
-            proofs[charlie]
-        );
+        govModule.castVote(proposalId, MerkleGovModule.VoteType.Abstain, votingPowers[charlie], proofs[charlie]);
 
         // Check vote tallies
         (
@@ -394,24 +342,12 @@ contract MerkleGovModuleTest is Test {
 
         // First vote succeeds
         vm.prank(alice);
-        govModule.castVote(
-            proposalId,
-            MerkleGovModule.VoteType.For,
-            votingPowers[alice],
-            REWARD_TOKEN,
-            proofs[alice]
-        );
+        govModule.castVote(proposalId, MerkleGovModule.VoteType.For, votingPowers[alice], proofs[alice]);
 
         // Second vote fails
         vm.prank(alice);
         vm.expectRevert("Already voted");
-        govModule.castVote(
-            proposalId,
-            MerkleGovModule.VoteType.For,
-            votingPowers[alice],
-            REWARD_TOKEN,
-            proofs[alice]
-        );
+        govModule.castVote(proposalId, MerkleGovModule.VoteType.For, votingPowers[alice], proofs[alice]);
     }
 
     function test_ProposalExecution() public {
@@ -444,22 +380,10 @@ contract MerkleGovModuleTest is Test {
         // Get enough votes to pass (need > 4% quorum and more for than against)
         // Total voting power = 575e18, so need > 23e18 total votes
         vm.prank(alice);
-        govModule.castVote(
-            proposalId,
-            MerkleGovModule.VoteType.For,
-            votingPowers[alice],
-            REWARD_TOKEN,
-            proofs[alice]
-        ); // 100e18
+        govModule.castVote(proposalId, MerkleGovModule.VoteType.For, votingPowers[alice], proofs[alice]); // 100e18
 
         vm.prank(bob);
-        govModule.castVote(
-            proposalId,
-            MerkleGovModule.VoteType.For,
-            votingPowers[bob],
-            REWARD_TOKEN,
-            proofs[bob]
-        ); // 200e18
+        govModule.castVote(proposalId, MerkleGovModule.VoteType.For, votingPowers[bob], proofs[bob]); // 200e18
 
         // Move past voting period
         vm.roll(block.number + 50401);
@@ -573,13 +497,7 @@ contract MerkleGovModuleTest is Test {
         // Try to vote with wrong voting power
         vm.prank(alice);
         vm.expectRevert("Invalid voting proof");
-        govModule.castVote(
-            proposalId,
-            MerkleGovModule.VoteType.For,
-            500e18,
-            REWARD_TOKEN,
-            proofs[alice]
-        ); // Wrong amount
+        govModule.castVote(proposalId, MerkleGovModule.VoteType.For, 500e18, proofs[alice]); // Wrong amount
 
         // Try to vote with wrong proof
         bytes32[] memory wrongProof = new bytes32[](1);
@@ -587,13 +505,7 @@ contract MerkleGovModuleTest is Test {
 
         vm.prank(alice);
         vm.expectRevert("Invalid voting proof");
-        govModule.castVote(
-            proposalId,
-            MerkleGovModule.VoteType.For,
-            votingPowers[alice],
-            REWARD_TOKEN,
-            wrongProof
-        );
+        govModule.castVote(proposalId, MerkleGovModule.VoteType.For, votingPowers[alice], wrongProof);
     }
 
     function test_ProposalWithMultipleActions() public {
@@ -634,22 +546,10 @@ contract MerkleGovModuleTest is Test {
         vm.roll(block.number + 2);
 
         vm.prank(alice);
-        govModule.castVote(
-            proposalId,
-            MerkleGovModule.VoteType.For,
-            votingPowers[alice],
-            REWARD_TOKEN,
-            proofs[alice]
-        );
+        govModule.castVote(proposalId, MerkleGovModule.VoteType.For, votingPowers[alice], proofs[alice]);
 
         vm.prank(bob);
-        govModule.castVote(
-            proposalId,
-            MerkleGovModule.VoteType.For,
-            votingPowers[bob],
-            REWARD_TOKEN,
-            proofs[bob]
-        );
+        govModule.castVote(proposalId, MerkleGovModule.VoteType.For, votingPowers[bob], proofs[bob]);
 
         // Execute
         vm.roll(block.number + 50401);
@@ -689,13 +589,7 @@ contract MerkleGovModuleTest is Test {
 
         // Alice votes with current merkle root
         vm.prank(alice);
-        govModule.castVote(
-            proposalId,
-            MerkleGovModule.VoteType.For,
-            votingPowers[alice],
-            REWARD_TOKEN,
-            proofs[alice]
-        );
+        govModule.castVote(proposalId, MerkleGovModule.VoteType.For, votingPowers[alice], proofs[alice]);
 
         // Update merkle root (simulating new distribution)
         bytes32 newRoot = bytes32(uint256(0xbeef));
@@ -703,13 +597,7 @@ contract MerkleGovModuleTest is Test {
 
         // Bob can still vote because the proposal uses the snapshot from creation
         vm.prank(bob);
-        govModule.castVote(
-            proposalId,
-            MerkleGovModule.VoteType.For,
-            votingPowers[bob],
-            REWARD_TOKEN,
-            proofs[bob]
-        );
+        govModule.castVote(proposalId, MerkleGovModule.VoteType.For, votingPowers[bob], proofs[bob]);
 
         // New proposal would use the new merkle root
         vm.prank(alice);
