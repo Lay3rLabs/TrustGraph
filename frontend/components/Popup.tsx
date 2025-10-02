@@ -197,7 +197,9 @@ export const Popup = ({
         : null,
     right:
       position === 'left' || position === 'same'
-        ? (rect) => window.innerWidth - rect.right + sideOffset
+        ? // Use document client width instead of window inner width to account for scrollbar.
+          (rect) =>
+            document.documentElement.clientWidth - rect.right + sideOffset
         : position === 'wide'
         ? () => 24
         : null,

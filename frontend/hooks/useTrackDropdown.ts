@@ -64,7 +64,7 @@ export const useTrackDropdown = ({
 
     let dropdownRight: number | undefined
     if (right !== null) {
-      dropdownRight = Math.max(padding, right?.(rect) ?? rect.width)
+      dropdownRight = Math.max(padding, right?.(rect) ?? rect.right)
       dropdownRef.current.style.right = `${dropdownRight}px`
     }
 
@@ -81,7 +81,11 @@ export const useTrackDropdown = ({
     // If dropdown is past the left edge of the screen, set the left.
     if (
       dropdownRight &&
-      window.innerWidth - dropdownRight - dropdownRect.width < padding
+      // Use document client width instead of window inner width to account for scrollbar.
+      document.documentElement.clientWidth -
+        dropdownRight -
+        dropdownRect.width <
+        padding
     ) {
       dropdownRef.current.style.left = paddingPixels
     }
@@ -89,7 +93,9 @@ export const useTrackDropdown = ({
     // If dropdown is past the right edge of the screen, set the right.
     if (
       dropdownLeft &&
-      dropdownLeft + dropdownRect.width > window.innerWidth - padding
+      // Use document client width instead of window inner width to account for scrollbar.
+      dropdownLeft + dropdownRect.width >
+        document.documentElement.clientWidth - padding
     ) {
       dropdownRef.current.style.right = paddingPixels
     }
