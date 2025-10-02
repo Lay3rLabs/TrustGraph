@@ -9,6 +9,7 @@ import {
   LogOut,
   Wallet,
 } from 'lucide-react'
+import { usePlausible } from 'next-plausible'
 import type React from 'react'
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
@@ -32,6 +33,7 @@ export const WalletConnectionButton = ({
   const { address, isConnected } = useAccount()
   const { connectors, connectAsync, isPending: isConnecting } = useConnect()
   const { disconnect } = useDisconnect()
+  const plausible = usePlausible()
 
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 5)}..${addr.slice(-3)}`
@@ -182,6 +184,13 @@ export const WalletConnectionButton = ({
                     onClick={() => {
                       // Close the popup as connection begins.
                       setOpenRef.current?.(false)
+
+                      plausible('wallet_connect', {
+                        props: {
+                          wallet: connector.id,
+                        },
+                      })
+
                       // Start connection.
                       connectAsync({ connector }).catch((err) => {
                         console.error('Connection errored:', err)
