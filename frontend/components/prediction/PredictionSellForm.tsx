@@ -20,6 +20,7 @@ import { config } from '@/lib/wagmi'
 import { HyperstitionMarket } from '@/types'
 
 import { Card } from '../Card'
+import { HyperstitionDescriptionDisplay } from './HyperstitionDescriptionDisplay'
 
 interface PredictionSellFormProps {
   market: HyperstitionMarket
@@ -246,7 +247,7 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
     <div className="space-y-6">
       <div className="space-y-2">
         <h3 className="terminal-command text-lg">{market.title}</h3>
-        <p className="terminal-text text-sm">{market.description}</p>
+        <HyperstitionDescriptionDisplay description={market.description} />
       </div>
 
       {isConnected && address && !isLoadingYesShares && !isLoadingNoShares && (

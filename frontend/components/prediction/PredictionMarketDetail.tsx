@@ -37,6 +37,7 @@ import { HyperstitionMarket, HyperstitionMarketStatus } from '@/types'
 import { PredictionMarketForms } from './PredictionMarketForms'
 import { PredictionMarketTradeHistory } from './PredictionMarketTradeHistory'
 import { Card } from '../Card'
+import { HyperstitionDescriptionDisplay } from './HyperstitionDescriptionDisplay'
 
 ChartJS.register(
   Tooltip,
@@ -431,11 +432,6 @@ export const PredictionMarketDetail = ({
     market.targetValue
   )
 
-  const twitterAccount = market.description.match(/@(\w+)/)?.[1]
-  const description = market.description
-    .replace(`@${twitterAccount}`, '')
-    .trim()
-
   return (
     <>
       <div className="space-y-8">
@@ -445,19 +441,10 @@ export const PredictionMarketDetail = ({
               <div className="flex items-center space-x-3">
                 <div>
                   <h3 className="terminal-command text-base">{market.title}</h3>
-                  <p className="terminal-text text-sm mt-1">
-                    {twitterAccount && (
-                      <a
-                        href={`https://x.com/${twitterAccount}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline"
-                      >
-                        @{twitterAccount}
-                      </a>
-                    )}{' '}
-                    <span>{description}</span>
-                  </p>
+                  <HyperstitionDescriptionDisplay
+                    description={market.description}
+                    className="mt-1"
+                  />
                 </div>
               </div>
               <div

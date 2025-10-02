@@ -19,7 +19,7 @@ const markets: HyperstitionMarket[] = [
   {
     title: 'EN0VA Twitter Ascension',
     description:
-      '@0xEN0VA reaches 50 Twitter followers by ' +
+      '[@0xEN0VA](https://x.com/0xEN0VA) reaches 50 Twitter followers by ' +
       endDate.toLocaleString(undefined, {
         dateStyle: 'short',
         timeStyle: 'long',
