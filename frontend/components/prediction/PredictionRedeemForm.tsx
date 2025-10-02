@@ -1,17 +1,14 @@
 'use client'
 
 import { usePonderQuery } from '@ponder/react'
+import { usePlausible } from 'next-plausible'
 import React, { useMemo, useState } from 'react'
 import { useAccount, useWriteContract } from 'wagmi'
 
 import { Button } from '@/components/ui/button'
 import { useCollateralToken } from '@/hooks/useCollateralToken'
 import { usePredictionMarket } from '@/hooks/usePredictionMarket'
-import {
-  conditionalTokensAbi,
-  conditionalTokensAddress,
-  erc20Address,
-} from '@/lib/contracts'
+import { conditionalTokensAbi, erc20Address } from '@/lib/contracts'
 import { txToast } from '@/lib/tx'
 import { formatBigNumber } from '@/lib/utils'
 import { HyperstitionMarket } from '@/types'
@@ -27,6 +24,7 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
 }) => {
   const { address, isConnected } = useAccount()
   const { isPending: isWriting } = useWriteContract()
+  const plausible = usePlausible()
 
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -164,7 +162,7 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
 
       const [receipt] = await txToast({
         tx: {
-          address: conditionalTokensAddress,
+          address: market.conditionalTokensAddress,
           abi: conditionalTokensAbi,
           functionName: 'redeemPositions',
           args: [
@@ -181,6 +179,17 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
               collateralSymbol
             : '$' + collateralSymbol
         }.`,
+      })
+
+      plausible('hyperstition_redeem', {
+        props: {
+          market: market.marketMakerAddress,
+          conditionalTokens: market.conditionalTokensAddress,
+          amount:
+            payout !== null
+              ? formatBigNumber(payout, collateralDecimals, true)
+              : -1,
+        },
       })
 
       console.log('Transaction confirmed:', receipt.transactionHash)

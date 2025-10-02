@@ -4,6 +4,7 @@ import clsx from 'clsx'
 import { useAtom } from 'jotai/react'
 import { useResetAtom } from 'jotai/utils'
 import { ChevronRight } from 'lucide-react'
+import { usePlausible } from 'next-plausible'
 import { RefObject, useEffect, useRef, useState } from 'react'
 
 import { Animator } from '@/lib/animator'
@@ -42,6 +43,7 @@ export const SymbientChat = ({
   const [isThinking, setIsThinking] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const plausible = usePlausible()
 
   if (prepareRef) {
     prepareRef.current = () => {
@@ -105,6 +107,12 @@ export const SymbientChat = ({
     setMessages(newMessages)
     setUserInput('')
     setError(null)
+
+    plausible('symbient_chat', {
+      props: {
+        message,
+      },
+    })
 
     const undoWithError = (error: string) => {
       setMessages((prev) => {

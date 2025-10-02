@@ -7,6 +7,7 @@ import useLocalStorageState from 'use-local-storage-state'
 import { Card } from '@/components/Card'
 import { PredictionMarketDetail } from '@/components/prediction/PredictionMarketDetail'
 import {
+  conditionalTokensAddress,
   lmsrMarketMakerAddress,
   predictionMarketControllerAddress,
 } from '@/lib/contracts'
@@ -28,6 +29,7 @@ const markets: HyperstitionMarket[] = [
     startDate: startDate,
     endDate: endDate,
     marketMakerAddress: lmsrMarketMakerAddress,
+    conditionalTokensAddress,
     controllerAddress: predictionMarketControllerAddress,
   },
 ]

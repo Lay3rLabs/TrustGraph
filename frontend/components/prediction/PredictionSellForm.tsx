@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { readContractQueryOptions } from '@wagmi/core/query'
 import clsx from 'clsx'
 import { LoaderCircle } from 'lucide-react'
+import { usePlausible } from 'next-plausible'
 import React, { useEffect, useState } from 'react'
 import { formatUnits, parseUnits } from 'viem'
 import { useAccount } from 'wagmi'
@@ -12,11 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useCollateralToken } from '@/hooks/useCollateralToken'
 import { usePredictionMarket } from '@/hooks/usePredictionMarket'
-import {
-  conditionalTokensAbi,
-  conditionalTokensAddress,
-  lmsrMarketMakerAbi,
-} from '@/lib/contracts'
+import { conditionalTokensAbi, lmsrMarketMakerAbi } from '@/lib/contracts'
 import { txToast } from '@/lib/tx'
 import { formatBigNumber } from '@/lib/utils'
 import { config } from '@/lib/wagmi'
@@ -35,6 +32,7 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
 }) => {
   const { address, isConnected } = useAccount()
   const queryClient = useQueryClient()
+  const plausible = usePlausible()
 
   const [formData, setFormData] = useState({
     outcome: 'YES' as 'YES' | 'NO',
@@ -189,7 +187,7 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
         // Approve market maker to spend conditional tokens
         {
           tx: {
-            address: conditionalTokensAddress,
+            address: market.conditionalTokensAddress,
             abi: conditionalTokensAbi,
             functionName: 'setApprovalForAll',
             args: [market.marketMakerAddress, true],
@@ -207,6 +205,17 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
           successMessage: 'Trade executed!',
         }
       )
+
+      plausible('hyperstition_sell', {
+        props: {
+          market: market.marketMakerAddress,
+          conditionalTokens: market.conditionalTokensAddress,
+          outcome: formData.outcome,
+          amount: formData.shareAmount,
+          estimated_amount: estimatedCollateralAmount,
+          slippage,
+        },
+      })
 
       setSuccess(
         `Successfully sold ${formData.shareAmount} ${formData.outcome} shares for ${estimatedCollateralAmount} USDC!`

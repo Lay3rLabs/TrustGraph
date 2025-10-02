@@ -11,6 +11,7 @@ export type HyperstitionMarket = {
   startDate: Date
   endDate: Date
   marketMakerAddress: `0x${string}`
+  conditionalTokensAddress: `0x${string}`
   controllerAddress: `0x${string}`
 }
 

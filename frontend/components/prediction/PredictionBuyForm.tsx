@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { readContractQueryOptions } from '@wagmi/core/query'
 import clsx from 'clsx'
 import { LoaderCircle } from 'lucide-react'
+import { usePlausible } from 'next-plausible'
 import React, { useCallback, useEffect, useState } from 'react'
 import { formatUnits, parseUnits } from 'viem'
 import { useAccount } from 'wagmi'
@@ -32,6 +33,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
 }) => {
   const { address, isConnected } = useAccount()
   const queryClient = useQueryClient()
+  const plausible = usePlausible()
 
   const [formData, setFormData] = useState({
     outcome: 'YES' as 'YES' | 'NO',
@@ -246,6 +248,17 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
           successMessage: 'Trade executed!',
         }
       )
+
+      plausible('hyperstition_buy', {
+        props: {
+          market: market.marketMakerAddress,
+          conditionalTokens: market.conditionalTokensAddress,
+          outcome: formData.outcome,
+          amount: formData.collateralAmount,
+          estimated_amount: estimatedTokenAmount,
+          slippage,
+        },
+      })
 
       setSuccess(
         `Successfully spent ${formData.collateralAmount} USDC on ${formData.outcome} tokens!`

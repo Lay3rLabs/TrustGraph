@@ -2,6 +2,7 @@
 
 import { PonderProvider } from '@ponder/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import PlausibleProvider from 'next-plausible'
 import React from 'react'
 import { WagmiProvider } from 'wagmi'
 import { hashFn } from 'wagmi/query'
@@ -47,21 +48,23 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <WagmiProvider config={config}>
-      <PonderProvider client={ponderClient}>
-        <QueryClientProvider client={queryClient}>
-          <WalletConnectionProvider>
-            {children}
+    <PlausibleProvider domain="en0va.xyz" taggedEvents trackOutboundLinks>
+      <WagmiProvider config={config}>
+        <PonderProvider client={ponderClient}>
+          <QueryClientProvider client={queryClient}>
+            <WalletConnectionProvider>
+              {children}
 
-            <Toaster />
-            <PointsNotifier />
+              <Toaster />
+              <PointsNotifier />
 
-            {/* {process.env.NODE_ENV === "development" && (
+              {/* {process.env.NODE_ENV === "development" && (
           <ReactQueryDevtools initialIsOpen={false} />
         )} */}
-          </WalletConnectionProvider>
-        </QueryClientProvider>
-      </PonderProvider>
-    </WagmiProvider>
+            </WalletConnectionProvider>
+          </QueryClientProvider>
+        </PonderProvider>
+      </WagmiProvider>
+    </PlausibleProvider>
   )
 }

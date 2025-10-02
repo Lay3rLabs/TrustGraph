@@ -1,3 +1,5 @@
+const { withPlausibleProxy } = require('next-plausible')
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
@@ -12,4 +14,4 @@ const nextConfig = {
   devIndicators: false,
 }
 
-export default nextConfig
+export default withPlausibleProxy(nextConfig)
