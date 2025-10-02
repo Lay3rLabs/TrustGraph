@@ -180,10 +180,10 @@ export default function PointsPage() {
             className="grow grid grid-cols-1 gap-6 md:grid-cols-2 md:justify-center md:gap-8"
           >
             <div className="terminal-text text-sm space-y-2">
-              <div className="system-message">◉ HYPERSTITION MARKETS</div>
+              <div className="system-message">◉ HYPERSTITIONS</div>
               <ul className="terminal-dim text-xs pl-4 list-disc">
                 <li>Participate in active Hyperstitions</li>
-                <li>Redeem winning predictions</li>
+                <li>Redeem winning outcomes</li>
                 <li>Experience collective manifestation</li>
               </ul>
             </div>
@@ -198,11 +198,21 @@ export default function PointsPage() {
             </div>
 
             <div className="terminal-text text-sm space-y-2">
-              <div className="system-message">◢◤ GOVERNANCE</div>
+              <div className="system-message">◢◤ CONTRIBUTE</div>
               <ul className="terminal-dim text-xs pl-4 list-disc">
-                <li>Build consensus</li>
+                <li>
+                  Develop{' '}
+                  <a
+                    href="https://github.com/Lay3rLabs/WAVS"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline"
+                  >
+                    open source software
+                  </a>
+                </li>
                 <li>Shape the future direction</li>
-                <li>Vote on collective decisions</li>
+                <li>Participate in the collective</li>
               </ul>
             </div>
 

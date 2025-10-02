@@ -12,6 +12,13 @@ const nextConfig = {
     unoptimized: true,
   },
   devIndicators: false,
+  redirects: () => [
+    {
+      source: '/',
+      destination: '/hyperstition',
+      permanent: false,
+    },
+  ],
 }
 
 export default withPlausibleProxy()(nextConfig)

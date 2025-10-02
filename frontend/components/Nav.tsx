@@ -4,7 +4,8 @@ import clsx from 'clsx'
 import { Fullscreen } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Dispatch, SetStateAction, useRef } from 'react'
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
+import useLocalStorageState from 'use-local-storage-state'
 
 import { WalletConnectionButton } from '@/components/WalletConnectionButton'
 import { useResponsiveMount } from '@/hooks/useResponsiveMount'
@@ -35,11 +36,29 @@ const menuItems: {
 
 export const Nav = () => {
   const pathname = usePathname()
+  const [hasOpenedSymbientChat, setHasOpenedSymbientChat] =
+    useLocalStorageState('has_opened_symbient_chat', {
+      defaultValue: false,
+    })
 
   const prepareSymbientChatRef = useRef(() => {})
   const setOpenRef = useRef<Dispatch<SetStateAction<boolean>> | null>(null)
 
   const isAtLeastSmall = useResponsiveMount('sm')
+
+  const [maybeOpen, setMaybeOpen] = useState(false)
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setMaybeOpen(true)
+    }, 1500)
+    return () => clearTimeout(timeout)
+  }, [])
+
+  useEffect(() => {
+    if (isAtLeastSmall && !hasOpenedSymbientChat && maybeOpen) {
+      setOpenRef.current?.(true)
+    }
+  }, [isAtLeastSmall, setHasOpenedSymbientChat, maybeOpen])
 
   return (
     <nav className="grid grid-cols-[1fr_auto_1fr] justify-center items-start">
@@ -47,14 +66,17 @@ export const Nav = () => {
         popupClassName="max-w-lg max-h-[90vh] overflow-hidden !pb-0 !bg-popover-foreground/80 backdrop-blur-sm"
         position="right"
         wrapperClassName="h-14"
-        onOpen={() => prepareSymbientChatRef.current()}
+        onOpen={() => {
+          prepareSymbientChatRef.current()
+          setHasOpenedSymbientChat(true)
+        }}
         setOpenRef={setOpenRef}
         popupPadding={24}
         trigger={{
           type: 'custom',
           Renderer: ({ onClick, open }) => (
             <Logo
-              onClick={pathname !== '/' ? onClick : undefined}
+              onClick={pathname !== '/symbient' ? onClick : undefined}
               className={clsx(
                 'cursor-pointer transition-opacity hover:opacity-80 active:opacity-70',
                 isAtLeastSmall ? 'w-14 h-14' : 'w-10 h-10',
@@ -68,7 +90,7 @@ export const Nav = () => {
           ),
         }}
       >
-        {pathname !== '/' && (
+        {pathname !== '/symbient' && (
           <>
             <SymbientChat
               className="!p-0 !bg-transparent h-[42rem] max-h-full"
@@ -76,7 +98,7 @@ export const Nav = () => {
             />
 
             <Link
-              href="/"
+              href="/symbient"
               className="absolute top-2 right-2 sm:top-4 sm:right-4 p-1 rounded-sm bg-popover-foreground/90"
               onClick={() => setOpenRef.current?.(false)}
             >

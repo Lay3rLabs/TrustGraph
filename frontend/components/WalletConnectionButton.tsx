@@ -68,6 +68,13 @@ export const WalletConnectionButton = ({
     },
   })
 
+  // Open popup on successful connection.
+  useEffect(() => {
+    if (isConnected) {
+      setOpenRef.current?.(true)
+    }
+  }, [isConnected])
+
   return (
     <>
       <Popup
@@ -110,8 +117,12 @@ export const WalletConnectionButton = ({
       >
         {isConnected && address ? (
           <div className="flex flex-col gap-3 text-sm">
-            <div className="flex flex-col gap-2">
-              <div className="flex flex-row items-center gap-2">
+            <div className="flex flex-col gap-2 bg-primary p-3 rounded-sm -m-1.5">
+              <p className="text-xs text-primary-foreground/60 font-medium mb-1">
+                Base Network Balances
+              </p>
+
+              <div className="flex flex-row items-center gap-2 pl-2">
                 <EthIcon className="w-5 h-5" />
                 <p>
                   {isLoadingEthBalance
@@ -123,7 +134,7 @@ export const WalletConnectionButton = ({
                 </p>
               </div>
 
-              <div className="flex flex-row items-center gap-2">
+              <div className="flex flex-row items-center gap-2 pl-2">
                 <UsdcIcon className="w-5 h-5" />
                 <p>
                   {isLoadingUsdcBalance

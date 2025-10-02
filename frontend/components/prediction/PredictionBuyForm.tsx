@@ -40,7 +40,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     collateralAmount: '',
   })
 
-  const [error, setError] = useState<string | null>(null)
+  const [_error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [tokensEstimate, setTokensEstimate] = useState<string | null>(null)
   const [isCalculating, setIsCalculating] = useState<boolean>(false)
@@ -192,6 +192,20 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     setSuccess(null)
   }
 
+  // TODO: remove after testing
+  let error
+  try {
+    error =
+      _error ||
+      (formData.collateralAmount &&
+      !isNaN(Number(formData.collateralAmount)) &&
+      Number(formData.collateralAmount) > 1
+        ? 'Please enter an amount <= 1 $USDC (for testing)'
+        : null)
+  } catch {
+    error = _error
+  }
+
   const [isBuying, setIsBuying] = useState(false)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -207,6 +221,26 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
       Number(formData.collateralAmount) <= 0
     ) {
       setError('Please enter a valid collateral amount')
+      return
+    }
+
+    // TODO: remove after testing
+    if (Number(formData.collateralAmount) > 1) {
+      setError('Please enter an amount <= 1 $USDC (for testing)')
+      return
+    }
+
+    // TODO: remove after testing
+    if (isLoadingYesShares || isLoadingNoShares) {
+      setError('Please wait for the shares to load')
+      return
+    }
+
+    // TODO: remove after testing
+    if (Number(formattedYesShares) > 1 || Number(formattedNoShares) > 1) {
+      setError(
+        'You already have at least 1 YES/NO share, you cannot buy more during this test'
+      )
       return
     }
 
@@ -481,7 +515,11 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
             !hasEnoughCollateral ||
             isLoadingResolution ||
             isMarketResolved ||
-            isCalculating
+            isCalculating ||
+            // TODO: remove after testing
+            isLoadingYesShares ||
+            // TODO: remove after testing
+            isLoadingNoShares
           }
           className="w-full mobile-terminal-btn"
         >
