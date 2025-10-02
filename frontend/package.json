@@ -20,6 +20,7 @@
   "dependencies": {
     "@ethereum-attestation-service/eas-sdk": "^2.9.0",
     "@hookform/resolvers": "^3.10.0",
+    "@microsoft/clarity": "^1.0.0",
     "@ponder/client": "^0.12.26",
     "@ponder/react": "^0.12.26",
     "@radix-ui/react-accordion": "1.2.2",

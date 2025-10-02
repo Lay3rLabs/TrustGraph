@@ -1,5 +1,6 @@
 'use client'
 
+import Clarity from '@microsoft/clarity'
 import { PonderProvider } from '@ponder/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import PlausibleProvider from 'next-plausible'
@@ -13,6 +14,8 @@ import { config } from '@/lib/wagmi'
 import { PointsNotifier } from './PointsNotifier'
 import { Toaster } from './toasts/Toaster'
 import { WalletConnectionProvider } from './WalletConnectionProvider'
+
+Clarity.init('tjxevwhvhb')
 
 const queryClient = new QueryClient({
   defaultOptions: {
