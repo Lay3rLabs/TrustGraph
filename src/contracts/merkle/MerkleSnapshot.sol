@@ -66,10 +66,12 @@ contract MerkleSnapshot is
     /// @param root The merkle root
     /// @param ipfsHash The IPFS hash
     /// @param ipfsHashCid The IPFS hash CID
+    /// @param totalValue The total value of the merkle tree
     function _updateState(
         bytes32 root,
         bytes32 ipfsHash,
-        string memory ipfsHashCid
+        string memory ipfsHashCid,
+        uint256 totalValue
     ) internal {
         uint256 currentBlock = block.number;
         uint256 stateIndex;
@@ -89,9 +91,11 @@ contract MerkleSnapshot is
 
         states[stateIndex] = MerkleState({
             blockNumber: currentBlock,
+            timestamp: block.timestamp,
             root: root,
             ipfsHash: ipfsHash,
-            ipfsHashCid: ipfsHashCid
+            ipfsHashCid: ipfsHashCid,
+            totalValue: totalValue
         });
 
         // Call the hooks.
@@ -396,12 +400,18 @@ contract MerkleSnapshot is
         }
 
         // Update merkle root
-        _updateState(avsOutput.root, avsOutput.ipfsHash, avsOutput.ipfsHashCid);
+        _updateState(
+            avsOutput.root,
+            avsOutput.ipfsHash,
+            avsOutput.ipfsHashCid,
+            avsOutput.totalValue
+        );
 
         emit MerkleRootUpdated(
             avsOutput.root,
             avsOutput.ipfsHash,
-            avsOutput.ipfsHashCid
+            avsOutput.ipfsHashCid,
+            avsOutput.totalValue
         );
     }
 

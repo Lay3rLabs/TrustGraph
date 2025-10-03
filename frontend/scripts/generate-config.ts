@@ -34,6 +34,10 @@ try {
       env === 'development'
         ? 'http://localhost:9090'
         : 'https://infra.en0va.xyz/wavs',
+    ipfsGateway:
+      env === 'development'
+        ? 'http://localhost:8080/ipfs/'
+        : 'https://gateway.pinata.cloud/ipfs/',
   }
 
   // Update WAVS service ID

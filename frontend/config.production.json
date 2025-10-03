@@ -2,7 +2,8 @@
   "chain": "base",
   "apis": {
     "ponder": "https://infra.en0va.xyz/ponder",
-    "pointsEvents": "https://infra.en0va.xyz/wavs"
+    "pointsEvents": "https://infra.en0va.xyz/wavs",
+    "ipfsGateway": "https://gateway.pinata.cloud/ipfs/"
   },
   "wavsServiceId": "88c1170909ea589d0a2922e686b369f1adf34cc4e3d5e77a2f2190c4d6c63bcb",
   "contracts": {

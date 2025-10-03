@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+import { APIS } from '@/lib/config'
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ cid: string }> }
@@ -15,7 +17,7 @@ export async function GET(
     }
 
     // Make GET request to IPFS gateway
-    const ipfsUrl = `http://127.0.0.1:8080/ipfs/${cid}`
+    const ipfsUrl = APIS.ipfsGateway + cid
 
     const response = await fetch(ipfsUrl, {
       method: 'GET',

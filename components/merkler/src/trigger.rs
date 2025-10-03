@@ -9,6 +9,7 @@ pub async fn encode_trigger_output(
     root: &[u8],
     ipfs_hash: &[u8],
     ipfs_hash_cid: String,
+    total_value: U256,
 ) -> Result<Vec<u8>, String> {
     let root = serde_json::from_value(root.into()).map_err(|e| e.to_string())?;
     let ipfs_hash = serde_json::from_value(ipfs_hash.into()).map_err(|e| e.to_string())?;
@@ -22,6 +23,7 @@ pub async fn encode_trigger_output(
         root,
         ipfsHash: ipfs_hash,
         ipfsHashCid: ipfs_hash_cid,
+        totalValue: total_value,
     }
     .abi_encode())
 }

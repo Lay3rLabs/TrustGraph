@@ -132,25 +132,35 @@ impl Guest for Component {
             },
         ));
 
-        // Reward users for prediction market interactions (1 point per type+contract interacted with, so 2 if user trades and also redeems on same market, and 1 if only trades but no redeem)
+        // Reward users for hyperstition market interactions
+
+        let hyperstition_trade_points: U256 = config_var("hyperstition_trade_points")
+            .ok_or_else(|| "Failed to get hyperstition_trade_points")?
+            .parse()
+            .map_err(|e| format!("Failed to parse hyperstition_trade_points as u256: {e}"))?;
         registry.add_source(sources::interactions::InteractionsSource::new(
             "prediction_market_trade",
-            U256::from(25),
-            true,
-        ));
-        registry.add_source(sources::interactions::InteractionsSource::new(
-            "prediction_market_redeem",
-            U256::from(50),
+            hyperstition_trade_points,
             true,
         ));
 
-        let prediction_markets =
-            config_var("prediction_markets").ok_or_else(|| "Failed to get prediction_markets")?;
+        let hyperstition_redeem_points: U256 = config_var("hyperstition_redeem_points")
+            .ok_or_else(|| "Failed to get hyperstition_redeem_points")?
+            .parse()
+            .map_err(|e| format!("Failed to parse hyperstition_redeem_points as u256: {e}"))?;
+        registry.add_source(sources::interactions::InteractionsSource::new(
+            "prediction_market_redeem",
+            hyperstition_redeem_points,
+            true,
+        ));
+
+        let hyperstition_market_makers = config_var("hyperstition_market_makers")
+            .ok_or_else(|| "Failed to get hyperstition_market_makers")?;
         let hyperstition_points_pool: U256 = config_var("hyperstition_points_pool")
             .ok_or_else(|| "Failed to get hyperstition_points_pool")?
             .parse()
             .map_err(|e| format!("Failed to parse hyperstition_points_pool as u256: {e}"))?;
-        for market in prediction_markets.split(",") {
+        for market in hyperstition_market_makers.split(",") {
             registry.add_source(sources::hyperstition::HyperstitionSource::new(
                 market,
                 hyperstition_points_pool,
@@ -419,8 +429,14 @@ impl Guest for Component {
             println!("✅ Successfully wrote account events");
 
             let ipfs_hash = cid.hash().digest();
-            let payload =
-                encode_trigger_output(&action, &root_bytes, ipfs_hash, cid.to_string()).await?;
+            let payload = encode_trigger_output(
+                &action,
+                &root_bytes,
+                ipfs_hash,
+                cid.to_string(),
+                total_value,
+            )
+            .await?;
 
             println!("🎉 Rewards component execution completed successfully");
             println!("📦 Final payload size: {} bytes", payload.len());

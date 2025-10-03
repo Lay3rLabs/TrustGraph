@@ -23,7 +23,7 @@ export const ponderQueries = {
   latestFollowerCount: queryOptions({
     queryKey: ponderKeys.latestFollowerCount(),
     queryFn: async () => {
-      const response = await fetch(`${APIS.ponder}/latest-follower-count`)
+      const response = await fetch(`${APIS.ponder}/followers/latest`)
 
       if (response.ok) {
         const { latestFollowerCount, timestamp } = (await response.json()) as {

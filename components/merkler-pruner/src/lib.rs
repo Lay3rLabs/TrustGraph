@@ -19,6 +19,7 @@ impl Guest for Component {
             root: FixedBytes::<32>::ZERO,
             ipfsHash: FixedBytes::<32>::ZERO,
             ipfsHashCid: String::new(),
+            totalValue: U256::ZERO,
         };
         Ok(Some(WasmResponse { payload: payload.abi_encode().into(), ordering: None }))
     }

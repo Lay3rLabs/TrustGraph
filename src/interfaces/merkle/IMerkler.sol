@@ -11,6 +11,7 @@ interface IMerkler {
      * @param root Root of the merkle tree.
      * @param ipfsHash IPFS hash of the merkle tree.
      * @param ipfsHashCid IPFS hash CID of the merkle tree.
+     * @param totalValue Total value of the merkle tree.
      */
     struct MerklerAvsOutput {
         uint256 expiresAt;
@@ -18,6 +19,7 @@ interface IMerkler {
         bytes32 root;
         bytes32 ipfsHash;
         string ipfsHashCid;
+        uint256 totalValue;
     }
 
     /**

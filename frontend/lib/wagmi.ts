@@ -59,7 +59,7 @@ export const config = createConfig({
   chains: supportedChains,
   connectors: [
     injected(),
-    porto(),
+    ...(CHAIN !== 'local' ? [porto()] : []),
     metaMask(),
     coinbaseWallet(),
     walletConnect({

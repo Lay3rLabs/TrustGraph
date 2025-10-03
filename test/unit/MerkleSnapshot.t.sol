@@ -107,7 +107,8 @@ contract MerkleSnapshotTest is Test {
                 0x1,
                 TEST_ROOT_1,
                 TEST_IPFS_HASH_1,
-                TEST_IPFS_CID_1
+                TEST_IPFS_CID_1,
+                100
             );
 
         // Expect event emission
@@ -115,7 +116,8 @@ contract MerkleSnapshotTest is Test {
         emit IMerkleSnapshot.MerkleRootUpdated(
             TEST_ROOT_1,
             TEST_IPFS_HASH_1,
-            TEST_IPFS_CID_1
+            TEST_IPFS_CID_1,
+            100
         );
 
         // Execute the signed envelope
@@ -130,6 +132,7 @@ contract MerkleSnapshotTest is Test {
         assertEq(state.root, TEST_ROOT_1);
         assertEq(state.ipfsHash, TEST_IPFS_HASH_1);
         assertEq(state.ipfsHashCid, TEST_IPFS_CID_1);
+        assertEq(state.totalValue, 100);
 
         // Verify state at index 0
         MerkleSnapshot.MerkleState memory stateAtIndex = merkleSnapshot
@@ -138,6 +141,7 @@ contract MerkleSnapshotTest is Test {
         assertEq(stateAtIndex.root, TEST_ROOT_1);
         assertEq(stateAtIndex.ipfsHash, TEST_IPFS_HASH_1);
         assertEq(stateAtIndex.ipfsHashCid, TEST_IPFS_CID_1);
+        assertEq(stateAtIndex.totalValue, 100);
 
         // Verify block number mapping
         assertEq(merkleSnapshot.blockToStateIndex(blockNumber), 0);
@@ -156,7 +160,8 @@ contract MerkleSnapshotTest is Test {
             0x1,
             TEST_ROOT_1,
             TEST_IPFS_HASH_1,
-            TEST_IPFS_CID_1
+            TEST_IPFS_CID_1,
+            100
         );
 
         // Ensure hook states are updated
@@ -169,7 +174,8 @@ contract MerkleSnapshotTest is Test {
             0x2,
             TEST_ROOT_2,
             TEST_IPFS_HASH_2,
-            TEST_IPFS_CID_2
+            TEST_IPFS_CID_2,
+            200
         );
 
         // Ensure hook states are updated
@@ -185,7 +191,8 @@ contract MerkleSnapshotTest is Test {
             0x3,
             TEST_ROOT_3,
             TEST_IPFS_HASH_3,
-            TEST_IPFS_CID_3
+            TEST_IPFS_CID_3,
+            300
         );
 
         // Ensure only second hook state is updated
@@ -234,7 +241,8 @@ contract MerkleSnapshotTest is Test {
                 0x1,
                 TEST_ROOT_1,
                 TEST_IPFS_HASH_1,
-                TEST_IPFS_CID_1
+                TEST_IPFS_CID_1,
+                100
             );
 
         merkleSnapshot.handleSignedEnvelope(envelope1, signatureData1);
@@ -253,7 +261,8 @@ contract MerkleSnapshotTest is Test {
                 0x2,
                 TEST_ROOT_2,
                 TEST_IPFS_HASH_2,
-                TEST_IPFS_CID_2
+                TEST_IPFS_CID_2,
+                200
             );
 
         merkleSnapshot.handleSignedEnvelope(envelope2, signatureData2);
@@ -266,6 +275,7 @@ contract MerkleSnapshotTest is Test {
         assertEq(overriddenState.root, TEST_ROOT_2);
         assertEq(overriddenState.ipfsHash, TEST_IPFS_HASH_2);
         assertEq(overriddenState.ipfsHashCid, TEST_IPFS_CID_2);
+        assertEq(overriddenState.totalValue, 200);
     }
 
     function testGetStateAtBlock_ShouldReturnCorrectState() public {
@@ -275,7 +285,8 @@ contract MerkleSnapshotTest is Test {
             0x1,
             TEST_ROOT_1,
             TEST_IPFS_HASH_1,
-            TEST_IPFS_CID_1
+            TEST_IPFS_CID_1,
+            100
         );
 
         vm.roll(150);
@@ -283,7 +294,8 @@ contract MerkleSnapshotTest is Test {
             0x2,
             TEST_ROOT_2,
             TEST_IPFS_HASH_2,
-            TEST_IPFS_CID_2
+            TEST_IPFS_CID_2,
+            200
         );
 
         vm.roll(200);
@@ -291,7 +303,8 @@ contract MerkleSnapshotTest is Test {
             0x3,
             TEST_ROOT_3,
             TEST_IPFS_HASH_3,
-            TEST_IPFS_CID_3
+            TEST_IPFS_CID_3,
+            300
         );
 
         // Test exact block matches
@@ -299,33 +312,39 @@ contract MerkleSnapshotTest is Test {
             .getStateAtBlock(100);
         assertEq(stateAtBlock1.blockNumber, 100);
         assertEq(stateAtBlock1.root, TEST_ROOT_1);
+        assertEq(stateAtBlock1.totalValue, 100);
 
         MerkleSnapshot.MerkleState memory stateAtBlock2 = merkleSnapshot
             .getStateAtBlock(150);
         assertEq(stateAtBlock2.blockNumber, 150);
         assertEq(stateAtBlock2.root, TEST_ROOT_2);
+        assertEq(stateAtBlock2.totalValue, 200);
 
         MerkleSnapshot.MerkleState memory stateAtBlock3 = merkleSnapshot
             .getStateAtBlock(200);
         assertEq(stateAtBlock3.blockNumber, 200);
         assertEq(stateAtBlock3.root, TEST_ROOT_3);
+        assertEq(stateAtBlock3.totalValue, 300);
 
         // Test getting state at block between snapshots (should return previous state)
         MerkleSnapshot.MerkleState memory stateAtIntermediate1 = merkleSnapshot
             .getStateAtBlock(125);
         assertEq(stateAtIntermediate1.blockNumber, 100);
         assertEq(stateAtIntermediate1.root, TEST_ROOT_1);
+        assertEq(stateAtIntermediate1.totalValue, 100);
 
         MerkleSnapshot.MerkleState memory stateAtIntermediate2 = merkleSnapshot
             .getStateAtBlock(175);
         assertEq(stateAtIntermediate2.blockNumber, 150);
         assertEq(stateAtIntermediate2.root, TEST_ROOT_2);
+        assertEq(stateAtIntermediate2.totalValue, 200);
 
         // Test future block (should return latest state)
         MerkleSnapshot.MerkleState memory stateAtFuture = merkleSnapshot
             .getStateAtBlock(300);
         assertEq(stateAtFuture.blockNumber, 200);
         assertEq(stateAtFuture.root, TEST_ROOT_3);
+        assertEq(stateAtFuture.totalValue, 300);
     }
 
     function testGetStateAtBlock_ShouldRevertForBlockBeforeFirstState() public {
@@ -334,7 +353,8 @@ contract MerkleSnapshotTest is Test {
             0x1,
             TEST_ROOT_1,
             TEST_IPFS_HASH_1,
-            TEST_IPFS_CID_1
+            TEST_IPFS_CID_1,
+            100
         );
 
         // Try to get state for block before first state
@@ -359,7 +379,8 @@ contract MerkleSnapshotTest is Test {
             0x1,
             root,
             TEST_IPFS_HASH_1,
-            TEST_IPFS_CID_1
+            TEST_IPFS_CID_1,
+            100
         );
 
         // Create proof for alice (leaf1)
@@ -382,7 +403,8 @@ contract MerkleSnapshotTest is Test {
             0x1,
             root,
             TEST_IPFS_HASH_1,
-            TEST_IPFS_CID_1
+            TEST_IPFS_CID_1,
+            100
         );
 
         // Create proof for alice
@@ -411,7 +433,8 @@ contract MerkleSnapshotTest is Test {
             0x1,
             root1,
             TEST_IPFS_HASH_1,
-            TEST_IPFS_CID_1
+            TEST_IPFS_CID_1,
+            100
         );
 
         // Create second state at block 200 with different root
@@ -422,7 +445,8 @@ contract MerkleSnapshotTest is Test {
             0x2,
             root2,
             TEST_IPFS_HASH_2,
-            TEST_IPFS_CID_2
+            TEST_IPFS_CID_2,
+            200
         );
 
         // Verify against first state
@@ -449,7 +473,8 @@ contract MerkleSnapshotTest is Test {
             0x1,
             root,
             TEST_IPFS_HASH_1,
-            TEST_IPFS_CID_1
+            TEST_IPFS_CID_1,
+            100
         );
 
         bytes32[] memory proof = new bytes32[](1);
@@ -472,7 +497,8 @@ contract MerkleSnapshotTest is Test {
             0x1,
             root1,
             TEST_IPFS_HASH_1,
-            TEST_IPFS_CID_1
+            TEST_IPFS_CID_1,
+            100
         );
 
         vm.roll(block.number + 1);
@@ -484,7 +510,8 @@ contract MerkleSnapshotTest is Test {
             0x2,
             root2,
             TEST_IPFS_HASH_2,
-            TEST_IPFS_CID_2
+            TEST_IPFS_CID_2,
+            200
         );
 
         // Test verification against specific state indices
@@ -515,7 +542,8 @@ contract MerkleSnapshotTest is Test {
             0x1,
             root,
             TEST_IPFS_HASH_1,
-            TEST_IPFS_CID_1
+            TEST_IPFS_CID_1,
+            100
         );
 
         bytes32[] memory proof = new bytes32[](1);
@@ -539,7 +567,8 @@ contract MerkleSnapshotTest is Test {
                 uint160(i + 1),
                 bytes32(uint256(i + 1)),
                 bytes32(uint256(i + 1)),
-                string(abi.encodePacked("QmTest", i + 1))
+                string(abi.encodePacked("QmTest", i + 1)),
+                i + 1
             );
         }
 
@@ -577,7 +606,8 @@ contract MerkleSnapshotTest is Test {
                 uint160(i + 1),
                 roots[i],
                 bytes32(uint256(i + 1)),
-                string(abi.encodePacked("QmTest", i + 1))
+                string(abi.encodePacked("QmTest", i + 1)),
+                i + 1
             );
         }
 
@@ -635,7 +665,8 @@ contract MerkleSnapshotTest is Test {
             0x1,
             root,
             TEST_IPFS_HASH_1,
-            TEST_IPFS_CID_1
+            TEST_IPFS_CID_1,
+            100
         );
 
         // Test proof for alice (leaf 0)
@@ -665,7 +696,8 @@ contract MerkleSnapshotTest is Test {
             0x1,
             bytes32(uint256(1)),
             TEST_IPFS_HASH_1,
-            TEST_IPFS_CID_1
+            TEST_IPFS_CID_1,
+            100
         );
 
         blockNumbers[1] = 150;
@@ -674,7 +706,8 @@ contract MerkleSnapshotTest is Test {
             0x2,
             bytes32(uint256(2)),
             TEST_IPFS_HASH_1,
-            TEST_IPFS_CID_1
+            TEST_IPFS_CID_1,
+            100
         );
 
         blockNumbers[2] = 200;
@@ -683,7 +716,8 @@ contract MerkleSnapshotTest is Test {
             0x3,
             bytes32(uint256(3)),
             TEST_IPFS_HASH_1,
-            TEST_IPFS_CID_1
+            TEST_IPFS_CID_1,
+            100
         );
 
         blockNumbers[3] = 300;
@@ -692,7 +726,8 @@ contract MerkleSnapshotTest is Test {
             0x4,
             bytes32(uint256(4)),
             TEST_IPFS_HASH_1,
-            TEST_IPFS_CID_1
+            TEST_IPFS_CID_1,
+            100
         );
 
         blockNumbers[4] = 500;
@@ -701,7 +736,8 @@ contract MerkleSnapshotTest is Test {
             0x5,
             bytes32(uint256(5)),
             TEST_IPFS_HASH_1,
-            TEST_IPFS_CID_1
+            TEST_IPFS_CID_1,
+            100
         );
 
         // Test exact matches
@@ -739,7 +775,8 @@ contract MerkleSnapshotTest is Test {
             0x1,
             randomRoot,
             TEST_IPFS_HASH_1,
-            TEST_IPFS_CID_1
+            TEST_IPFS_CID_1,
+            100
         );
 
         // Generate leaf for the account/value
@@ -764,12 +801,19 @@ contract MerkleSnapshotTest is Test {
         uint160 eventId,
         bytes32 root,
         bytes32 ipfsHash,
-        string memory ipfsHashCid
+        string memory ipfsHashCid,
+        uint256 totalValue
     ) internal {
         (
             IWavsServiceHandler.Envelope memory envelope,
             IWavsServiceHandler.SignatureData memory signatureData
-        ) = _createEnvelopeAndSignature(eventId, root, ipfsHash, ipfsHashCid);
+        ) = _createEnvelopeAndSignature(
+                eventId,
+                root,
+                ipfsHash,
+                ipfsHashCid,
+                totalValue
+            );
         merkleSnapshot.handleSignedEnvelope(envelope, signatureData);
     }
 
@@ -777,7 +821,8 @@ contract MerkleSnapshotTest is Test {
         uint160 eventId,
         bytes32 root,
         bytes32 ipfsHash,
-        string memory ipfsHashCid
+        string memory ipfsHashCid,
+        uint256 totalValue
     )
         public
         view
@@ -792,7 +837,8 @@ contract MerkleSnapshotTest is Test {
             prune: 0,
             root: root,
             ipfsHash: ipfsHash,
-            ipfsHashCid: ipfsHashCid
+            ipfsHashCid: ipfsHashCid,
+            totalValue: totalValue
         });
 
         // Create envelope
@@ -881,7 +927,8 @@ contract MockMerkleSnapshotHook is IMerkleSnapshotHook, IMerkleSnapshot {
         emit IMerkleSnapshot.MerkleRootUpdated(
             state.root,
             state.ipfsHash,
-            state.ipfsHashCid
+            state.ipfsHashCid,
+            state.totalValue
         );
     }
 }
