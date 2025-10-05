@@ -1,3 +1,5 @@
+CREATE SCHEMA "offchain";
+--> statement-breakpoint
 CREATE TABLE "offchain"."merkle_entry" (
 	"root" text NOT NULL,
 	"account" text NOT NULL,

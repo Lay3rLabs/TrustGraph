@@ -2,18 +2,19 @@
 
 import clsx from 'clsx'
 import { Check, Copy, LoaderCircle, LogOut, Wallet } from 'lucide-react'
+import { usePlausible } from 'next-plausible'
 import type React from 'react'
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAccount, useBalance, useConnect, useDisconnect } from 'wagmi'
 
+import { testAddress } from '@/lib/contracts'
 import { parseErrorMessage } from '@/lib/error'
 import { formatBigNumber } from '@/lib/utils'
 
 import { Popup } from './Popup'
 import { EthIcon } from './tokens/EthIcon'
 import { UsdcIcon } from './tokens/UsdcIcon'
-import { testAddress } from '@/lib/contracts'
 
 export interface WalletConnectionButtonProps {
   className?: string
@@ -82,10 +83,10 @@ export const WalletConnectionButton = ({
             <button
               onClick={onClick}
               className={clsx(
-                'flex items-center gap-2.5 rounded-full transition-[background-color,box-shadow] hover:shadow-md px-4 sm:px-5 text-sm text-foreground h-10 sm:h-12 border border-border',
+                'flex items-center gap-2.5 rounded-full transition-all hover:shadow-sm px-4 sm:px-5 text-sm text-foreground h-10 sm:h-12 border',
                 open
-                  ? 'bg-card shadow-md'
-                  : 'bg-card hover:bg-muted/50'
+                  ? 'bg-card shadow-sm border-primary/20'
+                  : 'bg-card hover:bg-secondary border-border'
               )}
             >
               {isConnecting ? (
@@ -109,39 +110,39 @@ export const WalletConnectionButton = ({
       >
         {isConnected && address ? (
           <div className="flex flex-col gap-3 text-sm">
-            <div className="flex flex-col gap-2 bg-primary p-3 rounded-sm -m-1.5">
-              <p className="text-xs text-primary-foreground/60 font-medium mb-1">
+            <div className="flex flex-col gap-2 bg-secondary p-3 rounded-md border border-border">
+              <p className="text-xs text-muted-foreground font-medium mb-1">
                 Base Network Balances
               </p>
 
               <div className="flex flex-row items-center gap-2 pl-2">
                 <EthIcon className="w-5 h-5" />
-                <p>
+                <p className="text-foreground font-medium">
                   {isLoadingEthBalance
                     ? '...'
                     : ethBalance
                     ? formatBigNumber(ethBalance.value, ethBalance.decimals)
                     : '?'}{' '}
-                  {ethBalance?.symbol}
+                  <span className="text-muted-foreground">{ethBalance?.symbol}</span>
                 </p>
               </div>
 
               <div className="flex flex-row items-center gap-2 pl-2">
                 <UsdcIcon className="w-5 h-5" />
-                <p>
+                <p className="text-foreground font-medium">
                   {isLoadingUsdcBalance
                     ? '...'
                     : usdcBalance
                     ? formatBigNumber(usdcBalance.value, usdcBalance.decimals)
                     : '?'}{' '}
-                  {usdcBalance?.symbol}
+                  <span className="text-muted-foreground">{usdcBalance?.symbol}</span>
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-col">
+            <div className="flex flex-col gap-1">
               <button
-                className="flex flex-row items-center gap-3 p-2 rounded-md bg-transparent text-foreground transition-colors hover:bg-muted active:bg-muted"
+                className="flex flex-row items-center gap-3 p-2 rounded-md bg-transparent text-foreground transition-all hover:bg-secondary active:bg-muted"
                 onClick={(e) => {
                   navigator.clipboard.writeText(address)
                   setCopied(true)
@@ -150,11 +151,11 @@ export const WalletConnectionButton = ({
                 }}
               >
                 <CopyIcon className="w-4 h-4 text-muted-foreground" />
-                <p>Copy address</p>
+                <p className="text-sm">Copy address</p>
               </button>
 
               <button
-                className="flex flex-row items-center gap-3 p-2 rounded-md bg-transparent text-foreground transition-colors hover:bg-destructive/10 active:bg-destructive/20"
+                className="flex flex-row items-center gap-3 p-2 rounded-md bg-transparent transition-all hover:bg-destructive/10 active:bg-destructive/15"
                 onClick={() => {
                   setOpenRef.current?.(false)
                   // Wait for the popup to close before disconnecting to avoid flickering as the popup classes change.
@@ -162,18 +163,18 @@ export const WalletConnectionButton = ({
                 }}
               >
                 <LogOut className="w-4 h-4 text-destructive" />
-                <p className="text-destructive">Disconnect</p>
+                <p className="text-sm text-destructive">Disconnect</p>
               </button>
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-2">
             {connectors && connectors.length > 0 ? (
-              <div className="flex flex-col text-sm">
+              <div className="flex flex-col gap-1 text-sm">
                 {connectors.map((connector) => (
                   <button
                     key={connector.id}
-                    className="flex flex-row gap-2 p-2 rounded-md bg-transparent text-foreground transition-colors hover:bg-muted active:bg-muted"
+                    className="flex flex-row gap-2 p-2 rounded-md bg-transparent text-foreground transition-all hover:bg-secondary active:bg-muted"
                     onClick={() => {
                       // Close the popup as connection begins.
                       setOpenRef.current?.(false)
@@ -208,7 +209,9 @@ export const WalletConnectionButton = ({
                 ))}
               </div>
             ) : (
-              <div className="text-muted-foreground text-sm">No wallets detected.</div>
+              <div className="text-muted-foreground text-sm">
+                No wallets detected.
+              </div>
             )}
           </div>
         )}

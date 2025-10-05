@@ -5,30 +5,30 @@
     "pointsEvents": "http://localhost:9090",
     "ipfsGateway": "http://localhost:8080/ipfs/"
   },
-  "wavsServiceId": "fd9708757b542fc2bb793242270a0e7989b5413a9ed3d8f0f4db15b9bf8c7c09",
+  "wavsServiceId": "12c950f7a2aca38f0545c4afb8f055cb3015b2f81b0fd229289001ba73f5c2f4",
   "contracts": {
-    "IWavsServiceManager": "0x9a96d659c16bdf83f9eed127e9eaaa97639aa055",
-    "WavsIndexer": "0xa44E7B70dbD9916ED9aC6dAF7fB3DD5A3d71d812",
-    "EASAttestTrigger": "0x439DcAa42cf8E82089cd27Ece6F8EEC6db7EEAc9",
-    "WavsAttester": "0x45C9889E09383daceE8aaEE181bD9A3848451461",
-    "EAS": "0xeA212f5518359A75a253DC0333bc07BC7D05B403",
-    "EASIndexerResolver": "0x56F02291ab74AA78336946B2003d9279b016949B",
-    "SchemaRegistrar": "0x95d0eA2F779eE959CbA2E8099207bF2E83C540A0",
-    "SchemaRegistry": "0x24C8cCE077d90BD443F7D35EDb91e6f9dBf9A10B",
-    "MerkleSnapshot": "0x706281A8d8DEA65Ef65449aBD721A79e2a069A90",
-    "RewardDistributor": "0x998Eb1dd66cd7ded9052B69198a9B3df4cF252b4",
-    "TEST": "0xE27a5d18c24E6F62518A1599d35210C245900F65",
-    "GnosisSafe": "0x0fBb67F26DC7bAA3e8E8b5b8F57a486D5D8B0749",
-    "GnosisSafeProxy": "0xa5D760550ca4B24E133267F28014e3eaf0C1399C",
-    "MerkleGovModule": "0x6eFF713AE0A3DdaDB8F9FcdD8AC9Da791122724b",
-    "SignerManagerModule": "0x9c8034e778Cc2de7483867cbF8BE1f5808CE0b43"
+    "IWavsServiceManager": "0xbbb7440fa9334953320561e50502ac601ac81551",
+    "WavsIndexer": "0xBf47ab93dC2a6721854C41162CA721F6F042Ab57",
+    "EASAttestTrigger": "0x5797093Efa0bfF66Bab2b0ef3282b303afC47B19",
+    "WavsAttester": "0x3AF24e4AE0C32972A903236a98804188b1BB07e5",
+    "EAS": "0xaBaD447b48d9d2f2870c1eC2671C9CF988698C89",
+    "EASIndexerResolver": "0xEf38766A9AA2511ccDAb79496F78E55f74662FeC",
+    "SchemaRegistrar": "0x75AD7b8cD296de73d04bcCEE455fE9a707761270",
+    "SchemaRegistry": "0x7f8C7342eFD67352b34E9aD98857ab8f869DC32e",
+    "MerkleSnapshot": "0xd2D112619b9245f31Af892AE5F5D95565f96464B",
+    "RewardDistributor": "0x8Eb19Ad923a585dBCE79CD45Db421B22C02FDCE5",
+    "TEST": "0x9Dd3336a28491bccF2206Dc9D699E5d085b21932",
+    "GnosisSafe": "0x22beb34d1297B0c4Bf59A8B09d6Cb6E57EAc621f",
+    "GnosisSafeProxy": "0x3A80357108117B6cD9D5CA5F0737FaB3A95c10a6",
+    "MerkleGovModule": "0xf22f18D3Ac11c4B186eA8636Ee6CA951030Ca389",
+    "SignerManagerModule": "0x074a13A125d4bDB953368cE89A86b6C56d65c29A"
   },
   "schemas": {
     "basic": {
-      "uid": "0x06ee33a5deadef7b4e3f947ab555f8b79aaa159145bd7f53114406825c915816",
+      "uid": "0xce183653bd55eee8182e0e54aa86b3a9490a1b79a57d6f0abfea7c4338a1d7fe",
       "name": "Basic",
       "description": "General purpose attestation",
-      "resolver": "0x56F02291ab74AA78336946B2003d9279b016949B",
+      "resolver": "0xEf38766A9AA2511ccDAb79496F78E55f74662FeC",
       "revocable": true,
       "schema": "bytes32 triggerId,string data,uint256 timestamp",
       "fields": [
@@ -47,10 +47,10 @@
       ]
     },
     "compute": {
-      "uid": "0x0d25a50b6891c37edefbf88da4a91516d0eb9b45c7b29a4d2e2994584c61400c",
+      "uid": "0x32cc9419825d913cf23e09bda7cf1c64ec89ed35fb3546208ab189e89d5aca23",
       "name": "Compute",
       "description": "Computational verification",
-      "resolver": "0x6bb38cAc051ced245Fab4C0dCfE69bed38DA7758",
+      "resolver": "0xEf38766A9AA2511ccDAb79496F78E55f74662FeC",
       "revocable": true,
       "schema": "bytes32 triggerId,string computation,bytes result,uint256 timestamp,address operator",
       "fields": [
@@ -77,10 +77,10 @@
       ]
     },
     "isTrue": {
-      "uid": "0xe5704bdbf062a384554dbf73aa261137c3b7bab011d2f73c62d5d122ec6d7b95",
+      "uid": "0x18e3b0af737798fc31eb7cb46db2d1c7e46a1bd9bd577cd27e180b853de7b1ec",
       "name": "IsTrue",
       "description": "Boolean truth assertion",
-      "resolver": "0x6bb38cAc051ced245Fab4C0dCfE69bed38DA7758",
+      "resolver": "0xEf38766A9AA2511ccDAb79496F78E55f74662FeC",
       "revocable": true,
       "schema": "bool isTrue",
       "fields": [
@@ -91,10 +91,10 @@
       ]
     },
     "like": {
-      "uid": "0xea3f1b829f92e41a6a89be82b94698a763aaf58e9b14ea45ee25df8dcee2f101",
+      "uid": "0x407b03281cde7c18fbd260275c1015cd8a506ef53a731324ba20f31db0393f31",
       "name": "Like",
       "description": "Simple like/dislike assertion",
-      "resolver": "0x4E960CF0c7ECaA2F951e3Ec247B0B40531626A37",
+      "resolver": "0x7AF342380e86F37C6C643Ae34fe738cf6703FB16",
       "revocable": true,
       "schema": "bool like",
       "fields": [
@@ -105,10 +105,10 @@
       ]
     },
     "recognition": {
-      "uid": "0xe3f1b4d68e01f1efcb7ddf7a48342f908a97545b4b9ac05ed393d243d0a7d71f",
+      "uid": "0x4aaea073e7222ca13e342baf480aaedc88b5e489c17b5b82619bf851bef7197c",
       "name": "Recognition",
       "description": "Recognize contributions",
-      "resolver": "0x6bb38cAc051ced245Fab4C0dCfE69bed38DA7758",
+      "resolver": "0xEf38766A9AA2511ccDAb79496F78E55f74662FeC",
       "revocable": true,
       "schema": "string reason,uint256 value",
       "fields": [
@@ -123,10 +123,10 @@
       ]
     },
     "statement": {
-      "uid": "0x072f1ddd76566a68ce7bb4b3ac5934c3237db01ad5b7db9ba675fbeda11765c8",
+      "uid": "0x575434c92bf411b946f6a77ed9a9b180ec2088595e01edc1fa8d5aba5aa73c08",
       "name": "Statement",
       "description": "Make an arbitrary statement",
-      "resolver": "0x6bb38cAc051ced245Fab4C0dCfE69bed38DA7758",
+      "resolver": "0xEf38766A9AA2511ccDAb79496F78E55f74662FeC",
       "revocable": true,
       "schema": "string statement",
       "fields": [
@@ -137,10 +137,10 @@
       ]
     },
     "vouching": {
-      "uid": "0xbd4a0330195fd810e1265cfc4455a914c22d0a707734b7225387655bea90dbb9",
+      "uid": "0xb6dfe30859ba3024df9a192460d7b36d1119d9e7a9716334944a1eae5eeb765b",
       "name": "Vouching",
       "description": "Weighted endorsement",
-      "resolver": "0x6bb38cAc051ced245Fab4C0dCfE69bed38DA7758",
+      "resolver": "0xEf38766A9AA2511ccDAb79496F78E55f74662FeC",
       "revocable": true,
       "schema": "uint256 weight",
       "fields": [

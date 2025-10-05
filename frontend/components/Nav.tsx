@@ -34,35 +34,12 @@ const menuItems: {
 
 export const Nav = () => {
   const pathname = usePathname()
-  const [hasOpenedSymbientChat, setHasOpenedSymbientChat] =
-    useLocalStorageState('has_opened_symbient_chat', {
-      defaultValue: false,
-    })
-
   const isAtLeastSmall = useResponsiveMount('sm')
-
-  const [maybeOpen, setMaybeOpen] = useState(false)
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setMaybeOpen(true)
-    }, 1500)
-    return () => clearTimeout(timeout)
-  }, [])
-
-  useEffect(() => {
-    if (isAtLeastSmall && !hasOpenedSymbientChat && maybeOpen) {
-      setOpenRef.current?.(true)
-    }
-  }, [isAtLeastSmall, setHasOpenedSymbientChat, maybeOpen])
 
   return (
     <nav className="grid grid-cols-[1fr_auto_1fr] justify-center items-start">
       <Link href="/">
-        <Logo
-          className={clsx(
-            isAtLeastSmall ? 'w-14 h-14' : 'w-10 h-10'
-          )}
-        />
+        <Logo className={clsx(isAtLeastSmall ? 'w-14 h-14' : 'w-10 h-10')} />
       </Link>
 
       <div className="flex justify-center items-stretch gap-4 sm:gap-6 text-foreground rounded-full bg-card border border-border transition-[background-color,box-shadow] hover:shadow-md px-4 sm:px-6 text-base h-10 sm:h-12">

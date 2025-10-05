@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+
 import { Card } from '@/components/Card'
 
 export default function WavsGovHome() {
@@ -54,7 +55,9 @@ export default function WavsGovHome() {
           </div>
 
           <div className="space-y-4">
-            <h2 className="terminal-bright text-xl md:text-2xl">Our Approach</h2>
+            <h2 className="terminal-bright text-xl md:text-2xl">
+              Our Approach
+            </h2>
             <p className="terminal-text text-sm md:text-base leading-relaxed">
               This initiative aims to create an initial governance primitive
               based on a "web of trust" that evolves organically through

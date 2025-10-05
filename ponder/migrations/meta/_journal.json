@@ -5,19 +5,12 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1758384927627,
-      "tag": "0000_freezing_kree",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
       "when": 1759519638183,
       "tag": "0001_worried_molecule_man",
       "breakpoints": true
     },
     {
-      "idx": 2,
+      "idx": 1,
       "version": "7",
       "when": 1759519711006,
       "tag": "0002_outstanding_hellfire_club",

@@ -1,6 +1,10 @@
 import { createConfig } from "ponder";
 
-import { wavsIndexerAbi } from "../frontend/lib/contracts";
+import {
+  easAbi,
+  merkleSnapshotAbi,
+  wavsIndexerAbi,
+} from "../frontend/lib/contracts";
 import deploymentSummary from "../.docker/deployment_summary.json";
 import { Hex } from "viem";
 
@@ -15,8 +19,14 @@ export default createConfig({
   chains: {
     [CHAIN]: {
       id: CHAIN_ID,
-      rpc: CHAIN === "local" ? "http://localhost:8545" : process.env[`PONDER_RPC_URL_${CHAIN_ID}`],
-      ws: CHAIN === "local" ? "ws://localhost:8545" : process.env[`PONDER_WS_URL_${CHAIN_ID}`],
+      rpc:
+        CHAIN === "local"
+          ? "http://localhost:8545"
+          : process.env[`PONDER_RPC_URL_${CHAIN_ID}`],
+      ws:
+        CHAIN === "local"
+          ? "ws://localhost:8545"
+          : process.env[`PONDER_WS_URL_${CHAIN_ID}`],
     },
   },
   contracts: {
