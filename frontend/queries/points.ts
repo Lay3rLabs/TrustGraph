@@ -26,7 +26,7 @@ export const pointsQueries = {
       queryKey: pointsKeys.events(address),
       queryFn: async () => {
         const response = await fetch(
-          `${APIS.pointsEvents}/${address.toLowerCase()}.json`
+          `${APIS.ponder}/points/${address.toLowerCase()}.json`
         )
 
         if (response.ok) {

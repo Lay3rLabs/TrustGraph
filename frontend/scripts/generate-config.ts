@@ -30,10 +30,6 @@ try {
       env === 'development'
         ? 'http://localhost:65421'
         : 'https://infra.en0va.xyz/ponder',
-    pointsEvents:
-      env === 'development'
-        ? 'http://localhost:9090'
-        : 'https://infra.en0va.xyz/wavs',
     ipfsGateway:
       env === 'development'
         ? 'http://localhost:8080/ipfs/'

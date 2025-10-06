@@ -52,13 +52,6 @@ services:
         wait
     restart: unless-stopped
 
-  merkler-events-server:
-    image: lipanski/docker-static-website:latest
-    ports:
-      - "9090:3000"
-    volumes:
-      - ./infra/wavs-1/app:/home/static
-
   ponder-db:
     image: postgres:17
     container_name: ponder-db

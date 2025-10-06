@@ -2,7 +2,6 @@
   "chain": "local",
   "apis": {
     "ponder": "http://localhost:65421",
-    "pointsEvents": "http://localhost:9090",
     "ipfsGateway": "http://localhost:8080/ipfs/"
   },
   "wavsServiceId": "0dc66dfcb11f815202347e123b0d989abade44e87ab4fbb3eb48321091f7f9d3",
