@@ -8,7 +8,7 @@ import { Hex } from 'viem'
 import { useAccount, useWatchContractEvent } from 'wagmi'
 
 import { Card } from '@/components/Card'
-import { merkleSnapshotAddress, merkleSnapshotConfig } from '@/lib/contracts'
+import { merkleSnapshotConfig } from '@/lib/contracts'
 import { formatTimeAgo } from '@/lib/utils'
 import { pointsQueries } from '@/queries/points'
 
@@ -58,7 +58,6 @@ export default function PointsPage() {
     ...merkleSnapshotConfig,
     eventName: 'MerkleRootUpdated',
     onLogs: handleMerkleRootUpdated,
-    enabled: !!merkleSnapshotAddress,
   })
 
   const { types, totalPoints } = useMemo(() => {
