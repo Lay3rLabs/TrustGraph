@@ -53,14 +53,11 @@ services:
     restart: unless-stopped
 
   merkler-events-server:
-    image: halverneus/static-file-server:latest
+    image: lipanski/docker-static-website:latest
     ports:
-      - "9090:9090"
+      - "9090:3000"
     volumes:
-      - ./infra/wavs-1/app:/web
-    environment:
-      - PORT=9090
-      # Optional config, e.g. CORS or TLS
+      - ./infra/wavs-1/app:/home/static
 
   ponder-db:
     image: postgres:17
