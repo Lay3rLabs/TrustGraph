@@ -1,0 +1,9 @@
+{
+  "market_maker": "${MARKET_MAKER_ADDRESS}",
+  "conditional_tokens": "${CONDITIONAL_TOKENS_ADDRESS}",
+  "question_id": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "chain_name": "${CHAIN_NAME}",
+  "resolver_type": "twitter_followers",
+  "resolver_config": "account:\\\"0xEN0VA\\\";threshold:50",
+  "resolve_after": 1759514400
+}

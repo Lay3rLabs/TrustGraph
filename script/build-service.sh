@@ -122,6 +122,8 @@ if [ -z "${COMPONENT_CONFIGS_FILE}" ] || [ ! -f "${COMPONENT_CONFIGS_FILE}" ]; t
     fi
 fi
 
+COMPONENT_CONFIGS_DIR=$(dirname "$COMPONENT_CONFIGS_FILE")
+
 echo "Reading component configurations from: ${COMPONENT_CONFIGS_FILE}"
 
 # Function to get aggregator component configuration
@@ -170,8 +172,15 @@ jq -c '.components[]' "${COMPONENT_CONFIGS_FILE}" | while IFS= read -r component
     COMP_TRIGGER_CRON_END_TIME=$(echo "$component" | jq -r '.trigger_cron.end_time // ""')
 
     # Extract component-specific config values and env variables
-    COMP_CONFIG_VALUES=$(echo "$component" | jq '.config_values // {}')
+    COMP_CONFIG_FILE=$(echo "$component" | jq -r '.config_file // ""')
     COMP_ENV_VARIABLES=$(echo "$component" | jq '.env_variables // []')
+
+    # if config file specified, load config values from file
+    if [ -n "$COMP_CONFIG_FILE" ]; then
+        COMP_CONFIG_VALUES=$(jq . "$COMPONENT_CONFIGS_DIR/$COMP_CONFIG_FILE")
+    else
+        COMP_CONFIG_VALUES=$(echo "$component" | jq '.config_values // {}')
+    fi
 
     echo "Creating workflow for component: ${COMP_FILENAME}"
     WORKFLOW_ID=`eval "$BASE_CMD workflow add" | jq -r .workflow_id`
