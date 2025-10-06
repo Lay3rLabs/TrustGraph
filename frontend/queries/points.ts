@@ -25,7 +25,9 @@ export const pointsQueries = {
     queryOptions({
       queryKey: pointsKeys.events(address),
       queryFn: async () => {
-        const response = await fetch(`${APIS.pointsEvents}/${address}.json`)
+        const response = await fetch(
+          `${APIS.pointsEvents}/${address.toLowerCase()}.json`
+        )
 
         if (response.ok) {
           const events = (await response.json()) as {
