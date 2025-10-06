@@ -132,11 +132,17 @@ upload_package() {
     # Set environment to use isolated storage (avoids .lock files)
     export WARG_HOME="${temp_home}"
     local output=$(warg config --registry "${REGISTRY_URL}" 2>&1 && \
-                   warg publish release --name "${FULL_PKG_NAME}" --version "${PKG_VERSION}" "${component_file}" --no-wait 2>&1)
+                   warg publish release --name "${FULL_PKG_NAME}" --version "${PKG_VERSION}" "${component_file}" 2>&1)
     local exit_code=$?
     rm -rf "${temp_home}"
 
-    if [ $exit_code -eq 0 ] || [[ "$output" =~ "already released" ]] || [[ "$output" =~ "failed to prove inclusion" ]]; then
+    if [[ "$output" =~ "Unauthorized" ]]; then
+        log "[$num] ❌ ${PKG_NAME} failed: ${output}"
+        return 1
+    elif [[ "$output" =~ "already released" ]]; then
+        log "[$num] ✅ ${PKG_NAME}:${PKG_VERSION} already released (did not re-upload)"
+        return 0
+    elif [[ "$output" =~ "submitted record" ]] || [[ "$output" =~ "published version" ]]; then
         log "[$num] ✅ ${PKG_NAME} uploaded"
         return 0
     else

@@ -93,7 +93,7 @@ contract DeployScript is Common {
             address(conditionalTokens)
         );
         console.log("LMSRMarketMaker deployed at:", address(lmsrMarketMaker));
-        console.log("Market funded with:", funding / 1e18, "tokens");
+        console.log("Market funded with:", funding, "tokens");
         console.log("Market fee:", fee / 1e16, "%");
 
         // Write deployment info to JSON
