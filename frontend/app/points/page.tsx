@@ -15,6 +15,7 @@ import { pointsQueries } from '@/queries/points'
 const ActivityLabel: Record<string, string> = {
   joined: 'Joined',
   attestation: 'Attestation',
+  hyperstition_test: 'Hyperstition Tester',
   hyperstition_realized: 'Hyperstition Realized',
   prediction_market_trade: 'Hyperstition Participation',
   prediction_market_redeem: 'Hyperstition Redemption',
@@ -23,6 +24,7 @@ const ActivityLabel: Record<string, string> = {
 const ActivityIcon: Record<string, ComponentType<{ className?: string }>> = {
   joined: FlaskConical,
   attestation: Hand,
+  hyperstition_test: Sparkles,
   hyperstition_realized: Sparkles,
   prediction_market_trade: Eye,
   prediction_market_redeem: DollarSign,
@@ -31,6 +33,7 @@ const ActivityIcon: Record<string, ComponentType<{ className?: string }>> = {
 const ActivitySummary: Record<string, string> = {
   joined: 'Joined the experiment',
   attestation: 'Received an attestation',
+  hyperstition_test: 'Participated in the test Hyperstition',
   hyperstition_realized: 'Collectively realized a Hyperstition',
   prediction_market_trade: 'Participated in a Hyperstition',
   prediction_market_redeem: 'Redeemed a Hyperstition',

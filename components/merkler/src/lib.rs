@@ -295,6 +295,7 @@ impl Guest for Component {
         registry.add_source(sources::direct::DirectSource::new(
             hyperstition_testers,
             hyperstition_tester_points,
+            "hyperstition_test",
             "Participated in the test Hyperstition",
             Some(hyperstition_tester_timestamp),
         ));

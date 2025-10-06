@@ -11,6 +11,8 @@ pub struct DirectSource {
     pub accounts: Vec<String>,
     /// Points per account.
     pub points_per_account: U256,
+    /// Type for the source event.
+    pub r#type: String,
     /// Summary for the source event.
     pub summary: String,
     /// Optional timestamp for the source event.
@@ -21,10 +23,17 @@ impl DirectSource {
     pub fn new(
         accounts: Vec<String>,
         points_per_account: U256,
+        r#type: &str,
         summary: &str,
         timestamp: Option<u128>,
     ) -> Self {
-        Self { accounts, points_per_account, summary: summary.to_string(), timestamp }
+        Self {
+            accounts,
+            points_per_account,
+            r#type: r#type.to_string(),
+            summary: summary.to_string(),
+            timestamp,
+        }
     }
 }
 
@@ -45,7 +54,7 @@ impl Source for DirectSource {
     ) -> Result<(Vec<SourceEvent>, U256)> {
         Ok((
             vec![SourceEvent {
-                r#type: "Direct".to_string(),
+                r#type: self.r#type.clone(),
                 timestamp: self.timestamp.unwrap_or_default(),
                 value: self.points_per_account,
                 metadata: Some(serde_json::json!({
@@ -60,6 +69,7 @@ impl Source for DirectSource {
         Ok(serde_json::json!({
             "accounts": self.accounts.len(),
             "points_per_account": self.points_per_account.to_string(),
+            "r#type": self.r#type,
             "summary": self.summary,
         }))
     }
