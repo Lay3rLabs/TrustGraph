@@ -13,6 +13,9 @@ const robotoMono = Roboto_Mono({
 })
 
 export const metadata: Metadata = {
+  icons: {
+    icon: '/en0va-white.png',
+  },
   title: 'EN0VA',
   description: 'what we imagine together becomes',
   openGraph: {
