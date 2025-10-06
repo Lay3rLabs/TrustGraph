@@ -4,8 +4,8 @@ import fs from "fs";
 import CONFIG from '../../../frontend/config.json'
 
 const eventsPath = path.join(
-  __dirname,
-  `../../../infra/wavs-1/app/${CONFIG.wavsServiceId}/events`
+  process.cwd(),
+  `../infra/wavs-1/app/${CONFIG.wavsServiceId}/events`
 );
 
 const pointsApp = new Hono();
