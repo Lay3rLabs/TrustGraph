@@ -19,17 +19,12 @@ pub struct DirectSource {
 
 impl DirectSource {
     pub fn new(
-        accounts: Vec<&str>,
+        accounts: Vec<String>,
         points_per_account: U256,
         summary: &str,
         timestamp: Option<u128>,
     ) -> Self {
-        Self {
-            accounts: accounts.iter().map(|a| a.to_string()).collect(),
-            points_per_account,
-            summary: summary.to_string(),
-            timestamp,
-        }
+        Self { accounts, points_per_account, summary: summary.to_string(), timestamp }
     }
 }
 
@@ -40,7 +35,7 @@ impl Source for DirectSource {
     }
 
     async fn get_accounts(&self, _ctx: &super::SourceContext) -> Result<Vec<String>> {
-        Ok(self.accounts.iter().map(|a| a.to_string()).collect())
+        Ok(self.accounts.clone())
     }
 
     async fn get_events_and_value(
