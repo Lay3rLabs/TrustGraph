@@ -12,6 +12,7 @@ use wavs_wasi_utils::evm::{
     new_evm_provider,
 };
 
+pub mod direct;
 pub mod eas;
 pub mod eas_pagerank;
 pub mod erc721;

@@ -278,6 +278,36 @@ impl Guest for Component {
             println!("ℹ️  PageRank points disabled (no pagerank_points_pool configured)");
         }
 
+        // Add 1k points for participating in the test Hyperstition
+        registry.add_source(sources::direct::DirectSource::new(
+            vec![
+                "0x016fbc13eac82a67cbea77eb282cc347a758c361",
+                "0xf9555236dea7940a21c0f271fa2b004af06b0fca",
+                "0x2cb2411005e4b369b1c456a38f64c5a9436dc7a4",
+                "0x3ea778e1e062261ff9b1770ae79a93de6c61401e",
+                "0xfdb6c3d6a28a0235b8b158891f412393dcf0cd42",
+                "0x7329ba91034357bfa6582df5f2b0e0d2969e5f63",
+                "0x2ced06a690d9cc293800d824f31b0972d0d2440e",
+                "0xd2c392084761cb6e44c544b6f39dcc001fde9775",
+                "0xe458a906b91fb4be7976810bbe2ad72d0d909539",
+                "0x7f62dc4c9ca18d4cd6dbd7599f4624a4d1b50b28",
+                "0x1626c59bd14b3a065242cad5059141bb2dec347d",
+                "0xea8bc703924637438313abf086d952011eb568f5",
+                "0x97b59c2ec4ac59b5a581d028bf495fd47c96892d",
+                "0x72e1638bd8cd371bfb04cf665b749a0e4ae38324",
+                "0x852d634983ab455c9c60ee1de3ae8c979eb72617",
+                "0x28499c2115299beff0c07fe7574ce7222d891c76",
+                "0xaedc56434676028849627f0b20a32de1a631c840",
+                "0x1503f75597355232f2553c55c90eefd5d60f216d",
+                "0xb9d53cc752d3d1888fe8e340a65027c1a2d86f94",
+                "0x9b8afd891a5d51f34f699bcb536109b77306b003",
+            ],
+            U256::from(1_000),
+            "Participated in the test Hyperstition",
+            // When the Hyperstition closed @ 10/3/25, 2:00:00 PM EDT
+            Some(1758841200),
+        ));
+
         // Example: Points for specific schema attestations
         // Uncomment and configure to points attestations to a specific schema
         // if let Ok(schema_uid) = config_var("schema_uid") {
