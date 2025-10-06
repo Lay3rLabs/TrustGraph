@@ -1,5 +1,6 @@
 'use client'
 
+import { useQuery } from '@tanstack/react-query'
 import clsx from 'clsx'
 import {
   ArrowRightLeft,
@@ -9,6 +10,7 @@ import {
   LogOut,
   Wallet,
 } from 'lucide-react'
+import Link from 'next/link'
 import { usePlausible } from 'next-plausible'
 import type React from 'react'
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
@@ -18,10 +20,12 @@ import { useAccount, useBalance, useConnect, useDisconnect } from 'wagmi'
 import { erc20Address } from '@/lib/contracts'
 import { parseErrorMessage } from '@/lib/error'
 import { formatBigNumber } from '@/lib/utils'
+import { pointsQueries } from '@/queries/points'
 
+import { EthIcon } from './icons/EthIcon'
+import { PointsIcon } from './icons/PointsIcon'
+import { UsdcIcon } from './icons/UsdcIcon'
 import { Popup } from './Popup'
-import { EthIcon } from './tokens/EthIcon'
-import { UsdcIcon } from './tokens/UsdcIcon'
 
 export interface WalletConnectionButtonProps {
   className?: string
@@ -51,7 +55,13 @@ export const WalletConnectionButton = ({
 
   const setOpenRef = useRef<Dispatch<SetStateAction<boolean>> | null>(null)
 
-  // Use mock USDC for collateral balance
+  const { data: { total: totalPoints = 0 } = {}, isLoading: isLoadingPoints } =
+    useQuery({
+      ...pointsQueries.points(address || '0x0'),
+      enabled: !!address,
+      refetchInterval: 30_000,
+    })
+
   const { data: usdcBalance, isLoading: isLoadingUsdcBalance } = useBalance({
     address: address,
     token: erc20Address,
@@ -117,7 +127,17 @@ export const WalletConnectionButton = ({
       >
         {isConnected && address ? (
           <div className="flex flex-col gap-3 text-sm">
-            <div className="flex flex-col gap-2 bg-primary p-3 rounded-sm -m-1.5">
+            <Link
+              href="/points"
+              className="flex flex-row items-center gap-2 pl-5 p-2 rounded-sm bg-primary text-primary-foreground transition-colors hover:bg-primary/70 active:bg-primary/90 -m-1.5"
+            >
+              <PointsIcon className="w-5 h-5 text-green" />
+              <span className="">
+                {isLoadingPoints ? '...' : formatBigNumber(totalPoints)} points
+              </span>
+            </Link>
+
+            <div className="flex flex-col gap-2 bg-primary p-3 rounded-sm -mx-1.5">
               <p className="text-xs text-primary-foreground/60 font-medium mb-1">
                 Base Network Balances
               </p>

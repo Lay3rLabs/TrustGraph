@@ -16,15 +16,13 @@ export const PointsNotifier = () => {
       return
     }
 
-    const events = await queryClient.fetchQuery(pointsQueries.events(address))
-    const totalPoints = events.reduce(
-      (acc, activity) => acc + activity.points,
-      0
+    const { total } = await queryClient.fetchQuery(
+      pointsQueries.points(address)
     )
 
-    setLastPoints(totalPoints)
+    setLastPoints(total)
 
-    return totalPoints
+    return total
   }, [queryClient, address])
 
   // On address change, update the last points.
@@ -45,7 +43,7 @@ export const PointsNotifier = () => {
 
     // Invalidate the points query.
     await queryClient.invalidateQueries({
-      queryKey: pointsQueries.events(address).queryKey,
+      queryKey: pointsQueries.points(address).queryKey,
     })
 
     const newPoints = await updatePoints()

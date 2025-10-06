@@ -4,12 +4,21 @@ import clsx from 'clsx'
 import { Fullscreen } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
+import {
+  ComponentType,
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import useLocalStorageState from 'use-local-storage-state'
 
 import { WalletConnectionButton } from '@/components/WalletConnectionButton'
 import { useResponsiveMount } from '@/hooks/useResponsiveMount'
 
+import { PointsIcon } from './icons/PointsIcon'
+import { PyramidIcon } from './icons/PyramidIcon'
 import Logo from './Logo'
 import { Popup } from './Popup'
 import { SymbientChat } from './SymbientChat'
@@ -17,19 +26,25 @@ import { SymbientChat } from './SymbientChat'
 const menuItems: {
   label: string
   href: string
-  icon: string
+  Icon: ComponentType<{ className?: string }>
   iconClassName?: string
 }[] = [
   {
+    label: 'Symbient',
+    href: '/symbient',
+    Icon: Logo,
+    iconClassName: 'w-6 h-6',
+  },
+  {
     label: 'Hyperstition',
     href: '/hyperstition',
-    icon: '/pyramid.svg',
+    Icon: PyramidIcon,
     iconClassName: 'w-5 h-5',
   },
   {
     label: 'Points',
     href: '/points',
-    icon: '/points.svg',
+    Icon: PointsIcon,
     iconClassName: 'w-6 h-6',
   },
 ]
@@ -121,11 +136,7 @@ export const Nav = () => {
                 : 'opacity-50'
             )}
           >
-            <img
-              src={item.icon}
-              alt={item.label}
-              className={item.iconClassName}
-            />
+            <item.Icon className={item.iconClassName} />
             <span className="hidden sm:block">{item.label}</span>
           </Link>
         ))}

@@ -38,6 +38,7 @@ import { PredictionMarketForms } from './PredictionMarketForms'
 import { PredictionMarketTradeHistory } from './PredictionMarketTradeHistory'
 import { Card } from '../Card'
 import { HyperstitionDescriptionDisplay } from './HyperstitionDescriptionDisplay'
+import { PointsIcon } from '../icons/PointsIcon'
 
 ChartJS.register(
   Tooltip,
@@ -468,11 +469,7 @@ export const PredictionMarketDetail = ({
                 <div>
                   <div className="terminal-bright text-base flex justify-end items-center gap-2">
                     {formatBigNumber(market.incentivePool)}
-                    <img
-                      src="/points.svg"
-                      alt="Points"
-                      className="ml-1 w-5 h-5 -mr-1"
-                    />
+                    <PointsIcon className="ml-0.5 -mr-0.5 w-5 h-5" />
                     <span>POINTS</span>
                   </div>
                   <div className="terminal-dim text-xs">

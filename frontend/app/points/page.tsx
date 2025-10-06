@@ -40,8 +40,12 @@ export default function PointsPage() {
   const { address, isConnected } = useAccount()
   const [selectedType, setSelectedType] = useState<string>('ALL')
 
-  const { data: activities = [], refetch: refetchActivities } = useQuery({
-    ...pointsQueries.events(address as Hex),
+  const {
+    data: { events: pointsEvents = [], total: totalPoints = 0 } = {},
+    isLoading: isLoadingPoints,
+    refetch: refreshPoints,
+  } = useQuery({
+    ...pointsQueries.points(address as Hex),
     enabled: !!address,
     refetchInterval: 30_000,
   })
@@ -51,8 +55,8 @@ export default function PointsPage() {
     console.log(
       '🌳 MerkleRootUpdated event detected - refreshing activities data'
     )
-    refetchActivities()
-  }, [refetchActivities])
+    refreshPoints()
+  }, [refreshPoints])
 
   useWatchContractEvent({
     ...merkleSnapshotConfig,
@@ -60,17 +64,12 @@ export default function PointsPage() {
     onLogs: handleMerkleRootUpdated,
   })
 
-  const { types, totalPoints } = useMemo(() => {
-    const types = [...new Set(activities.map((activity) => activity.type))]
-    const totalPoints = activities.reduce(
-      (acc, activity) => acc + activity.points,
-      0
-    )
+  const types = useMemo(
+    () => [...new Set(pointsEvents.map((activity) => activity.type))],
+    [pointsEvents]
+  )
 
-    return { types, totalPoints }
-  }, [activities])
-
-  const filteredActivities = activities.filter(
+  const filteredActivities = pointsEvents.filter(
     (activity) => selectedType === 'ALL' || activity.type === selectedType
   )
 
@@ -83,7 +82,7 @@ export default function PointsPage() {
             <h1 className="text-lg">YOUR POINTS</h1>
             {isConnected ? (
               <div className="text-8xl font-bold font-mono">
-                {totalPoints.toLocaleString()}
+                {isLoadingPoints ? '...' : totalPoints.toLocaleString()}
               </div>
             ) : (
               <div className="terminal-dim">
@@ -94,7 +93,7 @@ export default function PointsPage() {
         </div>
 
         <div className="flex flex-col items-stretch p-4 max-w-7xl gap-6 mx-auto">
-          {activities.length > 0 && (
+          {pointsEvents.length > 0 && (
             <>
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-white">
@@ -171,7 +170,9 @@ export default function PointsPage() {
 
           {/* Points Earning Guide Card */}
           <h2 className="text-lg font-bold text-white mt-8">
-            {activities.length > 0 ? 'EARN MORE POINTS' : 'HOW TO EARN POINTS'}
+            {pointsEvents.length > 0
+              ? 'EARN MORE POINTS'
+              : 'HOW TO EARN POINTS'}
           </h2>
           <Card
             type="detail"

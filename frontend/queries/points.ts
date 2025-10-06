@@ -21,7 +21,7 @@ export type PointsEvent = {
 }
 
 export const pointsQueries = {
-  events: (address: `0x${string}`) =>
+  points: (address: `0x${string}`) =>
     queryOptions({
       queryKey: pointsKeys.events(address),
       queryFn: async () => {
@@ -30,14 +30,14 @@ export const pointsQueries = {
         )
 
         if (response.ok) {
-          const events = (await response.json()) as {
+          const data = (await response.json()) as {
             type: string
             timestamp: number
             value: string
             metadata?: Record<string, any>
           }[]
 
-          return events.map(
+          const events = data.map(
             (event, index): PointsEvent => ({
               id: index.toString(),
               type: event.type,
@@ -50,9 +50,13 @@ export const pointsQueries = {
               metadata: event.metadata,
             })
           )
+
+          const total = events.reduce((acc, event) => acc + event.points, 0)
+
+          return { events, total }
         }
 
-        return []
+        return { events: [], total: 0 }
       },
     }),
 }
