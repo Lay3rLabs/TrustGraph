@@ -14,18 +14,18 @@ export const PyramidIcon = (props: SVGProps<SVGSVGElement>) => {
         d="M172.744 138.689L325.971 220.333L171.486 323.404L17.0002 220.333L172.744 138.689Z"
         fill="#191919"
         stroke="white"
-        stroke-width="17"
+        strokeWidth="17"
       />
       <path
         d="M172.744 15L325.971 220.333L171.486 323.404L17.0002 220.333L172.744 15Z"
         fill="#191919"
         stroke="white"
-        stroke-width="17"
+        strokeWidth="17"
       />
       <path
         d="M93.5178 265.478L172.073 33.2861L255.619 265.478"
         stroke="white"
-        stroke-width="17"
+        strokeWidth="17"
       />
       <line
         x1="179.986"
@@ -33,7 +33,7 @@ export const PyramidIcon = (props: SVGProps<SVGSVGElement>) => {
         x2="179.986"
         y2="323.699"
         stroke="white"
-        stroke-width="17"
+        strokeWidth="17"
       />
     </svg>
   )

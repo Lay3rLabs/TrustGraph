@@ -79,11 +79,12 @@ export const WalletConnectionButton = ({
   })
 
   // Open popup on successful connection.
+  const [shouldOpenOnConnection, setShouldOpenOnConnection] = useState(false)
   useEffect(() => {
-    if (isConnected) {
+    if (shouldOpenOnConnection && isConnected) {
       setOpenRef.current?.(true)
     }
-  }, [isConnected])
+  }, [shouldOpenOnConnection, isConnected])
 
   return (
     <>
@@ -215,6 +216,8 @@ export const WalletConnectionButton = ({
                     onClick={() => {
                       // Close the popup as connection begins.
                       setOpenRef.current?.(false)
+                      // Reopen the popup on successful connection.
+                      setShouldOpenOnConnection(true)
 
                       plausible('wallet_connect', {
                         props: {

@@ -12,7 +12,7 @@ import { useAccount } from 'wagmi'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useCollateralToken } from '@/hooks/useCollateralToken'
-import { usePredictionMarket } from '@/hooks/usePredictionMarket'
+import { useHyperstitionMarket } from '@/hooks/useHyperstitionMarket'
 import { conditionalTokensAbi, lmsrMarketMakerAbi } from '@/lib/contracts'
 import { txToast } from '@/lib/tx'
 import { formatBigNumber } from '@/lib/utils'
@@ -140,7 +140,7 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
     formattedNoShares,
     isLoadingNoShares,
     refetch: refetchPredictionMarket,
-  } = usePredictionMarket(market)
+  } = useHyperstitionMarket(market)
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))

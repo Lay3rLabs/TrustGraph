@@ -12,7 +12,7 @@ import { useAccount } from 'wagmi'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useCollateralToken } from '@/hooks/useCollateralToken'
-import { usePredictionMarket } from '@/hooks/usePredictionMarket'
+import { useHyperstitionMarket } from '@/hooks/useHyperstitionMarket'
 import { useUpdatingRef } from '@/hooks/useUpdatingRef'
 import { erc20Abi, erc20Address, lmsrMarketMakerAbi } from '@/lib/contracts'
 import { txToast } from '@/lib/tx'
@@ -179,7 +179,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     formattedNoShares,
     isLoadingNoShares,
     refetch: refetchPredictionMarket,
-  } = usePredictionMarket(market)
+  } = useHyperstitionMarket(market)
   const {
     symbol: collateralSymbol,
     decimals: collateralDecimals,

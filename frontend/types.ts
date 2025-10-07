@@ -4,6 +4,7 @@ export type ChatMessage = {
 }
 
 export type HyperstitionMarket = {
+  slug: string
   title: string
   description: string
   targetValue: number

@@ -3,21 +3,34 @@ import { formatUnits, hexToNumber } from 'viem'
 import { useAccount, useReadContract, useWatchContractEvent } from 'wagmi'
 
 import {
-  conditionalTokensConfig,
+  conditionalTokensAbi,
   erc20Address,
   lmsrMarketMakerAbi,
-  predictionMarketControllerAddress,
-  predictionMarketControllerConfig,
+  predictionMarketControllerAbi,
 } from '@/lib/contracts'
-import { HyperstitionMarket, HyperstitionMarketStatus } from '@/types'
+import { HyperstitionMarket } from '@/types'
 
 import { useCollateralToken } from './useCollateralToken'
+import { useHyperstitionMarketStatus } from './useHyperstitionMarketStatus'
 
 const PRICE_DIVISOR = hexToNumber('0x10000000000000000')
 
-export const usePredictionMarket = ({
-  marketMakerAddress,
-}: HyperstitionMarket) => {
+export const useHyperstitionMarket = (market: HyperstitionMarket) => {
+  const {
+    refetch: refetchStatus,
+    status,
+    conditionId,
+    isLoadingConditionId,
+    isMarketResolved,
+    yesPayoutNumerator,
+    noPayoutNumerator,
+    payoutDenominator,
+    isLoadingResolution,
+  } = useHyperstitionMarketStatus(market)
+
+  const { marketMakerAddress, conditionalTokensAddress, controllerAddress } =
+    market
+
   const { address } = useAccount()
 
   const {
@@ -50,21 +63,11 @@ export const usePredictionMarket = ({
 
   const { decimals: collateralDecimals } = useCollateralToken()
 
-  const { data: conditionId, isLoading: isLoadingConditionId } =
-    useReadContract({
-      ...conditionalTokensConfig,
-      functionName: 'getConditionId',
-      args: [
-        predictionMarketControllerAddress, // oracle
-        '0x0000000000000000000000000000000000000000000000000000000000000000' as `0x${string}`, // questionId
-        2n, // outcomeSlotCount (YES/NO = 2 outcomes)
-      ],
-    })
-
   // Get collection IDs for YES/NO positions
   const { data: yesCollectionId, isLoading: isLoadingYesCollectionId } =
     useReadContract({
-      ...conditionalTokensConfig,
+      abi: conditionalTokensAbi,
+      address: conditionalTokensAddress,
       functionName: 'getCollectionId',
       args: conditionId
         ? [
@@ -78,7 +81,8 @@ export const usePredictionMarket = ({
 
   const { data: noCollectionId, isLoading: isLoadingNoCollectionId } =
     useReadContract({
-      ...conditionalTokensConfig,
+      abi: conditionalTokensAbi,
+      address: conditionalTokensAddress,
       functionName: 'getCollectionId',
       args: conditionId
         ? [
@@ -93,7 +97,8 @@ export const usePredictionMarket = ({
   // Get position IDs for YES/NO tokens
   const { data: yesPositionId, isLoading: isLoadingYesPositionId } =
     useReadContract({
-      ...conditionalTokensConfig,
+      abi: conditionalTokensAbi,
+      address: conditionalTokensAddress,
       functionName: 'getPositionId',
       args: yesCollectionId
         ? [
@@ -106,7 +111,8 @@ export const usePredictionMarket = ({
 
   const { data: noPositionId, isLoading: isLoadingNoPositionId } =
     useReadContract({
-      ...conditionalTokensConfig,
+      abi: conditionalTokensAbi,
+      address: conditionalTokensAddress,
       functionName: 'getPositionId',
       args: noCollectionId ? [erc20Address, noCollectionId] : undefined,
       query: { enabled: !!noCollectionId },
@@ -118,7 +124,8 @@ export const usePredictionMarket = ({
     isLoading: _isLoadingYesShares,
     refetch: refetchYesShares,
   } = useReadContract({
-    ...conditionalTokensConfig,
+    abi: conditionalTokensAbi,
+    address: conditionalTokensAddress,
     functionName: 'balanceOf',
     args: address && yesPositionId ? [address, yesPositionId] : undefined,
     query: {
@@ -142,7 +149,8 @@ export const usePredictionMarket = ({
     isLoading: _isLoadingNoShares,
     refetch: refetchNoShares,
   } = useReadContract({
-    ...conditionalTokensConfig,
+    abi: conditionalTokensAbi,
+    address: conditionalTokensAddress,
     functionName: 'balanceOf',
     args: address && noPositionId ? [address, noPositionId] : undefined,
     query: {
@@ -161,81 +169,31 @@ export const usePredictionMarket = ({
     ? formatUnits(noShares, collateralDecimals)
     : '0'
 
-  const {
-    data: payoutDenominator,
-    isLoading: isLoadingPayoutDenominator,
-    refetch: refetchPayoutDenominator,
-  } = useReadContract({
-    ...conditionalTokensConfig,
-    functionName: 'payoutDenominator',
-    args: conditionId ? [conditionId] : undefined,
-    query: { enabled: !!conditionId },
-  })
-
-  const {
-    data: yesPayoutNumerator,
-    isLoading: isLoadingYesPayoutNumerator,
-    refetch: refetchYesPayoutNumerator,
-  } = useReadContract({
-    ...conditionalTokensConfig,
-    functionName: 'payoutNumerators',
-    args: conditionId ? [conditionId, 1n] : undefined,
-    query: { enabled: !!conditionId },
-  })
-
-  const {
-    data: noPayoutNumerator,
-    isLoading: isLoadingNoPayoutNumerator,
-    refetch: refetchNoPayoutNumerator,
-  } = useReadContract({
-    ...conditionalTokensConfig,
-    functionName: 'payoutNumerators',
-    args: conditionId ? [conditionId, 0n] : undefined,
-    query: { enabled: !!conditionId },
-  })
-
-  const isMarketResolved =
-    !!payoutDenominator &&
-    yesPayoutNumerator !== undefined &&
-    noPayoutNumerator !== undefined
-
-  const status: HyperstitionMarketStatus = isMarketResolved
-    ? yesPayoutNumerator > 0n
-      ? 'achieved'
-      : 'failed'
-    : isLoadingPayoutDenominator ||
-      isLoadingYesPayoutNumerator ||
-      isLoadingNoPayoutNumerator ||
-      isLoadingConditionId
-    ? 'loading'
-    : 'active'
-
   const refetch = useCallback(() => {
     refetchYesCost()
     refetchNoCost()
     refetchYesShares()
     refetchNoShares()
-    refetchPayoutDenominator()
-    refetchYesPayoutNumerator()
-    refetchNoPayoutNumerator()
+    refetchStatus()
   }, [
     refetchYesCost,
     refetchNoCost,
     refetchYesShares,
     refetchNoShares,
-    refetchPayoutDenominator,
-    refetchYesPayoutNumerator,
-    refetchNoPayoutNumerator,
+    refetchStatus,
   ])
 
   // Refresh when the market resolves.
   useWatchContractEvent({
-    ...predictionMarketControllerConfig,
+    address: controllerAddress,
+    abi: predictionMarketControllerAbi,
     eventName: 'MarketResolved',
     onLogs: refetch,
   })
 
   return {
+    refetch,
+
     status,
 
     yesCost,
@@ -260,9 +218,9 @@ export const usePredictionMarket = ({
 
     isLoadingShares: isLoadingYesShares || isLoadingNoShares,
 
-    refetch,
-
     conditionId,
+    isLoadingConditionId,
+
     yesCollectionId,
     noCollectionId,
     yesPositionId,
@@ -272,10 +230,6 @@ export const usePredictionMarket = ({
     yesPayoutNumerator,
     noPayoutNumerator,
     payoutDenominator,
-    isLoadingResolution:
-      isLoadingConditionId ||
-      isLoadingPayoutDenominator ||
-      isLoadingYesPayoutNumerator ||
-      isLoadingNoPayoutNumerator,
+    isLoadingResolution,
   }
 }

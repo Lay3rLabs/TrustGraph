@@ -7,7 +7,7 @@ import { useAccount, useWriteContract } from 'wagmi'
 
 import { Button } from '@/components/ui/button'
 import { useCollateralToken } from '@/hooks/useCollateralToken'
-import { usePredictionMarket } from '@/hooks/usePredictionMarket'
+import { useHyperstitionMarket } from '@/hooks/useHyperstitionMarket'
 import { conditionalTokensAbi, erc20Address } from '@/lib/contracts'
 import { txToast } from '@/lib/tx'
 import { formatBigNumber } from '@/lib/utils'
@@ -41,7 +41,7 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
     isMarketResolved,
     conditionId,
     refetch: refetchPredictionMarket,
-  } = usePredictionMarket(market)
+  } = useHyperstitionMarket(market)
 
   // Find the redemption for the connected user.
   const { data: redemption, isLoading: isLoadingRedemption } = usePonderQuery({

@@ -28,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { usePredictionMarket } from '@/hooks/usePredictionMarket'
+import { useHyperstitionMarket } from '@/hooks/useHyperstitionMarket'
 import { useResponsiveMount } from '@/hooks/useResponsiveMount'
 import { formatBigNumber, formatTimeAgo } from '@/lib/utils'
 import { ponderQueries } from '@/queries/ponder'
@@ -135,7 +135,7 @@ export const PredictionMarketDetail = ({
     refetchInterval: 30_000,
   })
 
-  const { status, isMarketResolved, yesCost } = usePredictionMarket(market)
+  const { status, isMarketResolved, yesCost } = useHyperstitionMarket(market)
 
   const greenColor = getComputedStyle(document.documentElement)
     .getPropertyValue('--green')

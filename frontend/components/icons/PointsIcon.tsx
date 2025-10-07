@@ -17,7 +17,7 @@ export const PointsIcon = (props: SVGProps<SVGSVGElement>) => {
         height="181.019"
         transform="rotate(-45 75.9998 141)"
         stroke="currentColor"
-        stroke-width="17"
+        strokeWidth="17"
       />
       <rect
         x="184.908"
@@ -27,13 +27,13 @@ export const PointsIcon = (props: SVGProps<SVGSVGElement>) => {
         transform="rotate(-90 184.908 160.092)"
         fill="currentColor"
         stroke="currentColor"
-        stroke-width="17"
+        strokeWidth="17"
       />
-      <path d="M407.903 141L332 141" stroke="currentColor" stroke-width="17" />
+      <path d="M407.903 141L332 141" stroke="currentColor" strokeWidth="17" />
       <path
         d="M75.9028 141L0.000106812 141"
         stroke="currentColor"
-        stroke-width="17"
+        strokeWidth="17"
       />
     </svg>
   )

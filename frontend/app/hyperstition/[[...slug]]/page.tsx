@@ -1,42 +1,23 @@
 'use client'
 
 import { motion, useAnimation } from 'motion/react'
+import Link from 'next/link'
+import { useParams } from 'next/navigation'
 import { useRef } from 'react'
 import useLocalStorageState from 'use-local-storage-state'
 
 import { Card } from '@/components/Card'
+import { HyperstitionMarketList } from '@/components/prediction/HyperstitionMarketList'
 import { PredictionMarketDetail } from '@/components/prediction/PredictionMarketDetail'
-import {
-  conditionalTokensAddress,
-  lmsrMarketMakerAddress,
-  predictionMarketControllerAddress,
-} from '@/lib/contracts'
-import { HyperstitionMarket } from '@/types'
+import { allMarkets, currentMarket } from '@/lib/hyperstition'
 
-const startDate = new Date(1758841200 * 1e3)
-const endDate = new Date(1759514400 * 1e3)
-const markets: HyperstitionMarket[] = [
-  {
-    title: 'EN0VA Twitter Ascension',
-    description:
-      '[@0xEN0VA](https://x.com/0xEN0VA) reaches 50 Twitter followers by ' +
-      endDate.toLocaleString(undefined, {
-        dateStyle: 'short',
-        timeStyle: 'long',
-      }),
-    targetValue: 50,
-    incentivePool: 10_000,
-    startDate: startDate,
-    endDate: endDate,
-    marketMakerAddress: lmsrMarketMakerAddress,
-    conditionalTokensAddress,
-    controllerAddress: predictionMarketControllerAddress,
-  },
-]
+export default function HyperstitionSlugPage() {
+  const { slug: slugs = [] } = useParams<{ slug: string[] }>()
+  // Only take the first slug.
+  const slug = slugs[0]
 
-export default function HyperstitionPage() {
   const [headerDismissed, setHeaderDismissed] = useLocalStorageState(
-    'hyperstitionHeaderDismissed',
+    'hyperstition_header_dismissed',
     {
       defaultValue: false,
     }
@@ -57,8 +38,28 @@ export default function HyperstitionPage() {
     setHeaderDismissed(true)
   }
 
+  const market = !slug
+    ? currentMarket
+    : allMarkets.find((market) => market.slug === slug)
+
+  if (!market) {
+    return (
+      <div className="flex flex-col justify-center items-center gap-6">
+        <div className="terminal-dim text-center py-8">
+          ∞ MARKET NOT FOUND ∞
+        </div>
+        <Link
+          href="/hyperstition"
+          className="terminal-command text-sm hover:terminal-bright"
+        >
+          GO BACK
+        </Link>
+      </div>
+    )
+  }
+
   return (
-    <div>
+    <div className="space-y-8">
       {!headerDismissed && (
         <motion.div
           animate={headerAnimation}
@@ -85,7 +86,13 @@ export default function HyperstitionPage() {
         </motion.div>
       )}
 
-      <PredictionMarketDetail market={markets[0]} />
+      <PredictionMarketDetail market={market} />
+
+      <HyperstitionMarketList
+        markets={allMarkets}
+        excludeMarket={market}
+        title="OTHER HYPERSTITIONS"
+      />
     </div>
   )
 }
