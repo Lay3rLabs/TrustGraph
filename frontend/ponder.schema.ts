@@ -1,4 +1,38 @@
+import { unique } from 'drizzle-orm/pg-core'
 import { index, onchainEnum, onchainTable } from 'ponder'
+
+export const predictionMarket = onchainTable(
+  'prediction_market',
+  (t) => ({
+    marketMaker: t.hex().primaryKey(),
+    conditionalTokens: t.hex().notNull(),
+    controller: t.hex().notNull(),
+    collateralToken: t.hex().notNull(),
+    questionId: t.hex().notNull(),
+    conditionId: t.hex().notNull(),
+    fee: t.bigint().notNull(),
+    initialFunding: t.bigint().notNull(),
+    yesCollectionId: t.hex().notNull(),
+    noCollectionId: t.hex().notNull(),
+    yesPositionId: t.bigint().notNull(),
+    noPositionId: t.bigint().notNull(),
+    payoutDenominator: t.bigint(),
+    yesPayoutNumerator: t.bigint(),
+    noPayoutNumerator: t.bigint(),
+    isMarketResolved: t.boolean().notNull(),
+    result: t.boolean(),
+    redeemableCollateral: t.bigint(),
+    unusedCollateral: t.bigint(),
+    collectedFees: t.bigint(),
+    createdAt: t.bigint().notNull(),
+    resolvedAt: t.bigint(),
+  }),
+  (t) => ({
+    uniqueConditionalTokensIdx: unique().on(t.conditionalTokens),
+    createdAtIdx: index().on(t.createdAt),
+    resolvedAtIdx: index().on(t.resolvedAt),
+  })
+)
 
 export const predictionMarketPrice = onchainTable(
   'prediction_market_price',

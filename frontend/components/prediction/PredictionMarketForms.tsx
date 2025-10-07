@@ -12,7 +12,7 @@ import { PredictionSellForm } from './PredictionSellForm'
 
 export type PredictionMarketFormsProps = {
   market: HyperstitionMarket
-  isMarketResolved: boolean
+  isMarketResolved?: boolean
   className?: string
 }
 
@@ -27,13 +27,14 @@ export const PredictionMarketForms = ({
 
   const redeemButton = (
     <button
-      onClick={() => setActiveTab('redeem')}
+      onClick={() => isMarketResolved && setActiveTab('redeem')}
       className={clsx(
         'text-xs font-mono transition-colors',
         activeTab === 'redeem'
           ? 'terminal-command'
           : 'terminal-dim hover:terminal-bright',
-        !isMarketResolved && '!opacity-50 cursor-not-allowed'
+        !isMarketResolved &&
+          '!opacity-50 cursor-not-allowed pointer-events-none'
       )}
     >
       REDEEM
@@ -48,27 +49,29 @@ export const PredictionMarketForms = ({
           <div className="flex space-x-6">
             {isMarketResolved && redeemButton}
             <button
-              onClick={() => setActiveTab('buy')}
+              onClick={() => !isMarketResolved && setActiveTab('buy')}
               disabled={isMarketResolved}
               className={clsx(
                 'text-xs font-mono transition-colors',
                 activeTab === 'buy'
                   ? 'terminal-command'
                   : 'terminal-dim hover:terminal-bright',
-                isMarketResolved && '!opacity-50 cursor-not-allowed'
+                isMarketResolved &&
+                  '!opacity-50 cursor-not-allowed pointer-events-none'
               )}
             >
               BUY
             </button>
             <button
-              onClick={() => setActiveTab('sell')}
+              onClick={() => !isMarketResolved && setActiveTab('sell')}
               disabled={isMarketResolved}
               className={clsx(
                 'text-xs font-mono transition-colors',
                 activeTab === 'sell'
                   ? 'terminal-command'
                   : 'terminal-dim hover:terminal-bright',
-                isMarketResolved && '!opacity-50 cursor-not-allowed'
+                isMarketResolved &&
+                  '!opacity-50 cursor-not-allowed pointer-events-none'
               )}
             >
               SELL

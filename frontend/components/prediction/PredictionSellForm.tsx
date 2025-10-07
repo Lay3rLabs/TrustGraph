@@ -131,8 +131,8 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
   ])
 
   const {
+    isLoadingMarket,
     isMarketResolved,
-    isLoadingResolution,
     yesShares,
     formattedYesShares,
     isLoadingYesShares,
@@ -443,7 +443,7 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
             isSelling ||
             !formData.shareAmount ||
             !hasEnoughShares ||
-            isLoadingResolution ||
+            isLoadingMarket ||
             isMarketResolved ||
             isCalculating
           }

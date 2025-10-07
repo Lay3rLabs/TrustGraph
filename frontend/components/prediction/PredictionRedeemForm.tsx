@@ -97,7 +97,8 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
       userPositions.length === 0 ||
       !isMarketResolved ||
       !payoutDenominator ||
-      (yesPayoutNumerator === undefined && noPayoutNumerator === undefined)
+      (typeof yesPayoutNumerator !== 'bigint' &&
+        typeof noPayoutNumerator !== 'bigint')
     ) {
       return null
     }
@@ -108,7 +109,7 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
       for (const position of userPositions) {
         const payoutNumerator =
           position.outcome === 'YES' ? yesPayoutNumerator : noPayoutNumerator
-        if (payoutNumerator !== undefined) {
+        if (typeof payoutNumerator === 'bigint') {
           // Calculate payout: (position.amount * payoutNumerator) / payoutDenominator
           const positionPayout =
             (position.amount * payoutNumerator) / payoutDenominator

@@ -135,7 +135,7 @@ export const PredictionMarketDetail = ({
     refetchInterval: 30_000,
   })
 
-  const { status, isMarketResolved, yesCost } = useHyperstitionMarket(market)
+  const { status, isMarketResolved, yesPrice } = useHyperstitionMarket(market)
 
   const greenColor = getComputedStyle(document.documentElement)
     .getPropertyValue('--green')
@@ -462,7 +462,7 @@ export const PredictionMarketDetail = ({
               <div className="flex items-center justify-between">
                 <div>
                   <div className="terminal-bright text-base">
-                    {yesCost ? (yesCost * 100).toFixed(2) + '%' : '...'}
+                    {yesPrice ? (yesPrice * 100).toFixed(2) + '%' : '...'}
                   </div>
                   <div className="terminal-dim text-xs">BELIEF LEVEL</div>
                 </div>

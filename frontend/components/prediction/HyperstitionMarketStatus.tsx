@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 
-import { useHyperstitionMarketStatus } from '@/hooks/useHyperstitionMarketStatus'
+import { useHyperstitionMarket } from '@/hooks/useHyperstitionMarket'
 import { HyperstitionMarket } from '@/types'
 
 export type HyperstitionMarketStatusProps = {
@@ -10,7 +10,7 @@ export type HyperstitionMarketStatusProps = {
 export const HyperstitionMarketStatus = ({
   market,
 }: HyperstitionMarketStatusProps) => {
-  const { status } = useHyperstitionMarketStatus(market)
+  const { status } = useHyperstitionMarket(market)
 
   return (
     <div
