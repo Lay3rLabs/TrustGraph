@@ -1,6 +1,6 @@
-import { createConfig } from "ponder";
+import { createConfig, factory } from "ponder";
 
-import { conditionalTokensAbi, easAbi, lmsrMarketMakerAbi, merkleSnapshotAbi, wavsIndexerAbi } from "../frontend/lib/contracts";
+import { conditionalTokensAbi, easAbi, lmsrMarketMakerAbi, merkleSnapshotAbi, predictionMarketControllerAbi, wavsIndexerAbi } from "../frontend/lib/contracts";
 import deploymentSummary from "../.docker/deployment_summary.json";
 import { Hex } from "viem";
 
@@ -20,22 +20,35 @@ export default createConfig({
     },
   },
   contracts: {
-    marketMaker: {
-      abi: lmsrMarketMakerAbi,
+    predictionMarketController: {
+      abi: predictionMarketControllerAbi,
       startBlock: 1,
-      // startBlock: "latest",
       // startBlock: 35855002,
       chain: {
-        [CHAIN]: { address: deploymentSummary.prediction_market.market_maker as Hex },
+        [CHAIN]: { address: deploymentSummary.prediction_market.controller as Hex },
       },
+    },
+    marketMaker: {
+      abi: lmsrMarketMakerAbi,
+      chain: CHAIN,
+      startBlock: 1,
+      // startBlock: 35855002,
+      address: factory({
+        address: deploymentSummary.prediction_market.controller as Hex,
+        event: predictionMarketControllerAbi.find(abi => abi.type === 'event' && abi.name === 'LMSRMarketMakerCreation')!,
+        parameter: 'lmsrMarketMaker',
+      }),
     },
     conditionalTokens: {
       abi: conditionalTokensAbi,
+      chain: CHAIN,
       startBlock: 1,
       // startBlock: 35855002,
-      chain: {
-        [CHAIN]: { address: deploymentSummary.prediction_market.conditional_tokens as Hex },
-      },
+      address: factory({
+        address: deploymentSummary.prediction_market.controller as Hex,
+        event: predictionMarketControllerAbi.find(abi => abi.type === 'event' && abi.name === 'LMSRMarketMakerCreation')!,
+        parameter: 'conditionalTokens',
+      }),
     },
     wavsIndexer: {
       abi: wavsIndexerAbi,

@@ -1,47 +1,201 @@
 import { ponder } from "ponder:registry";
 import {
+  predictionMarket,
   predictionMarketPrice,
   predictionMarketRedemption,
   predictionMarketTrade,
 } from "ponder:schema";
-import { lmsrMarketMakerAbi } from "../../frontend/lib/contracts";
+import {
+  conditionalTokensAbi,
+  lmsrMarketMakerAbi,
+} from "../../frontend/lib/contracts";
 import { hexToNumber } from "viem";
+import { eq } from "drizzle-orm";
 
 const PRICE_DIVISOR = hexToNumber("0x10000000000000000");
 
-// Calculate initial price.
-ponder.on("marketMaker:setup", async ({ context }) => {
-  const marketAddress = context.contracts.marketMaker.address!;
+// Initialize market.
+ponder.on(
+  "predictionMarketController:LMSRMarketMakerCreation",
+  async ({ event, context }) => {
+    const controller = event.log.address;
+    const {
+      lmsrMarketMaker: marketMaker,
+      conditionalTokens,
+      collateralToken,
+      questionId,
+      conditionIds,
+      fee,
+      funding: initialFunding,
+    } = event.args;
 
-  // During setup, the market maker contract may not exist yet.
-  let yesPrice: number;
-  try {
-    yesPrice =
-      Number(
-        await context.client.readContract({
-          address: marketAddress,
-          abi: lmsrMarketMakerAbi,
-          functionName: "calcMarginalPrice",
-          args: [1],
-          retryEmptyResponse: false,
+    if (conditionIds.length !== 1) {
+      throw new Error(
+        "Expected exactly one condition ID, got " + conditionIds.length
+      );
+    }
+
+    const conditionId = conditionIds[0]!;
+
+    const [
+      { yesCollectionId, yesPositionId },
+      { noCollectionId, noPositionId },
+    ] = await Promise.all([
+      context.client
+        .readContract({
+          abi: conditionalTokensAbi,
+          address: conditionalTokens,
+          functionName: "getCollectionId",
+          args: [
+            // parentCollectionId
+            "0x0000000000000000000000000000000000000000000000000000000000000000",
+            conditionId,
+            2n, // indexSet for YES (binary 10 = decimal 2)
+          ],
         })
-      ) / PRICE_DIVISOR;
-  } catch (error) {
-    return;
-  }
+        .then(async (yesCollectionId) => ({
+          yesCollectionId,
+          yesPositionId: await context.client.readContract({
+            abi: conditionalTokensAbi,
+            address: conditionalTokens,
+            functionName: "getPositionId",
+            args: [collateralToken, yesCollectionId],
+          }),
+        })),
+      context.client
+        .readContract({
+          abi: conditionalTokensAbi,
+          address: conditionalTokens,
+          functionName: "getCollectionId",
+          args: [
+            // parentCollectionId
+            "0x0000000000000000000000000000000000000000000000000000000000000000",
+            conditionId,
+            1n, // indexSet for NO (binary 01 = decimal 1)
+          ],
+        })
+        .then(async (noCollectionId) => ({
+          noCollectionId,
+          noPositionId: await context.client.readContract({
+            abi: conditionalTokensAbi,
+            address: conditionalTokens,
+            functionName: "getPositionId",
+            args: [collateralToken, noCollectionId],
+          }),
+        })),
+    ]);
 
-  await context.db.insert(predictionMarketPrice).values({
-    id: "init",
-    price: yesPrice,
-    marketAddress,
-    timestamp: BigInt(Math.floor(Date.now() / 1000)),
-  });
-});
+    await Promise.all([
+      context.db.insert(predictionMarket).values({
+        marketMaker,
+        conditionalTokens,
+        controller,
+        collateralToken,
+        questionId,
+        conditionId,
+        fee,
+        initialFunding,
+        yesCollectionId,
+        noCollectionId,
+        yesPositionId,
+        noPositionId,
+        payoutDenominator: null,
+        yesPayoutNumerator: null,
+        noPayoutNumerator: null,
+        isMarketResolved: false,
+        result: null,
+        redeemableCollateral: null,
+        unusedCollateral: null,
+        collectedFees: null,
+        createdAt: event.block.timestamp,
+        resolvedAt: null,
+      }),
+      context.db.insert(predictionMarketPrice).values({
+        id: "init",
+        price: 0.5,
+        marketAddress: marketMaker,
+        timestamp: event.block.timestamp,
+      }),
+    ]);
+  }
+);
+
+// Resolve market.
+ponder.on(
+  "predictionMarketController:MarketResolved",
+  async ({ event, context }) => {
+    const {
+      lmsrMarketMaker: marketMaker,
+      conditionalTokens,
+      result,
+      redeemableCollateral,
+      unusedCollateral,
+      collectedFees,
+    } = event.args;
+
+    const conditionId = (
+      await context.db.sql
+        .select({ conditionId: predictionMarket.conditionId })
+        .from(predictionMarket)
+        .where(eq(predictionMarket.marketMaker, marketMaker))
+        .limit(1)
+    )[0]?.conditionId;
+
+    if (!conditionId) {
+      throw new Error("Condition ID not found for market maker " + marketMaker);
+    }
+
+    const [payoutDenominator, yesPayoutNumerator, noPayoutNumerator] =
+      await Promise.all([
+        context.client.readContract({
+          abi: conditionalTokensAbi,
+          address: conditionalTokens,
+          functionName: "payoutDenominator",
+          args: [conditionId],
+        }),
+        context.client.readContract({
+          abi: conditionalTokensAbi,
+          address: conditionalTokens,
+          functionName: "payoutNumerators",
+          args: [conditionId, 1n], // outcome slot for YES
+        }),
+        context.client.readContract({
+          abi: conditionalTokensAbi,
+          address: conditionalTokens,
+          functionName: "payoutNumerators",
+          args: [conditionId, 0n], // outcome slot for NO
+        }),
+      ]);
+
+    if (!payoutDenominator) {
+      throw new Error(
+        "Payout denominator not set even though market was resolved"
+      );
+    }
+
+    if (yesPayoutNumerator + noPayoutNumerator !== payoutDenominator) {
+      throw new Error(
+        "Payout numerators do not sum to payout denominator even though market was resolved"
+      );
+    }
+
+    await context.db.update(predictionMarket, { marketMaker }).set({
+      payoutDenominator,
+      yesPayoutNumerator,
+      noPayoutNumerator,
+      isMarketResolved: true,
+      result,
+      redeemableCollateral,
+      unusedCollateral,
+      collectedFees,
+      resolvedAt: event.block.timestamp,
+    });
+  }
+);
 
 // Update price after each trade.
 ponder.on("marketMaker:AMMOutcomeTokenTrade", async ({ event, context }) => {
-  const marketAddress = context.contracts.marketMaker.address!;
-
+  const marketAddress = event.log.address;
   const { transactor, outcomeTokenAmounts, outcomeTokenNetCost, marketFees } =
     event.args;
 
@@ -103,7 +257,22 @@ ponder.on("marketMaker:AMMOutcomeTokenTrade", async ({ event, context }) => {
 });
 
 ponder.on("conditionalTokens:PayoutRedemption", async ({ event, context }) => {
-  const marketAddress = context.contracts.marketMaker.address!;
+  const conditionalTokens = event.log.address;
+  const marketMaker = (
+    await context.db.sql
+      .select({
+        marketMaker: predictionMarket.marketMaker,
+      })
+      .from(predictionMarket)
+      .where(eq(predictionMarket.conditionalTokens, conditionalTokens))
+      .limit(1)
+  )[0]?.marketMaker;
+
+  if (!marketMaker) {
+    throw new Error(
+      "Market maker not found for conditional tokens " + conditionalTokens
+    );
+  }
 
   const {
     redeemer,
@@ -123,7 +292,7 @@ ponder.on("conditionalTokens:PayoutRedemption", async ({ event, context }) => {
   await context.db.insert(predictionMarketRedemption).values({
     id: event.id,
     address: redeemer,
-    marketAddress,
+    marketAddress: marketMaker,
     collateralToken,
     conditionId,
     indexSets: indexSets as bigint[],
