@@ -75,10 +75,10 @@ export default function RootLayout({
         className={`${robotoMono.variable} font-mono dynamic-bg text-primary-foreground`}
       >
         <Providers>
-          <div className="min-h-screen p-2 sm:p-6">
+          <div className="min-h-screen p-2 sm:p-4 md:p-6">
             <Nav />
 
-            <main className="p-2 mt-4 sm:p-4 sm:mt-8 min-h-full">
+            <main className="p-2 mt-2 sm:p-4 sm:mt-6 min-h-full">
               {children}
             </main>
 

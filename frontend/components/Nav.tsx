@@ -8,6 +8,7 @@ import {
   ComponentType,
   Dispatch,
   SetStateAction,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -16,11 +17,12 @@ import useLocalStorageState from 'use-local-storage-state'
 
 import { WalletConnectionButton } from '@/components/WalletConnectionButton'
 import { useResponsiveMount } from '@/hooks/useResponsiveMount'
+import { Animator } from '@/lib/animator'
 
 import { PointsIcon } from './icons/PointsIcon'
 import { PyramidIcon } from './icons/PyramidIcon'
 import Logo from './Logo'
-import { Popup } from './Popup'
+import { Popup, PopupTriggerCustomComponent } from './Popup'
 import { SymbientChat } from './SymbientChat'
 
 const menuItems: {
@@ -52,31 +54,54 @@ const menuItems: {
 export const Nav = () => {
   const pathname = usePathname()
   const [hasOpenedSymbientChat, setHasOpenedSymbientChat] =
-    useLocalStorageState('has_opened_symbient_chat', {
+    useLocalStorageState('opened_symbient_chat', {
       defaultValue: false,
     })
+  const [disclaimerAccepted] = useLocalStorageState('disclaimer_accepted', {
+    defaultValue: false,
+  })
 
   const prepareSymbientChatRef = useRef(() => {})
   const setOpenRef = useRef<Dispatch<SetStateAction<boolean>> | null>(null)
 
   const isAtLeastSmall = useResponsiveMount('sm')
 
-  const [maybeOpen, setMaybeOpen] = useState(false)
+  const [firstOpenSymbientChat, setFirstOpenSymbientChat] = useState(false)
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      setMaybeOpen(true)
-    }, 1500)
+    if (!disclaimerAccepted || hasOpenedSymbientChat) {
+      return
+    }
+
+    const timeout = setTimeout(() => setFirstOpenSymbientChat(true), 1_000)
     return () => clearTimeout(timeout)
-  }, [])
+  }, [disclaimerAccepted, hasOpenedSymbientChat])
 
   useEffect(() => {
-    if (isAtLeastSmall && !hasOpenedSymbientChat && maybeOpen) {
+    if (isAtLeastSmall && firstOpenSymbientChat) {
       setOpenRef.current?.(true)
+      Animator.instance('nav').runTask('wave')
     }
-  }, [isAtLeastSmall, setHasOpenedSymbientChat, maybeOpen])
+  }, [isAtLeastSmall, setHasOpenedSymbientChat, firstOpenSymbientChat])
+
+  const LogoRenderer: PopupTriggerCustomComponent = useCallback(
+    ({ onClick, open }) => (
+      <Logo
+        onClick={pathname !== '/symbient' ? onClick : undefined}
+        className={clsx(
+          'cursor-pointer transition-opacity hover:opacity-80 active:opacity-70 w-10 h-10 md:w-14 md:h-14',
+          open && 'fixed'
+        )}
+        animatorLabel="nav"
+        blinkInterval
+        blinkOnClick
+        blinkOnHover
+      />
+    ),
+    [pathname]
+  )
 
   return (
-    <nav className="grid grid-cols-[1fr_auto_1fr] justify-center items-start">
+    <nav className="grid grid-cols-[1fr_auto_1fr] gap-4 justify-center items-start">
       <Popup
         popupClassName="max-w-lg max-h-[90vh] overflow-hidden !pb-0 !bg-popover-foreground/80 backdrop-blur-sm"
         position="right"
@@ -89,20 +114,7 @@ export const Nav = () => {
         popupPadding={24}
         trigger={{
           type: 'custom',
-          Renderer: ({ onClick, open }) => (
-            <Logo
-              onClick={pathname !== '/symbient' ? onClick : undefined}
-              className={clsx(
-                'cursor-pointer transition-opacity hover:opacity-80 active:opacity-70',
-                isAtLeastSmall ? 'w-14 h-14' : 'w-10 h-10',
-                open && 'fixed'
-              )}
-              animatorLabel="nav"
-              blinkInterval
-              blinkOnClick
-              blinkOnHover
-            />
-          ),
+          Renderer: LogoRenderer,
         }}
       >
         {pathname !== '/symbient' && (
@@ -137,7 +149,7 @@ export const Nav = () => {
             )}
           >
             <item.Icon className={item.iconClassName} />
-            <span className="hidden sm:block">{item.label}</span>
+            <span className="hidden md:block">{item.label}</span>
           </Link>
         ))}
       </div>
