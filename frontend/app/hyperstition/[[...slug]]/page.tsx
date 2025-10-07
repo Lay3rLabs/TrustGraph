@@ -1,15 +1,21 @@
 'use client'
 
+import { usePonderClient } from '@ponder/react'
+import { useQuery } from '@tanstack/react-query'
 import { motion, useAnimation } from 'motion/react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useRef } from 'react'
 import useLocalStorageState from 'use-local-storage-state'
+import { useAccount } from 'wagmi'
 
 import { Card } from '@/components/Card'
+import { UsdcIcon } from '@/components/icons/UsdcIcon'
 import { HyperstitionMarketList } from '@/components/prediction/HyperstitionMarketList'
 import { PredictionMarketDetail } from '@/components/prediction/PredictionMarketDetail'
 import { allMarkets, currentMarket } from '@/lib/hyperstition'
+import { formatBigNumber } from '@/lib/utils'
+import { hyperstitionQueries } from '@/queries/hyperstition'
 
 export default function HyperstitionSlugPage() {
   const { slug: slugs = [] } = useParams<{ slug: string[] }>()
@@ -22,6 +28,13 @@ export default function HyperstitionSlugPage() {
       defaultValue: false,
     }
   )
+
+  const ponderClient = usePonderClient()
+  const { address = '0x0' } = useAccount()
+  const { data: pendingRedemptions } = useQuery({
+    ...hyperstitionQueries.pendingRedemptions(ponderClient, address),
+    enabled: address !== '0x0',
+  })
 
   const headerAnimation = useAnimation()
   const headerRef = useRef<HTMLDivElement>(null)
@@ -84,6 +97,41 @@ export default function HyperstitionSlugPage() {
             </div>
           </Card>
         </motion.div>
+      )}
+
+      {!!pendingRedemptions?.length && (
+        <Card type="detail" size="md" className="space-y-1 mb-8">
+          <div className="terminal-command text-lg">CLAIM YOUR WINNINGS</div>
+          <div className="system-message text-sm">
+            You have{' '}
+            <span className="text-green">{pendingRedemptions.length}</span>{' '}
+            pending redemption{pendingRedemptions.length === 1 ? '' : 's'}.
+          </div>
+
+          <div className="space-y-3 mt-4">
+            {pendingRedemptions.map((redemption) => (
+              <Link
+                key={redemption.market.slug}
+                href={`/hyperstition/${redemption.market.slug}`}
+                className="transition-opacity hover:opacity-70 active:opacity-50"
+              >
+                <Card
+                  type="primary"
+                  size="sm"
+                  className="flex flex-row justify-between items-center"
+                >
+                  <p>{redemption.market.title}</p>
+                  <div className="flex flex-row items-center gap-2">
+                    <UsdcIcon className="w-5 h-5" />
+                    <p>
+                      {formatBigNumber(redemption.amount)} {redemption.symbol}
+                    </p>
+                  </div>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </Card>
       )}
 
       <PredictionMarketDetail market={market} />

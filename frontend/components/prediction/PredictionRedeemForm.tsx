@@ -1,9 +1,10 @@
 'use client'
 
 import { usePonderQuery } from '@ponder/react'
+import { useQueryClient } from '@tanstack/react-query'
 import { usePlausible } from 'next-plausible'
-import React, { useMemo, useState } from 'react'
-import { useAccount, useWriteContract } from 'wagmi'
+import { useCallback, useMemo, useState } from 'react'
+import { useAccount } from 'wagmi'
 
 import { Button } from '@/components/ui/button'
 import { useCollateralToken } from '@/hooks/useCollateralToken'
@@ -11,6 +12,7 @@ import { useHyperstitionMarket } from '@/hooks/useHyperstitionMarket'
 import { conditionalTokensAbi, erc20Address } from '@/lib/contracts'
 import { txToast } from '@/lib/tx'
 import { formatBigNumber } from '@/lib/utils'
+import { hyperstitionKeys } from '@/queries/hyperstition'
 import { HyperstitionMarket } from '@/types'
 
 interface PredictionRedeemFormProps {
@@ -18,14 +20,15 @@ interface PredictionRedeemFormProps {
   onSuccess?: () => void
 }
 
-export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
+export const PredictionRedeemForm = ({
   market,
   onSuccess,
-}) => {
+}: PredictionRedeemFormProps) => {
   const { address, isConnected } = useAccount()
-  const { isPending: isWriting } = useWriteContract()
+  const queryClient = useQueryClient()
   const plausible = usePlausible()
 
+  const [isRedeeming, setIsRedeeming] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
@@ -33,8 +36,8 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
     useCollateralToken()
   const {
     isLoadingShares,
-    yesShares,
-    noShares,
+    yesShares = 0n,
+    noShares = 0n,
     yesPayoutNumerator,
     noPayoutNumerator,
     payoutDenominator,
@@ -69,22 +72,19 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
 
   // Determine which positions the user has (can have both YES and NO)
   const userPositions = useMemo(() => {
-    const yesAmount = yesShares || 0n
-    const noAmount = noShares || 0n
-
     const positions = []
 
-    if (yesAmount > 0n) {
+    if (yesShares > 0n) {
       positions.push({
         outcome: 'YES' as const,
-        amount: yesAmount,
+        amount: yesShares,
       })
     }
 
-    if (noAmount > 0n) {
+    if (noShares > 0n) {
       positions.push({
         outcome: 'NO' as const,
-        amount: noAmount,
+        amount: noShares,
       })
     }
 
@@ -130,6 +130,22 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
     noPayoutNumerator,
   ])
 
+  const scrollRedeemRef = useCallback(
+    (node: HTMLElement | null) => {
+      if (!node || !payout) {
+        return
+      }
+
+      const rect = node.getBoundingClientRect()
+      if (rect.bottom > window.innerHeight) {
+        node.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      } else if (rect.top < 0) {
+        node.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    },
+    [payout]
+  )
+
   const handleRedeem = async () => {
     if (!isConnected || !address) {
       setError('Please connect your wallet')
@@ -146,6 +162,7 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
       return
     }
 
+    setIsRedeeming(true)
     setError(null)
     setSuccess(null)
 
@@ -198,12 +215,19 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
       // Refresh balances
       refetchPredictionMarket()
 
+      // Refresh pending redemptions
+      queryClient.invalidateQueries({
+        queryKey: hyperstitionKeys.pendingRedemptions(address),
+      })
+
       if (onSuccess) {
         onSuccess()
       }
     } catch (err: any) {
       console.error('Error redeeming position:', err)
       setError(err.message || 'Failed to redeem position')
+    } finally {
+      setIsRedeeming(false)
     }
   }
 
@@ -230,7 +254,10 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
             </div>
           ) : !isMarketResolved || userPositions.length > 0 ? (
             <>
-              <div className="bg-black/20 border border-gray-600 p-4 rounded-sm">
+              <div
+                className="bg-black/20 border border-gray-600 p-4 rounded-sm"
+                ref={scrollRedeemRef}
+              >
                 <div className="space-y-3">
                   <div className="terminal-dim text-xs">YOUR POSITIONS</div>
 
@@ -296,10 +323,10 @@ export const PredictionRedeemForm: React.FC<PredictionRedeemFormProps> = ({
 
               <Button
                 onClick={handleRedeem}
-                disabled={!isConnected || !isMarketResolved || isWriting}
+                disabled={!isConnected || !isMarketResolved || isRedeeming}
                 className="w-full mobile-terminal-btn"
               >
-                {isWriting ? (
+                {isRedeeming ? (
                   <span className="terminal-dim">Processing...</span>
                 ) : payout ? (
                   <span className="terminal-command">
