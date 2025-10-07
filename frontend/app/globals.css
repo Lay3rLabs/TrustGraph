@@ -77,6 +77,10 @@
   --sidebar-ring: oklch(0.439 0 0);
 }
 
+.root {
+  isolation: isolate;
+}
+
 @theme inline {
   /* optional: --font-sans, --font-serif, --font-mono if they are applied in the layout.tsx */
   --color-background: var(--background);

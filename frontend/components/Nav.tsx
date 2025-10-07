@@ -21,6 +21,7 @@ import { Animator } from '@/lib/animator'
 
 import { PointsIcon } from './icons/PointsIcon'
 import { PyramidIcon } from './icons/PyramidIcon'
+import { SymbientIcon } from './icons/SymbientIcon'
 import Logo from './Logo'
 import { Popup, PopupTriggerCustomComponent } from './Popup'
 import { SymbientChat } from './SymbientChat'
@@ -34,8 +35,8 @@ const menuItems: {
   {
     label: 'Symbient',
     href: '/symbient',
-    Icon: Logo,
-    iconClassName: 'w-6 h-6',
+    Icon: SymbientIcon,
+    iconClassName: 'w-5 h-5',
   },
   {
     label: 'Hyperstition',
@@ -47,7 +48,7 @@ const menuItems: {
     label: 'Points',
     href: '/points',
     Icon: PointsIcon,
-    iconClassName: 'w-6 h-6',
+    iconClassName: 'w-5 h-5',
   },
 ]
 

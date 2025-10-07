@@ -9,14 +9,15 @@ import {
   ChartData,
   Chart as ChartJS,
   ChartOptions,
+  Tooltip as ChartTooltip,
   Legend,
   LineElement,
   LinearScale,
   PointElement,
   ScriptableContext,
   TimeScale,
-  Tooltip,
 } from 'chart.js'
+import { Info } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Line } from 'react-chartjs-2'
 import { useAccount } from 'wagmi'
@@ -39,9 +40,10 @@ import { PredictionMarketTradeHistory } from './PredictionMarketTradeHistory'
 import { Card } from '../Card'
 import { HyperstitionDescriptionDisplay } from './HyperstitionDescriptionDisplay'
 import { PointsIcon } from '../icons/PointsIcon'
+import { Tooltip } from '../Tooltip'
 
 ChartJS.register(
-  Tooltip,
+  ChartTooltip,
   Legend,
   LineElement,
   PointElement,
@@ -472,9 +474,12 @@ export const PredictionMarketDetail = ({
                     <PointsIcon className="ml-0.5 -mr-0.5 w-5 h-5" />
                     <span>POINTS</span>
                   </div>
-                  <div className="terminal-dim text-xs">
-                    YES OUTCOME INCENTIVE POOL
-                  </div>
+                  <Tooltip title="If the Hyperstition succeeds, these points are distributed proportionally to participants who predicted the YES outcome.">
+                    <div className="terminal-dim text-xs flex flex-row gap-1 items-center">
+                      <p>HYPERSTITION INCENTIVE POOL</p>
+                      <Info className="w-3 h-3" />
+                    </div>
+                  </Tooltip>
                 </div>
               </div>
             </Card>
