@@ -28,7 +28,6 @@ export const predictionMarket = onchainTable(
     resolvedAt: t.bigint(),
   }),
   (t) => ({
-    uniqueConditionalTokensIdx: unique().on(t.conditionalTokens),
     createdAtIdx: index().on(t.createdAt),
     resolvedAtIdx: index().on(t.resolvedAt),
   })
