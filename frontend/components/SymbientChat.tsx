@@ -47,7 +47,10 @@ export const SymbientChat = ({
 
   if (prepareRef) {
     prepareRef.current = () => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      messagesEndRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      })
       textareaRef.current?.focus()
     }
   }
@@ -81,7 +84,10 @@ export const SymbientChat = ({
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    messagesEndRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+    })
   }, [messages, isThinking])
 
   // Function to send message to chat API
