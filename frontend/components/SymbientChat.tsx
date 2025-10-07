@@ -178,6 +178,21 @@ export const SymbientChat = ({
           return
         }
 
+        try {
+          const { error } = await response.json()
+          if (error) {
+            undoWithError(error)
+            return
+          }
+        } catch {}
+
+        console.error(
+          'Failed to send message',
+          response.status,
+          response.statusText,
+          await response.text().catch((error) => `Body error: ${error}`)
+        )
+
         undoWithError('Failed to send message')
         return
       }

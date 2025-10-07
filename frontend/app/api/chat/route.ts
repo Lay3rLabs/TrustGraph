@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 
 import { NextRequest, NextResponse } from 'next/server'
-import OpenAI from 'openai'
+import OpenAI, { APIError } from 'openai'
 import {
   ChatCompletionAssistantMessageParam,
   ChatCompletionSystemMessageParam,
@@ -97,7 +97,7 @@ const validateMessageLength = (
     ) {
       return {
         valid: false,
-        error: `Message exceeds maximum length of ${MAX_CHAT_MESSAGE_LENGTH} characters (current: ${message.content.length})`,
+        error: `Message exceeds maximum length of ${MAX_CHAT_MESSAGE_LENGTH} characters (length: ${message.content.length.toLocaleString()})`,
       }
     }
   }
@@ -280,6 +280,27 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Chat API error:', error)
+
+    if (error instanceof APIError) {
+      if (
+        error.status === 400 &&
+        error.message.includes('prompt is too long')
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              'Context length exceeded. Send /clear to start a new conversation.',
+          },
+          { status: 400 }
+        )
+      }
+
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      )
+    }
+
     return NextResponse.json(
       { error: 'Failed to process chat message' },
       { status: 500 }
