@@ -4,6 +4,7 @@ import type { Metadata, Viewport } from 'next'
 import { Roboto_Mono } from 'next/font/google'
 
 import { DisclaimerModal } from '@/components/DisclaimerModal'
+import { Footer } from '@/components/Footer'
 import { Nav } from '@/components/Nav'
 import { Providers } from '@/components/providers'
 
@@ -75,12 +76,12 @@ export default function RootLayout({
         className={`${robotoMono.variable} font-mono dynamic-bg text-primary-foreground`}
       >
         <Providers>
-          <div className="min-h-screen p-2 sm:p-4 md:p-6">
+          <div className="min-h-screen p-2 sm:p-4 md:p-6 flex flex-col">
             <Nav />
 
-            <main className="p-2 mt-2 sm:p-4 sm:mt-6 min-h-full">
-              {children}
-            </main>
+            <main className="p-2 mt-2 sm:p-4 sm:mt-6 flex-1">{children}</main>
+
+            <Footer />
 
             <DisclaimerModal />
           </div>
