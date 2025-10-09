@@ -109,7 +109,9 @@ export function Modal({
       </Card>
 
       {backgroundContent && (
-        <div className="absolute inset-0 z-40">{backgroundContent}</div>
+        <div className="absolute inset-0 z-40 pointer-events-none">
+          {backgroundContent}
+        </div>
       )}
 
       <CRTScanlines opacity={0.12} lineHeight={3} />
