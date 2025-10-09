@@ -73,8 +73,10 @@ export const SymbientShareModal = ({
   useEffect(() => {
     try {
       if (isOpen) {
+        setConfetti(true)
         loadShareableMessage(action)
       } else {
+        setConfetti(false)
         Animator.instance('share').stopTask('thinking')
       }
     } catch {}
