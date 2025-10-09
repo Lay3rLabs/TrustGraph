@@ -65,7 +65,7 @@ const menuItems: MenuItem[] = [
   {
     id: 'memetics',
     label: 'Memetics',
-    path: '/backroom/memetics',
+    path: '/memetics',
     icon: '✛',
   },
   // {

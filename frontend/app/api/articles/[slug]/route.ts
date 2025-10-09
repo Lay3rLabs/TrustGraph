@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { getArticleBySlug } from '@/lib/articles'
+import { CLASSIFIED_PASSWORD, getArticleBySlug } from '@/lib/articles'
 
 export async function GET(
   request: NextRequest,
@@ -8,7 +8,13 @@ export async function GET(
 ) {
   try {
     const { slug } = await params
-    const article = await getArticleBySlug(slug)
+    const { searchParams } = new URL(request.url)
+    const password = searchParams.get('password')
+
+    const article = await getArticleBySlug(
+      slug,
+      password !== CLASSIFIED_PASSWORD
+    )
 
     if (!article) {
       return NextResponse.json({ error: 'Article not found' }, { status: 404 })

@@ -1,4 +1,5 @@
-import { Github, Globe } from 'lucide-react'
+import { Brain, Github, Globe } from 'lucide-react'
+import Link from 'next/link'
 
 import { WavsIcon } from './icons/WavsIcon'
 import { XIcon } from './icons/XIcon'
@@ -33,6 +34,13 @@ export const Footer = () => {
           <Github className="w-4 h-4" />
           GitHub
         </a>
+        <Link
+          href="/memetics"
+          className="transition-opacity hover:opacity-80 active:opacity-70 flex flex-col items-center gap-1"
+        >
+          <Brain className="w-4 h-4" />
+          Memetics
+        </Link>
       </div>
 
       <a

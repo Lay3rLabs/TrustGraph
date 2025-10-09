@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import type React from 'react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import useLocalStorageState from 'use-local-storage-state'
 
 import { PasswordGate } from '@/components/ui/password-gate'
 import {
@@ -13,28 +14,33 @@ import {
 } from '@/lib/articles-client'
 
 export default function MemeticsPage() {
-  const [hasClassifiedAccess, setHasClassifiedAccess] = useState(false)
   const [showPasswordGate, setShowPasswordGate] = useState(false)
   const [writings, setWritings] = useState<ArticleMetadata[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const loadArticles = async () => {
-      try {
-        const articles = await getAllArticles()
-        setWritings(articles)
-      } catch (error) {
-        console.error('Failed to load articles:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
+  const [password] = useLocalStorageState('memetics_password', {
+    defaultValue: '',
+  })
 
+  const loadArticles = useCallback(async () => {
+    try {
+      const articles = await getAllArticles(password)
+      setWritings(articles)
+      return articles
+    } catch (error) {
+      console.error('Failed to load articles:', error)
+      return []
+    } finally {
+      setLoading(false)
+    }
+  }, [password])
+
+  useEffect(() => {
     loadArticles()
   }, [])
 
   const shareArticle = (writing: ArticleMetadata) => {
-    const url = `${window.location.origin}/backroom/memetics/articles/${writing.slug}`
+    const url = `${window.location.origin}/memetics/${writing.slug}`
     if (navigator.share) {
       navigator.share({
         title: writing.title,
@@ -49,13 +55,16 @@ export default function MemeticsPage() {
   }
 
   const handleClassifiedClick = (writing: ArticleMetadata) => {
-    if (writing.status === 'classified' && !hasClassifiedAccess) {
+    if (writing.locked) {
       setShowPasswordGate(true)
     }
   }
 
-  const handleUnlock = () => {
-    setHasClassifiedAccess(true)
+  const handleUnlock = async () => {
+    const articles = await loadArticles()
+    if (articles.some((article) => article.locked)) {
+      throw new Error('ACCESS DENIED')
+    }
     setShowPasswordGate(false)
   }
 
@@ -94,10 +103,7 @@ export default function MemeticsPage() {
       {/* Clean Article List */}
       <div className="space-y-6">
         {writings.map((writing) => {
-          const isClassified = writing.status === 'classified'
-          const canAccess = !isClassified || hasClassifiedAccess
-
-          if (!canAccess) {
+          if (writing.locked) {
             return (
               <div
                 key={writing.slug}
@@ -152,7 +158,7 @@ export default function MemeticsPage() {
           return (
             <Link
               key={writing.slug}
-              href={`/backroom/memetics/articles/${writing.slug}`}
+              href={`/memetics/${writing.slug}`}
               className="block border-b border-gray-800 pb-6 hover:bg-black/10 transition-colors group cursor-pointer"
             >
               <div className="flex items-start justify-between mb-2">
@@ -190,11 +196,12 @@ export default function MemeticsPage() {
               <div className="flex items-center justify-between">
                 <div className="flex space-x-3">
                   {writing.tags.slice(0, 3).map((tag) => (
-                    <span key={tag} className="terminal-dim text-xs">
+                    <span key={tag} className="terminal-dim text-xs opacity-60">
                       #{tag}
                     </span>
                   ))}
                 </div>
+                <div className="text-green-600/40 text-xs">🔓</div>
               </div>
             </Link>
           )

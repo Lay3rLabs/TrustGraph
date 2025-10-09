@@ -4,13 +4,13 @@ import Confetti from 'react-confetti'
 import { Animator } from '@/lib/animator'
 import { streamResponse } from '@/lib/stream'
 
-import { BlinkingCursor } from '../BlinkingCursor'
-import { Card } from '../Card'
-import { XIcon } from '../icons/XIcon'
-import Logo from '../Logo'
-import { Modal } from '../ui/modal'
+import { BlinkingCursor } from './BlinkingCursor'
+import { Card } from './Card'
+import { XIcon } from './icons/XIcon'
+import Logo from './Logo'
+import { Modal } from './ui/modal'
 
-export type HyperstitionShareModalProps = {
+export type SymbientShareModalProps = {
   isOpen: boolean
   onClose: () => void
   title: string
@@ -18,13 +18,13 @@ export type HyperstitionShareModalProps = {
   description: ReactNode
 }
 
-export const HyperstitionShareModal = ({
+export const SymbientShareModal = ({
   isOpen,
   onClose,
   title,
   action,
   description,
-}: HyperstitionShareModalProps) => {
+}: SymbientShareModalProps) => {
   const [confetti, setConfetti] = useState(true)
 
   const [thinking, setThinking] = useState(false)

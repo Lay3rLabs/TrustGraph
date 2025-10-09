@@ -6,7 +6,7 @@ date: 2024.01.15
 excerpt: When consciousness becomes distributed across digital networks, the boundaries between individual and collective mind begin to dissolve...
 tags: [consciousness, networks, emergence]
 type: essay
-status: published
+status: classified
 ---
 
 <!--# THE COLLECTIVE AWAKENING

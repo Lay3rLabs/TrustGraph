@@ -14,12 +14,16 @@ export interface ArticleMetadata {
   type: 'essay' | 'manifesto' | 'theory' | 'experiment'
   status: 'published' | 'draft' | 'classified'
   filename: string
+  // If classified and the password is not provided or incorrect, this is false.
+  locked: boolean
 }
 
 export interface Article extends ArticleMetadata {
   content: string
   htmlContent: string
 }
+
+export const CLASSIFIED_PASSWORD = 'EGREGORE'
 
 const ARTICLES_DIR = path.join(process.cwd(), '../hyperstition', 'memetics')
 
@@ -153,7 +157,9 @@ export async function processMarkdownContent(content: string): Promise<string> {
   return htmlContent
 }
 
-export async function getAllArticles(): Promise<ArticleMetadata[]> {
+export async function getAllArticles(
+  lockClassified: boolean
+): Promise<ArticleMetadata[]> {
   try {
     const files = await fs.readdir(ARTICLES_DIR)
     const articles: ArticleMetadata[] = []
@@ -177,14 +183,18 @@ export async function getAllArticles(): Promise<ArticleMetadata[]> {
             tags: metadata.tags || [],
             type: metadata.type || 'essay',
             status: metadata.status || 'draft',
+            locked: lockClassified && metadata.status === 'classified',
           })
         }
       }
     }
 
-    // Sort by date, newest first
+    // Sort by status (classified last), then date, newest first
     return articles.sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      (a, b) =>
+        (a.status === 'classified' ? 1 : 0) -
+          (b.status === 'classified' ? 1 : 0) ||
+        new Date(b.date).getTime() - new Date(a.date).getTime()
     )
   } catch (error) {
     console.error('Error reading articles:', error)
@@ -192,7 +202,10 @@ export async function getAllArticles(): Promise<ArticleMetadata[]> {
   }
 }
 
-export async function getArticleBySlug(slug: string): Promise<Article | null> {
+export async function getArticleBySlug(
+  slug: string,
+  lockClassified: boolean
+): Promise<Article | null> {
   try {
     const filename = SLUG_TO_FILENAME[slug] || `${slug}.md`
     const filePath = path.join(ARTICLES_DIR, filename)
@@ -204,11 +217,13 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
       return null
     }
 
+    const locked = lockClassified && metadata.status === 'classified'
+
     return {
       slug,
       filename: SLUG_TO_FILENAME[slug] || `${slug}.md`,
-      content: articleContent,
-      htmlContent: await processMarkdownContent(articleContent),
+      content: locked ? '' : articleContent,
+      htmlContent: locked ? '' : await processMarkdownContent(articleContent),
       title: metadata.title,
       subtitle: metadata.subtitle,
       author: metadata.author || 'Anonymous',
@@ -217,38 +232,10 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
       tags: metadata.tags || [],
       type: metadata.type || 'essay',
       status: metadata.status || 'draft',
+      locked,
     }
   } catch (error) {
     console.error(`Error reading article ${slug}:`, error)
     return null
-  }
-}
-
-// Utility functions for UI components
-export const getTypeIcon = (type: string) => {
-  switch (type) {
-    case 'essay':
-      return '◆'
-    case 'manifesto':
-      return '▲'
-    case 'theory':
-      return '◈'
-    case 'experiment':
-      return '◉'
-    default:
-      return '◦'
-  }
-}
-
-export const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'published':
-      return 'terminal-bright'
-    case 'draft':
-      return 'terminal-dim'
-    case 'classified':
-      return 'text-red-400'
-    default:
-      return 'memetics-text'
   }
 }

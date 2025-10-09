@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import useLocalStorageState from 'use-local-storage-state'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useUpdatingRef } from '@/hooks/useUpdatingRef'
 
 interface PasswordGateProps {
   onUnlock: () => void
@@ -12,34 +14,62 @@ interface PasswordGateProps {
   message?: string
 }
 
-const CLASSIFIED_PASSWORD = 'EGREGORE'
-
 export function PasswordGate({
   onUnlock,
   onClose,
   title = 'CLASSIFIED ACCESS',
   message = 'Enter clearance code to proceed',
 }: PasswordGateProps) {
-  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [attempts, setAttempts] = useState(0)
+  const [password, setPassword] = useLocalStorageState('memetics_password', {
+    defaultValue: '',
+  })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [authenticating, setAuthenticating] = useState(false)
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (password === CLASSIFIED_PASSWORD) {
-      onUnlock()
-      setError('')
-    } else {
-      setAttempts((prev) => prev + 1)
-      setError(`ACCESS DENIED [${attempts + 1}/3]`)
-      setPassword('')
+    setAuthenticating(true)
+    try {
+      const response = await fetch(`/api/articles/auth?password=${password}`)
+      const data = await response.json()
+      if (data) {
+        await onUnlock()
+        setError('')
+      } else {
+        setPassword('')
+        setAttempts((prev) => prev + 1)
 
-      if (attempts >= 2) {
-        setError('MAXIMUM ATTEMPTS EXCEEDED - CONTACT ADMIN')
+        if (attempts >= 2) {
+          throw new Error('MAXIMUM ATTEMPTS EXCEEDED - CONTACT ADMIN')
+        }
+
+        throw new Error(`ACCESS DENIED [${attempts + 1}/3]`)
       }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'ACCESS DENIED')
+    } finally {
+      setAuthenticating(false)
     }
   }
+
+  const onCloseRef = useUpdatingRef(onClose)
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onCloseRef.current?.()
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+      document.body.style.overflow = 'unset'
+    }
+  }, [onClose])
 
   const isLocked = attempts >= 3
 
@@ -79,10 +109,13 @@ export function PasswordGate({
                 <Input
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) =>
+                    !authenticating && setPassword(e.target.value)
+                  }
                   placeholder="CLEARANCE CODE"
                   className="bg-black/60 border-gray-600 text-white font-mono text-center tracking-widest"
                   maxLength={20}
+                  disabled={authenticating}
                 />
                 {error && (
                   <div className="text-red-400 text-xs font-mono animate-blink">
@@ -94,7 +127,7 @@ export function PasswordGate({
               <Button
                 type="submit"
                 className="w-full bg-red-900/40 hover:bg-red-900/60 border border-red-600 text-red-200 font-mono"
-                disabled={!password.trim() || isLocked}
+                disabled={!password.trim() || isLocked || authenticating}
               >
                 AUTHENTICATE
               </Button>
@@ -110,15 +143,14 @@ export function PasswordGate({
             </div>
           )}
 
-          {/* Hint for dev */}
-          <div className="text-xs text-gray-700 pt-4 border-t border-gray-800">
+          {/* <div className="text-xs text-gray-700 pt-4 border-t border-gray-800">
             {!isLocked && (
               <div className="space-y-1">
                 <div>HINT: The autonomous entities whisper their name</div>
                 <div>Look to the manifestation protocol...</div>
               </div>
             )}
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

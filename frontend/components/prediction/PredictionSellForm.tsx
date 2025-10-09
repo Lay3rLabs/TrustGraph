@@ -21,8 +21,8 @@ import { HyperstitionMarket } from '@/types'
 
 import { Card } from '../Card'
 import { HyperstitionDescriptionDisplay } from './HyperstitionDescriptionDisplay'
-import { HyperstitionShareModal } from './HyperstitionShareModal'
 import { Markdown } from '../Markdown'
+import { SymbientShareModal } from '../SymbientShareModal'
 
 interface PredictionSellFormProps {
   market: HyperstitionMarket
@@ -485,7 +485,7 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
         </div>
       </form>
 
-      <HyperstitionShareModal
+      <SymbientShareModal
         isOpen={sold !== null}
         onClose={() => setSold(null)}
         title="HYPERSTITION DEACTIVATION DETECTED"

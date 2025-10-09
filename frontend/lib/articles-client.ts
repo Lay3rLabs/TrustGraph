@@ -9,6 +9,8 @@ export interface ArticleMetadata {
   type: 'essay' | 'manifesto' | 'theory' | 'experiment'
   status: 'published' | 'draft' | 'classified'
   filename: string
+  // If classified and the password is not provided or incorrect, this is false, and the content is not provided (just the excerpt).
+  locked: boolean
 }
 
 export interface Article extends ArticleMetadata {
@@ -16,9 +18,11 @@ export interface Article extends ArticleMetadata {
   htmlContent: string
 }
 
-export async function getAllArticles(): Promise<ArticleMetadata[]> {
+export async function getAllArticles(
+  password?: string
+): Promise<ArticleMetadata[]> {
   try {
-    const response = await fetch('/api/articles')
+    const response = await fetch(`/api/articles?password=${password}`)
     if (!response.ok) {
       throw new Error(`Failed to fetch articles: ${response.statusText}`)
     }
@@ -29,9 +33,12 @@ export async function getAllArticles(): Promise<ArticleMetadata[]> {
   }
 }
 
-export async function getArticleBySlug(slug: string): Promise<Article | null> {
+export async function getArticleBySlug(
+  slug: string,
+  password?: string
+): Promise<Article | null> {
   try {
-    const response = await fetch(`/api/articles/${slug}`)
+    const response = await fetch(`/api/articles/${slug}?password=${password}`)
     if (!response.ok) {
       if (response.status === 404) {
         return null

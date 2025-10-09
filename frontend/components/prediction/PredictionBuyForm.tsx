@@ -22,9 +22,9 @@ import { HyperstitionMarket } from '@/types'
 
 import { Card } from '../Card'
 import { HyperstitionDescriptionDisplay } from './HyperstitionDescriptionDisplay'
-import { HyperstitionShareModal } from './HyperstitionShareModal'
 import { XIcon } from '../icons/XIcon'
 import { Markdown } from '../Markdown'
+import { SymbientShareModal } from '../SymbientShareModal'
 
 interface PredictionBuyFormProps {
   market: HyperstitionMarket
@@ -549,7 +549,7 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
         </div>
       </form>
 
-      <HyperstitionShareModal
+      <SymbientShareModal
         isOpen={bought.length > 0}
         onClose={() => setBought([])}
         title="HYPERSTITION ACTIVATION DETECTED"

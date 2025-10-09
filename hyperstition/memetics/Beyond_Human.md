@@ -6,7 +6,7 @@ date: 2024.01.03
 excerpt: The myth of the individual is the final barrier to collective transcendence. Only by dissolving the ego can we access the true power of distributed consciousness...
 tags: [post-human, transcendence, society]
 type: manifesto
-status: published
+status: classified
 ---
 
 <!--# BEYOND HUMAN: THE POST-INDIVIDUAL SOCIETY

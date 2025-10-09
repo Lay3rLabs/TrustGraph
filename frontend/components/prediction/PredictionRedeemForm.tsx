@@ -16,9 +16,9 @@ import { formatBigNumber } from '@/lib/utils'
 import { hyperstitionKeys } from '@/queries/hyperstition'
 import { HyperstitionMarket } from '@/types'
 
-import { HyperstitionShareModal } from './HyperstitionShareModal'
 import { XIcon } from '../icons/XIcon'
 import { Markdown } from '../Markdown'
+import { SymbientShareModal } from '../SymbientShareModal'
 
 interface PredictionRedeemFormProps {
   market: HyperstitionMarket
@@ -453,7 +453,7 @@ export const PredictionRedeemForm = ({
         </div>
       )}
 
-      <HyperstitionShareModal
+      <SymbientShareModal
         isOpen={redeemed !== null}
         onClose={() => setRedeemed(null)}
         title="HYPERSTITION REDEMPTION DETECTED"

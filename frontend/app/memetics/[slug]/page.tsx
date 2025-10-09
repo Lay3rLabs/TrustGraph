@@ -3,7 +3,8 @@
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import type React from 'react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import useLocalStorageState from 'use-local-storage-state'
 
 import { PasswordGate } from '@/components/ui/password-gate'
 import { type Article, getArticleBySlug } from '@/lib/articles-client'
@@ -13,40 +14,51 @@ export default function ArticlePage() {
   const router = useRouter()
   const [article, setArticle] = useState<Article | null>(null)
   const [loading, setLoading] = useState(true)
-  const [hasClassifiedAccess, setHasClassifiedAccess] = useState(false)
   const [showPasswordGate, setShowPasswordGate] = useState(false)
   const slug = params.slug as string
 
-  useEffect(() => {
-    const loadArticle = async () => {
-      try {
-        const loadedArticle = await getArticleBySlug(slug)
-        if (loadedArticle) {
-          setArticle(loadedArticle)
+  const [password] = useLocalStorageState('memetics_password', {
+    defaultValue: '',
+  })
 
-          // Check if article is classified and user doesn't have access
-          if (loadedArticle.status === 'classified' && !hasClassifiedAccess) {
-            setShowPasswordGate(true)
-          }
-        } else {
-          // Redirect to main page if article not found
-          router.push('/backroom/memetics')
+  const loadArticle = useCallback(async () => {
+    try {
+      const loadedArticle = await getArticleBySlug(slug, password)
+      if (loadedArticle) {
+        setArticle(loadedArticle)
+
+        // Check if article is locked and needs password
+        if (loadedArticle.locked) {
+          setShowPasswordGate(true)
         }
-      } catch (error) {
-        console.error('Failed to load article:', error)
-        router.push('/backroom/memetics')
-      } finally {
-        setLoading(false)
+
+        return loadedArticle
+      } else {
+        return null
       }
+    } catch (error) {
+      console.error('Failed to load article:', error)
+      return null
+    } finally {
+      setLoading(false)
     }
+  }, [slug, password, router])
 
+  useEffect(() => {
     if (slug) {
-      loadArticle()
+      loadArticle().then((article) => {
+        if (!article) {
+          router.push('/memetics')
+        }
+      })
     }
-  }, [slug, router, hasClassifiedAccess])
+  }, [slug, router])
 
-  const handleUnlock = () => {
-    setHasClassifiedAccess(true)
+  const handleUnlock = async () => {
+    const article = await loadArticle()
+    if (article?.locked) {
+      throw new Error('ACCESS DENIED')
+    }
     setShowPasswordGate(false)
   }
 
@@ -95,7 +107,7 @@ export default function ArticlePage() {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Back Button */}
       <Link
-        href="/backroom/memetics"
+        href="/memetics"
         className="terminal-command text-sm hover:terminal-bright flex items-center space-x-2"
       >
         <span>←</span>
@@ -147,7 +159,7 @@ export default function ArticlePage() {
       {/* Footer */}
       <div className="text-center border-t border-gray-700 pt-8">
         <Link
-          href="/backroom/memetics"
+          href="/memetics"
           className="terminal-dim text-xs hover:terminal-bright"
         >
           ∞ RETURN TO ARCHIVE ∞
