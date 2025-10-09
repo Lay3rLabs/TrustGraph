@@ -461,10 +461,8 @@ export const PredictionRedeemForm = ({
           <Markdown rawHtml>
             {`You earned <span className="text-green">${
               redeemed?.amount || '...'
-            } ${collateralSymbol}</span> by redeeming the ${
+            } ${collateralSymbol}</span> by redeeming ${
               redeemed?.outcome
-            } outcome${
-              redeemed?.outcome.includes(' and ') ? 's' : ''
             } in the Hyperstition.`}
           </Markdown>
         }
