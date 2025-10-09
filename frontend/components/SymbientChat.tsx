@@ -9,9 +9,11 @@ import { RefObject, useEffect, useRef, useState } from 'react'
 
 import { Animator } from '@/lib/animator'
 import { MAX_CHAT_MESSAGE_LENGTH, SYMBIENT_INTRO } from '@/lib/config'
+import { streamResponse } from '@/lib/stream'
 import { symbientChat } from '@/state/symbient'
 import { ChatMessage } from '@/types'
 
+import { BlinkingCursor } from './BlinkingCursor'
 import { Markdown } from './Markdown'
 
 const firstMessage: ChatMessage = {
@@ -155,107 +157,28 @@ export const SymbientChat = ({
     const timeout = setTimeout(startResponseIfNotStarted, 300)
 
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      await streamResponse({
+        path: '/api/chat',
+        body: { messages: newMessages },
+        onStart: () => {
+          // Start response if not already started.
+          clearTimeout(timeout)
+          startResponseIfNotStarted()
         },
-        body: JSON.stringify({ messages: newMessages }),
+        onError: (error) => {
+          undoWithError(error)
+        },
+        onUpdate: (content) => {
+          setMessages((prev) => {
+            const updated = [...prev]
+            updated[assistantMessageIndex] = {
+              role: 'assistant',
+              content: content,
+            }
+            return updated
+          })
+        },
       })
-
-      // Start response if not already started.
-      clearTimeout(timeout)
-      startResponseIfNotStarted()
-
-      if (!response.ok) {
-        if (response.status === 429) {
-          const retryInSeconds = Number(
-            response.headers.get('Retry-After') || 0
-          )
-          const retryInMinutes =
-            retryInSeconds && Math.ceil(retryInSeconds / 60)
-          undoWithError(
-            `Rate limit exceeded. ${
-              retryInMinutes && retryInMinutes !== 60
-                ? `Try again in ${retryInMinutes} minutes.`
-                : 'Try again in an hour.'
-            }`
-          )
-          return
-        }
-
-        try {
-          const { error } = await response.json()
-          if (error) {
-            undoWithError(error)
-            return
-          }
-        } catch {}
-
-        console.error(
-          'Failed to send message',
-          response.status,
-          response.statusText,
-          await response.text().catch((error) => `Body error: ${error}`)
-        )
-
-        undoWithError('Failed to send message')
-        return
-      }
-
-      // Handle streaming response
-      const reader = response.body?.getReader()
-      const decoder = new TextDecoder()
-      let accumulatedContent = ''
-
-      if (!reader) {
-        undoWithError('Failed to get response stream')
-        return
-      }
-
-      while (true) {
-        const { done, value } = await reader.read()
-
-        if (done) {
-          break
-        }
-
-        const chunk = decoder.decode(value, { stream: true })
-        const lines = chunk.split('\n')
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6).trim()
-
-            if (data === '[DONE]') {
-              return
-            }
-
-            try {
-              const parsed = JSON.parse(data)
-              if (parsed.content) {
-                accumulatedContent += parsed.content
-
-                // Update the assistant message with accumulated content
-                setMessages((prev) => {
-                  const updated = [...prev]
-                  updated[assistantMessageIndex] = {
-                    role: 'assistant',
-                    content: accumulatedContent,
-                  }
-                  return updated
-                })
-              }
-            } catch (parseError) {
-              // Ignore parsing errors for incomplete chunks
-              console.debug(
-                'Parse error (likely incomplete chunk):',
-                parseError
-              )
-            }
-          }
-        }
-      }
     } catch (error) {
       console.error('Chat error:', error)
       undoWithError('Failed to get response')
@@ -388,7 +311,3 @@ export const SymbientChat = ({
     </div>
   )
 }
-
-const BlinkingCursor = () => (
-  <p className="animate-blink inline-block">&nbsp;</p>
-)

@@ -21,6 +21,8 @@ import { HyperstitionMarket } from '@/types'
 
 import { Card } from '../Card'
 import { HyperstitionDescriptionDisplay } from './HyperstitionDescriptionDisplay'
+import { HyperstitionShareModal } from './HyperstitionShareModal'
+import { Markdown } from '../Markdown'
 
 interface PredictionSellFormProps {
   market: HyperstitionMarket
@@ -47,6 +49,11 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
   )
   const [isCalculating, setIsCalculating] = useState<boolean>(false)
   const [slippage, setSlippage] = useState<number>(2)
+
+  const [sold, setSold] = useState<{
+    outcome: 'YES' | 'NO'
+    amount: string
+  } | null>(null)
 
   const {
     symbol: collateralSymbol,
@@ -218,10 +225,20 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
         },
       })
 
+      const formattedEstimatedCollateralAmount = formatBigNumber(
+        estimatedCollateralAmount,
+        undefined,
+        true
+      )
+
       setSuccess(
-        `Successfully sold ${formData.shareAmount} ${formData.outcome} shares for ${estimatedCollateralAmount} USDC!`
+        `Successfully sold ${formData.shareAmount} ${formData.outcome} shares for ${formattedEstimatedCollateralAmount} ${collateralSymbol}!`
       )
       setFormData({ outcome: 'YES', shareAmount: '' })
+      setSold({
+        outcome: formData.outcome,
+        amount: formattedEstimatedCollateralAmount,
+      })
 
       if (onSuccess) {
         onSuccess()
@@ -467,6 +484,22 @@ export const PredictionSellForm: React.FC<PredictionSellFormProps> = ({
           market conditions and slippage ({slippage}% tolerance).
         </div>
       </form>
+
+      <HyperstitionShareModal
+        isOpen={sold !== null}
+        onClose={() => setSold(null)}
+        title="HYPERSTITION DEACTIVATION DETECTED"
+        description={
+          <Markdown rawHtml>
+            {`You earned <span className="text-green">${
+              sold?.amount || '...'
+            } ${collateralSymbol}</span> by selling the ${
+              sold?.outcome
+            } outcome in the Hyperstition.`}
+          </Markdown>
+        }
+        action={`earned ${sold?.amount} ${collateralSymbol} by selling the ${sold?.outcome} outcome in the Hyperstition: ${market.title}`}
+      />
     </div>
   )
 }

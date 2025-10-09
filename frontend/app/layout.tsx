@@ -3,6 +3,7 @@ import './globals.css'
 import type { Metadata, Viewport } from 'next'
 import { Roboto_Mono } from 'next/font/google'
 
+import { CRTScanlines } from '@/components/CRTScanlines'
 import { DisclaimerModal } from '@/components/DisclaimerModal'
 import { Footer } from '@/components/Footer'
 import { Nav } from '@/components/Nav'
@@ -84,6 +85,8 @@ export default function RootLayout({
             <Footer />
 
             <DisclaimerModal />
+
+            <CRTScanlines opacity={0.05} lineHeight={2} />
           </div>
         </Providers>
       </body>

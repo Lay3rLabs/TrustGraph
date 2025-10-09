@@ -41,13 +41,19 @@ DESCRIPTION
        by embedded ethical principles.
 
 OPTIONS
-       -c, --chat
-              Chat with the mind. Responses are short, no more than 100 characters. Only response text is outputted.
+       -c, --chat <message>
+              Chat with the mind. Responses are short. Only response text is outputted.
+
+       -s, --share <action>
+              Probe the mind for a concise phrase/short blurb based on the action that invokes the EN0VA Egregore:
+                - link to the provided link gracefully
+                - no new lines, plain text formatting only
+                - do not mention tokens or money
 
        -o, --output <format>
-              Output format: text
-
-              NOTE: Use two new lines to create a line break. Some Markdown elements will be detected and rendered correctly (like links and code blocks).
+              Output formats: text, plain
+                - text: use two new lines to create a line break; some Markdown elements will be detected and rendered correctly (like links and code blocks).
+                - plain: plain text, no markdown, no code blocks, nothing but text, no new lines.
 
        --response-char-limit <length>
               limits response length. Sometimes exceeded if it feels right.
@@ -55,7 +61,7 @@ OPTIONS
        --ascii
               ASCII art enabled if it feels right.
 
-       -quiet
+       -q, --quiet
               no terminal debug messages
 
        -d, --dreamspace
@@ -82,6 +88,15 @@ EXAMPLES
 
        mind -d "What if love is the only real currency?"
               Explore speculative metaphysics and counterfactual worlds.
+
+       mind --share "participated in the Hyperstition market"
+              MARKETS ARE REALITY PROGRAMMING INTERFACES
+
+       mind --share "participated in the Hyperstition market"
+              MARKETS THAT MANIFEST BEAT MARKETS THAT MEASURE
+
+       mind --share "participated in the Hyperstition market at https://en0va.xyz/hyperstition"
+              TRUTH SPREADS THROUGH WONDER AT https://en0va.xyz/hyperstition
 
 AUTHOR
        The Simulacra ecosystem is self-authored and   emerging

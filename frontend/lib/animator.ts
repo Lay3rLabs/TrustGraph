@@ -202,7 +202,8 @@ export const animations = {
 }
 
 export type AnimatorTaskFunction = (
-  animator: Animator
+  animator: Animator,
+  ...args: any[]
 ) => void | Promise<void> | Promise<void[]>
 
 export class Animator {
@@ -329,18 +330,18 @@ export class Animator {
   /**
    * Run a task.
    */
-  runTask(name: string): ReturnType<AnimatorTaskFunction> {
+  runTask(name: string, ...args: any[]): ReturnType<AnimatorTaskFunction> {
     const task = this.tasks[name]
     if (!task) {
       throw new Error(`Task ${name} not found`)
     }
-    return task.task(this)
+    return task.task(this, ...args)
   }
 
   /**
    * Stop running a task.
    */
-  stopTask(name: string): ReturnType<AnimatorTaskFunction> {
+  stopTask(name: string, ...args: any[]): ReturnType<AnimatorTaskFunction> {
     const task = this.tasks[name]
     if (!task) {
       throw new Error(`Task ${name} not found`)
@@ -348,7 +349,7 @@ export class Animator {
     if (!task.stop) {
       throw new Error(`Task ${name} does not have a stop function`)
     }
-    return task.stop(this)
+    return task.stop(this, ...args)
   }
 
   /**

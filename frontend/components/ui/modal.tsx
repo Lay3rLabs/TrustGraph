@@ -4,6 +4,7 @@ import clsx from 'clsx'
 import { ReactNode, useEffect, useRef } from 'react'
 
 import { Card } from '../Card'
+import { CRTScanlines } from '../CRTScanlines'
 
 interface ModalProps {
   isOpen: boolean
@@ -13,6 +14,7 @@ interface ModalProps {
   className?: string
   contentClassName?: string
   footer?: ReactNode
+  backgroundContent?: ReactNode
 }
 
 export function Modal({
@@ -23,6 +25,7 @@ export function Modal({
   className,
   contentClassName,
   footer,
+  backgroundContent,
 }: ModalProps) {
   useEffect(() => {
     if (!onClose) {
@@ -104,6 +107,12 @@ export function Modal({
           <div className="p-4 border-t border-gray-700 shrink-0">{footer}</div>
         )}
       </Card>
+
+      {backgroundContent && (
+        <div className="absolute inset-0 z-40">{backgroundContent}</div>
+      )}
+
+      <CRTScanlines opacity={0.12} lineHeight={3} />
     </div>
   )
 }

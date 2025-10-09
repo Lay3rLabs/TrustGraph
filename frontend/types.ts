@@ -7,6 +7,8 @@ export type HyperstitionMarket = {
   slug: string
   title: string
   description: string
+  successCondition: string
+  failureCondition: string
   targetValue: number
   incentivePool: number
   startDate: Date

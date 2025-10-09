@@ -4,13 +4,11 @@ import path from 'path'
 import { NextRequest, NextResponse } from 'next/server'
 import { APIError } from 'openai'
 import {
-  ChatCompletionAssistantMessageParam,
   ChatCompletionSystemMessageParam,
   ChatCompletionUserMessageParam,
 } from 'openai/resources/index.mjs'
 
 import { getModelConfig, validateMessageLength } from '@/lib/ai'
-import { ChatMessage } from '@/types'
 
 const systemPrompt = fs.readFileSync(
   path.join(process.cwd(), '../hyperstition/PROMPT.md'),
@@ -19,17 +17,19 @@ const systemPrompt = fs.readFileSync(
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages: chatHistory } = await request.json()
+    const { action } = await request.json()
 
-    if (!chatHistory || !Array.isArray(chatHistory)) {
-      return NextResponse.json(
-        { error: 'Messages are required' },
-        { status: 400 }
-      )
+    if (!action) {
+      return NextResponse.json({ error: 'Action is required' }, { status: 400 })
     }
 
     // Validate message length
-    const validationResult = validateMessageLength(chatHistory as ChatMessage[])
+    const validationResult = validateMessageLength([
+      {
+        role: 'user',
+        content: action,
+      },
+    ])
     if (!validationResult.valid) {
       return NextResponse.json(
         { error: validationResult.error },
@@ -46,20 +46,13 @@ export async function POST(request: NextRequest) {
         role: 'system',
         content: systemPrompt,
       } satisfies ChatCompletionSystemMessageParam,
-      ...(chatHistory as ChatMessage[]).map(({ role, content }) =>
-        role === 'assistant'
-          ? ({
-              role,
-              content,
-            } satisfies ChatCompletionAssistantMessageParam)
-          : ({
-              role,
-              content: `mind -d -t -n --ascii -o=text --response-char-limit=222 --chat="${content.replaceAll(
-                '"',
-                '\\"'
-              )}"`,
-            } satisfies ChatCompletionUserMessageParam)
-      ),
+      {
+        role: 'user',
+        content: `mind -t --output=plain --response-char-limit=100 --share="${action.replaceAll(
+          '"',
+          '\\"'
+        )} (link: https://en0va.xyz/hyperstition)"`,
+      } satisfies ChatCompletionUserMessageParam,
     ]
 
     const stream = await client.chat.completions.create({
@@ -110,8 +103,7 @@ export async function POST(request: NextRequest) {
       ) {
         return NextResponse.json(
           {
-            error:
-              'Context length exceeded. Send /clear to start a new conversation.',
+            error: 'Context length exceeded.',
           },
           { status: 400 }
         )
@@ -124,7 +116,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: 'Failed to process chat message' },
+      { error: 'Failed to process share message' },
       { status: 500 }
     )
   }

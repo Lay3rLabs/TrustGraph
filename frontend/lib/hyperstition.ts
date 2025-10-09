@@ -8,9 +8,21 @@ import {
 
 export const currentMarket: HyperstitionMarket = {
   slug: 'test',
-  title: 'EN0VA Twitter Launch',
+  title: '0xEN0VA Launch',
   description:
-    '[@0xEN0VA](https://x.com/0xEN0VA) reaches 50 Twitter followers by ' +
+    '[@0xEN0VA](https://x.com/0xEN0VA) reaches 50 followers by ' +
+    new Date(1759514400 * 1e3).toLocaleString(undefined, {
+      dateStyle: 'short',
+      timeStyle: 'long',
+    }),
+  successCondition:
+    '[@0xEN0VA](https://x.com/0xEN0VA) reaches 50 followers by ' +
+    new Date(1759514400 * 1e3).toLocaleString(undefined, {
+      dateStyle: 'short',
+      timeStyle: 'long',
+    }),
+  failureCondition:
+    '[@0xEN0VA](https://x.com/0xEN0VA) does not reach 50 followers by ' +
     new Date(1759514400 * 1e3).toLocaleString(undefined, {
       dateStyle: 'short',
       timeStyle: 'long',

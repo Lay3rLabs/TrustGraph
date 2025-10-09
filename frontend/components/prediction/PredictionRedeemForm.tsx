@@ -4,6 +4,7 @@ import { usePonderQuery } from '@ponder/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { usePlausible } from 'next-plausible'
 import { useCallback, useMemo, useState } from 'react'
+import { formatUnits } from 'viem'
 import { useAccount } from 'wagmi'
 
 import { Button } from '@/components/ui/button'
@@ -14,6 +15,10 @@ import { txToast } from '@/lib/tx'
 import { formatBigNumber } from '@/lib/utils'
 import { hyperstitionKeys } from '@/queries/hyperstition'
 import { HyperstitionMarket } from '@/types'
+
+import { HyperstitionShareModal } from './HyperstitionShareModal'
+import { XIcon } from '../icons/XIcon'
+import { Markdown } from '../Markdown'
 
 interface PredictionRedeemFormProps {
   market: HyperstitionMarket
@@ -31,6 +36,11 @@ export const PredictionRedeemForm = ({
   const [isRedeeming, setIsRedeeming] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+
+  const [redeemed, setRedeemed] = useState<{
+    outcome: string
+    amount: string
+  } | null>(null)
 
   const { symbol: collateralSymbol, decimals: collateralDecimals } =
     useCollateralToken()
@@ -78,6 +88,10 @@ export const PredictionRedeemForm = ({
       positions.push({
         outcome: 'YES' as const,
         amount: yesShares,
+        payout:
+          typeof yesPayoutNumerator === 'bigint' && payoutDenominator
+            ? (yesShares * yesPayoutNumerator) / payoutDenominator
+            : null,
       })
     }
 
@@ -85,10 +99,14 @@ export const PredictionRedeemForm = ({
       positions.push({
         outcome: 'NO' as const,
         amount: noShares,
+        payout:
+          typeof noPayoutNumerator === 'bigint' && payoutDenominator
+            ? (noShares * noPayoutNumerator) / payoutDenominator
+            : null,
       })
     }
 
-    return positions
+    return positions.sort((a, b) => Number(b.amount - a.amount))
   }, [yesShares, noShares])
 
   // Calculate expected payout for all positions
@@ -103,25 +121,10 @@ export const PredictionRedeemForm = ({
       return null
     }
 
-    try {
-      let totalPayout = 0n
-
-      for (const position of userPositions) {
-        const payoutNumerator =
-          position.outcome === 'YES' ? yesPayoutNumerator : noPayoutNumerator
-        if (typeof payoutNumerator === 'bigint') {
-          // Calculate payout: (position.amount * payoutNumerator) / payoutDenominator
-          const positionPayout =
-            (position.amount * payoutNumerator) / payoutDenominator
-          totalPayout += positionPayout
-        }
-      }
-
-      return totalPayout
-    } catch (err) {
-      console.error('Error calculating expected payout:', err)
-      return null
-    }
+    return userPositions.reduce(
+      (acc, position) => acc + (position.payout ?? 0n),
+      0n
+    )
   }, [
     userPositions,
     isMarketResolved,
@@ -152,13 +155,13 @@ export const PredictionRedeemForm = ({
       return
     }
 
-    if (userPositions.length === 0) {
-      setError('No positions found to redeem')
+    if (!isMarketResolved || payout === null) {
+      setError('Market must be resolved before redeeming')
       return
     }
 
-    if (!isMarketResolved) {
-      setError('Market must be resolved before redeeming')
+    if (userPositions.length === 0 || !payout) {
+      setError('No payout found to redeem')
       return
     }
 
@@ -191,11 +194,7 @@ export const PredictionRedeemForm = ({
           ],
         },
         successMessage: `Successfully redeemed ${
-          payout !== null
-            ? formatBigNumber(payout, collateralDecimals) +
-              ' $' +
-              collateralSymbol
-            : '$' + collateralSymbol
+          formatBigNumber(payout, collateralDecimals) + ' $' + collateralSymbol
         }.`,
       })
 
@@ -203,11 +202,21 @@ export const PredictionRedeemForm = ({
         props: {
           market: market.marketMakerAddress,
           conditionalTokens: market.conditionalTokensAddress,
-          amount:
-            payout !== null
-              ? formatBigNumber(payout, collateralDecimals, true)
-              : -1,
+          amount: formatBigNumber(payout, collateralDecimals, true),
         },
+      })
+
+      setSuccess(
+        `Successfully redeemed ${
+          formatBigNumber(payout, collateralDecimals) + ' $' + collateralSymbol
+        }.`
+      )
+      setRedeemed({
+        outcome: userPositions
+          .filter((pos) => !!pos.payout)
+          .map((pos) => pos.outcome)
+          .join(' and '),
+        amount: formatBigNumber(payout, collateralDecimals, true),
       })
 
       console.log('Transaction confirmed:', receipt.transactionHash)
@@ -362,15 +371,46 @@ export const PredictionRedeemForm = ({
               </div>
             </div>
           ) : redemption ? (
-            <div className="bg-black/20 border border-gray-600 p-4 rounded-sm">
-              <div className="space-y-3">
-                <div className="terminal-dim text-xs">WINNINGS</div>
-                <div className="terminal-bright text-base !text-green-400">
-                  {formatBigNumber(redemption.payout, collateralDecimals)} $
-                  {collateralSymbol}
+            <>
+              <div className="bg-black/20 border border-gray-600 p-4 rounded-sm">
+                <div className="space-y-3">
+                  <div className="terminal-dim text-xs">WINNINGS</div>
+                  <div className="terminal-bright text-base !text-green-400">
+                    {formatBigNumber(redemption.payout, collateralDecimals)} $
+                    {collateralSymbol}
+                  </div>
                 </div>
               </div>
-            </div>
+
+              {isConnected && redemption.payout > 0n && (
+                <Button
+                  variant="tertiary"
+                  className="w-full"
+                  onClick={() =>
+                    setRedeemed(
+                      redemption.indexSets[0] === 2n
+                        ? {
+                            outcome: 'YES',
+                            amount: formatUnits(
+                              redemption.payout,
+                              collateralDecimals
+                            ),
+                          }
+                        : {
+                            outcome: 'NO',
+                            amount: formatUnits(
+                              redemption.payout,
+                              collateralDecimals
+                            ),
+                          }
+                    )
+                  }
+                >
+                  <XIcon className="w-3 h-3" />
+                  Share
+                </Button>
+              )}
+            </>
           ) : (
             <div className="bg-black/20 border border-gray-600 p-4 rounded-sm">
               <div className="text-center py-8">
@@ -412,6 +452,26 @@ export const PredictionRedeemForm = ({
           </div>
         </div>
       )}
+
+      <HyperstitionShareModal
+        isOpen={redeemed !== null}
+        onClose={() => setRedeemed(null)}
+        title="HYPERSTITION REDEMPTION DETECTED"
+        description={
+          <Markdown rawHtml>
+            {`You earned <span className="text-green">${
+              redeemed?.amount || '...'
+            } ${collateralSymbol}</span> by redeeming the ${
+              redeemed?.outcome
+            } outcome${
+              redeemed?.outcome.includes(' and ') ? 's' : ''
+            } in the Hyperstition.`}
+          </Markdown>
+        }
+        action={`redeemed the ${redeemed?.outcome || '...'} outcome${
+          redeemed?.outcome.includes(' and ') ? 's' : ''
+        } in the Hyperstition: ${market.title}`}
+      />
     </div>
   )
 }

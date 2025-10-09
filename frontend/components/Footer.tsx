@@ -1,6 +1,7 @@
-import { Github, Globe, TwitterIcon } from 'lucide-react'
+import { Github, Globe } from 'lucide-react'
 
 import { WavsIcon } from './icons/WavsIcon'
+import { XIcon } from './icons/XIcon'
 
 export const Footer = () => {
   return (
@@ -12,7 +13,7 @@ export const Footer = () => {
           rel="noopener noreferrer"
           className="transition-opacity hover:opacity-80 active:opacity-70 flex flex-col items-center gap-1"
         >
-          <TwitterIcon className="w-4 h-4" />
+          <XIcon className="w-4 h-4" />
           @0xEN0VA
         </a>
         <a

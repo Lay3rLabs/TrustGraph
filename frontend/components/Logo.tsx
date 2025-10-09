@@ -104,14 +104,16 @@ const Logo = ({
     // Animation tasks.
     animator.registerTask(
       'thinking',
-      ({ start }) =>
+      ({ start }, { wag = true }: { wag?: boolean }) =>
         Promise.all([
           start('structure', 'pulse', { duration: 3, repeat: Infinity }),
           start('logo', 'glow', { duration: 3, repeat: Infinity }),
-          start('topRight', 'wag', { duration: 0.4, repeat: Infinity }),
-          start('topLeft', 'wag', { duration: 0.4, repeat: Infinity }),
-          start('bottomRight', 'wag', { duration: 0.4, repeat: Infinity }),
-          start('bottomLeft', 'wag', { duration: 0.4, repeat: Infinity }),
+          wag && start('topRight', 'wag', { duration: 0.4, repeat: Infinity }),
+          wag && start('topLeft', 'wag', { duration: 0.4, repeat: Infinity }),
+          wag &&
+            start('bottomRight', 'wag', { duration: 0.4, repeat: Infinity }),
+          wag &&
+            start('bottomLeft', 'wag', { duration: 0.4, repeat: Infinity }),
         ]),
       ({ stop }) => {
         stop('structure')

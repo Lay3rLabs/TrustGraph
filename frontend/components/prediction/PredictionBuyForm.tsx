@@ -22,6 +22,9 @@ import { HyperstitionMarket } from '@/types'
 
 import { Card } from '../Card'
 import { HyperstitionDescriptionDisplay } from './HyperstitionDescriptionDisplay'
+import { HyperstitionShareModal } from './HyperstitionShareModal'
+import { XIcon } from '../icons/XIcon'
+import { Markdown } from '../Markdown'
 
 interface PredictionBuyFormProps {
   market: HyperstitionMarket
@@ -46,6 +49,13 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
   const [tokensEstimate, setTokensEstimate] = useState<string | null>(null)
   const [isCalculating, setIsCalculating] = useState<boolean>(false)
   const [slippage, setSlippage] = useState<number>(2)
+
+  const [bought, setBought] = useState<
+    {
+      outcome: string
+      amount: string
+    }[]
+  >([])
 
   // Binary search to find the exact token amount for the specified collateral
   const [estimatedTokenAmount, setEstimatedTokenAmount] = useState<string>('0')
@@ -173,9 +183,11 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
     isLoadingMarket,
     isMarketResolved,
     yesPrice,
+    yesShares,
     formattedYesShares,
     isLoadingYesShares,
     noPrice,
+    noShares,
     formattedNoShares,
     isLoadingNoShares,
     refetch: refetchPredictionMarket,
@@ -265,6 +277,12 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
         `Successfully spent ${formData.collateralAmount} USDC on ${formData.outcome} tokens!`
       )
       setFormData({ outcome: 'YES', collateralAmount: '' })
+      setBought([
+        {
+          outcome: formData.outcome,
+          amount: formatBigNumber(estimatedTokenAmount, undefined, true),
+        },
+      ])
 
       if (onSuccess) {
         onSuccess()
@@ -292,24 +310,49 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
         <HyperstitionDescriptionDisplay description={market.description} />
       </div>
 
-      {isConnected && address && !isLoadingYesShares && !isLoadingNoShares && (
-        <Card size="sm" type="detail">
-          <div className="terminal-dim text-xs text-center">YOUR POSITION</div>
-          <div className="grid grid-cols-2 gap-4 mt-2">
-            <div className="flex flex-col items-center">
-              <div className="text-[#05df72] text-sm font-bold">
-                {formatBigNumber(formattedYesShares)}
-              </div>
-              <div className="terminal-dim text-xs">YES shares</div>
+      {isConnected &&
+        !!address &&
+        !isLoadingYesShares &&
+        !isLoadingNoShares && (
+          <Card size="sm" type="detail">
+            <div className="terminal-dim text-xs text-center">
+              YOUR POSITION
             </div>
-            <div className="flex flex-col items-center">
-              <div className="text-[#dd70d4] text-sm font-bold">
-                {formatBigNumber(formattedNoShares)}
+            <div className="grid grid-cols-2 gap-4 mt-2">
+              <div className="flex flex-col items-center">
+                <div className="text-[#05df72] text-sm font-bold">
+                  {formatBigNumber(formattedYesShares)}
+                </div>
+                <div className="terminal-dim text-xs">YES shares</div>
               </div>
-              <div className="terminal-dim text-xs">NO shares</div>
+              <div className="flex flex-col items-center">
+                <div className="text-[#dd70d4] text-sm font-bold">
+                  {formatBigNumber(formattedNoShares)}
+                </div>
+                <div className="terminal-dim text-xs">NO shares</div>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        )}
+
+      {isConnected && (!!yesShares || !!noShares) && (
+        <Button
+          variant="tertiary"
+          className="w-full"
+          onClick={() =>
+            setBought([
+              ...(yesShares
+                ? [{ outcome: 'YES', amount: formattedYesShares }]
+                : []),
+              ...(noShares
+                ? [{ outcome: 'NO', amount: formattedNoShares }]
+                : []),
+            ])
+          }
+        >
+          <XIcon className="w-3 h-3" />
+          Share
+        </Button>
       )}
 
       {error && (
@@ -505,6 +548,36 @@ export const PredictionBuyForm: React.FC<PredictionBuyFormProps> = ({
           slippage tolerance).
         </div>
       </form>
+
+      <HyperstitionShareModal
+        isOpen={bought.length > 0}
+        onClose={() => setBought([])}
+        title="HYPERSTITION ACTIVATION DETECTED"
+        description={
+          <Markdown rawHtml>
+            {bought.length === 2
+              ? `If ${
+                  market.successCondition
+                }, you'll earn <span className="text-green">${
+                  bought.find((b) => b.outcome === 'YES')?.amount || '0'
+                } ${collateralSymbol}</span>. Otherwise, you'll earn <span className="text-green">${
+                  bought.find((b) => b.outcome === 'NO')?.amount || '0'
+                } ${collateralSymbol}</span>.`
+              : `If ${
+                  bought[0]?.outcome === 'NO'
+                    ? market.failureCondition
+                    : market.successCondition
+                }, you'll earn <span className="text-green">${
+                  bought[0]?.amount || '...'
+                } ${collateralSymbol}</span>.`}
+          </Markdown>
+        }
+        action={`hyperstitioned the ${bought
+          .map((b) => b.outcome)
+          .join(' and ')} outcome${
+          bought.length === 2 ? 's' : ''
+        } in the Hyperstition: ${market.title}`}
+      />
     </div>
   )
 }
