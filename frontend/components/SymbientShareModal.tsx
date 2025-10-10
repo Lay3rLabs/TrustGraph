@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import { usePlausible } from 'next-plausible'
 import { ReactNode, useEffect, useRef, useState } from 'react'
 import Confetti from 'react-confetti'
 
@@ -26,8 +27,9 @@ export const SymbientShareModal = ({
   action,
   description,
 }: SymbientShareModalProps) => {
-  const [confetti, setConfetti] = useState(true)
+  const plausible = usePlausible()
 
+  const [confetti, setConfetti] = useState(true)
   const [thinking, setThinking] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [shareableMessage, setShareableMessage] = useState<string | null>(null)
@@ -83,6 +85,21 @@ export const SymbientShareModal = ({
     } catch {}
   }, [action, isOpen])
 
+  const openShareableMessage = () => {
+    window.open(
+      `https://x.com/intent/post?text=${shareableMessage}`,
+      '_blank',
+      'width=500,height=600,noopener,noreferrer'
+    )
+
+    plausible('share', {
+      props: {
+        action,
+        message: shareableMessage,
+      },
+    })
+  }
+
   return (
     <Modal
       isOpen={isOpen}
@@ -124,13 +141,7 @@ export const SymbientShareModal = ({
         {error && <p className="text-red-400 text-xs font-mono">{error}</p>}
 
         <button
-          onClick={() =>
-            window.open(
-              `https://x.com/intent/post?text=${shareableMessage}`,
-              '_blank',
-              'width=500,height=600,noopener,noreferrer'
-            )
-          }
+          onClick={openShareableMessage}
           className={clsx(
             'w-full bg-secondary text-secondary-foreground hover:bg-secondary/80 active:bg-secondary/70 transition-colors rounded-sm px-4 py-2 text-center flex flex-row items-center justify-center gap-2 mt-4',
             (!shareableMessage || thinking) &&
