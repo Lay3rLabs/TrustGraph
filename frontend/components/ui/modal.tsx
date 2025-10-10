@@ -69,7 +69,28 @@ export function Modal({
       )}
     >
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
+      <div
+        className="fixed inset-0 bg-black/50 cursor-pointer"
+        onClick={
+          onClose &&
+          ((e) => {
+            e.stopPropagation()
+            onClose()
+          })
+        }
+      />
+
+      {onClose && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onClose()
+          }}
+          className="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors text-2xl leading-none z-10"
+        >
+          ×
+        </button>
+      )}
 
       {/* Modal */}
       <Card
@@ -85,14 +106,6 @@ export function Modal({
         {title && (
           <div className="flex items-center justify-between p-4 border-b border-gray-700 shrink09">
             <h2 className="terminal-bright text-sm">{title}</h2>
-            {onClose && (
-              <button
-                onClick={onClose}
-                className="terminal-dim hover:terminal-bright transition-colors text-lg"
-              >
-                ×
-              </button>
-            )}
           </div>
         )}
 

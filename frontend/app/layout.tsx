@@ -1,5 +1,6 @@
 import './globals.css'
 
+import clsx from 'clsx'
 import type { Metadata, Viewport } from 'next'
 import { Roboto_Mono } from 'next/font/google'
 
@@ -52,6 +53,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({
@@ -68,16 +70,17 @@ export default function RootLayout({
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
-        />
+        <link rel="preload" href="/background.jpg" as="image" />
+        <link rel="preload" href="/background_vertical.jpg" as="image" />
       </head>
       <body
-        className={`${robotoMono.variable} font-mono dynamic-bg text-primary-foreground`}
+        className={clsx(
+          robotoMono.variable,
+          'font-mono text-primary-foreground min-h-screen p-safe-or-2 sm:p-safe-or-4 md:p-safe-or-6'
+        )}
       >
         <Providers>
-          <div className="min-h-screen p-2 sm:p-4 md:p-6 flex flex-col root">
+          <div className="flex flex-col root">
             <Nav />
 
             <main className="p-2 mt-2 sm:p-4 sm:mt-6 flex-1">{children}</main>

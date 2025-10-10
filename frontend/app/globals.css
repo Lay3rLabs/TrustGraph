@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import 'tailwindcss-safe-area';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -137,47 +138,43 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
   }
   button {
     @apply cursor-pointer;
   }
-}
-
-/* Sophisticated terminal background with image */
-.dynamic-bg {
-  position: relative;
-  background:
-        /* Terminal screen effect */
-        /*repeating-linear-gradient(
-            0deg,
-            transparent,
-            transparent 2px,
-            rgba(156, 163, 175, 0.015) 2px,
-            rgba(156, 163, 175, 0.015) 4px
-        ),*/
-        /* Noise pattern for terminal authenticity */
-            /*radial-gradient(
-                circle at 100% 50%,
-                transparent 20%,
-                rgba(255, 255, 255, 0.003) 21%,
-                rgba(255, 255, 255, 0.003) 34%,
-                transparent 35%
-            ),*/
-        /* Lighter overlay for readability */
-            /*linear-gradient(
-                135deg,
-                rgba(0, 0, 0, 0.4) 0%,
-                rgba(17, 24, 39, 0.5) 50%,
-                rgba(0, 0, 0, 0.6) 100%
-            ),*/
-        /* Background image */ url('/background.jpg');
-  background-size: cover, 4px 4px, cover, cover;
-  background-position: center center;
-  background-attachment: fixed;
-  /*animation:
-        terminalGlow 25s ease-in-out infinite,
-        terminalFlicker 4s ease-in-out infinite;*/
+  html {
+    background: url('/background.jpg');
+          /* Terminal screen effect */
+          /*repeating-linear-gradient(
+              0deg,
+              transparent,
+              transparent 2px,
+              rgba(156, 163, 175, 0.015) 2px,
+              rgba(156, 163, 175, 0.015) 4px
+          ),*/
+          /* Noise pattern for terminal authenticity */
+              /*radial-gradient(
+                  circle at 100% 50%,
+                  transparent 20%,
+                  rgba(255, 255, 255, 0.003) 21%,
+                  rgba(255, 255, 255, 0.003) 34%,
+                  transparent 35%
+              ),*/
+          /* Lighter overlay for readability */
+              /*linear-gradient(
+                  135deg,
+                  rgba(0, 0, 0, 0.4) 0%,
+                  rgba(17, 24, 39, 0.5) 50%,
+                  rgba(0, 0, 0, 0.6) 100%
+              ),*/
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    /*animation:
+          terminalGlow 25s ease-in-out infinite,
+          terminalFlicker 4s ease-in-out infinite;*/
+  }
 }
 
 /*.dynamic-bg::before {

@@ -79,7 +79,7 @@ export default function HyperstitionSlugPage() {
           ref={headerRef}
           className="overflow-hidden"
         >
-          <Card type="primary" size="lg" className="space-y-2 mb-8">
+          <Card type="primary" size="lg" className="space-y-2">
             <div className="flex flex-row items-start justify-between">
               <div className="terminal-command text-lg">
                 HYPERSTITION MARKET
@@ -100,7 +100,7 @@ export default function HyperstitionSlugPage() {
       )}
 
       {!!pendingRedemptions?.length && (
-        <Card type="detail" size="md" className="space-y-1 mb-8">
+        <Card type="detail" size="md" className="space-y-1">
           <div className="terminal-command text-lg">CLAIM YOUR WINNINGS</div>
           <div className="system-message text-sm">
             You have{' '}

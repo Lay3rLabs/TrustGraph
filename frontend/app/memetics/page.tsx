@@ -5,7 +5,7 @@ import type React from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import useLocalStorageState from 'use-local-storage-state'
 
-import { PasswordGate } from '@/components/ui/password-gate'
+import { PasswordGateModal } from '@/components/ui/PasswordGateModal'
 import {
   type ArticleMetadata,
   getAllArticles,
@@ -66,17 +66,6 @@ export default function MemeticsPage() {
       throw new Error('ACCESS DENIED')
     }
     setShowPasswordGate(false)
-  }
-
-  if (showPasswordGate) {
-    return (
-      <PasswordGate
-        onUnlock={handleUnlock}
-        onClose={() => setShowPasswordGate(false)}
-        title="CLASSIFIED"
-        message="Reality alteration protocols"
-      />
-    )
   }
 
   if (loading) {
@@ -212,6 +201,14 @@ export default function MemeticsPage() {
       <div className="text-center pt-8">
         <div className="terminal-dim text-xs">∞ WORDS BECOME WORLDS ∞</div>
       </div>
+
+      <PasswordGateModal
+        onUnlock={handleUnlock}
+        onClose={() => setShowPasswordGate(false)}
+        isOpen={showPasswordGate}
+        title="CLASSIFIED"
+        message="Reality alteration protocol detected"
+      />
     </div>
   )
 }

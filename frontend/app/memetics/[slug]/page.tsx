@@ -6,7 +6,7 @@ import type React from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import useLocalStorageState from 'use-local-storage-state'
 
-import { PasswordGate } from '@/components/ui/password-gate'
+import { PasswordGateModal } from '@/components/ui/PasswordGateModal'
 import { type Article, getArticleBySlug } from '@/lib/articles-client'
 
 export default function ArticlePage() {
@@ -75,16 +75,6 @@ export default function ArticlePage() {
         `${writing.title}\n\n${writing.excerpt}\n\n${url}`
       )
     }
-  }
-
-  if (showPasswordGate) {
-    return (
-      <PasswordGate
-        onUnlock={handleUnlock}
-        title="CLASSIFIED DOCUMENT ACCESS"
-        message="Reality alteration protocol detected - clearance required"
-      />
-    )
   }
 
   if (loading) {
@@ -165,6 +155,17 @@ export default function ArticlePage() {
           ∞ RETURN TO ARCHIVE ∞
         </Link>
       </div>
+
+      <PasswordGateModal
+        onUnlock={handleUnlock}
+        onClose={() => {
+          router.push('/memetics')
+          setShowPasswordGate(false)
+        }}
+        isOpen={showPasswordGate}
+        title="CLASSIFIED"
+        message="Reality alteration protocol detected"
+      />
     </div>
   )
 }

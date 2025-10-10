@@ -443,7 +443,7 @@ export const PredictionMarketDetail = ({
             <div className="flex items-start justify-between">
               <div className="flex items-center space-x-3">
                 <div>
-                  <h3 className="terminal-command text-base">{market.title}</h3>
+                  <h3 className="terminal-command !text-xl">{market.title}</h3>
                   <HyperstitionDescriptionDisplay
                     description={market.description}
                     className="mt-1"

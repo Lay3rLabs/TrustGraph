@@ -1,3 +1,4 @@
+import clsx from 'clsx'
 import { ReactNode, useEffect, useRef, useState } from 'react'
 import Confetti from 'react-confetti'
 
@@ -130,7 +131,12 @@ export const SymbientShareModal = ({
               'width=500,height=600,noopener,noreferrer'
             )
           }
-          className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80 active:bg-secondary/70 transition-colors rounded-sm px-4 py-2 text-center flex flex-row items-center justify-center gap-2 mt-4"
+          className={clsx(
+            'w-full bg-secondary text-secondary-foreground hover:bg-secondary/80 active:bg-secondary/70 transition-colors rounded-sm px-4 py-2 text-center flex flex-row items-center justify-center gap-2 mt-4',
+            (!shareableMessage || thinking) &&
+              'cursor-not-allowed !bg-secondary/50 !text-secondary-foreground/50'
+          )}
+          disabled={!shareableMessage || thinking}
         >
           <XIcon className="w-3 h-3" />
           Share

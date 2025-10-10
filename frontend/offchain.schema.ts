@@ -1,29 +1,29 @@
-import { index, pgSchema, primaryKey } from "drizzle-orm/pg-core";
+import { index, pgSchema, primaryKey } from 'drizzle-orm/pg-core'
 
-export const offchainSchema = pgSchema("offchain");
+export const offchainSchema = pgSchema('offchain')
 
-export const followerCount = offchainSchema.table("follower_count", (t) => ({
+export const followerCount = offchainSchema.table('follower_count', (t) => ({
   timestamp: t.integer().primaryKey(),
   twitterAccount: t.text(),
   followers: t.integer().notNull(),
-}));
+}))
 
 export const merkleMetadata = offchainSchema.table(
-  "merkle_metadata",
+  'merkle_metadata',
   (t) => ({
     root: t.text().primaryKey(),
     ipfsHash: t.text().notNull(),
     ipfsHashCid: t.text().notNull(),
     numAccounts: t.integer().notNull(),
-    totalValue: t.bigint({ mode: "bigint" }).notNull(),
+    totalValue: t.bigint({ mode: 'bigint' }).notNull(),
     sources: t.jsonb().notNull().$type<
       {
-        name: string;
-        metadata: any;
+        name: string
+        metadata: any
       }[]
     >(),
-    blockNumber: t.bigint({ mode: "bigint" }).notNull(),
-    timestamp: t.bigint({ mode: "bigint" }).notNull(),
+    blockNumber: t.bigint({ mode: 'bigint' }).notNull(),
+    timestamp: t.bigint({ mode: 'bigint' }).notNull(),
   }),
   (t) => [
     index().on(t.root),
@@ -31,18 +31,18 @@ export const merkleMetadata = offchainSchema.table(
     index().on(t.blockNumber),
     index().on(t.timestamp),
   ]
-);
+)
 
 export const merkleEntry = offchainSchema.table(
-  "merkle_entry",
+  'merkle_entry',
   (t) => ({
     root: t.text().notNull(),
     account: t.text().notNull(),
     ipfsHashCid: t.text().notNull(),
-    value: t.bigint({ mode: "bigint" }).notNull(),
+    value: t.bigint({ mode: 'bigint' }).notNull(),
     proof: t.jsonb().notNull().$type<string[]>(),
-    blockNumber: t.bigint({ mode: "bigint" }).notNull(),
-    timestamp: t.bigint({ mode: "bigint" }).notNull(),
+    blockNumber: t.bigint({ mode: 'bigint' }).notNull(),
+    timestamp: t.bigint({ mode: 'bigint' }).notNull(),
   }),
   (t) => [
     primaryKey({ columns: [t.root, t.account] }),
@@ -53,4 +53,4 @@ export const merkleEntry = offchainSchema.table(
     index().on(t.timestamp),
     index().on(t.account, t.timestamp),
   ]
-);
+)

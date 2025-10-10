@@ -90,7 +90,8 @@ export const Nav = () => {
         onClick={pathname !== '/symbient' ? onClick : undefined}
         className={clsx(
           'cursor-pointer transition-opacity hover:opacity-80 active:opacity-70 w-10 h-10 md:w-14 md:h-14',
-          open && 'fixed'
+          open &&
+            'z-50 fixed backdrop-blur rounded-full -m-1 p-1 w-12 h-12 md:w-16 md:h-16'
         )}
         animatorLabel="nav"
         blinkInterval
