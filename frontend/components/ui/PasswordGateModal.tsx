@@ -1,11 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import useLocalStorageState from 'use-local-storage-state'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useUpdatingRef } from '@/hooks/useUpdatingRef'
 
 import { Modal } from './modal'
 
@@ -57,23 +56,6 @@ export const PasswordGateModal = ({
       setAuthenticating(false)
     }
   }
-
-  const onCloseRef = useUpdatingRef(onClose)
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onCloseRef.current?.()
-      }
-    }
-
-    document.addEventListener('keydown', handleEscape)
-    document.body.style.overflow = 'hidden'
-
-    return () => {
-      document.removeEventListener('keydown', handleEscape)
-      document.body.style.overflow = 'unset'
-    }
-  }, [onClose])
 
   const isLocked = attempts >= 3
 

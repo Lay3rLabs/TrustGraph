@@ -3,6 +3,8 @@
 import clsx from 'clsx'
 import { ReactNode, useEffect, useRef } from 'react'
 
+import { useUpdatingRef } from '@/hooks/useUpdatingRef'
+
 import { Card } from '../Card'
 import { CRTScanlines } from '../CRTScanlines'
 
@@ -28,26 +30,45 @@ export function Modal({
   backgroundContent,
 }: ModalProps) {
   useEffect(() => {
-    if (!onClose) {
+    if (isOpen) {
+      const scrollX = window.scrollX
+      const scrollY = window.scrollY
+      const width = document.documentElement.clientWidth
+      const scrollbarWidth =
+        window.innerWidth - document.documentElement.clientWidth
+      console.log('scrollbarWidth', scrollbarWidth)
+      document.body.style.position = 'fixed'
+      document.body.style.top = `-${scrollY}px`
+      document.body.style.left = `-${scrollX}px`
+      document.body.style.width = `${width}px`
+      return () => {
+        document.body.style.position = ''
+        document.body.style.top = ''
+        document.body.style.left = ''
+        document.body.style.width = ''
+        window.scrollTo(scrollX, scrollY)
+      }
+    }
+  }, [isOpen])
+
+  const onCloseRef = useUpdatingRef(onClose)
+  useEffect(() => {
+    if (!isOpen) {
       return
     }
 
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose?.()
+        onCloseRef.current?.()
       }
     }
 
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape)
-      document.body.style.overflow = 'hidden'
-    }
+    document.addEventListener('keydown', handleEscape)
 
     return () => {
       document.removeEventListener('keydown', handleEscape)
-      document.body.style.overflow = 'unset'
     }
-  }, [isOpen, onClose])
+  }, [isOpen, onCloseRef])
 
   const openedOnce = useRef(isOpen)
   if (isOpen && !openedOnce.current) {
