@@ -11,177 +11,23 @@ const Logo = ({ className, onClick }: LogoProps) => {
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        width="120"
-        height="120"
-        viewBox="0 0 120 120"
-        fill="none"
+        width="48"
+        height="48"
+        viewBox="0 0 138.24 138.24"
         className={className}
       >
-        {/* Central node - darker to stand out */}
-        <circle
-          cx="60"
-          cy="60"
-          r="12"
-          fill="#4D4D4D"
-          stroke="#333333"
-          strokeWidth="2.5"
+        <defs>
+          <style>
+            {`.cls-1 {
+              fill: #1f88c1;
+            }`}
+          </style>
+        </defs>
+        <path
+          className="cls-1"
+          d="M138.24,57h-39.87l28.19-28.19-17.14-17.14c-33.36,33.36-61.54,17.23-73.87,6.65l-6.68-6.7L11.72,28.76l28.19,28.25H0v24.24h39.87l-28.19,28.19,17.14,17.14,28.19-28.19v39.87h24.24v-39.82l28.13,28.19,17.15-17.12-28.19-28.25h39.91v-24.24Z"
         />
-
-        {/* Outer nodes - medium gray */}
-        <circle
-          cx="60"
-          cy="20"
-          r="8"
-          fill="#808080"
-          stroke="#5A5A5A"
-          strokeWidth="2"
-        />
-        <circle
-          cx="95"
-          cy="40"
-          r="8"
-          fill="#808080"
-          stroke="#5A5A5A"
-          strokeWidth="2"
-        />
-        <circle
-          cx="95"
-          cy="80"
-          r="8"
-          fill="#808080"
-          stroke="#5A5A5A"
-          strokeWidth="2"
-        />
-        <circle
-          cx="60"
-          cy="100"
-          r="8"
-          fill="#808080"
-          stroke="#5A5A5A"
-          strokeWidth="2"
-        />
-        <circle
-          cx="25"
-          cy="80"
-          r="8"
-          fill="#808080"
-          stroke="#5A5A5A"
-          strokeWidth="2"
-        />
-        <circle
-          cx="25"
-          cy="40"
-          r="8"
-          fill="#808080"
-          stroke="#5A5A5A"
-          strokeWidth="2"
-        />
-
-        {/* Primary connecting lines - visible gray */}
-        <line
-          x1="60"
-          y1="48"
-          x2="60"
-          y2="28"
-          stroke="#5A5A5A"
-          strokeWidth="2"
-        />
-        <line
-          x1="72"
-          y1="52"
-          x2="87"
-          y2="42"
-          stroke="#5A5A5A"
-          strokeWidth="2"
-        />
-        <line
-          x1="72"
-          y1="68"
-          x2="87"
-          y2="78"
-          stroke="#5A5A5A"
-          strokeWidth="2"
-        />
-        <line
-          x1="60"
-          y1="72"
-          x2="60"
-          y2="92"
-          stroke="#5A5A5A"
-          strokeWidth="2"
-        />
-        <line
-          x1="48"
-          y1="68"
-          x2="33"
-          y2="78"
-          stroke="#5A5A5A"
-          strokeWidth="2"
-        />
-        <line
-          x1="48"
-          y1="52"
-          x2="33"
-          y2="42"
-          stroke="#5A5A5A"
-          strokeWidth="2"
-        />
-
-        {/* Secondary trust connections - lighter dashed */}
-        <line
-          x1="52"
-          y1="28"
-          x2="33"
-          y2="40"
-          stroke="#999999"
-          strokeWidth="1.5"
-          strokeDasharray="4,3"
-        />
-        <line
-          x1="68"
-          y1="28"
-          x2="87"
-          y2="40"
-          stroke="#999999"
-          strokeWidth="1.5"
-          strokeDasharray="4,3"
-        />
-        <line
-          x1="87"
-          y1="48"
-          x2="87"
-          y2="72"
-          stroke="#999999"
-          strokeWidth="1.5"
-          strokeDasharray="4,3"
-        />
-        <line
-          x1="68"
-          y1="92"
-          x2="87"
-          y2="80"
-          stroke="#999999"
-          strokeWidth="1.5"
-          strokeDasharray="4,3"
-        />
-        <line
-          x1="52"
-          y1="92"
-          x2="33"
-          y2="80"
-          stroke="#999999"
-          strokeWidth="1.5"
-          strokeDasharray="4,3"
-        />
-        <line
-          x1="33"
-          y1="48"
-          x2="33"
-          y2="72"
-          stroke="#999999"
-          strokeWidth="1.5"
-          strokeDasharray="4,3"
-        />
+        <circle className="cls-1" cx="69.12" cy="12.12" r="12.12" />
       </svg>
       <span className="hidden sm:block text-lg font-bold text-foreground whitespace-nowrap">
         TrustGraph
