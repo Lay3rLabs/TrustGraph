@@ -1,5 +1,10 @@
 # The Plan
 
+- Get new indexer working
+- Add copy
+- Add tooltips
+- Query DB for needed trustgraph info
+
 ## Frontend
 - formatVotingPower is baddly named
 - create proposal doesn't submit amount as big int

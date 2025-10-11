@@ -80,14 +80,25 @@ ponder.on("merkleSnapshot:MerkleRootUpdated", async ({ event, context }) => {
   if (!ipfsGateway) {
     throw new Error("IPFS_GATEWAY is not set");
   }
-  const merkleRequest = await fetch(ipfsGateway + ipfsHashCid);
+  // Use 127.0.0.1 instead of localhost to avoid subdomain redirects
+  const ipfsUrl = (ipfsGateway + ipfsHashCid).replace("localhost", "127.0.0.1");
+  const merkleRequest = await fetch(ipfsUrl);
   if (!merkleRequest.ok) {
     throw new Error(
       `Failed to fetch merkle tree from IPFS CID ${ipfsHashCid}: ${merkleRequest.status} ${merkleRequest.statusText}`
     );
   }
   const merkleTreeData = (await merkleRequest.json()) as MerkleTreeData;
+  await insertMerkleData(merkleTreeData, event, root, ipfsHash, ipfsHashCid);
+});
 
+async function insertMerkleData(
+  merkleTreeData: MerkleTreeData,
+  event: any,
+  root: string,
+  ipfsHash: string,
+  ipfsHashCid: string
+) {
   await offchainDb
     .insert(offchainSchema.merkleMetadata)
     .values({
@@ -159,4 +170,4 @@ ponder.on("merkleSnapshot:MerkleRootUpdated", async ({ event, context }) => {
         ),
       },
     });
-});
+}

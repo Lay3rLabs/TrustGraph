@@ -3,7 +3,6 @@ import './globals.css'
 import type { Metadata, Viewport } from 'next'
 import { Roboto_Mono } from 'next/font/google'
 
-import { DisclaimerModal } from '@/components/DisclaimerModal'
 import { Nav } from '@/components/Nav'
 import { Providers } from '@/components/providers'
 

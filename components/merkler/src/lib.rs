@@ -72,25 +72,6 @@ impl Guest for Component {
 
         let mut registry = sources::SourceRegistry::new();
 
-        // Reward users for received attestations - 5e17 points per attestation
-        // registry.add_source(sources::eas::EasSource::new(
-        //     &eas_address,
-        //     &indexer_address,
-        //     &chain_name,
-        //     sources::eas::EasSourceType::ReceivedAttestations(schema_uid.clone()),
-        //     U256::from(5e17),
-        // ));
-        // println!("✅ Added EAS source for received attestations (5e17 points each)");
-
-        // // Reward users for sent attestations - 3e17 points per attestation
-        // registry.add_source(sources::eas::EasSource::new(
-        //     &eas_address,
-        //     &eas_indexer_address,
-        //     &chain_name,
-        //     sources::eas::EasRewardType::SentAttestations,
-        //     U256::from(3e17),
-        // ));
-
         let chain_config = get_evm_chain_config(&chain_name)
             .ok_or_else(|| format!("Failed to get chain config for {chain_name}"))?;
         let chain_id = chain_config.chain_id;
@@ -114,23 +95,6 @@ impl Guest for Component {
         if trusted_recognizers.is_empty() {
             return Err("No trusted recognizers configured. UNSAFE!!".to_string());
         }
-
-        // println!("📋 Using recognition schema UID: {}", recognition_schema_uid);
-        // registry.add_source(sources::eas::EasSource::new(
-        //     sources::eas::EasSourceType::ReceivedAttestations {
-        //         schema_uid: recognition_schema_uid,
-        //         allow_self_attestations: false,
-        //         trusted_attesters: Some(trusted_recognizers),
-        //     },
-        //     sources::eas::EasSummaryComputation::StringAbiDataField {
-        //         schema: "(string,uint256)".to_string(),
-        //         index: 0,
-        //     },
-        //     sources::eas::EasPointsComputation::UintAbiDataField {
-        //         schema: "(string,uint256)".to_string(),
-        //         index: 1,
-        //     },
-        // ));
 
         // Add PageRank-based EAS points if configured
         if let (true, Some(pagerank_pool_str), Some(vouching_schema_uid)) = (
