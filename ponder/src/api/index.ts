@@ -5,6 +5,7 @@ import { client, graphql } from "ponder";
 
 import merkle from "./merkle";
 import followers from "./followers";
+import attestations from "./attestations";
 
 const app = new Hono();
 
@@ -14,5 +15,6 @@ app.use("/graphql", graphql({ db, schema }));
 
 app.route("/followers", followers);
 app.route("/merkle", merkle);
+app.route("/attestations", attestations);
 
 export default app;

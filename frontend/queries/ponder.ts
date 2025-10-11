@@ -7,10 +7,10 @@ import { APIS } from '@/lib/config'
 // Query keys for consistent caching
 export const ponderKeys = {
   all: ['ponder'] as const,
-  latestFollowerCount: () =>
-    [...ponderKeys.all, 'latestFollowerCount'] as const,
-  followerCounts: (options?: { minTimestamp?: number }) =>
-    [...ponderKeys.all, 'followerCounts', options] as const,
+  latestMerkleTree: () => [...ponderKeys.all, 'latestMerkleTree'] as const,
+  merkleTree: (root?: string) =>
+    [...ponderKeys.all, 'merkleTree', root] as const,
+  attestationCounts: () => [...ponderKeys.all, 'attestationCounts'] as const,
 }
 
 export type FollowerCount = {
@@ -19,58 +19,122 @@ export type FollowerCount = {
   followers: number
 }
 
+export type AttestationCount = {
+  account: string
+  sent: number
+  received: number
+}
+
+export type MerkleMetadata = {
+  root: string
+  ipfsHash: string
+  ipfsHashCid: string
+  numAccounts: number
+  totalValue: string
+  sources: Array<{
+    name: string
+    metadata: any
+  }>
+  blockNumber: string
+  timestamp: string
+}
+
+export type MerkleEntry = {
+  account: string
+  value: string
+  proof: string[]
+  sent?: number
+  received?: number
+}
+
+export type MerkleTreeResponse = {
+  tree: MerkleMetadata
+  entries: MerkleEntry[]
+}
+
 export const ponderQueries = {
-  latestFollowerCount: queryOptions({
-    queryKey: ponderKeys.latestFollowerCount(),
+  latestMerkleTree: queryOptions({
+    queryKey: ponderKeys.latestMerkleTree(),
     queryFn: async () => {
-      const response = await fetch(`${APIS.ponder}/followers/latest`)
+      const response = await fetch(`${APIS.ponder}/merkle/current`)
 
       if (response.ok) {
-        const { latestFollowerCount, timestamp } = (await response.json()) as {
-          latestFollowerCount: number
-          timestamp: number
-        }
+        const data = (await response.json()) as MerkleTreeResponse
 
-        return { latestFollowerCount, timestamp }
+        // Sort entries by value (descending) for ranking
+        const sortedEntries = data.entries.sort((a, b) => {
+          const aValue = BigInt(a.value)
+          const bValue = BigInt(b.value)
+          return bValue > aValue ? 1 : bValue < aValue ? -1 : 0
+        })
+
+        return {
+          tree: data.tree,
+          entries: sortedEntries,
+        }
       } else {
         throw new Error(
-          `Failed to fetch follower counts: ${response.status} ${
+          `Failed to fetch latest merkle tree: ${response.status} ${
             response.statusText
           } (${await response.text()})`
         )
       }
     },
+    enabled: !!APIS.ponder,
   }),
-  followerCounts: (options?: { minTimestamp?: number }) =>
+  merkleTree: (root?: string) =>
     queryOptions({
-      queryKey: ponderKeys.followerCounts(options),
+      queryKey: ponderKeys.merkleTree(root),
       queryFn: async () => {
-        const response = await fetch(
-          `${APIS.ponder}/followers?${new URLSearchParams(
-            options?.minTimestamp
-              ? { minTimestamp: BigInt(options.minTimestamp).toString() }
-              : {}
-          ).toString()}`
-        )
+        if (!root) {
+          throw new Error('Root is required for merkle tree query')
+        }
+
+        const response = await fetch(`${APIS.ponder}/merkle/${root}`)
 
         if (response.ok) {
-          const { followers } = (await response.json()) as {
-            followers: FollowerCount[]
+          const data = (await response.json()) as MerkleTreeResponse
+
+          // Sort entries by value (descending) for ranking
+          const sortedEntries = data.entries.sort((a, b) => {
+            const aValue = BigInt(a.value)
+            const bValue = BigInt(b.value)
+            return bValue > aValue ? 1 : bValue < aValue ? -1 : 0
+          })
+
+          return {
+            tree: data.tree,
+            entries: sortedEntries,
           }
-
-          const max = followers.reduce(
-            (max, follower) => Math.max(max, follower.followers),
-            0
-          )
-
-          return { followers, max }
         } else {
           throw new Error(
-            `Failed to fetch follower counts: ${response.status} ${
+            `Failed to fetch merkle tree: ${response.status} ${
               response.statusText
             } (${await response.text()})`
           )
         }
       },
+      enabled: !!root && !!APIS.ponder,
     }),
+  attestationCounts: queryOptions({
+    queryKey: ponderKeys.attestationCounts(),
+    queryFn: async () => {
+      const response = await fetch(`${APIS.ponder}/attestations/counts`)
+
+      if (response.ok) {
+        const data = (await response.json()) as {
+          attestationCounts: AttestationCount[]
+        }
+
+        return data.attestationCounts
+      } else {
+        throw new Error(
+          `Failed to fetch attestation counts: ${response.status} ${
+            response.statusText
+          } (${await response.text()})`
+        )
+      }
+    },
+    enabled: !!APIS.ponder,
+  }),
 }

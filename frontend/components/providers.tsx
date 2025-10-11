@@ -57,7 +57,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <WalletConnectionProvider>
               {children}
 
-            <Toaster />
+              <Toaster />
 
               {/* {process.env.NODE_ENV === "development" && (
           <ReactQueryDevtools initialIsOpen={false} />

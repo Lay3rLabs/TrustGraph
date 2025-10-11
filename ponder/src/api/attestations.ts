@@ -1,0 +1,98 @@
+import { Hono } from "hono";
+import { db } from "ponder:api";
+import { easAttestation } from "ponder:schema";
+import { sql, count, eq } from "drizzle-orm";
+
+const app = new Hono();
+
+// Get attestation counts for all accounts
+app.get("/counts", async (c) => {
+  try {
+    // Get sent counts (where account is attester)
+    const sentCounts = await db
+      .select({
+        account: easAttestation.attester,
+        sent: count(easAttestation.uid),
+      })
+      .from(easAttestation)
+      .groupBy(easAttestation.attester);
+
+    // Get received counts (where account is recipient)
+    const receivedCounts = await db
+      .select({
+        account: easAttestation.recipient,
+        received: count(easAttestation.uid),
+      })
+      .from(easAttestation)
+      .groupBy(easAttestation.recipient);
+
+    // Combine the results
+    const accountCounts: Record<string, { sent: number; received: number }> =
+      {};
+
+    // Add sent counts
+    for (const item of sentCounts) {
+      if (!accountCounts[item.account]) {
+        accountCounts[item.account] = { sent: 0, received: 0 };
+      }
+      accountCounts[item.account]!.sent = item.sent;
+    }
+
+    // Add received counts
+    for (const item of receivedCounts) {
+      if (!accountCounts[item.account]) {
+        accountCounts[item.account] = { sent: 0, received: 0 };
+      }
+      accountCounts[item.account]!.received = item.received;
+    }
+
+    // Convert to array format
+    const results = Object.entries(accountCounts).map(([account, counts]) => ({
+      account,
+      sent: counts.sent,
+      received: counts.received,
+    }));
+
+    return c.json({ attestationCounts: results });
+  } catch (error) {
+    console.error("Error fetching attestation counts:", error);
+    return c.json({ error: "Failed to fetch attestation counts" }, 500);
+  }
+});
+
+// Get attestation counts for a specific account
+app.get("/counts/:account", async (c) => {
+  try {
+    const account = c.req.param("account");
+
+    if (!account) {
+      return c.json({ error: "Account parameter is required" }, 400);
+    }
+
+    // Get sent count
+    const sentResult = await db
+      .select({ count: count(easAttestation.uid) })
+      .from(easAttestation)
+      .where(eq(easAttestation.attester, account as `0x${string}`));
+
+    // Get received count
+    const receivedResult = await db
+      .select({ count: count(easAttestation.uid) })
+      .from(easAttestation)
+      .where(eq(easAttestation.recipient, account as `0x${string}`));
+
+    const sent = sentResult[0]?.count || 0;
+    const received = receivedResult[0]?.count || 0;
+
+    return c.json({
+      account,
+      sent,
+      received,
+    });
+  } catch (error) {
+    console.error("Error fetching attestation counts for account:", error);
+    return c.json({ error: "Failed to fetch attestation counts" }, 500);
+  }
+});
+
+export default app;

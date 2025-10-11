@@ -5,7 +5,7 @@ import { useAccount, useConnect } from 'wagmi'
 import { injected } from 'wagmi/connectors'
 
 import { Button } from '@/components/ui/button'
-import { useMerkle } from '@/hooks/useMerkle'
+import { useNetwork } from '@/hooks/useNetwork'
 
 export default function NetworkPage() {
   const { isConnected } = useAccount()
@@ -18,7 +18,7 @@ export default function NetworkPage() {
     totalRewards,
     totalParticipants,
     refresh,
-  } = useMerkle()
+  } = useNetwork()
 
   const handleConnect = () => {
     try {
@@ -66,10 +66,10 @@ export default function NetworkPage() {
           {isLoading && (
             <div className="text-center py-8">
               <div className="terminal-bright text-sm text-gray-900">
-                ◉ LOADING MERKLE DATA ◉
+                ◉ LOADING NETWORK DATA ◉
               </div>
               <div className="terminal-dim text-xs mt-2 text-gray-600">
-                Fetching latest reputation scores from IPFS...
+                Fetching latest TrustGraph data...
               </div>
             </div>
           )}
@@ -92,7 +92,9 @@ export default function NetworkPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="border border-gray-300 bg-white p-4 rounded-sm shadow-sm">
                 <div className="space-y-2">
-                  <div className="terminal-dim text-xs text-gray-600">MEMBERS</div>
+                  <div className="terminal-dim text-xs text-gray-600">
+                    MEMBERS
+                  </div>
                   <div className="terminal-bright text-2xl text-gray-900">
                     {totalParticipants}
                   </div>
@@ -154,6 +156,12 @@ export default function NetworkPage() {
                       <th className="text-left p-4 terminal-dim text-xs text-gray-600">
                         SCORE
                       </th>
+                      <th className="text-left p-4 terminal-dim text-xs text-gray-600">
+                        RECEIVED
+                      </th>
+                      <th className="text-left p-4 terminal-dim text-xs text-gray-600">
+                        SENT
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -200,6 +208,16 @@ export default function NetworkPage() {
                             {formatAmount(entry.value)}
                           </div>
                         </td>
+                        <td className="p-4">
+                          <div className="terminal-text text-sm text-gray-800">
+                            {entry.received}
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="terminal-text text-sm text-gray-800">
+                            {entry.sent}
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -212,10 +230,10 @@ export default function NetworkPage() {
           {!isLoading && (!MerkleData || MerkleData.length === 0) && !error && (
             <div className="text-center py-8 border border-gray-300 bg-white rounded-sm shadow-sm">
               <div className="terminal-dim text-sm text-gray-600">
-                NO MERKLE DATA AVAILABLE
+                NO NETWORK DATA AVAILABLE
               </div>
               <div className="system-message text-xs mt-2 text-gray-700">
-                ◆ PARTICIPATE IN ATTESTATIONS TO APPEAR ON Merkle ◆
+                ◆ PARTICIPATE IN ATTESTATIONS TO APPEAR ON NETWORK ◆
               </div>
             </div>
           )}
@@ -228,7 +246,9 @@ export default function NetworkPage() {
                 className="mobile-terminal-btn !px-6 !py-2"
                 disabled={isLoading}
               >
-                <span className="terminal-command text-xs">REFRESH MERKLE</span>
+                <span className="terminal-command text-xs">
+                  REFRESH NETWORK
+                </span>
               </Button>
             </div>
           )}

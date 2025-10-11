@@ -3,7 +3,7 @@
   "apis": {
     "ponder": "http://localhost:65421",
     "pointsEvents": "http://localhost:9090",
-    "ipfsGateway": "http://127.0.0.1:8080/ipfs/"
+    "ipfsGateway": "http://localhost:8080/ipfs/"
   },
   "wavsServiceId": "aef5dfac8b66f143ad9a3ed529a17c512513603188b232d8ec2136bd6db648c2",
   "contracts": {

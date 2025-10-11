@@ -1,23 +1,22 @@
 # The Plan
 
-- Get new indexer working
+- Use Ponder for queries
+- Remove followers logic from ponder
+- Add paper mono font
+- Swap out logo
 - Add copy
 - Add tooltips
 - Query DB for needed trustgraph info
+- Remove unused attestation types
+- Add notion of seed accounts
+- Add ENS support
+
+
 
 ## Frontend
 - formatVotingPower is baddly named
 - create proposal doesn't submit amount as big int
-
-## Indexer TODO
-
-We need to extend the Ponder indexer to index Merkle Tree data when the MerkleSnapshot contract updates.
-
-We need to be able to show a list of network membership with:
-- account
-- attestations made for a particular Schema UID
-- attestations recieved for a given Schema UID
-- score (value)
+- need a graph visualization
 
 ## Contracts
 - [x] Wire up new component to utilize SignerManagerModule, respond to MerkleRootUpdated Event get IPFS CID, get top N users, sync
