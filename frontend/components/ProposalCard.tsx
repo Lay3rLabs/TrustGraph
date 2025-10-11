@@ -148,12 +148,16 @@ export function ProposalCard({
               {getProposalStateText(state)}
             </div>
             {getTimeLeft() && (
-              <div className="terminal-dim text-xs text-gray-600">{getTimeLeft()}</div>
+              <div className="terminal-dim text-xs text-gray-600">
+                {getTimeLeft()}
+              </div>
             )}
           </div>
         </div>
 
-        <div className="terminal-text text-sm text-gray-800">{proposal.description}</div>
+        <div className="terminal-text text-sm text-gray-800">
+          {proposal.description}
+        </div>
       </div>
 
       {/* Success Message */}
@@ -166,14 +170,18 @@ export function ProposalCard({
       {/* Actions */}
       {actions.length > 0 && (
         <div className="border-t border-gray-300 pt-4 space-y-3">
-          <div className="terminal-bright text-sm font-semibold text-gray-900">PROPOSED ACTIONS</div>
+          <div className="terminal-bright text-sm font-semibold text-gray-900">
+            PROPOSED ACTIONS
+          </div>
           {actions.map((action, index) => (
             <div
               key={index}
               className="border border-gray-300 bg-gray-50 p-3 rounded-sm space-y-2"
             >
               <div className="flex justify-between items-start">
-                <div className="terminal-dim text-xs text-gray-600">ACTION #{index + 1}</div>
+                <div className="terminal-dim text-xs text-gray-600">
+                  ACTION #{index + 1}
+                </div>
                 {action.value !== '0' && (
                   <div className="terminal-text text-xs text-gray-800">
                     {formatVotingPower(action.value)} ETH
@@ -188,7 +196,9 @@ export function ProposalCard({
               </div>
               {action.description && (
                 <div className="space-y-1">
-                  <div className="terminal-dim text-xs text-gray-600">DESCRIPTION</div>
+                  <div className="terminal-dim text-xs text-gray-600">
+                    DESCRIPTION
+                  </div>
                   <div className="terminal-text text-sm text-gray-800">
                     {action.description}
                   </div>
@@ -196,7 +206,9 @@ export function ProposalCard({
               )}
               {action.data !== '0x' && (
                 <div className="space-y-1">
-                  <div className="terminal-dim text-xs text-gray-600">CALLDATA</div>
+                  <div className="terminal-dim text-xs text-gray-600">
+                    CALLDATA
+                  </div>
                   <div className="terminal-text text-xs font-mono break-all text-gray-800">
                     {action.data.slice(0, 100)}...
                   </div>
@@ -209,7 +221,9 @@ export function ProposalCard({
 
       {/* Vote Results */}
       <div className="border-t border-gray-300 pt-4 space-y-3">
-        <div className="terminal-bright text-sm font-semibold text-gray-900">VOTING RESULTS</div>
+        <div className="terminal-bright text-sm font-semibold text-gray-900">
+          VOTING RESULTS
+        </div>
         <div className="grid grid-cols-3 gap-4 text-xs">
           <div className="space-y-2">
             <div className="flex justify-between">
@@ -271,7 +285,9 @@ export function ProposalCard({
       {/* Voting Buttons */}
       {canVote && (
         <div className="border-t border-gray-300 pt-4 space-y-3">
-          <div className="terminal-bright text-sm font-semibold text-gray-900">CAST YOUR VOTE</div>
+          <div className="terminal-bright text-sm font-semibold text-gray-900">
+            CAST YOUR VOTE
+          </div>
           <div className="terminal-dim text-xs text-gray-600">
             Your voting power: {userVotingPower!}
           </div>
@@ -307,7 +323,9 @@ export function ProposalCard({
       {/* Admin Actions */}
       {isSucceeded && (
         <div className="border-t border-gray-300 pt-4 space-y-3">
-          <div className="terminal-bright text-sm font-semibold text-gray-900">PROPOSAL EXECUTION</div>
+          <div className="terminal-bright text-sm font-semibold text-gray-900">
+            PROPOSAL EXECUTION
+          </div>
           <div className="terminal-dim text-xs mb-3 text-gray-600">
             Succeeded proposals can be executed immediately
           </div>
@@ -331,7 +349,9 @@ export function ProposalCard({
       {/* No Voting Power Message */}
       {isActive && (!userVotingPower || Number(userVotingPower) === 0) && (
         <div className="border-t border-gray-300 pt-4 text-center">
-          <div className="terminal-dim text-sm text-gray-600">NO VOTING POWER</div>
+          <div className="terminal-dim text-sm text-gray-600">
+            NO VOTING POWER
+          </div>
           <div className="system-message text-xs mt-2 text-gray-700">
             ◆ YOU NEED VOTING POWER TO PARTICIPATE IN GOVERNANCE ◆
           </div>

@@ -1,7 +1,7 @@
 import clsx from 'clsx'
+import { X } from 'lucide-react'
 import { ReactNode, cloneElement } from 'react'
 import { Toast, ToastBar, toast as hotToast } from 'react-hot-toast'
-import { X } from 'lucide-react'
 
 import { Card } from '../Card'
 

@@ -11,7 +11,10 @@ export const ErrorToast = (props: ErrorToastProps) => (
   <ToastCard
     containerClassName="!bg-destructive !border-destructive"
     preMessage={
-      <AlertCircle size={20} className="text-destructive-foreground flex-shrink-0" />
+      <AlertCircle
+        size={20}
+        className="text-destructive-foreground flex-shrink-0"
+      />
     }
     {...props}
   />

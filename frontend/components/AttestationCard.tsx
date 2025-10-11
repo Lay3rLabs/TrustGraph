@@ -2,13 +2,13 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { useAccount } from 'wagmi'
 import toast from 'react-hot-toast'
+import { useAccount } from 'wagmi'
 
+import { useAttestation } from '@/hooks/useAttestation'
+import { useAttestationQueries } from '@/hooks/useAttestationQueries'
 import { AttestationData, SchemaManager } from '@/lib/schemas'
 import { formatTimeAgo } from '@/lib/utils'
-import { attestationQueries } from '@/queries/attestation'
-import { useAttestation } from '@/hooks/useAttestation'
 
 import { AttestationDataDisplay } from './AttestationData'
 import { Card } from './Card'
@@ -29,6 +29,7 @@ export function AttestationCard({
   const { revokeAttestation, isLoading: isRevoking } = useAttestation()
   const [isRevokingThis, setIsRevokingThis] = useState(false)
 
+  const attestationQueries = useAttestationQueries()
   const {
     data: attestation,
     isLoading,
@@ -167,7 +168,8 @@ export function AttestationCard({
     SchemaManager.maybeSchemaForUid(attestation.schema)?.name || 'Unknown'
 
   // Check if current user is the attester and attestation is not already revoked
-  const canRevoke = address &&
+  const canRevoke =
+    address &&
     address.toLowerCase() === attestation.attester.toLowerCase() &&
     Number(attestation.revocationTime) === 0
 
@@ -175,7 +177,11 @@ export function AttestationCard({
     <Card
       type="primary"
       size="lg"
-      className={clickable ? 'cursor-pointer hover:border-foreground/50 transition-colors' : ''}
+      className={
+        clickable
+          ? 'cursor-pointer hover:border-foreground/50 transition-colors'
+          : ''
+      }
       onClick={clickable ? onClick : undefined}
     >
       <div className="space-y-4">

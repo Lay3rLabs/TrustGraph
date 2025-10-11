@@ -1,7 +1,7 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 import { AttestationCard } from '@/components/AttestationCard'
 

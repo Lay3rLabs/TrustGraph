@@ -1,7 +1,7 @@
-import { index, onchainEnum, onchainTable } from "ponder";
+import { index, onchainTable } from 'ponder'
 
 export const wavsIndexerEvent = onchainTable(
-  "wavs_indexer_event",
+  'wavs_indexer_event',
   (t) => ({
     id: t.hex().primaryKey(),
     chainId: t.text().notNull(),

@@ -5,7 +5,10 @@ export type LogoProps = {
 
 const Logo = ({ className, onClick }: LogoProps) => {
   return (
-    <div onClick={onClick} className="flex items-center gap-3 cursor-pointer transition-opacity hover:opacity-80 active:opacity-70">
+    <div
+      onClick={onClick}
+      className="flex items-center gap-3 cursor-pointer transition-opacity hover:opacity-80 active:opacity-70"
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="120"
@@ -14,134 +17,176 @@ const Logo = ({ className, onClick }: LogoProps) => {
         fill="none"
         className={className}
       >
-      {/* Central node - darker to stand out */}
-      <circle
-        cx="60"
-        cy="60"
-        r="12"
-        fill="#4D4D4D"
-        stroke="#333333"
-        strokeWidth="2.5"
-      />
+        {/* Central node - darker to stand out */}
+        <circle
+          cx="60"
+          cy="60"
+          r="12"
+          fill="#4D4D4D"
+          stroke="#333333"
+          strokeWidth="2.5"
+        />
 
-      {/* Outer nodes - medium gray */}
-      <circle
-        cx="60"
-        cy="20"
-        r="8"
-        fill="#808080"
-        stroke="#5A5A5A"
-        strokeWidth="2"
-      />
-      <circle
-        cx="95"
-        cy="40"
-        r="8"
-        fill="#808080"
-        stroke="#5A5A5A"
-        strokeWidth="2"
-      />
-      <circle
-        cx="95"
-        cy="80"
-        r="8"
-        fill="#808080"
-        stroke="#5A5A5A"
-        strokeWidth="2"
-      />
-      <circle
-        cx="60"
-        cy="100"
-        r="8"
-        fill="#808080"
-        stroke="#5A5A5A"
-        strokeWidth="2"
-      />
-      <circle
-        cx="25"
-        cy="80"
-        r="8"
-        fill="#808080"
-        stroke="#5A5A5A"
-        strokeWidth="2"
-      />
-      <circle
-        cx="25"
-        cy="40"
-        r="8"
-        fill="#808080"
-        stroke="#5A5A5A"
-        strokeWidth="2"
-      />
+        {/* Outer nodes - medium gray */}
+        <circle
+          cx="60"
+          cy="20"
+          r="8"
+          fill="#808080"
+          stroke="#5A5A5A"
+          strokeWidth="2"
+        />
+        <circle
+          cx="95"
+          cy="40"
+          r="8"
+          fill="#808080"
+          stroke="#5A5A5A"
+          strokeWidth="2"
+        />
+        <circle
+          cx="95"
+          cy="80"
+          r="8"
+          fill="#808080"
+          stroke="#5A5A5A"
+          strokeWidth="2"
+        />
+        <circle
+          cx="60"
+          cy="100"
+          r="8"
+          fill="#808080"
+          stroke="#5A5A5A"
+          strokeWidth="2"
+        />
+        <circle
+          cx="25"
+          cy="80"
+          r="8"
+          fill="#808080"
+          stroke="#5A5A5A"
+          strokeWidth="2"
+        />
+        <circle
+          cx="25"
+          cy="40"
+          r="8"
+          fill="#808080"
+          stroke="#5A5A5A"
+          strokeWidth="2"
+        />
 
-      {/* Primary connecting lines - visible gray */}
-      <line x1="60" y1="48" x2="60" y2="28" stroke="#5A5A5A" strokeWidth="2" />
-      <line x1="72" y1="52" x2="87" y2="42" stroke="#5A5A5A" strokeWidth="2" />
-      <line x1="72" y1="68" x2="87" y2="78" stroke="#5A5A5A" strokeWidth="2" />
-      <line x1="60" y1="72" x2="60" y2="92" stroke="#5A5A5A" strokeWidth="2" />
-      <line x1="48" y1="68" x2="33" y2="78" stroke="#5A5A5A" strokeWidth="2" />
-      <line x1="48" y1="52" x2="33" y2="42" stroke="#5A5A5A" strokeWidth="2" />
+        {/* Primary connecting lines - visible gray */}
+        <line
+          x1="60"
+          y1="48"
+          x2="60"
+          y2="28"
+          stroke="#5A5A5A"
+          strokeWidth="2"
+        />
+        <line
+          x1="72"
+          y1="52"
+          x2="87"
+          y2="42"
+          stroke="#5A5A5A"
+          strokeWidth="2"
+        />
+        <line
+          x1="72"
+          y1="68"
+          x2="87"
+          y2="78"
+          stroke="#5A5A5A"
+          strokeWidth="2"
+        />
+        <line
+          x1="60"
+          y1="72"
+          x2="60"
+          y2="92"
+          stroke="#5A5A5A"
+          strokeWidth="2"
+        />
+        <line
+          x1="48"
+          y1="68"
+          x2="33"
+          y2="78"
+          stroke="#5A5A5A"
+          strokeWidth="2"
+        />
+        <line
+          x1="48"
+          y1="52"
+          x2="33"
+          y2="42"
+          stroke="#5A5A5A"
+          strokeWidth="2"
+        />
 
-      {/* Secondary trust connections - lighter dashed */}
-      <line
-        x1="52"
-        y1="28"
-        x2="33"
-        y2="40"
-        stroke="#999999"
-        strokeWidth="1.5"
-        strokeDasharray="4,3"
-      />
-      <line
-        x1="68"
-        y1="28"
-        x2="87"
-        y2="40"
-        stroke="#999999"
-        strokeWidth="1.5"
-        strokeDasharray="4,3"
-      />
-      <line
-        x1="87"
-        y1="48"
-        x2="87"
-        y2="72"
-        stroke="#999999"
-        strokeWidth="1.5"
-        strokeDasharray="4,3"
-      />
-      <line
-        x1="68"
-        y1="92"
-        x2="87"
-        y2="80"
-        stroke="#999999"
-        strokeWidth="1.5"
-        strokeDasharray="4,3"
-      />
-      <line
-        x1="52"
-        y1="92"
-        x2="33"
-        y2="80"
-        stroke="#999999"
-        strokeWidth="1.5"
-        strokeDasharray="4,3"
-      />
-      <line
-        x1="33"
-        y1="48"
-        x2="33"
-        y2="72"
-        stroke="#999999"
-        strokeWidth="1.5"
-        strokeDasharray="4,3"
-      />
-    </svg>
-    <span className="hidden sm:block text-lg font-bold text-foreground whitespace-nowrap">
-      Trust Graph
-    </span>
-  </div>
+        {/* Secondary trust connections - lighter dashed */}
+        <line
+          x1="52"
+          y1="28"
+          x2="33"
+          y2="40"
+          stroke="#999999"
+          strokeWidth="1.5"
+          strokeDasharray="4,3"
+        />
+        <line
+          x1="68"
+          y1="28"
+          x2="87"
+          y2="40"
+          stroke="#999999"
+          strokeWidth="1.5"
+          strokeDasharray="4,3"
+        />
+        <line
+          x1="87"
+          y1="48"
+          x2="87"
+          y2="72"
+          stroke="#999999"
+          strokeWidth="1.5"
+          strokeDasharray="4,3"
+        />
+        <line
+          x1="68"
+          y1="92"
+          x2="87"
+          y2="80"
+          stroke="#999999"
+          strokeWidth="1.5"
+          strokeDasharray="4,3"
+        />
+        <line
+          x1="52"
+          y1="92"
+          x2="33"
+          y2="80"
+          stroke="#999999"
+          strokeWidth="1.5"
+          strokeDasharray="4,3"
+        />
+        <line
+          x1="33"
+          y1="48"
+          x2="33"
+          y2="72"
+          stroke="#999999"
+          strokeWidth="1.5"
+          strokeDasharray="4,3"
+        />
+      </svg>
+      <span className="hidden sm:block text-lg font-bold text-foreground whitespace-nowrap">
+        TrustGraph
+      </span>
+    </div>
   )
 }
 

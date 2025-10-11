@@ -216,7 +216,9 @@ export function CreateProposalForm({
               className="border border-border p-4 rounded-md space-y-3 bg-muted/30"
             >
               <div className="flex items-center justify-between">
-                <div className="text-muted-foreground text-xs font-medium">Action #{index + 1}</div>
+                <div className="text-muted-foreground text-xs font-medium">
+                  Action #{index + 1}
+                </div>
                 {actions.length > 1 && (
                   <Button
                     type="button"
@@ -232,7 +234,9 @@ export function CreateProposalForm({
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <div className="text-muted-foreground text-xs font-medium">Target Contract</div>
+                  <div className="text-muted-foreground text-xs font-medium">
+                    Target Contract
+                  </div>
                   <input
                     type="text"
                     value={action.target}
@@ -246,7 +250,9 @@ export function CreateProposalForm({
                 </div>
 
                 <div className="space-y-2">
-                  <div className="text-muted-foreground text-xs font-medium">ETH Value</div>
+                  <div className="text-muted-foreground text-xs font-medium">
+                    ETH Value
+                  </div>
                   <input
                     type="text"
                     value={action.value}
@@ -259,7 +265,9 @@ export function CreateProposalForm({
                 </div>
 
                 <div className="space-y-2">
-                  <div className="text-muted-foreground text-xs font-medium">Operation Type</div>
+                  <div className="text-muted-foreground text-xs font-medium">
+                    Operation Type
+                  </div>
                   <select
                     value={action.operation || 0}
                     onChange={(e) =>
@@ -274,7 +282,9 @@ export function CreateProposalForm({
               </div>
 
               <div className="space-y-2">
-                <div className="text-muted-foreground text-xs font-medium">Action Description</div>
+                <div className="text-muted-foreground text-xs font-medium">
+                  Action Description
+                </div>
                 <input
                   type="text"
                   value={action.description}
@@ -288,7 +298,9 @@ export function CreateProposalForm({
               </div>
 
               <div className="space-y-2">
-                <div className="text-muted-foreground text-xs font-medium">Calldata (Optional)</div>
+                <div className="text-muted-foreground text-xs font-medium">
+                  Calldata (Optional)
+                </div>
                 <textarea
                   value={action.data}
                   onChange={(e) => updateAction(index, 'data', e.target.value)}

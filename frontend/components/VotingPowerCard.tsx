@@ -54,7 +54,9 @@ export function VotingPowerCard({
                 hasVotingPower ? 'text-green-700' : 'text-muted-foreground'
               }`}
             >
-              {hasVotingPower ? '✓ Eligible to vote on proposals' : '✗ No voting power'}
+              {hasVotingPower
+                ? '✓ Eligible to vote on proposals'
+                : '✗ No voting power'}
             </div>
           </div>
 
@@ -62,8 +64,16 @@ export function VotingPowerCard({
           {hasVotingPower && proposalThreshold && (
             <div className="space-y-2 pt-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Proposal creation threshold</span>
-                <span className={`font-medium ${canCreateProposal ? 'text-green-700' : 'text-muted-foreground'}`}>
+                <span className="text-muted-foreground">
+                  Proposal creation threshold
+                </span>
+                <span
+                  className={`font-medium ${
+                    canCreateProposal
+                      ? 'text-green-700'
+                      : 'text-muted-foreground'
+                  }`}
+                >
                   {canCreateProposal ? '✓ Met' : '✗ Not met'}
                 </span>
               </div>
@@ -82,7 +92,8 @@ export function VotingPowerCard({
                 />
               </div>
               <div className="text-muted-foreground text-xs">
-                {formatVotingPower(proposalThreshold)} required to create proposals
+                {formatVotingPower(proposalThreshold)} required to create
+                proposals
               </div>
             </div>
           )}

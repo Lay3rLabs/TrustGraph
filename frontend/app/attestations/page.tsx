@@ -9,8 +9,11 @@ import { Hex } from 'viem'
 import { AttestationCard } from '@/components/AttestationCard'
 import { Card } from '@/components/Card'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
+import {
+  useAttestationDataSource,
+  useAttestationQueries,
+} from '@/hooks/useAttestationQueries'
 import { SCHEMAS } from '@/lib/schemas'
-import { attestationQueries } from '@/queries/attestation'
 
 // Helper component to fetch attestation data for filtering
 function AttestationWithStatus({
@@ -20,6 +23,7 @@ function AttestationWithStatus({
   uid: `0x${string}`
   onStatusReady: (uid: string, status: string) => void
 }) {
+  const attestationQueries = useAttestationQueries()
   const { data: attestationData } = useQuery(attestationQueries.get(uid))
 
   const getAttestationStatus = (attestation: any) => {
@@ -54,8 +58,14 @@ export default function AttestationsPage() {
     Record<string, string>
   >({})
 
+  const attestationQueries = useAttestationQueries()
+  const dataSource = useAttestationDataSource()
+
   const allQuery = useQuery({
-    ...attestationQueries.uids({ limit, reverse: sortOrder === 'newest' }),
+    ...attestationQueries.uids({
+      limit,
+      reverse: sortOrder === 'newest',
+    }),
     enabled: selectedSchema === 'all',
   })
   const allCountQuery = useQuery(attestationQueries.count)
@@ -171,7 +181,8 @@ export default function AttestationsPage() {
             ◉ LOADING ATTESTATIONS ◉
           </div>
           <div className="terminal-dim text-sm mt-2">
-            Fetching data from EAS contract...
+            Fetching data from{' '}
+            {dataSource === 'ponder' ? 'Ponder indexer' : 'EAS contract'}...
           </div>
         </div>
       )}
