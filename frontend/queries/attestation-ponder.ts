@@ -61,6 +61,7 @@ export const attestationPonderQueries = {
           schema: attestation.schema,
           attester: attestation.attester,
           recipient: attestation.recipient,
+          time: BigInt(attestation.time || attestation.timestamp || 0),
           data: attestation.data,
           refUID:
             attestation.ref ||

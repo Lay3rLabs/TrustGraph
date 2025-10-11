@@ -1,9 +1,77 @@
 import { Hono } from "hono";
 import { db } from "ponder:api";
 import { easAttestation } from "ponder:schema";
-import { sql, count, eq } from "drizzle-orm";
+import { sql, count, eq, desc, asc } from "drizzle-orm";
 
 const app = new Hono();
+
+// Get paginated list of attestations with optional schema filtering
+app.get("/", async (c) => {
+  try {
+    const limit = parseInt(c.req.query("limit") || "50");
+    const offset = parseInt(c.req.query("offset") || "0");
+    const reverse = c.req.query("reverse") === "true";
+    const schema = c.req.query("schema") as `0x${string}` | undefined;
+
+    let query = db.select().from(easAttestation);
+
+    // Add schema filter if provided
+    if (schema) {
+      query = query.where(eq(easAttestation.schema, schema));
+    }
+
+    // Add ordering
+    const orderBy = reverse
+      ? desc(easAttestation.timestamp)
+      : asc(easAttestation.timestamp);
+    query = query.orderBy(orderBy);
+
+    // Add pagination
+    query = query.limit(limit).offset(offset);
+
+    const attestations = await query;
+
+    return c.json(
+      attestations.map((attestation) => ({
+        uid: attestation.uid,
+        timestamp: Number(attestation.timestamp),
+        schema: attestation.schema,
+        attester: attestation.attester,
+        recipient: attestation.recipient,
+        data: attestation.data,
+        revocationTime: Number(attestation.revocationTime),
+        expirationTime: Number(attestation.expirationTime),
+      }))
+    );
+  } catch (error) {
+    console.error("Error fetching attestations:", error);
+    return c.json({ error: "Failed to fetch attestations" }, 500);
+  }
+});
+
+// Get total count of attestations or count by schema
+app.get("/count", async (c) => {
+  try {
+    const schema = c.req.query("schema") as `0x${string}` | undefined;
+
+    let query = db
+      .select({ count: count(easAttestation.uid) })
+      .from(easAttestation);
+
+    // Add schema filter if provided
+    if (schema) {
+      query = query.where(eq(easAttestation.schema, schema));
+    }
+
+    const result = await query;
+    const totalCount = result[0]?.count || 0;
+
+    return c.json({ count: totalCount });
+  } catch (error) {
+    console.error("Error fetching attestation count:", error);
+    return c.json({ error: "Failed to fetch attestation count" }, 500);
+  }
+});
 
 // Get attestation counts for all accounts
 app.get("/counts", async (c) => {
@@ -92,6 +160,32 @@ app.get("/counts/:account", async (c) => {
   } catch (error) {
     console.error("Error fetching attestation counts for account:", error);
     return c.json({ error: "Failed to fetch attestation counts" }, 500);
+  }
+});
+
+// Get individual attestation by UID (must come after specific routes)
+app.get("/:uid", async (c) => {
+  try {
+    const uid = c.req.param("uid") as `0x${string}`;
+
+    if (!uid) {
+      return c.json({ error: "UID parameter is required" }, 400);
+    }
+
+    const attestation = await db
+      .select()
+      .from(easAttestation)
+      .where(eq(easAttestation.uid, uid))
+      .limit(1);
+
+    if (attestation.length === 0) {
+      return c.json({ error: "Attestation not found" }, 404);
+    }
+
+    return c.json(attestation[0]);
+  } catch (error) {
+    console.error("Error fetching attestation:", error);
+    return c.json({ error: "Failed to fetch attestation" }, 500);
   }
 });
 

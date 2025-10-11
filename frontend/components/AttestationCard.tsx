@@ -26,15 +26,15 @@ export function AttestationCard({
   clickable = false,
 }: AttestationCardProps) {
   const { address } = useAccount()
-  const { revokeAttestation, isLoading: isRevoking } = useAttestation()
+  const { revokeAttestation } = useAttestation()
   const [isRevokingThis, setIsRevokingThis] = useState(false)
 
   const attestationQueries = useAttestationQueries()
-  const {
-    data: attestation,
-    isLoading,
-    error,
-  } = useQuery(attestationQueries.get(uid))
+  const { data, isLoading, error } = useQuery(
+    attestationQueries.get(uid) as any
+  )
+
+  const attestation = data as AttestationData | undefined
 
   const handleRevoke = async (e: React.MouseEvent) => {
     e.stopPropagation() // Prevent card click when revoking
@@ -55,7 +55,18 @@ export function AttestationCard({
   }
 
   const formatTimestamp = (timestamp: number) => {
+    // Validate timestamp is a valid number
+    if (!timestamp || isNaN(timestamp) || timestamp < 0) {
+      return 'Invalid timestamp'
+    }
+
     const date = new Date(timestamp * 1000)
+
+    // Check if the date is valid
+    if (isNaN(date.getTime())) {
+      return 'Invalid date'
+    }
+
     return date.toISOString().replace('T', ' ').split('.')[0]
   }
 

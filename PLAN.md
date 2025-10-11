@@ -1,22 +1,22 @@
 # The Plan
 
 - Use Ponder for queries
-- Remove followers logic from ponder
+- Make profile page
+- Remove followers logic from ponder indexer
 - Add paper mono font
 - Swap out logo
 - Add copy
-- Add tooltips
-- Query DB for needed trustgraph info
-- Remove unused attestation types
-- Add notion of seed accounts
+- Create tooltip component
+- Remove unused attestation schema types from frontend
+- Add notion of seed accounts to config
 - Add ENS support
-
-
-
-## Frontend
-- formatVotingPower is baddly named
-- create proposal doesn't submit amount as big int
+- Experimental notice on governance page
+- Calibrate math so scores are right
+- formatVotingPower is baddly named (kill)
+- create proposal doesn't submit amount as big int (it's in wei)
 - need a graph visualization
+
+- Documentation for merkler component
 
 ## Contracts
 - [x] Wire up new component to utilize SignerManagerModule, respond to MerkleRootUpdated Event get IPFS CID, get top N users, sync
