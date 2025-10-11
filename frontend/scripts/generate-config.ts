@@ -36,7 +36,7 @@ try {
         : 'https://infra.en0va.xyz/wavs',
     ipfsGateway:
       env === 'development'
-        ? 'http://localhost:8080/ipfs/'
+        ? 'http://127.0.0.1:8080/ipfs/'
         : 'https://gateway.pinata.cloud/ipfs/',
   }
 
