@@ -59,7 +59,7 @@ export function CreateAttestationModal({
 
   const form = useForm<AttestationFormData>({
     defaultValues: {
-      schema: 'recognition',
+      schema: 'vouching',
       recipient: '',
       data: {},
     },

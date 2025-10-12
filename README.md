@@ -107,33 +107,6 @@ This creates a realistic attestation network with:
 
 Perfect for testing PageRank-based reward algorithms!
 
-### 1. Trigger Attestation Request
-
-Create an attestation request using your schema.
-
-**What this does:** Emits an `AttestationRequested` event that the WAVS operator monitors. The WAVS service will process this request, execute the WebAssembly component, and create an actual EAS attestation on-chain.
-
-```bash
-# Trigger attestation creation via WAVS
-task forge:trigger-attestation INPUT="Advanced Solidity Development Skills Verified"
-```
-
-### 2. View Results
-
-Check the attestation was created.
-
-**What this shows:** Verifies that the WAVS operator successfully processed your request and created the attestation. You should see the attestation data stored on-chain in the EAS registry.
-
-```bash
-# Query attestations for the schema and recipient
-task forge:query-attestations
-```
-
-Check voting power for recipient, it should have gone up by number of attestations (note this is a separate demo from MerkleGov which we'll show later):
-```bash
-task forge:query-voting-power
-```
-
 ### Distribute Rewards
 
 Trigger the service to run:
@@ -151,32 +124,6 @@ Claim:
 task forge:claim-rewards
 
 task forge:query-rewards-balance
-```
-
-## LLM Attester
-
-Make a statement attestation to be reviewed by the `llm-attester` component:
-```bash
-task forge:trigger-statement-attestation INPUT="Advanced Solidity Development Skills Verified"
-```
-
-Query latest attestations from AI:
-```bash
-task forge:query-statement-attestations
-```
-
-## WAVS Safe Zodiac Module (DAO Agent)
-
-Trigger the DAO agent with some input:
-```bash
-task forge:agent-trigger INPUT="To save the rainforest, send 1 ETH to 0xDf3679681B87fAE75CE185e4f01d98b64Ddb64a3"
-```
-
-Wait a bit for the component to run.
-
-Verify funds were sent:
-```bash
-cast balance 0xDf3679681B87fAE75CE185e4f01d98b64Ddb64a3 --rpc-url http://localhost:8545
 ```
 
 ## AI Coding Agents

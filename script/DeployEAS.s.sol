@@ -104,7 +104,7 @@ contract DeployEAS is Common {
             address(indexerResolver),
             "vouching",
             "Weighted endorsement",
-            "string comment, uint256 confidence",
+            "string comment,uint256 confidence",
             true
         );
 

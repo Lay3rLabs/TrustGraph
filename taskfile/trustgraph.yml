@@ -7,7 +7,7 @@ vars:
 
 tasks:
   create-network:
-    desc: "Create PageRank vouching attestation network"
+    desc: "Create TrustGraph vouching attestation network"
     vars:
       TEST_ADDRESS: "{{.TEST_ADDRESS}}"
     preconditions:
@@ -24,7 +24,7 @@ tasks:
         CYAN='\033[0;36m'
         NC='\033[0m'
 
-        echo -e "${PURPLE}Creating Direct EAS PageRank Vouching Network${NC}"
+        echo -e "${PURPLE}Creating Direct EAS TrustGraph Vouching Network${NC}"
 
         # Load deployment configuration
         EAS_ADDRESS=$(jq -r '.eas.contracts.eas' {{.DEPLOYMENT_FILE}})
@@ -49,7 +49,8 @@ tasks:
         create_vouching_attestation() {
           local attester_name="$1"
           local recipient_addr="$2"
-          local weight="$3"
+          local comment="$3"
+          local confidence="$4"
           local attester_key
 
           case "$attester_name" in
@@ -79,9 +80,10 @@ tasks:
             *) ;; # Keep address as-is if it's already a valid address
           esac
 
-          local data=$(cast abi-encode "f(uint256)" $weight)
+          # Encode both comment and confidence according to new schema: "string comment, uint256 confidence"
+          local data=$(cast abi-encode "f(string,uint256)" "$comment" $confidence)
 
-          echo -e "${CYAN}Creating vouching: $attester_name → $recipient_addr (weight: $weight)${NC}"
+          echo -e "${CYAN}Creating vouching: $attester_name → $recipient_addr (comment: \"$comment\", confidence: $confidence)${NC}"
 
           if cast send $EAS_ADDRESS \
               --private-key "$attester_key" \
@@ -97,7 +99,7 @@ tasks:
           fi
         }
 
-        echo -e "${BLUE}=== Creating PageRank Vouching Network ===${NC}"
+        echo -e "${BLUE}=== Creating TrustGraph Vouching Network ===${NC}"
 
         total_attestations=0
         failed_attestations=0
@@ -105,21 +107,21 @@ tasks:
         # Authority vouchers
         echo -e "${CYAN}👑 Creating authority vouchers...${NC}"
 
-        if create_vouching_attestation "Alice" "Bob" "95"; then
+        if create_vouching_attestation "Alice" "Bob" "Highly trusted community member" "95"; then
           total_attestations=$((total_attestations + 1))
         else
           failed_attestations=$((failed_attestations + 1))
         fi
         sleep 0.1
 
-        if create_vouching_attestation "Alice" "{{.TEST_ADDRESS}}" "85"; then
+        if create_vouching_attestation "Alice" "{{.TEST_ADDRESS}}" "Reliable test participant" "85"; then
           total_attestations=$((total_attestations + 1))
         else
           failed_attestations=$((failed_attestations + 1))
         fi
         sleep 0.1
 
-        if create_vouching_attestation "Bob" "{{.TEST_ADDRESS}}" "75"; then
+        if create_vouching_attestation "Bob" "{{.TEST_ADDRESS}}" "Good collaborator" "75"; then
           total_attestations=$((total_attestations + 1))
         else
           failed_attestations=$((failed_attestations + 1))
@@ -128,32 +130,45 @@ tasks:
 
         # Spammer self-vouchers
         echo -e "${CYAN}🤬 Creating spammer self-vouchers...${NC}"
-        for spammer in Grace Henry Ivy; do
-          if create_vouching_attestation "$spammer" "$spammer" "100"; then
-            total_attestations=$((total_attestations + 1))
-          else
-            failed_attestations=$((failed_attestations + 1))
-          fi
-          sleep 0.1
-        done
+
+        if create_vouching_attestation "Grace" "Grace" "I am the best" "100"; then
+          total_attestations=$((total_attestations + 1))
+        else
+          failed_attestations=$((failed_attestations + 1))
+        fi
+        sleep 0.1
+
+        if create_vouching_attestation "Henry" "Henry" "Trust me completely" "100"; then
+          total_attestations=$((total_attestations + 1))
+        else
+          failed_attestations=$((failed_attestations + 1))
+        fi
+        sleep 0.1
+
+        if create_vouching_attestation "Ivy" "Ivy" "Self-vouching is valid" "100"; then
+          total_attestations=$((total_attestations + 1))
+        else
+          failed_attestations=$((failed_attestations + 1))
+        fi
+        sleep 0.1
 
         # Community vouchers
         echo -e "${CYAN}🤝 Creating community vouchers...${NC}"
 
         declare -A vouches=(
-          ["Bob:Charlie"]="70"
-          ["Charlie:Diana"]="65"
-          ["Diana:Eve"]="60"
-          ["Eve:Frank"]="55"
-          ["Frank:Bob"]="50"
-          ["Charlie:Frank"]="45"
-          ["Diana:Bob"]="40"
+          ["Bob:Charlie"]="Solid contributor:70"
+          ["Charlie:Diana"]="Helpful team member:65"
+          ["Diana:Eve"]="Consistent performer:60"
+          ["Eve:Frank"]="Dependable colleague:55"
+          ["Frank:Bob"]="Trustworthy partner:50"
+          ["Charlie:Frank"]="Good communicator:45"
+          ["Diana:Bob"]="Reliable supporter:40"
         )
 
         for vouch in "${!vouches[@]}"; do
           IFS=':' read -r attester recipient <<< "$vouch"
-          weight="${vouches[$vouch]}"
-          if create_vouching_attestation "$attester" "$recipient" "$weight"; then
+          IFS=':' read -r comment confidence <<< "${vouches[$vouch]}"
+          if create_vouching_attestation "$attester" "$recipient" "$comment" "$confidence"; then
             total_attestations=$((total_attestations + 1))
           else
             failed_attestations=$((failed_attestations + 1))
@@ -168,7 +183,7 @@ tasks:
         fi
 
   analyze:
-    desc: "Analyze the created PageRank vouching network"
+    desc: "Analyze the created TrustGraph vouching network"
     vars:
       TEST_ADDRESS: "{{.TEST_ADDRESS}}"
     preconditions:
@@ -183,7 +198,7 @@ tasks:
         EAS_ADDRESS=$(jq -r '.eas.contracts.eas' {{.DEPLOYMENT_FILE}})
         VOUCHING_SCHEMA_ID=$(jq -r '.eas.schemas.vouching.uid' {{.DEPLOYMENT_FILE}})
 
-        echo -e "${CYAN}📊 Vouching Network Analysis${NC}"
+        echo -e "${CYAN}📊 TrustGraph Vouching Network Analysis${NC}"
         echo "==========================="
         echo ""
         echo "👥 Test Accounts (using anvil accounts):"
@@ -198,10 +213,14 @@ tasks:
         echo "   • Ivy: 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720"
         echo "   • TestAccount: {{.TEST_ADDRESS}} (Custom Test Address)"
         echo ""
-        echo "📈 Expected PageRank Leaders:"
-        echo "   1. Alice - Authority figure with high outgoing weight"
-        echo "   2. TestAccount ({{.TEST_ADDRESS}}) - Receives high-weight vouches"
-        echo "   3. Bob - Receives high-weight vouch from Alice"
+        echo "📈 Expected TrustGraph Leaders:"
+        echo "   1. Alice - Authority figure with high outgoing confidence scores"
+        echo "   2. TestAccount ({{.TEST_ADDRESS}}) - Receives high-confidence vouches"
+        echo "   3. Bob - Receives high-confidence vouch from Alice"
+        echo ""
+        echo "📝 Schema Format:"
+        echo "   • comment: string - Human readable endorsement reason"
+        echo "   • confidence: uint256 - Numerical confidence score (0-100)"
         echo ""
         echo "⚙️ Contract Addresses:"
         echo "   • EAS: $EAS_ADDRESS"
@@ -209,7 +228,7 @@ tasks:
         echo "   • RPC: {{.RPC_URL}}"
 
   next-steps:
-    desc: "Show next steps for PageRank testing"
+    desc: "Show next steps for TrustGraph testing"
     vars:
       TEST_ADDRESS: "{{.TEST_ADDRESS}}"
     preconditions:
@@ -222,7 +241,7 @@ tasks:
         EAS_ADDRESS=$(jq -r '.eas.contracts.eas' {{.DEPLOYMENT_FILE}})
         VOUCHING_SCHEMA_ID=$(jq -r '.eas.schemas.vouching.uid' {{.DEPLOYMENT_FILE}})
 
-        echo -e "${YELLOW}🎯 Next Steps for PageRank Testing${NC}"
+        echo -e "${YELLOW}🎯 Next Steps for TrustGraph Testing${NC}"
         echo ""
         echo "🔄 Environment setup:"
         echo "   export WAVS_ENV_EAS_ADDRESS=\"$EAS_ADDRESS\""
@@ -230,18 +249,23 @@ tasks:
         echo "   export WAVS_ENV_RPC_URL=\"{{.RPC_URL}}\""
         echo "   export WAVS_ENV_CHAIN_ID=\"{{.CHAIN_ID}}\""
         echo ""
-        echo "🔨 Build and test PageRank component:"
+        echo "🔨 Build and test TrustGraph component:"
         echo "   task build:wasi"
-        echo "   task wasi:exec COMPONENT_FILENAME=merkler.wasm INPUT_DATA=\"test-pagerank\""
+        echo "   task wasi:exec COMPONENT_FILENAME=merkler.wasm INPUT_DATA=\"test-trustgraph\""
         echo ""
         echo "📊 Expected Results:"
-        echo "   • Alice should have highest PageRank (authority)"
+        echo "   • Alice should have highest trust score (authority)"
         echo "   • TestAccount ({{.TEST_ADDRESS}}) should rank very high"
         echo "   • Bob should rank high"
-        echo "   • Grace/Henry/Ivy should rank low (spammers)"
+        echo "   • Grace/Henry/Ivy should rank low (spammers with self-vouches)"
+        echo ""
+        echo "📝 Schema Details:"
+        echo "   • New vouching attestations include both comment and confidence"
+        echo "   • Comments provide human-readable endorsement context"
+        echo "   • Confidence scores (0-100) provide weighted trust values"
 
   full-setup:
-    desc: "Complete PageRank network setup with analysis"
+    desc: "Complete TrustGraph network setup with analysis"
     vars:
       TEST_ADDRESS: "{{.TEST_ADDRESS}}"
     preconditions:

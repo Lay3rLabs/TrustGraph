@@ -4,12 +4,12 @@ Figma: https://www.figma.com/proto/uGHgh87RIFS0GUlLR68hCs/TrustGraph-Wireframes?
 
 TODO: explore configuration...
 
-- Remove unused attestation schema types from frontend (comment out in contracts)
-- Create trust schema
-- Change default schema to trust
 - Network overview on network page
 - Add ENS support
 - Address component
+- Extend create attestation component to handle more custom components for certain schema ids like vouching
+- Make CreateVouching Schema component
+- Make vouching modal better
 - Add copy, new landing page
 - cap confidence at 100
 - Add profile link somewhere
@@ -21,6 +21,10 @@ TODO: explore configuration...
 - need a graph visualization
 - Documentation for merkler component
 - Live updates
+
+Known Bugs:
+- Don't allow self-attestations, these shouldn't account
+- No max on confidence level
 
 # Deploying
 - Deploy somewhere so people can try
@@ -36,7 +40,6 @@ TODO: explore configuration...
 - Rename component from merkler to trust graph
 - Refactor to consume upstream packages from WAVS tools
 - Docs so people unfamiliar with WAVS can run it
-- Remove unused bits? `dao-agent`, etc.
 - Make sure tasks are named appropriately
 
 # Governance extra credit

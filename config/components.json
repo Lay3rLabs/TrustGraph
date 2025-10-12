@@ -12,18 +12,12 @@
         "eas_address": "${EAS_ADDRESS}",
         "indexer_address": "${INDEXER_ADDRESS}",
         "chain_name": "${CHAIN_NAME}",
-        "recognition_schema_uid": "${RECOGNITION_SCHEMA_UID}",
         "vouching_schema_uid": "${VOUCHING_SCHEMA_UID}",
         "pagerank_enabled": "true",
         "pagerank_points_pool": "10000",
         "pagerank_trusted_seeds": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
         "pagerank_trust_multiplier": "10.5",
-        "pagerank_trust_boost": "0.99",
-        "trusted_recognizers": "0x45CbC00e0618880bfB2dBDdEAed1ef1411dd5eeE,0x7d7ec12d1252Ac65bb2a5f1dA75d415b665c5a42,0xD2C392084761cb6E44c544B6f39dcc001fDe9775",
-        "hyperstition_market_makers": "${MARKET_MAKER_ADDRESS}",
-        "hyperstition_points_pool": "10000",
-        "hyperstition_trade_points": "25",
-        "hyperstition_redeem_points": "50"
+        "pagerank_trust_boost": "0.99"
       },
       "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
     },
@@ -39,18 +33,12 @@
         "eas_address": "${EAS_ADDRESS}",
         "indexer_address": "${INDEXER_ADDRESS}",
         "chain_name": "${CHAIN_NAME}",
-        "recognition_schema_uid": "${RECOGNITION_SCHEMA_UID}",
         "vouching_schema_uid": "${VOUCHING_SCHEMA_UID}",
         "pagerank_enabled": "true",
         "pagerank_points_pool": "10000",
         "pagerank_trusted_seeds": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
         "pagerank_trust_multiplier": "10.5",
-        "pagerank_trust_boost": "0.99",
-        "trusted_recognizers": "0x45CbC00e0618880bfB2dBDdEAed1ef1411dd5eeE,0x7d7ec12d1252Ac65bb2a5f1dA75d415b665c5a42,0xD2C392084761cb6E44c544B6f39dcc001fDe9775",
-        "hyperstition_market_makers": "${MARKET_MAKER_ADDRESS}",
-        "hyperstition_points_pool": "10000",
-        "hyperstition_trade_points": "25",
-        "hyperstition_redeem_points": "50"
+        "pagerank_trust_boost": "0.99"
       },
       "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
     },

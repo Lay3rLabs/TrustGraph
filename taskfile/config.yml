@@ -13,12 +13,6 @@ tasks:
       - 'echo "{{.FUNDED_KEY}}"'
     silent: true
 
-  prediction-controller-address:
-    desc: "Get the prediction market controller address"
-    cmds:
-      - 'echo "{{.PREDICTION_MARKET_CONTROLLER_ADDRESS}}"'
-    silent: true
-
   indexer-address:
     desc: "Get the indexer address"
     cmds:
@@ -35,12 +29,6 @@ tasks:
     desc: "Get the merkle snapshot address"
     cmds:
       - 'echo "{{.MERKLE_SNAPSHOT_ADDR}}"'
-    silent: true
-
-  collateral-token-address:
-    desc: "Get the prediction market collateral token address"
-    cmds:
-      - 'echo "{{.COLLATERAL_TOKEN_ADDR}}"'
     silent: true
 
   service-manager-address:
@@ -103,8 +91,6 @@ vars:
     sh: test -f .docker/deployment_summary.json && jq -r '.eas.contracts.schema_registrar' .docker/deployment_summary.json || echo ""
   INDEXER_ADDR:
     sh: test -f .docker/deployment_summary.json && jq -r '.wavs_indexer' .docker/deployment_summary.json || echo ""
-  COLLATERAL_TOKEN_ADDR:
-    sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market.collateral_token' .docker/deployment_summary.json || echo ""
   EAS_INDEXER_RESOLVER_ADDR:
     sh: test -f .docker/deployment_summary.json && jq -r '.eas.contracts.indexer_resolver' .docker/deployment_summary.json || echo ""
   VOTING_POWER_ADDR:
@@ -116,20 +102,6 @@ vars:
   MERKLE_SNAPSHOT_ADDR:
     sh: test -f .docker/merkler_deploy.json && jq -r '.merkle_snapshot' .docker/merkler_deploy.json || echo ""
 
-  # Prediction Market contract addresses (loaded from deployment summary)
-  MARKET_MAKER_ADDRESS:
-    sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market.market_maker' .docker/deployment_summary.json || echo ""
-  CONDITIONAL_TOKENS_ADDRESS:
-    sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market.conditional_tokens' .docker/deployment_summary.json || echo ""
-  COLLATERAL_TOKEN_ADDRESS:
-    sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market.collateral_token' .docker/deployment_summary.json || echo ""
-  PREDICTION_MARKET_CONTROLLER_ADDRESS:
-    sh: test -f .docker/deployment_summary.json && jq -r '.prediction_market.controller' .docker/deployment_summary.json || echo ""
-
   # Schema UIDs (loaded from deployment summary)
   VOUCHING_SCHEMA_ID:
     sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.vouching.uid' .docker/deployment_summary.json || echo ""
-  STATEMENT_SCHEMA_UID:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.statement.uid' .docker/deployment_summary.json || echo ""
-  LIKE_SCHEMA_UID:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.like.uid' .docker/deployment_summary.json || echo ""
