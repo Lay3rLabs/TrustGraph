@@ -9,13 +9,11 @@ TODO: explore configuration...
 - Make network info config with copy
 
 
-- Add profile link somewhere
 - Add sorts on network page
 - Contact support button
 - update site metadata
-- need a graph visualization
-- Documentation for merkler component
 - Live updates
+- need a graph visualization
 
 Needs discussion:
 - Calibrate math so scores are right? (open questions about this)
@@ -40,6 +38,7 @@ Test:
 - formatVotingPower is baddly named (kill, it's just using BigInt, there must be a function in one of our packages)
 - Remove followers logic from ponder indexer
 - Rename component from merkler to trust graph
+- Documentation for merkler component
 - Refactor to consume upstream packages from WAVS tools
 - Docs so people unfamiliar with WAVS can run it
 - Make sure tasks are named appropriately

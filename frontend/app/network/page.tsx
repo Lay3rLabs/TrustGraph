@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import type React from 'react'
+import { useState, useMemo } from 'react'
 import { useAccount, useConnect } from 'wagmi'
 import { injected } from 'wagmi/connectors'
 
@@ -13,10 +14,17 @@ import { InfoTooltip } from '@/components/ui/info-tooltip'
 import { useNetwork } from '@/hooks/useNetwork'
 import { TRUSTED_SEEDS } from '@/lib/config'
 
+type SortColumn = 'rank' | 'received' | 'sent' | 'score'
+type SortDirection = 'asc' | 'desc'
+
 export default function NetworkPage() {
   const router = useRouter()
   const { isConnected } = useAccount()
   const { connect } = useConnect()
+
+  // Sorting state
+  const [sortColumn, setSortColumn] = useState<SortColumn>('score')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
   const {
     isLoading,
@@ -37,6 +45,68 @@ export default function NetworkPage() {
 
   const formatAmount = (amount: string) => {
     return BigInt(amount || 0).toLocaleString()
+  }
+
+  // Handle column header clicks
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortColumn(column)
+      setSortDirection(
+        ['score', 'received', 'sent'].includes(column) ? 'desc' : 'asc'
+      ) // Default to desc for score/received/sent, asc for others
+    }
+  }
+
+  // Sort the data
+  const sortedMerkleData = useMemo(() => {
+    if (!MerkleData) return []
+
+    const sorted = [...MerkleData].sort((a, b) => {
+      let aValue: number, bValue: number
+
+      switch (sortColumn) {
+        case 'rank':
+          aValue = MerkleData.indexOf(a) + 1
+          bValue = MerkleData.indexOf(b) + 1
+          break
+        case 'received':
+          aValue = parseInt(a.received || '0')
+          bValue = parseInt(b.received || '0')
+          break
+        case 'sent':
+          aValue = parseInt(a.sent || '0')
+          bValue = parseInt(b.sent || '0')
+          break
+        case 'score':
+          aValue = Number(BigInt(a.value || '0'))
+          bValue = Number(BigInt(b.value || '0'))
+          break
+        default:
+          return 0
+      }
+
+      if (sortDirection === 'asc') {
+        return aValue - bValue
+      } else {
+        return bValue - aValue
+      }
+    })
+
+    return sorted
+  }, [MerkleData, sortColumn, sortDirection])
+
+  // Helper function to render sort indicator
+  const getSortIndicator = (column: SortColumn) => {
+    if (sortColumn !== column) {
+      return <span className="text-gray-400 ml-1">↕</span>
+    }
+    return sortDirection === 'asc' ? (
+      <span className="text-gray-900 ml-1">↑</span>
+    ) : (
+      <span className="text-gray-900 ml-1">↓</span>
+    )
   }
 
   return (
@@ -158,8 +228,14 @@ export default function NetworkPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-300">
-                      <th className="text-left p-4 terminal-dim text-xs text-gray-600">
-                        RANK
+                      <th
+                        className="text-left p-4 terminal-dim text-xs text-gray-600 cursor-pointer hover:text-gray-900 transition-colors select-none"
+                        onClick={() => handleSort('rank')}
+                      >
+                        <div className="flex items-center">
+                          RANK
+                          {getSortIndicator('rank')}
+                        </div>
                       </th>
                       <th className="text-left p-4 terminal-dim text-xs text-gray-600">
                         ACCOUNT
@@ -170,96 +246,125 @@ export default function NetworkPage() {
                           <InfoTooltip content="Seed members carry additional weight with their attestations." />
                         </div>
                       </th>
-                      <th className="text-left p-4 terminal-dim text-xs text-gray-600">
+                      <th
+                        className="text-left p-4 terminal-dim text-xs text-gray-600 cursor-pointer hover:text-gray-900 transition-colors select-none"
+                        onClick={() => handleSort('received')}
+                      >
                         <div className="flex items-center gap-1">
                           RECEIVED
                           <InfoTooltip content="The number of attestations an entity has received." />
+                          {getSortIndicator('received')}
                         </div>
                       </th>
-                      <th className="text-left p-4 terminal-dim text-xs text-gray-600">
+                      <th
+                        className="text-left p-4 terminal-dim text-xs text-gray-600 cursor-pointer hover:text-gray-900 transition-colors select-none"
+                        onClick={() => handleSort('sent')}
+                      >
                         <div className="flex items-center gap-1">
                           SENT
                           <InfoTooltip content="The number of attestations an entity has given out." />
+                          {getSortIndicator('sent')}
                         </div>
                       </th>
-                      <th className="text-left p-4 terminal-dim text-xs text-gray-600">
+                      <th
+                        className="text-left p-4 terminal-dim text-xs text-gray-600 cursor-pointer hover:text-gray-900 transition-colors select-none"
+                        onClick={() => handleSort('score')}
+                      >
                         <div className="flex items-center gap-1">
                           SCORE
                           <InfoTooltip content="The TrustScore for a particular account, based on reputation in the network. Attestations from members with higher reputations carry more weight." />
+                          {getSortIndicator('score')}
                         </div>
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {MerkleData.map((entry, index) => (
-                      <tr
-                        key={entry.account}
-                        className={`border-b border-gray-200 cursor-pointer transition-colors ${
-                          index < 3
-                            ? 'bg-gray-50 hover:bg-gray-100'
-                            : index < 10
-                            ? 'bg-gray-50 hover:bg-gray-100'
-                            : 'hover:bg-gray-50'
-                        }`}
-                        onClick={() => router.push(`/network/${entry.account}`)}
-                        title="Click to view account profile"
-                      >
-                        <td className="p-4">
-                          <div className="flex items-center space-x-2">
-                            <span
-                              className={`text-sm font-semibold ${
-                                index === 0
-                                  ? 'text-yellow-600'
-                                  : index === 1
-                                  ? 'text-gray-500'
-                                  : index === 2
-                                  ? 'text-amber-700'
-                                  : 'text-gray-800'
-                              }`}
-                            >
-                              #{index + 1}
-                            </span>
-                            {index < 3 && (
-                              <span className="text-xs">
-                                {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                    {sortedMerkleData.map((entry, index) => {
+                      // Find original index for rank calculation
+                      const originalIndex = MerkleData.findIndex(
+                        (item) => item.account === entry.account
+                      )
+                      return (
+                        <tr
+                          key={entry.account}
+                          className={`border-b border-gray-200 cursor-pointer transition-colors ${
+                            originalIndex < 3
+                              ? 'bg-gray-50 hover:bg-gray-100'
+                              : originalIndex < 10
+                              ? 'bg-gray-50 hover:bg-gray-100'
+                              : 'hover:bg-gray-50'
+                          }`}
+                          onClick={() =>
+                            router.push(`/network/${entry.account}`)
+                          }
+                          title="Click to view account profile"
+                        >
+                          <td className="p-4">
+                            <div className="flex items-center space-x-2">
+                              <span
+                                className={`text-sm font-semibold ${
+                                  originalIndex === 0
+                                    ? 'text-yellow-600'
+                                    : originalIndex === 1
+                                    ? 'text-gray-500'
+                                    : originalIndex === 2
+                                    ? 'text-amber-700'
+                                    : 'text-gray-800'
+                                }`}
+                              >
+                                #{originalIndex + 1}
                               </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <TableAddress
-                            address={entry.account}
-                            onClick={(address) =>
-                              router.push(`/network/${address}`)
-                            }
-                          />
-                        </td>
-                        <td className="p-4">
-                          <div className="terminal-text text-sm text-gray-800">
-                            {TRUSTED_SEEDS.includes(entry.account) ? '⚡' : '-'}
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <div className="terminal-text text-sm text-gray-800">
-                            {entry.received}
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <div className="terminal-text text-sm text-gray-800">
-                            {entry.sent}
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <div className="terminal-bright text-sm text-gray-900">
-                            {formatAmount(entry.value)}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                              {originalIndex < 3 && (
+                                <span className="text-xs">
+                                  {originalIndex === 0
+                                    ? '🥇'
+                                    : originalIndex === 1
+                                    ? '🥈'
+                                    : '🥉'}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <TableAddress
+                              address={entry.account}
+                              onClick={(address) =>
+                                router.push(`/network/${address}`)
+                              }
+                            />
+                          </td>
+                          <td className="p-4">
+                            <div className="terminal-text text-sm text-gray-800">
+                              {TRUSTED_SEEDS.includes(entry.account)
+                                ? '⚡'
+                                : '-'}
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <div className="terminal-text text-sm text-gray-800">
+                              {entry.received}
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <div className="terminal-text text-sm text-gray-800">
+                              {entry.sent}
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <div className="terminal-bright text-sm text-gray-900">
+                              {formatAmount(entry.value)}
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
-              <ExportButtons data={MerkleData} filename="trust-graph-network" />
+              <ExportButtons
+                data={sortedMerkleData}
+                filename="trust-graph-network"
+              />
             </div>
           )}
 

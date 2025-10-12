@@ -1,8 +1,9 @@
 'use client'
 
 import clsx from 'clsx'
-import { Check, Copy, LoaderCircle, LogOut, Wallet } from 'lucide-react'
+import { Check, Copy, LoaderCircle, LogOut, User, Wallet } from 'lucide-react'
 import { usePlausible } from 'next-plausible'
+import { useRouter } from 'next/navigation'
 import type React from 'react'
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
@@ -26,6 +27,7 @@ export const WalletConnectionButton = ({
   const { address, isConnected } = useAccount()
   const { connectors, connectAsync, isPending: isConnecting } = useConnect()
   const { disconnect } = useDisconnect()
+  const router = useRouter()
   const plausible = usePlausible()
 
   const formatAddress = (addr: string) => {
@@ -149,6 +151,17 @@ export const WalletConnectionButton = ({
               >
                 <CopyIcon className="w-4 h-4 text-muted-foreground" />
                 <p className="text-sm">Copy address</p>
+              </button>
+
+              <button
+                className="flex flex-row items-center gap-3 p-2 rounded-md bg-transparent text-foreground transition-all hover:bg-secondary active:bg-muted"
+                onClick={() => {
+                  setOpenRef.current?.(false)
+                  router.push(`/network/${address}`)
+                }}
+              >
+                <User className="w-4 h-4 text-muted-foreground" />
+                <p className="text-sm">View profile</p>
               </button>
 
               <button
