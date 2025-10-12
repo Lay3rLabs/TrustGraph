@@ -1,13 +1,11 @@
 # The Plan
 
-- Use Ponder for queries
 - Make profile page
 - Remove followers logic from ponder indexer
 - Add paper mono font
-- Swap out logo
 - Add copy
 - Create tooltip component
-- Remove unused attestation schema types from frontend
+- Remove unused attestation schema types from frontend (comment out in contracts)
 - Add notion of seed accounts to config
 - Add ENS support
 - Experimental notice on governance page

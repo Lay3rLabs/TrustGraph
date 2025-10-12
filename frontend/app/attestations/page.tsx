@@ -180,10 +180,7 @@ export default function AttestationsPage() {
           <div className="terminal-bright text-lg">
             ◉ LOADING ATTESTATIONS ◉
           </div>
-          <div className="terminal-dim text-sm mt-2">
-            Fetching data from{' '}
-            {dataSource === 'ponder' ? 'Ponder indexer' : 'EAS contract'}...
-          </div>
+          <div className="terminal-dim text-sm mt-2">Fetching data...</div>
         </div>
       )}
 

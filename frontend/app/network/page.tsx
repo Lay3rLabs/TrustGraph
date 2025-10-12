@@ -5,7 +5,9 @@ import { useAccount, useConnect } from 'wagmi'
 import { injected } from 'wagmi/connectors'
 
 import { Button } from '@/components/ui/button'
+import { InfoTooltip } from '@/components/ui/info-tooltip'
 import { useNetwork } from '@/hooks/useNetwork'
+import { TRUSTED_SEEDS } from '@/lib/config'
 
 export default function NetworkPage() {
   const { isConnected } = useAccount()
@@ -92,8 +94,9 @@ export default function NetworkPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="border border-gray-300 bg-white p-4 rounded-sm shadow-sm">
                 <div className="space-y-2">
-                  <div className="terminal-dim text-xs text-gray-600">
+                  <div className="terminal-dim text-xs text-gray-600 flex items-center gap-1">
                     MEMBERS
+                    <InfoTooltip content="The number of people belonging to this network." />
                   </div>
                   <div className="terminal-bright text-2xl text-gray-900">
                     {totalParticipants}
@@ -103,8 +106,9 @@ export default function NetworkPage() {
 
               <div className="border border-gray-300 bg-white p-4 rounded-sm shadow-sm">
                 <div className="space-y-2">
-                  <div className="terminal-dim text-xs text-gray-600">
-                    TOTAL REPUTATION POINTS
+                  <div className="terminal-dim text-xs text-gray-600 flex items-center gap-1">
+                    TOTAL NETWORK SCORE
+                    <InfoTooltip content="The sum of all trust scores in the network." />
                   </div>
                   <div className="terminal-bright text-2xl text-gray-900">
                     {formatAmount(totalRewards)}
@@ -114,8 +118,9 @@ export default function NetworkPage() {
 
               <div className="border border-gray-300 bg-white p-4 rounded-sm shadow-sm">
                 <div className="space-y-2">
-                  <div className="terminal-dim text-xs text-gray-600">
+                  <div className="terminal-dim text-xs text-gray-600 flex items-center gap-1">
                     AVERAGE TRUST SCORE
+                    <InfoTooltip content="The average trust score across the network." />
                   </div>
                   <div className="terminal-bright text-2xl text-gray-900">
                     {totalParticipants > 0
@@ -154,13 +159,28 @@ export default function NetworkPage() {
                         ACCOUNT
                       </th>
                       <th className="text-left p-4 terminal-dim text-xs text-gray-600">
-                        SCORE
+                        <div className="flex items-center gap-1">
+                          SEED
+                          <InfoTooltip content="Seed members carry additional weight with their attestations." />
+                        </div>
                       </th>
                       <th className="text-left p-4 terminal-dim text-xs text-gray-600">
-                        RECEIVED
+                        <div className="flex items-center gap-1">
+                          RECEIVED
+                          <InfoTooltip content="The number of attestations an entity has received." />
+                        </div>
                       </th>
                       <th className="text-left p-4 terminal-dim text-xs text-gray-600">
-                        SENT
+                        <div className="flex items-center gap-1">
+                          SENT
+                          <InfoTooltip content="The number of attestations an entity has given out." />
+                        </div>
+                      </th>
+                      <th className="text-left p-4 terminal-dim text-xs text-gray-600">
+                        <div className="flex items-center gap-1">
+                          SCORE
+                          <InfoTooltip content="The TrustScore for a particular account, based on reputation in the network. Attestations from members with higher reputations carry more weight." />
+                        </div>
                       </th>
                     </tr>
                   </thead>
@@ -204,8 +224,8 @@ export default function NetworkPage() {
                           </div>
                         </td>
                         <td className="p-4">
-                          <div className="terminal-bright text-sm text-gray-900">
-                            {formatAmount(entry.value)}
+                          <div className="terminal-text text-sm text-gray-800">
+                            {TRUSTED_SEEDS.includes(entry.account) ? '⚡' : '-'}
                           </div>
                         </td>
                         <td className="p-4">
@@ -216,6 +236,11 @@ export default function NetworkPage() {
                         <td className="p-4">
                           <div className="terminal-text text-sm text-gray-800">
                             {entry.sent}
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="terminal-bright text-sm text-gray-900">
+                            {formatAmount(entry.value)}
                           </div>
                         </td>
                       </tr>

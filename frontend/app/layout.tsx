@@ -1,14 +1,15 @@
 import './globals.css'
 
 import type { Metadata, Viewport } from 'next'
-import { Roboto_Mono } from 'next/font/google'
+import localFont from 'next/font/local'
 
 import { Nav } from '@/components/Nav'
 import { Providers } from '@/components/providers'
 
-const robotoMono = Roboto_Mono({
-  subsets: ['latin'],
+const paperMono = localFont({
+  src: '../public/fonts/PaperMono-Regular.woff2',
   variable: '--font-mono',
+  display: 'swap',
 })
 
 export const metadata: Metadata = {
@@ -32,19 +33,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
         />
       </head>
       <body
-        className={`${robotoMono.variable} font-mono dynamic-bg text-foreground`}
+        className={`${paperMono.variable} font-mono dynamic-bg text-foreground`}
       >
         <Providers>
           <div className="min-h-screen p-2 sm:p-6 flex flex-col">
