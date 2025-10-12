@@ -8,8 +8,6 @@ TODO: explore configuration...
 - Add copy, new landing page
 - Make network info config with copy
 
-
-- Add sorts on network page
 - Contact support button
 - update site metadata
 - Live updates

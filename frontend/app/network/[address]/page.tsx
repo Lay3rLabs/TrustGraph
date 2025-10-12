@@ -2,16 +2,29 @@
 
 import { useParams, useRouter } from 'next/navigation'
 import type React from 'react'
+import { useMemo, useState } from 'react'
 import { useAccount, useConnect } from 'wagmi'
 import { injected } from 'wagmi/connectors'
 
-import { AttestationCard } from '@/components/AttestationCard'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
-import { Address } from '@/components/ui/address'
+import { Address, TableAddress } from '@/components/ui/address'
 import { Button } from '@/components/ui/button'
 import { InfoTooltip } from '@/components/ui/info-tooltip'
 import { useAccountProfile } from '@/hooks/useAccountProfile'
 import { TRUSTED_SEEDS } from '@/lib/config'
+import { AttestationData, SchemaManager } from '@/lib/schemas'
+import { formatTimeAgo } from '@/lib/utils'
+
+type AttestationSortColumn = 'time' | 'confidence'
+type SortDirection = 'asc' | 'desc'
+
+// Extended attestation data for table display
+interface AttestationTableData extends AttestationData {
+  confidence?: string
+  schemaName: string
+  formattedTime: string
+  timeAgo: string
+}
 
 export default function AccountProfilePage() {
   const params = useParams()
@@ -20,6 +33,18 @@ export default function AccountProfilePage() {
   const { connect } = useConnect()
 
   const address = params.address as string
+
+  // Sorting state for attestations given
+  const [givenSortColumn, setGivenSortColumn] =
+    useState<AttestationSortColumn>('time')
+  const [givenSortDirection, setGivenSortDirection] =
+    useState<SortDirection>('desc')
+
+  // Sorting state for attestations received
+  const [receivedSortColumn, setReceivedSortColumn] =
+    useState<AttestationSortColumn>('time')
+  const [receivedSortDirection, setReceivedSortDirection] =
+    useState<SortDirection>('desc')
 
   const {
     isLoading,
@@ -42,6 +67,121 @@ export default function AccountProfilePage() {
 
   const formatAmount = (amount: string) => {
     return BigInt(amount || 0).toLocaleString()
+  }
+
+  const formatTimestamp = (timestamp: number) => {
+    if (!timestamp || isNaN(timestamp) || timestamp < 0) {
+      return 'Invalid timestamp'
+    }
+
+    const date = new Date(timestamp * 1000)
+    if (isNaN(date.getTime())) {
+      return 'Invalid date'
+    }
+
+    return date.toISOString().replace('T', ' ').split('.')[0]
+  }
+
+  const processAttestationData = (
+    attestations: any[]
+  ): AttestationTableData[] => {
+    return attestations.map((attestation) => {
+      const schemaName =
+        SchemaManager.maybeSchemaForUid(attestation.schema)?.name || 'Unknown'
+      const confidence = attestation.decodedData?.confidence || '0'
+
+      return {
+        ...attestation,
+        confidence,
+        schemaName,
+        formattedTime: formatTimestamp(Number(attestation.time)),
+        timeAgo: formatTimeAgo(Number(attestation.time) * 1000),
+      }
+    })
+  }
+
+  // Handle sorting for given attestations
+  const handleGivenSort = (column: AttestationSortColumn) => {
+    if (givenSortColumn === column) {
+      setGivenSortDirection(givenSortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setGivenSortColumn(column)
+      setGivenSortDirection('desc')
+    }
+  }
+
+  // Handle sorting for received attestations
+  const handleReceivedSort = (column: AttestationSortColumn) => {
+    if (receivedSortColumn === column) {
+      setReceivedSortDirection(receivedSortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setReceivedSortColumn(column)
+      setReceivedSortDirection('desc')
+    }
+  }
+
+  // Sort attestations given
+  const sortedAttestationsGiven = useMemo(() => {
+    const processedData = processAttestationData(attestationsGiven)
+
+    return [...processedData].sort((a, b) => {
+      let aValue: number, bValue: number
+
+      switch (givenSortColumn) {
+        case 'time':
+          aValue = Number(a.time)
+          bValue = Number(b.time)
+          break
+        case 'confidence':
+          aValue = Number(a.confidence || '0')
+          bValue = Number(b.confidence || '0')
+          break
+        default:
+          return 0
+      }
+
+      return givenSortDirection === 'asc' ? aValue - bValue : bValue - aValue
+    })
+  }, [attestationsGiven, givenSortColumn, givenSortDirection])
+
+  // Sort attestations received
+  const sortedAttestationsReceived = useMemo(() => {
+    const processedData = processAttestationData(attestationsReceived)
+
+    return [...processedData].sort((a, b) => {
+      let aValue: number, bValue: number
+
+      switch (receivedSortColumn) {
+        case 'time':
+          aValue = Number(a.time)
+          bValue = Number(b.time)
+          break
+        case 'confidence':
+          aValue = Number(a.confidence || '0')
+          bValue = Number(b.confidence || '0')
+          break
+        default:
+          return 0
+      }
+
+      return receivedSortDirection === 'asc' ? aValue - bValue : bValue - aValue
+    })
+  }, [attestationsReceived, receivedSortColumn, receivedSortDirection])
+
+  // Helper function to render sort indicator
+  const getSortIndicator = (
+    column: AttestationSortColumn,
+    currentColumn: AttestationSortColumn,
+    direction: SortDirection
+  ) => {
+    if (currentColumn !== column) {
+      return <span className="text-gray-400 ml-1">↕</span>
+    }
+    return direction === 'asc' ? (
+      <span className="text-gray-900 ml-1">↑</span>
+    ) : (
+      <span className="text-gray-900 ml-1">↓</span>
+    )
   }
 
   const isTrustedSeed = TRUSTED_SEEDS.includes(address)
@@ -207,51 +347,105 @@ export default function AccountProfilePage() {
                     </div>
                   </div>
 
-                  <div className="p-4 space-y-4">
-                    {isLoadingAttestationsGiven && (
+                  {isLoadingAttestationsGiven && (
+                    <div className="text-center py-8">
+                      <div className="terminal-bright text-sm text-gray-900">
+                        ◉ LOADING ATTESTATIONS ◉
+                      </div>
+                    </div>
+                  )}
+
+                  {!isLoadingAttestationsGiven &&
+                    sortedAttestationsGiven.length === 0 && (
                       <div className="text-center py-8">
-                        <div className="terminal-bright text-sm text-gray-900">
-                          ◉ LOADING ATTESTATIONS ◉
+                        <div className="terminal-dim text-sm text-gray-600">
+                          NO ATTESTATIONS GIVEN
+                        </div>
+                        <div className="system-message text-xs mt-2 text-gray-700">
+                          ◆ THIS ACCOUNT HAS NOT MADE ANY ATTESTATIONS YET ◆
                         </div>
                       </div>
                     )}
 
-                    {!isLoadingAttestationsGiven &&
-                      attestationsGiven.length === 0 && (
-                        <div className="text-center py-8">
-                          <div className="terminal-dim text-sm text-gray-600">
-                            NO ATTESTATIONS GIVEN
-                          </div>
-                          <div className="system-message text-xs mt-2 text-gray-700">
-                            ◆ THIS ACCOUNT HAS NOT MADE ANY ATTESTATIONS YET ◆
-                          </div>
-                        </div>
-                      )}
-
-                    {!isLoadingAttestationsGiven &&
-                      attestationsGiven
-                        .slice(0, 5)
-                        .map((attestation) => (
-                          <AttestationCard
-                            key={attestation.uid}
-                            uid={attestation.uid}
-                            clickable
-                            onClick={() =>
-                              router.push(`/attestations/${attestation.uid}`)
-                            }
-                          />
-                        ))}
-
-                    {!isLoadingAttestationsGiven &&
-                      attestationsGiven.length > 5 && (
-                        <div className="text-center pt-4">
-                          <div className="terminal-dim text-sm text-gray-600">
-                            Showing 5 of {attestationsGiven.length} attestations
-                            given
-                          </div>
-                        </div>
-                      )}
-                  </div>
+                  {!isLoadingAttestationsGiven &&
+                    sortedAttestationsGiven.length > 0 && (
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-gray-300">
+                              <th className="text-left p-4 terminal-dim text-xs text-gray-600">
+                                RECIPIENT
+                              </th>
+                              <th
+                                className="text-left p-4 terminal-dim text-xs text-gray-600 cursor-pointer hover:text-gray-900 transition-colors select-none"
+                                onClick={() => handleGivenSort('confidence')}
+                              >
+                                <div className="flex items-center gap-1">
+                                  CONFIDENCE
+                                  <InfoTooltip content="The strength of the attestation as specified by the attester." />
+                                  {getSortIndicator(
+                                    'confidence',
+                                    givenSortColumn,
+                                    givenSortDirection
+                                  )}
+                                </div>
+                              </th>
+                              <th
+                                className="text-left p-4 terminal-dim text-xs text-gray-600 cursor-pointer hover:text-gray-900 transition-colors select-none"
+                                onClick={() => handleGivenSort('time')}
+                              >
+                                <div className="flex items-center">
+                                  TIME
+                                  {getSortIndicator(
+                                    'time',
+                                    givenSortColumn,
+                                    givenSortDirection
+                                  )}
+                                </div>
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {sortedAttestationsGiven.map((attestation) => (
+                              <tr
+                                key={attestation.uid}
+                                className="border-b border-gray-200 cursor-pointer transition-colors hover:bg-gray-50"
+                                onClick={() =>
+                                  router.push(
+                                    `/attestations/${attestation.uid}`
+                                  )
+                                }
+                                title="Click to view attestation details"
+                              >
+                                <td className="p-4">
+                                  <TableAddress
+                                    address={attestation.recipient}
+                                    onClick={(addr) =>
+                                      router.push(`/network/${addr}`)
+                                    }
+                                  />
+                                </td>
+                                <td className="p-4">
+                                  <div className="terminal-bright text-sm text-gray-900">
+                                    {formatAmount(
+                                      attestation.confidence || '0'
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="p-4">
+                                  <div className="terminal-text text-sm text-gray-800">
+                                    <div>{attestation.formattedTime}</div>
+                                    <div className="terminal-dim text-xs text-gray-600">
+                                      {attestation.timeAgo}
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                 </div>
               </div>
 
@@ -267,52 +461,105 @@ export default function AccountProfilePage() {
                     </div>
                   </div>
 
-                  <div className="p-4 space-y-4">
-                    {isLoadingAttestationsReceived && (
+                  {isLoadingAttestationsReceived && (
+                    <div className="text-center py-8">
+                      <div className="terminal-bright text-sm text-gray-900">
+                        ◉ LOADING ATTESTATIONS ◉
+                      </div>
+                    </div>
+                  )}
+
+                  {!isLoadingAttestationsReceived &&
+                    sortedAttestationsReceived.length === 0 && (
                       <div className="text-center py-8">
-                        <div className="terminal-bright text-sm text-gray-900">
-                          ◉ LOADING ATTESTATIONS ◉
+                        <div className="terminal-dim text-sm text-gray-600">
+                          NO ATTESTATIONS RECEIVED
+                        </div>
+                        <div className="system-message text-xs mt-2 text-gray-700">
+                          ◆ THIS ACCOUNT HAS NOT RECEIVED ANY ATTESTATIONS YET ◆
                         </div>
                       </div>
                     )}
 
-                    {!isLoadingAttestationsReceived &&
-                      attestationsReceived.length === 0 && (
-                        <div className="text-center py-8">
-                          <div className="terminal-dim text-sm text-gray-600">
-                            NO ATTESTATIONS RECEIVED
-                          </div>
-                          <div className="system-message text-xs mt-2 text-gray-700">
-                            ◆ THIS ACCOUNT HAS NOT RECEIVED ANY ATTESTATIONS YET
-                            ◆
-                          </div>
-                        </div>
-                      )}
-
-                    {!isLoadingAttestationsReceived &&
-                      attestationsReceived
-                        .slice(0, 5)
-                        .map((attestation) => (
-                          <AttestationCard
-                            key={attestation.uid}
-                            uid={attestation.uid}
-                            clickable
-                            onClick={() =>
-                              router.push(`/attestations/${attestation.uid}`)
-                            }
-                          />
-                        ))}
-
-                    {!isLoadingAttestationsReceived &&
-                      attestationsReceived.length > 5 && (
-                        <div className="text-center pt-4">
-                          <div className="terminal-dim text-sm text-gray-600">
-                            Showing 5 of {attestationsReceived.length}{' '}
-                            attestations received
-                          </div>
-                        </div>
-                      )}
-                  </div>
+                  {!isLoadingAttestationsReceived &&
+                    sortedAttestationsReceived.length > 0 && (
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b border-gray-300">
+                              <th className="text-left p-4 terminal-dim text-xs text-gray-600">
+                                ATTESTER
+                              </th>
+                              <th
+                                className="text-left p-4 terminal-dim text-xs text-gray-600 cursor-pointer hover:text-gray-900 transition-colors select-none"
+                                onClick={() => handleReceivedSort('confidence')}
+                              >
+                                <div className="flex items-center gap-1">
+                                  CONFIDENCE
+                                  <InfoTooltip content="The strength of the attestation as specified by the attester." />
+                                  {getSortIndicator(
+                                    'confidence',
+                                    receivedSortColumn,
+                                    receivedSortDirection
+                                  )}
+                                </div>
+                              </th>
+                              <th
+                                className="text-left p-4 terminal-dim text-xs text-gray-600 cursor-pointer hover:text-gray-900 transition-colors select-none"
+                                onClick={() => handleReceivedSort('time')}
+                              >
+                                <div className="flex items-center">
+                                  TIME
+                                  {getSortIndicator(
+                                    'time',
+                                    receivedSortColumn,
+                                    receivedSortDirection
+                                  )}
+                                </div>
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {sortedAttestationsReceived.map((attestation) => (
+                              <tr
+                                key={attestation.uid}
+                                className="border-b border-gray-200 cursor-pointer transition-colors hover:bg-gray-50"
+                                onClick={() =>
+                                  router.push(
+                                    `/attestations/${attestation.uid}`
+                                  )
+                                }
+                                title="Click to view attestation details"
+                              >
+                                <td className="p-4">
+                                  <TableAddress
+                                    address={attestation.attester}
+                                    onClick={(addr) =>
+                                      router.push(`/network/${addr}`)
+                                    }
+                                  />
+                                </td>
+                                <td className="p-4">
+                                  <div className="terminal-bright text-sm text-gray-900">
+                                    {formatAmount(
+                                      attestation.confidence || '0'
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="p-4">
+                                  <div className="terminal-text text-sm text-gray-800">
+                                    <div>{attestation.formattedTime}</div>
+                                    <div className="terminal-dim text-xs text-gray-600">
+                                      {attestation.timeAgo}
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                 </div>
               </div>
 
