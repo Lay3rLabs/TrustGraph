@@ -96,8 +96,8 @@ contract MerkleGovModuleTest is Test {
         // Deploy merkle helper
         merkleHelper = new MerkleTreeHelper();
 
-        // Deploy governance module
-        govModule = new MerkleGovModule(owner, address(safe), address(safe));
+        // Deploy governance module (using address(this) as merkleSnapshot for testing)
+        govModule = new MerkleGovModule(owner, address(safe), address(safe), address(this));
 
         // Setup merkle tree
         _setupMerkleTree();
@@ -130,18 +130,21 @@ contract MerkleGovModuleTest is Test {
             votingPowers[accounts[i].account] = accounts[i].votingPower;
         }
 
+        // Calculate total voting power (100 + 200 + 150 + 50 + 75 = 575)
+        uint256 totalVotingPower = 575e18;
+
         // Update merkle root
-        _updateMerkleRoot(merkleRoot, bytes32(uint256(0x1234)));
+        _updateMerkleRoot(merkleRoot, bytes32(uint256(0x1234)), totalVotingPower);
     }
 
-    function _updateMerkleRoot(bytes32 root, bytes32 ipfsHash) internal {
+    function _updateMerkleRoot(bytes32 root, bytes32 ipfsHash, uint256 totalValue) internal {
         // Execute merkle root update
         vm.expectEmit(true, false, false, true);
         emit IMerkleSnapshot.MerkleRootUpdated(
             root,
             ipfsHash,
             "ipfs://test",
-            100
+            totalValue
         );
         govModule.onMerkleUpdate(
             IMerkleSnapshot.MerkleState({
@@ -150,7 +153,7 @@ contract MerkleGovModuleTest is Test {
                 root: root,
                 ipfsHash: ipfsHash,
                 ipfsHashCid: "ipfs://test",
-                totalValue: 100
+                totalValue: totalValue
             })
         );
     }
@@ -159,7 +162,9 @@ contract MerkleGovModuleTest is Test {
         assertEq(govModule.avatar(), address(safe));
         assertEq(govModule.target(), address(safe));
         assertEq(govModule.owner(), owner);
+        assertEq(govModule.merkleSnapshotContract(), address(this));
         assertEq(govModule.currentMerkleRoot(), merkleRoot);
+        assertEq(govModule.totalVotingPower(), 575e18);
         assertEq(govModule.votingDelay(), 1);
         assertEq(govModule.votingPeriod(), 50400);
         assertEq(govModule.quorum(), 4e16);
@@ -377,8 +382,8 @@ contract MerkleGovModuleTest is Test {
         // Move to voting period
         vm.roll(block.number + 2);
 
-        // Get enough votes to pass (need > 4% quorum and more for than against)
-        // Total voting power = 575e18, so need > 23e18 total votes
+        // Get enough votes to pass (need >= 4% quorum and more for than against)
+        // Total voting power = 575e18, so need >= 23e18 total votes (4% of 575e18 = 23e18)
         vm.prank(alice);
         govModule.castVote(proposalId, MerkleGovModule.VoteType.For, votingPowers[alice], proofs[alice]); // 100e18
 
@@ -456,6 +461,10 @@ contract MerkleGovModuleTest is Test {
         vm.expectRevert();
         govModule.setVotingPeriod(100000);
 
+        vm.prank(alice);
+        vm.expectRevert();
+        govModule.setMerkleSnapshotContract(address(0x1234));
+
         // Owner can update parameters
         vm.prank(owner);
         govModule.setQuorum(5e16);
@@ -468,6 +477,10 @@ contract MerkleGovModuleTest is Test {
         vm.prank(owner);
         govModule.setVotingPeriod(100000);
         assertEq(govModule.votingPeriod(), 100000);
+
+        vm.prank(owner);
+        govModule.setMerkleSnapshotContract(address(0x1234));
+        assertEq(govModule.merkleSnapshotContract(), address(0x1234));
     }
 
     function test_InvalidMerkleProof() public {
@@ -563,6 +576,35 @@ contract MerkleGovModuleTest is Test {
         assertEq(address(0x8888).balance, balanceBefore + 2 ether);
     }
 
+    function test_OnlyMerkleSnapshotCanUpdate() public {
+        // Non-merkleSnapshot address cannot call onMerkleUpdate
+        vm.prank(alice);
+        vm.expectRevert("Only MerkleSnapshot");
+        govModule.onMerkleUpdate(
+            IMerkleSnapshot.MerkleState({
+                blockNumber: block.number,
+                timestamp: block.timestamp,
+                root: bytes32(uint256(0xbeef)),
+                ipfsHash: bytes32(uint256(0x5678)),
+                ipfsHashCid: "ipfs://test",
+                totalValue: 575e18
+            })
+        );
+
+        // Invalid totalValue should revert
+        vm.expectRevert("Invalid total voting power");
+        govModule.onMerkleUpdate(
+            IMerkleSnapshot.MerkleState({
+                blockNumber: block.number,
+                timestamp: block.timestamp,
+                root: bytes32(uint256(0xbeef)),
+                ipfsHash: bytes32(uint256(0x5678)),
+                ipfsHashCid: "ipfs://test",
+                totalValue: 0
+            })
+        );
+    }
+
     function test_MerkleRootUpdateDuringVoting() public {
         // Create proposal with initial merkle root
         address[] memory targets = new address[](1);
@@ -593,7 +635,7 @@ contract MerkleGovModuleTest is Test {
 
         // Update merkle root (simulating new distribution)
         bytes32 newRoot = bytes32(uint256(0xbeef));
-        _updateMerkleRoot(newRoot, bytes32(uint256(0x5678)));
+        _updateMerkleRoot(newRoot, bytes32(uint256(0x5678)), 575e18);
 
         // Bob can still vote because the proposal uses the snapshot from creation
         vm.prank(bob);

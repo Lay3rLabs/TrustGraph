@@ -112,7 +112,7 @@ contract DeployZodiacSafes is Common {
         );
 
         // Deploy Merkle Gov Module
-        MerkleGovModule merkleGovModule = new MerkleGovModule(deployer, safeProxy, safeProxy);
+        MerkleGovModule merkleGovModule = new MerkleGovModule(deployer, safeProxy, safeProxy, address(merkleSnapshot));
         // Add the merkle gov module as a hook to the merkle snapshot.
         merkleSnapshot.addHook(IMerkleSnapshotHook(address(merkleGovModule)));
 

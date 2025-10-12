@@ -17,6 +17,12 @@ import {IMerkleSnapshotHook} from "interfaces/merkle/IMerkleSnapshotHook.sol";
 contract RewardDistributor is UniversalRewardsDistributor, IMerkleSnapshotHook {
     using SafeERC20 for IERC20;
 
+    /// @notice Emitted when the merkle snapshot contract is updated
+    event MerkleSnapshotContractUpdated(address indexed previousContract, address indexed newContract);
+
+    /// @notice Address of the MerkleSnapshot contract that can update merkle state
+    address public merkleSnapshotContract;
+
     /// @notice The optional ipfs hash CID containing metadata about the root (e.g. the merkle tree itself).
     string public ipfsHashCid;
 
@@ -26,15 +32,20 @@ contract RewardDistributor is UniversalRewardsDistributor, IMerkleSnapshotHook {
     /**
      * @notice Initialize the contract
      * @param rewardToken_ The ERC20 reward token to distribute
+     * @param merkleSnapshot_ The MerkleSnapshot contract address
      */
     constructor(
-        address rewardToken_
+        address rewardToken_,
+        address merkleSnapshot_
     ) UniversalRewardsDistributor(address(this), 0, bytes32(0), bytes32(0)) {
         rewardToken = rewardToken_;
+        merkleSnapshotContract = merkleSnapshot_;
     }
 
     /// @inheritdoc IMerkleSnapshotHook
     function onMerkleUpdate(IMerkleSnapshot.MerkleState memory state) external {
+        require(msg.sender == merkleSnapshotContract, "Only MerkleSnapshot");
+
         _setRoot(state.root, state.ipfsHash);
         ipfsHashCid = state.ipfsHashCid;
         emit IMerkleSnapshot.MerkleRootUpdated(
@@ -43,6 +54,15 @@ contract RewardDistributor is UniversalRewardsDistributor, IMerkleSnapshotHook {
             state.ipfsHashCid,
             state.totalValue
         );
+    }
+
+    /// @notice Update merkle snapshot contract
+    /// @param newContract The new merkle snapshot contract address
+    function setMerkleSnapshotContract(address newContract) external onlyOwner {
+        require(newContract != address(0), "Invalid address");
+        address previousContract = merkleSnapshotContract;
+        merkleSnapshotContract = newContract;
+        emit MerkleSnapshotContractUpdated(previousContract, newContract);
     }
 
     /// @notice Claims rewards for the reward token.

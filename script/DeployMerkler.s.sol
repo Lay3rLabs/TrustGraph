@@ -45,7 +45,7 @@ contract DeployScript is Common {
             );
 
             // Create the distributor and add it as a hook to the merkle snapshot.
-            RewardDistributor rewardDistributor = new RewardDistributor(address(rewardToken));
+            RewardDistributor rewardDistributor = new RewardDistributor(address(rewardToken), address(merkleSnapshot));
             merkleSnapshot.addHook(rewardDistributor);
 
             // Mint tokens for the distributor to distribute.

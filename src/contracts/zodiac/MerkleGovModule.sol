@@ -67,10 +67,14 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
     event QuorumUpdated(uint256 newQuorum);
     event VotingDelayUpdated(uint256 newDelay);
     event VotingPeriodUpdated(uint256 newPeriod);
+    event MerkleSnapshotContractUpdated(address indexed previousContract, address indexed newContract);
 
     /*///////////////////////////////////////////////////////////////
                                 STORAGE
     //////////////////////////////////////////////////////////////*/
+
+    /// @notice Address of the MerkleSnapshot contract that can update merkle state
+    address public merkleSnapshotContract;
 
     /// @notice Current merkle root for voting power verification
     bytes32 public currentMerkleRoot;
@@ -80,6 +84,9 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
 
     /// @notice The optional ipfs hash CID containing metadata about the root (e.g. the merkle tree itself).
     string public ipfsHashCid;
+
+    /// @notice Total voting power across all accounts in the merkle tree
+    uint256 public totalVotingPower;
 
     /// @notice Proposal counter
     uint256 public proposalCount;
@@ -93,8 +100,7 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
     /// @notice Governance parameters
     uint256 public votingDelay = 1; // blocks
     uint256 public votingPeriod = 50400; // ~1 week at 12s blocks
-    // TODO fix me, this is not a percent... maybe we need some notion of total voting power...
-    uint256 public quorum = 4e16; // 4%
+    uint256 public quorum = 4e16; // 4% in basis points (4e16 = 4% of 1e18)
 
     /// @notice Whether the module is initialized
     bool private _initialized;
@@ -103,26 +109,28 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
                               CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
 
-    constructor(address _owner, address _avatar, address _target) {
-        _setUp(_owner, _avatar, _target);
-    }
-
-    /// @notice Sets up the module for factory deployment
-    function setUp(bytes memory initializeParams) public override {
-        require(!_initialized, "Already initialized");
-
-        (address _owner, address _avatar, address _target) = abi.decode(initializeParams, (address, address, address));
-
-        _setUp(_owner, _avatar, _target);
-    }
-
-    function _setUp(address _owner, address _avatar, address _target) private {
+    constructor(address _owner, address _avatar, address _target, address _merkleSnapshot) {
         require(!_initialized, "Already initialized");
         _initialized = true;
 
         _transferOwnership(_owner);
         avatar = _avatar;
         target = _target;
+        merkleSnapshotContract = _merkleSnapshot;
+    }
+
+    /// @notice Sets up the module for factory deployment
+    function setUp(bytes memory initializeParams) public override {
+        require(!_initialized, "Already initialized");
+        _initialized = true;
+
+        (address _owner, address _avatar, address _target, address _merkleSnapshot) =
+            abi.decode(initializeParams, (address, address, address, address));
+
+        _transferOwnership(_owner);
+        avatar = _avatar;
+        target = _target;
+        merkleSnapshotContract = _merkleSnapshot;
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -240,8 +248,10 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
         if (currentBlock <= proposal.endBlock) return ProposalState.Active;
 
         // Check if proposal succeeded
+        // Quorum is a percentage of totalVotingPower (e.g., 4e16 = 4%)
         uint256 totalVotes = proposal.forVotes + proposal.againstVotes + proposal.abstainVotes;
-        if (totalVotes >= quorum && proposal.forVotes > proposal.againstVotes) {
+        uint256 quorumThreshold = (totalVotingPower * quorum) / 1e18;
+        if (totalVotes >= quorumThreshold && proposal.forVotes > proposal.againstVotes) {
             return ProposalState.Succeeded;
         }
 
@@ -282,15 +292,27 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
         emit VotingPeriodUpdated(newPeriod);
     }
 
+    /// @notice Update merkle snapshot contract
+    function setMerkleSnapshotContract(address newContract) external onlyOwner {
+        require(newContract != address(0), "Invalid address");
+        address previousContract = merkleSnapshotContract;
+        merkleSnapshotContract = newContract;
+        emit MerkleSnapshotContractUpdated(previousContract, newContract);
+    }
+
     /*///////////////////////////////////////////////////////////////
                         MERKLE SNAPSHOT HOOK
     //////////////////////////////////////////////////////////////*/
 
     /// @inheritdoc IMerkleSnapshotHook
     function onMerkleUpdate(IMerkleSnapshot.MerkleState memory state_) external {
+        require(msg.sender == merkleSnapshotContract, "Only MerkleSnapshot");
+        require(state_.totalValue > 0, "Invalid total voting power");
+
         currentMerkleRoot = state_.root;
         ipfsHash = state_.ipfsHash;
         ipfsHashCid = state_.ipfsHashCid;
+        totalVotingPower = state_.totalValue;
         emit IMerkleSnapshot.MerkleRootUpdated(state_.root, state_.ipfsHash, state_.ipfsHashCid, state_.totalValue);
     }
 }
