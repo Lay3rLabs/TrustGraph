@@ -30,6 +30,7 @@ impl Guest for Component {
     fn run(action: TriggerAction) -> std::result::Result<Option<WasmResponse>, String> {
         println!("🚀 Starting merkler component execution");
 
+        // QUESTION is this actually being used?
         let events_dir = config_var("events_dir").unwrap_or_else(|| "./events".to_string());
         let events_dir = Path::new(events_dir.trim_end_matches("/"));
         if !events_dir.exists() {
@@ -78,23 +79,6 @@ impl Guest for Component {
         let http_endpoint = chain_config
             .http_endpoint
             .ok_or_else(|| format!("Failed to get HTTP endpoint for {chain_name}"))?;
-
-        // Reward users for receiving recognition attestations
-        let recognition_schema_uid = config_var("recognition_schema_uid").ok_or_else(|| {
-            "Failed to get recognition_schema_uid - this is required for EAS points"
-        })?;
-        let trusted_recognizers = config_var("trusted_recognizers")
-            .unwrap_or_default()
-            .split(",")
-            .map(|s| {
-                Address::from_str(s).map_err(|e| {
-                    format!("Failed to parse trusted recognizer address ({}): {}", s, e)
-                })
-            })
-            .collect::<Result<Vec<Address>, _>>()?;
-        if trusted_recognizers.is_empty() {
-            return Err("No trusted recognizers configured. UNSAFE!!".to_string());
-        }
 
         // Add PageRank-based EAS points if configured
         if let (true, Some(pagerank_pool_str), Some(vouching_schema_uid)) = (
@@ -207,18 +191,6 @@ impl Guest for Component {
             println!("ℹ️  PageRank points disabled (no pagerank_points_pool configured)");
         }
 
-        // Example: Points for specific schema attestations
-        // Uncomment and configure to points attestations to a specific schema
-        // if let Ok(schema_uid) = config_var("schema_uid") {
-        //     registry.add_source(sources::eas::EasSource::new(
-        //         &eas_address,
-        //         &eas_indexer_address,
-        //         &chain_name,
-        //         sources::eas::EasRewardType::SchemaAttestations(schema_uid),
-        //         U256::from(1e18), // 1e18 points per schema attestation
-        //     ));
-        // }
-
         block_on(async move {
             let ctx = sources::SourceContext::new(
                 &chain_name,
@@ -230,7 +202,6 @@ impl Guest for Component {
             .await
             .map_err(|e| e.to_string())?;
 
-            println!("🔍 Fetching accounts from all sources...");
             let accounts = registry.get_accounts(&ctx).await.map_err(|e| e.to_string())?;
             println!("👥 Found {} unique accounts", accounts.len());
 
@@ -287,18 +258,6 @@ impl Guest for Component {
                 return Ok(None);
             }
 
-            // Additional safety check: verify no individual value is excessive
-            for (_, result) in &results {
-                let amount = U256::from_str(&result[1]).unwrap();
-                let max_individual_value = U256::from(10000000000000000000000u128); // 10K points max per account
-                if amount > max_individual_value {
-                    return Err(format!(
-                        "Individual value for account {} exceeds limit: {} (max: {})",
-                        result[0], amount, max_individual_value
-                    ));
-                }
-            }
-
             let tree = get_merkle_tree(
                 results.iter().map(|(_, value)| value.clone()).collect::<Vec<_>>(),
             )?;
@@ -332,8 +291,6 @@ impl Guest for Component {
             });
 
             let ipfs_data_json = serde_json::to_string(&ipfs_data).map_err(|e| e.to_string())?;
-            println!("📤 Uploading merkle tree to IPFS...");
-
             let cid = ipfs::upload_json_to_ipfs(
                 &ipfs_data_json,
                 &format!("merkle_{}.json", ipfs_data.root),

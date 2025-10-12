@@ -11,9 +11,15 @@ export const attestationPonderKeys = {
   all: ['attestations-ponder'] as const,
   get: (uid: `0x${string}`) =>
     [...attestationPonderKeys.all, 'attestation', uid] as const,
-  uids: (options: { limit: number; offset?: number; reverse?: boolean }) =>
-    [...attestationPonderKeys.all, 'uids', options] as const,
-  count: () => [...attestationPonderKeys.all, 'count'] as const,
+  uids: (options: {
+    limit: number
+    offset?: number
+    reverse?: boolean
+    attester?: string
+    recipient?: string
+  }) => [...attestationPonderKeys.all, 'uids', options] as const,
+  count: (options?: { attester?: string; recipient?: string }) =>
+    [...attestationPonderKeys.all, 'count', options] as const,
   schemas: () => [...attestationPonderKeys.all, 'schemas'] as const,
   schema: (schemaUID: `0x${string}`) =>
     [...attestationPonderKeys.schemas(), schemaUID] as const,
@@ -77,7 +83,13 @@ export const attestationPonderQueries = {
       gcTime: 10 * 60 * 1000, // Cache longer since they don't change often
     }),
 
-  uids: (options: { limit: number; offset?: number; reverse?: boolean }) =>
+  uids: (options: {
+    limit: number
+    offset?: number
+    reverse?: boolean
+    attester?: string
+    recipient?: string
+  }) =>
     queryOptions({
       queryKey: attestationPonderKeys.uids(options),
       queryFn: async () => {
@@ -90,6 +102,13 @@ export const attestationPonderQueries = {
           offset: (options.offset || 0).toString(),
           reverse: (options.reverse || false).toString(),
         })
+
+        if (options.attester) {
+          searchParams.append('attester', options.attester)
+        }
+        if (options.recipient) {
+          searchParams.append('recipient', options.recipient)
+        }
 
         const response = await fetch(
           `${APIS.ponder}/attestations?${searchParams}`
@@ -113,28 +132,39 @@ export const attestationPonderQueries = {
       gcTime: 5 * 60 * 1000, // Cache for 5 minutes
     }),
 
-  count: queryOptions({
-    queryKey: attestationPonderKeys.count(),
-    queryFn: async () => {
-      if (!APIS.ponder) {
-        throw new Error('Ponder API URL not configured')
-      }
+  count: (options?: { attester?: string; recipient?: string }) =>
+    queryOptions({
+      queryKey: attestationPonderKeys.count(options),
+      queryFn: async () => {
+        if (!APIS.ponder) {
+          throw new Error('Ponder API URL not configured')
+        }
 
-      const response = await fetch(`${APIS.ponder}/attestations/count`)
+        const searchParams = new URLSearchParams()
+        if (options?.attester) {
+          searchParams.append('attester', options.attester)
+        }
+        if (options?.recipient) {
+          searchParams.append('recipient', options.recipient)
+        }
 
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch attestation count: ${response.status} ${response.statusText}`
+        const response = await fetch(
+          `${APIS.ponder}/attestations/count?${searchParams}`
         )
-      }
 
-      const data = await response.json()
-      return data.count
-    },
-    enabled: !!APIS.ponder,
-    staleTime: 60 * 1000, // Count changes less frequently
-    gcTime: 10 * 60 * 1000, // Cache for 10 minutes
-  }),
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch attestation count: ${response.status} ${response.statusText}`
+          )
+        }
+
+        const data = await response.json()
+        return data.count
+      },
+      enabled: !!APIS.ponder,
+      staleTime: 60 * 1000, // Count changes less frequently
+      gcTime: 10 * 60 * 1000, // Cache for 10 minutes
+    }),
 
   schemaCount: (schemaUID: Hex) =>
     queryOptions({

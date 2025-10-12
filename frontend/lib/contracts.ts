@@ -589,7 +589,7 @@ export const easAbi = [
   { type: 'error', inputs: [], name: 'WrongSchema' },
 ] as const
 
-export const easAddress = '0xF0cE5D57c4E78be5d369ceDa37D6E019A4EeCe13' as const
+export const easAddress = '0xaE45d7460c3942d10f7fCeC5270E814DDAfD919f' as const
 
 export const easConfig = { address: easAddress, abi: easAbi } as const
 
@@ -690,7 +690,7 @@ export const easAttestTriggerAbi = [
 ] as const
 
 export const easAttestTriggerAddress =
-  '0x4B4306D3aAaeFF14A940a8d755a2cF7657F7be53' as const
+  '0x3f34F5C5184b9D9855f1D41b314f0Db72b3d7Ad5' as const
 
 export const easAttestTriggerConfig = {
   address: easAttestTriggerAddress,
@@ -876,7 +876,7 @@ export const easIndexerResolverAbi = [
 ] as const
 
 export const easIndexerResolverAddress =
-  '0x963d14eBdc8b4a3763ee485940D88a16282d14a5' as const
+  '0xdaDEAF344b596f169F3cbcb5bAF2BD8786F001e4' as const
 
 export const easIndexerResolverConfig = {
   address: easIndexerResolverAddress,
@@ -1462,7 +1462,7 @@ export const gnosisSafeAbi = [
 ] as const
 
 export const gnosisSafeAddress =
-  '0x94F54E6F1e6c37113107f00B008C105539Af5767' as const
+  '0x87E02Ba469670F3B1214Fa9D1912ec0D48bF315b' as const
 
 export const gnosisSafeConfig = {
   address: gnosisSafeAddress,
@@ -1483,7 +1483,7 @@ export const gnosisSafeProxyAbi = [
 ] as const
 
 export const gnosisSafeProxyAddress =
-  '0xe6c5059860eCFBa23C797975233E359282c2d356' as const
+  '0xd108322378CFF888F4ca68e260193A3E6d23B224' as const
 
 export const gnosisSafeProxyConfig = {
   address: gnosisSafeProxyAddress,
@@ -1624,7 +1624,7 @@ export const iWavsServiceManagerAbi = [
 ] as const
 
 export const iWavsServiceManagerAddress =
-  '0xdCc00506168c610AFd358568FE8aDd898E298c04' as const
+  '0xb43c8078371fD5dB5FfD5BA2D45C60120d19FeD5' as const
 
 export const iWavsServiceManagerConfig = {
   address: iWavsServiceManagerAddress,
@@ -1642,6 +1642,7 @@ export const merkleGovModuleAbi = [
       { name: '_owner', internalType: 'address', type: 'address' },
       { name: '_avatar', internalType: 'address', type: 'address' },
       { name: '_target', internalType: 'address', type: 'address' },
+      { name: '_merkleSnapshot', internalType: 'address', type: 'address' },
     ],
     stateMutability: 'nonpayable',
   },
@@ -1730,6 +1731,13 @@ export const merkleGovModuleAbi = [
     inputs: [],
     name: 'ipfsHashCid',
     outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'merkleSnapshotContract',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
     stateMutability: 'view',
   },
   {
@@ -1836,6 +1844,13 @@ export const merkleGovModuleAbi = [
   },
   {
     type: 'function',
+    inputs: [{ name: 'newContract', internalType: 'address', type: 'address' }],
+    name: 'setMerkleSnapshotContract',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
     inputs: [{ name: 'newQuorum', internalType: 'uint256', type: 'uint256' }],
     name: 'setQuorum',
     outputs: [],
@@ -1889,6 +1904,13 @@ export const merkleGovModuleAbi = [
     inputs: [],
     name: 'target',
     outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'totalVotingPower',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
     stateMutability: 'view',
   },
   {
@@ -1969,6 +1991,25 @@ export const merkleGovModuleAbi = [
       },
     ],
     name: 'MerkleRootUpdated',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'previousContract',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newContract',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'MerkleSnapshotContractUpdated',
   },
   {
     type: 'event',
@@ -2156,7 +2197,7 @@ export const merkleGovModuleAbi = [
 ] as const
 
 export const merkleGovModuleAddress =
-  '0x2375263eef918d27bD67F24D1fdD4C38a437289B' as const
+  '0x5bEc56EBB1189f35Cfc5a831790d0023c1a5B994' as const
 
 export const merkleGovModuleConfig = {
   address: merkleGovModuleAddress,
@@ -2646,7 +2687,7 @@ export const merkleSnapshotAbi = [
 ] as const
 
 export const merkleSnapshotAddress =
-  '0xB78923A92fD791f25352d02DBc888f9f85454b5B' as const
+  '0x2145de3EC8756b82C67C9Ba22BD1902eB0AEeB32' as const
 
 export const merkleSnapshotConfig = {
   address: merkleSnapshotAddress,
@@ -2662,6 +2703,7 @@ export const rewardDistributorAbi = [
     type: 'constructor',
     inputs: [
       { name: 'rewardToken_', internalType: 'address', type: 'address' },
+      { name: 'merkleSnapshot_', internalType: 'address', type: 'address' },
     ],
     stateMutability: 'nonpayable',
   },
@@ -2728,6 +2770,13 @@ export const rewardDistributorAbi = [
   },
   {
     type: 'function',
+    inputs: [],
+    name: 'merkleSnapshotContract',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
     inputs: [
       {
         name: 'state',
@@ -2785,6 +2834,13 @@ export const rewardDistributorAbi = [
     name: 'root',
     outputs: [{ name: '', internalType: 'bytes32', type: 'bytes32' }],
     stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'newContract', internalType: 'address', type: 'address' }],
+    name: 'setMerkleSnapshotContract',
+    outputs: [],
+    stateMutability: 'nonpayable',
   },
   {
     type: 'function',
@@ -2887,6 +2943,25 @@ export const rewardDistributorAbi = [
       },
     ],
     name: 'MerkleRootUpdated',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'previousContract',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newContract',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'MerkleSnapshotContractUpdated',
   },
   {
     type: 'event',
@@ -2998,7 +3073,7 @@ export const rewardDistributorAbi = [
 ] as const
 
 export const rewardDistributorAddress =
-  '0x241e6532B2C5a776832209Ab408C45AF68f93729' as const
+  '0x7D3590afaBF53341ba3bA8D51BeaF5B6347401F7' as const
 
 export const rewardDistributorConfig = {
   address: rewardDistributorAddress,
@@ -3042,7 +3117,7 @@ export const schemaRegistrarAbi = [
 ] as const
 
 export const schemaRegistrarAddress =
-  '0x665a25Ca90517248c6AB4273c9f0B21E42304A94' as const
+  '0xa1b0D2f6204dBB6F7CE6F372Ab63D51EAA4f769D' as const
 
 export const schemaRegistrarConfig = {
   address: schemaRegistrarAddress,
@@ -3134,7 +3209,7 @@ export const schemaRegistryAbi = [
 ] as const
 
 export const schemaRegistryAddress =
-  '0xD71a4Ee227f0b4fbD210C2949Ad3767682A2338C' as const
+  '0x58B7508D1C37067D3B875835cE447595EA202832' as const
 
 export const schemaRegistryConfig = {
   address: schemaRegistryAddress,
@@ -3531,7 +3606,7 @@ export const signerManagerModuleAbi = [
 ] as const
 
 export const signerManagerModuleAddress =
-  '0x414FD076A94Df8442a8abA4856A6410eD4230dfe' as const
+  '0x5f1ddba28B4dd9119ae4CE95896A57efFEE7EDcf' as const
 
 export const signerManagerModuleConfig = {
   address: signerManagerModuleAddress,
@@ -3934,7 +4009,7 @@ export const testAbi = [
   },
 ] as const
 
-export const testAddress = '0x810FF255d20C6800dB6e295dE79402FdC1FD8424' as const
+export const testAddress = '0x8dd8ad7F0df700b8e4166e38880148d946021955' as const
 
 export const testConfig = { address: testAddress, abi: testAbi } as const
 
@@ -4119,7 +4194,7 @@ export const wavsAttesterAbi = [
 ] as const
 
 export const wavsAttesterAddress =
-  '0xAc2D1CFAE780E578ac3283A283234cc42e85cEbe' as const
+  '0x00707fbFc505Db725a41139827B6b432458B7FaA' as const
 
 export const wavsAttesterConfig = {
   address: wavsAttesterAddress,
@@ -5151,7 +5226,7 @@ export const wavsIndexerAbi = [
 ] as const
 
 export const wavsIndexerAddress =
-  '0x1Dda74a6272bA7dc8c3B56BfC101fAf9AeA1FcC2' as const
+  '0xa16853a6d398c64c52a1baa56163E4ebf747f163' as const
 
 export const wavsIndexerConfig = {
   address: wavsIndexerAddress,

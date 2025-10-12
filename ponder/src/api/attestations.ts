@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { db } from "ponder:api";
 import { easAttestation } from "ponder:schema";
-import { sql, count, eq, desc, asc } from "drizzle-orm";
+import { sql, count, eq, desc, asc, and } from "drizzle-orm";
 
 const app = new Hono();
 
@@ -12,12 +12,30 @@ app.get("/", async (c) => {
     const offset = parseInt(c.req.query("offset") || "0");
     const reverse = c.req.query("reverse") === "true";
     const schema = c.req.query("schema") as `0x${string}` | undefined;
+    const attester = c.req.query("attester") as `0x${string}` | undefined;
+    const recipient = c.req.query("recipient") as `0x${string}` | undefined;
 
     let query = db.select().from(easAttestation);
 
-    // Add schema filter if provided
+    // Build where conditions
+    const whereConditions = [];
     if (schema) {
-      query = query.where(eq(easAttestation.schema, schema));
+      whereConditions.push(eq(easAttestation.schema, schema));
+    }
+    if (attester) {
+      whereConditions.push(eq(easAttestation.attester, attester));
+    }
+    if (recipient) {
+      whereConditions.push(eq(easAttestation.recipient, recipient));
+    }
+
+    // Apply where conditions if any exist
+    if (whereConditions.length > 0) {
+      query = query.where(
+        whereConditions.length === 1
+          ? whereConditions[0]
+          : and(...whereConditions)
+      );
     }
 
     // Add ordering
@@ -53,14 +71,32 @@ app.get("/", async (c) => {
 app.get("/count", async (c) => {
   try {
     const schema = c.req.query("schema") as `0x${string}` | undefined;
+    const attester = c.req.query("attester") as `0x${string}` | undefined;
+    const recipient = c.req.query("recipient") as `0x${string}` | undefined;
 
     let query = db
       .select({ count: count(easAttestation.uid) })
       .from(easAttestation);
 
-    // Add schema filter if provided
+    // Build where conditions
+    const whereConditions = [];
     if (schema) {
-      query = query.where(eq(easAttestation.schema, schema));
+      whereConditions.push(eq(easAttestation.schema, schema));
+    }
+    if (attester) {
+      whereConditions.push(eq(easAttestation.attester, attester));
+    }
+    if (recipient) {
+      whereConditions.push(eq(easAttestation.recipient, recipient));
+    }
+
+    // Apply where conditions if any exist
+    if (whereConditions.length > 0) {
+      query = query.where(
+        whereConditions.length === 1
+          ? whereConditions[0]
+          : and(...whereConditions)
+      );
     }
 
     const result = await query;

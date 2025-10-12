@@ -18,9 +18,14 @@ export const ponderKeys = {
     offset?: number
     reverse?: boolean
     schema?: string
+    attester?: string
+    recipient?: string
   }) => [...ponderKeys.all, 'attestations', options] as const,
-  attestationCount: (schema?: string) =>
-    [...ponderKeys.all, 'attestationCount', schema] as const,
+  attestationCount: (options?: {
+    schema?: string
+    attester?: string
+    recipient?: string
+  }) => [...ponderKeys.all, 'attestationCount', options] as const,
 }
 
 export type FollowerCount = {
@@ -192,6 +197,8 @@ export const ponderQueries = {
     offset?: number
     reverse?: boolean
     schema?: string
+    attester?: string
+    recipient?: string
   }) =>
     queryOptions({
       queryKey: ponderKeys.attestations(options),
@@ -204,6 +211,12 @@ export const ponderQueries = {
 
         if (options.schema) {
           searchParams.append('schema', options.schema)
+        }
+        if (options.attester) {
+          searchParams.append('attester', options.attester)
+        }
+        if (options.recipient) {
+          searchParams.append('recipient', options.recipient)
         }
 
         const response = await fetch(
@@ -225,13 +238,23 @@ export const ponderQueries = {
       staleTime: 30 * 1000, // UIDs change more frequently
       gcTime: 5 * 60 * 1000, // Cache for 5 minutes
     }),
-  attestationCount: (schema?: string) =>
+  attestationCount: (options?: {
+    schema?: string
+    attester?: string
+    recipient?: string
+  }) =>
     queryOptions({
-      queryKey: ponderKeys.attestationCount(schema),
+      queryKey: ponderKeys.attestationCount(options),
       queryFn: async () => {
         const searchParams = new URLSearchParams()
-        if (schema) {
-          searchParams.append('schema', schema)
+        if (options?.schema) {
+          searchParams.append('schema', options.schema)
+        }
+        if (options?.attester) {
+          searchParams.append('attester', options.attester)
+        }
+        if (options?.recipient) {
+          searchParams.append('recipient', options.recipient)
         }
 
         const response = await fetch(

@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import type React from 'react'
 import { useAccount, useConnect } from 'wagmi'
 import { injected } from 'wagmi/connectors'
@@ -10,6 +11,7 @@ import { useNetwork } from '@/hooks/useNetwork'
 import { TRUSTED_SEEDS } from '@/lib/config'
 
 export default function NetworkPage() {
+  const router = useRouter()
   const { isConnected } = useAccount()
   const { connect } = useConnect()
 
@@ -188,13 +190,15 @@ export default function NetworkPage() {
                     {MerkleData.map((entry, index) => (
                       <tr
                         key={entry.account}
-                        className={`border-b border-gray-200 ${
+                        className={`border-b border-gray-200 cursor-pointer transition-colors ${
                           index < 3
-                            ? 'bg-gray-50'
+                            ? 'bg-gray-50 hover:bg-gray-100'
                             : index < 10
-                            ? 'bg-gray-25'
-                            : ''
+                            ? 'bg-gray-50 hover:bg-gray-100'
+                            : 'hover:bg-gray-50'
                         }`}
+                        onClick={() => router.push(`/network/${entry.account}`)}
+                        title="Click to view account profile"
                       >
                         <td className="p-4">
                           <div className="flex items-center space-x-2">

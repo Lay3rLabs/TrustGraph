@@ -68,7 +68,7 @@ export default function AttestationsPage() {
     }),
     enabled: selectedSchema === 'all',
   })
-  const allCountQuery = useQuery(attestationQueries.count)
+  const allCountQuery = useQuery(attestationQueries.count())
   const { data: totalAttestations = 0, isLoading: isLoadingTotalAttestations } =
     allCountQuery
 
