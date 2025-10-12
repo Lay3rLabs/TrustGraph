@@ -6,6 +6,11 @@ import { useForm } from 'react-hook-form'
 import { useAccount, useConnect } from 'wagmi'
 import { injected } from 'wagmi/connectors'
 
+import {
+  AttestationFormData,
+  GenericSchemaComponent,
+  schemaComponentRegistry,
+} from '@/components/schema-components'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -24,15 +29,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
 import { useAttestation } from '@/hooks/useAttestation'
-import { SCHEMAS, SchemaKey, SchemaManager } from '@/lib/schemas'
-
-interface AttestationFormData {
-  schema: SchemaKey
-  recipient: string
-  data: Record<string, string>
-}
+import { SCHEMAS, SchemaManager } from '@/lib/schemas'
 
 interface CreateAttestationModalProps {
   trigger?: React.ReactNode
@@ -67,8 +65,14 @@ export function CreateAttestationModal({
 
   const { isConnected } = useAccount()
   const { connect } = useConnect()
-  const { createAttestation, isLoading, isSuccess, error, hash } =
-    useAttestation()
+  const {
+    createAttestation,
+    clearTransactionState,
+    isLoading,
+    isSuccess,
+    error,
+    hash,
+  } = useAttestation()
 
   // Monitor transaction state
   useEffect(() => {
@@ -79,6 +83,23 @@ export function CreateAttestationModal({
       form.reset()
     }
   }, [hash, isSuccess, onSuccess, form])
+
+  // Clear transaction state when modal reopens
+  useEffect(() => {
+    if (isOpen) {
+      // Clear any previous transaction state
+      clearTransactionState()
+      // Reset form to default values
+      form.reset({
+        schema: 'vouching',
+        recipient: '',
+        data: {
+          comment: '',
+          confidence: '100',
+        },
+      })
+    }
+  }, [isOpen, clearTransactionState])
 
   const handleConnect = () => {
     try {
@@ -147,10 +168,7 @@ export function CreateAttestationModal({
           {/* Attestation Form */}
           {isConnected && (
             <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-4"
-              >
+              <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -217,112 +235,62 @@ export function CreateAttestationModal({
                   </div>
                 )}
 
-                {selectedSchemaInfo?.fields.map(({ name, type }) => (
-                  <FormField
-                    key={selectedSchemaInfo.uid + ':' + name}
-                    control={form.control}
-                    name={`data.${name}`}
-                    rules={{ required: `Field ${name} is required` }}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">
-                          {name.charAt(0).toUpperCase() +
-                            name.slice(1).replace(/([A-Z])/g, ' $1')}
-                        </FormLabel>
+                {selectedSchemaInfo ? (
+                  (() => {
+                    // Check if there's a custom component for this schema
+                    const CustomComponent =
+                      schemaComponentRegistry.getComponent(
+                        selectedSchemaInfo.uid
+                      )
 
-                        <FormControl>
-                          {type.startsWith('uint') ? (
-                            <Input
-                              {...field}
-                              type="number"
-                              className="text-sm"
-                              required
-                            />
-                          ) : (
-                            <Textarea
-                              {...field}
-                              className="text-sm min-h-20"
-                              required
-                            />
-                          )}
-                        </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-                )) || (
+                    if (CustomComponent) {
+                      // Use custom component
+                      return (
+                        <CustomComponent
+                          form={form}
+                          schemaInfo={selectedSchemaInfo}
+                          onSubmit={onSubmit}
+                          isLoading={isLoading}
+                          error={error}
+                          isSuccess={isSuccess}
+                          hash={hash}
+                        />
+                      )
+                    } else {
+                      // Use generic component
+                      return (
+                        <GenericSchemaComponent
+                          form={form}
+                          schemaInfo={selectedSchemaInfo}
+                          onSubmit={onSubmit}
+                          isLoading={isLoading}
+                          error={error}
+                          isSuccess={isSuccess}
+                          hash={hash}
+                        />
+                      )
+                    }
+                  })()
+                ) : (
                   <p className="text-muted-foreground text-sm">
                     Select a schema to attest to.
                   </p>
                 )}
 
-                <div className="pt-4 border-t border-border space-y-3">
-                  <div className="flex space-x-3">
+                {selectedSchemaInfo && (
+                  <div className="pt-4 border-t border-border">
                     <Button
                       type="button"
                       variant="outline"
                       onClick={() => setIsOpen(false)}
                       disabled={isLoading}
-                      className="px-6 py-2"
+                      className="px-6 py-2 w-full"
                     >
                       Cancel
                     </Button>
-                    <Button
-                      type="submit"
-                      disabled={isLoading}
-                      className="px-6 py-2 flex-1"
-                    >
-                      {isLoading ? 'Creating...' : 'Create Attestation'}
-                    </Button>
                   </div>
-
-                  {error && (
-                    <div className="text-destructive text-sm border border-destructive/50 bg-destructive/10 p-3 rounded-md">
-                      {error.message.toLowerCase().includes('nonce') ? (
-                        <div className="space-y-1">
-                          <div className="font-medium">
-                            ⚠️ Nonce Conflict Detected
-                          </div>
-                          <div className="text-xs opacity-75">
-                            Local network transaction ordering issue - retrying
-                            automatically...
-                          </div>
-                        </div>
-                      ) : error.message
-                          .toLowerCase()
-                          .includes('internal json-rpc error') ||
-                        error.message
-                          .toLowerCase()
-                          .includes('internal error') ? (
-                        <div className="space-y-1">
-                          <div className="font-medium">🔧 Anvil Node Error</div>
-                          <div className="text-xs opacity-75">
-                            Local blockchain node issue - attempting automatic
-                            recovery...
-                          </div>
-                          <div className="text-xs opacity-75 mt-1">
-                            If this persists, restart anvil with:{' '}
-                            <code className="bg-muted px-1 rounded">
-                              make start-all-local
-                            </code>
-                          </div>
-                        </div>
-                      ) : (
-                        <div>Error: {error.message}</div>
-                      )}
-                    </div>
-                  )}
-
-                  {isSuccess && hash && (
-                    <div className="text-sm border border-green-600 bg-green-50 text-green-700 p-3 rounded-md">
-                      <div>
-                        ✓ Attestation created! Tx: {hash.slice(0, 10)}...
-                        {hash.slice(-8)}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </form>
+                )}
+              </div>
             </Form>
           )}
         </div>

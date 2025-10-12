@@ -61,13 +61,6 @@ export const WalletConnectionButton = ({
     },
   })
 
-  // Open popup on successful connection.
-  useEffect(() => {
-    if (isConnected) {
-      setOpenRef.current?.(true)
-    }
-  }, [isConnected])
-
   return (
     <>
       <Popup

@@ -5,6 +5,7 @@ import type React from 'react'
 import { useAccount, useConnect } from 'wagmi'
 import { injected } from 'wagmi/connectors'
 
+import { TableAddress } from '@/components/ui/address'
 import { Button } from '@/components/ui/button'
 import { ExportButtons } from '@/components/ui/export-buttons'
 import { InfoTooltip } from '@/components/ui/info-tooltip'
@@ -224,9 +225,12 @@ export default function NetworkPage() {
                           </div>
                         </td>
                         <td className="p-4">
-                          <div className="terminal-text text-sm font-mono break-all text-gray-800">
-                            {entry.account}
-                          </div>
+                          <TableAddress
+                            address={entry.account}
+                            onClick={(address) =>
+                              router.push(`/network/${address}`)
+                            }
+                          />
                         </td>
                         <td className="p-4">
                           <div className="terminal-text text-sm text-gray-800">

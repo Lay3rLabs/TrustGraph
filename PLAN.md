@@ -7,24 +7,23 @@ TODO: explore configuration...
 - Network overview on network page
 - Add ENS support
 - Address component
-- Extend create attestation component to handle more custom components for certain schema ids like vouching
-- Make CreateVouching Schema component
-- Make vouching modal better
 - Add copy, new landing page
-- cap confidence at 100
 - Add profile link somewhere
 - Make network info config with copy
 - Navigate to network from account link
 - Contact support button
 - update site metadata
-- Calibrate math so scores are right? (open questions about this)
 - need a graph visualization
 - Documentation for merkler component
 - Live updates
 
+Needs discussion:
+- Calibrate math so scores are right? (open questions about this)
+
 Known Bugs:
 - Don't allow self-attestations, these shouldn't account
-- No max on confidence level
+- Handle multiple attestations from the same account to the same account
+- Set max 100 on confidence level
 
 # Deploying
 - Deploy somewhere so people can try
