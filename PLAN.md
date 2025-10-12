@@ -1,6 +1,7 @@
 # The Plan
 
-- Download network CSV
+Figma: https://www.figma.com/proto/uGHgh87RIFS0GUlLR68hCs/TrustGraph-Wireframes?node-id=20-134
+
 - Remove unused attestation schema types from frontend (comment out in contracts)
 - Create trust schema
 - Change default schema to trust

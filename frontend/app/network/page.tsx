@@ -6,6 +6,7 @@ import { useAccount, useConnect } from 'wagmi'
 import { injected } from 'wagmi/connectors'
 
 import { Button } from '@/components/ui/button'
+import { ExportButtons } from '@/components/ui/export-buttons'
 import { InfoTooltip } from '@/components/ui/info-tooltip'
 import { useNetwork } from '@/hooks/useNetwork'
 import { TRUSTED_SEEDS } from '@/lib/config'
@@ -252,6 +253,7 @@ export default function NetworkPage() {
                   </tbody>
                 </table>
               </div>
+              <ExportButtons data={MerkleData} filename="trust-graph-network" />
             </div>
           )}
 
