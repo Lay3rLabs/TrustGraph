@@ -5,6 +5,7 @@ import type React from 'react'
 import { useAccount, useConnect } from 'wagmi'
 import { injected } from 'wagmi/connectors'
 
+import { CreateAttestationModal } from '@/components/CreateAttestationModal'
 import { TableAddress } from '@/components/ui/address'
 import { Button } from '@/components/ui/button'
 import { ExportButtons } from '@/components/ui/export-buttons'
@@ -41,12 +42,13 @@ export default function NetworkPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      {/*<div className="border-b border-gray-700 pb-4">
-        <div className="ascii-art-title text-lg mb-2">
-          Trust Graph Merkle Tree
+      <div className="border-b border-gray-700 pb-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="ascii-art-title text-lg">TRUST NETWORK</div>
+          <CreateAttestationModal />
         </div>
         <div className="system-message text-sm">◆ RANKED BY REPUTATION ◆</div>
-      </div>*/}
+      </div>
 
       {/* Wallet Connection */}
       {!isConnected && (

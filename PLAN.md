@@ -5,12 +5,12 @@ Figma: https://www.figma.com/proto/uGHgh87RIFS0GUlLR68hCs/TrustGraph-Wireframes?
 TODO: explore configuration...
 
 - Network overview on network page
-- Add ENS support
-- Address component
 - Add copy, new landing page
-- Add profile link somewhere
 - Make network info config with copy
-- Navigate to network from account link
+
+
+- Add profile link somewhere
+- Add sorts on network page
 - Contact support button
 - update site metadata
 - need a graph visualization
@@ -20,10 +20,13 @@ TODO: explore configuration...
 Needs discussion:
 - Calibrate math so scores are right? (open questions about this)
 
-Known Bugs:
+Potential Bugs (need testing):
 - Don't allow self-attestations, these shouldn't account
 - Handle multiple attestations from the same account to the same account
 - Set max 100 on confidence level
+
+Test:
+- ENS support
 
 # Deploying
 - Deploy somewhere so people can try

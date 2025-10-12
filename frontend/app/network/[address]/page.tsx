@@ -7,6 +7,7 @@ import { injected } from 'wagmi/connectors'
 
 import { AttestationCard } from '@/components/AttestationCard'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
+import { Address } from '@/components/ui/address'
 import { Button } from '@/components/ui/button'
 import { InfoTooltip } from '@/components/ui/info-tooltip'
 import { useAccountProfile } from '@/hooks/useAccountProfile'
@@ -15,7 +16,7 @@ import { TRUSTED_SEEDS } from '@/lib/config'
 export default function AccountProfilePage() {
   const params = useParams()
   const router = useRouter()
-  const { isConnected } = useAccount()
+  const { isConnected, address: connectedAddress } = useAccount()
   const { connect } = useConnect()
 
   const address = params.address as string
@@ -43,10 +44,6 @@ export default function AccountProfilePage() {
     return BigInt(amount || 0).toLocaleString()
   }
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-  }
-
   const isTrustedSeed = TRUSTED_SEEDS.includes(address)
 
   return (
@@ -54,11 +51,33 @@ export default function AccountProfilePage() {
       {/* Header */}
       <div className="border-b border-gray-700 pb-4">
         <div className="flex items-center justify-between mb-2">
-          <div className="ascii-art-title text-lg">ACCOUNT PROFILE</div>
-          <CreateAttestationModal />
-        </div>
-        <div className="system-message text-sm">
-          ◆ TRUST NETWORK PARTICIPANT PROFILE ◆
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <Address
+                address={address}
+                className="ascii-art-title [&>span]:!text-xl [&>span]:!font-bold"
+                displayMode="full"
+                showCopyIcon={true}
+                clickable={false}
+              />
+              {isTrustedSeed && (
+                <div className="flex items-center gap-1">
+                  <span title="Trusted Seed">⚡</span>
+                  <InfoTooltip content="This account is a trusted seed member with enhanced network privileges." />
+                </div>
+              )}
+            </div>
+            <div
+              className="text-sm text-blue-600 hover:text-blue-800 cursor-pointer transition-colors"
+              onClick={() => router.push('/network')}
+            >
+              ← Back to Network
+            </div>
+          </div>
+          {connectedAddress &&
+            connectedAddress.toLowerCase() === address.toLowerCase() && (
+              <CreateAttestationModal />
+            )}
         </div>
       </div>
 
@@ -110,35 +129,6 @@ export default function AccountProfilePage() {
           {/* Account Info */}
           {!isLoading && profileData && (
             <>
-              {/* Account Address */}
-              <div className="border border-gray-300 bg-white p-4 rounded-sm shadow-sm">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <div className="terminal-dim text-sm text-gray-600">
-                      ACCOUNT ADDRESS
-                    </div>
-                    {isTrustedSeed && (
-                      <div className="flex items-center gap-1">
-                        <span title="Trusted Seed">⚡</span>
-                        <InfoTooltip content="This account is a trusted seed member with enhanced network privileges." />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="terminal-text text-lg font-mono break-all text-gray-900">
-                      {address}
-                    </div>
-                    <Button
-                      onClick={() => copyToClipboard(address)}
-                      className="mobile-terminal-btn !px-3 !py-1"
-                      title="Copy address"
-                    >
-                      <span className="text-xs">COPY</span>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
               {/* Profile Statistics */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="border border-gray-300 bg-white p-4 rounded-sm shadow-sm">
