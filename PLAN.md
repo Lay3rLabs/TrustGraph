@@ -2,13 +2,18 @@
 
 Figma: https://www.figma.com/proto/uGHgh87RIFS0GUlLR68hCs/TrustGraph-Wireframes?node-id=20-134
 
+TODO: explore configuration...
+
 - Remove unused attestation schema types from frontend (comment out in contracts)
 - Create trust schema
 - Change default schema to trust
+- Network overview on network page
 - Add ENS support
 - Address component
 - Add copy, new landing page
+- cap confidence at 100
 - Add profile link somewhere
+- Make network info config with copy
 - Navigate to network from account link
 - Contact support button
 - update site metadata
@@ -22,6 +27,7 @@ Figma: https://www.figma.com/proto/uGHgh87RIFS0GUlLR68hCs/TrustGraph-Wireframes?
 - Clean git history
 - Open Source
 - Deploy on Celo
+- Publish WAVS packages
 
 
 # Clean up
@@ -30,6 +36,8 @@ Figma: https://www.figma.com/proto/uGHgh87RIFS0GUlLR68hCs/TrustGraph-Wireframes?
 - Rename component from merkler to trust graph
 - Refactor to consume upstream packages from WAVS tools
 - Docs so people unfamiliar with WAVS can run it
+- Remove unused bits? `dao-agent`, etc.
+- Make sure tasks are named appropriately
 
 # Governance extra credit
 - Experimental notice on governance page
