@@ -9,9 +9,8 @@ use crate::bindings::{export, Guest, TriggerAction};
 
 use bindings::WasmResponse;
 use config::{MerklerConfig, PageRankSourceConfig};
-use merkle::get_merkle_tree;
+use merkle::{get_merkle_tree, MerkleTreeEntry, MerkleTreeIpfsData};
 use merkle_tree_rs::standard::LeafType;
-use serde::Serialize;
 use serde_json::json;
 use std::fs::File;
 use std::str::FromStr;
@@ -200,33 +199,3 @@ pub mod solidity {
     pub use IMerkler::*;
     sol!("../../src/interfaces/merkle/IMerkler.sol");
 }
-
-#[derive(Serialize)]
-struct MerkleTreeIpfsData {
-    id: String,
-    metadata: serde_json::Value,
-    root: String,
-    tree: Vec<MerkleTreeEntry>,
-}
-
-#[derive(Serialize)]
-struct MerkleTreeEntry {
-    account: String,
-    value: String,
-    proof: Vec<String>,
-}
-
-// {
-//     "id": "A string id of the Merkle tree, can be random (you can use the root)",
-//     "metadata": {
-//       "info": "a key value mapping allowing you to add information"
-//     },
-//     "root": "The merkle root of the tree",
-//     "tree": [
-//       {
-//         "account": "The address of the account",
-//         "value": "The value associated with the account",
-//         "proof": ["0x1...", "0x2...", "...", "0xN..."]
-//       }
-//     ]
-//   }
