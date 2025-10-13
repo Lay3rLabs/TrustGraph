@@ -1,6 +1,8 @@
-# EAS Attestation Component Example
+# Basic EAS Attestation Component Example
 
 A generic WAVS component that receives attestation input data and creates EAS (Ethereum Attestation Service) attestations. This component provides a simple interface for creating attestations from various input formats.
+
+IT is not used as part of demo.
 
 ## Overview
 

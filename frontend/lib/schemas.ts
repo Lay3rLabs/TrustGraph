@@ -147,14 +147,6 @@ export class SchemaManager {
     switch (key) {
       case 'vouching':
         return 'Enter a numeric weight value representing the strength of your vouch'
-      case 'basic':
-        return 'Enter any text-based attestation or message'
-      case 'compute':
-        return 'Provide computational verification data'
-      case 'recognition':
-        return 'Enter reason and an optional value'
-      case 'statement':
-        return 'Attest to an arbitrary statement'
     }
     return null
   }

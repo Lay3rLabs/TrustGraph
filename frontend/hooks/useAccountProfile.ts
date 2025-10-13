@@ -5,6 +5,7 @@ import { useCallback } from 'react'
 
 import { useNetwork } from '@/hooks/useNetwork'
 import { APIS } from '@/lib/config'
+import { AttestationData, SchemaManager } from '@/lib/schemas'
 
 interface AccountProfileData {
   account: string
@@ -75,10 +76,34 @@ export function useAccountProfile(address: string) {
       }
 
       const attestations = await response.json()
-      return attestations.map((attestation: any) => ({
-        uid: attestation.uid,
-        timestamp: attestation.timestamp,
-      }))
+      return attestations.map((attestation: any) => {
+        let decodedData = {}
+        try {
+          if (attestation.data && attestation.schema) {
+            decodedData = SchemaManager.decode(
+              attestation.schema,
+              attestation.data
+            )
+          }
+        } catch (error) {
+          console.warn('Failed to decode attestation data:', error)
+        }
+
+        return {
+          uid: attestation.uid,
+          attester: attestation.attester,
+          recipient: attestation.recipient,
+          time: BigInt(attestation.timestamp),
+          expirationTime: BigInt(attestation.expirationTime || 0),
+          revocationTime: BigInt(attestation.revocationTime || 0),
+          refUID:
+            attestation.ref ||
+            '0x0000000000000000000000000000000000000000000000000000000000000000',
+          schema: attestation.schema,
+          data: attestation.data,
+          decodedData,
+        } as AttestationData
+      })
     },
     enabled: !!address && !!APIS.ponder,
     staleTime: 30 * 1000,
@@ -110,10 +135,34 @@ export function useAccountProfile(address: string) {
       }
 
       const attestations = await response.json()
-      return attestations.map((attestation: any) => ({
-        uid: attestation.uid,
-        timestamp: attestation.timestamp,
-      }))
+      return attestations.map((attestation: any) => {
+        let decodedData = {}
+        try {
+          if (attestation.data && attestation.schema) {
+            decodedData = SchemaManager.decode(
+              attestation.schema,
+              attestation.data
+            )
+          }
+        } catch (error) {
+          console.warn('Failed to decode attestation data:', error)
+        }
+
+        return {
+          uid: attestation.uid,
+          attester: attestation.attester,
+          recipient: attestation.recipient,
+          time: BigInt(attestation.timestamp),
+          expirationTime: BigInt(attestation.expirationTime || 0),
+          revocationTime: BigInt(attestation.revocationTime || 0),
+          refUID:
+            attestation.ref ||
+            '0x0000000000000000000000000000000000000000000000000000000000000000',
+          schema: attestation.schema,
+          data: attestation.data,
+          decodedData,
+        } as AttestationData
+      })
     },
     enabled: !!address && !!APIS.ponder,
     staleTime: 30 * 1000,

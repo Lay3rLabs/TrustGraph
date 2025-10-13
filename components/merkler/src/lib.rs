@@ -1,26 +1,22 @@
 #[rustfmt::skip]
 pub mod bindings;
+mod config;
 mod ipfs;
 mod merkle;
 mod trigger;
 
-use crate::bindings::{
-    export,
-    host::{config_var, get_evm_chain_config},
-    Guest, TriggerAction,
-};
+use crate::bindings::{export, Guest, TriggerAction};
 
 use bindings::WasmResponse;
-use merkle::get_merkle_tree;
+use config::{MerklerConfig, PageRankSourceConfig};
+use merkle::{get_merkle_tree, MerkleTreeEntry, MerkleTreeIpfsData};
 use merkle_tree_rs::standard::LeafType;
-use serde::Serialize;
 use serde_json::json;
 use std::fs::File;
-use std::path::Path;
 use std::str::FromStr;
 use trigger::encode_trigger_output;
 use wavs_merkle_sources::{pagerank, sources};
-use wavs_wasi_utils::evm::alloy_primitives::{hex, Address, U256};
+use wavs_wasi_utils::evm::alloy_primitives::{hex, U256};
 use wstd::runtime::block_on;
 
 struct Component;
@@ -30,145 +26,18 @@ impl Guest for Component {
     fn run(action: TriggerAction) -> std::result::Result<Option<WasmResponse>, String> {
         println!("🚀 Starting merkler component execution");
 
-        // QUESTION is this actually being used?
-        let events_dir = config_var("events_dir").unwrap_or_else(|| "./events".to_string());
-        let events_dir = Path::new(events_dir.trim_end_matches("/"));
-        if !events_dir.exists() {
-            std::fs::create_dir_all(events_dir).map_err(|e| {
-                format!(
-                    "Failed to create events directory at {}: {}",
-                    events_dir.display(),
-                    e.to_string()
-                )
-            })?;
-        } else if !events_dir.is_dir() {
-            return Err(format!("Events directory {} is not a directory", events_dir.display()));
-        }
-
-        // EAS-related configuration
-        let eas_address = config_var("eas_address").ok_or_else(|| "Failed to get EAS address")?;
-        let indexer_address =
-            config_var("indexer_address").ok_or_else(|| "Failed to get indexer address")?;
-        let chain_name = config_var("chain_name").unwrap_or_else(|| "local".to_string());
-
-        println!("📋 Configuration loaded:");
-        println!("  - EAS address: {}", eas_address);
-        println!("  - Indexer: {}", indexer_address);
-        println!("  - Chain: {}", chain_name);
-
-        // Try to use Pinata first, fallback to local IPFS if API key is not available
-        let (ipfs_url, ipfs_api_key) = match std::env::var("WAVS_ENV_PINATA_API_KEY") {
-            Ok(api_key) => {
-                // TODO: this is different from gateway. Need to rechange this
-                let url = std::env::var("WAVS_ENV_PINATA_API_URL")
-                    .unwrap_or_else(|_| "https://uploads.pinata.cloud/v3/files".to_string());
-                println!("🌐 Using Pinata IPFS service");
-                (url, Some(api_key))
-            }
-            Err(_) => {
-                println!("🏠 Pinata API key not found, using local IPFS node");
-                ("http://localhost:5001/api/v0/add".to_string(), None)
-            }
-        };
-
+        // Load all configuration
+        let config = MerklerConfig::load()?;
         let mut registry = sources::SourceRegistry::new();
 
-        let chain_config = get_evm_chain_config(&chain_name)
-            .ok_or_else(|| format!("Failed to get chain config for {chain_name}"))?;
-        let chain_id = chain_config.chain_id;
-        let http_endpoint = chain_config
-            .http_endpoint
-            .ok_or_else(|| format!("Failed to get HTTP endpoint for {chain_name}"))?;
-
         // Add PageRank-based EAS points if configured
-        if let (true, Some(pagerank_pool_str), Some(vouching_schema_uid)) = (
-            config_var("pagerank_enabled") == Some("true".to_string()),
-            config_var("pagerank_points_pool"),
-            config_var("vouching_schema_uid"),
-        ) {
-            let pool_amount = U256::from_str(&pagerank_pool_str)
-                .map_err(|err| format!("Failed to get pagerank_points_pool: {err}"))?;
-
-            // Configure Trust Aware PageRank
-            let mut pagerank_config = pagerank::PageRankConfig {
-                damping_factor: config_var("pagerank_damping_factor")
-                    .and_then(|s| s.parse().ok())
-                    .unwrap_or(0.85),
-                max_iterations: config_var("pagerank_max_iterations")
-                    .and_then(|s| s.parse().ok())
-                    .unwrap_or(100),
-                tolerance: config_var("pagerank_tolerance")
-                    .and_then(|s| s.parse().ok())
-                    .unwrap_or(1e-6),
-                trust_config: pagerank::TrustConfig::default(),
-            };
-
-            // Configure trusted seeds if provided
-            println!("🔍 Checking for pagerank_trusted_seeds configuration...");
-            if let Some(trusted_seeds_str) = config_var("pagerank_trusted_seeds") {
-                println!("🔍 Found pagerank_trusted_seeds: '{}'", trusted_seeds_str);
-                let seed_addresses: Vec<&str> =
-                    trusted_seeds_str.split(',').map(|s| s.trim()).collect();
-                let mut parsed_seeds = Vec::new();
-
-                for seed_str in seed_addresses {
-                    if seed_str.is_empty() {
-                        continue;
-                    }
-                    match wavs_wasi_utils::evm::alloy_primitives::Address::from_str(seed_str) {
-                        Ok(address) => parsed_seeds.push(address),
-                        Err(e) => {
-                            println!("⚠️  Invalid trusted seed address '{}': {}", seed_str, e);
-                        }
-                    }
-                }
-
-                println!("🔍 Parsed {} trusted seed addresses", parsed_seeds.len());
-                if !parsed_seeds.is_empty() {
-                    let mut trust_config = pagerank::TrustConfig::new(parsed_seeds.clone());
-
-                    // Configure trust parameters
-                    if let Some(multiplier_str) = config_var("pagerank_trust_multiplier") {
-                        if let Ok(multiplier) = multiplier_str.parse::<f64>() {
-                            trust_config = trust_config.with_trust_multiplier(multiplier);
-                        }
-                    }
-
-                    if let Some(boost_str) = config_var("pagerank_trust_boost") {
-                        if let Ok(boost) = boost_str.parse::<f64>() {
-                            trust_config = trust_config.with_trust_boost(boost);
-                        }
-                    }
-
-                    pagerank_config = pagerank_config.with_trust_config(trust_config);
-                    println!(
-                        "✅ Configured Trust Aware PageRank with {} trusted seeds",
-                        parsed_seeds.len()
-                    );
-                    println!(
-                        "   Trust multiplier: {:.1}x",
-                        pagerank_config.trust_config.trust_multiplier
-                    );
-                    println!(
-                        "   Trust boost: {:.1}%",
-                        pagerank_config.trust_config.trust_boost * 100.0
-                    );
-                } else {
-                    println!("⚠️  No valid trusted seed addresses found, using standard PageRank");
-                }
-            } else {
-                println!("ℹ️  No pagerank_trusted_seeds configured, using standard PageRank");
-            }
-
-            let min_threshold =
-                config_var("pagerank_min_threshold").and_then(|s| s.parse().ok()).unwrap_or(0.0001);
-
+        if let Some(pagerank_config) = PageRankSourceConfig::load()? {
             let pagerank_source_config = pagerank::PageRankRewardSource::new(
-                vouching_schema_uid.clone(),
-                pool_amount,
-                pagerank_config,
+                pagerank_config.vouching_schema_uid.clone(),
+                pagerank_config.points_pool,
+                pagerank_config.pagerank_config.clone(),
             )
-            .with_min_threshold(min_threshold);
+            .with_min_threshold(pagerank_config.min_threshold);
 
             let has_trust = pagerank_source_config.has_trust_enabled();
             match sources::eas_pagerank::EasPageRankSource::new(pagerank_source_config) {
@@ -177,27 +46,28 @@ impl Guest for Component {
                     if has_trust {
                         println!(
                             "✅ Added Trust Aware EAS PageRank source with {} points pool",
-                            pool_amount
+                            pagerank_config.points_pool
                         );
                     } else {
-                        println!("✅ Added EAS PageRank source with {} points pool", pool_amount);
+                        println!(
+                            "✅ Added EAS PageRank source with {} points pool",
+                            pagerank_config.points_pool
+                        );
                     }
                 }
                 Err(e) => {
                     println!("⚠️  Failed to create PageRank source: {}", e);
                 }
             }
-        } else {
-            println!("ℹ️  PageRank points disabled (no pagerank_points_pool configured)");
         }
 
         block_on(async move {
             let ctx = sources::SourceContext::new(
-                &chain_name,
-                &chain_id,
-                &http_endpoint,
-                &eas_address,
-                &indexer_address,
+                &config.chain_name,
+                &config.chain_id,
+                &config.http_endpoint,
+                &config.eas_address,
+                &config.indexer_address,
             )
             .await
             .map_err(|e| e.to_string())?;
@@ -230,22 +100,12 @@ impl Guest for Component {
 
             // Calculate total points with safety checks
             let mut total_value = U256::ZERO;
-            let max_reasonable_total = U256::from(100000000000000000000000000u128); // 100M points max
-
             for (_, result) in &results {
                 let amount = U256::from_str(&result[1])
                     .map_err(|e| format!("Invalid amount '{}': {}", result[1], e))?;
                 total_value = total_value
                     .checked_add(amount)
                     .ok_or_else(|| "Total calculation overflow".to_string())?;
-            }
-
-            // Safety check: prevent unreasonably large total distributions
-            if total_value > max_reasonable_total {
-                return Err(format!(
-                    "Total exceeds reasonable limit: {} (max: {})",
-                    total_value, max_reasonable_total
-                ));
             }
 
             let total_value_str = total_value.to_string();
@@ -294,19 +154,19 @@ impl Guest for Component {
             let cid = ipfs::upload_json_to_ipfs(
                 &ipfs_data_json,
                 &format!("merkle_{}.json", ipfs_data.root),
-                &ipfs_url,
-                ipfs_api_key.as_deref(),
+                &config.ipfs_url,
+                config.ipfs_api_key.as_deref(),
             )
             .await
             .map_err(|e| format!("Failed to upload IPFS: {}", e))?;
 
             println!("✅ Successfully uploaded to IPFS with CID: {}", cid);
 
-            println!("🗃️ Writing account events to {}...", events_dir.display());
+            println!("🗃️ Writing account events to {}...", config.events_dir.display());
             results
                 .into_iter()
                 .map(|(events, value)| {
-                    let file_path = events_dir.join(format!("{}.json", value[0]));
+                    let file_path = config.events_dir.join(format!("{}.json", value[0]));
                     let file = File::create(file_path).unwrap();
                     serde_json::to_writer(file, &events)
                 })
@@ -339,33 +199,3 @@ pub mod solidity {
     pub use IMerkler::*;
     sol!("../../src/interfaces/merkle/IMerkler.sol");
 }
-
-#[derive(Serialize)]
-struct MerkleTreeIpfsData {
-    id: String,
-    metadata: serde_json::Value,
-    root: String,
-    tree: Vec<MerkleTreeEntry>,
-}
-
-#[derive(Serialize)]
-struct MerkleTreeEntry {
-    account: String,
-    value: String,
-    proof: Vec<String>,
-}
-
-// {
-//     "id": "A string id of the Merkle tree, can be random (you can use the root)",
-//     "metadata": {
-//       "info": "a key value mapping allowing you to add information"
-//     },
-//     "root": "The merkle root of the tree",
-//     "tree": [
-//       {
-//         "account": "The address of the account",
-//         "value": "The value associated with the account",
-//         "proof": ["0x1...", "0x2...", "...", "0xN..."]
-//       }
-//     ]
-//   }

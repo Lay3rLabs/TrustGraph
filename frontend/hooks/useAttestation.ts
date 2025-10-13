@@ -202,6 +202,12 @@ export function useAttestation() {
     }
   }
 
+  const clearTransactionState = useCallback(() => {
+    setIsSuccess(false)
+    setError(null)
+    setHash(null)
+  }, [])
+
   const revokeAttestation = async (uid: Hex, schemaUid: Hex) => {
     if (!isConnected) {
       throw new Error('Please connect your wallet')
@@ -338,6 +344,7 @@ export function useAttestation() {
   return {
     createAttestation,
     revokeAttestation,
+    clearTransactionState,
     isLoading,
     isSuccess,
     error,

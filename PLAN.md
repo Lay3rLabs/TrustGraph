@@ -2,34 +2,44 @@
 
 Figma: https://www.figma.com/proto/uGHgh87RIFS0GUlLR68hCs/TrustGraph-Wireframes?node-id=20-134
 
-- Remove unused attestation schema types from frontend (comment out in contracts)
-- Create trust schema
-- Change default schema to trust
-- Add ENS support
-- Address component
+TODO: explore configuration...
+
+- Network overview on network page
 - Add copy, new landing page
-- Add profile link somewhere
-- Navigate to network from account link
+- Make network info config with copy
+
 - Contact support button
 - update site metadata
-- Calibrate math so scores are right? (open questions about this)
-- need a graph visualization
-- Documentation for merkler component
 - Live updates
+- need a graph visualization
+
+Needs discussion:
+- Calibrate math so scores are right? (open questions about this)
+
+Potential Bugs (need testing):
+- Don't allow self-attestations, these shouldn't account
+- Handle multiple attestations from the same account to the same account
+- Set max 100 on confidence level
+
+Test:
+- ENS support
 
 # Deploying
 - Deploy somewhere so people can try
 - Clean git history
 - Open Source
 - Deploy on Celo
+- Publish WAVS packages
 
 
 # Clean up
 - formatVotingPower is baddly named (kill, it's just using BigInt, there must be a function in one of our packages)
 - Remove followers logic from ponder indexer
 - Rename component from merkler to trust graph
+- Documentation for merkler component
 - Refactor to consume upstream packages from WAVS tools
 - Docs so people unfamiliar with WAVS can run it
+- Make sure tasks are named appropriately
 
 # Governance extra credit
 - Experimental notice on governance page

@@ -5,147 +5,39 @@
     "pointsEvents": "http://localhost:9090",
     "ipfsGateway": "http://127.0.0.1:8080/ipfs/"
   },
-  "wavsServiceId": "ee16d4bcbd3580984cf59100069b52a227c07db39af898721e609f8dd2b8ae52",
+  "wavsServiceId": "3f6126305144277930aca2b96c92dc24a360b6f44356a609df1c4892f352be6c",
   "contracts": {
-    "IWavsServiceManager": "0xb43c8078371fd5db5ffd5ba2d45c60120d19fed5",
-    "WavsIndexer": "0xa16853a6d398c64c52a1baa56163E4ebf747f163",
-    "EASAttestTrigger": "0x3f34F5C5184b9D9855f1D41b314f0Db72b3d7Ad5",
-    "WavsAttester": "0x00707fbFc505Db725a41139827B6b432458B7FaA",
-    "EAS": "0xaE45d7460c3942d10f7fCeC5270E814DDAfD919f",
-    "EASIndexerResolver": "0xdaDEAF344b596f169F3cbcb5bAF2BD8786F001e4",
-    "SchemaRegistrar": "0xa1b0D2f6204dBB6F7CE6F372Ab63D51EAA4f769D",
-    "SchemaRegistry": "0x58B7508D1C37067D3B875835cE447595EA202832",
-    "MerkleSnapshot": "0x2145de3EC8756b82C67C9Ba22BD1902eB0AEeB32",
-    "RewardDistributor": "0x7D3590afaBF53341ba3bA8D51BeaF5B6347401F7",
-    "TEST": "0x8dd8ad7F0df700b8e4166e38880148d946021955",
-    "GnosisSafe": "0x87E02Ba469670F3B1214Fa9D1912ec0D48bF315b",
-    "GnosisSafeProxy": "0xd108322378CFF888F4ca68e260193A3E6d23B224",
-    "MerkleGovModule": "0x5bEc56EBB1189f35Cfc5a831790d0023c1a5B994",
-    "SignerManagerModule": "0x5f1ddba28B4dd9119ae4CE95896A57efFEE7EDcf"
+    "IWavsServiceManager": "0xad1dfe8fa2e3259589c5d82719214463a979507b",
+    "WavsIndexer": "0xDfbb16B2436461E65a851C8fab11771d64e3c565",
+    "EASAttestTrigger": "0x8feC6C959D37443c8022C78CE589dc10112f56Dd",
+    "WavsAttester": "0xb17B6497865Dcfe46A72bEa773c485BC27E77AcB",
+    "EAS": "0x97c2bD7AbbBEeD38615C0AEfc77FFbf788A6AE9B",
+    "EASIndexerResolver": "0x79fbEed5f2a08cE66A0659965b2e3Af8baBFcf33",
+    "SchemaRegistrar": "0xC1a7a318F5621FF074968F46bAB64Cfe0A7dE178",
+    "SchemaRegistry": "0x93e9e3D98F7060AC73e18f5fFc80aF8aC96F731F",
+    "MerkleSnapshot": "0x475f8782aA3556e1761Af75DC1e2b8F9330328ee",
+    "RewardDistributor": "0xe723F46f8537b546429A32E0f041378e649D885B",
+    "TEST": "0x964380C963144DeBaF6c9BC31a474b11F7Ea62f4",
+    "GnosisSafe": "0x05B872406d54BacD750139c016106742c65060f9",
+    "GnosisSafeProxy": "0x26FbF33dF12bD2b4B40F00e240De4Ce7F14F12f2",
+    "MerkleGovModule": "0xadF71ff7B26281778F4f31527869c93B4921e0b0",
+    "SignerManagerModule": "0xd15C536C78D0424076aa7F0F0d32715ac2a4d4Eb"
   },
   "schemas": {
-    "basic": {
-      "uid": "0x3f059502e428aa3dc1a6b9601c05f5ad1efbe3982065d36d233139ac1959a473",
-      "name": "Basic",
-      "description": "General purpose attestation",
-      "resolver": "0xdaDEAF344b596f169F3cbcb5bAF2BD8786F001e4",
-      "revocable": true,
-      "schema": "bytes32 triggerId,string data,uint256 timestamp",
-      "fields": [
-        {
-          "name": "triggerId",
-          "type": "bytes32"
-        },
-        {
-          "name": "data",
-          "type": "string"
-        },
-        {
-          "name": "timestamp",
-          "type": "uint256"
-        }
-      ]
-    },
-    "compute": {
-      "uid": "0xb99932dccbe8b8a82c20b28e9bf84512b89caefda7f4f82993e524cbabaf68b2",
-      "name": "Compute",
-      "description": "Computational verification",
-      "resolver": "0xdaDEAF344b596f169F3cbcb5bAF2BD8786F001e4",
-      "revocable": true,
-      "schema": "bytes32 triggerId,string computation,bytes result,uint256 timestamp,address operator",
-      "fields": [
-        {
-          "name": "triggerId",
-          "type": "bytes32"
-        },
-        {
-          "name": "computation",
-          "type": "string"
-        },
-        {
-          "name": "result",
-          "type": "bytes"
-        },
-        {
-          "name": "timestamp",
-          "type": "uint256"
-        },
-        {
-          "name": "operator",
-          "type": "address"
-        }
-      ]
-    },
-    "isTrue": {
-      "uid": "0x086505fd34aee428ab928a534181b77114bdeb489fb6d6d823e6b30b7a1f8016",
-      "name": "IsTrue",
-      "description": "Boolean truth assertion",
-      "resolver": "0xdaDEAF344b596f169F3cbcb5bAF2BD8786F001e4",
-      "revocable": true,
-      "schema": "bool isTrue",
-      "fields": [
-        {
-          "name": "isTrue",
-          "type": "bool"
-        }
-      ]
-    },
-    "like": {
-      "uid": "0x66fc22dd8a887efc3eb2c42a0b0e1434ab8980f2110c6243723b79a2af1701cd",
-      "name": "Like",
-      "description": "Simple like/dislike assertion",
-      "resolver": "0xE812F08E254f2478666D8f0BBea91D42646d4c3E",
-      "revocable": true,
-      "schema": "bool like",
-      "fields": [
-        {
-          "name": "like",
-          "type": "bool"
-        }
-      ]
-    },
-    "recognition": {
-      "uid": "0x60bbdf7b7e88ba5adb7415778bfb55656f719ca119cf2979ed4f26cc92780868",
-      "name": "Recognition",
-      "description": "Recognize contributions",
-      "resolver": "0xdaDEAF344b596f169F3cbcb5bAF2BD8786F001e4",
-      "revocable": true,
-      "schema": "string reason,uint256 value",
-      "fields": [
-        {
-          "name": "reason",
-          "type": "string"
-        },
-        {
-          "name": "value",
-          "type": "uint256"
-        }
-      ]
-    },
-    "statement": {
-      "uid": "0xe41af70bc66f69641239cbb97aadb425a99b777c00cab05f8ca5b189eb4fc27d",
-      "name": "Statement",
-      "description": "Make an arbitrary statement",
-      "resolver": "0xdaDEAF344b596f169F3cbcb5bAF2BD8786F001e4",
-      "revocable": true,
-      "schema": "string statement",
-      "fields": [
-        {
-          "name": "statement",
-          "type": "string"
-        }
-      ]
-    },
     "vouching": {
-      "uid": "0x0e6860dbbec062e3055ae8de0e37d0cff99b25833ce41e0c44db3e27ce92239a",
+      "uid": "0x2cda741a2705ceeca550f9be0a3b535054539305868eddcf4512b99d93483693",
       "name": "Vouching",
       "description": "Weighted endorsement",
-      "resolver": "0xdaDEAF344b596f169F3cbcb5bAF2BD8786F001e4",
+      "resolver": "0x79fbEed5f2a08cE66A0659965b2e3Af8baBFcf33",
       "revocable": true,
-      "schema": "uint256 weight",
+      "schema": "string comment,uint256 confidence",
       "fields": [
         {
-          "name": "weight",
+          "name": "comment",
+          "type": "string"
+        },
+        {
+          "name": "confidence",
           "type": "uint256"
         }
       ]

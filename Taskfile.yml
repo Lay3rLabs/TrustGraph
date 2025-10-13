@@ -13,11 +13,9 @@ includes:
   deploy: ./taskfile/deploy.yml
   eas: ./taskfile/eas.yml
   forge: ./taskfile/forge.yml
-  governance: ./taskfile/governance.yml
   rewards: ./taskfile/rewards.yml
-  prediction-market: ./taskfile/prediction-market.yml
   services: ./taskfile/services.yml
-  pagerank: ./taskfile/pagerank.yml
+  trustgraph: ./taskfile/trustgraph.yml
   operator: ./taskfile/operator.yml
   env:
     taskfile: ./taskfile/env.yml
