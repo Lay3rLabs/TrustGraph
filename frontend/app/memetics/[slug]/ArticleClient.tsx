@@ -112,25 +112,6 @@ export function ArticleClient({ slug, initialArticle }: ArticleClientProps) {
               </div>
             </div>
           </div>
-
-          <div className="flex items-center justify-between mt-4">
-            <div className="flex flex-wrap gap-2">
-              {article.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="text-xs px-2 py-1 bg-black/40 border border-gray-600 rounded-sm terminal-dim"
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
-            <button
-              onClick={() => shareArticle(article)}
-              className="terminal-command text-xs hover:terminal-bright px-3 py-1 border border-gray-600 rounded-sm"
-            >
-              SHARE
-            </button>
-          </div>
         </div>
 
         {/* Loading State */}
