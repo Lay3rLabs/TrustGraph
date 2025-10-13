@@ -11,7 +11,7 @@ export const useHyperstitionMarketStatus = ({
   controllerAddress,
   conditionalTokensAddress,
 }: HyperstitionMarket) => {
-  const { data: conditionId, isLoading: isLoadingConditionId } =
+  const { data: conditionId, isPending: isLoadingConditionId } =
     useReadContract({
       abi: conditionalTokensAbi,
       address: conditionalTokensAddress,
@@ -25,7 +25,7 @@ export const useHyperstitionMarketStatus = ({
 
   const {
     data: payoutDenominator,
-    isLoading: isLoadingPayoutDenominator,
+    isPending: isLoadingPayoutDenominator,
     refetch: refetchPayoutDenominator,
   } = useReadContract({
     address: conditionalTokensAddress,
@@ -37,7 +37,7 @@ export const useHyperstitionMarketStatus = ({
 
   const {
     data: yesPayoutNumerator,
-    isLoading: isLoadingYesPayoutNumerator,
+    isPending: isLoadingYesPayoutNumerator,
     refetch: refetchYesPayoutNumerator,
   } = useReadContract({
     address: conditionalTokensAddress,
@@ -49,7 +49,7 @@ export const useHyperstitionMarketStatus = ({
 
   const {
     data: noPayoutNumerator,
-    isLoading: isLoadingNoPayoutNumerator,
+    isPending: isLoadingNoPayoutNumerator,
     refetch: refetchNoPayoutNumerator,
   } = useReadContract({
     address: conditionalTokensAddress,

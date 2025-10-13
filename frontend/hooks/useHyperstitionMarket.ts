@@ -16,7 +16,7 @@ export const useHyperstitionMarket = (market: HyperstitionMarket) => {
 
   const {
     data: state,
-    isLoading: isLoadingMarketState,
+    isPending: isLoadingMarketState,
     refetch: refetchMarketState,
   } = usePonderQuery({
     queryFn: (db) =>
@@ -43,7 +43,7 @@ export const useHyperstitionMarket = (market: HyperstitionMarket) => {
 
   const {
     data: { price: yesPrice } = { price: 0 },
-    isLoading: isLoadingPrice,
+    isPending: isLoadingPrice,
     isError: isErrorPrice,
     refetch: refetchPrice,
   } = usePonderQuery({
@@ -61,7 +61,7 @@ export const useHyperstitionMarket = (market: HyperstitionMarket) => {
   // Get user's token balances using the position IDs
   const {
     data: yesShares,
-    isLoading: _isLoadingYesShares,
+    isPending: _isLoadingYesShares,
     refetch: refetchYesShares,
   } = useReadContract({
     abi: conditionalTokensAbi,
@@ -84,7 +84,7 @@ export const useHyperstitionMarket = (market: HyperstitionMarket) => {
 
   const {
     data: noShares,
-    isLoading: _isLoadingNoShares,
+    isPending: _isLoadingNoShares,
     refetch: refetchNoShares,
   } = useReadContract({
     abi: conditionalTokensAbi,

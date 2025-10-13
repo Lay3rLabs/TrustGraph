@@ -55,14 +55,14 @@ export const WalletConnectionButton = ({
 
   const setOpenRef = useRef<Dispatch<SetStateAction<boolean>> | null>(null)
 
-  const { data: { total: totalPoints = 0 } = {}, isLoading: isLoadingPoints } =
+  const { data: { total: totalPoints = 0 } = {}, isPending: isLoadingPoints } =
     useQuery({
       ...pointsQueries.points(address || '0x0'),
       enabled: !!address,
       refetchInterval: 30_000,
     })
 
-  const { data: usdcBalance, isLoading: isLoadingUsdcBalance } = useBalance({
+  const { data: usdcBalance, isPending: isLoadingUsdcBalance } = useBalance({
     address: address,
     token: erc20Address,
     query: {
@@ -70,7 +70,7 @@ export const WalletConnectionButton = ({
       refetchInterval: 30_000,
     },
   })
-  const { data: ethBalance, isLoading: isLoadingEthBalance } = useBalance({
+  const { data: ethBalance, isPending: isLoadingEthBalance } = useBalance({
     address: address,
     query: {
       enabled: !!address,

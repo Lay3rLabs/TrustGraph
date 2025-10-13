@@ -104,7 +104,7 @@ export const PredictionMarketDetail = ({
   )
   const {
     data: priceHistory,
-    isLoading: isLoadingPriceHistory,
+    isPending: isLoadingPriceHistory,
     isError: isErrorPriceHistory,
     error: errorPriceHistory,
   } = usePonderQuery({

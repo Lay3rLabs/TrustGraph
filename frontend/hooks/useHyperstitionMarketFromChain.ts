@@ -35,7 +35,7 @@ export const useHyperstitionMarket = (market: HyperstitionMarket) => {
 
   const {
     data: yesCostData,
-    isLoading: isLoadingYesCost,
+    isPending: isLoadingYesCost,
     refetch: refetchYesCost,
   } = useReadContract({
     address: marketMakerAddress,
@@ -49,7 +49,7 @@ export const useHyperstitionMarket = (market: HyperstitionMarket) => {
 
   const {
     data: noCostData,
-    isLoading: isLoadingNoCost,
+    isPending: isLoadingNoCost,
     refetch: refetchNoCost,
   } = useReadContract({
     address: marketMakerAddress,
@@ -64,7 +64,7 @@ export const useHyperstitionMarket = (market: HyperstitionMarket) => {
   const { decimals: collateralDecimals } = useCollateralToken()
 
   // Get collection IDs for YES/NO positions
-  const { data: yesCollectionId, isLoading: isLoadingYesCollectionId } =
+  const { data: yesCollectionId, isPending: isLoadingYesCollectionId } =
     useReadContract({
       abi: conditionalTokensAbi,
       address: conditionalTokensAddress,
@@ -79,7 +79,7 @@ export const useHyperstitionMarket = (market: HyperstitionMarket) => {
       query: { enabled: !!conditionId },
     })
 
-  const { data: noCollectionId, isLoading: isLoadingNoCollectionId } =
+  const { data: noCollectionId, isPending: isLoadingNoCollectionId } =
     useReadContract({
       abi: conditionalTokensAbi,
       address: conditionalTokensAddress,
@@ -95,7 +95,7 @@ export const useHyperstitionMarket = (market: HyperstitionMarket) => {
     })
 
   // Get position IDs for YES/NO tokens
-  const { data: yesPositionId, isLoading: isLoadingYesPositionId } =
+  const { data: yesPositionId, isPending: isLoadingYesPositionId } =
     useReadContract({
       abi: conditionalTokensAbi,
       address: conditionalTokensAddress,
@@ -109,7 +109,7 @@ export const useHyperstitionMarket = (market: HyperstitionMarket) => {
       query: { enabled: !!yesCollectionId },
     })
 
-  const { data: noPositionId, isLoading: isLoadingNoPositionId } =
+  const { data: noPositionId, isPending: isLoadingNoPositionId } =
     useReadContract({
       abi: conditionalTokensAbi,
       address: conditionalTokensAddress,
@@ -121,7 +121,7 @@ export const useHyperstitionMarket = (market: HyperstitionMarket) => {
   // Get user's token balances using the position IDs
   const {
     data: yesShares,
-    isLoading: _isLoadingYesShares,
+    isPending: _isLoadingYesShares,
     refetch: refetchYesShares,
   } = useReadContract({
     abi: conditionalTokensAbi,
@@ -146,7 +146,7 @@ export const useHyperstitionMarket = (market: HyperstitionMarket) => {
 
   const {
     data: noShares,
-    isLoading: _isLoadingNoShares,
+    isPending: _isLoadingNoShares,
     refetch: refetchNoShares,
   } = useReadContract({
     abi: conditionalTokensAbi,

@@ -57,7 +57,7 @@ export const PredictionRedeemForm = ({
   } = useHyperstitionMarket(market)
 
   // Find the redemption for the connected user.
-  const { data: redemption, isLoading: isLoadingRedemption } = usePonderQuery({
+  const { data: redemption, isPending: isLoadingRedemption } = usePonderQuery({
     queryFn: (db) =>
       db.query.predictionMarketRedemption.findFirst({
         where: (t, { and, eq }) =>

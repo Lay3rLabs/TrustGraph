@@ -45,7 +45,7 @@ export default function PointsPage() {
 
   const {
     data: { events: pointsEvents = [], total: totalPoints = 0 } = {},
-    isLoading: isLoadingPoints,
+    isPending: isLoadingPoints,
     refetch: refreshPoints,
   } = useQuery({
     ...pointsQueries.points(address as Hex),

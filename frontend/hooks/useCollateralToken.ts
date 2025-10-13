@@ -6,12 +6,12 @@ import { erc20Address, erc20Config } from '@/lib/contracts'
 export const useCollateralToken = () => {
   const { address } = useAccount()
 
-  const { data: decimals = 6, isLoading: isLoadingDecimals } = useReadContract({
+  const { data: decimals = 6, isPending: isLoadingDecimals } = useReadContract({
     ...erc20Config,
     functionName: 'decimals',
   })
 
-  const { data: symbol = 'USDC', isLoading: isLoadingSymbol } = useReadContract(
+  const { data: symbol = 'USDC', isPending: isLoadingSymbol } = useReadContract(
     {
       ...erc20Config,
       functionName: 'symbol',
@@ -20,7 +20,7 @@ export const useCollateralToken = () => {
 
   const {
     data: _balance,
-    isLoading: isLoadingBalance,
+    isPending: isLoadingBalance,
     refetch: refetchBalance,
   } = useBalance({
     address: address,

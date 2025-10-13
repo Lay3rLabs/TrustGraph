@@ -26,7 +26,7 @@ export const PredictionMarketTradeHistory: React.FC<
 
   const {
     data: tradeHistory,
-    isLoading: isLoadingTradeHistory,
+    isPending: isLoadingTradeHistory,
     isError: isErrorTradeHistory,
     error: errorTradeHistory,
   } = usePonderQuery({
