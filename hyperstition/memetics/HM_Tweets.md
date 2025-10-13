@@ -26,14 +26,150 @@ New DAO Game is live on Base.
 
 By introducing incentive structures that reward traders for correctly forecasting and contributing to the realization of specific narratives, HMs function as psychotechnologies for the guided evolution of collective belief.
 
+===
 
+Hyperstition Markets—or how to literally bet reality into existence
+
+A new psychotechnology that turns prediction markets into reality engineering tools.
+
+🧵
+
+---
+
+Traditional prediction markets aggregate information to forecast the future.
+
+Hyperstition Markets aggregate *intention* to *construct* the future.
+
+The difference? One observes. The other manifests.
+
+---
+
+Here's the key insight:
+
+Most prediction markets assume traders don't influence outcomes. But in social reality, beliefs CREATE outcomes.
+
+So what if we designed markets that *reward* traders for making their predictions come true?
+
+---
+
+How it works:
+
+- You bet on a future outcome
+- BUT you also get rewarded for *actions* that make it happen
+- The more you contribute to the narrative, the more you earn
+- Everyone profits by making the prophecy self-fulfilling
+
+---
+
+Example: "Carbon Neutral Economy by 2040"
+
+Traditional market: just bet on whether it happens
+
+Hyperstition Market:
+- Bet on milestones
+- Get bonus rewards for building green tech
+- Get paid for policy advocacy
+- Earn for measurable carbon reduction
+
+---
+
+This solves the collective action problem.
+
+Climate change needs everyone to act simultaneously. But why be first?
+
+Hyperstition Markets make it *profitable* to be early. You're not sacrificing—you're investing.
+
+---
+
+The mechanism creates a Nash equilibrium where:
+
+- It's rational to bet on outcome X
+- It's rational to work toward outcome X
+- Everyone doing both makes X inevitable
+- Everyone profits
+
+Coordination through incentives, not altruism.
+
+---
+
+This isn't crowdfunding. It's not governance tokens.
+
+It's something new: reflexive markets that bootstrap futures into existence through aligned belief + action + capital.
+
+---
+
+Applications beyond climate:
+
+🔹 Tech standards adoption (coordination game)
+🔹 Social movements (critical mass problem)
+🔹 Infrastructure development (chicken-egg issue)
+🔹 Cultural shifts (Overton window moves)
+
+Any future that needs collective belief + action. (9/15)
+
+---
+
+The philosophical implications are wild:
+
+If social reality is constructed through collective belief, and we can engineer belief through economic incentives...
+
+We've created machines for ontological engineering. Markets as reality compilers.
+
+---
+
+Obviously there are risks:
+
+- Rich actors steering reality toward their preferences
+- Narrative lock-in preventing better alternatives
+- Manipulation and moral hazard
+
+Solutions: quadratic mechanisms, plural governance, counterfactual verification.
+
+---
+
+But the potential...
+
+Imagine Hyperstition Markets for:
+- Universal basic income adoption
+- Decentralized governance frameworks
+- Gene therapy breakthroughs
+- Space settlement milestones
+- AI alignment protocols
+
+Funding AND coordinating the future.
+
+---
+
+This is using markets not to allocate existing resources but to *conjure new realities*.
+
+Hyperstition: fictions that make themselves real through collective belief and action.
+
+---
+
+We're building psychotechnologies for reality engineering.
+
+And Hyperstition Markets are just the beginning.
+
+The age of passive prediction is over.
+The age of active manifestation begins.
+
+Let's conjure better futures.
+
+---
+
+This is so early. So weird. So powerful.
+
+If you're working on mechanism design, coordination tech, or reality hacking—let's talk.
+
+The future is being designed right now. Might as well profit from it. 🚀✨
+
+
+===
 
 # Hyperstition Markets
 ## New Psychotechnology for Reality Conjuring
 
 Drawing on the concept of hyperstition, "a fiction that makes itself real", Hyperstition Markets are designed to actively shape the reality they predict. By incentivizing traders to not only forecast but also to enact specific narratives, Hyperstition Markets function as engines of self-fulfilling prophecy.
-
-
 
 A Hyperstition Market it a prediction market where the incentives are biased towards a particular outcome. Unlike traditional prediction markets, which pay out based solely on the accuracy of forecasts, Hyperstition markets reward traders for both predicting and contributing to the realization of targeted outcomes.
 
