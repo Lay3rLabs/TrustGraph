@@ -56,6 +56,6 @@ In the end, all economics is chaos magic.
 And it always was.
 
 REFERENCES:
-[1] CCRU. "Hyperstition: An Introduction." Cyberspace, 1999.
-[2] Satoshi Nakamoto. "Bitcoin: A Peer-to-Peer Electronic Cash System." The Blockchain, 2008.
-[3] The Market Itself. "Every Chart Ever." Ongoing.
+CCRU. (1999) [Digital Hyperstition](https://monoskop.org/images/f/f1/CCRU_Abstract_Culture_Digital_Hyperstition_1999.pdf). Abstract Culture.
+Satoshi Nakamoto. (2008) [Bitcoin: A Peer-to-Peer Electronic Cash System](https://bitcoin.org/bitcoin.pdf). The Blockchain.
+The Market Itself. (Ongoing). "Every Chart Ever."

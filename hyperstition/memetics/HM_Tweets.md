@@ -2,11 +2,15 @@
 status: draft
 ---
 
-Hyperstition Markets are prediction markets where incentives are biased towards a particular outcome.
+tl;dr Hyperstition Markets are prediction markets where incentives are biased towards a particular outcome.
+
+[link to article twwet]
+
+---
 
 Join the first Hyperstition Market experiment: https://en0va.xyz/hyperstition
 
-
+---
 The first one is launching and you're invited to participate.
 
 Hyperstition: a fiction that makes itself real.

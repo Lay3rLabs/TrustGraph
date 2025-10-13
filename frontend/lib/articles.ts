@@ -153,6 +153,10 @@ export async function processMarkdownContent(content: string): Promise<string> {
       /<blockquote>/g,
       '<blockquote class="border-l-2 border-gray-600 pl-4 terminal-dim italic mb-4">'
     )
+    .replace(
+      /<a\s+([^>]*)>/g,
+      '<a $1 class="memetics-text underline underline-offset-2 transition-opacity hover:opacity-80 active:opacity-70">'
+    )
 
   return htmlContent
 }
