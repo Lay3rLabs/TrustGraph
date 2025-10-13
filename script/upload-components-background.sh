@@ -139,7 +139,7 @@ upload_package() {
     if [[ "$output" =~ "Unauthorized" ]]; then
         log "[$num] ❌ ${PKG_NAME} failed: ${output}"
         return 1
-    elif [[ "$output" =~ "already released" ]]; then
+    elif [[ "$output" =~ "already released" ]] || [[ "$output" =~ "failed to prove inclusion" ]]; then
         log "[$num] ✅ ${PKG_NAME}:${PKG_VERSION} already released (did not re-upload)"
         return 0
     elif [[ "$output" =~ "submitted record" ]] || [[ "$output" =~ "published version" ]]; then

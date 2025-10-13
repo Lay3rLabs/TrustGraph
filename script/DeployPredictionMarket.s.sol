@@ -37,7 +37,7 @@ contract DeployScript is Common {
 
         // Market parameters
         uint64 fee = 1e16; // 1% fee
-        uint256 funding = 100e6; // 100 collateral tokens
+        uint256 funding = 1000e6; // 1000 collateral tokens
         string memory uri = ""; // Market metadata URI
         bytes32 questionId = bytes32(0);
 
@@ -55,7 +55,7 @@ contract DeployScript is Common {
             collateralToken = address(new MockUSDC());
 
             // Mint collateral tokens to deployer
-            MockUSDC(collateralToken).mint(deployer, funding * 10);
+            MockUSDC(collateralToken).mint(deployer, funding * 100);
         }
 
         // Approve controller to spend collateral tokens

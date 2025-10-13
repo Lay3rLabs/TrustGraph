@@ -16,6 +16,10 @@ pointsApp.get("/:account", async (c) => {
     return c.json({ error: "Account is required" }, 400);
   }
 
+  if (!fs.existsSync(eventsPath)) {
+    return c.json({ error: "Events path not found" }, 500);
+  }
+
   const files = fs.readdirSync(eventsPath);
 
   const filePath = files.find(

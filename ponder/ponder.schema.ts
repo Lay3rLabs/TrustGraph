@@ -1,4 +1,3 @@
-import { unique } from 'drizzle-orm/pg-core'
 import { index, onchainEnum, onchainTable } from 'ponder'
 
 export const predictionMarket = onchainTable(
