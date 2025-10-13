@@ -56,7 +56,7 @@ This creates a Nash equilibrium where rational actors maximize returns by both b
 
 ### 3.3 Example Implementation
 
-Consider a simple Hyperstition Market for *[@0xEN0VA](https://x.com/0xEN0VA) X account reaches 1000 followers in two weeks*:
+Consider a simple Hyperstition Market for *[@0xEN0VA](https://x.com/0xEN0VA) account reaches 1000 followers in two weeks*:
 
 - Prediction market launches with a market resolver for Twitter followers
 - Traders buy $YES positions and act in ways that make the predicted outcome more likely (telling friends, writing articles, sharing)

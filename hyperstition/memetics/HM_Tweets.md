@@ -6,13 +6,9 @@ tl;dr Hyperstition Markets are prediction markets where incentives are biased to
 
 [link to article twwet]
 
----
-
-Join the first Hyperstition Market experiment: https://en0va.xyz/hyperstition
+Join the experiment: https://en0va.xyz/hyperstition
 
 ---
-The first one is launching and you're invited to participate.
-
 Hyperstition: a fiction that makes itself real.
 
 By incentivizing traders to not only forecast but also to enact specific narratives, Hyperstition Markets function as engines of self-fulfilling prophecy.
@@ -20,17 +16,11 @@ By incentivizing traders to not only forecast but also to enact specific narrati
 
 The core innovation of Hyperstition Markets lies in their incentive structure. Unlike traditional prediction markets, which pay out based solely on the accuracy of forecasts, Hyperstition markets reward traders for both predicting and contributing to the realization of targeted outcomes.
 
-
-New DAO Game is live on Base.
-
-
 By introducing incentive structures that reward traders for correctly forecasting and contributing to the realization of specific narratives, HMs function as psychotechnologies for the guided evolution of collective belief.
 
 ===
 
-Hyperstition Markets—or how to literally bet reality into existence
-
-A new psychotechnology that turns prediction markets into reality engineering tools.
+Hyperstition Markets: A new psychotechnology that turns prediction markets into reality engineering tools.
 
 🧵
 
@@ -55,8 +45,8 @@ So what if we designed markets that *reward* traders for making their prediction
 How it works:
 
 - You bet on a future outcome
-- BUT you also get rewarded for *actions* that make it happen
-- The more you contribute to the narrative, the more you earn
+- You get extra incentives if it happens
+- You also get rewarded for *actions* that make it happen
 - Everyone profits by making the prophecy self-fulfilling
 
 ---
