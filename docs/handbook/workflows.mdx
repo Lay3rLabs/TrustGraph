@@ -2,6 +2,7 @@
 title: Workflows
 description: Building and managing WAVS service workflows
 ---
+
 <!--docsignore
 import { Callout } from 'fumadocs-ui/components/callout';
 import { DocsPage } from 'fumadocs-ui/page';
@@ -52,7 +53,7 @@ The following example shows a workflow with a cron trigger and a submission to a
     },
     "submit": {  // Where results are sent
         "aggregator": {  // Type of submission (aggregator)
-            "url": "http://127.0.0.1:8001"  // Local aggregator endpoint
+            "url": "http://127.0.0.1:8040"  // Local aggregator endpoint
         }
     },
     "aggregators": [  // The final submission address that the aggregator will submit to
@@ -133,6 +134,7 @@ You can chain workflows together to create more complex execution flows. To have
   }
 }
 ```
+
 You can also chain different services together with this method by setting the trigger of the second service to the onchain submission event of the first service.
 
 ## Multichain services

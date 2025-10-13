@@ -35,7 +35,7 @@ if [ -z "$RPC_URL" ]; then
     export RPC_URL=$(task get-rpc)
 fi
 if [ -z "$AGGREGATOR_URL" ]; then
-    export AGGREGATOR_URL=http://127.0.0.1:8001
+    export AGGREGATOR_URL=http://127.0.0.1:8040
 fi
 
 # local: create deployer & auto fund. testnet: create & iterate check balance
@@ -250,7 +250,7 @@ sleep 3
 
 # Deploy the service JSON to WAVS so it now watches and submits.
 # 'opt in' for WAVS to watch (this is before we register to Eigenlayer)
-WAVS_ENDPOINT=http://127.0.0.1:8000 SERVICE_URL=${IPFS_URI} IPFS_GATEWAY=${IPFS_GATEWAY} make deploy-service
+WAVS_ENDPOINT=http://127.0.0.1:8041 SERVICE_URL=${IPFS_URI} IPFS_GATEWAY=${IPFS_GATEWAY} make deploy-service
 sleep 3
 
 export SERVICE_ID=${SERVICE_ID:-`task config:service-id`}

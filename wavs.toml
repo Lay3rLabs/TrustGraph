@@ -113,7 +113,7 @@ cors_allowed_origins = [
 # The directory to store the data. Default is "/var/wavs-cli"
 data = "~/wavs/cli"
 
-# wavs_endpoint = "http://localhost:8000"
+# wavs_endpoint = "http://localhost:8041"
 
 # ----------------------------
 # Aggregator specific settings

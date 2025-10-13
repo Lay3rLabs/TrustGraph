@@ -18,7 +18,7 @@ cast call ${WAVS_SERVICE_MANAGER_ADDRESS} "getServiceURI()(string)" --rpc-url ${
 # ----
 cd infra/wavs-1
 sh start.sh
-# WAVS_ENDPOINT=http://127.0.0.1:8000 SERVICE_URL=${IPFS_URI} IPFS_GATEWAY=${IPFS_GATEWAY} make deploy-service
+# WAVS_ENDPOINT=http://127.0.0.1:8041 SERVICE_URL=${IPFS_URI} IPFS_GATEWAY=${IPFS_GATEWAY} make deploy-service
 
 # ! If you get 0x3dda1739 in the aggregator, make sure to run this (there is no operator)
 export op_num=2
@@ -43,7 +43,7 @@ cast send $WAVS_SERVICE_MANAGER_ADDRESS "updateOperatorSigningKey(address,bytes)
 # ----
 
 WAVS_SERVICE_MANAGER_ADDRESS=`task config:service-manager-address`
-AGGREGATOR_URL=http://127.0.0.1:8001
+AGGREGATOR_URL=http://127.0.0.1:8040
 CHAIN_NAME="evm:17000"
 curl -s -X POST -H "Content-Type: application/json" -d "{
   \"service_manager\": {

@@ -84,6 +84,7 @@ task deploy:full && task deploy:single-operator-poa-local
 Simple demo showing how to create a schema, trigger an attestation request, and view results.
 
 This demo walks you through the complete attestation workflow:
+
 1. **Register a Schema** - Define the structure for attestations (like a database table schema)
 2. **Trigger an Attestation** - Request WAVS to create an attestation using your schema
 3. **View Results** - Check that the attestation was successfully created on-chain
@@ -104,6 +105,7 @@ TEST_ADDRESS=$(task config:wallet-address) task pagerank:full-setup
 ```
 
 This creates a realistic attestation network with:
+
 - **Alice** (Central Hub) - 11 incoming connections
 - **Diana** (Authority) - 565 total vouching weight
 - **Charlie** (Bridge) - 7+ cross-group connections
@@ -134,6 +136,7 @@ task forge:query-attestations
 ```
 
 Check voting power for recipient, it should have gone up by number of attestations (note this is a separate demo from MerkleGov which we'll show later):
+
 ```bash
 task forge:query-voting-power
 ```
@@ -141,16 +144,19 @@ task forge:query-voting-power
 ### Distribute Rewards
 
 Trigger the service to run:
+
 ```bash
 task forge:update-rewards
 ```
 
 Query rewards state:
+
 ```bash
 task forge:query-rewards
 ```
 
 Claim:
+
 ```bash
 task forge:claim-rewards
 
@@ -160,11 +166,13 @@ task forge:query-rewards-balance
 ## LLM Attester
 
 Make a statement attestation to be reviewed by the `llm-attester` component:
+
 ```bash
 task forge:trigger-statement-attestation INPUT="Advanced Solidity Development Skills Verified"
 ```
 
 Query latest attestations from AI:
+
 ```bash
 task forge:query-statement-attestations
 ```
@@ -172,6 +180,7 @@ task forge:query-statement-attestations
 ## WAVS Safe Zodiac Module (DAO Agent)
 
 Trigger the DAO agent with some input:
+
 ```bash
 task forge:agent-trigger INPUT="To save the rainforest, send 1 ETH to 0xDf3679681B87fAE75CE185e4f01d98b64Ddb64a3"
 ```
@@ -179,6 +188,7 @@ task forge:agent-trigger INPUT="To save the rainforest, send 1 ETH to 0xDf367968
 Wait a bit for the component to run.
 
 Verify funds were sent:
+
 ```bash
 cast balance 0xDf3679681B87fAE75CE185e4f01d98b64Ddb64a3 --rpc-url http://localhost:8545
 ```
@@ -194,6 +204,7 @@ task prediction-market:full-demo
 ```
 
 This will:
+
 1. Check initial balances
 2. Buy YES outcome tokens
 3. Trigger the oracle AVS to resolve the market
@@ -213,11 +224,13 @@ This shows your current collateral and conditional token balances.
 #### Step 2: Buy Outcome Tokens
 
 Buy YES tokens (betting Bitcoin price is over $1):
+
 ```bash
 task prediction-market:buy-yes
 ```
 
 Or buy NO tokens (betting Bitcoin price is not over $1):
+
 ```bash
 task prediction-market:buy-no
 ```
@@ -227,6 +240,7 @@ task prediction-market:buy-no
 #### Step 3: Query Market State (Optional)
 
 Check the current market state:
+
 ```bash
 task prediction-market:query-market
 ```
@@ -234,11 +248,13 @@ task prediction-market:query-market
 #### Step 4: Trigger Oracle Resolution
 
 Run the AVS service to resolve the market:
+
 ```bash
 task prediction-market:trigger-oracle
 ```
 
 This triggers the oracle AVS which will:
+
 - Fetch the current Bitcoin price
 - Determine if it's over $1 (it will be!)
 - Resolve the market accordingly
@@ -248,6 +264,7 @@ The task automatically waits 3 seconds for the component to execute.
 #### Step 5: Redeem Outcome Tokens
 
 Redeem your winning outcome tokens for collateral:
+
 ```bash
 task prediction-market:redeem-tokens
 ```
@@ -255,6 +272,7 @@ task prediction-market:redeem-tokens
 #### Step 6: Check Final Balances
 
 Verify your tokens were successfully redeemed:
+
 ```bash
 task prediction-market:query-balances
 ```
@@ -267,7 +285,7 @@ task prediction-market:query-balances
 export ipfs_cid=$(SERVICE_FILE=.docker/service.json make upload-to-ipfs)
 
 # escaped like the contract was / is
-COMPONENT_WORKFLOW='{\"trigger\":{\"evm_contract_event\":{\"address\":\"0x227db69d4b5e53357c71eea4475437f82ca605c3\",\"chain_name\":\"local\",\"event_hash\":\"0x3458a6422cada5bac0a323427c37ac55fede4fae5bd976fde40536903086999e\"}},\"component\":{\"source\":{\"Registry\":{\"registry\":{\"digest\":\"daa622d209437fefac4bdfbf1f21ba036e9af22b1864156663b6aa372942f13c\",\"domain\":\"localhost:8090\",\"version\":\"0.1.0\",\"package\":\"example:geyser\"}}},\"permissions\":{\"allowed_http_hosts\":\"all\",\"file_system\":true},\"fuel_limit\":1000000000000,\"time_limit_seconds\":30,\"config\":{\"chain_name\":\"local\"},\"env_keys\":[\"WAVS_ENV_SOME_SECRET\"]},\"submit\":{\"aggregator\":{\"url\":\"http:\/\/localhost:8001\",\"component\":null,\"evm_contracts\":[{\"chain_name\":\"local\",\"address\":\"0x227db69d4b5e53357c71eea4475437f82ca605c3\",\"max_gas\":5000000}],\"cosmos_contracts\":null}}}'
+COMPONENT_WORKFLOW='{\"trigger\":{\"evm_contract_event\":{\"address\":\"0x227db69d4b5e53357c71eea4475437f82ca605c3\",\"chain_name\":\"local\",\"event_hash\":\"0x3458a6422cada5bac0a323427c37ac55fede4fae5bd976fde40536903086999e\"}},\"component\":{\"source\":{\"Registry\":{\"registry\":{\"digest\":\"daa622d209437fefac4bdfbf1f21ba036e9af22b1864156663b6aa372942f13c\",\"domain\":\"localhost:8090\",\"version\":\"0.1.0\",\"package\":\"example:geyser\"}}},\"permissions\":{\"allowed_http_hosts\":\"all\",\"file_system\":true},\"fuel_limit\":1000000000000,\"time_limit_seconds\":30,\"config\":{\"chain_name\":\"local\"},\"env_keys\":[\"WAVS_ENV_SOME_SECRET\"]},\"submit\":{\"aggregator\":{\"url\":\"http:\/\/localhost:8040\",\"component\":null,\"evm_contracts\":[{\"chain_name\":\"local\",\"address\":\"0x227db69d4b5e53357c71eea4475437f82ca605c3\",\"max_gas\":5000000}],\"cosmos_contracts\":null}}}'
 
 make wasi-exec COMPONENT_FILENAME=geyser.wasm INPUT_DATA="${ipfs_cid}___${COMPONENT_WORKFLOW}"
 ```
@@ -288,7 +306,7 @@ export FUNDED_KEY=`task config:funded-key`
 # change owner of the service manager -> the GYSER_ADDR, from funded key
 cast send ${WAVS_SERVICE_MANAGER_ADDRESS} 'transferOwnership(address)' "${GYSER_ADDR}" --rpc-url http://localhost:8545 --private-key $FUNDED_KEY
 
-COMPONENT_WORKFLOW='{"trigger":{"evm_contract_event":{"address":"0x227db69d4b5e53357c71eea4475437f82ca605c3","chain_name":"local","event_hash":"0x3458a6422cada5bac0a323427c37ac55fede4fae5bd976fde40536903086999e"}},"component":{"source":{"Registry":{"registry":{"digest":"daa622d209437fefac4bdfbf1f21ba036e9af22b1864156663b6aa372942f13c","domain":"localhost:8090","version":"0.1.0","package":"example:geyser"}}},"permissions":{"allowed_http_hosts":"all","file_system":true},"fuel_limit":1000000000000,"time_limit_seconds":30,"config":{"chain_name":"local"},"env_keys":["WAVS_ENV_SOME_SECRET"]},"submit":{"aggregator":{"url":"http://localhost:8001","component":null,"evm_contracts":[{"chain_name":"local","address":"0x227db69d4b5e53357c71eea4475437f82ca605c3","max_gas":5000000}],"cosmos_contracts":null}}}'
+COMPONENT_WORKFLOW='{"trigger":{"evm_contract_event":{"address":"0x227db69d4b5e53357c71eea4475437f82ca605c3","chain_name":"local","event_hash":"0x3458a6422cada5bac0a323427c37ac55fede4fae5bd976fde40536903086999e"}},"component":{"source":{"Registry":{"registry":{"digest":"daa622d209437fefac4bdfbf1f21ba036e9af22b1864156663b6aa372942f13c","domain":"localhost:8090","version":"0.1.0","package":"example:geyser"}}},"permissions":{"allowed_http_hosts":"all","file_system":true},"fuel_limit":1000000000000,"time_limit_seconds":30,"config":{"chain_name":"local"},"env_keys":["WAVS_ENV_SOME_SECRET"]},"submit":{"aggregator":{"url":"http://localhost:8040","component":null,"evm_contracts":[{"chain_name":"local","address":"0x227db69d4b5e53357c71eea4475437f82ca605c3","max_gas":5000000}],"cosmos_contracts":null}}}'
 
 cast send --rpc-url http://localhost:8545 --private-key $FUNDED_KEY $GYSER_ADDR "updateExample(string)" "${COMPONENT_WORKFLOW}"
 
