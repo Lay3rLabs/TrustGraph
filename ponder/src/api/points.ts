@@ -1,12 +1,13 @@
 import { Hono } from "hono";
 import path from "path";
 import fs from "fs";
-import CONFIG from '../../../frontend/config.json'
+import CONFIG from "../../../frontend/config.json";
 
-const eventsPath = path.join(
-  process.cwd(),
-  `../infra/wavs-1/app/${CONFIG.wavsServiceId}/events`
-);
+const eventsFolders = [CONFIG.wavsServiceId]
+  .flat()
+  .map((serviceId) =>
+    path.join(process.cwd(), `../infra/wavs-1/app/${serviceId}/events`)
+  );
 
 const pointsApp = new Hono();
 
@@ -16,22 +17,27 @@ pointsApp.get("/:account", async (c) => {
     return c.json({ error: "Account is required" }, 400);
   }
 
-  if (!fs.existsSync(eventsPath)) {
-    return c.json({ error: "Events path not found" }, 500);
+  if (eventsFolders.every((folder) => !fs.existsSync(folder))) {
+    return c.json({ error: "Events paths not found" }, 500);
   }
 
-  const files = fs.readdirSync(eventsPath);
-
-  const filePath = files.find(
-    (file) => file.toLowerCase() === account.toLowerCase() + ".json"
+  const allFiles = eventsFolders.flatMap((folder) =>
+    fs.readdirSync(folder).map((file) => path.join(folder, file))
   );
-  if (!filePath) {
+
+  const filePaths = allFiles.filter((file) =>
+    file.toLowerCase().endsWith("/" + account.toLowerCase() + ".json")
+  );
+  if (filePaths.length === 0) {
     return c.json({ error: "Points not found for account" }, 404);
   }
 
-  const file = JSON.parse(
-    fs.readFileSync(path.join(eventsPath, filePath), "utf8")
+  const files = filePaths.map((filePath) =>
+    JSON.parse(fs.readFileSync(filePath, "utf8"))
   );
+
+  // Choose whichever file has the most events, in case any services experienced downtime.
+  const file = files.sort((a, b) => b.length - a.length)[0];
 
   return c.json(file);
 });

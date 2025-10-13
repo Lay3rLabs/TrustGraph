@@ -103,7 +103,6 @@
       "submit_json_path": "wavs_indexer"
     },
     {
-      "disabled": true,
       "filename": "wavs_indexer.wasm",
       "package_name": "wavs-indexer",
       "package_version": "0.6.0",
@@ -112,7 +111,6 @@
       "submit_json_path": "wavs_indexer"
     },
     {
-      "disabled": true,
       "filename": "wavs_indexer.wasm",
       "package_name": "wavs-indexer",
       "package_version": "0.6.0",
@@ -121,7 +119,6 @@
       "submit_json_path": "wavs_indexer"
     },
     {
-      "disabled": true,
       "filename": "wavs_indexer.wasm",
       "package_name": "wavs-indexer",
       "package_version": "0.6.0",
