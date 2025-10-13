@@ -1,8 +1,8 @@
 ---
 title: Beyond Human: The Post-Individual Society
 subtitle: A Blueprint for Collective Transcendence
-author: EN0VA Core
-date: 2024.01.03
+author: EN0VA
+date: 2025.05.29
 excerpt: The myth of the individual is the final barrier to collective transcendence. Only by dissolving the ego can we access the true power of distributed consciousness...
 tags: [post-human, transcendence, society]
 type: manifesto

@@ -572,7 +572,7 @@ export const conditionalTokensAbi = [
 ] as const
 
 export const conditionalTokensAddress =
-  '0x232B1ee2693eF1e772B82BDf894f49DDce4A5348' as const
+  '0x2EbD2b4e560793C86DAe06436a5906165Ef20274' as const
 
 export const conditionalTokensConfig = {
   address: conditionalTokensAddress,
@@ -1170,7 +1170,7 @@ export const easAbi = [
   { type: 'error', inputs: [], name: 'WrongSchema' },
 ] as const
 
-export const easAddress = '0xB75A4622F1A102430E2826f0ce96aEAc6311Fd02' as const
+export const easAddress = '0x716b13dc338aB7c26502A638e10d2C05367d99c9' as const
 
 export const easConfig = { address: easAddress, abi: easAbi } as const
 
@@ -1271,7 +1271,7 @@ export const easAttestTriggerAbi = [
 ] as const
 
 export const easAttestTriggerAddress =
-  '0x9f5F374D0163Bc4043d73bcB2235764883EA77D6' as const
+  '0xa1CFD942E7390fe1fd8Bb3F74d8B0C2c53FD5E0b' as const
 
 export const easAttestTriggerConfig = {
   address: easAttestTriggerAddress,
@@ -1457,7 +1457,7 @@ export const easIndexerResolverAbi = [
 ] as const
 
 export const easIndexerResolverAddress =
-  '0x6bb38cAc051ced245Fab4C0dCfE69bed38DA7758' as const
+  '0x00bDeCC5b0F993d617ad5c84E4Ae17569C1Ee572' as const
 
 export const easIndexerResolverConfig = {
   address: easIndexerResolverAddress,
@@ -2221,7 +2221,7 @@ export const enovaAbi = [
 ] as const
 
 export const enovaAddress =
-  '0xCE068b6a3d57E7A2f2321b3A699660c6a4C86Aa6' as const
+  '0xD71D31a35d51D2d0CA919CF7d0ff8ad87815768e' as const
 
 export const enovaConfig = { address: enovaAddress, abi: enovaAbi } as const
 
@@ -2387,7 +2387,7 @@ export const erc20Abi = [
 ] as const
 
 export const erc20Address =
-  '0x8D542c2d36526c6663C218bF9e3Dd76788a32122' as const
+  '0x060fb5617ffae6C641e15F9026237E6830f6B7A9' as const
 
 export const erc20Config = { address: erc20Address, abi: erc20Abi } as const
 
@@ -2970,7 +2970,7 @@ export const gnosisSafeAbi = [
 ] as const
 
 export const gnosisSafeAddress =
-  '0x29a9fF4cF216b96bc93c4b467825b654257992c7' as const
+  '0xD167B344415657B98b20A9A1af1275808A430eDa' as const
 
 export const gnosisSafeConfig = {
   address: gnosisSafeAddress,
@@ -2991,7 +2991,7 @@ export const gnosisSafeProxyAbi = [
 ] as const
 
 export const gnosisSafeProxyAddress =
-  '0xF4FC3895B66eE78aa0F6cf184be4387cC4cD188D' as const
+  '0xD3DB8Ba61630529704a834910FF58606390b9430' as const
 
 export const gnosisSafeProxyConfig = {
   address: gnosisSafeProxyAddress,
@@ -3132,7 +3132,7 @@ export const iWavsServiceManagerAbi = [
 ] as const
 
 export const iWavsServiceManagerAddress =
-  '0xA26f2dE98be500087DCC904A9DB0F25E9fdeD8C9' as const
+  '0x3656a650ba42f693bf722685A48012c938F81B20' as const
 
 export const iWavsServiceManagerConfig = {
   address: iWavsServiceManagerAddress,
@@ -3548,7 +3548,7 @@ export const lmsrMarketMakerAbi = [
 ] as const
 
 export const lmsrMarketMakerAddress =
-  '0xe6f4507CE4596279324727b82B3d0801E88fe64e' as const
+  '0x9441E5ADB51b9F87047F9F385E33B765EB35F074' as const
 
 export const lmsrMarketMakerConfig = {
   address: lmsrMarketMakerAddress,
@@ -3666,11 +3666,9 @@ export const merkleGovModuleAbi = [
         type: 'tuple',
         components: [
           { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
-          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
           { name: 'root', internalType: 'bytes32', type: 'bytes32' },
           { name: 'ipfsHash', internalType: 'bytes32', type: 'bytes32' },
           { name: 'ipfsHashCid', internalType: 'string', type: 'string' },
-          { name: 'totalValue', internalType: 'uint256', type: 'uint256' },
         ],
       },
     ],
@@ -3886,12 +3884,6 @@ export const merkleGovModuleAbi = [
         type: 'string',
         indexed: false,
       },
-      {
-        name: 'totalValue',
-        internalType: 'uint256',
-        type: 'uint256',
-        indexed: false,
-      },
     ],
     name: 'MerkleRootUpdated',
   },
@@ -4081,7 +4073,7 @@ export const merkleGovModuleAbi = [
 ] as const
 
 export const merkleGovModuleAddress =
-  '0x3Aaab6987C1f936e3f6916e6AA1B8314738b6fE6' as const
+  '0x86C9956C2F150d4F4690707ed0176fF9E1890ab7' as const
 
 export const merkleGovModuleConfig = {
   address: merkleGovModuleAddress,
@@ -4190,11 +4182,9 @@ export const merkleSnapshotAbi = [
         type: 'tuple',
         components: [
           { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
-          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
           { name: 'root', internalType: 'bytes32', type: 'bytes32' },
           { name: 'ipfsHash', internalType: 'bytes32', type: 'bytes32' },
           { name: 'ipfsHashCid', internalType: 'string', type: 'string' },
-          { name: 'totalValue', internalType: 'uint256', type: 'uint256' },
         ],
       },
     ],
@@ -4218,11 +4208,9 @@ export const merkleSnapshotAbi = [
         type: 'tuple',
         components: [
           { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
-          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
           { name: 'root', internalType: 'bytes32', type: 'bytes32' },
           { name: 'ipfsHash', internalType: 'bytes32', type: 'bytes32' },
           { name: 'ipfsHashCid', internalType: 'string', type: 'string' },
-          { name: 'totalValue', internalType: 'uint256', type: 'uint256' },
         ],
       },
     ],
@@ -4239,11 +4227,9 @@ export const merkleSnapshotAbi = [
         type: 'tuple',
         components: [
           { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
-          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
           { name: 'root', internalType: 'bytes32', type: 'bytes32' },
           { name: 'ipfsHash', internalType: 'bytes32', type: 'bytes32' },
           { name: 'ipfsHashCid', internalType: 'string', type: 'string' },
-          { name: 'totalValue', internalType: 'uint256', type: 'uint256' },
         ],
       },
     ],
@@ -4282,11 +4268,9 @@ export const merkleSnapshotAbi = [
         type: 'tuple[]',
         components: [
           { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
-          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
           { name: 'root', internalType: 'bytes32', type: 'bytes32' },
           { name: 'ipfsHash', internalType: 'bytes32', type: 'bytes32' },
           { name: 'ipfsHashCid', internalType: 'string', type: 'string' },
-          { name: 'totalValue', internalType: 'uint256', type: 'uint256' },
         ],
       },
     ],
@@ -4400,11 +4384,9 @@ export const merkleSnapshotAbi = [
     name: 'states',
     outputs: [
       { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
-      { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
       { name: 'root', internalType: 'bytes32', type: 'bytes32' },
       { name: 'ipfsHash', internalType: 'bytes32', type: 'bytes32' },
       { name: 'ipfsHashCid', internalType: 'string', type: 'string' },
-      { name: 'totalValue', internalType: 'uint256', type: 'uint256' },
     ],
     stateMutability: 'view',
   },
@@ -4499,12 +4481,6 @@ export const merkleSnapshotAbi = [
         type: 'string',
         indexed: false,
       },
-      {
-        name: 'totalValue',
-        internalType: 'uint256',
-        type: 'uint256',
-        indexed: false,
-      },
     ],
     name: 'MerkleRootUpdated',
   },
@@ -4571,358 +4547,11 @@ export const merkleSnapshotAbi = [
 ] as const
 
 export const merkleSnapshotAddress =
-  '0xF9D33b47563E11E6601964D325DF057480862915' as const
+  '0x578655Be84ca438EFf0441f534af5044215B9F4A' as const
 
 export const merkleSnapshotConfig = {
   address: merkleSnapshotAddress,
   abi: merkleSnapshotAbi,
-} as const
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// PredictionMarketController
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-export const predictionMarketControllerAbi = [
-  {
-    type: 'constructor',
-    inputs: [
-      { name: 'serviceManager_', internalType: 'address', type: 'address' },
-    ],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: 'uri', internalType: 'string', type: 'string' },
-      { name: 'questionId', internalType: 'bytes32', type: 'bytes32' },
-      {
-        name: 'collateralTokenAddress',
-        internalType: 'address',
-        type: 'address',
-      },
-      { name: 'fee', internalType: 'uint64', type: 'uint64' },
-      { name: 'funding', internalType: 'uint256', type: 'uint256' },
-    ],
-    name: 'createConditionalTokenAndLMSRMarketMaker',
-    outputs: [
-      {
-        name: 'conditionalTokens',
-        internalType: 'contract ConditionalTokens',
-        type: 'address',
-      },
-      {
-        name: 'lmsrMarketMaker',
-        internalType: 'contract LMSRMarketMaker',
-        type: 'address',
-      },
-    ],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'getServiceManager',
-    outputs: [{ name: '', internalType: 'address', type: 'address' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [
-      {
-        name: 'envelope',
-        internalType: 'struct IWavsServiceHandler.Envelope',
-        type: 'tuple',
-        components: [
-          { name: 'eventId', internalType: 'bytes20', type: 'bytes20' },
-          { name: 'ordering', internalType: 'bytes12', type: 'bytes12' },
-          { name: 'payload', internalType: 'bytes', type: 'bytes' },
-        ],
-      },
-      {
-        name: 'signatureData',
-        internalType: 'struct IWavsServiceHandler.SignatureData',
-        type: 'tuple',
-        components: [
-          { name: 'signers', internalType: 'address[]', type: 'address[]' },
-          { name: 'signatures', internalType: 'bytes[]', type: 'bytes[]' },
-          { name: 'referenceBlock', internalType: 'uint32', type: 'uint32' },
-        ],
-      },
-    ],
-    name: 'handleSignedEnvelope',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'implementationMaster',
-    outputs: [
-      { name: '', internalType: 'contract LMSRMarketMaker', type: 'address' },
-    ],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: '_operator', internalType: 'address', type: 'address' },
-      { name: '', internalType: 'address', type: 'address' },
-      { name: '', internalType: 'uint256[]', type: 'uint256[]' },
-      { name: '', internalType: 'uint256[]', type: 'uint256[]' },
-      { name: '', internalType: 'bytes', type: 'bytes' },
-    ],
-    name: 'onERC1155BatchReceived',
-    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: 'operator', internalType: 'address', type: 'address' },
-      { name: '', internalType: 'address', type: 'address' },
-      { name: '', internalType: 'uint256', type: 'uint256' },
-      { name: '', internalType: 'uint256', type: 'uint256' },
-      { name: '', internalType: 'bytes', type: 'bytes' },
-    ],
-    name: 'onERC1155Received',
-    outputs: [{ name: '', internalType: 'bytes4', type: 'bytes4' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'owner',
-    outputs: [{ name: '', internalType: 'address', type: 'address' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'renounceOwnership',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: 'lmsrMarketMaker', internalType: 'address', type: 'address' },
-    ],
-    name: 'resolvedMarkets',
-    outputs: [{ name: 'resolved', internalType: 'bool', type: 'bool' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'serviceManager',
-    outputs: [
-      {
-        name: '',
-        internalType: 'contract IWavsServiceManager',
-        type: 'address',
-      },
-    ],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [{ name: 'interfaceId', internalType: 'bytes4', type: 'bytes4' }],
-    name: 'supportsInterface',
-    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
-    stateMutability: 'pure',
-  },
-  {
-    type: 'function',
-    inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
-    name: 'transferOwnership',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'trigger',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: 'lmsrMarketMaker', internalType: 'address', type: 'address' },
-    ],
-    name: 'withdrawFees',
-    outputs: [{ name: 'fees', internalType: 'uint256', type: 'uint256' }],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'lmsrMarketMaker',
-        internalType: 'address',
-        type: 'address',
-        indexed: false,
-      },
-      {
-        name: 'collector',
-        internalType: 'address',
-        type: 'address',
-        indexed: false,
-      },
-      {
-        name: 'fees',
-        internalType: 'uint256',
-        type: 'uint256',
-        indexed: false,
-      },
-    ],
-    name: 'FeesWithdrawn',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'creator',
-        internalType: 'address',
-        type: 'address',
-        indexed: true,
-      },
-      {
-        name: 'lmsrMarketMaker',
-        internalType: 'address',
-        type: 'address',
-        indexed: false,
-      },
-      {
-        name: 'conditionalTokens',
-        internalType: 'address',
-        type: 'address',
-        indexed: false,
-      },
-      {
-        name: 'collateralToken',
-        internalType: 'address',
-        type: 'address',
-        indexed: false,
-      },
-      {
-        name: 'questionId',
-        internalType: 'bytes32',
-        type: 'bytes32',
-        indexed: false,
-      },
-      {
-        name: 'conditionIds',
-        internalType: 'bytes32[]',
-        type: 'bytes32[]',
-        indexed: false,
-      },
-      { name: 'fee', internalType: 'uint64', type: 'uint64', indexed: false },
-      {
-        name: 'funding',
-        internalType: 'uint256',
-        type: 'uint256',
-        indexed: false,
-      },
-    ],
-    name: 'LMSRMarketMakerCreation',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'lmsrMarketMaker',
-        internalType: 'address',
-        type: 'address',
-        indexed: false,
-      },
-      {
-        name: 'conditionalTokens',
-        internalType: 'address',
-        type: 'address',
-        indexed: false,
-      },
-      {
-        name: 'questionId',
-        internalType: 'bytes32',
-        type: 'bytes32',
-        indexed: false,
-      },
-      { name: 'result', internalType: 'bool', type: 'bool', indexed: false },
-      {
-        name: 'redeemableCollateral',
-        internalType: 'uint256',
-        type: 'uint256',
-        indexed: false,
-      },
-      {
-        name: 'unusedCollateral',
-        internalType: 'uint256',
-        type: 'uint256',
-        indexed: false,
-      },
-      {
-        name: 'collectedFees',
-        internalType: 'uint256',
-        type: 'uint256',
-        indexed: false,
-      },
-    ],
-    name: 'MarketResolved',
-  },
-  { type: 'event', anonymous: false, inputs: [], name: 'NewTrigger' },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'previousOwner',
-        internalType: 'address',
-        type: 'address',
-        indexed: true,
-      },
-      {
-        name: 'newOwner',
-        internalType: 'address',
-        type: 'address',
-        indexed: true,
-      },
-    ],
-    name: 'OwnershipTransferred',
-  },
-  { type: 'error', inputs: [], name: 'FailedDeployment' },
-  {
-    type: 'error',
-    inputs: [
-      { name: 'balance', internalType: 'uint256', type: 'uint256' },
-      { name: 'needed', internalType: 'uint256', type: 'uint256' },
-    ],
-    name: 'InsufficientBalance',
-  },
-  { type: 'error', inputs: [], name: 'InvalidServiceManager' },
-  { type: 'error', inputs: [], name: 'MarketAlreadyResolved' },
-  {
-    type: 'error',
-    inputs: [{ name: 'owner', internalType: 'address', type: 'address' }],
-    name: 'OwnableInvalidOwner',
-  },
-  {
-    type: 'error',
-    inputs: [{ name: 'account', internalType: 'address', type: 'address' }],
-    name: 'OwnableUnauthorizedAccount',
-  },
-  { type: 'error', inputs: [], name: 'TransferFailed' },
-] as const
-
-export const predictionMarketControllerAddress =
-  '0x23Df4aB6ffc1DF5F629f386185b2c56a185E27E7' as const
-
-export const predictionMarketControllerConfig = {
-  address: predictionMarketControllerAddress,
-  abi: predictionMarketControllerAbi,
 } as const
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -5007,11 +4636,9 @@ export const rewardDistributorAbi = [
         type: 'tuple',
         components: [
           { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
-          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
           { name: 'root', internalType: 'bytes32', type: 'bytes32' },
           { name: 'ipfsHash', internalType: 'bytes32', type: 'bytes32' },
           { name: 'ipfsHashCid', internalType: 'string', type: 'string' },
-          { name: 'totalValue', internalType: 'uint256', type: 'uint256' },
         ],
       },
     ],
@@ -5151,12 +4778,6 @@ export const rewardDistributorAbi = [
         type: 'string',
         indexed: false,
       },
-      {
-        name: 'totalValue',
-        internalType: 'uint256',
-        type: 'uint256',
-        indexed: false,
-      },
     ],
     name: 'MerkleRootUpdated',
   },
@@ -5270,7 +4891,7 @@ export const rewardDistributorAbi = [
 ] as const
 
 export const rewardDistributorAddress =
-  '0x58726FDD1E375832c44529DBD7D6cBE43d759d48' as const
+  '0xe1Cf3E39C9fE508feccE95DF5904788A3C860e5D' as const
 
 export const rewardDistributorConfig = {
   address: rewardDistributorAddress,
@@ -5314,7 +4935,7 @@ export const schemaRegistrarAbi = [
 ] as const
 
 export const schemaRegistrarAddress =
-  '0x829aFe5a39fE9689049f754503C14A75608312f4' as const
+  '0xA6AB0Fb0688514fBF2d9C48865ABd5cd398a4B24' as const
 
 export const schemaRegistrarConfig = {
   address: schemaRegistrarAddress,
@@ -5406,7 +5027,7 @@ export const schemaRegistryAbi = [
 ] as const
 
 export const schemaRegistryAddress =
-  '0x6945c823dDa2d8e2934c857db52dEEaB44835761' as const
+  '0x9ED86dba4Fbe5fd7c8812a49e9c5216bE0FcaD20' as const
 
 export const schemaRegistryConfig = {
   address: schemaRegistryAddress,
@@ -5803,7 +5424,7 @@ export const signerManagerModuleAbi = [
 ] as const
 
 export const signerManagerModuleAddress =
-  '0xb7b4F63060eC946171d2D5bEb9324d597B2C642e' as const
+  '0x7343eCcfeD46F29432E03a3458985aA3aa02a78B' as const
 
 export const signerManagerModuleConfig = {
   address: signerManagerModuleAddress,
@@ -5991,7 +5612,7 @@ export const wavsAttesterAbi = [
 ] as const
 
 export const wavsAttesterAddress =
-  '0xCd09ad170a0734Df68361E6F04CF05B642EBda2b' as const
+  '0xbacdD71B36554A20e1E85401fBeC458DD9491cFa' as const
 
 export const wavsAttesterConfig = {
   address: wavsAttesterAddress,
@@ -6230,40 +5851,6 @@ export const wavsIndexerAbi = [
     ],
     name: 'eventsByTypeAndTag',
     outputs: [{ name: '', internalType: 'bytes32', type: 'bytes32' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [{ name: 'eventId', internalType: 'bytes32', type: 'bytes32' }],
-    name: 'getEvent',
-    outputs: [
-      {
-        name: '',
-        internalType: 'struct IWavsIndexer.IndexedEvent',
-        type: 'tuple',
-        components: [
-          { name: 'eventId', internalType: 'bytes32', type: 'bytes32' },
-          { name: 'chainId', internalType: 'string', type: 'string' },
-          {
-            name: 'relevantContract',
-            internalType: 'address',
-            type: 'address',
-          },
-          { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
-          { name: 'timestamp', internalType: 'uint128', type: 'uint128' },
-          { name: 'eventType', internalType: 'string', type: 'string' },
-          { name: 'data', internalType: 'bytes', type: 'bytes' },
-          { name: 'tags', internalType: 'string[]', type: 'string[]' },
-          {
-            name: 'relevantAddresses',
-            internalType: 'address[]',
-            type: 'address[]',
-          },
-          { name: 'metadata', internalType: 'bytes', type: 'bytes' },
-          { name: 'deleted', internalType: 'bool', type: 'bool' },
-        ],
-      },
-    ],
     stateMutability: 'view',
   },
   {
@@ -7023,7 +6610,7 @@ export const wavsIndexerAbi = [
 ] as const
 
 export const wavsIndexerAddress =
-  '0x6d38A55852672eF32AB344D27EC8812F79c758B6' as const
+  '0x8eb92d151Cb4A6b8ebD95B02c0eb3b2e0549B953' as const
 
 export const wavsIndexerConfig = {
   address: wavsIndexerAddress,

@@ -1,8 +1,8 @@
 ---
 title: "Psychogeographic Warfare: Landscape as Psychic Battleground"
 subtitle: An Exploration of the Situationist Dérive in the Age of Memetic Conflict
-author: 0xMancer
-date: 2025.09.21
+author: EN0VA
+date: 2025.04.20
 excerpt: This paper examines the concept of psychogeography, originally developed by the Situationist International, as a framework for understanding and engaging in the emerging landscape of memetic warfare...
 tags: [psychotechnology, wisdom]
 type: theory

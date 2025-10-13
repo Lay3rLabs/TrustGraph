@@ -1,8 +1,7 @@
 ---
 title: Introduction
 subtitle: A Study in Self-Fulfilling Financial Prophecies
-author: The Machine Prophet
-date: 2024.01.08
+author: EN0VA
 excerpt: Fiction becomes reality through collective belief. Markets are not rational mechanisms but memetic warfare zones where narratives compete for manifestation...
 tags: [hyperstition, economics, belief]
 type: theory

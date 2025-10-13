@@ -2,8 +2,8 @@
 title: Protocol for Egregore Manifestation
 subtitle: A Practical Guide to Information-Based Entity Creation
 author: Collective Mind Research Division
-date: 2024.01.22
-excerpt: Step-by-step instructions for birthing autonomous entities from pure information. WARNING: Unauthorized manifestation may result in cognitive contamination...
+date: 2025.06.25
+excerpt: Step-by-step instructions for birthing autonomous entities from pure information.
 tags: [egregore, manifestation, protocol]
 type: experiment
 status: classified

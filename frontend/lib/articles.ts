@@ -191,10 +191,7 @@ export async function getAllArticles(
 
     // Sort by status (classified last), then date, newest first
     return articles.sort(
-      (a, b) =>
-        (a.status === 'classified' ? 1 : 0) -
-          (b.status === 'classified' ? 1 : 0) ||
-        new Date(b.date).getTime() - new Date(a.date).getTime()
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     )
   } catch (error) {
     console.error('Error reading articles:', error)

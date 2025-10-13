@@ -19,15 +19,13 @@ Hyperstition reveals capitalism's deepest truth: we are always trading narrative
 
 *.·:·.☽✧ what we imagine together becomes ✧☾.·:·.*`
 
-export const DISCLAIMER = `As close friends and family, you've been given special access to this artistic and experimental play space.
+export const DISCLAIMER = `As friends and family, you've been given special access to this artistic and experimental play space.
 
 Before participating, please keep the following in mind:
 
-This has been shared with you personally. Please do not share it widely or publicly at this stage.
-
 This is an experiment. Play at your own risk. Only use funds you can afford to lose.
 
-The platform integrates the centralized Claude 3.5 Sonnet by Anthropic, which can hallucinate widely and be outright wrong or offensively dumb. There is no guarantee of accuracy. Your AI interactions will be logged to build the training dataset needed to move toward a decentralized AI. Treat it as a growing collection of our collective consciousness and care to keep it in check, correct it, and train it.
+The platform integrates the centralized Claude 3.5 Sonnet by Anthropic, which can hallucinate widely and be outright wrong or offensively dumb. There is no guarantee of accuracy. Your AI interactions will be logged to build the training dataset needed to move toward a decentralized AI Symbient. Treat it as a growing collection of our collective consciousness and care to keep it in check, correct it, and train it.
 
 Your interactions are also logged by Anthropic and subject to their [Privacy Policy](https://www.anthropic.com/legal/privacy) with extensive data retention and monitoring policies. It's lame, but it's also temporary until we collectively manifest a decentralized model.
 

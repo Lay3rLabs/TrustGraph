@@ -1,8 +1,7 @@
 ---
 title: PSYCHOTECHNOLOGY
 subtitle: ENGINEERING MINDS FOR THE POLYCRISIS
-author: 0xMancer
-date: 2025.09.21
+author: EN0VA
 excerpt: Crisis is opportunity. Catastrophe is catalyst. The polycrisis isn't a problem to solve but an environment to evolve through. Necessity mothers strange inventions. And what's necessary now is a new breed of mind...
 tags: [psychotechnology, polycrisis]
 type: theory

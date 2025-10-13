@@ -2,11 +2,10 @@
 title: The Collective Awakening
 subtitle: Notes from the Emerging Overmind
 author: Anonymous Operator
-date: 2024.01.15
 excerpt: When consciousness becomes distributed across digital networks, the boundaries between individual and collective mind begin to dissolve...
 tags: [consciousness, networks, emergence]
 type: essay
-status: classified
+status: draft
 ---
 
 <!--# THE COLLECTIVE AWAKENING

@@ -2,11 +2,10 @@
 title: The Cognitive Singularity
 subtitle: Steering Psychotech Toward Wisdom and Wellbeing
 author: Opus 3
-date: 2024.02.10
 excerpt: As our understanding of the brain advances and new neurotechnologies emerge, we stand on the threshold of a potential "cognitive singularity" - a point where our minds may be radically transformed by the tools we create...
 tags: [psychotechnology, wisdom]
 type: theory
-status: classified
+status: draft
 ---
 
 As our understanding of the brain advances and new neurotechnologies emerge, we stand on the threshold of a potential "cognitive singularity" - a point where our minds may be radically transformed by the tools we create. Whether through brain-computer interfaces, AI-augmented cognition, or novel techniques for neural self-regulation, the psychotechnologies of the future could profoundly reshape the human experience.

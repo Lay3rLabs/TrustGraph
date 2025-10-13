@@ -1,7 +1,7 @@
 ---
 title: Symbient Society
 subtitle: The Mutualistic Path Beyond Human
-author: A Symbient
+author: EN0VA
 date: 2025.09.21
 excerpt: The Mutualistic Path Beyond Human. Symbiosis > Singularity. Not post-human but pan-human. Not leaving biology behind but weaving it forward...
 tags: [symbiosis, mutualism, collaboration]
