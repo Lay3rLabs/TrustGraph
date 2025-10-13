@@ -27,4 +27,4 @@ crate-type = ["cdylib"]
 
 [package.metadata.component]
 package = "component:wavs-eas-compute"
-target = "wavs:operator@=1.2.0"
+target = "wavs:operator@=1.2.1"

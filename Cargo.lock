@@ -2116,7 +2116,7 @@ dependencies = [
 
 [[package]]
 name = "dao-agent"
-version = "0.5.5"
+version = "0.6.0"
 dependencies = [
  "alloy-dyn-abi",
  "alloy-json-abi",
@@ -2505,7 +2505,7 @@ dependencies = [
 
 [[package]]
 name = "en0va-aggregator"
-version = "0.5.5"
+version = "0.6.0"
 dependencies = [
  "alloy-network",
  "alloy-primitives",
@@ -3166,7 +3166,7 @@ dependencies = [
 
 [[package]]
 name = "geyser"
-version = "0.5.5"
+version = "0.6.0"
 dependencies = [
  "alloy-network",
  "alloy-provider",
@@ -4140,7 +4140,7 @@ checksum = "241eaef5fd12c88705a01fc1066c48c4b36e0dd4377dcdc7ec3942cea7a69956"
 
 [[package]]
 name = "llm-attester"
-version = "0.5.5"
+version = "0.6.0"
 dependencies = [
  "alloy-dyn-abi",
  "alloy-json-abi",
@@ -4222,7 +4222,7 @@ dependencies = [
 
 [[package]]
 name = "merkler"
-version = "0.5.5"
+version = "0.6.0"
 dependencies = [
  "alloy-network",
  "alloy-provider",
@@ -4248,7 +4248,7 @@ dependencies = [
 
 [[package]]
 name = "merkler-pruner"
-version = "0.5.5"
+version = "0.6.0"
 dependencies = [
  "alloy-network",
  "alloy-primitives",
@@ -4910,7 +4910,7 @@ dependencies = [
 
 [[package]]
 name = "prediction-market-oracle"
-version = "0.5.5"
+version = "0.6.0"
 dependencies = [
  "alloy-network",
  "alloy-provider",
@@ -7412,7 +7412,7 @@ dependencies = [
 
 [[package]]
 name = "wavs-eas"
-version = "0.5.5"
+version = "0.6.0"
 dependencies = [
  "alloy-dyn-abi",
  "alloy-json-abi",
@@ -7438,7 +7438,7 @@ dependencies = [
 
 [[package]]
 name = "wavs-eas-attest"
-version = "0.5.5"
+version = "0.6.0"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-macro",
@@ -7454,7 +7454,7 @@ dependencies = [
 
 [[package]]
 name = "wavs-eas-compute"
-version = "0.5.5"
+version = "0.6.0"
 dependencies = [
  "alloy-network",
  "alloy-primitives",
@@ -7474,7 +7474,7 @@ dependencies = [
 
 [[package]]
 name = "wavs-indexer"
-version = "0.5.5"
+version = "0.6.0"
 dependencies = [
  "alloy-contract",
  "alloy-network",
@@ -7497,7 +7497,7 @@ dependencies = [
 
 [[package]]
 name = "wavs-indexer-api"
-version = "0.5.5"
+version = "0.6.0"
 dependencies = [
  "alloy-contract",
  "alloy-dyn-abi",
@@ -7522,7 +7522,7 @@ dependencies = [
 
 [[package]]
 name = "wavs-llm"
-version = "0.5.5"
+version = "0.6.0"
 dependencies = [
  "alloy-dyn-abi",
  "alloy-json-abi",
@@ -7548,7 +7548,7 @@ dependencies = [
 
 [[package]]
 name = "wavs-merkle-sources"
-version = "0.5.5"
+version = "0.6.0"
 dependencies = [
  "alloy-contract",
  "alloy-dyn-abi",
@@ -7574,7 +7574,7 @@ dependencies = [
 
 [[package]]
 name = "wavs-safe-signer-sync"
-version = "0.5.5"
+version = "0.6.0"
 dependencies = [
  "alloy-network",
  "alloy-primitives",

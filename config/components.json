@@ -3,7 +3,7 @@
     {
       "filename": "merkler.wasm",
       "package_name": "merkler",
-      "package_version": "0.3.8",
+      "package_version": "0.6.0",
       "trigger_event": "MerklerTrigger(uint64)",
       "trigger_json_path": "merkler.merkle_snapshot",
       "submit_json_path": "merkler.merkle_snapshot",
@@ -13,7 +13,7 @@
     {
       "filename": "merkler.wasm",
       "package_name": "merkler",
-      "package_version": "0.3.8",
+      "package_version": "0.6.0",
       "trigger_event": "EventIndexed(bytes32,address,string,address[],string[])",
       "trigger_json_path": "wavs_indexer",
       "submit_json_path": "merkler.merkle_snapshot",
@@ -23,7 +23,7 @@
     {
       "filename": "merkler_pruner.wasm",
       "package_name": "merkler-pruner",
-      "package_version": "0.3.8",
+      "package_version": "0.6.0",
       "trigger_block_interval": "2000",
       "submit_json_path": "merkler.merkle_snapshot",
       "config_values": {},
@@ -33,7 +33,7 @@
       "disabled": true,
       "filename": "prediction_market_oracle.wasm",
       "package_name": "prediction-market-oracle",
-      "package_version": "0.3.8",
+      "package_version": "0.6.0",
       "trigger_event": "NewTrigger()",
       "trigger_json_path": "prediction_market.controller",
       "submit_json_path": "prediction_market.controller",
@@ -44,7 +44,7 @@
       "disabled": true,
       "filename": "prediction_market_oracle.wasm",
       "package_name": "prediction-market-oracle",
-      "package_version": "0.3.8",
+      "package_version": "0.6.0",
       "trigger_cron": {
         "schedule": "*/30 * * * * *",
         "start_time": 1759514400000000001,
@@ -57,7 +57,7 @@
     {
       "filename": "wavs_indexer.wasm",
       "package_name": "wavs-indexer",
-      "package_version": "0.3.8",
+      "package_version": "0.6.0",
       "trigger_event": "AttestationAttested(address,bytes32)",
       "trigger_json_path": "eas.contracts.indexer_resolver",
       "submit_json_path": "wavs_indexer"
@@ -65,7 +65,7 @@
     {
       "filename": "wavs_indexer.wasm",
       "package_name": "wavs-indexer",
-      "package_version": "0.3.8",
+      "package_version": "0.6.0",
       "trigger_event": "AttestationRevoked(address,bytes32)",
       "trigger_json_path": "eas.contracts.indexer_resolver",
       "submit_json_path": "wavs_indexer"
@@ -73,7 +73,7 @@
     {
       "filename": "wavs_indexer.wasm",
       "package_name": "wavs-indexer",
-      "package_version": "0.3.8",
+      "package_version": "0.6.0",
       "trigger_event": "AttestationAttested(address,bytes32)",
       "trigger_json_path": "eas.contracts.payable_indexer_resolver",
       "submit_json_path": "wavs_indexer"
@@ -81,7 +81,7 @@
     {
       "filename": "wavs_indexer.wasm",
       "package_name": "wavs-indexer",
-      "package_version": "0.3.8",
+      "package_version": "0.6.0",
       "trigger_event": "AttestationRevoked(address,bytes32)",
       "trigger_json_path": "eas.contracts.payable_indexer_resolver",
       "submit_json_path": "wavs_indexer"
@@ -89,7 +89,7 @@
     {
       "filename": "wavs_indexer.wasm",
       "package_name": "wavs-indexer",
-      "package_version": "0.3.8",
+      "package_version": "0.6.0",
       "trigger_event": "AttestationAttested(address,bytes32)",
       "trigger_json_path": "eas.contracts.attester_indexer_resolver",
       "submit_json_path": "wavs_indexer"
@@ -97,7 +97,7 @@
     {
       "filename": "wavs_indexer.wasm",
       "package_name": "wavs-indexer",
-      "package_version": "0.3.8",
+      "package_version": "0.6.0",
       "trigger_event": "AttestationRevoked(address,bytes32)",
       "trigger_json_path": "eas.contracts.attester_indexer_resolver",
       "submit_json_path": "wavs_indexer"
@@ -106,7 +106,7 @@
       "disabled": true,
       "filename": "wavs_indexer.wasm",
       "package_name": "wavs-indexer",
-      "package_version": "0.3.8",
+      "package_version": "0.6.0",
       "trigger_event": "Interaction(address,string,string[],bytes)",
       "trigger_json_path": "prediction_market.conditional_tokens",
       "submit_json_path": "wavs_indexer"
@@ -115,7 +115,7 @@
       "disabled": true,
       "filename": "wavs_indexer.wasm",
       "package_name": "wavs-indexer",
-      "package_version": "0.3.8",
+      "package_version": "0.6.0",
       "trigger_event": "Interaction(address,string,string[],bytes)",
       "trigger_json_path": "prediction_market.market_maker",
       "submit_json_path": "wavs_indexer"
@@ -124,7 +124,7 @@
       "disabled": true,
       "filename": "wavs_indexer.wasm",
       "package_name": "wavs-indexer",
-      "package_version": "0.3.8",
+      "package_version": "0.6.0",
       "trigger_event": "MarketResolved(address,address,bytes32,bool,uint256,uint256,uint256)",
       "trigger_json_path": "prediction_market.controller",
       "submit_json_path": "wavs_indexer"
@@ -227,7 +227,7 @@
     {
       "filename": "en0va_aggregator.wasm",
       "package_name": "en0va-aggregator",
-      "package_version": "0.3.8",
+      "package_version": "0.6.0",
       "config_values": {
         "timer_delay_secs": "${AGGREGATOR_TIMER_DELAYER_SECS}"
       },
