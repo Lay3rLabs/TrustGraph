@@ -1,7 +1,7 @@
 use crate::sources::SourceEvent;
 use anyhow::Result;
 use async_trait::async_trait;
-use wavs_wasi_utils::evm::alloy_primitives::U256;
+use wavs_wasi_utils::evm::alloy_primitives::{Address, U256};
 
 use super::Source;
 
@@ -50,7 +50,7 @@ impl Source for DirectSource {
     async fn get_events_and_value(
         &self,
         _ctx: &super::SourceContext,
-        _account: &str,
+        _account: &Address,
     ) -> Result<(Vec<SourceEvent>, U256)> {
         Ok((
             vec![SourceEvent {

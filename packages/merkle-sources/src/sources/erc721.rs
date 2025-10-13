@@ -39,17 +39,16 @@ impl Source for Erc721Source {
     async fn get_events_and_value(
         &self,
         ctx: &super::SourceContext,
-        account: &str,
+        account: &Address,
     ) -> Result<(Vec<SourceEvent>, U256)> {
-        let address = Address::from_str(account).unwrap();
-        let nft_balance = self.query_nft_ownership(ctx, address).await?;
+        let nft_balance = self.query_nft_ownership(ctx, *account).await?;
         let source_events: Vec<SourceEvent> = (0..nft_balance.to::<u64>())
             .map(|_| SourceEvent {
                 r#type: "ERC721".to_string(),
                 timestamp: 0,
                 value: self.points_per_token,
                 metadata: Some(json!({
-                    "address": address.to_string(),
+                    "address": account.to_string(),
                 })),
             })
             .collect();

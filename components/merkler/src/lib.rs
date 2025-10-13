@@ -323,46 +323,21 @@ impl Guest for Component {
             .await
             .map_err(|e| e.to_string())?;
 
-            println!("🔍 Fetching accounts from all sources...");
-            let accounts = registry.get_accounts(&ctx).await.map_err(|e| e.to_string())?;
-            println!("👥 Found {} unique accounts", accounts.len());
+            println!("🔍 Fetching accounts and values from all sources...");
 
-            // each value is [address, amount]
-            let events_and_values = accounts
-                .into_iter()
-                .map(|account| {
-                    let registry = &registry;
-                    async {
-                        let (events, value) = registry
-                            .get_events_and_value(&ctx, &account)
-                            .await
-                            .map_err(|e| e.to_string())?;
-                        Ok::<(Vec<sources::SourceEvent>, Vec<String>), String>((
-                            events,
-                            vec![account, value.to_string()],
-                        ))
-                    }
-                })
-                .collect::<Vec<_>>();
+            let (results, total_value) =
+                registry.get_accounts_events_and_value(&ctx).await.map_err(|e| e.to_string())?;
 
-            let results = futures::future::join_all(events_and_values)
-                .await
-                .into_iter()
-                .collect::<Result<Vec<_>, _>>()?;
+            println!("👥 Found {} unique accounts", results.len());
+            println!("💰 Total points assigned: {}", total_value);
 
-            // Calculate total points with safety checks
-            let mut total_value = U256::ZERO;
-            let max_reasonable_total = U256::from(100000000000000000000000000u128); // 100M points max
-
-            for (_, result) in &results {
-                let amount = U256::from_str(&result[1])
-                    .map_err(|e| format!("Invalid amount '{}': {}", result[1], e))?;
-                total_value = total_value
-                    .checked_add(amount)
-                    .ok_or_else(|| "Total calculation overflow".to_string())?;
+            if results.len() == 0 {
+                println!("⚠️  No accounts to distribute points to");
+                return Ok(None);
             }
 
             // Safety check: prevent unreasonably large total distributions
+            let max_reasonable_total = U256::from(100000000u128); // 100M points max
             if total_value > max_reasonable_total {
                 return Err(format!(
                     "Total exceeds reasonable limit: {} (max: {})",
@@ -370,31 +345,22 @@ impl Guest for Component {
                 ));
             }
 
-            let total_value_str = total_value.to_string();
-
-            println!("💰 Calculated points for {} accounts", results.len());
-            println!("💎 Total points assigned: {}", total_value_str);
-
-            if results.len() == 0 {
-                println!("⚠️  No accounts to distribute points to");
-                return Ok(None);
-            }
-
-            // Additional safety check: verify no individual value is excessive
-            for (_, result) in &results {
-                let amount = U256::from_str(&result[1]).unwrap();
-                let max_individual_value = U256::from(10000000000000000000000u128); // 10K points max per account
-                if amount > max_individual_value {
+            // Safety check: verify no individual value is excessive
+            let max_individual_value = U256::from(1000000u128); // 1M points max per account
+            for (account, (_, value)) in &results {
+                if *value > max_individual_value {
                     return Err(format!(
                         "Individual value for account {} exceeds limit: {} (max: {})",
-                        result[0], amount, max_individual_value
+                        account, value, max_individual_value
                     ));
                 }
             }
 
-            let tree = get_merkle_tree(
-                results.iter().map(|(_, value)| value.clone()).collect::<Vec<_>>(),
-            )?;
+            let tree_data = results
+                .iter()
+                .map(|(account, (_, value))| vec![account.to_string(), value.to_string()])
+                .collect::<Vec<_>>();
+            let tree = get_merkle_tree(tree_data.clone())?;
             let root = tree.root();
             let root_bytes = hex::decode(&root).map_err(|e| e.to_string())?;
 
@@ -407,7 +373,7 @@ impl Guest for Component {
                 id: root.clone(),
                 metadata: json!({
                     "num_accounts": results.len(),
-                    "total_value": total_value_str,
+                    "total_value": total_value.to_string(),
                     "sources": sources_with_metadata,
                 }),
                 root: root.clone(),
@@ -415,7 +381,7 @@ impl Guest for Component {
             };
 
             // get proof for each value
-            results.iter().for_each(|(_, value)| {
+            tree_data.into_iter().for_each(|value| {
                 let proof = tree.get_proof(LeafType::LeafBytes(value.clone()));
                 ipfs_data.tree.push(MerkleTreeEntry {
                     account: value[0].clone(),
@@ -441,8 +407,8 @@ impl Guest for Component {
             println!("🗃️ Writing account events to {}...", events_dir.display());
             results
                 .into_iter()
-                .map(|(events, value)| {
-                    let file_path = events_dir.join(format!("{}.json", value[0]));
+                .map(|(account, (events, _))| {
+                    let file_path = events_dir.join(format!("{}.json", account));
                     let file = File::create(file_path).unwrap();
                     serde_json::to_writer(file, &events)
                 })

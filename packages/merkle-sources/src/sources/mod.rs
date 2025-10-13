@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use alloy_network::Ethereum;
 use alloy_provider::RootProvider;
@@ -69,7 +69,7 @@ impl SourceContext {
 }
 
 /// An event that earns points.
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct SourceEvent {
     /// The type of the event.
     pub r#type: String,
@@ -94,14 +94,12 @@ pub trait Source {
     async fn get_events_and_value(
         &self,
         ctx: &SourceContext,
-        account: &str,
+        account: &Address,
     ) -> Result<(Vec<SourceEvent>, U256)>;
 
     /// Get metadata about the source.
     async fn get_metadata(&self, ctx: &SourceContext) -> Result<serde_json::Value>;
 }
-
-// TODO: only pass accounts into a source that were returned by that source
 
 /// A registry that manages multiple value sources.
 pub struct SourceRegistry {
@@ -136,20 +134,11 @@ impl SourceRegistry {
     ) -> Result<(Vec<SourceEvent>, U256)> {
         let mut all_source_events = Vec::new();
         let mut total = U256::ZERO;
-        let max_single_source_value = U256::from(1000000000000000000000000u128); // 1M points max per source
+
+        let account = Address::from_str(account)?;
 
         for source in &self.sources {
-            let (source_events, source_value) = source.get_events_and_value(ctx, account).await?;
-
-            // Safety check: prevent any single source from returning unreasonably large value
-            if source_value > max_single_source_value {
-                return Err(anyhow::anyhow!(
-                    "Source '{}' returned excessive value: {} (max allowed: {})",
-                    source.get_name(),
-                    source_value,
-                    max_single_source_value
-                ));
-            }
+            let (source_events, source_value) = source.get_events_and_value(ctx, &account).await?;
 
             all_source_events.extend(source_events);
 
@@ -176,6 +165,105 @@ impl SourceRegistry {
         all_source_events.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
 
         Ok((all_source_events, total))
+    }
+
+    /// Get the accounts, events, and total value from a single source.
+    pub async fn get_accounts_events_and_value_for_source(
+        &self,
+        ctx: &SourceContext,
+        source: &Box<dyn Source>,
+    ) -> Result<HashMap<String, (Vec<SourceEvent>, U256)>> {
+        let mut data: HashMap<String, (Vec<SourceEvent>, U256)> = HashMap::from_iter(
+            source
+                .get_accounts(ctx)
+                .await?
+                .iter()
+                .map(|a| (a.to_lowercase(), (vec![], U256::ZERO))),
+        );
+
+        let events_and_values = futures::future::join_all(
+            data.keys()
+                .map(|a| async {
+                    let account = Address::from_str(a)?;
+                    let (events, value) = source.get_events_and_value(ctx, &account).await?;
+                    Ok::<(String, (Vec<SourceEvent>, U256)), anyhow::Error>((
+                        a.to_string(),
+                        (events, value),
+                    ))
+                })
+                .collect::<Vec<_>>(),
+        )
+        .await
+        .into_iter()
+        .collect::<Result<Vec<_>, _>>()?;
+
+        for (account, (events, value)) in events_and_values {
+            data.insert(account, (events, value));
+        }
+
+        Ok(data)
+    }
+
+    /// Get the accounts, events, and total value from all sources.
+    pub async fn get_accounts_events_and_value(
+        &self,
+        ctx: &SourceContext,
+    ) -> Result<(HashMap<String, (Vec<SourceEvent>, U256)>, U256)> {
+        let accounts_events_and_values = futures::future::join_all(
+            self.sources
+                .iter()
+                .map(|source| self.get_accounts_events_and_value_for_source(ctx, source)),
+        )
+        .await
+        .into_iter()
+        .collect::<Result<Vec<_>, _>>()?;
+
+        let mut data: HashMap<String, (Vec<SourceEvent>, U256)> = HashMap::new();
+
+        let mut total = U256::ZERO;
+
+        // Combine all the source data into a single map, merging the events and values for each account.
+        for (source_index, source_data) in accounts_events_and_values.into_iter().enumerate() {
+            let source = &self.sources[source_index].get_name();
+
+            let mut source_total = U256::ZERO;
+
+            for (account, (events, value)) in source_data {
+                if !value.is_zero() {
+                    println!("💸 Value for {} from {} source: {}", account, source, value);
+                }
+
+                match data.entry(account) {
+                    std::collections::hash_map::Entry::Occupied(mut e) => {
+                        let (existing_events, existing_value) = e.get_mut();
+                        existing_events.extend(events);
+                        *existing_value += value;
+                    }
+                    std::collections::hash_map::Entry::Vacant(e) => {
+                        e.insert((events, value));
+                    }
+                }
+
+                source_total += value;
+            }
+
+            if !source_total.is_zero() {
+                println!("💰 Total value for {} source: {}", source, source_total);
+            }
+
+            total += source_total;
+        }
+
+        if !total.is_zero() {
+            println!("🏦 Total value distributed: {}", total);
+        }
+
+        // Sort events descending by timestamp, and compute total.
+        for (events, _) in data.values_mut() {
+            events.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
+        }
+
+        Ok((data, total))
     }
 
     /// Get metadata about all sources.

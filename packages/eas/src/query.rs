@@ -135,7 +135,7 @@ pub async fn query_received_attestation_count(
     println!("Querying with config {:?}", config);
     let indexer_querier = config.indexer_querier().await?;
     let attestation_count = indexer_querier
-        .get_attestation_count_by_schema_and_recipient(schema_uid, recipient)
+        .get_attestation_count_by_schema_and_recipient(schema_uid, &recipient)
         .await?;
 
     println!(
@@ -160,7 +160,7 @@ pub async fn query_received_attestation_uids(
     let uids = indexer_querier
         .get_indexed_attestations_by_schema_and_recipient(
             schema_uid,
-            recipient,
+            &recipient,
             start,
             length,
             reverse_order,
