@@ -78,7 +78,7 @@ tasks:
         {{.DOCKER_SUDO}} docker run --rm --network host \
           $(test -f .env && echo "--env-file ./.env") \
           -v $(pwd):/data {{.DOCKER_IMAGE}} wavs-cli \
-          deploy-service --service-url {{.SERVICE_URL}} \
+          deploy-service --service-uri {{.SERVICE_URL}} \
           --log-level=debug --data /data/.docker --home /data \
           {{if .WAVS_ENDPOINT}}--wavs-endpoint {{.WAVS_ENDPOINT}}{{end}} \
           {{if .IPFS_GATEWAY}}--ipfs-gateway {{.IPFS_GATEWAY}}{{end}}

@@ -146,7 +146,7 @@ deploy-service:
 		done; \
 	fi
 	@echo "🚀 Deploying service from: ${SERVICE_URL}..."
-	@$(WAVS_CMD) deploy-service --service-url ${SERVICE_URL} --log-level=debug --data /data/.docker --home /data $(if $(WAVS_ENDPOINT),--wavs-endpoint $(WAVS_ENDPOINT),) $(if $(IPFS_GATEWAY),--ipfs-gateway $(IPFS_GATEWAY),)
+	@$(WAVS_CMD) deploy-service --service-uri ${SERVICE_URL} --log-level=debug --data /data/.docker --home /data $(if $(WAVS_ENDPOINT),--wavs-endpoint $(WAVS_ENDPOINT),) $(if $(IPFS_GATEWAY),--ipfs-gateway $(IPFS_GATEWAY),)
 	@echo "✅ Service deployed successfully"
 
 PINATA_API_KEY?=""

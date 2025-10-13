@@ -21,10 +21,11 @@ sh start.sh
 # WAVS_ENDPOINT=http://127.0.0.1:8000 SERVICE_URL=${IPFS_URI} IPFS_GATEWAY=${IPFS_GATEWAY} make deploy-service
 
 # ! If you get 0x3dda1739 in the aggregator, make sure to run this (there is no operator)
-export op_priv_key=$(grep ^WAVS_CLI_EVM_CREDENTIAL= infra/wavs-1/.env | cut -d '=' -f2- | tr -d '"')
-export op_mnemonic=$(grep ^WAVS_SUBMISSION_MNEMONIC= infra/wavs-1/.env | cut -d '=' -f2- | tr -d '"')
+export op_num=2
+export op_priv_key=$(grep ^WAVS_CLI_EVM_CREDENTIAL= infra/wavs-$op_num/.env | cut -d '=' -f2- | tr -d '"')
+export op_mnemonic=$(grep ^WAVS_SUBMISSION_MNEMONIC= infra/wavs-$op_num/.env | cut -d '=' -f2- | tr -d '"')
 export op_addr=$(cast wallet address --private-key $op_priv_key) && echo $op_addr
-export op_signing_key_1=$(cast wallet address --mnemonic "$op_mnemonic" --mnemonic-index 1) && echo $op_signing_key_1
+export op_signing_key=$(cast wallet address --mnemonic "$op_mnemonic" --mnemonic-index 1) && echo $op_signing_key
 cast send --rpc-url `task get-rpc` $WAVS_SERVICE_MANAGER_ADDRESS "registerOperator(address,uint256)" "${op_addr}" 1000 --private-key `task config:funded-key`
 # cast send ${op_addr} --value 0.001ether -r `task get-rpc` --private-key `task config:funded-key` # if you forgot to fund
 
@@ -35,7 +36,7 @@ signing_signature=$(cast wallet sign --no-hash --mnemonic "$op_mnemonic" --mnemo
 echo "Signing signature: $signing_signature"
 
 # NOTE: if `Out of gas: gas required exceeds allowance: 0`, give funds to op_addr
-cast send $WAVS_SERVICE_MANAGER_ADDRESS "updateOperatorSigningKey(address,bytes)" "${op_signing_key_1}" "${signing_signature}" --rpc-url `task get-rpc` --private-key $op_priv_key
+cast send $WAVS_SERVICE_MANAGER_ADDRESS "updateOperatorSigningKey(address,bytes)" "${op_signing_key}" "${signing_signature}" --rpc-url `task get-rpc` --private-key $op_priv_key
 
 # cast call $WAVS_SERVICE_MANAGER_ADDRESS "getOperatorWeight(address)(uint256)" ${op_addr} --rpc-url `task get-rpc`
 
