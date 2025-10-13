@@ -36,7 +36,7 @@ vars:
   # Default endpoints
   RPC_URL: '{{.RPC_URL | default "http://127.0.0.1:8545"}}'
   WAVS_ENDPOINT: '{{.WAVS_ENDPOINT | default "http://127.0.0.1:8041"}}'
-  AGGREGATOR_URL: '{{.AGGREGATOR_URL | default "http://localhost:8040"}}'
+  AGGREGATOR_URL: '{{.AGGREGATOR_URL | default "http://127.0.0.1:8040"}}'
   IPFS_ENDPOINT: '{{.IPFS_ENDPOINT | default "http://127.0.0.1:5001"}}'
   IPFS_GATEWAY: '{{.IPFS_GATEWAY | default "http://127.0.0.1:8080/ipfs/"}}'
 
