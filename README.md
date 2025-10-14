@@ -85,9 +85,6 @@ Create a comprehensive PageRank test network with real attestations:
 # Create 40+ real attestations across different network patterns
 # Set TEST_ADDRESS to your wallet address from config
 TEST_ADDRESS=$(task config:wallet-address) task trustgraph:full-setup
-
-# Verify the network and get PageRank recommendations
-# task eas:verify-pagerank-network
 ```
 
 This creates a realistic attestation network with:
