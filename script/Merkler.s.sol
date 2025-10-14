@@ -49,8 +49,15 @@ contract Merkler is Common {
 
         // Query for the merkle entry for this specific claimer
         string memory claimerStr = vm.toString(claimer);
+        // Use case-insensitive comparison by lowercasing both addresses
         string memory entry = runCmd(
-            string.concat("curl -s -X GET ", url, " | jq -c '.tree[] | select(.account == \"", claimerStr, "\")'")
+            string.concat(
+                "claimerLower=$(echo '",
+                claimerStr,
+                "' | tr '[:upper:]' '[:lower:]'); curl -s -X GET ",
+                url,
+                " | jq -c \".tree[] | select(.account == \\\"$claimerLower\\\")\""
+            )
         );
 
         // Check if entry was found
