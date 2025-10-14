@@ -202,7 +202,10 @@ export const PredictionMarketDetail = ({
         : firstTimestamp
     )
 
-    const numHours = Math.ceil((lastTimestamp - firstTimestamp) / 1000 / 3600)
+    const numHours = Math.max(
+      Math.ceil((lastTimestamp - firstTimestamp) / 1000 / 3600),
+      1
+    )
     const timestamps = [
       ...new Set([
         // Add a point at every price change.

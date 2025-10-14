@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { useAccount, useWatchContractEvent } from 'wagmi'
 
 import { merkleSnapshotConfig } from '@/lib/contracts'
+import { formatBigNumber } from '@/lib/utils'
 import { pointsQueries } from '@/queries/points'
 
 export const PointsNotifier = () => {
@@ -54,7 +55,9 @@ export const PointsNotifier = () => {
     const difference = newPoints - lastPoints
     if (difference > 0) {
       toast.success(
-        `Earned ${difference} point${difference !== 1 ? 's' : ''}! 🎉`
+        `Earned ${formatBigNumber(difference, undefined, true)} point${
+          difference !== 1 ? 's' : ''
+        }! 🎉`
       )
     }
   }, [lastPoints, updatePoints])
