@@ -18,11 +18,11 @@ wstd = "0.5.4"
 wasi = "0.14.2"
 wavs-wasi-utils = "=1.2.0"
 
-# WAVS
-wavs-llm = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "5509bf5d6f910cb7f6ab035a6fa55b3071f27bcd", package = "wavs-llm"}
-wavs-eas = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "5509bf5d6f910cb7f6ab035a6fa55b3071f27bcd", package = "wavs-eas" }
-wavs-indexer-api = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "5509bf5d6f910cb7f6ab035a6fa55b3071f27bcd", package = "wavs-indexer-api" }
-wavs-merkle-sources = { git = "https://github.com/Lay3rLabs/wavs-tools",  rev = "5509bf5d6f910cb7f6ab035a6fa55b3071f27bcd", package = "wavs-merkle-sources" }
+# WAVS (https://github.com/Lay3rLabs/wavs-tools/pull/123)
+wavs-llm = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "d159899766e1f842addd4b4289f9487012b1803a", package = "wavs-llm"}
+wavs-eas = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "d159899766e1f842addd4b4289f9487012b1803a", package = "wavs-eas" }
+wavs-indexer-api = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "d159899766e1f842addd4b4289f9487012b1803a", package = "wavs-indexer-api" }
+wavs-merkle-sources = { git = "https://github.com/Lay3rLabs/wavs-tools",  rev = "d159899766e1f842addd4b4289f9487012b1803a", package = "wavs-merkle-sources" }
 
 # Other
 schemars = "1.0.4"
@@ -69,3 +69,6 @@ opt-level = "s"
 debug = false
 strip = true
 lto = true
+
+[patch.crates-io]
+# This tells Cargo to not fetch submodules for ALL git dependencies
