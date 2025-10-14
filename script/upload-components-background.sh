@@ -109,11 +109,15 @@ upload_package() {
     fi
 
     local REGISTRY=$(task get-registry)
-    local PKG_NAMESPACE=$(task get-wasi-namespace REGISTRY="$REGISTRY")
+    if [ -z "$REGISTRY" ]; then
+        REGISTRY="localhost:8090"
+        log "[$num] ⚠️  REGISTRY not set, defaulting to $REGISTRY"
+    fi
 
-    if [ -z "$REGISTRY" ] || [ -z "$PKG_NAMESPACE" ]; then
-        log "[$num] ❌ Registry config missing for ${PKG_NAME}"
-        return 1
+    local PKG_NAMESPACE=$(task get-wasi-namespace REGISTRY="$REGISTRY")
+    if [ -z "$PKG_NAMESPACE" ]; then
+        PKG_NAMESPACE="example"
+        log "[$num] ⚠️  PKG_NAMESPACE not set, defaulting to $PKG_NAMESPACE"
     fi
 
     local PROTOCOL="https"
