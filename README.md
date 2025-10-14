@@ -43,16 +43,6 @@ task build:wasi
 
 Start an ethereum node (anvil), the WAVS service, and deploy AVS contracts to the local network.
 
-### Enable Telemetry (optional)
-
-Set Log Level:
-
-- Open the `.env` file.
-- Set the `log_level` variable for wavs to debug to ensure detailed logs are captured.
-
-> \[!NOTE]
-> To see details on how to access both traces and metrics, please check out [Telemetry Documentation](telemetry/telemetry.md).
-
 ### Start the backend
 
 ```bash docci-background docci-delay-after=5
