@@ -23,6 +23,8 @@ infra/*
 
 # Tools
 **/.claude/settings.local.json
+.task
+
 
 # Claud Code
 anvil
