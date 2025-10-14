@@ -6,7 +6,6 @@ use alloy_sol_types::{sol, SolCall};
 use anyhow::Result;
 use async_trait::async_trait;
 use std::collections::HashMap;
-use std::str::FromStr;
 use wavs_indexer_api::solidity::IndexedEvent;
 use wavs_indexer_api::IndexedAttestation;
 use wavs_wasi_utils::evm::alloy_primitives::{hex, Address, FixedBytes, TxKind, U256};
@@ -384,11 +383,10 @@ impl Source for EasPageRankSource {
     async fn get_events_and_value(
         &self,
         ctx: &super::SourceContext,
-        account: &str,
+        account: &Address,
     ) -> Result<(Vec<SourceEvent>, U256)> {
-        let address = Address::from_str(account)?;
         let points = self.calculate_pagerank_points(ctx).await?;
-        let total_value = points.get(&address).copied().unwrap_or(U256::ZERO);
+        let total_value = points.get(account).copied().unwrap_or(U256::ZERO);
         let source_events: Vec<SourceEvent> = if !total_value.is_zero() {
             vec![SourceEvent {
                 r#type: self.get_name().to_string(),

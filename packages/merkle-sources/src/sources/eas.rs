@@ -7,7 +7,6 @@ use anyhow::Result;
 use async_trait::async_trait;
 use serde::Serialize;
 use std::collections::HashSet;
-use std::str::FromStr;
 use wavs_indexer_api::IndexedAttestation;
 use wavs_wasi_utils::evm::alloy_primitives::{hex, Address, FixedBytes, TxKind, U256};
 
@@ -95,17 +94,16 @@ impl Source for EasSource {
     async fn get_events_and_value(
         &self,
         ctx: &super::SourceContext,
-        account: &str,
+        account: &Address,
     ) -> Result<(Vec<SourceEvent>, U256)> {
-        let address = Address::from_str(account)?;
         let (schema_uid, attestation_count) = match &self.source_type {
             EasSourceType::ReceivedAttestations { schema_uid, .. } => (
                 self.parse_schema_uid(schema_uid)?,
-                self.query_received_attestation_count(ctx, address, schema_uid).await?,
+                self.query_received_attestation_count(ctx, account, schema_uid).await?,
             ),
             EasSourceType::SentAttestations { schema_uid, .. } => (
                 self.parse_schema_uid(schema_uid)?,
-                self.query_sent_attestation_count(ctx, &address, schema_uid).await?,
+                self.query_sent_attestation_count(ctx, account, schema_uid).await?,
             ),
         };
 
@@ -179,7 +177,7 @@ impl Source for EasSource {
                     ctx.indexer_querier
                         .get_indexed_attestations_by_schema_and_recipient(
                             schema_uid,
-                            address,
+                            account,
                             U256::from(start),
                             U256::from(length),
                             false,
@@ -193,7 +191,7 @@ impl Source for EasSource {
                     ctx.indexer_querier
                         .get_indexed_attestations_by_schema_and_attester(
                             schema_uid,
-                            &address,
+                            account,
                             U256::from(start),
                             U256::from(length),
                             false,
@@ -300,7 +298,7 @@ impl EasSource {
     async fn query_received_attestation_count(
         &self,
         ctx: &super::SourceContext,
-        recipient: Address,
+        recipient: &Address,
         schema_uid: &str,
     ) -> Result<u64> {
         let schema = self.parse_schema_uid(schema_uid)?;

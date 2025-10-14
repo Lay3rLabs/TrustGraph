@@ -3,49 +3,27 @@
     {
       "filename": "merkler.wasm",
       "package_name": "merkler",
-      "package_version": "0.3.4",
+      "package_version": "0.6.0",
       "trigger_event": "MerklerTrigger(uint64)",
       "trigger_json_path": "merkler.merkle_snapshot",
       "submit_json_path": "merkler.merkle_snapshot",
-      "config_values": {
-        "events_dir": "./events",
-        "eas_address": "${EAS_ADDRESS}",
-        "indexer_address": "${INDEXER_ADDRESS}",
-        "chain_name": "${CHAIN_NAME}",
-        "vouching_schema_uid": "${VOUCHING_SCHEMA_UID}",
-        "pagerank_enabled": "true",
-        "pagerank_points_pool": "10000",
-        "pagerank_trusted_seeds": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-        "pagerank_trust_multiplier": "10.5",
-        "pagerank_trust_boost": "0.99"
-      },
+      "config_file": "merkler.json",
       "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
     },
     {
       "filename": "merkler.wasm",
       "package_name": "merkler",
-      "package_version": "0.3.4",
+      "package_version": "0.6.0",
       "trigger_event": "EventIndexed(bytes32,address,string,address[],string[])",
       "trigger_json_path": "wavs_indexer",
       "submit_json_path": "merkler.merkle_snapshot",
-      "config_values": {
-        "events_dir": "./events",
-        "eas_address": "${EAS_ADDRESS}",
-        "indexer_address": "${INDEXER_ADDRESS}",
-        "chain_name": "${CHAIN_NAME}",
-        "vouching_schema_uid": "${VOUCHING_SCHEMA_UID}",
-        "pagerank_enabled": "true",
-        "pagerank_points_pool": "10000",
-        "pagerank_trusted_seeds": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-        "pagerank_trust_multiplier": "10.5",
-        "pagerank_trust_boost": "0.99"
-      },
+      "config_file": "merkler.json",
       "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
     },
     {
       "filename": "merkler_pruner.wasm",
       "package_name": "merkler-pruner",
-      "package_version": "0.3.4",
+      "package_version": "0.6.0",
       "trigger_block_interval": "2000",
       "submit_json_path": "merkler.merkle_snapshot",
       "config_values": {},
@@ -54,7 +32,7 @@
     {
       "filename": "wavs_indexer.wasm",
       "package_name": "wavs-indexer",
-      "package_version": "0.3.4",
+      "package_version": "0.6.0",
       "trigger_event": "AttestationAttested(address,bytes32)",
       "trigger_json_path": "eas.contracts.indexer_resolver",
       "submit_json_path": "wavs_indexer"
@@ -62,7 +40,7 @@
     {
       "filename": "wavs_indexer.wasm",
       "package_name": "wavs-indexer",
-      "package_version": "0.3.4",
+      "package_version": "0.6.0",
       "trigger_event": "AttestationRevoked(address,bytes32)",
       "trigger_json_path": "eas.contracts.indexer_resolver",
       "submit_json_path": "wavs_indexer"
@@ -70,7 +48,7 @@
     {
       "filename": "wavs_indexer.wasm",
       "package_name": "wavs-indexer",
-      "package_version": "0.3.4",
+      "package_version": "0.6.0",
       "trigger_event": "AttestationAttested(address,bytes32)",
       "trigger_json_path": "eas.contracts.payable_indexer_resolver",
       "submit_json_path": "wavs_indexer"
@@ -78,7 +56,7 @@
     {
       "filename": "wavs_indexer.wasm",
       "package_name": "wavs-indexer",
-      "package_version": "0.3.4",
+      "package_version": "0.6.0",
       "trigger_event": "AttestationRevoked(address,bytes32)",
       "trigger_json_path": "eas.contracts.payable_indexer_resolver",
       "submit_json_path": "wavs_indexer"
@@ -86,7 +64,7 @@
     {
       "filename": "wavs_indexer.wasm",
       "package_name": "wavs-indexer",
-      "package_version": "0.3.4",
+      "package_version": "0.6.0",
       "trigger_event": "AttestationAttested(address,bytes32)",
       "trigger_json_path": "eas.contracts.attester_indexer_resolver",
       "submit_json_path": "wavs_indexer"
@@ -94,7 +72,7 @@
     {
       "filename": "wavs_indexer.wasm",
       "package_name": "wavs-indexer",
-      "package_version": "0.3.4",
+      "package_version": "0.6.0",
       "trigger_event": "AttestationRevoked(address,bytes32)",
       "trigger_json_path": "eas.contracts.attester_indexer_resolver",
       "submit_json_path": "wavs_indexer"
@@ -102,7 +80,7 @@
     {
       "filename": "wavs_safe_signer_sync.wasm",
       "package_name": "wavs-safe-signer-sync",
-      "package_version": "0.1.0",
+      "package_version": "0.6.0",
       "trigger_event": "MerkleRootUpdated(bytes32,bytes32,string)",
       "trigger_json_path": "zodiac_safes.safe1.merkle_gov_module",
       "submit_json_path": "zodiac_safes.safe1.signer_module",
@@ -119,7 +97,7 @@
     {
       "filename": "wavs_gov_aggregator.wasm",
       "package_name": "wavs-gov-aggregator",
-      "package_version": "0.3.4",
+      "package_version": "0.6.0",
       "config_values": {
         "timer_delay_secs": "${AGGREGATOR_TIMER_DELAYER_SECS}"
       },

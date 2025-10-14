@@ -2,20 +2,18 @@
 
 import clsx from 'clsx'
 import { Check, Copy, LoaderCircle, LogOut, User, Wallet } from 'lucide-react'
-import { usePlausible } from 'next-plausible'
 import { useRouter } from 'next/navigation'
+import { usePlausible } from 'next-plausible'
 import type React from 'react'
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAccount, useBalance, useConnect, useDisconnect } from 'wagmi'
 
-import { testAddress } from '@/lib/contracts'
 import { parseErrorMessage } from '@/lib/error'
 import { formatBigNumber } from '@/lib/utils'
 
+import { EthIcon } from './icons/EthIcon'
 import { Popup } from './Popup'
-import { EthIcon } from './tokens/EthIcon'
-import { UsdcIcon } from './tokens/UsdcIcon'
 
 export interface WalletConnectionButtonProps {
   className?: string
@@ -46,16 +44,7 @@ export const WalletConnectionButton = ({
 
   const setOpenRef = useRef<Dispatch<SetStateAction<boolean>> | null>(null)
 
-  // Use mock USDC for collateral balance
-  const { data: usdcBalance, isLoading: isLoadingUsdcBalance } = useBalance({
-    address: address,
-    token: testAddress,
-    query: {
-      enabled: !!address,
-      refetchInterval: 30_000,
-    },
-  })
-  const { data: ethBalance, isLoading: isLoadingEthBalance } = useBalance({
+  const { data: ethBalance, isPending: isLoadingEthBalance } = useBalance({
     address: address,
     query: {
       enabled: !!address,
@@ -105,9 +94,9 @@ export const WalletConnectionButton = ({
       >
         {isConnected && address ? (
           <div className="flex flex-col gap-3 text-sm">
-            <div className="flex flex-col gap-2 bg-secondary p-3 rounded-md border border-border">
+            <div className="flex flex-col gap-2 bg-secondary p-3 rounded-md border border-border -mx-1.5">
               <p className="text-xs text-muted-foreground font-medium mb-1">
-                Base Network Balances
+                Balances
               </p>
 
               <div className="flex flex-row items-center gap-2 pl-2">
@@ -120,20 +109,6 @@ export const WalletConnectionButton = ({
                     : '?'}{' '}
                   <span className="text-muted-foreground">
                     {ethBalance?.symbol}
-                  </span>
-                </p>
-              </div>
-
-              <div className="flex flex-row items-center gap-2 pl-2">
-                <UsdcIcon className="w-5 h-5" />
-                <p className="text-foreground font-medium">
-                  {isLoadingUsdcBalance
-                    ? '...'
-                    : usdcBalance
-                    ? formatBigNumber(usdcBalance.value, usdcBalance.decimals)
-                    : '?'}{' '}
-                  <span className="text-muted-foreground">
-                    {usdcBalance?.symbol}
                   </span>
                 </p>
               </div>

@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import 'tailwindcss-safe-area';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -56,6 +57,8 @@
   --primary-foreground: oklch(0.205 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
+  --tertiary: oklch(0.73 0 0);
+  --tertiary-foreground: oklch(0.1 0 0);
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
   --accent: oklch(0.269 0 0);
@@ -80,6 +83,10 @@
   --sidebar-ring: oklch(0.439 0 0);
 }
 
+.root {
+  isolation: isolate;
+}
+
 @theme inline {
   /* optional: --font-sans, --font-serif, --font-mono if they are applied in the layout.tsx */
   --color-background: var(--background);
@@ -92,6 +99,8 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-tertiary: var(--tertiary);
+  --color-tertiary-foreground: var(--tertiary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
@@ -130,7 +139,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply text-foreground;
   }
   button {
     @apply cursor-pointer;
@@ -138,14 +147,13 @@
 }
 
 /* Clean light background */
-.dynamic-bg {
+html {
   position: relative;
   background: linear-gradient(
     135deg,
     oklch(0.98 0 0) 0%,
     oklch(0.96 0 0) 100%
   );
-  min-height: 100vh;
 }
 
 

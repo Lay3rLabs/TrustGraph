@@ -1642,7 +1642,6 @@ export const merkleGovModuleAbi = [
       { name: '_owner', internalType: 'address', type: 'address' },
       { name: '_avatar', internalType: 'address', type: 'address' },
       { name: '_target', internalType: 'address', type: 'address' },
-      { name: '_merkleSnapshot', internalType: 'address', type: 'address' },
     ],
     stateMutability: 'nonpayable',
   },
@@ -1670,6 +1669,7 @@ export const merkleGovModuleAbi = [
         type: 'uint8',
       },
       { name: 'votingPower', internalType: 'uint256', type: 'uint256' },
+      { name: 'rewardToken', internalType: 'address', type: 'address' },
       { name: 'proof', internalType: 'bytes32[]', type: 'bytes32[]' },
     ],
     name: 'castVote',
@@ -1731,13 +1731,6 @@ export const merkleGovModuleAbi = [
     inputs: [],
     name: 'ipfsHashCid',
     outputs: [{ name: '', internalType: 'string', type: 'string' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'merkleSnapshotContract',
-    outputs: [{ name: '', internalType: 'address', type: 'address' }],
     stateMutability: 'view',
   },
   {
@@ -1844,13 +1837,6 @@ export const merkleGovModuleAbi = [
   },
   {
     type: 'function',
-    inputs: [{ name: 'newContract', internalType: 'address', type: 'address' }],
-    name: 'setMerkleSnapshotContract',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
     inputs: [{ name: 'newQuorum', internalType: 'uint256', type: 'uint256' }],
     name: 'setQuorum',
     outputs: [],
@@ -1904,13 +1890,6 @@ export const merkleGovModuleAbi = [
     inputs: [],
     name: 'target',
     outputs: [{ name: '', internalType: 'address', type: 'address' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'totalVotingPower',
-    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
     stateMutability: 'view',
   },
   {
@@ -1991,25 +1970,6 @@ export const merkleGovModuleAbi = [
       },
     ],
     name: 'MerkleRootUpdated',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'previousContract',
-        internalType: 'address',
-        type: 'address',
-        indexed: true,
-      },
-      {
-        name: 'newContract',
-        internalType: 'address',
-        type: 'address',
-        indexed: true,
-      },
-    ],
-    name: 'MerkleSnapshotContractUpdated',
   },
   {
     type: 'event',
@@ -2703,7 +2663,6 @@ export const rewardDistributorAbi = [
     type: 'constructor',
     inputs: [
       { name: 'rewardToken_', internalType: 'address', type: 'address' },
-      { name: 'merkleSnapshot_', internalType: 'address', type: 'address' },
     ],
     stateMutability: 'nonpayable',
   },
@@ -2770,13 +2729,6 @@ export const rewardDistributorAbi = [
   },
   {
     type: 'function',
-    inputs: [],
-    name: 'merkleSnapshotContract',
-    outputs: [{ name: '', internalType: 'address', type: 'address' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
     inputs: [
       {
         name: 'state',
@@ -2834,13 +2786,6 @@ export const rewardDistributorAbi = [
     name: 'root',
     outputs: [{ name: '', internalType: 'bytes32', type: 'bytes32' }],
     stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [{ name: 'newContract', internalType: 'address', type: 'address' }],
-    name: 'setMerkleSnapshotContract',
-    outputs: [],
-    stateMutability: 'nonpayable',
   },
   {
     type: 'function',
@@ -2943,25 +2888,6 @@ export const rewardDistributorAbi = [
       },
     ],
     name: 'MerkleRootUpdated',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'previousContract',
-        internalType: 'address',
-        type: 'address',
-        indexed: true,
-      },
-      {
-        name: 'newContract',
-        internalType: 'address',
-        type: 'address',
-        indexed: true,
-      },
-    ],
-    name: 'MerkleSnapshotContractUpdated',
   },
   {
     type: 'event',

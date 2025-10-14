@@ -2,6 +2,7 @@
 title: Submission and aggregator
 description: Creating and configuring submission contracts and the aggregator
 ---
+
 <!--docsignore
 import { Callout } from 'fumadocs-ui/components/callout';
 import { DocsPage } from 'fumadocs-ui/page';
@@ -16,7 +17,7 @@ The `submit` field in a service.json file specifies the submission logic for a s
 ```json service.json
     "submit": {  // Where results are sent
         "aggregator": {  // Type of submission (aggregator)
-            "url": "http://127.0.0.1:8001"  // Local aggregator endpoint
+            "url": "http://127.0.0.1:8040"  // Local aggregator endpoint
         }
     },
     "aggregators": [  // The final submission address that the aggregator will submit to
@@ -29,6 +30,7 @@ The `submit` field in a service.json file specifies the submission logic for a s
         }
     ]
 ```
+
 Submit can also be set to `none` if the service does not need to submit results to a contract. The component will still run, but the results will not be submitted.
 
 ## Submission contract

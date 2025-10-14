@@ -7,6 +7,7 @@ export async function POST(
   try {
     // Get chain ID from path parameters
     const { chainId } = await params
+    const id = Number(request.nextUrl.searchParams.get('id') || 0)
 
     if (!chainId) {
       return NextResponse.json(
@@ -24,7 +25,9 @@ export async function POST(
     }
 
     // Get the private RPC URL from environment variables based on chain ID
-    const rpcUrl = process.env[`RPC_URL_${chainId}`]
+    const rpcUrl =
+      (!id && process.env[`RPC_URL_${chainId}`]) ||
+      process.env[`RPC_URL_${chainId}_${id}`]
 
     if (!rpcUrl) {
       return NextResponse.json(

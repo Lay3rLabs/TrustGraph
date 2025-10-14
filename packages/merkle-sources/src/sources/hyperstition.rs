@@ -3,8 +3,7 @@ use alloy_sol_macro::sol;
 use anyhow::Result;
 use async_trait::async_trait;
 use serde_json::json;
-use std::collections::HashSet;
-use std::str::FromStr;
+use std::{collections::HashSet, str::FromStr};
 use wavs_wasi_utils::evm::alloy_primitives::{Address, U256};
 
 use super::Source;
@@ -112,10 +111,8 @@ impl Source for HyperstitionSource {
     async fn get_events_and_value(
         &self,
         ctx: &super::SourceContext,
-        account: &str,
+        account: &Address,
     ) -> Result<(Vec<SourceEvent>, U256)> {
-        let address = Address::from_str(account)?;
-
         let potential_events = ctx
             .indexer_querier
             .getEventsByTypeAndTag(
@@ -135,15 +132,15 @@ impl Source for HyperstitionSource {
             None => return Ok((vec![], U256::ZERO)),
         };
 
-        let collateral_available = U256::try_from_be_slice(&hyperstition_resolution_event.data)
-            .ok_or_else(|| anyhow::anyhow!("Failed to parse data as u256 collateral available"))?;
+        let redeemable_collateral = U256::try_from_be_slice(&hyperstition_resolution_event.data)
+            .ok_or_else(|| anyhow::anyhow!("Failed to parse data as u256 redeemable collateral"))?;
 
         let market_maker = IMarketMakerInstance::new(self.market_maker, &ctx.provider);
         let conditional_tokens = market_maker.pmSystem().call().await?;
 
         let redemption_count = ctx
             .indexer_querier
-            .get_interaction_count_by_type_and_address("prediction_market_redeem", address)
+            .get_interaction_count_by_type_and_address("prediction_market_redeem", *account)
             .await
             .map_err(|e| anyhow::anyhow!(e))?;
 
@@ -154,7 +151,7 @@ impl Source for HyperstitionSource {
             let length = std::cmp::min(batch_size, redemption_count - start);
             println!(
                 "🔄 Finding interaction redemption batch for address {}: {} to {}",
-                address,
+                *account,
                 start,
                 start + length - 1
             );
@@ -163,7 +160,7 @@ impl Source for HyperstitionSource {
                 .indexer_querier
                 .get_interactions_by_type_and_address(
                     "prediction_market_redeem",
-                    address,
+                    *account,
                     start,
                     length,
                     false,
@@ -180,7 +177,7 @@ impl Source for HyperstitionSource {
                             )
                         })?;
 
-                    let value = self.points_pool * payout / collateral_available;
+                    let value = self.points_pool * payout / redeemable_collateral;
 
                     let source_events = vec![SourceEvent {
                         r#type: "hyperstition_realized".to_string(),

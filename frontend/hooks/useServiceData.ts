@@ -43,7 +43,7 @@ export function useServiceData() {
   // Get service URI from POA Service Manager
   const {
     data: serviceURI,
-    isLoading: isServiceURILoading,
+    isPending: isServiceURILoading,
     error: serviceURIError,
   } = useReadContract({
     address: iWavsServiceManagerAddress,

@@ -1,5 +1,5 @@
 use crate::bindings::host::{config_var, get_evm_chain_config};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::str::FromStr;
 use wavs_merkle_sources::pagerank;
 use wavs_wasi_utils::evm::alloy_primitives::{Address, U256};

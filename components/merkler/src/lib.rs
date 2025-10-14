@@ -13,10 +13,9 @@ use merkle::{get_merkle_tree, MerkleTreeEntry, MerkleTreeIpfsData};
 use merkle_tree_rs::standard::LeafType;
 use serde_json::json;
 use std::fs::File;
-use std::str::FromStr;
 use trigger::encode_trigger_output;
 use wavs_merkle_sources::{pagerank, sources};
-use wavs_wasi_utils::evm::alloy_primitives::{hex, U256};
+use wavs_wasi_utils::evm::alloy_primitives::hex;
 use wstd::runtime::block_on;
 
 struct Component;
@@ -72,55 +71,24 @@ impl Guest for Component {
             .await
             .map_err(|e| e.to_string())?;
 
-            let accounts = registry.get_accounts(&ctx).await.map_err(|e| e.to_string())?;
-            println!("👥 Found {} unique accounts", accounts.len());
+            println!("🔍 Fetching accounts and values from all sources...");
 
-            // each value is [address, amount]
-            let events_and_values = accounts
-                .into_iter()
-                .map(|account| {
-                    let registry = &registry;
-                    async {
-                        let (events, value) = registry
-                            .get_events_and_value(&ctx, &account)
-                            .await
-                            .map_err(|e| e.to_string())?;
-                        Ok::<(Vec<sources::SourceEvent>, Vec<String>), String>((
-                            events,
-                            vec![account, value.to_string()],
-                        ))
-                    }
-                })
-                .collect::<Vec<_>>();
+            let (results, total_value) =
+                registry.get_accounts_events_and_value(&ctx).await.map_err(|e| e.to_string())?;
 
-            let results = futures::future::join_all(events_and_values)
-                .await
-                .into_iter()
-                .collect::<Result<Vec<_>, _>>()?;
-
-            // Calculate total points with safety checks
-            let mut total_value = U256::ZERO;
-            for (_, result) in &results {
-                let amount = U256::from_str(&result[1])
-                    .map_err(|e| format!("Invalid amount '{}': {}", result[1], e))?;
-                total_value = total_value
-                    .checked_add(amount)
-                    .ok_or_else(|| "Total calculation overflow".to_string())?;
-            }
-
-            let total_value_str = total_value.to_string();
-
-            println!("💰 Calculated points for {} accounts", results.len());
-            println!("💎 Total points assigned: {}", total_value_str);
+            println!("👥 Found {} unique accounts", results.len());
+            println!("💰 Total value assigned: {}", total_value);
 
             if results.len() == 0 {
-                println!("⚠️  No accounts to distribute points to");
+                println!("⚠️  No accounts to distribute to");
                 return Ok(None);
             }
 
-            let tree = get_merkle_tree(
-                results.iter().map(|(_, value)| value.clone()).collect::<Vec<_>>(),
-            )?;
+            let tree_data = results
+                .iter()
+                .map(|(account, (_, value))| vec![account.to_string(), value.to_string()])
+                .collect::<Vec<_>>();
+            let tree = get_merkle_tree(tree_data.clone())?;
             let root = tree.root();
             let root_bytes = hex::decode(&root).map_err(|e| e.to_string())?;
 
@@ -133,7 +101,7 @@ impl Guest for Component {
                 id: root.clone(),
                 metadata: json!({
                     "num_accounts": results.len(),
-                    "total_value": total_value_str,
+                    "total_value": total_value.to_string(),
                     "sources": sources_with_metadata,
                 }),
                 root: root.clone(),
@@ -141,7 +109,7 @@ impl Guest for Component {
             };
 
             // get proof for each value
-            results.iter().for_each(|(_, value)| {
+            tree_data.into_iter().for_each(|value| {
                 let proof = tree.get_proof(LeafType::LeafBytes(value.clone()));
                 ipfs_data.tree.push(MerkleTreeEntry {
                     account: value[0].clone(),
@@ -165,8 +133,8 @@ impl Guest for Component {
             println!("🗃️ Writing account events to {}...", config.events_dir.display());
             results
                 .into_iter()
-                .map(|(events, value)| {
-                    let file_path = config.events_dir.join(format!("{}.json", value[0]));
+                .map(|(account, (events, _))| {
+                    let file_path = config.events_dir.join(format!("{}.json", account));
                     let file = File::create(file_path).unwrap();
                     serde_json::to_writer(file, &events)
                 })

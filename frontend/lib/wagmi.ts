@@ -38,7 +38,7 @@ export const getCurrentChainConfig = (): Chain => {
       ...base,
       rpcUrls: {
         default: {
-          http: ['/api/rpc/8453'],
+          http: ['/api/rpc/8453?id=0', '/api/rpc/8453?id=1'],
           ...(webSocketUrl && { webSocket: [webSocketUrl] }),
         },
       },
@@ -67,17 +67,12 @@ export const config = createConfig({
     }),
   ],
   transports: supportedChains.reduce((acc, chain) => {
-    const webSocketUrl = chain.rpcUrls.default.webSocket?.[0]
-    const httpUrl = chain.rpcUrls.default.http[0]
-    const httpTransport = http(httpUrl, {
-      retryCount: 3,
-      timeout: 30_000,
-    })
-    const transport = webSocketUrl
-      ? fallback([webSocket(webSocketUrl), httpTransport])
-      : httpTransport
+    const transports = [
+      ...(chain.rpcUrls.default.webSocket?.map((url) => webSocket(url)) || []),
+      ...(chain.rpcUrls.default.http.map((url) => http(url)) || []),
+    ]
 
-    acc[chain.id] = transport
+    acc[chain.id] = transports.length > 1 ? fallback(transports) : transports[0]
     return acc
   }, {} as Record<number, any>),
 })

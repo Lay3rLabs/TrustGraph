@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import type React from 'react'
-import { useState, useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useAccount, useConnect } from 'wagmi'
 import { injected } from 'wagmi/connectors'
 

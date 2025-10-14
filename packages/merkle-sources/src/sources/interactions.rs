@@ -3,7 +3,6 @@ use anyhow::Result;
 use async_trait::async_trait;
 use serde_json::json;
 use std::collections::HashSet;
-use std::str::FromStr;
 use wavs_wasi_utils::evm::alloy_primitives::{Address, U256};
 
 use super::Source;
@@ -97,12 +96,11 @@ impl Source for InteractionsSource {
     async fn get_events_and_value(
         &self,
         ctx: &super::SourceContext,
-        account: &str,
+        account: &Address,
     ) -> Result<(Vec<SourceEvent>, U256)> {
-        let address = Address::from_str(account)?;
         let interaction_count = ctx
             .indexer_querier
-            .get_interaction_count_by_type_and_address(&self.interaction_type, address)
+            .get_interaction_count_by_type_and_address(&self.interaction_type, *account)
             .await
             .map_err(|e| anyhow::anyhow!(e))?;
 
@@ -124,7 +122,7 @@ impl Source for InteractionsSource {
                 .indexer_querier
                 .get_interactions_by_type_and_address(
                     &self.interaction_type,
-                    address,
+                    *account,
                     start,
                     length,
                     false,

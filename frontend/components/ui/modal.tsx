@@ -3,6 +3,8 @@
 import clsx from 'clsx'
 import { ReactNode, useEffect, useRef } from 'react'
 
+import { useUpdatingRef } from '@/hooks/useUpdatingRef'
+
 import { Card } from '../Card'
 
 interface ModalProps {
@@ -13,6 +15,7 @@ interface ModalProps {
   className?: string
   contentClassName?: string
   footer?: ReactNode
+  backgroundContent?: ReactNode
 }
 
 export function Modal({
@@ -23,28 +26,48 @@ export function Modal({
   className,
   contentClassName,
   footer,
+  backgroundContent,
 }: ModalProps) {
   useEffect(() => {
-    if (!onClose) {
+    if (isOpen) {
+      const scrollX = window.scrollX
+      const scrollY = window.scrollY
+      const width = document.documentElement.clientWidth
+      const scrollbarWidth =
+        window.innerWidth - document.documentElement.clientWidth
+      console.log('scrollbarWidth', scrollbarWidth)
+      document.body.style.position = 'fixed'
+      document.body.style.top = `-${scrollY}px`
+      document.body.style.left = `-${scrollX}px`
+      document.body.style.width = `${width}px`
+      return () => {
+        document.body.style.position = ''
+        document.body.style.top = ''
+        document.body.style.left = ''
+        document.body.style.width = ''
+        window.scrollTo(scrollX, scrollY)
+      }
+    }
+  }, [isOpen])
+
+  const onCloseRef = useUpdatingRef(onClose)
+  useEffect(() => {
+    if (!isOpen) {
       return
     }
 
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose?.()
+        onCloseRef.current?.()
       }
     }
 
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape)
-      document.body.style.overflow = 'hidden'
-    }
+    document.addEventListener('keydown', handleEscape)
 
     return () => {
       document.removeEventListener('keydown', handleEscape)
-      document.body.style.overflow = 'unset'
     }
-  }, [isOpen, onClose])
+  }, [isOpen, onCloseRef])
 
   const openedOnce = useRef(isOpen)
   if (isOpen && !openedOnce.current) {
@@ -66,7 +89,28 @@ export function Modal({
       )}
     >
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
+      <div
+        className="fixed inset-0 bg-black/50 cursor-pointer"
+        onClick={
+          onClose &&
+          ((e) => {
+            e.stopPropagation()
+            onClose()
+          })
+        }
+      />
+
+      {onClose && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onClose()
+          }}
+          className="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors text-2xl leading-none z-10"
+        >
+          ×
+        </button>
+      )}
 
       {/* Modal */}
       <Card
@@ -82,14 +126,6 @@ export function Modal({
         {title && (
           <div className="flex items-center justify-between p-4 border-b border-gray-700 shrink09">
             <h2 className="terminal-bright text-sm">{title}</h2>
-            {onClose && (
-              <button
-                onClick={onClose}
-                className="terminal-dim hover:terminal-bright transition-colors text-lg"
-              >
-                ×
-              </button>
-            )}
           </div>
         )}
 
@@ -104,6 +140,12 @@ export function Modal({
           <div className="p-4 border-t border-gray-700 shrink-0">{footer}</div>
         )}
       </Card>
+
+      {backgroundContent && (
+        <div className="absolute inset-0 z-40 pointer-events-none">
+          {backgroundContent}
+        </div>
+      )}
     </div>
   )
 }

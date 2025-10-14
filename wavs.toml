@@ -94,7 +94,7 @@ cors_allowed_origins = [
 ]
 
 # The port on which the server will listen.
-# port = 8000
+port = 8041
 
 # The host to serve on. Default is localhost
 # host = "localhost"
@@ -113,7 +113,7 @@ cors_allowed_origins = [
 # The directory to store the data. Default is "/var/wavs-cli"
 data = "~/wavs/cli"
 
-# wavs_endpoint = "http://localhost:8000"
+# wavs_endpoint = "http://localhost:8041"
 
 # ----------------------------
 # Aggregator specific settings
@@ -127,6 +127,8 @@ cors_allowed_origins = [
     "http://localhost:*",
     "http://127.0.0.1:*",
 ]
+
+port = 8040
 
 # Optional bearer token to protect mutating HTTP endpoints
 # If set here or via env var `WAVS_AGGREGATOR_BEARER_TOKEN`, POST endpoints require `Authorization: Bearer <token>`

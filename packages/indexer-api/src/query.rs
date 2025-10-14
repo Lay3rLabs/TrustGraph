@@ -210,7 +210,7 @@ impl WavsIndexerQuerier {
     pub async fn get_attestation_count_by_schema_and_recipient(
         &self,
         schema_uid: FixedBytes<32>,
-        recipient: Address,
+        recipient: &Address,
     ) -> Result<U256, String> {
         self.getEventCountByTypeAndTag(
             "attestation".to_string(),
@@ -224,7 +224,7 @@ impl WavsIndexerQuerier {
     pub async fn get_indexed_attestations_by_schema_and_recipient(
         &self,
         schema_uid: FixedBytes<32>,
-        recipient: Address,
+        recipient: &Address,
         start: U256,
         length: U256,
         reverse_order: bool,

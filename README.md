@@ -80,6 +80,7 @@ task deploy:full && task deploy:single-operator-poa-local
 Simple demo showing how to create a schema, trigger an attestation request, and view results.
 
 This demo walks you through the complete attestation workflow:
+
 1. **Register a Schema** - Define the structure for attestations (like a database table schema)
 2. **Trigger an Attestation** - Request WAVS to create an attestation using your schema
 3. **View Results** - Check that the attestation was successfully created on-chain
@@ -100,6 +101,7 @@ TEST_ADDRESS=$(task config:wallet-address) task pagerank:full-setup
 ```
 
 This creates a realistic attestation network with:
+
 - **Alice** (Central Hub) - 11 incoming connections
 - **Diana** (Authority) - 565 total vouching weight
 - **Charlie** (Bridge) - 7+ cross-group connections
@@ -110,16 +112,19 @@ Perfect for testing PageRank-based reward algorithms!
 ### Distribute Rewards
 
 Trigger the service to run:
+
 ```bash
 task forge:update-rewards
 ```
 
 Query rewards state:
+
 ```bash
 task forge:query-rewards
 ```
 
 Claim:
+
 ```bash
 task forge:claim-rewards
 

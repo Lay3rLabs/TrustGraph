@@ -80,7 +80,7 @@ build_env_args() {
     echo "$args"
 }
 
-BASE_CMD="docker run --rm --network host -w /data -v $(pwd):/data ghcr.io/lay3rlabs/wavs:1.4.1 wavs-cli service --json true --home /data --file /data/${FILE_LOCATION}"
+BASE_CMD="docker run --rm --network host -w /data -v $(pwd):/data ghcr.io/lay3rlabs/wavs:1.5.0 wavs-cli service --json true --home /data --file /data/${FILE_LOCATION}"
 
 if [ -z "$WAVS_SERVICE_MANAGER_ADDRESS" ]; then
     export WAVS_SERVICE_MANAGER_ADDRESS=$(jq -r '.contract' .docker/poa_sm_deploy.json)
@@ -121,6 +121,8 @@ if [ -z "${COMPONENT_CONFIGS_FILE}" ] || [ ! -f "${COMPONENT_CONFIGS_FILE}" ]; t
         fi
     fi
 fi
+
+COMPONENT_CONFIGS_DIR=$(dirname "$COMPONENT_CONFIGS_FILE")
 
 echo "Reading component configurations from: ${COMPONENT_CONFIGS_FILE}"
 
@@ -170,8 +172,15 @@ jq -c '.components[]' "${COMPONENT_CONFIGS_FILE}" | while IFS= read -r component
     COMP_TRIGGER_CRON_END_TIME=$(echo "$component" | jq -r '.trigger_cron.end_time // ""')
 
     # Extract component-specific config values and env variables
-    COMP_CONFIG_VALUES=$(echo "$component" | jq '.config_values // {}')
+    COMP_CONFIG_FILE=$(echo "$component" | jq -r '.config_file // ""')
     COMP_ENV_VARIABLES=$(echo "$component" | jq '.env_variables // []')
+
+    # if config file specified, load config values from file
+    if [ -n "$COMP_CONFIG_FILE" ]; then
+        COMP_CONFIG_VALUES=$(jq . "$COMPONENT_CONFIGS_DIR/$COMP_CONFIG_FILE")
+    else
+        COMP_CONFIG_VALUES=$(echo "$component" | jq '.config_values // {}')
+    fi
 
     echo "Creating workflow for component: ${COMP_FILENAME}"
     WORKFLOW_ID=`eval "$BASE_CMD workflow add" | jq -r .workflow_id`

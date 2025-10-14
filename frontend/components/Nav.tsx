@@ -3,6 +3,7 @@
 import clsx from 'clsx'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { ComponentType } from 'react'
 
 import { WalletConnectionButton } from '@/components/WalletConnectionButton'
 import { useResponsiveMount } from '@/hooks/useResponsiveMount'
@@ -12,23 +13,20 @@ import Logo from './Logo'
 const menuItems: {
   label: string
   href: string
-  icon?: string
+  Icon?: ComponentType<{ className?: string }>
   iconClassName?: string
 }[] = [
   {
     label: 'Attestations',
     href: '/attestations',
-    iconClassName: 'w-5 h-5',
   },
   {
     label: 'Governance',
     href: '/governance',
-    iconClassName: 'w-6 h-6',
   },
   {
     label: 'Network',
     href: '/network',
-    iconClassName: 'w-6 h-6',
   },
 ]
 
@@ -55,14 +53,8 @@ export const Nav = () => {
                 : 'opacity-50'
             )}
           >
-            {item.icon && (
-              <img
-                src={item.icon}
-                alt={item.label}
-                className={item.iconClassName}
-              />
-            )}
-            <span className="hidden sm:block">{item.label}</span>
+            {item.Icon && <item.Icon className={item.iconClassName} />}
+            <span className="hidden md:block">{item.label}</span>
           </Link>
         ))}
       </div>

@@ -248,7 +248,7 @@ pub unsafe fn _export_process_packet_cabi<T: Guest>(arg0: *mut u8) -> *mut u8 {
                         let len50 = l49;
                         let bytes50 = _rt::Vec::from_raw_parts(l48.cast(), len50, len50);
                         wavs::types::service::ComponentSourceDownload {
-                            url: _rt::string_lift(bytes47),
+                            uri: _rt::string_lift(bytes47),
                             digest: _rt::string_lift(bytes50),
                         }
                     };
@@ -524,7 +524,7 @@ pub unsafe fn _export_process_packet_cabi<T: Guest>(arg0: *mut u8) -> *mut u8 {
                                         len107,
                                     );
                                     wavs::types::service::ComponentSourceDownload {
-                                        url: _rt::string_lift(bytes104),
+                                        uri: _rt::string_lift(bytes104),
                                         digest: _rt::string_lift(bytes107),
                                     }
                                 };
@@ -1689,7 +1689,7 @@ pub unsafe fn _export_handle_timer_callback_cabi<T: Guest>(arg0: *mut u8) -> *mu
                         let len50 = l49;
                         let bytes50 = _rt::Vec::from_raw_parts(l48.cast(), len50, len50);
                         wavs::types::service::ComponentSourceDownload {
-                            url: _rt::string_lift(bytes47),
+                            uri: _rt::string_lift(bytes47),
                             digest: _rt::string_lift(bytes50),
                         }
                     };
@@ -1965,7 +1965,7 @@ pub unsafe fn _export_handle_timer_callback_cabi<T: Guest>(arg0: *mut u8) -> *mu
                                         len107,
                                     );
                                     wavs::types::service::ComponentSourceDownload {
-                                        url: _rt::string_lift(bytes104),
+                                        uri: _rt::string_lift(bytes104),
                                         digest: _rt::string_lift(bytes107),
                                     }
                                 };
@@ -3130,7 +3130,7 @@ pub unsafe fn _export_handle_submit_callback_cabi<T: Guest>(arg0: *mut u8) -> *m
                         let len50 = l49;
                         let bytes50 = _rt::Vec::from_raw_parts(l48.cast(), len50, len50);
                         wavs::types::service::ComponentSourceDownload {
-                            url: _rt::string_lift(bytes47),
+                            uri: _rt::string_lift(bytes47),
                             digest: _rt::string_lift(bytes50),
                         }
                     };
@@ -3406,7 +3406,7 @@ pub unsafe fn _export_handle_submit_callback_cabi<T: Guest>(arg0: *mut u8) -> *m
                                         len107,
                                     );
                                     wavs::types::service::ComponentSourceDownload {
-                                        url: _rt::string_lift(bytes104),
+                                        uri: _rt::string_lift(bytes104),
                                         digest: _rt::string_lift(bytes107),
                                     }
                                 };
@@ -21157,7 +21157,7 @@ pub mod wavs {
             }
             #[derive(Clone)]
             pub struct ComponentSourceDownload {
-                pub url: _rt::String,
+                pub uri: _rt::String,
                 pub digest: Digest,
             }
             impl ::core::fmt::Debug for ComponentSourceDownload {
@@ -21166,7 +21166,7 @@ pub mod wavs {
                     f: &mut ::core::fmt::Formatter<'_>,
                 ) -> ::core::fmt::Result {
                     f.debug_struct("ComponentSourceDownload")
-                        .field("url", &self.url)
+                        .field("uri", &self.uri)
                         .field("digest", &self.digest)
                         .finish()
                 }
@@ -22318,7 +22318,7 @@ pub mod host {
                                     len52,
                                 );
                                 super::wavs::types::service::ComponentSourceDownload {
-                                    url: _rt::string_lift(bytes49),
+                                    uri: _rt::string_lift(bytes49),
                                     digest: _rt::string_lift(bytes52),
                                 }
                             };
@@ -22630,7 +22630,7 @@ pub mod host {
                                                 len109,
                                             );
                                             super::wavs::types::service::ComponentSourceDownload {
-                                                url: _rt::string_lift(bytes106),
+                                                uri: _rt::string_lift(bytes106),
                                                 digest: _rt::string_lift(bytes109),
                                             }
                                         };
@@ -23327,7 +23327,7 @@ pub mod host {
                         let len44 = l43;
                         let bytes44 = _rt::Vec::from_raw_parts(l42.cast(), len44, len44);
                         super::wavs::types::service::ComponentSourceDownload {
-                            url: _rt::string_lift(bytes41),
+                            uri: _rt::string_lift(bytes41),
                             digest: _rt::string_lift(bytes44),
                         }
                     };
@@ -23599,7 +23599,7 @@ pub mod host {
                                         len101,
                                     );
                                     super::wavs::types::service::ComponentSourceDownload {
-                                        url: _rt::string_lift(bytes98),
+                                        uri: _rt::string_lift(bytes98),
                                         digest: _rt::string_lift(bytes101),
                                     }
                                 };
@@ -24255,7 +24255,7 @@ macro_rules! __export_aggregator_world_impl {
 pub(crate) use __export_aggregator_world_impl as export;
 #[cfg(target_arch = "wasm32")]
 #[unsafe(
-    link_section = "component-type:wit-bindgen:0.41.0:wavs:aggregator@1.2.0:aggregator-world:encoded world"
+    link_section = "component-type:wit-bindgen:0.41.0:wavs:aggregator@1.2.1:aggregator-world:encoded world"
 )]
 #[doc(hidden)]
 #[allow(clippy::octal_escapes)]
@@ -24265,7 +24265,7 @@ pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 20944] = *b"\
 timestamp\x03\0\x02\x01r\x01\x04secsw\x04\0\x08duration\x03\0\x04\x01o\x02ww\x01\
 r\x01\x05value\x06\x04\0\x04u128\x03\0\x07\x01q\x05\x05error\0\0\x04warn\0\0\x04\
 info\0\0\x05debug\0\0\x05trace\0\0\x04\0\x09log-level\x03\0\x09\x03\0\x15wavs:ty\
-pes/core@1.2.0\x05\0\x01B\x1c\x01s\x04\0\x09chain-key\x03\0\0\x01p}\x04\0\x0bevm\
+pes/core@1.2.1\x05\0\x01B\x1c\x01s\x04\0\x09chain-key\x03\0\0\x01p}\x04\0\x0bevm\
 -tx-hash\x03\0\x02\x01s\x04\0\x0ecosmos-tx-hash\x03\0\x04\x01q\x02\x03evm\x01\x03\
 \0\x06cosmos\x01\x05\0\x04\0\x0bany-tx-hash\x03\0\x06\x01r\x02\x0bbech32-addrs\x0a\
 prefix-leny\x04\0\x0ecosmos-address\x03\0\x08\x01o\x02ss\x01p\x0a\x01r\x02\x02ty\
@@ -24277,7 +24277,7 @@ gas-denoms\x0dbech32-prefixs\x04\0\x13cosmos-chain-config\x03\0\x0f\x01p}\x01r\x
 \x04data\x16\x07tx-hash\x03\x0cblock-numberw\x09log-indexw\x0ablock-hash\x11\x0f\
 block-timestamp\x17\x08tx-indexw\x04\0\x0devm-event-log\x03\0\x18\x01r\x03\x08ch\
 ain-ids\x0bws-endpoint\x0e\x0dhttp-endpoint\x0e\x04\0\x10evm-chain-config\x03\0\x1a\
-\x03\0\x16wavs:types/chain@1.2.0\x05\x01\x02\x03\0\0\x06digest\x02\x03\0\0\x09ti\
+\x03\0\x16wavs:types/chain@1.2.1\x05\x01\x02\x03\0\0\x06digest\x02\x03\0\0\x09ti\
 mestamp\x02\x03\0\x01\x09chain-key\x02\x03\0\x01\x0bevm-address\x02\x03\0\x01\x0e\
 cosmos-address\x01BO\x02\x03\x02\x01\x02\x04\0\x06digest\x03\0\0\x02\x03\x02\x01\
 \x03\x04\0\x09timestamp\x03\0\x02\x02\x03\x02\x01\x04\x04\0\x09chain-key\x03\0\x04\
@@ -24286,7 +24286,7 @@ cosmos-address\x03\0\x08\x01s\x04\0\x0aservice-id\x03\0\x0a\x01s\x04\0\x0bworkfl
 ow-id\x03\0\x0c\x01s\x04\0\x0bpackage-ref\x03\0\x0e\x01s\x04\0\x0esemver-version\
 \x03\0\x10\x01q\x02\x06active\0\0\x06paused\0\0\x04\0\x0eservice-status\x03\0\x12\
 \x01r\x02\x05chain\x05\x07address\x07\x04\0\x0bevm-manager\x03\0\x14\x01q\x01\x03\
-evm\x01\x15\0\x04\0\x0fservice-manager\x03\0\x16\x01r\x02\x03urls\x06digest\x01\x04\
+evm\x01\x15\0\x04\0\x0fservice-manager\x03\0\x16\x01r\x02\x03uris\x06digest\x01\x04\
 \0\x19component-source-download\x03\0\x18\x01ks\x01k\x11\x01r\x04\x06digest\x01\x06\
 domain\x1a\x07version\x1b\x03pkg\x0f\x04\0\x08registry\x03\0\x1c\x01q\x03\x08dow\
 nload\x01\x19\0\x08registry\x01\x1d\0\x06digest\x01\x01\0\x04\0\x10component-sou\
@@ -24311,7 +24311,7 @@ it\x03\0?\x01r\x03\x07trigger5\x09component)\x06submit\xc0\0\x04\0\x08workflow\x
 \x07max-gas%\x04\0\x17evm-contract-submission\x03\0G\x01q\x01\x03evm\x01\xc8\0\0\
 \x04\0\x0aaggregator\x03\0I\x01r\x02\x07service\xc6\0\x0bworkflow-id\x0d\x04\0\x17\
 service-and-workflow-id\x03\0K\x01r\x02\x08workflow\xc2\0\x0bworkflow-id\x0d\x04\
-\0\x18workflow-and-workflow-id\x03\0M\x03\0\x18wavs:types/service@1.2.0\x05\x07\x02\
+\0\x18workflow-and-workflow-id\x03\0M\x03\0\x18wavs:types/service@1.2.1\x05\x07\x02\
 \x03\0\x01\x0devm-event-log\x02\x03\0\x01\x0ccosmos-event\x01B\x19\x02\x03\x02\x01\
 \x04\x04\0\x09chain-key\x03\0\0\x02\x03\x02\x01\x05\x04\0\x0bevm-address\x03\0\x02\
 \x02\x03\x02\x01\x08\x04\0\x0devm-event-log\x03\0\x04\x02\x03\x02\x01\x06\x04\0\x0e\
@@ -24324,7 +24324,7 @@ in\x01\x0cblock-heightw\x04\0\x1btrigger-data-block-interval\x03\0\x12\x01r\x01\
 trigger-time\x0b\x04\0\x11trigger-data-cron\x03\0\x14\x01p}\x01q\x05\x12evm-cont\
 ract-event\x01\x0f\0\x15cosmos-contract-event\x01\x11\0\x0eblock-interval\x01\x13\
 \0\x04cron\x01\x15\0\x03raw\x01\x16\0\x04\0\x0ctrigger-data\x03\0\x17\x03\0\x17w\
-avs:types/events@1.2.0\x05\x0a\x02\x03\0\0\x08duration\x02\x03\0\0\x04u128\x02\x03\
+avs:types/events@1.2.1\x05\x0a\x02\x03\0\0\x08duration\x02\x03\0\0\x04u128\x02\x03\
 \0\x02\x07service\x02\x03\0\x02\x0bworkflow-id\x02\x03\0\x02\x0esignature-kind\x02\
 \x03\0\x03\x0ctrigger-data\x02\x03\0\x03\x08event-id\x01B\x20\x02\x03\x02\x01\x0b\
 \x04\0\x08duration\x03\0\0\x02\x03\x02\x01\x0c\x04\0\x04u128\x03\0\x02\x02\x03\x02\
@@ -24339,7 +24339,7 @@ signature\x16\x0ctrigger-data\x0f\x04\0\x06packet\x03\0\x17\x01r\x01\x05delay\x0
 \x04\0\x0ctimer-action\x03\0\x19\x01k\x03\x01r\x03\x05chain\x0b\x10contract-addr\
 ess\x0d\x09gas-price\x1b\x04\0\x0dsubmit-action\x03\0\x1c\x01q\x02\x05timer\x01\x1a\
 \0\x06submit\x01\x1d\0\x04\0\x11aggregator-action\x03\0\x1e\x03\0\x20wavs:aggreg\
-ator/aggregator@1.2.0\x05\x12\x02\x03\0\x04\x06packet\x03\0\x06packet\x03\0\x13\x02\
+ator/aggregator@1.2.1\x05\x12\x02\x03\0\x04\x06packet\x03\0\x06packet\x03\0\x13\x02\
 \x03\0\x04\x11aggregator-action\x03\0\x11aggregator-action\x03\0\x15\x02\x03\0\x01\
 \x0bany-tx-hash\x03\0\x0bany-tx-hash\x03\0\x17\x01B\x0a\x04\0\x08pollable\x03\x01\
 \x01h\0\x01@\x01\x04self\x01\0\x7f\x04\0\x16[method]pollable.ready\x01\x02\x01@\x01\
@@ -24686,7 +24686,7 @@ ket\x04\x04keys\x05\0\x0d\x04\0\x0bdelete-many\x01\x0f\x03\0\x20wasi:keyvalue/ba
 tch@0.2.0-draft2\x05U\x01p\x16\x01j\x01\xd6\0\x01s\x01@\x01\x06packet\x14\0\xd7\0\
 \x04\0\x0eprocess-packet\x01X\x04\0\x15handle-timer-callback\x01X\x01j\x01\x18\x01\
 s\x01j\0\x01s\x01@\x02\x06packet\x14\x09tx-result\xd9\0\0\xda\0\x04\0\x16handle-\
-submit-callback\x01[\x04\0&wavs:aggregator/aggregator-world@1.2.0\x04\0\x0b\x16\x01\
+submit-callback\x01[\x04\0&wavs:aggregator/aggregator-world@1.2.1\x04\0\x0b\x16\x01\
 \0\x10aggregator-world\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-co\
 mponent\x070.227.1\x10wit-bindgen-rust\x060.41.0";
 #[inline(never)]

@@ -1,4 +1,5 @@
 name: Solidity
+
 on:
   pull_request:
 

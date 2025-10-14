@@ -8,7 +8,7 @@ CARGO=cargo
 INPUT_DATA?=``
 COMPONENT_FILENAME?=wavs_eas_attest.wasm
 CREDENTIAL?=""
-DOCKER_IMAGE?=ghcr.io/lay3rlabs/wavs:1.4.1
+DOCKER_IMAGE?=ghcr.io/lay3rlabs/wavs:1.5.0
 MIDDLEWARE_DOCKER_IMAGE?=ghcr.io/lay3rlabs/wavs-middleware:0.5.0-beta.10
 IPFS_ENDPOINT?=http://127.0.0.1:5001
 RPC_URL?=http://127.0.0.1:8545
@@ -16,7 +16,7 @@ SERVICE_FILE?=.docker/service.json
 WASI_BUILD_DIR ?= ""
 ENV_FILE?=.env
 WAVS_CMD ?= $(SUDO) docker run --rm --network host $$(test -f ${ENV_FILE} && echo "--env-file ./${ENV_FILE}") -v $$(pwd):/data ${DOCKER_IMAGE} wavs-cli
-WAVS_ENDPOINT?="http://127.0.0.1:8000"
+WAVS_ENDPOINT?="http://127.0.0.1:8041"
 WAVS_SERVICE_MANAGER_ADDRESS?=`task config:service-manager-address`
 -include ${ENV_FILE}
 
@@ -146,7 +146,7 @@ deploy-service:
 		done; \
 	fi
 	@echo "🚀 Deploying service from: ${SERVICE_URL}..."
-	@$(WAVS_CMD) deploy-service --service-url ${SERVICE_URL} --log-level=debug --data /data/.docker --home /data $(if $(WAVS_ENDPOINT),--wavs-endpoint $(WAVS_ENDPOINT),) $(if $(IPFS_GATEWAY),--ipfs-gateway $(IPFS_GATEWAY),)
+	@$(WAVS_CMD) deploy-service --service-uri ${SERVICE_URL} --log-level=debug --data /data/.docker --home /data $(if $(WAVS_ENDPOINT),--wavs-endpoint $(WAVS_ENDPOINT),) $(if $(IPFS_GATEWAY),--ipfs-gateway $(IPFS_GATEWAY),)
 	@echo "✅ Service deployed successfully"
 
 PINATA_API_KEY?=""

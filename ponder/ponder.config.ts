@@ -1,4 +1,4 @@
-import { createConfig } from "ponder";
+import { createConfig, factory } from "ponder";
 
 import {
   easAbi,

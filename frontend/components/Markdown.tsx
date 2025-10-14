@@ -4,19 +4,22 @@ import clsx from 'clsx'
 import { HTMLMotionProps, motion } from 'motion/react'
 import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
+import rehypeRaw from 'rehype-raw'
 
 export type MarkdownProps = {
   children: string
+  rawHtml?: boolean
   textFade?: boolean
 }
 
-export const Markdown = ({ children, textFade }: MarkdownProps) => {
+export const Markdown = ({ children, textFade, rawHtml }: MarkdownProps) => {
   return (
     <ReactMarkdown
       components={{
         ...(textFade ? { p: SlideFadeInParagraph as any } : {}),
         a: StyledLink as any,
       }}
+      rehypePlugins={rawHtml ? [rehypeRaw] : undefined}
     >
       {children}
     </ReactMarkdown>

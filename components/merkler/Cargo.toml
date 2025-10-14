@@ -44,4 +44,4 @@ lto = true
 
 [package.metadata.component]
 package = "component:merkler"
-target = "wavs:operator@=1.2.0"
+target = "wavs:operator@=1.2.1"
