@@ -104,7 +104,7 @@ const Logo = ({
     // Animation tasks.
     animator.registerTask(
       'thinking',
-      ({ start }, { wag = true }: { wag?: boolean }) =>
+      ({ start }, { wag = true }: { wag?: boolean } = {}) =>
         Promise.all([
           start('structure', 'pulse', { duration: 3, repeat: Infinity }),
           start('logo', 'glow', { duration: 3, repeat: Infinity }),
