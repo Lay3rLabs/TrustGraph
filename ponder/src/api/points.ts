@@ -3,11 +3,7 @@ import path from "path";
 import fs from "fs";
 import CONFIG from "../../../frontend/config.json";
 
-const eventsFolders = [CONFIG.wavsServiceId]
-  .flat()
-  .map((serviceId) =>
-    path.join(process.cwd(), `../infra/wavs-1/app/${serviceId}/events`)
-  );
+const operatorsFolder = path.join(process.cwd(), "../infra");
 
 const pointsApp = new Hono();
 
@@ -17,8 +13,23 @@ pointsApp.get("/:account", async (c) => {
     return c.json({ error: "Account is required" }, 400);
   }
 
-  if (eventsFolders.every((folder) => !fs.existsSync(folder))) {
-    return c.json({ error: "Events paths not found" }, 500);
+  const eventsFolders = fs
+    .readdirSync(operatorsFolder, {
+      withFileTypes: true,
+    })
+    .filter((folder) => folder.isDirectory() && folder.name.startsWith("wavs-"))
+    .map((folder) =>
+      path.join(
+        operatorsFolder,
+        folder.name,
+        "app",
+        CONFIG.wavsServiceId,
+        "events"
+      )
+    );
+
+  if (eventsFolders.length === 0) {
+    return c.json({ error: "No operator events folders found" }, 500);
   }
 
   const allFiles = eventsFolders.flatMap((folder) =>
