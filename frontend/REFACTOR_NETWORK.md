@@ -84,7 +84,7 @@ The `useNetwork` hook maintains the same interface as `useMerkle`:
 const {
   isLoading,
   error,
-  MerkleData,        // Array of network entries
+  merkleData,        // Array of network entries
   totalRewards,      // Total reputation points
   totalParticipants, // Number of members
   refresh,           // Function to refresh data

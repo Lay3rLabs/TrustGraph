@@ -2,12 +2,12 @@
 
 import type React from 'react'
 import { useCallback, useEffect, useState } from 'react'
-import { useAccount, useConnect } from 'wagmi'
-import { injected } from 'wagmi/connectors'
+import { useAccount } from 'wagmi'
 
 import { CreateProposalForm } from '@/components/CreateProposalForm'
 import { ProposalCard } from '@/components/ProposalCard'
 import { Button } from '@/components/ui/button'
+import { useOpenWalletConnector } from '@/components/WalletConnectionProvider'
 import {
   ProposalAction,
   ProposalCore,
@@ -16,7 +16,7 @@ import {
 
 export default function GovernancePage() {
   const { isConnected } = useAccount()
-  const { connect } = useConnect()
+  const openConnectWallet = useOpenWalletConnector()
   const [proposals, setProposals] = useState<
     { core: ProposalCore; actions: ProposalAction[] }[]
   >([])
@@ -45,14 +45,6 @@ export default function GovernancePage() {
     safeBalance,
     safeAddress,
   } = useGovernance()
-
-  const handleConnect = useCallback(() => {
-    try {
-      connect({ connector: injected() })
-    } catch (err) {
-      console.error('Failed to connect wallet:', err)
-    }
-  }, [connect])
 
   // Load proposals when connected
   useEffect(() => {
@@ -170,7 +162,7 @@ export default function GovernancePage() {
           <div className="text-muted-foreground text-sm">
             Connect your wallet to participate in governance
           </div>
-          <Button onClick={handleConnect} className="px-6 py-2">
+          <Button onClick={openConnectWallet} className="px-6 py-2">
             Connect Wallet
           </Button>
         </div>

@@ -146,7 +146,6 @@
   }
 }
 
-/* Clean light background */
 html {
   position: relative;
   background: linear-gradient(
@@ -155,7 +154,6 @@ html {
     oklch(0.96 0 0) 100%
   );
 }
-
 
 @keyframes fadeIn {
   from {

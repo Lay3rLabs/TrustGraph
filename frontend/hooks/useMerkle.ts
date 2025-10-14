@@ -33,7 +33,7 @@ const cidToUrl = (cid: string): string => {
 export function useMerkle() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [MerkleData, setMerkleData] = useState<MerkleEntry[]>([])
+  const [merkleData, setMerkleData] = useState<MerkleEntry[]>([])
   const [totalRewards, setTotalRewards] = useState<string>('0')
   const [totalParticipants, setTotalParticipants] = useState<number>(0)
 
@@ -115,7 +115,7 @@ export function useMerkle() {
     error,
 
     // Data
-    MerkleData,
+    merkleData,
     totalRewards,
     totalParticipants,
 

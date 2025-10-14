@@ -1,4 +1,12 @@
-import { useEffect } from 'react'
+import {
+  BaseSyntheticEvent,
+  MouseEvent,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react'
 import { useAccount, useSwitchChain } from 'wagmi'
 
 import {
@@ -7,11 +15,30 @@ import {
   getTargetChainId,
 } from '@/lib/wagmi'
 
+const WalletConnectionContext = createContext<{
+  _openId: number
+  openConnectWallet: (event?: BaseSyntheticEvent) => void
+}>({
+  _openId: 0,
+  openConnectWallet: () => {},
+})
+
+export const useWalletConnectionContext = () =>
+  useContext(WalletConnectionContext)
+export const useOpenWalletConnector = () =>
+  useWalletConnectionContext().openConnectWallet
+
 export const WalletConnectionProvider = ({
   children,
 }: {
   children: React.ReactNode
 }) => {
+  const [_openId, setOpenId] = useState(0)
+  const openConnectWallet = useCallback((event?: BaseSyntheticEvent) => {
+    event?.stopPropagation()
+    setOpenId((openId) => openId + 1)
+  }, [])
+
   const addTargetNetwork = async () => {
     try {
       const chainConfig = getTargetChainConfig()
@@ -63,5 +90,9 @@ export const WalletConnectionProvider = ({
     }
   }, [isConnected, chain])
 
-  return <>{children}</>
+  return (
+    <WalletConnectionContext.Provider value={{ _openId, openConnectWallet }}>
+      {children}
+    </WalletConnectionContext.Provider>
+  )
 }

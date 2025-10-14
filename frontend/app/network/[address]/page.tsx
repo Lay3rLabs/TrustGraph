@@ -3,36 +3,28 @@
 import { useParams, useRouter } from 'next/navigation'
 import type React from 'react'
 import { useMemo, useState } from 'react'
-import { useAccount, useConnect } from 'wagmi'
-import { injected } from 'wagmi/connectors'
+import { Hex } from 'viem'
+import { useAccount } from 'wagmi'
 
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
 import { Address, TableAddress } from '@/components/ui/address'
 import { Button } from '@/components/ui/button'
 import { InfoTooltip } from '@/components/ui/info-tooltip'
+import { useOpenWalletConnector } from '@/components/WalletConnectionProvider'
 import { useAccountProfile } from '@/hooks/useAccountProfile'
 import { TRUSTED_SEEDS } from '@/lib/config'
-import { AttestationData, SchemaManager } from '@/lib/schemas'
-import { formatTimeAgo } from '@/lib/utils'
+import { formatBigNumber } from '@/lib/utils'
 
 type AttestationSortColumn = 'time' | 'confidence'
 type SortDirection = 'asc' | 'desc'
-
-// Extended attestation data for table display
-interface AttestationTableData extends AttestationData {
-  confidence?: string
-  schemaName: string
-  formattedTime: string
-  timeAgo: string
-}
 
 export default function AccountProfilePage() {
   const params = useParams()
   const router = useRouter()
   const { isConnected, address: connectedAddress } = useAccount()
-  const { connect } = useConnect()
+  const openConnectWallet = useOpenWalletConnector()
 
-  const address = params.address as string
+  const address = params.address as Hex
 
   // Sorting state for attestations given
   const [givenSortColumn, setGivenSortColumn] =
@@ -57,49 +49,6 @@ export default function AccountProfilePage() {
     refresh,
   } = useAccountProfile(address)
 
-  const handleConnect = () => {
-    try {
-      connect({ connector: injected() })
-    } catch (err) {
-      console.error('Failed to connect wallet:', err)
-    }
-  }
-
-  const formatAmount = (amount: string) => {
-    return BigInt(amount || 0).toLocaleString()
-  }
-
-  const formatTimestamp = (timestamp: number) => {
-    if (!timestamp || isNaN(timestamp) || timestamp < 0) {
-      return 'Invalid timestamp'
-    }
-
-    const date = new Date(timestamp * 1000)
-    if (isNaN(date.getTime())) {
-      return 'Invalid date'
-    }
-
-    return date.toISOString().replace('T', ' ').split('.')[0]
-  }
-
-  const processAttestationData = (
-    attestations: any[]
-  ): AttestationTableData[] => {
-    return attestations.map((attestation) => {
-      const schemaName =
-        SchemaManager.maybeSchemaForUid(attestation.schema)?.name || 'Unknown'
-      const confidence = attestation.decodedData?.confidence || '0'
-
-      return {
-        ...attestation,
-        confidence,
-        schemaName,
-        formattedTime: formatTimestamp(Number(attestation.time)),
-        timeAgo: formatTimeAgo(Number(attestation.time) * 1000),
-      }
-    })
-  }
-
   // Handle sorting for given attestations
   const handleGivenSort = (column: AttestationSortColumn) => {
     if (givenSortColumn === column) {
@@ -121,52 +70,54 @@ export default function AccountProfilePage() {
   }
 
   // Sort attestations given
-  const sortedAttestationsGiven = useMemo(() => {
-    const processedData = processAttestationData(attestationsGiven)
+  const sortedAttestationsGiven = useMemo(
+    () =>
+      [...attestationsGiven].sort((a, b) => {
+        let aValue: number, bValue: number
 
-    return [...processedData].sort((a, b) => {
-      let aValue: number, bValue: number
+        switch (givenSortColumn) {
+          case 'time':
+            aValue = Number(a.time)
+            bValue = Number(b.time)
+            break
+          case 'confidence':
+            aValue = Number(a.decodedData?.confidence || '0')
+            bValue = Number(b.decodedData?.confidence || '0')
+            break
+          default:
+            return 0
+        }
 
-      switch (givenSortColumn) {
-        case 'time':
-          aValue = Number(a.time)
-          bValue = Number(b.time)
-          break
-        case 'confidence':
-          aValue = Number(a.confidence || '0')
-          bValue = Number(b.confidence || '0')
-          break
-        default:
-          return 0
-      }
-
-      return givenSortDirection === 'asc' ? aValue - bValue : bValue - aValue
-    })
-  }, [attestationsGiven, givenSortColumn, givenSortDirection])
+        return givenSortDirection === 'asc' ? aValue - bValue : bValue - aValue
+      }),
+    [attestationsGiven, givenSortColumn, givenSortDirection]
+  )
 
   // Sort attestations received
-  const sortedAttestationsReceived = useMemo(() => {
-    const processedData = processAttestationData(attestationsReceived)
+  const sortedAttestationsReceived = useMemo(
+    () =>
+      [...attestationsReceived].sort((a, b) => {
+        let aValue: number, bValue: number
 
-    return [...processedData].sort((a, b) => {
-      let aValue: number, bValue: number
+        switch (receivedSortColumn) {
+          case 'time':
+            aValue = Number(a.time)
+            bValue = Number(b.time)
+            break
+          case 'confidence':
+            aValue = Number(a.decodedData?.confidence || '0')
+            bValue = Number(b.decodedData?.confidence || '0')
+            break
+          default:
+            return 0
+        }
 
-      switch (receivedSortColumn) {
-        case 'time':
-          aValue = Number(a.time)
-          bValue = Number(b.time)
-          break
-        case 'confidence':
-          aValue = Number(a.confidence || '0')
-          bValue = Number(b.confidence || '0')
-          break
-        default:
-          return 0
-      }
-
-      return receivedSortDirection === 'asc' ? aValue - bValue : bValue - aValue
-    })
-  }, [attestationsReceived, receivedSortColumn, receivedSortDirection])
+        return receivedSortDirection === 'asc'
+          ? aValue - bValue
+          : bValue - aValue
+      }),
+    [attestationsReceived, receivedSortColumn, receivedSortDirection]
+  )
 
   // Helper function to render sort indicator
   const getSortIndicator = (
@@ -231,7 +182,7 @@ export default function AccountProfilePage() {
             Connect your wallet to view profile details
           </div>
           <Button
-            onClick={handleConnect}
+            onClick={openConnectWallet}
             className="mobile-terminal-btn !px-6 !py-2"
           >
             <span className="terminal-command text-xs">CONNECT WALLET</span>
@@ -278,7 +229,7 @@ export default function AccountProfilePage() {
                       <InfoTooltip content="The account's reputation score in the trust network." />
                     </div>
                     <div className="terminal-bright text-2xl text-gray-900">
-                      {formatAmount(profileData.trustScore)}
+                      {formatBigNumber(profileData.trustScore, undefined, true)}
                     </div>
                   </div>
                 </div>
@@ -427,8 +378,11 @@ export default function AccountProfilePage() {
                                 </td>
                                 <td className="p-4">
                                   <div className="terminal-bright text-sm text-gray-900">
-                                    {formatAmount(
-                                      attestation.confidence || '0'
+                                    {formatBigNumber(
+                                      attestation.decodedData?.confidence ||
+                                        '0',
+                                      undefined,
+                                      true
                                     )}
                                   </div>
                                 </td>
@@ -436,7 +390,7 @@ export default function AccountProfilePage() {
                                   <div className="terminal-text text-sm text-gray-800">
                                     <div>{attestation.formattedTime}</div>
                                     <div className="terminal-dim text-xs text-gray-600">
-                                      {attestation.timeAgo}
+                                      {attestation.formattedTimeAgo}
                                     </div>
                                   </div>
                                 </td>
@@ -541,8 +495,11 @@ export default function AccountProfilePage() {
                                 </td>
                                 <td className="p-4">
                                   <div className="terminal-bright text-sm text-gray-900">
-                                    {formatAmount(
-                                      attestation.confidence || '0'
+                                    {formatBigNumber(
+                                      attestation.decodedData?.confidence ||
+                                        '0',
+                                      undefined,
+                                      true
                                     )}
                                   </div>
                                 </td>
@@ -550,7 +507,7 @@ export default function AccountProfilePage() {
                                   <div className="terminal-text text-sm text-gray-800">
                                     <div>{attestation.formattedTime}</div>
                                     <div className="terminal-dim text-xs text-gray-600">
-                                      {attestation.timeAgo}
+                                      {attestation.formattedTimeAgo}
                                     </div>
                                   </div>
                                 </td>

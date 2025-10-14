@@ -9,10 +9,8 @@ TODO: explore configuration...
 - Add copy, new landing page
 - Make network info config with copy
 
-- Don't hide network page if wallet is not connected
 - Contact support button
 - update site metadata
-- Live updates
 - need a graph visualization
 
 Needs discussion:
