@@ -111,7 +111,7 @@ impl Guest for Component {
         let module_address = config_var("signer_module_address")
             .ok_or_else(|| "signer_module_address not configured")?;
 
-        let current_signers = block_on(query_current_signers(&module_address))?;
+        let current_signers = block_on(query_current_signers(module_address))?;
         println!("📋 Current signers: {} addresses", current_signers.len());
         for (i, signer) in current_signers.iter().enumerate() {
             println!("  [{}] {}", i, signer);
@@ -204,7 +204,7 @@ fn download_merkle_tree(cid: &str) -> Result<MerkleTreeIpfsData, String> {
         let full_url = format!("{}/{}", gateway_url, cid);
         println!("🔗 Fetching from Pinata: {}", full_url);
 
-        let response = block_on(async {
+        let response = block_on(async move {
             let mut request = wavs_wasi_utils::http::http_request_get(&full_url)
                 .map_err(|e| format!("Failed to create request: {}", e))?;
 
@@ -251,9 +251,11 @@ fn download_merkle_tree(cid: &str) -> Result<MerkleTreeIpfsData, String> {
 
         for url in urls {
             println!("🔗 Trying: {}", url);
+            let url_for_logging = url.clone(); // Clone for use after async block
 
-            let result = block_on(async {
-                let request = wavs_wasi_utils::http::http_request_get(&url)
+            let result = block_on(async move {
+                let url_clone = url.clone(); // Clone the url for use in the async block
+                let request = wavs_wasi_utils::http::http_request_get(&url_clone)
                     .map_err(|e| format!("Failed to create request: {}", e))?;
 
                 wavs_wasi_utils::http::fetch_bytes(request)
@@ -266,17 +268,17 @@ fn download_merkle_tree(cid: &str) -> Result<MerkleTreeIpfsData, String> {
                     // Try to parse the response
                     match serde_json::from_slice::<MerkleTreeIpfsData>(&response) {
                         Ok(merkle_tree) => {
-                            println!("✅ Successfully fetched from: {}", url);
+                            println!("✅ Successfully fetched from: {}", url_for_logging);
                             return Ok(merkle_tree);
                         }
                         Err(e) => {
-                            println!("⚠️ Failed to parse JSON from {}: {}", url, e);
+                            println!("⚠️ Failed to parse JSON from {}: {}", url_for_logging, e);
                             last_error = format!("Failed to parse JSON: {}", e);
                         }
                     }
                 }
                 Err(e) => {
-                    println!("⚠️ Failed to fetch from {}: {}", url, e);
+                    println!("⚠️ Failed to fetch from {}: {}", url_for_logging, e);
                     last_error = format!("Failed to fetch: {}", e);
                 }
             }
@@ -327,7 +329,7 @@ fn find_top_signers(
 }
 
 /// Queries the current signers from the SignerManagerModule contract
-async fn query_current_signers(module_address: &str) -> Result<Vec<Address>, String> {
+async fn query_current_signers(module_address: String) -> Result<Vec<Address>, String> {
     let chain_name = config_var("chain_name").unwrap_or("local".to_string());
     let chain_config = get_evm_chain_config(&chain_name).unwrap();
     let provider: RootProvider<Ethereum> =
@@ -335,7 +337,7 @@ async fn query_current_signers(module_address: &str) -> Result<Vec<Address>, Str
 
     // Parse module address
     let module_addr =
-        Address::from_str(module_address).map_err(|e| format!("Invalid module address: {}", e))?;
+        Address::from_str(&module_address).map_err(|e| format!("Invalid module address: {}", e))?;
 
     // Create the getSigners call
     let get_signers_call = ISignerManagerModule::getSignersCall {};
