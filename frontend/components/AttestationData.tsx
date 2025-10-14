@@ -1,6 +1,7 @@
 'use client'
 
-import { AttestationData, SchemaManager } from '@/lib/schemas'
+import { AttestationData } from '@/lib/attestation'
+import { SchemaManager } from '@/lib/schemas'
 
 interface AttestationDataDisplayProps {
   attestation: AttestationData

@@ -14,6 +14,7 @@ import { formatBigNumber } from '@/lib/utils'
 
 import { EthIcon } from './icons/EthIcon'
 import { Popup } from './Popup'
+import { useWalletConnectionContext } from './WalletConnectionProvider'
 
 export interface WalletConnectionButtonProps {
   className?: string
@@ -22,6 +23,7 @@ export interface WalletConnectionButtonProps {
 export const WalletConnectionButton = ({
   className,
 }: WalletConnectionButtonProps) => {
+  const { _openId } = useWalletConnectionContext()
   const { address, isConnected } = useAccount()
   const { connectors, connectAsync, isPending: isConnecting } = useConnect()
   const { disconnect } = useDisconnect()
@@ -51,6 +53,12 @@ export const WalletConnectionButton = ({
       refetchInterval: 30_000,
     },
   })
+
+  useEffect(() => {
+    if (_openId > 0) {
+      setOpenRef.current?.(true)
+    }
+  }, [_openId])
 
   return (
     <>
@@ -94,7 +102,7 @@ export const WalletConnectionButton = ({
       >
         {isConnected && address ? (
           <div className="flex flex-col gap-3 text-sm">
-            <div className="flex flex-col gap-2 bg-secondary p-3 rounded-md border border-border -mx-1.5">
+            <div className="flex flex-col gap-2 bg-secondary p-3 rounded-md border border-border -m-1">
               <p className="text-xs text-muted-foreground font-medium mb-1">
                 Balances
               </p>

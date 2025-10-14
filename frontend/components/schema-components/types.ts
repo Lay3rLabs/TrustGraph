@@ -30,7 +30,7 @@ export interface SchemaComponentProps {
   isLoading: boolean
   error?: Error | null
   isSuccess: boolean
-  hash?: string
+  hash?: string | null
 }
 
 // Type for schema component registry

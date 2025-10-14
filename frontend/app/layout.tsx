@@ -37,24 +37,21 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head></head>
-      <body
-        className={clsx(
-          paperMono.variable,
-          'font-mono text-foreground min-h-screen p-safe-or-2 sm:p-safe-or-4 md:p-safe-or-6 root flex flex-col'
-        )}
-      >
-        <Providers>
-          {/* Account for the footer, but make sure to push it down below the initial page */}
-          <div className="flex flex-col min-h-[calc(100vh-2rem)]">
-            <Nav />
+      <body className={clsx(paperMono.variable, 'font-mono text-foreground')}>
+        <div className="min-h-screen root flex flex-col p-safe-or-2 sm:p-safe-or-4 md:p-safe-or-6">
+          <Providers>
+            {/* Account for the footer, but make sure to push it down below the initial page */}
+            <div className="flex flex-col min-h-[calc(100vh-2rem)]">
+              <Nav />
 
-            <main className="p-2 mt-2 sm:p-4 sm:mt-6 flex-1 grow">
-              {children}
-            </main>
-          </div>
+              <main className="p-2 mt-2 sm:p-4 sm:mt-6 flex-1 grow">
+                {children}
+              </main>
+            </div>
 
-          <Footer />
-        </Providers>
+            <Footer />
+          </Providers>
+        </div>
       </body>
     </html>
   )

@@ -3,8 +3,6 @@
 import { useRouter } from 'next/navigation'
 import type React from 'react'
 import { useMemo, useState } from 'react'
-import { useAccount, useConnect } from 'wagmi'
-import { injected } from 'wagmi/connectors'
 
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
 import { TableAddress } from '@/components/ui/address'
@@ -19,8 +17,6 @@ type SortDirection = 'asc' | 'desc'
 
 export default function NetworkPage() {
   const router = useRouter()
-  const { isConnected } = useAccount()
-  const { connect } = useConnect()
 
   // Sorting state
   const [sortColumn, setSortColumn] = useState<SortColumn>('score')
@@ -29,19 +25,11 @@ export default function NetworkPage() {
   const {
     isLoading,
     error,
-    MerkleData,
+    merkleData,
     totalRewards,
     totalParticipants,
     refresh,
   } = useNetwork()
-
-  const handleConnect = () => {
-    try {
-      connect({ connector: injected() })
-    } catch (err) {
-      console.error('Failed to connect wallet:', err)
-    }
-  }
 
   const formatAmount = (amount: string) => {
     return BigInt(amount || 0).toLocaleString()
@@ -61,23 +49,23 @@ export default function NetworkPage() {
 
   // Sort the data
   const sortedMerkleData = useMemo(() => {
-    if (!MerkleData) return []
+    if (!merkleData) return []
 
-    const sorted = [...MerkleData].sort((a, b) => {
+    const sorted = [...merkleData].sort((a, b) => {
       let aValue: number, bValue: number
 
       switch (sortColumn) {
         case 'rank':
-          aValue = MerkleData.indexOf(a) + 1
-          bValue = MerkleData.indexOf(b) + 1
+          aValue = merkleData.indexOf(a) + 1
+          bValue = merkleData.indexOf(b) + 1
           break
         case 'received':
-          aValue = parseInt(a.received || '0')
-          bValue = parseInt(b.received || '0')
+          aValue = a.received || 0
+          bValue = b.received || 0
           break
         case 'sent':
-          aValue = parseInt(a.sent || '0')
-          bValue = parseInt(b.sent || '0')
+          aValue = a.sent || 0
+          bValue = b.sent || 0
           break
         case 'score':
           aValue = Number(BigInt(a.value || '0'))
@@ -95,7 +83,7 @@ export default function NetworkPage() {
     })
 
     return sorted
-  }, [MerkleData, sortColumn, sortDirection])
+  }, [merkleData, sortColumn, sortDirection])
 
   // Helper function to render sort indicator
   const getSortIndicator = (column: SortColumn) => {
@@ -146,7 +134,7 @@ export default function NetworkPage() {
       )}
 
       {/* Statistics */}
-      {!isLoading && MerkleData && (
+      {!isLoading && merkleData && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="border border-gray-300 bg-white p-4 rounded-sm shadow-sm">
             <div className="space-y-2">
@@ -193,7 +181,7 @@ export default function NetworkPage() {
       )}
 
       {/* Merkle Table */}
-      {!isLoading && MerkleData && MerkleData.length > 0 && (
+      {!isLoading && merkleData && merkleData.length > 0 && (
         <div className="border border-gray-300 bg-white rounded-sm shadow-sm">
           <div className="border-b border-gray-300 p-4">
             <div className="ascii-art-title text-lg mb-1 text-gray-900">
@@ -259,9 +247,9 @@ export default function NetworkPage() {
                 </tr>
               </thead>
               <tbody>
-                {sortedMerkleData.map((entry, index) => {
+                {sortedMerkleData.map((entry) => {
                   // Find original index for rank calculation
-                  const originalIndex = MerkleData.findIndex(
+                  const originalIndex = merkleData.findIndex(
                     (item) => item.account === entry.account
                   )
                   return (
@@ -345,7 +333,7 @@ export default function NetworkPage() {
       )}
 
       {/* No Data Message */}
-      {!isLoading && (!MerkleData || MerkleData.length === 0) && !error && (
+      {!isLoading && (!merkleData || merkleData.length === 0) && !error && (
         <div className="text-center py-8 border border-gray-300 bg-white rounded-sm shadow-sm">
           <div className="terminal-dim text-sm text-gray-600">
             NO NETWORK DATA AVAILABLE

@@ -86,7 +86,7 @@ export function CreateProposalForm({
       if (!action.target.startsWith('0x') || action.target.length !== 42) {
         return `Action ${i + 1}: Invalid target address format`
       }
-      if (!action.description.trim()) {
+      if (!action.description?.trim()) {
         return `Action ${i + 1}: Action description is required`
       }
     }

@@ -1,98 +1,65 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { usePonderQuery } from '@ponder/react'
 import { useRouter } from 'next/navigation'
+import { count, eq } from 'ponder'
 import type React from 'react'
-import { useCallback, useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Hex } from 'viem'
 
 import { AttestationCard } from '@/components/AttestationCard'
 import { Card } from '@/components/Card'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
-import {
-  useAttestationDataSource,
-  useAttestationQueries,
-} from '@/hooks/useAttestationQueries'
+import { intoAttestationsData } from '@/lib/attestation'
 import { SCHEMAS } from '@/lib/schemas'
-
-// Helper component to fetch attestation data for filtering
-function AttestationWithStatus({
-  uid,
-  onStatusReady,
-}: {
-  uid: `0x${string}`
-  onStatusReady: (uid: string, status: string) => void
-}) {
-  const attestationQueries = useAttestationQueries()
-  const { data: attestationData } = useQuery(attestationQueries.get(uid))
-
-  const getAttestationStatus = (attestation: any) => {
-    if (!attestation) return 'loading'
-    if (Number(attestation.revocationTime) > 0) return 'revoked'
-    if (
-      Number(attestation.expirationTime) > 0 &&
-      Number(attestation.expirationTime) < Math.floor(Date.now() / 1000)
-    ) {
-      return 'expired'
-    }
-    return 'verified'
-  }
-
-  useEffect(() => {
-    if (attestationData) {
-      const status = getAttestationStatus(attestationData)
-      onStatusReady(uid, status)
-    }
-  }, [attestationData, uid, onStatusReady])
-
-  return null
-}
+import { easAttestation } from '@/ponder.schema'
 
 export default function AttestationsPage() {
   const router = useRouter()
   const [selectedSchema, setSelectedSchema] = useState<string>('all')
   const [selectedStatus, setSelectedStatus] = useState<string>('all')
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest')
-  const [limit, setLimit] = useState(50)
-  const [attestationStatuses, setAttestationStatuses] = useState<
-    Record<string, string>
-  >({})
+  const [limit, _setLimit] = useState(50)
 
-  const attestationQueries = useAttestationQueries()
-  const dataSource = useAttestationDataSource()
-
-  const allQuery = useQuery({
-    ...attestationQueries.uids({
-      limit,
-      reverse: sortOrder === 'newest',
-    }),
-    enabled: selectedSchema === 'all',
+  const {
+    data: [{ count: totalAttestations }] = [{ count: 0 }],
+    isPending: isLoadingTotalAttestations,
+  } = usePonderQuery({
+    queryFn: (db) =>
+      db.select({ count: count(easAttestation.uid) }).from(easAttestation),
   })
-  const allCountQuery = useQuery(attestationQueries.count())
-  const { data: totalAttestations = 0, isLoading: isLoadingTotalAttestations } =
-    allCountQuery
-
-  const schemaQuery = useQuery({
-    ...attestationQueries.schemaUIDs(selectedSchema as Hex, {
-      limit,
-      reverse: sortOrder === 'newest',
-    }),
-    enabled: selectedSchema !== 'all' && selectedSchema.startsWith('0x'),
-  })
-  const schemaCountQuery = useQuery({
-    ...attestationQueries.schemaCount(selectedSchema as Hex),
-    enabled: selectedSchema !== 'all' && selectedSchema.startsWith('0x'),
+  const {
+    data: [{ count: currentTotal }] = [{ count: 0 }],
+    isPending: isLoadingCurrentTotal,
+  } = usePonderQuery({
+    queryFn: (db) =>
+      db
+        .select({ count: count(easAttestation.uid) })
+        .from(easAttestation)
+        .where(
+          selectedSchema === 'all' || !selectedSchema.startsWith('0x')
+            ? undefined
+            : eq(easAttestation.schema, selectedSchema as Hex)
+        ),
   })
 
-  const { data: attestationUIDs = [], isLoading: isLoadingUIDs } =
-    selectedSchema === 'all' ? allQuery : schemaQuery
-  const { data: currentTotal = 0, isLoading: isLoadingCurrentTotal } =
-    selectedSchema === 'all' ? allCountQuery : schemaCountQuery
-
-  // Handle status updates from individual attestations
-  const handleStatusReady = useCallback((uid: string, status: string) => {
-    setAttestationStatuses((prev) => ({ ...prev, [uid]: status }))
-  }, [])
+  const { data: _attestations, isPending: isLoadingAttestations } =
+    usePonderQuery({
+      queryFn: (db) =>
+        db.query.easAttestation.findMany({
+          where: (t, { eq }) =>
+            selectedSchema === 'all' || !selectedSchema.startsWith('0x')
+              ? undefined
+              : eq(t.schema, selectedSchema as Hex),
+          orderBy: (t, { asc, desc }) =>
+            sortOrder === 'newest' ? desc(t.timestamp) : asc(t.timestamp),
+          limit,
+        }),
+    })
+  const attestations = useMemo(
+    () => intoAttestationsData(_attestations || []),
+    [_attestations]
+  )
 
   return (
     <div className="space-y-6">
@@ -173,7 +140,7 @@ export default function AttestationsPage() {
       </div>
 
       {/* Loading State */}
-      {(isLoadingUIDs ||
+      {(isLoadingAttestations ||
         isLoadingCurrentTotal ||
         isLoadingTotalAttestations) && (
         <div className="text-center py-8">
@@ -184,28 +151,22 @@ export default function AttestationsPage() {
         </div>
       )}
 
-      {/* Hidden components to fetch status data */}
-      <div style={{ display: 'none' }}>
-        {attestationUIDs.map((item) => (
-          <AttestationWithStatus
-            key={`status-${item.uid}`}
-            uid={item.uid}
-            onStatusReady={handleStatusReady}
-          />
-        ))}
-      </div>
-
       {/* Attestations List */}
       <div className="space-y-4">
-        {!isLoadingUIDs &&
-          attestationUIDs.map((item) => (
-            <AttestationCard
-              key={item.uid}
-              uid={item.uid}
-              clickable
-              onClick={() => router.push(`/attestations/${item.uid}`)}
-            />
-          ))}
+        {!isLoadingAttestations &&
+          attestations
+            .filter(
+              (item) =>
+                selectedStatus === 'all' || item.status === selectedStatus
+            )
+            .map((item) => (
+              <AttestationCard
+                key={item.uid}
+                uid={item.uid}
+                clickable
+                onClick={() => router.push(`/attestations/${item.uid}`)}
+              />
+            ))}
       </div>
 
       {!isLoadingTotalAttestations &&

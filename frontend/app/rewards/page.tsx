@@ -2,16 +2,16 @@
 
 import type React from 'react'
 import { useCallback, useState } from 'react'
-import { useAccount, useConnect } from 'wagmi'
-import { injected } from 'wagmi/connectors'
+import { useAccount } from 'wagmi'
 
 import { RewardsCard } from '@/components/RewardsCard'
 import { Button } from '@/components/ui/button'
+import { useOpenWalletConnector } from '@/components/WalletConnectionProvider'
 import { useRewards } from '@/hooks/useRewards'
 
 export default function RewardsPage() {
-  const { address, isConnected } = useAccount()
-  const { connect } = useConnect()
+  const { isConnected } = useAccount()
+  const openConnectWallet = useOpenWalletConnector()
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const {
@@ -27,17 +27,8 @@ export default function RewardsPage() {
     rewardBalance,
     claim,
     triggerUpdate,
-    refresh,
     contractAddress,
   } = useRewards()
-
-  const handleConnect = useCallback(() => {
-    try {
-      connect({ connector: injected() })
-    } catch (err) {
-      console.error('Failed to connect wallet:', err)
-    }
-  }, [connect])
 
   const handleClaim = useCallback(async () => {
     setSuccessMessage(null)
@@ -86,7 +77,7 @@ export default function RewardsPage() {
             Connect your wallet to view and claim rewards
           </div>
           <Button
-            onClick={handleConnect}
+            onClick={openConnectWallet}
             className="mobile-terminal-btn !px-6 !py-2"
           >
             <span className="terminal-command text-xs">CONNECT WALLET</span>

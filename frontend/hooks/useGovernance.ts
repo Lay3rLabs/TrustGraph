@@ -550,7 +550,7 @@ export function useGovernance() {
   )
 
   // No queuing in MerkleGovModule - proposals go directly from Succeeded to executable
-  const queueProposal = useCallback(async () => {
+  const queueProposal = useCallback(async (_proposalId: number) => {
     console.log(
       'Queue not supported in MerkleGovModule - proposals are directly executable when succeeded'
     )

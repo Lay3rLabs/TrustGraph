@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 
 import { ponderQueries } from '@/queries/ponder'
 import type {
@@ -21,48 +21,61 @@ export function useNetwork() {
   // Fetch latest merkle tree with entries
   const {
     data: merkleTreeData,
-    isLoading: merkleLoading,
+    isPending: merkleLoading,
     error: merkleError,
     refetch: refetchMerkle,
-  } = useQuery(ponderQueries.latestMerkleTree)
+  } = useQuery({
+    ...ponderQueries.latestMerkleTree,
+    refetchInterval: 10_000,
+  })
 
   // Fetch attestation counts
   const {
     data: attestationCounts,
-    isLoading: attestationLoading,
+    isPending: attestationLoading,
     error: attestationError,
     refetch: refetchAttestations,
-  } = useQuery(ponderQueries.attestationCounts)
+  } = useQuery({
+    ...ponderQueries.attestationCounts,
+    refetchInterval: 10_000,
+  })
 
   // Create a map of attestation counts by account
-  const attestationMap = new Map<string, { sent: number; received: number }>()
-  if (attestationCounts && Array.isArray(attestationCounts)) {
-    attestationCounts.forEach((count: AttestationCount) => {
-      attestationMap.set(count.account.toLowerCase(), {
-        sent: count.sent,
-        received: count.received,
+  const merkleData = useMemo((): NetworkEntry[] => {
+    if (!merkleTreeData?.entries?.length) {
+      return []
+    }
+
+    const attestationMap = new Map<string, { sent: number; received: number }>()
+    if (attestationCounts && Array.isArray(attestationCounts)) {
+      attestationCounts.forEach((count: AttestationCount) => {
+        attestationMap.set(count.account.toLowerCase(), {
+          sent: count.sent,
+          received: count.received,
+        })
       })
-    })
-  }
+    }
 
-  // Transform ponder merkle entries to match the expected format with attestation data
-  const transformedEntries: NetworkEntry[] =
-    merkleTreeData?.entries?.map((entry: PonderMerkleEntry, index: number) => {
-      const attestationData = attestationMap.get(
-        entry.account.toLowerCase()
-      ) || {
-        sent: 0,
-        received: 0,
-      }
+    // Transform ponder merkle entries to match the expected format with attestation data
+    return merkleTreeData.entries.map(
+      (entry: PonderMerkleEntry, index: number) => {
+        const attestationData = attestationMap.get(
+          entry.account.toLowerCase()
+        ) || {
+          sent: 0,
+          received: 0,
+        }
 
-      return {
-        account: entry.account,
-        value: entry.value,
-        rank: index + 1,
-        sent: attestationData.sent,
-        received: attestationData.received,
+        return {
+          account: entry.account,
+          value: entry.value,
+          rank: index + 1,
+          sent: attestationData.sent,
+          received: attestationData.received,
+        }
       }
-    }) || []
+    )
+  }, [merkleTreeData, attestationCounts])
 
   // Calculate derived values
   const totalRewards = merkleTreeData?.tree?.totalValue?.toString() || '0'
@@ -85,7 +98,7 @@ export function useNetwork() {
     error,
 
     // Data (using same names as useMerkle for compatibility)
-    MerkleData: transformedEntries,
+    merkleData,
     totalRewards,
     totalParticipants,
 

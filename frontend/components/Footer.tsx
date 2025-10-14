@@ -1,5 +1,4 @@
-import { GithubIcon } from 'lucide-react'
-
+import { GitHubIcon } from './icons/GitHubIcon'
 import { WavsIcon } from './icons/WavsIcon'
 import { XIcon } from './icons/XIcon'
 
@@ -9,13 +8,13 @@ export const Footer = () => {
       <a
         href="https://www.wavs.xyz"
         target="_blank"
-        className="transition-opacity hover:opacity-80 active:opacity-70 text-center text-primary-foreground/40 flex flex-row gap-1.5 items-center font-medium"
+        className="transition-opacity opacity-70 hover:opacity-100 flex flex-row gap-1.5 items-center font-medium"
       >
         <p>Powered by</p>
-        <WavsIcon className="w-14 h-5 -mb-0.5" />
+        <WavsIcon className="w-12 h-4 -mb-0.25" />
       </a>
 
-      <div className="flex flex-row items-center gap-3 ">
+      <div className="flex flex-row items-center gap-3">
         <a
           href="https://x.com/"
           target="_blank"
@@ -23,7 +22,7 @@ export const Footer = () => {
           className="transition-colors hover:text-foreground"
           aria-label="X (Twitter)"
         >
-          <XIcon className="w-4 h-4" />
+          <XIcon className="w-4 h-3.5" />
         </a>
         <a
           href="https://github.com/"
@@ -32,7 +31,7 @@ export const Footer = () => {
           className="transition-colors hover:text-foreground"
           aria-label="GitHub"
         >
-          <GithubIcon className="w-4 h-4" />
+          <GitHubIcon className="w-4 h-4" />
         </a>
       </div>
     </footer>

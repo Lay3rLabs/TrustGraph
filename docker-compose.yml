@@ -37,7 +37,6 @@ services:
 
   ponder-db:
     image: postgres:17
-    container_name: ponder-db
     environment:
       POSTGRES_DB: ponder
       POSTGRES_USER: ponder

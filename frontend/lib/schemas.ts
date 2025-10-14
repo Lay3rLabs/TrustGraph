@@ -33,19 +33,6 @@ export type SchemaFieldType =
   | 'uint256'
   | 'address'
 
-export interface AttestationData {
-  uid: string
-  attester: string
-  recipient: string
-  time: bigint
-  expirationTime: bigint
-  revocationTime: bigint
-  refUID: string
-  schema: string
-  data: string
-  decodedData: Record<string, string | boolean>
-}
-
 export class SchemaManager {
   static maybeSchemaForUid(uid: string) {
     return SCHEMAS.find((s) => s.uid === uid)

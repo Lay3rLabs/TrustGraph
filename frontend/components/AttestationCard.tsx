@@ -1,13 +1,14 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { usePonderQuery } from '@ponder/react'
+import { useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
+import { Hex } from 'viem'
 import { useAccount } from 'wagmi'
 
 import { useAttestation } from '@/hooks/useAttestation'
-import { useAttestationQueries } from '@/hooks/useAttestationQueries'
-import { AttestationData, SchemaManager } from '@/lib/schemas'
+import { AttestationData, intoAttestationData } from '@/lib/attestation'
+import { SchemaManager } from '@/lib/schemas'
 import { formatTimeAgo } from '@/lib/utils'
 
 import { AttestationDataDisplay } from './AttestationData'
@@ -15,7 +16,7 @@ import { Card } from './Card'
 import { CopyableText } from './CopyableText'
 
 interface AttestationCardProps {
-  uid: `0x${string}`
+  uid: Hex
   onClick?: () => void
   clickable?: boolean
 }
@@ -29,12 +30,20 @@ export function AttestationCard({
   const { revokeAttestation } = useAttestation()
   const [isRevokingThis, setIsRevokingThis] = useState(false)
 
-  const attestationQueries = useAttestationQueries()
-  const { data, isLoading, error } = useQuery(
-    attestationQueries.get(uid) as any
+  const {
+    data: _attestation,
+    isPending: isLoading,
+    error,
+  } = usePonderQuery({
+    queryFn: (db) =>
+      db.query.easAttestation.findFirst({
+        where: (t, { eq }) => eq(t.uid, uid),
+      }),
+  })
+  const attestation = useMemo(
+    () => intoAttestationData(_attestation),
+    [_attestation]
   )
-
-  const attestation = data as AttestationData | undefined
 
   const handleRevoke = async (e: React.MouseEvent) => {
     e.stopPropagation() // Prevent card click when revoking
@@ -264,15 +273,15 @@ export function AttestationCard({
               className="text-foreground"
             />
           </div>
-          {attestation.refUID &&
-            attestation.refUID !==
+          {attestation.ref &&
+            attestation.ref !==
               '0x0000000000000000000000000000000000000000000000000000000000000000' && (
               <div>
                 <div className="text-muted-foreground text-xs font-medium mb-1">
                   Reference UID
                 </div>
                 <CopyableText
-                  text={attestation.refUID}
+                  text={attestation.ref}
                   className="text-foreground"
                 />
               </div>

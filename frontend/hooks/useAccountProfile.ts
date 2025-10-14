@@ -1,11 +1,11 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
-import { useCallback } from 'react'
+import { usePonderQuery } from '@ponder/react'
+import { useCallback, useMemo } from 'react'
+import { Hex } from 'viem'
 
 import { useNetwork } from '@/hooks/useNetwork'
-import { APIS } from '@/lib/config'
-import { AttestationData, SchemaManager } from '@/lib/schemas'
+import { intoAttestationsData } from '@/lib/attestation'
 
 interface AccountProfileData {
   account: string
@@ -38,136 +38,48 @@ export const accountProfileKeys = {
     ] as const,
 }
 
-export function useAccountProfile(address: string) {
+export function useAccountProfile(address: Hex) {
   const {
-    MerkleData,
+    merkleData,
     isLoading: networkLoading,
     error: networkError,
     refresh: refreshNetwork,
   } = useNetwork()
 
   // Find the account in the network data
-  const accountNetworkData = MerkleData?.find(
+  const accountNetworkData = merkleData?.find(
     (entry) => entry.account.toLowerCase() === address.toLowerCase()
   )
 
   // Query for attestations given by this account (as attester)
-  const attestationsGivenQuery = useQuery({
-    queryKey: accountProfileKeys.attestationsGiven(address, { limit: 100 }),
-    queryFn: async () => {
-      if (!APIS.ponder) {
-        throw new Error('Ponder API URL not configured')
-      }
-
-      const searchParams = new URLSearchParams({
-        limit: '100',
-        reverse: 'true',
-        attester: address,
-      })
-
-      const response = await fetch(
-        `${APIS.ponder}/attestations?${searchParams}`
-      )
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch attestations given: ${response.status} ${response.statusText}`
-        )
-      }
-
-      const attestations = await response.json()
-      return attestations.map((attestation: any) => {
-        let decodedData = {}
-        try {
-          if (attestation.data && attestation.schema) {
-            decodedData = SchemaManager.decode(
-              attestation.schema,
-              attestation.data
-            )
-          }
-        } catch (error) {
-          console.warn('Failed to decode attestation data:', error)
-        }
-
-        return {
-          uid: attestation.uid,
-          attester: attestation.attester,
-          recipient: attestation.recipient,
-          time: BigInt(attestation.timestamp),
-          expirationTime: BigInt(attestation.expirationTime || 0),
-          revocationTime: BigInt(attestation.revocationTime || 0),
-          refUID:
-            attestation.ref ||
-            '0x0000000000000000000000000000000000000000000000000000000000000000',
-          schema: attestation.schema,
-          data: attestation.data,
-          decodedData,
-        } as AttestationData
-      })
-    },
-    enabled: !!address && !!APIS.ponder,
-    staleTime: 30 * 1000,
-    gcTime: 5 * 60 * 1000,
+  const attestationsGivenQuery = usePonderQuery({
+    queryFn: (db) =>
+      db.query.easAttestation.findMany({
+        where: (t, { eq }) => eq(t.attester, address),
+        orderBy: (t, { desc }) => desc(t.timestamp),
+        limit: 100,
+      }),
+    enabled: !!address,
   })
+  const attestationsGiven = useMemo(
+    () => intoAttestationsData(attestationsGivenQuery.data || []),
+    [attestationsGivenQuery.data]
+  )
 
   // Query for attestations received by this account (as recipient)
-  const attestationsReceivedQuery = useQuery({
-    queryKey: accountProfileKeys.attestationsReceived(address, { limit: 100 }),
-    queryFn: async () => {
-      if (!APIS.ponder) {
-        throw new Error('Ponder API URL not configured')
-      }
-
-      const searchParams = new URLSearchParams({
-        limit: '100',
-        reverse: 'true',
-        recipient: address,
-      })
-
-      const response = await fetch(
-        `${APIS.ponder}/attestations?${searchParams}`
-      )
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch attestations received: ${response.status} ${response.statusText}`
-        )
-      }
-
-      const attestations = await response.json()
-      return attestations.map((attestation: any) => {
-        let decodedData = {}
-        try {
-          if (attestation.data && attestation.schema) {
-            decodedData = SchemaManager.decode(
-              attestation.schema,
-              attestation.data
-            )
-          }
-        } catch (error) {
-          console.warn('Failed to decode attestation data:', error)
-        }
-
-        return {
-          uid: attestation.uid,
-          attester: attestation.attester,
-          recipient: attestation.recipient,
-          time: BigInt(attestation.timestamp),
-          expirationTime: BigInt(attestation.expirationTime || 0),
-          revocationTime: BigInt(attestation.revocationTime || 0),
-          refUID:
-            attestation.ref ||
-            '0x0000000000000000000000000000000000000000000000000000000000000000',
-          schema: attestation.schema,
-          data: attestation.data,
-          decodedData,
-        } as AttestationData
-      })
-    },
-    enabled: !!address && !!APIS.ponder,
-    staleTime: 30 * 1000,
-    gcTime: 5 * 60 * 1000,
+  const attestationsReceivedQuery = usePonderQuery({
+    queryFn: (db) =>
+      db.query.easAttestation.findMany({
+        where: (t, { eq }) => eq(t.recipient, address),
+        orderBy: (t, { desc }) => desc(t.timestamp),
+        limit: 100,
+      }),
+    enabled: !!address,
   })
+  const attestationsReceived = useMemo(
+    () => intoAttestationsData(attestationsReceivedQuery.data || []),
+    [attestationsReceivedQuery.data]
+  )
 
   // Transform data into profile format
   const profileData: AccountProfileData | null = accountNetworkData
@@ -185,7 +97,7 @@ export function useAccountProfile(address: string) {
         trustScore: '0',
         rank: 0,
         attestationsReceived: attestationsReceivedQuery.data?.length || 0,
-        attestationsGiven: attestationsGivenQuery.data?.length || 0,
+        attestationsGiven: attestationsGiven.length,
         networkParticipant: false,
       }
     : null
@@ -193,8 +105,8 @@ export function useAccountProfile(address: string) {
   // Combined loading state
   const isLoading =
     networkLoading ||
-    attestationsGivenQuery.isLoading ||
-    attestationsReceivedQuery.isLoading
+    attestationsGivenQuery.isPending ||
+    attestationsReceivedQuery.isPending
 
   // Combined error state
   const error =
@@ -224,14 +136,14 @@ export function useAccountProfile(address: string) {
     // Profile data
     profileData,
 
-    // Attestation lists (UIDs only)
-    attestationsGiven: attestationsGivenQuery.data || [],
-    attestationsReceived: attestationsReceivedQuery.data || [],
+    // Attestation lists
+    attestationsGiven,
+    attestationsReceived,
 
     // Individual loading states for more granular control
     isLoadingProfile: networkLoading,
-    isLoadingAttestationsGiven: attestationsGivenQuery.isLoading,
-    isLoadingAttestationsReceived: attestationsReceivedQuery.isLoading,
+    isLoadingAttestationsGiven: attestationsGivenQuery.isPending,
+    isLoadingAttestationsReceived: attestationsReceivedQuery.isPending,
 
     // Actions
     refresh,
