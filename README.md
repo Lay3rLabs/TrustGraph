@@ -1,12 +1,12 @@
 # [WAVS](https://docs.wavs.xyz) Gov
 
-Some next-gen attestation-based governance tools.
+Some next-gen attestation-based governance tools. Get setup with the [Setup Readme](./README_SETUP.md)
 
-**Status:** HIGHLY EXPERIMENTL! Please experiment with us.
+**Status:** HIGHLY EXPERIMENTAL! Please experiment with us.
 
 ### Solidity
 
-Install the required packages to build the Solidity contracts. This project supports both [submodules](./.gitmodules) and [npm packages](./package.json).
+Install the required packages to build the Solidity contracts.
 
 ```bash
 # Install packages (npm & submodules)

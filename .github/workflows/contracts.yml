@@ -20,7 +20,7 @@ jobs:
           node-version: 21
 
       - name: Install deps
-        run: make setup
+        run: task setup
 
       - name: Run forge build
         run: forge build -vvv
