@@ -1,5 +1,5 @@
 [workspace]
-members = ["components/*", "packages/*"]
+members = ["components/*"]
 resolver = "2"
 
 [workspace.package]
@@ -19,10 +19,10 @@ wasi = "0.14.2"
 wavs-wasi-utils = "=1.0.0"
 
 # WAVS
-wavs-llm = { path = "./packages/llm" }
-wavs-eas = { path = "./packages/eas" }
-wavs-indexer-api = { path = "./packages/indexer-api" }
-wavs-merkle-sources = { path = "./packages/merkle-sources" }
+wavs-llm = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "453afad0b792f82da4b9466cfdfd07af804990d9" }
+wavs-eas = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "453afad0b792f82da4b9466cfdfd07af804990d9" }
+wavs-indexer-api = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "453afad0b792f82da4b9466cfdfd07af804990d9" }
+wavs-merkle-sources = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "453afad0b792f82da4b9466cfdfd07af804990d9" }
 
 # Other
 schemars = "1.0.4"
