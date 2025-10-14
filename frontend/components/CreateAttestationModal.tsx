@@ -3,8 +3,7 @@
 import type React from 'react'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { useAccount, useConnect } from 'wagmi'
-import { injected } from 'wagmi/connectors'
+import { useAccount } from 'wagmi'
 
 import {
   AttestationFormData,
@@ -64,7 +63,6 @@ export function CreateAttestationModal({
   })
 
   const { isConnected } = useAccount()
-  const { connect } = useConnect()
   const {
     createAttestation,
     clearTransactionState,
@@ -101,14 +99,6 @@ export function CreateAttestationModal({
     }
   }, [isOpen, clearTransactionState])
 
-  const handleConnect = () => {
-    try {
-      connect({ connector: injected() })
-    } catch (err) {
-      console.error('Failed to connect wallet:', err)
-    }
-  }
-
   const onSubmit = async (data: AttestationFormData) => {
     try {
       await createAttestation(data)
@@ -123,7 +113,11 @@ export function CreateAttestationModal({
     : undefined
 
   const defaultTrigger = (
-    <Button className="px-6 py-2" onClick={() => setIsOpen(true)}>
+    <Button
+      className="px-6 py-2"
+      onClick={() => setIsOpen(true)}
+      disabled={!isConnected}
+    >
       Create Attestation
     </Button>
   )
@@ -151,148 +145,131 @@ export function CreateAttestationModal({
         </div>
 
         <div className="space-y-6">
-          {/* Wallet Connection Status */}
-          {!isConnected && (
-            <div className="border border-border bg-muted p-4 rounded-md">
-              <div className="flex flex-col space-y-3">
-                <div className="text-foreground text-center">
-                  Wallet connection required
-                </div>
-                <Button onClick={handleConnect} className="px-4 py-2">
-                  Connect Wallet
-                </Button>
-              </div>
-            </div>
-          )}
-
           {/* Attestation Form */}
-          {isConnected && (
-            <Form {...form}>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="recipient"
-                    rules={{
-                      required: 'Recipient address is required',
-                      pattern: {
-                        value: /^0x[a-fA-F0-9]{40}$/,
-                        message: 'Invalid Ethereum address',
-                      },
-                    }}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">
-                          Recipient Address
-                        </FormLabel>
+          <Form {...form}>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="recipient"
+                  rules={{
+                    required: 'Recipient address is required',
+                    pattern: {
+                      value: /^0x[a-fA-F0-9]{40}$/,
+                      message: 'Invalid Ethereum address',
+                    },
+                  }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">
+                        Recipient Address
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="0x..."
+                          className="text-sm"
+                        />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="schema"
+                  rules={{ required: 'Schema selection is required' }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">
+                        Schema Type
+                      </FormLabel>
+                      <Select
+                        onValueChange={(value) => field.onChange(value)}
+                        value={field.value}
+                      >
                         <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="0x..."
-                            className="text-sm"
-                          />
+                          <SelectTrigger className="text-sm">
+                            <SelectValue placeholder="Select schema..." />
+                          </SelectTrigger>
                         </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="schema"
-                    rules={{ required: 'Schema selection is required' }}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">
-                          Schema Type
-                        </FormLabel>
-                        <Select
-                          onValueChange={(value) => field.onChange(value)}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="text-sm">
-                              <SelectValue placeholder="Select schema..." />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {SCHEMAS.map((schema) => (
-                              <SelectItem key={schema.key} value={schema.key}>
-                                {schema.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {selectedSchemaInfo && (
-                  <div className="text-muted-foreground text-sm">
-                    {SchemaManager.schemaHelperText(selectedSchemaInfo.key)}
-                  </div>
-                )}
-
-                {selectedSchemaInfo ? (
-                  (() => {
-                    // Check if there's a custom component for this schema
-                    const CustomComponent =
-                      schemaComponentRegistry.getComponent(
-                        selectedSchemaInfo.uid
-                      )
-
-                    if (CustomComponent) {
-                      // Use custom component
-                      return (
-                        <CustomComponent
-                          form={form}
-                          schemaInfo={selectedSchemaInfo}
-                          onSubmit={onSubmit}
-                          isLoading={isLoading}
-                          error={error}
-                          isSuccess={isSuccess}
-                          hash={hash}
-                        />
-                      )
-                    } else {
-                      // Use generic component
-                      return (
-                        <GenericSchemaComponent
-                          form={form}
-                          schemaInfo={selectedSchemaInfo}
-                          onSubmit={onSubmit}
-                          isLoading={isLoading}
-                          error={error}
-                          isSuccess={isSuccess}
-                          hash={hash}
-                        />
-                      )
-                    }
-                  })()
-                ) : (
-                  <p className="text-muted-foreground text-sm">
-                    Select a schema to attest to.
-                  </p>
-                )}
-
-                {selectedSchemaInfo && (
-                  <div className="pt-4 border-t border-border">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsOpen(false)}
-                      disabled={isLoading}
-                      className="px-6 py-2 w-full"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                )}
+                        <SelectContent>
+                          {SCHEMAS.map((schema) => (
+                            <SelectItem key={schema.key} value={schema.key}>
+                              {schema.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
               </div>
-            </Form>
-          )}
+
+              {selectedSchemaInfo && (
+                <div className="text-muted-foreground text-sm">
+                  {SchemaManager.schemaHelperText(selectedSchemaInfo.key)}
+                </div>
+              )}
+
+              {selectedSchemaInfo ? (
+                (() => {
+                  // Check if there's a custom component for this schema
+                  const CustomComponent = schemaComponentRegistry.getComponent(
+                    selectedSchemaInfo.uid
+                  )
+
+                  if (CustomComponent) {
+                    // Use custom component
+                    return (
+                      <CustomComponent
+                        form={form}
+                        schemaInfo={selectedSchemaInfo}
+                        onSubmit={onSubmit}
+                        isLoading={isLoading}
+                        error={error}
+                        isSuccess={isSuccess}
+                        hash={hash}
+                      />
+                    )
+                  } else {
+                    // Use generic component
+                    return (
+                      <GenericSchemaComponent
+                        form={form}
+                        schemaInfo={selectedSchemaInfo}
+                        onSubmit={onSubmit}
+                        isLoading={isLoading}
+                        error={error}
+                        isSuccess={isSuccess}
+                        hash={hash}
+                      />
+                    )
+                  }
+                })()
+              ) : (
+                <p className="text-muted-foreground text-sm">
+                  Select a schema to attest to.
+                </p>
+              )}
+
+              {selectedSchemaInfo && (
+                <div className="pt-4 border-t border-border">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsOpen(false)}
+                    disabled={isLoading}
+                    className="px-6 py-2 w-full"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
+            </div>
+          </Form>
         </div>
       </Modal>
     </>

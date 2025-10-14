@@ -1,6 +1,7 @@
 # The Plan
 
 Figma: https://www.figma.com/proto/uGHgh87RIFS0GUlLR68hCs/TrustGraph-Wireframes?node-id=20-134
+Copy: https://www.notion.so/opencivics/TrustGraph-Copy-28606d2570f2805a8f08dfa3e64c559e?source=copy_link
 
 TODO: explore configuration...
 
@@ -8,6 +9,7 @@ TODO: explore configuration...
 - Add copy, new landing page
 - Make network info config with copy
 
+- Don't hide network page if wallet is not connected
 - Contact support button
 - update site metadata
 - Live updates
