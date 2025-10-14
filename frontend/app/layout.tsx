@@ -93,9 +93,7 @@ export default function RootLayout({
 
           <DisclaimerModal />
 
-          <div className="fixed inset-0 z-20">
-            <CRTScanlines opacity={0.05} lineHeight={2} />
-          </div>
+          <CRTScanlines opacity={0.05} lineHeight={2} className="!fixed" />
         </Providers>
       </body>
     </html>

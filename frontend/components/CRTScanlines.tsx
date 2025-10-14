@@ -1,6 +1,9 @@
 'use client'
 
+import clsx from 'clsx'
+
 interface CRTScanlinesProps {
+  className?: string
   opacity?: number
   lineHeight?: number
   flicker?: boolean
@@ -8,6 +11,7 @@ interface CRTScanlinesProps {
 }
 
 export const CRTScanlines = ({
+  className,
   opacity = 0.15,
   lineHeight = 2,
   flicker = true,
@@ -15,7 +19,7 @@ export const CRTScanlines = ({
 }: CRTScanlinesProps) => {
   return (
     <div
-      className="absolute inset-0 pointer-events-none z-20"
+      className={clsx('absolute inset-0 pointer-events-none z-20', className)}
       style={{
         background: `repeating-linear-gradient(
           0deg,
