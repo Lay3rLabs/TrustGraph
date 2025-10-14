@@ -1,5 +1,5 @@
 [workspace]
-members = ["components/*", "packages/*"]
+members = ["components/*"]
 resolver = "2"
 
 [workspace.package]
@@ -16,13 +16,13 @@ wit-bindgen-rt = { version = "0.44.0", features = ["bitflags"] }
 wit-bindgen = "0.44.0"
 wstd = "0.5.4"
 wasi = "0.14.2"
-wavs-wasi-utils = "=1.0.0"
+wavs-wasi-utils = "=1.2.0"
 
-# WAVS
-wavs-llm = { path = "./packages/llm" }
-wavs-eas = { path = "./packages/eas" }
-wavs-indexer-api = { path = "./packages/indexer-api" }
-wavs-merkle-sources = { path = "./packages/merkle-sources" }
+# WAVS (https://github.com/Lay3rLabs/wavs-tools/pull/123)
+wavs-llm = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "d159899766e1f842addd4b4289f9487012b1803a", package = "wavs-llm"}
+wavs-eas = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "d159899766e1f842addd4b4289f9487012b1803a", package = "wavs-eas" }
+wavs-indexer-api = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "d159899766e1f842addd4b4289f9487012b1803a", package = "wavs-indexer-api" }
+wavs-merkle-sources = { git = "https://github.com/Lay3rLabs/wavs-tools",  rev = "d159899766e1f842addd4b4289f9487012b1803a", package = "wavs-merkle-sources" }
 
 # Other
 schemars = "1.0.4"
@@ -69,3 +69,6 @@ opt-level = "s"
 debug = false
 strip = true
 lto = true
+
+[patch.crates-io]
+# This tells Cargo to not fetch submodules for ALL git dependencies

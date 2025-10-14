@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 
+// TODO: note this is upstream in WAVS tools now
+
 pragma solidity 0.8.27;
 
 /// @title IWavsIndexer
