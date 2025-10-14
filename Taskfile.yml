@@ -7,16 +7,19 @@ silent: true
 dotenv: [".env"]
 
 includes:
-  build: ./taskfile/build.yml
-  wasi: ./taskfile/wasi.yml
-  docker: ./taskfile/docker.yml
-  deploy: ./taskfile/deploy.yml
+  # Upstream common taskfiles (from wavs-taskfiles repo)
+  build: https://raw.githubusercontent.com/Lay3rLabs/wavs-taskfiles/main/base/build.yml
+  docker: https://raw.githubusercontent.com/Lay3rLabs/wavs-taskfiles/main/base/docker.yml
+  operator: https://raw.githubusercontent.com/Lay3rLabs/wavs-taskfiles/main/base/poa-operator.yml
+  services: https://raw.githubusercontent.com/Lay3rLabs/wavs-taskfiles/main/base/services.yml
+  wasi: https://raw.githubusercontent.com/Lay3rLabs/wavs-taskfiles/main/base/wasi.yml
+  deploy: https://raw.githubusercontent.com/Lay3rLabs/wavs-taskfiles/main/base/deploy.yml
+
+  # Project-specific taskfiles (with customizations)
   eas: ./taskfile/eas.yml
-  forge: ./taskfile/forge.yml
+  forge: ./taskfile/eas-forge.yml
   rewards: ./taskfile/rewards.yml
-  services: ./taskfile/services.yml
   trustgraph: ./taskfile/trustgraph.yml
-  operator: ./taskfile/operator.yml
   env:
     taskfile: ./taskfile/env.yml
     flatten: true

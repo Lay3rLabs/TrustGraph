@@ -61,7 +61,7 @@ contract Merkler is Common {
         }
 
         // Extract the claimable amount and proof
-        uint256 claimable = vm.parseJsonUint(entry, ".claimable");
+        uint256 claimable = vm.parseJsonUint(entry, ".value");
         bytes32[] memory proof = vm.parseJsonBytes32Array(entry, ".proof");
 
         console.log("Claimer:", claimer);
