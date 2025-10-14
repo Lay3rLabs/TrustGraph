@@ -1,4 +1,4 @@
-import { Brain, Github, Globe } from 'lucide-react'
+import { Brain } from 'lucide-react'
 import Link from 'next/link'
 
 import { WavsIcon } from './icons/WavsIcon'
@@ -16,23 +16,6 @@ export const Footer = () => {
         >
           <XIcon className="w-4 h-4" />
           @0xEN0VA
-        </a>
-        <a
-          href="https://www.wavs.xyz"
-          target="_blank"
-          className="transition-opacity hover:opacity-80 active:opacity-70 flex flex-col items-center gap-1"
-        >
-          <Globe className="w-4 h-4" />
-          wavs.xyz
-        </a>
-        <a
-          href="https://github.com/Lay3rLabs/WAVS"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="transition-opacity hover:opacity-80 active:opacity-70 flex flex-col items-center gap-1"
-        >
-          <Github className="w-4 h-4" />
-          GitHub
         </a>
         <Link
           href="/memetics"

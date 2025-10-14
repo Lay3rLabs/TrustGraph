@@ -76,19 +76,24 @@ export default function RootLayout({
       <body
         className={clsx(
           robotoMono.variable,
-          'font-mono text-primary-foreground min-h-screen p-safe-or-2 sm:p-safe-or-4 md:p-safe-or-6'
+          'font-mono text-primary-foreground min-h-screen p-safe-or-2 sm:p-safe-or-4 md:p-safe-or-6 root flex flex-col'
         )}
       >
         <Providers>
-          <div className="flex flex-col root">
+          {/* Account for the footer, but make sure to push it down below the initial page */}
+          <div className="flex flex-col min-h-[calc(100vh-2rem)]">
             <Nav />
 
-            <main className="p-2 mt-2 sm:p-4 sm:mt-6 flex-1">{children}</main>
+            <main className="p-2 mt-2 sm:p-4 sm:mt-6 flex-1 grow">
+              {children}
+            </main>
+          </div>
 
-            <Footer />
+          <Footer />
 
-            <DisclaimerModal />
+          <DisclaimerModal />
 
+          <div className="fixed inset-0 z-20">
             <CRTScanlines opacity={0.05} lineHeight={2} />
           </div>
         </Providers>
