@@ -70,7 +70,7 @@ contract Merkler is Common {
         // Claim rewards with proof
         TEST rewardToken = TEST(rewardTokenAddress);
         uint256 balanceBefore = rewardToken.balanceOf(claimer);
-        uint256 claimed = rewardDistributor.claim(claimer, rewardTokenAddress, claimable, proof);
+        uint256 claimed = rewardDistributor.claim(claimer, claimable, proof);
         uint256 balanceAfter = rewardToken.balanceOf(claimer);
 
         console.log("Balance before:", balanceBefore);
