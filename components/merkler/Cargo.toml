@@ -21,6 +21,7 @@ alloy-rpc-types = { workspace = true }
 wavs-indexer-api = { workspace = true }
 wavs-merkle-sources = { workspace = true }
 futures = { workspace = true }
+wavs-ipfs = { workspace = true }
 
 ## IPFS
 cid = { workspace = true }

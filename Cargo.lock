@@ -3293,6 +3293,7 @@ dependencies = [
  "serde",
  "serde_json",
  "wavs-indexer-api",
+ "wavs-ipfs",
  "wavs-merkle-sources",
  "wavs-wasi-utils",
  "wit-bindgen-rt 0.44.0",
@@ -5789,6 +5790,20 @@ dependencies = [
  "wavs-wasi-utils",
  "wit-bindgen 0.43.0",
  "wit-bindgen-rt 0.43.0",
+ "wstd",
+]
+
+[[package]]
+name = "wavs-ipfs"
+version = "0.6.0-alpha.1"
+dependencies = [
+ "anyhow",
+ "bs58 0.5.1",
+ "cid",
+ "multibase",
+ "multihash 0.18.1",
+ "serde",
+ "serde_json",
  "wstd",
 ]
 

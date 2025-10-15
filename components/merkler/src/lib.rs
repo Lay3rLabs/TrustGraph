@@ -1,7 +1,6 @@
 #[rustfmt::skip]
 pub mod bindings;
 mod config;
-mod ipfs;
 mod merkle;
 mod trigger;
 
@@ -119,7 +118,7 @@ impl Guest for Component {
             });
 
             let ipfs_data_json = serde_json::to_string(&ipfs_data).map_err(|e| e.to_string())?;
-            let cid = ipfs::upload_json_to_ipfs(
+            let cid = wavs_ipfs::upload_json_to_ipfs(
                 &ipfs_data_json,
                 &format!("merkle_{}.json", ipfs_data.root),
                 &config.ipfs_url,
