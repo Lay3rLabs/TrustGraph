@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation'
 import type React from 'react'
+import { useMemo } from 'react'
 import { Hex } from 'viem'
 import { useAccount } from 'wagmi'
 
@@ -13,8 +14,21 @@ import { Button } from '@/components/ui/button'
 import { InfoTooltip } from '@/components/ui/info-tooltip'
 import { useAccountProfile } from '@/hooks/useAccountProfile'
 import { AttestationData } from '@/lib/attestation'
-import { EXAMPLE_NETWORK, isTrustedSeed } from '@/lib/network'
+import {
+  EXAMPLE_NETWORK,
+  NETWORKS,
+  Network,
+  isTrustedSeed,
+} from '@/lib/network'
 import { formatBigNumber } from '@/lib/utils'
+
+interface NetworkParticipant {
+  network: Network
+  rank: string
+  score: string
+  attestationsGiven: number
+  attestationsReceived: number
+}
 
 export default function AccountProfilePage() {
   const params = useParams()
@@ -35,6 +49,97 @@ export default function AccountProfilePage() {
   } = useAccountProfile(address)
 
   const trustedSeed = isTrustedSeed(EXAMPLE_NETWORK, address)
+
+  const {
+    networksData,
+    maxScore,
+    averageScore,
+    medianScore,
+    totalAttestationsReceived,
+    totalAttestationsGiven,
+  } = useMemo(() => {
+    const networksData = NETWORKS.map(
+      (network): NetworkParticipant => ({
+        network,
+        rank: profileData?.rank?.toString() || '...',
+        score: profileData?.trustScore || '...',
+        attestationsReceived: profileData?.attestationsReceived || 0,
+        attestationsGiven: profileData?.attestationsGiven || 0,
+      })
+    ).sort((a, b) => Number(b.score) - Number(a.score))
+
+    const maxScore = networksData.reduce(
+      (max, network) => Math.max(max, Number(network.score)),
+      0
+    )
+    const averageScore =
+      networksData.length > 0
+        ? networksData.reduce(
+            (sum, network) => sum + Number(network.score),
+            0
+          ) / networksData.length
+        : 0
+    const medianScore =
+      networksData.length > 1
+        ? Number(networksData[Math.ceil(networksData.length / 2)].score)
+        : Number(networksData[0]?.score || '0')
+
+    const totalAttestationsReceived = networksData.reduce(
+      (sum, network) => sum + network.attestationsReceived,
+      0
+    )
+    const totalAttestationsGiven = networksData.reduce(
+      (sum, network) => sum + network.attestationsGiven,
+      0
+    )
+
+    return {
+      networksData,
+      maxScore,
+      averageScore,
+      medianScore,
+      totalAttestationsReceived,
+      totalAttestationsGiven,
+    }
+  }, [profileData])
+
+  const networksColumns: Column<NetworkParticipant>[] = [
+    {
+      key: 'name',
+      header: 'NETWORK',
+      tooltip: 'The name of the network.',
+      sortable: false,
+      accessor: (row) => row.network.name,
+    },
+    {
+      key: 'rank',
+      header: 'RANK',
+      tooltip: 'The rank of the account in the network.',
+      sortable: true,
+      accessor: (row) => row.rank,
+    },
+    {
+      key: 'score',
+      header: 'SCORE',
+      tooltip: 'The score of the account in the network.',
+      sortable: true,
+      accessor: (row) => row.score,
+    },
+    {
+      key: 'attestationsReceived',
+      header: 'ATTESTATIONS RECEIVED',
+      tooltip: 'The number of attestations received by the account.',
+      sortable: true,
+      accessor: (row) => row.attestationsReceived,
+    },
+    {
+      key: 'attestationsGiven',
+      header: 'ATTESTATIONS MADE',
+      tooltip: 'The number of attestations made by the account.',
+      sortable: true,
+      accessor: (row) => row.attestationsGiven,
+    },
+  ]
 
   // Define columns for attestations given
   const attestationsGivenColumns: Column<AttestationData>[] = [
@@ -180,36 +285,61 @@ export default function AccountProfilePage() {
       {/* Account Info */}
       {!isLoading && profileData && (
         <>
+          {/* Networks */}
+          <div className="pb-6 space-y-6">
+            <div className="overflow-x-auto">
+              <Table
+                columns={networksColumns}
+                data={networksData}
+                getRowKey={(row) => row.network.id}
+                onRowClick={(row) => router.push(`/network/${row.network.id}`)}
+                rowClickTitle="Click to view network"
+              />
+            </div>
+          </div>
+
+          {/* Statistics */}
           <div className="border-y border-border py-12 space-y-6">
             <h2 className="font-bold">STATISTICS</h2>
             <div className="flex flex-row gap-4 flex-wrap">
               <StatisticCard
-                title="RANK"
-                tooltip="Member's position in this network ranked by Trust Score. Rank is recalculated as new attestations are made."
-                value={formatBigNumber(profileData.rank, undefined, true)}
+                title="NETWORKS"
+                tooltip="The number of networks this account is participating in."
+                value={formatBigNumber(networksData.length, undefined, true)}
               />
               <StatisticCard
-                title="TRUST SCORE"
-                tooltip="The account's Trust Score based on reputation in the network. Trust Score is recalculated as new attestations are made."
-                value={formatBigNumber(profileData.trustScore, undefined, true)}
+                title="HIGHEST SCORE"
+                tooltip="The account's highest Trust Score based on reputation in all their networks."
+                value={formatBigNumber(maxScore, undefined, true)}
               />
+              {networksData.length > 1 && (
+                <StatisticCard
+                  title="AVERAGE + MEDIAN TRUST SCORE"
+                  tooltip="This account's typical Trust Scores in all their networks."
+                  value={
+                    averageScore === medianScore
+                      ? formatBigNumber(averageScore, undefined, true)
+                      : `${formatBigNumber(
+                          Math.round(averageScore),
+                          undefined,
+                          true
+                        )} / ${formatBigNumber(medianScore, undefined, true)}`
+                  }
+                />
+              )}
               <StatisticCard
                 title="ATTESTATIONS RECEIVED"
-                tooltip="Number of attestations this account has received from others."
+                tooltip="Total number of attestations this account has received from others."
                 value={formatBigNumber(
-                  profileData.attestationsReceived,
+                  totalAttestationsReceived,
                   undefined,
                   true
                 )}
               />
               <StatisticCard
                 title="ATTESTATIONS MADE"
-                tooltip="Number of attestations this account has made to others."
-                value={formatBigNumber(
-                  profileData.attestationsGiven,
-                  undefined,
-                  true
-                )}
+                tooltip="Total number of attestations this account has made to others."
+                value={formatBigNumber(totalAttestationsGiven, undefined, true)}
               />
             </div>
           </div>

@@ -17,13 +17,13 @@ export interface Column<T> {
   sortable?: boolean
   /** Custom sort function. If not provided but sortable is true, will use default comparison */
   sortFn?: (a: T, b: T, direction: 'asc' | 'desc') => number
-  /** Custom render function for the cell. If not provided, will display the value directly */
+  /** Custom render function for the cell. If not provided, will display the value directly (from accessor) */
   render?: (row: T) => React.ReactNode
   /** Custom className for the cell */
   cellClassName?: string | ((row: T) => string)
   /** Custom className for the header */
   headerClassName?: string
-  /** Accessor function to get the value from the row for default sorting/rendering */
+  /** Accessor function to get the value from the row for default sorting/rendering (required if render is not provided) */
   accessor?: (row: T) => any
 }
 

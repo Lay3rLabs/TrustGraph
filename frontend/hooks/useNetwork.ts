@@ -85,9 +85,9 @@ export function useNetwork() {
       ? Number(totalValue) / Number(totalParticipants)
       : 0
   const medianValue =
-    merkleData.length > 0
+    merkleData.length > 1
       ? Number(merkleData[Math.ceil(merkleData.length / 2)].value)
-      : 0
+      : Number(merkleData[0]?.value || 0)
 
   // Combined loading state
   const isLoading = merkleLoading || attestationLoading
