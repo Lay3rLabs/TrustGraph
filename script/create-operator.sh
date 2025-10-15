@@ -66,7 +66,7 @@ cat > "${OPERATOR_LOC}/start.sh" << EOF
 #!/bin/bash
 cd \$(dirname "\$0") || return
 
-IMAGE=ghcr.io/lay3rlabs/wavs:1.5.0
+IMAGE=ghcr.io/lay3rlabs/wavs:1.5.1
 WAVS_INSTANCE=wavs-${OPERATOR_INDEX}
 IPFS_GATEWAY=\${IPFS_GATEWAY:-"https://gateway.pinata.cloud/ipfs/"}
 
