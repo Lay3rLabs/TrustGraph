@@ -13,7 +13,7 @@ use eas_pagerank::{sources, EasPageRankSource};
 use serde_json::json;
 use std::fs::File;
 use trigger::encode_trigger_output;
-use wavs_merkler::build_merkle_ipfs_data;
+use wavs_merkle_sources::core::build_merkle_ipfs_data;
 use wavs_wasi_utils::evm::alloy_primitives::hex;
 use wstd::runtime::block_on;
 
