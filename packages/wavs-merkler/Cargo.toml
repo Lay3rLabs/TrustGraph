@@ -1,5 +1,5 @@
 [package]
-name = "trust-graph-merkle"
+name = "wavs-merkler"
 edition.workspace = true
 version.workspace = true
 authors.workspace = true

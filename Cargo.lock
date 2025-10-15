@@ -2796,7 +2796,7 @@ dependencies = [
  "libc",
  "percent-encoding",
  "pin-project-lite",
- "socket2 0.5.10",
+ "socket2 0.6.1",
  "tokio",
  "tower-service",
  "tracing",
@@ -3292,10 +3292,10 @@ dependencies = [
  "multihash 0.18.1",
  "serde",
  "serde_json",
- "trust-graph-merkle",
  "wavs-indexer-api",
  "wavs-ipfs",
  "wavs-merkle-sources",
+ "wavs-merkler",
  "wavs-wasi-utils",
  "wit-bindgen-rt 0.44.0",
  "wstd",
@@ -5393,16 +5393,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "trust-graph-merkle"
-version = "0.6.0"
-dependencies = [
- "anyhow",
- "merkle-tree-rs",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "try-lock"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5843,6 +5833,16 @@ dependencies = [
  "wit-bindgen 0.43.0",
  "wit-bindgen-rt 0.43.0",
  "wstd",
+]
+
+[[package]]
+name = "wavs-merkler"
+version = "0.6.0"
+dependencies = [
+ "anyhow",
+ "merkle-tree-rs",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

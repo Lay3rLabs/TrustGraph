@@ -2,17 +2,18 @@
 pub mod bindings;
 mod config;
 mod eas_pagerank;
+mod pagerank;
 mod trigger;
 
 use crate::bindings::{export, Guest, TriggerAction};
 
 use bindings::WasmResponse;
 use config::{MerklerConfig, PageRankSourceConfig};
-use eas_pagerank::{pagerank, sources};
+use eas_pagerank::{sources, EasPageRankSource};
 use serde_json::json;
 use std::fs::File;
 use trigger::encode_trigger_output;
-use trust_graph_merkle::build_merkle_ipfs_data;
+use wavs_merkler::build_merkle_ipfs_data;
 use wavs_wasi_utils::evm::alloy_primitives::hex;
 use wstd::runtime::block_on;
 
@@ -37,7 +38,7 @@ impl Guest for Component {
             .with_min_threshold(pagerank_config.min_threshold);
 
             let has_trust = pagerank_source_config.has_trust_enabled();
-            match sources::eas_pagerank::EasPageRankSource::new(pagerank_source_config) {
+            match EasPageRankSource::new(pagerank_source_config) {
                 Ok(pagerank_source) => {
                     registry.add_source(pagerank_source);
                     if has_trust {
