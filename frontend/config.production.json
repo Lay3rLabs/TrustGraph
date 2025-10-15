@@ -1,0 +1,45 @@
+{
+  "chain": "local",
+  "apis": {
+    "ponder": "http://localhost:65421",
+    "ipfsGateway": "http://127.0.0.1:8080/ipfs/"
+  },
+  "wavsServiceId": "06c2b36493c57e9ad9852b613aaf420e8d8abab29dc20adbcd38bae0337b3230",
+  "contracts": {
+    "IWavsServiceManager": "0xdf6f2abf8f7bafcc5fff4692a6adb5159b61380c",
+    "WavsIndexer": "0xddE08380E8716Ffb2D3E67dceb461B26908E485e",
+    "EASAttestTrigger": "0x6c9CAa8A70302730fFb682D40Da781ab1fDf75Db",
+    "WavsAttester": "0xfB00c87E8625Ab09C2724fc4d37324551d799C08",
+    "EAS": "0x32143D02dBbcF5c5D79ee18BB02985D8696B7dAF",
+    "EASIndexerResolver": "0xdaA66cD73C999E1Ab85E09c2E77C967a2B5A7614",
+    "SchemaRegistrar": "0x5658705805f2539993A19811Ce189D79347AC7DE",
+    "SchemaRegistry": "0x8d27e581Bf74537A6BA1E679fdBDf432A607561a",
+    "MerkleSnapshot": "0x7E4eba3d98e24aCfC60943d99226ec99d63115Cf",
+    "RewardDistributor": "0x310fcC5bCA186a1d381FB73Ef132f8900Afa322C",
+    "TEST": "0x5E6ee924257d2E4bFaF16d11BD169f7Faf7CB45f",
+    "GnosisSafe": "0x2fF02b8A39edd6065515C8E8be906f32799fD057",
+    "GnosisSafeProxy": "0x959cDAE80C610277080a9d9b5069EFE02983a3d8",
+    "MerkleGovModule": "0x794c44D4f3A409EE3A41910a7346B40844d60C64",
+    "SignerManagerModule": "0x1A58dd2ffeD25d5dc55BE0202d9d3827fD8870D8"
+  },
+  "schemas": {
+    "vouching": {
+      "uid": "0x4d1912b465fb02992e4a05f3efe86620ad01190a1b5e8dcc41d3ee6b99351024",
+      "name": "Vouching",
+      "description": "Weighted endorsement",
+      "resolver": "0xdaA66cD73C999E1Ab85E09c2E77C967a2B5A7614",
+      "revocable": true,
+      "schema": "string comment,uint256 confidence",
+      "fields": [
+        {
+          "name": "comment",
+          "type": "string"
+        },
+        {
+          "name": "confidence",
+          "type": "uint256"
+        }
+      ]
+    }
+  }
+}

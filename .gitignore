@@ -1,0 +1,41 @@
+# general compile
+/target
+out/
+cache/
+broadcast/
+node_modules/
+
+# WAVS
+.env
+.env.*
+!.env.example
+.env-e
+.env.pagerank
+compiled/*.wasm
+.docker/*.json
+.docker/*.log
+wavs:worker*.wit
+wavs:worker*.wasm
+
+# WAVS infra
+.nodes
+infra/*
+
+# Tools
+**/.claude/settings.local.json
+.task
+
+
+# Claud Code
+anvil
+cast
+chisel
+forge
+foundry_nightly_linux_arm64.tar.gz
+
+# Misc
+.DS_Store
+schema_output.log
+.docker/component-upload-status
+script/post-deploy.sh
+Cargo-component.lock

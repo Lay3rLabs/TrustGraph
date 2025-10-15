@@ -1,0 +1,12 @@
+contracts/=src/contracts
+common/=src/common
+interfaces/=src/interfaces
+@wavs=node_modules/@wavs/solidity/contracts
+@lay3rlabs/poa-middleware=node_modules/@lay3rlabs/poa-middleware/contracts
+forge-std=node_modules/forge-std/src
+@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/
+@openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/
+@ethereum-attestation-service/eas-contracts/=node_modules/@ethereum-attestation-service/eas-contracts/
+@morpho-org/universal-rewards-distributor=node_modules/@morpho-org/universal-rewards-distributor/src
+@gnosis-guild/zodiac-core/=node_modules/@gnosis-guild/zodiac-core/contracts/
+@gnosis.pm/safe-contracts/=node_modules/@gnosis.pm/safe-contracts/contracts/

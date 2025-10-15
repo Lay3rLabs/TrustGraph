@@ -1,0 +1,25 @@
+[package]
+name = "wavs-gov-aggregator"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[package.metadata.component]
+package = "component:wavs-gov-aggregator"
+target = "wavs:aggregator@=1.2.1"
+
+[dependencies]
+alloy-primitives = { workspace = true }
+alloy-network = { workspace = true }
+alloy-provider = { workspace = true }
+wit-bindgen-rt = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+wavs-wasi-utils = { workspace = true }
+wstd = { workspace = true }

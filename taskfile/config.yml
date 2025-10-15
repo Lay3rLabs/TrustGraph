@@ -1,0 +1,107 @@
+version: "3"
+
+tasks:
+  wallet-address:
+    desc: "Get the wallet address"
+    cmds:
+      - 'echo "{{.WALLET_ADDRESS}}"'
+    silent: true
+
+  funded-key:
+    desc: "Get the funded private key"
+    cmds:
+      - 'echo "{{.FUNDED_KEY}}"'
+    silent: true
+
+  indexer-address:
+    desc: "Get the indexer address"
+    cmds:
+      - 'echo "{{.INDEXER_ADDR}}"'
+    silent: true
+
+  reward-distributor-address:
+    desc: "Get the reward distributor address"
+    cmds:
+      - 'echo "{{.REWARD_DISTRIBUTOR_ADDRESS}}"'
+    silent: true
+
+  merkle-snapshot-address:
+    desc: "Get the merkle snapshot address"
+    cmds:
+      - 'echo "{{.MERKLE_SNAPSHOT_ADDR}}"'
+    silent: true
+
+  service-manager-address:
+    desc: "Get the WAVS Service Manager address"
+    cmds:
+      - 'echo "{{.WAVS_SERVICE_MANAGER_ADDRESS}}"'
+    silent: true
+
+  service-id:
+    desc: "Get the service ID"
+    cmds:
+      - 'echo "{{.SERVICE_ID}}"'
+    silent: true
+
+vars:
+  # Repository general
+  REPO_ROOT:
+    sh: git rev-parse --show-toplevel
+
+  # Wallet configuration (from .env via Taskfile dotenv)
+  FUNDED_KEY: "{{.FUNDED_KEY}}"
+  WALLET_ADDRESS:
+    sh: test -n "{{.FUNDED_KEY}}" && cast wallet address "{{.FUNDED_KEY}}" 2>/dev/null || echo ""
+
+  # Docker images
+  WAVS_DOCKER_IMAGE: "ghcr.io/lay3rlabs/wavs:1.5.0"
+  MIDDLEWARE_DOCKER_IMAGE: "ghcr.io/lay3rlabs/wavs-middleware:0.5.0-beta.10"
+
+  # Service endpoints
+  IPFS_ENDPOINT: "http://localhost:5001"
+  IPFS_GATEWAY: "http://localhost:8080/ipfs/"
+  RPC_URL: "http://127.0.0.1:8545"
+  WAVS_ENDPOINT: "http://127.0.0.1:8041"
+  AGGREGATOR_URL: "http://127.0.0.1:8040"
+
+  # Deployment summary path
+  DEPLOY_SUMMARY: ".docker/deployment_summary.json"
+
+  SERVICE_INDEX: '{{.SERVICE_INDEX | default "0"}}'
+  SERVICE_ID:
+    sh: curl -s http://localhost:8041/services | jq -r ".service_ids[{{.SERVICE_INDEX}}]"
+  WAVS_SERVICE_MANAGER_ADDRESS:
+    sh: |
+      if [ -n "${WAVS_SERVICE_MANAGER_ADDRESS}" ]; then
+        echo "${WAVS_SERVICE_MANAGER_ADDRESS}"
+      else
+        addr=$(jq -r '.addresses.POAStakeRegistry' .nodes/poa_deploy.json 2>/dev/null || echo "")
+        if [ -n "$addr" ] && [ "$addr" != "null" ]; then
+          echo "$addr"
+        else
+          echo "⚠️ WAVS Service Manager address not found (looked in \$WAVS_SERVICE_MANAGER_ADDRESS env and .nodes/poa_deploy.json file)" >&2
+          echo ""
+        fi
+      fi
+  EAS_ATTEST_TRIGGER_ADDR:
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.contracts.attest_trigger' .docker/deployment_summary.json || echo ""
+  EAS_ADDR:
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.contracts.eas' .docker/deployment_summary.json || echo ""
+  SCHEMA_REGISTRAR_ADDR:
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.contracts.schema_registrar' .docker/deployment_summary.json || echo ""
+  INDEXER_ADDR:
+    sh: test -f .docker/deployment_summary.json && jq -r '.wavs_indexer' .docker/deployment_summary.json || echo ""
+  EAS_INDEXER_RESOLVER_ADDR:
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.contracts.indexer_resolver' .docker/deployment_summary.json || echo ""
+  VOTING_POWER_ADDR:
+    sh: test -f .docker/deployment_summary.json && jq -r '.governance.voting_power' .docker/deployment_summary.json || echo ""
+  REWARDS_TOKEN_ADDRESS:
+    sh: test -f .docker/deployment_summary.json && jq -r '.merkler.reward_token' .docker/deployment_summary.json || echo ""
+  REWARD_DISTRIBUTOR_ADDRESS:
+    sh: test -f .docker/deployment_summary.json && jq -r '.merkler.reward_distributor' .docker/deployment_summary.json || echo ""
+  MERKLE_SNAPSHOT_ADDR:
+    sh: test -f .docker/merkler_deploy.json && jq -r '.merkle_snapshot' .docker/merkler_deploy.json || echo ""
+
+  # Schema UIDs (loaded from deployment summary)
+  VOUCHING_SCHEMA_ID:
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.vouching.uid' .docker/deployment_summary.json || echo ""

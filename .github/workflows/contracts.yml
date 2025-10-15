@@ -1,0 +1,34 @@
+name: Solidity
+
+on:
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    env:
+      TASK_X_REMOTE_TASKFILES: 1
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - uses: actions/setup-node@v4
+        name: Install Node.js
+        with:
+          node-version: 21
+
+      - name: Install Task
+        uses: go-task/setup-task@v1
+
+      - name: Install deps
+        run: task --yes setup
+
+      - name: Run forge build
+        run: forge build -vvv
+
+      - name: Run forge tests
+        run: forge test -vvv

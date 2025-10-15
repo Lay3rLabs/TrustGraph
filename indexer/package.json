@@ -1,0 +1,39 @@
+{
+  "name": "@wavs/trust-graph-indexer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm",
+    "predev": "npm run ensure-env-local && npm run db:migrate",
+    "ensure-env-local": "if ! test -f .env.local; then cp .env.example .env.local; fi",
+    "dev": "ponder dev -p 65421",
+    "start": "ponder start -p 65421",
+    "db": "ponder db",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "codegen": "ponder codegen",
+    "serve": "ponder serve -p 65421",
+    "lint": "eslint .",
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@ponder/client": "^0.13.0",
+    "drizzle-orm": "^0.41.0",
+    "hono": "^4.5.0",
+    "pg": "^8.16.3",
+    "ponder": "^0.13.8",
+    "viem": "^2.21.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/pg": "^8.15.5",
+    "dotenv": "^17.2.2",
+    "drizzle-kit": "^0.31.4",
+    "eslint": "^8.54.0",
+    "eslint-config-ponder": "^0.12.26",
+    "typescript": "^5.3.2"
+  },
+  "engines": {
+    "node": ">=18.14"
+  }
+}

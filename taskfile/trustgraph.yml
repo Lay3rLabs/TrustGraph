@@ -1,0 +1,282 @@
+version: "3"
+
+vars:
+  RPC_URL: "http://localhost:8545"
+  CHAIN_ID: "31337"
+  DEPLOYMENT_FILE: ".docker/deployment_summary.json"
+
+tasks:
+  create-network:
+    desc: "Create TrustGraph vouching attestation network"
+    vars:
+      TEST_ADDRESS: "{{.TEST_ADDRESS}}"
+    preconditions:
+      - test -n "{{.TEST_ADDRESS}}"
+      - test -f {{.DEPLOYMENT_FILE}}
+    cmds:
+      - |
+        # Colors for output
+        RED='\033[0;31m'
+        GREEN='\033[0;32m'
+        YELLOW='\033[1;33m'
+        BLUE='\033[0;34m'
+        PURPLE='\033[0;35m'
+        CYAN='\033[0;36m'
+        NC='\033[0m'
+
+        echo -e "${PURPLE}Creating Direct EAS TrustGraph Vouching Network${NC}"
+
+        # Load deployment configuration
+        EAS_ADDRESS=$(jq -r '.eas.contracts.eas' {{.DEPLOYMENT_FILE}})
+        ATTESTER_ADDRESS=$(jq -r '.eas.contracts.attester' {{.DEPLOYMENT_FILE}})
+        VOUCHING_SCHEMA_ID=$(jq -r '.eas.schemas.vouching.uid' {{.DEPLOYMENT_FILE}})
+
+        echo -e "${BLUE}Configuration:${NC}"
+        echo "EAS: $EAS_ADDRESS"
+        echo "Attester: $ATTESTER_ADDRESS"
+        echo "Vouching Schema: $VOUCHING_SCHEMA_ID"
+        echo "Test Address: {{.TEST_ADDRESS}}"
+
+        # Verify network connectivity
+        if ! curl -s -X POST -H "Content-Type: application/json" \
+            --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' \
+            {{.RPC_URL}} > /dev/null; then
+          echo -e "${RED}Cannot connect to RPC at {{.RPC_URL}}${NC}"
+          exit 1
+        fi
+
+        # Function to create vouching attestation
+        create_vouching_attestation() {
+          local attester_name="$1"
+          local recipient_addr="$2"
+          local comment="$3"
+          local confidence="$4"
+          local attester_key
+
+          case "$attester_name" in
+            Alice) attester_key="0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d" ;;
+            Bob) attester_key="0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a" ;;
+            Charlie) attester_key="0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6" ;;
+            Diana) attester_key="0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a" ;;
+            Eve) attester_key="0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba" ;;
+            Frank) attester_key="0x92db14e403b83dfe3df233f83dfa3a0d7096f21ca9b0d6d6b8d88b2b4ec1564e" ;;
+            Grace) attester_key="0x4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356" ;;
+            Henry) attester_key="0xdbda1821b80551c9d65939329250298aa3472ba22feea921c0cf5d620ea67b97" ;;
+            Ivy) attester_key="0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6" ;;
+            *) return 1 ;;
+          esac
+
+          # Get recipient address
+          case "$recipient_addr" in
+            Alice) recipient_addr="0x70997970C51812dc3A010C7d01b50e0d17dc79C8" ;;
+            Bob) recipient_addr="0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC" ;;
+            Charlie) recipient_addr="0x90F79bf6EB2c4f870365E785982E1f101E93b906" ;;
+            Diana) recipient_addr="0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65" ;;
+            Eve) recipient_addr="0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc" ;;
+            Frank) recipient_addr="0x976EA74026E726554dB657fA54763abd0C3a0aa9" ;;
+            Grace) recipient_addr="0x14dC79964da2C08b23698B3D3cc7Ca32193d9955" ;;
+            Henry) recipient_addr="0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f" ;;
+            Ivy) recipient_addr="0xa0Ee7A142d267C1f36714E4a8F75612F20a79720" ;;
+            *) ;; # Keep address as-is if it's already a valid address
+          esac
+
+          # Encode both comment and confidence according to new schema: "string comment, uint256 confidence"
+          local data=$(cast abi-encode "f(string,uint256)" "$comment" $confidence)
+
+          echo -e "${CYAN}Creating vouching: $attester_name → $recipient_addr (comment: \"$comment\", confidence: $confidence)${NC}"
+
+          if cast send $EAS_ADDRESS \
+              --private-key "$attester_key" \
+              --rpc-url {{.RPC_URL}} \
+              --gas-limit 500000 \
+              "attest((bytes32,(address,uint64,bool,bytes32,bytes,uint256)))" \
+              "($VOUCHING_SCHEMA_ID,($recipient_addr,0,true,0x0000000000000000000000000000000000000000000000000000000000000000,$data,0))" > /dev/null 2>&1; then
+            echo -e "${GREEN}✓ Success${NC}"
+            return 0
+          else
+            echo -e "${RED}✗ Failed${NC}"
+            return 1
+          fi
+        }
+
+        echo -e "${BLUE}=== Creating TrustGraph Vouching Network ===${NC}"
+
+        total_attestations=0
+        failed_attestations=0
+
+        # Authority vouchers
+        echo -e "${CYAN}👑 Creating authority vouchers...${NC}"
+
+        if create_vouching_attestation "Alice" "Bob" "Highly trusted community member" "95"; then
+          total_attestations=$((total_attestations + 1))
+        else
+          failed_attestations=$((failed_attestations + 1))
+        fi
+        sleep 0.1
+
+        if create_vouching_attestation "Alice" "{{.TEST_ADDRESS}}" "Reliable test participant" "85"; then
+          total_attestations=$((total_attestations + 1))
+        else
+          failed_attestations=$((failed_attestations + 1))
+        fi
+        sleep 0.1
+
+        if create_vouching_attestation "Bob" "{{.TEST_ADDRESS}}" "Good collaborator" "75"; then
+          total_attestations=$((total_attestations + 1))
+        else
+          failed_attestations=$((failed_attestations + 1))
+        fi
+        sleep 0.1
+
+        # Spammer self-vouchers
+        echo -e "${CYAN}🤬 Creating spammer self-vouchers...${NC}"
+
+        if create_vouching_attestation "Grace" "Grace" "I am the best" "100"; then
+          total_attestations=$((total_attestations + 1))
+        else
+          failed_attestations=$((failed_attestations + 1))
+        fi
+        sleep 0.1
+
+        if create_vouching_attestation "Henry" "Henry" "Trust me completely" "100"; then
+          total_attestations=$((total_attestations + 1))
+        else
+          failed_attestations=$((failed_attestations + 1))
+        fi
+        sleep 0.1
+
+        if create_vouching_attestation "Ivy" "Ivy" "Self-vouching is valid" "100"; then
+          total_attestations=$((total_attestations + 1))
+        else
+          failed_attestations=$((failed_attestations + 1))
+        fi
+        sleep 0.1
+
+        # Community vouchers
+        echo -e "${CYAN}🤝 Creating community vouchers...${NC}"
+
+        declare -A vouches=(
+          ["Bob:Charlie"]="Solid contributor:70"
+          ["Charlie:Diana"]="Helpful team member:65"
+          ["Diana:Eve"]="Consistent performer:60"
+          ["Eve:Frank"]="Dependable colleague:55"
+          ["Frank:Bob"]="Trustworthy partner:50"
+          ["Charlie:Frank"]="Good communicator:45"
+          ["Diana:Bob"]="Reliable supporter:40"
+        )
+
+        for vouch in "${!vouches[@]}"; do
+          IFS=':' read -r attester recipient <<< "$vouch"
+          IFS=':' read -r comment confidence <<< "${vouches[$vouch]}"
+          if create_vouching_attestation "$attester" "$recipient" "$comment" "$confidence"; then
+            total_attestations=$((total_attestations + 1))
+          else
+            failed_attestations=$((failed_attestations + 1))
+          fi
+          sleep 0.1
+        done
+
+        echo -e "${GREEN}✅ Network creation complete!${NC}"
+        echo -e "${GREEN}Created: $total_attestations attestations${NC}"
+        if [[ $failed_attestations -gt 0 ]]; then
+          echo -e "${YELLOW}Failed: $failed_attestations attestations${NC}"
+        fi
+
+  analyze:
+    desc: "Analyze the created TrustGraph vouching network"
+    vars:
+      TEST_ADDRESS: "{{.TEST_ADDRESS}}"
+    preconditions:
+      - test -n "{{.TEST_ADDRESS}}"
+      - test -f {{.DEPLOYMENT_FILE}}
+    cmds:
+      - |
+        CYAN='\033[0;36m'
+        GREEN='\033[0;32m'
+        NC='\033[0m'
+
+        EAS_ADDRESS=$(jq -r '.eas.contracts.eas' {{.DEPLOYMENT_FILE}})
+        VOUCHING_SCHEMA_ID=$(jq -r '.eas.schemas.vouching.uid' {{.DEPLOYMENT_FILE}})
+
+        echo -e "${CYAN}📊 TrustGraph Vouching Network Analysis${NC}"
+        echo "==========================="
+        echo ""
+        echo "👥 Test Accounts (using anvil accounts):"
+        echo "   • Alice: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+        echo "   • Bob: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
+        echo "   • Charlie: 0x90F79bf6EB2c4f870365E785982E1f101E93b906"
+        echo "   • Diana: 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65"
+        echo "   • Eve: 0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc"
+        echo "   • Frank: 0x976EA74026E726554dB657fA54763abd0C3a0aa9"
+        echo "   • Grace: 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955"
+        echo "   • Henry: 0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f"
+        echo "   • Ivy: 0xa0Ee7A142d267C1f36714E4a8F75612F20a79720"
+        echo "   • TestAccount: {{.TEST_ADDRESS}} (Custom Test Address)"
+        echo ""
+        echo "📈 Expected TrustGraph Leaders:"
+        echo "   1. Alice - Authority figure with high outgoing confidence scores"
+        echo "   2. TestAccount ({{.TEST_ADDRESS}}) - Receives high-confidence vouches"
+        echo "   3. Bob - Receives high-confidence vouch from Alice"
+        echo ""
+        echo "📝 Schema Format:"
+        echo "   • comment: string - Human readable endorsement reason"
+        echo "   • confidence: uint256 - Numerical confidence score (0-100)"
+        echo ""
+        echo "⚙️ Contract Addresses:"
+        echo "   • EAS: $EAS_ADDRESS"
+        echo "   • Vouching Schema: $VOUCHING_SCHEMA_ID"
+        echo "   • RPC: {{.RPC_URL}}"
+
+  next-steps:
+    desc: "Show next steps for TrustGraph testing"
+    vars:
+      TEST_ADDRESS: "{{.TEST_ADDRESS}}"
+    preconditions:
+      - test -f {{.DEPLOYMENT_FILE}}
+    cmds:
+      - |
+        YELLOW='\033[1;33m'
+        NC='\033[0m'
+
+        EAS_ADDRESS=$(jq -r '.eas.contracts.eas' {{.DEPLOYMENT_FILE}})
+        VOUCHING_SCHEMA_ID=$(jq -r '.eas.schemas.vouching.uid' {{.DEPLOYMENT_FILE}})
+
+        echo -e "${YELLOW}🎯 Next Steps for TrustGraph Testing${NC}"
+        echo ""
+        echo "🔄 Environment setup:"
+        echo "   export WAVS_ENV_EAS_ADDRESS=\"$EAS_ADDRESS\""
+        echo "   export WAVS_ENV_VOUCHING_SCHEMA_ID=\"$VOUCHING_SCHEMA_ID\""
+        echo "   export WAVS_ENV_RPC_URL=\"{{.RPC_URL}}\""
+        echo "   export WAVS_ENV_CHAIN_ID=\"{{.CHAIN_ID}}\""
+        echo ""
+        echo "🔨 Build and test TrustGraph component:"
+        echo "   task build:wasi"
+        echo "   task wasi:exec COMPONENT_FILENAME=merkler.wasm INPUT_DATA=\"test-trustgraph\""
+        echo ""
+        echo "📊 Expected Results:"
+        echo "   • Alice should have highest trust score (authority)"
+        echo "   • TestAccount ({{.TEST_ADDRESS}}) should rank very high"
+        echo "   • Bob should rank high"
+        echo "   • Grace/Henry/Ivy should rank low (spammers with self-vouches)"
+        echo ""
+        echo "📝 Schema Details:"
+        echo "   • New vouching attestations include both comment and confidence"
+        echo "   • Comments provide human-readable endorsement context"
+        echo "   • Confidence scores (0-100) provide weighted trust values"
+
+  full-setup:
+    desc: "Complete TrustGraph network setup with analysis"
+    vars:
+      TEST_ADDRESS: "{{.TEST_ADDRESS}}"
+    preconditions:
+      - test -n "{{.TEST_ADDRESS}}"
+    cmds:
+      - task: create-network
+        vars:
+          TEST_ADDRESS: "{{.TEST_ADDRESS}}"
+      - task: analyze
+        vars:
+          TEST_ADDRESS: "{{.TEST_ADDRESS}}"
+      - task: next-steps
+        vars:
+          TEST_ADDRESS: "{{.TEST_ADDRESS}}"
