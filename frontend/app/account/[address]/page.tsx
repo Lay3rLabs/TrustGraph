@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button'
 import { InfoTooltip } from '@/components/ui/info-tooltip'
 import { useAccountProfile } from '@/hooks/useAccountProfile'
 import { AttestationData } from '@/lib/attestation'
-import { TRUSTED_SEEDS } from '@/lib/config'
+import { EXAMPLE_NETWORK, isTrustedSeed } from '@/lib/network'
 import { formatBigNumber } from '@/lib/utils'
 
 export default function AccountProfilePage() {
@@ -34,7 +34,7 @@ export default function AccountProfilePage() {
     refresh,
   } = useAccountProfile(address)
 
-  const isTrustedSeed = TRUSTED_SEEDS.includes(address)
+  const trustedSeed = isTrustedSeed(EXAMPLE_NETWORK, address)
 
   // Define columns for attestations given
   const attestationsGivenColumns: Column<AttestationData>[] = [
@@ -136,7 +136,7 @@ export default function AccountProfilePage() {
                 showCopyIcon={true}
                 clickable={false}
               />
-              {isTrustedSeed && (
+              {trustedSeed && (
                 <div className="flex items-center gap-1">
                   <span title="Trusted Seed">⚡</span>
                   <InfoTooltip title="This account is a trusted seed member with enhanced network privileges." />

@@ -10,7 +10,7 @@ import { TableAddress } from '@/components/ui/address'
 import { Button } from '@/components/ui/button'
 import { ExportButtons } from '@/components/ui/ExportButtons'
 import { NetworkEntry, useNetwork } from '@/hooks/useNetwork'
-import { NETWORKS } from '@/lib/network'
+import { NETWORKS, isTrustedSeed } from '@/lib/network'
 import { cn, formatBigNumber } from '@/lib/utils'
 
 export default function NetworkPage() {
@@ -34,7 +34,7 @@ export default function NetworkPage() {
     return <div>Network not found</div>
   }
 
-  const { name, url, about, criteria, trustedSeeds } = network
+  const { name, url, about, criteria } = network
 
   // Define table columns
   const columns: Column<NetworkEntry>[] = [
@@ -89,7 +89,7 @@ export default function NetworkPage() {
       sortable: false,
       render: (row) => (
         <div className="terminal-text text-sm text-gray-800">
-          {trustedSeeds.includes(row.account) ? '⚡' : ''}
+          {isTrustedSeed(network, row.account) ? '⚡' : ''}
         </div>
       ),
     },

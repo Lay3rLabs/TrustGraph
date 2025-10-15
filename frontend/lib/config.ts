@@ -5,4 +5,3 @@ export const CHAIN = CONFIG.chain
 export const APIS = CONFIG.apis
 export const SCHEMA_CONFIG = CONFIG.schemas
 export const CONTRACT_CONFIG = CONFIG.contracts
-export const TRUSTED_SEEDS = ['0x70997970C51812dc3A010C7d01b50e0d17dc79C8']

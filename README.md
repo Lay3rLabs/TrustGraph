@@ -82,7 +82,7 @@ export SKIP_CONTRACT_UPLOAD=true
 **In a new terminal**, start the frontend:
 
 ```bash
-pnpm frontend:dev
+pnpm frontend dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
@@ -92,7 +92,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 **In another new terminal**, start the [Ponder.sh](https://ponder.sh) indexer:
 
 ```bash
-pnpm indexer:dev
+pnpm indexer dev
 ```
 
 ### 8. Deploy Test Network of Attestations

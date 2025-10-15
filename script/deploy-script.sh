@@ -124,12 +124,6 @@ echo "✅ Indexer Address: ${INDEXER_ADDRESS}"
 echo "✅ Vouching Schema UID: ${VOUCHING_SCHEMA_UID}"
 echo "✅ Chain Name: ${CHAIN_NAME}"
 
-# Export additional configuration values that components might need
-export PAGERANK_REWARD_POOL="1000000000000000000000"
-export PAGERANK_TRUSTED_SEEDS="0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
-export PAGERANK_TRUST_MULTIPLIER="10.5"
-export PAGERANK_TRUST_BOOST="0.99"
-
 # Zodiac Module Configuration values
 export SIGNER_MANAGER_ZODIAC_MODULE=`jq -r '.zodiac_safes.safe1.signer_module' "./.docker/deployment_summary.json"`
 

@@ -14,12 +14,19 @@ const deploymentSummaryFile = path.join(
   __dirname,
   '../../.docker/deployment_summary.json'
 )
+const trustGraphConfigFile = path.join(
+  __dirname,
+  '../../config/trust_graph.json'
+)
 
 console.log('🔄 Updating config with latest deployment data...')
 
 try {
-  // Read deployment summary
+  // Read configs
   const deployment = JSON.parse(fs.readFileSync(deploymentSummaryFile, 'utf8'))
+  const trustGraphConfig = JSON.parse(
+    fs.readFileSync(trustGraphConfigFile, 'utf8')
+  )
 
   console.log('📋 Found deployment data')
 
@@ -120,6 +127,8 @@ try {
         },
       }
     }, {})
+
+  configOutput.trustedSeeds = trustGraphConfig.pagerank_trusted_seeds.split(',')
 
   fs.writeFileSync(configOutputFile, JSON.stringify(configOutput, null, 2))
 

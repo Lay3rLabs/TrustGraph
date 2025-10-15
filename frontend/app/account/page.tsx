@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { ExportButtons } from '@/components/ui/ExportButtons'
 import { InfoTooltip } from '@/components/ui/info-tooltip'
 import { useNetwork } from '@/hooks/useNetwork'
-import { TRUSTED_SEEDS } from '@/lib/config'
+import { EXAMPLE_NETWORK } from '@/lib/network'
 import { formatBigNumber } from '@/lib/utils'
 
 type SortColumn = 'rank' | 'received' | 'sent' | 'score'
@@ -298,7 +298,9 @@ export default function NetworkPage() {
                       </td>
                       <td className="p-4">
                         <div className="terminal-text text-sm text-gray-800">
-                          {TRUSTED_SEEDS.includes(entry.account) ? '⚡' : '-'}
+                          {EXAMPLE_NETWORK.trustedSeeds.includes(entry.account)
+                            ? '⚡'
+                            : '-'}
                         </div>
                       </td>
                       <td className="p-4">

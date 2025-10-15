@@ -2,6 +2,7 @@ import { porto } from 'porto/wagmi'
 import { Chain } from 'viem'
 import { base } from 'viem/chains'
 import { createConfig, fallback, http, webSocket } from 'wagmi'
+import { mainnet } from 'wagmi/chains'
 import {
   coinbaseWallet,
   injected,
@@ -53,7 +54,11 @@ export const getCurrentChainConfig = (): Chain => {
 // Get the current network configuration
 export const currentNetworkConfig = getCurrentChainConfig()
 
-const supportedChains = [currentNetworkConfig] as readonly [Chain, ...Chain[]]
+const supportedChains = [
+  currentNetworkConfig,
+  // Add ETH mainnet for ENS resolution
+  mainnet,
+] as readonly [Chain, ...Chain[]]
 
 export const config = createConfig({
   chains: supportedChains,
