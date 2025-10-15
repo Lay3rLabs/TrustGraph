@@ -87,11 +87,7 @@ export default function NetworkPage() {
       tooltip:
         'Indicates if this member is part of the initial seed group that bootstrapped this network. Seed member influence is designed to diminish as the network grows.',
       sortable: false,
-      render: (row) => (
-        <div className="terminal-text text-sm text-gray-800">
-          {isTrustedSeed(network, row.account) ? '⚡' : ''}
-        </div>
-      ),
+      render: (row) => (isTrustedSeed(network, row.account) ? '🌱' : ''),
     },
     {
       key: 'received',

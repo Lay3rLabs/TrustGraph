@@ -299,7 +299,7 @@ export default function NetworkPage() {
                       <td className="p-4">
                         <div className="terminal-text text-sm text-gray-800">
                           {EXAMPLE_NETWORK.trustedSeeds.includes(entry.account)
-                            ? '⚡'
+                            ? '🌱'
                             : '-'}
                         </div>
                       </td>

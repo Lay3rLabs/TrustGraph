@@ -111,11 +111,7 @@ export default function AccountProfilePage() {
       tooltip:
         'Indicates if this account is part of the initial seed group that bootstrapped this network. Seed member influence is designed to diminish as the network grows.',
       sortable: false,
-      render: (row) => (
-        <div className="terminal-text text-sm text-gray-800">
-          {row.seed ? '⚡' : ''}
-        </div>
-      ),
+      render: (row) => (row.seed ? '🌱' : ''),
     },
     {
       key: 'rank',
