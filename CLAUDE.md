@@ -4,32 +4,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Common Development Commands
 
+Use `task --list-all` to see all available commands.
+
 ### Build Commands
-- `make build` - Build both Solidity contracts and WASI components
-- `forge build` - Build only Solidity contracts
-- `make wasi-build` - Build WASI components into compiled/ directory
-- `WASI_BUILD_DIR=components/component-name make wasi-build` - Build specific component
+- `task build:forge` - Build Solidity contracts
+- `task build:wasi` - Build WASI components into compiled/ directory
+- `task build:wasi WASI_BUILD_DIR=components/component-name` - Build specific component
 
 ### Test Commands
-- `forge test` - Run all Solidity tests
-- `forge test -vvv` - Run tests with verbose output
+- `task test` - Run all Solidity tests
+- `forge test -vvv` - Run tests with verbose output (use forge directly for flags)
 - `npm run test:unit` - Run unit tests matching Unit contracts
 - `npm run coverage` - Generate test coverage report
 
 ### Development Environment
-- `make start-all-local` - Start anvil, IPFS, WARG, Jaeger, and prometheus
-- `bash ./script/deploy-script.sh` - Complete WAVS deployment pipeline
-- `make setup` - Install initial dependencies (npm + forge)
+- `task start-all-local` - Start anvil, IPFS, WARG, Jaeger, and prometheus
+- `task deploy-full` - Complete WAVS deployment pipeline
+- `task setup` - Install initial dependencies (npm + forge)
 
 ### Lint and Format Commands
-- `npm run lint:check` - Check Solidity linting and formatting
-- `npm run lint:fix` - Fix linting and formatting issues
-- `forge fmt` - Format Solidity code
-- `cargo fmt` - Format Rust code
+- `task lint:check` - Check Solidity linting and formatting
+- `task lint:fix` - Fix linting and formatting issues
+- `task fmt` - Format Solidity and Rust code
 
 ## Architecture Overview
 
-This is a WAVS (WASI AVS) project that provides Ethereum Attestation Service (EAS) integration with off-chain computation capabilities. The system consists of:
+TrustGraph is a WAVS (WASI AVS) project that implements attestation-based governance using EAS (Ethereum Attestation Service) and PageRank algorithms. The system uses trust attestations between accounts to calculate governance weights and distribute rewards. The system consists of:
 
 ### Core Components Structure
 - **Solidity Contracts** (`src/contracts/`): On-chain logic including attestation handlers, governance, rewards, and triggers
@@ -41,10 +41,13 @@ This is a WAVS (WASI AVS) project that provides Ethereum Attestation Service (EA
 
 #### WASI Components (`components/`)
 
-Three main components that handle different aspects of the attestation workflow:
+Components that handle different aspects of the attestation and governance workflow:
 - `eas-attest/`: Creates EAS attestations based on trigger events
-- `eas-compute/`: Computes voting power and updates based on attestation data
-- `merkler/`: Calculates a merkle tree based on attestation activity
+- `merkler/`: Calculates merkle trees for TrustGraph PageRank-based governance
+- `merkler-pruner/`: Prunes and maintains merkle tree data
+- `aggregator/`: Aggregates operator responses
+- `safe-signer-sync/`: Syncs Safe multisig signers
+- `wavs-indexer/`: Indexes blockchain events for the system
 
 
 #### Service Architecture
@@ -80,19 +83,17 @@ The system operates as an AVS (Actively Validated Service) where:
 - Always verify API endpoints with curl before implementing code that depends on them
 
 ### Testing Patterns
-- Components can be tested locally using `make wasi-exec`
+- Components can be tested locally using `task wasi:exec`
 - Always use string parameters for component input, even for numeric values
 - Validation script at `test_utils/validate_component.sh` checks component compliance
-- Use `make validate-component COMPONENT=component-name` to validate components
 - Always run validation and fix ALL errors before building components
 
 ### Component Creation Workflow
 1. Research existing components in `/components/` for patterns
 2. Create component directory: `mkdir -p components/name/src`
-3. Copy template files: `cp components/evm-price-oracle/src/bindings.rs components/name/src/ && cp components/evm-price-oracle/config.json components/name/ && cp components/evm-price-oracle/Makefile components/name/`
+3. Copy template files from an existing component
 4. Implement `src/lib.rs` and `src/trigger.rs` with proper ABI decoding
 5. Create `Cargo.toml` using workspace dependencies
 6. Add component to workspace members in root `Cargo.toml`
-7. Validate: `make validate-component COMPONENT=name`
-8. Build: `WASI_BUILD_DIR=components/name make wasi-build`
-9. Test: `make wasi-exec COMPONENT_FILENAME=name.wasm INPUT_DATA="test-string"`
+7. Build: `task build:wasi WASI_BUILD_DIR=components/name`
+8. Test: `task wasi:exec COMPONENT_FILENAME=name.wasm INPUT_DATA="test-string"`

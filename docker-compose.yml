@@ -1,6 +1,6 @@
 ###################################
 #
-# make start-all-local
+# task start-all-local
 #
 ###################################
 
@@ -34,24 +34,6 @@ services:
     stop_signal: SIGKILL
     command: daemon
     restart: unless-stopped
-
-  ## If you want to build examples leveraging AI as part of your service, you'll need to enable this sidecar.
-  # ollama:
-  #   image: ollama/ollama:0.11.0
-  #   container_name: "ollama"
-  #   stop_signal: SIGKILL
-  #   ports:
-  #     - "11434:11434"
-  #   volumes:
-  #     - ollama-data:/root/.ollama
-  #   entrypoint: ["/bin/sh", "-c"]
-  #   command:
-  #     - |
-  #       ollama serve &
-  #       sleep 5
-  #       ollama pull llama3.2
-  #       wait
-  #   restart: unless-stopped
 
   ponder-db:
     image: postgres:17

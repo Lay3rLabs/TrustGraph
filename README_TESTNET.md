@@ -1,9 +1,27 @@
-## Testnet
+## Testnet Deployment
+
+### Recommended Approach
+
+Use the task-based deployment commands:
+
+```bash
+# Update .env for TESTNET environment
+# export DEPLOY_ENV=TESTNET
+
+# Full deployment pipeline
+task deploy:full
+
+# Upload service config to IPFS
+task deploy:ipfs
+
+# Deploy service
+task deploy:service
+```
+
+### Manual Deployment Steps (Legacy)
 
 ```bash
 echo "COMPLETED" > .docker/component-upload-status
-
-# TODO: in v1.0.0 I had to replace time_limit_seconds: null, -> time_limit_seconds: 60, in the service.json. Fixed in latest v1.X patch
 
 # TESTNET
 export WAVS_SERVICE_MANAGER_ADDRESS=`task config:service-manager-address`
@@ -11,14 +29,14 @@ export RPC_URL=`task get-rpc`
 
 # Update IPFS service
 export PINATA_API_KEY=$(grep ^WAVS_ENV_PINATA_API_KEY= .env | cut -d '=' -f2-)
-export ipfs_cid=`SERVICE_FILE=.docker/service.json PINATA_API_KEY=${PINATA_API_KEY} make upload-to-ipfs`
+export ipfs_cid=`task deploy:ipfs`
 cast send `task config:service-manager-address` 'setServiceURI(string)' "ipfs://${ipfs_cid}" -r `task get-rpc` --private-key `task config:funded-key`
 cast call ${WAVS_SERVICE_MANAGER_ADDRESS} "getServiceURI()(string)" --rpc-url ${RPC_URL}
 
 # ----
 cd infra/wavs-1
 sh start.sh
-# WAVS_ENDPOINT=http://127.0.0.1:8041 SERVICE_URL=${IPFS_URI} IPFS_GATEWAY=${IPFS_GATEWAY} make deploy-service
+# Use task deploy:service instead
 
 # ! If you get 0x3dda1739 in the aggregator, make sure to run this (there is no operator)
 export op_num=2

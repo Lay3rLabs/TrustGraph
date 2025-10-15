@@ -3,13 +3,6 @@ pragma solidity 0.8.27;
 
 import {Script} from "forge-std/Script.sol";
 
-/// @dev Struct to store Eigen contracts
-struct EigenContracts {
-    address delegation_manager;
-    address rewards_coordinator;
-    address avs_directory;
-}
-
 /// @dev Common script for all deployment scripts
 contract Common is Script {
     uint256 internal _privateKey =

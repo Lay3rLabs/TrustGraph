@@ -1,12 +1,12 @@
 # [WAVS](https://docs.wavs.xyz) Gov
 
-Some next-gen attestation-based governance tools.
+Some next-gen attestation-based governance tools. Get setup with the [Setup Readme](./README_SETUP.md)
 
-**Status:** HIGHLY EXPERIMENTL! Please experiment with us.
+**Status:** HIGHLY EXPERIMENTAL! Please experiment with us.
 
 ### Solidity
 
-Install the required packages to build the Solidity contracts. This project supports both [submodules](./.gitmodules) and [npm packages](./package.json).
+Install the required packages to build the Solidity contracts.
 
 ```bash
 # Install packages (npm & submodules)
@@ -42,16 +42,6 @@ task build:wasi
 ## Start Environment
 
 Start an ethereum node (anvil), the WAVS service, and deploy AVS contracts to the local network.
-
-### Enable Telemetry (optional)
-
-Set Log Level:
-
-- Open the `.env` file.
-- Set the `log_level` variable for wavs to debug to ensure detailed logs are captured.
-
-> \[!NOTE]
-> To see details on how to access both traces and metrics, please check out [Telemetry Documentation](telemetry/telemetry.md).
 
 ### Start the backend
 
@@ -95,9 +85,6 @@ Create a comprehensive PageRank test network with real attestations:
 # Create 40+ real attestations across different network patterns
 # Set TEST_ADDRESS to your wallet address from config
 TEST_ADDRESS=$(task config:wallet-address) task trustgraph:full-setup
-
-# Verify the network and get PageRank recommendations
-# task eas:verify-pagerank-network
 ```
 
 This creates a realistic attestation network with:
@@ -129,18 +116,4 @@ Claim:
 task forge:claim-rewards
 
 task forge:query-rewards-balance
-```
-
-## AI Coding Agents
-
-This template contains rulefiles for building components with Claude Code and Cursor. Read the [AI-powered component creation guide](./docs/handbook/ai.mdx) for usage instructions.
-
-### Claude Code
-
-To spin up a sandboxed instance of [Claude Code](https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview) in a Docker container that only has access to this project's files, run the following command:
-
-```bash docci-ignore
-npm run claude-code
-# or with no restrictions (--dangerously-skip-permissions)
-npm run claude-code:unrestricted
 ```
