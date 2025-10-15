@@ -11,11 +11,11 @@ use crate::bindings::{export, Guest, TriggerAction};
 use bindings::WasmResponse;
 use config::{MerklerConfig, PageRankSourceConfig};
 use merkle::{get_merkle_tree, MerkleTreeEntry, MerkleTreeIpfsData};
+use merkle_sources::{pagerank, sources};
 use merkle_tree_rs::standard::LeafType;
 use serde_json::json;
 use std::fs::File;
 use trigger::encode_trigger_output;
-use merkle_sources::{pagerank, sources};
 use wavs_wasi_utils::evm::alloy_primitives::hex;
 use wstd::runtime::block_on;
 

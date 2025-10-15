@@ -35,23 +35,14 @@ impl EasPageRankSource {
             );
 
             // Log trusted seeds for transparency
-            for (i, seed) in pagerank_config
-                .config
-                .trust_config
-                .trusted_seeds
-                .iter()
-                .enumerate()
-            {
+            for (i, seed) in pagerank_config.config.trust_config.trusted_seeds.iter().enumerate() {
                 println!("   {}. {}", i + 1, seed);
             }
         } else {
             println!("📊 Standard PageRank (no trust seeds configured)");
         }
 
-        Ok(Self {
-            pagerank_config,
-            cached_points: Mutex::new(None),
-        })
+        Ok(Self { pagerank_config, cached_points: Mutex::new(None) })
     }
 
     fn parse_schema_uid(&self, schema_uid: &str) -> Result<FixedBytes<32>> {
@@ -102,10 +93,7 @@ impl EasPageRankSource {
         let call = IEAS::getAttestationCall { uid };
         let tx: alloy_rpc_types::TransactionRequest = alloy_rpc_types::eth::TransactionRequest {
             to: Some(TxKind::Call(ctx.eas_address)),
-            input: TransactionInput {
-                input: Some(call.abi_encode().into()),
-                data: None,
-            },
+            input: TransactionInput { input: Some(call.abi_encode().into()), data: None },
             ..Default::default()
         };
 
@@ -140,15 +128,10 @@ impl EasPageRankSource {
 
         while start < total_attestations {
             let length = std::cmp::min(batch_size, total_attestations - start);
-            println!(
-                "🔄 Processing attestation batch: {} to {}",
-                start,
-                start + length - 1
-            );
+            println!("🔄 Processing attestation batch: {} to {}", start, start + length - 1);
 
-            let attestations = self
-                .get_indexed_attestations(ctx, schema_uid, start, length)
-                .await?;
+            let attestations =
+                self.get_indexed_attestations(ctx, schema_uid, start, length).await?;
 
             for IndexedAttestation {
                 uid,
@@ -166,10 +149,7 @@ impl EasPageRankSource {
                 println!("   Data length: {}", data.len());
 
                 if data.len() > 0 {
-                    println!(
-                        "   Data (hex): 0x{}",
-                        hex::encode(&data[..data.len().min(64)])
-                    );
+                    println!("   Data (hex): 0x{}", hex::encode(&data[..data.len().min(64)]));
                 }
 
                 // Decode weight from attestation data
@@ -192,10 +172,7 @@ impl EasPageRankSource {
                     // Handle potential overflow when converting U256 to u64
                     // Cap weight at reasonable maximum or scale down large values
                     if weight_u256 > U256::from(u64::MAX) {
-                        println!(
-                            "⚠️  Large weight detected ({}), capping at maximum",
-                            weight_u256
-                        );
+                        println!("⚠️  Large weight detected ({}), capping at maximum", weight_u256);
                         // For very large values, scale them down to a reasonable range
                         // Use logarithmic scaling to handle extreme values
                         let scaled_weight =
@@ -242,10 +219,7 @@ impl EasPageRankSource {
         // Log graph structure for debugging
         println!("\n📊 Graph structure:");
         for node in graph.nodes() {
-            let out_edges = graph
-                .get_outgoing(&node)
-                .map(|edges| edges.len())
-                .unwrap_or(0);
+            let out_edges = graph.get_outgoing(&node).map(|edges| edges.len()).unwrap_or(0);
             println!("   Node {}: {} outgoing edges", node, out_edges);
         }
 
@@ -270,10 +244,7 @@ impl EasPageRankSource {
         let mut points_map = HashMap::new();
         let total_pool = self.pagerank_config.total_pool;
 
-        println!(
-            "\n🎯 Distributing {} total points based on PageRank scores",
-            total_pool
-        );
+        println!("\n🎯 Distributing {} total points based on PageRank scores", total_pool);
 
         // Filter out accounts below minimum threshold and calculate points
         let total_accounts = scores.len();
@@ -340,11 +311,7 @@ impl EasPageRankSource {
             };
 
             // Double-check we don't distribute more than available
-            let actual_points = if points > remaining_pool {
-                remaining_pool
-            } else {
-                points
-            };
+            let actual_points = if points > remaining_pool { remaining_pool } else { points };
 
             if !actual_points.is_zero() {
                 total_distributed += actual_points;
@@ -391,13 +358,7 @@ impl EasPageRankSource {
         for (i, (addr, points)) in sorted_points.iter().take(10).enumerate() {
             // Find corresponding PageRank score
             let score = filtered_scores.get(*addr).unwrap_or(&0.0);
-            println!(
-                "  {}. {}: {} tokens (PageRank: {:.6})",
-                i + 1,
-                addr,
-                points,
-                score
-            );
+            println!("  {}. {}: {} tokens (PageRank: {:.6})", i + 1, addr, points, score);
         }
 
         Ok(points_map)

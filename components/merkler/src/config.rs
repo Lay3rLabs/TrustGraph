@@ -1,7 +1,7 @@
 use crate::bindings::host::{config_var, get_evm_chain_config};
+use crate::merkle_sources::pagerank;
 use std::path::PathBuf;
 use std::str::FromStr;
-use crate::merkle_sources::pagerank;
 use wavs_wasi_utils::evm::alloy_primitives::{Address, U256};
 
 pub struct MerklerConfig {

@@ -122,11 +122,7 @@ pub struct AttestationGraph {
 
 impl AttestationGraph {
     pub fn new() -> Self {
-        Self {
-            outgoing: HashMap::new(),
-            incoming: HashMap::new(),
-            nodes: Vec::new(),
-        }
+        Self { outgoing: HashMap::new(), incoming: HashMap::new(), nodes: Vec::new() }
     }
 
     /// Add an edge from attester to recipient with base weight
@@ -147,10 +143,7 @@ impl AttestationGraph {
         }
 
         // Add the edge
-        self.outgoing
-            .get_mut(&from)
-            .unwrap()
-            .push((to, base_weight));
+        self.outgoing.get_mut(&from).unwrap().push((to, base_weight));
         *self.incoming.get_mut(&to).unwrap() += 1;
     }
 
@@ -216,10 +209,7 @@ impl AttestationGraph {
             })
             .count();
         if self_loops > 0 {
-            println!(
-                "⚠️  Detected {} nodes with self-loops (will be ignored)",
-                self_loops
-            );
+            println!("⚠️  Detected {} nodes with self-loops (will be ignored)", self_loops);
         }
 
         for iteration in 0..config.max_iterations {
@@ -314,10 +304,7 @@ impl AttestationGraph {
             ranks = new_ranks.clone();
 
             if iteration % 10 == 0 {
-                println!(
-                    "🔄 PageRank iteration {}: max delta = {:.8}",
-                    iteration, max_delta
-                );
+                println!("🔄 PageRank iteration {}: max delta = {:.8}", iteration, max_delta);
             }
 
             if max_delta < config.tolerance {
@@ -341,9 +328,7 @@ impl AttestationGraph {
         // Normalize scores to ensure they sum to 1
         let total_score: f64 = ranks.values().sum();
         if total_score > 0.0 {
-            ranks
-                .iter_mut()
-                .for_each(|(_, score)| *score /= total_score);
+            ranks.iter_mut().for_each(|(_, score)| *score /= total_score);
         }
 
         // Log trust statistics if trust is enabled
@@ -362,11 +347,7 @@ impl AttestationGraph {
         if !config.has_trust_enabled() {
             // Standard uniform initialization
             let initial_rank = 1.0 / n as f64;
-            return self
-                .nodes
-                .iter()
-                .map(|&addr| (addr, initial_rank))
-                .collect();
+            return self.nodes.iter().map(|&addr| (addr, initial_rank)).collect();
         }
 
         // Trust-aware initialization
@@ -375,16 +356,10 @@ impl AttestationGraph {
         let regular_total_score = 1.0 - trust_boost;
         let regular_count = n - trusted_count;
 
-        let trusted_score = if trusted_count > 0 {
-            trusted_total_score / trusted_count as f64
-        } else {
-            0.0
-        };
-        let regular_score = if regular_count > 0 {
-            regular_total_score / regular_count as f64
-        } else {
-            0.0
-        };
+        let trusted_score =
+            if trusted_count > 0 { trusted_total_score / trusted_count as f64 } else { 0.0 };
+        let regular_score =
+            if regular_count > 0 { regular_total_score / regular_count as f64 } else { 0.0 };
 
         self.nodes
             .iter()
@@ -538,30 +513,16 @@ impl AttestationGraph {
             "  Trusted seeds: {} addresses with {:.4} total score (avg: {:.6})",
             trusted_count,
             trusted_total_score,
-            if trusted_count > 0 {
-                trusted_total_score / trusted_count as f64
-            } else {
-                0.0
-            }
+            if trusted_count > 0 { trusted_total_score / trusted_count as f64 } else { 0.0 }
         );
         println!(
             "  Regular nodes: {} addresses with {:.4} total score (avg: {:.6})",
             regular_count,
             regular_total_score,
-            if regular_count > 0 {
-                regular_total_score / regular_count as f64
-            } else {
-                0.0
-            }
+            if regular_count > 0 { regular_total_score / regular_count as f64 } else { 0.0 }
         );
-        println!(
-            "  🚫 Isolated nodes: {} (unreachable from trusted seeds)",
-            isolated_count
-        );
-        println!(
-            "  🔄 Self-vouching nodes: {} (ignored in calculation)",
-            self_vouching_count
-        );
+        println!("  🚫 Isolated nodes: {} (unreachable from trusted seeds)", isolated_count);
+        println!("  🔄 Self-vouching nodes: {} (ignored in calculation)", self_vouching_count);
 
         if trusted_count > 0 && regular_count > 0 {
             let trust_advantage = (trusted_total_score / trusted_count as f64)
@@ -646,12 +607,7 @@ impl PageRankRewardSource {
 
     /// Get trusted seed addresses
     pub fn get_trusted_seeds(&self) -> Vec<Address> {
-        self.config
-            .trust_config
-            .trusted_seeds
-            .iter()
-            .copied()
-            .collect()
+        self.config.trust_config.trusted_seeds.iter().copied().collect()
     }
 }
 
@@ -703,9 +659,8 @@ mod tests {
         graph.add_edge(charlie, trusted_alice, 1.0); // Charlie attests back to Alice
 
         // Configure trust with Alice as trusted seed
-        let trust_config = TrustConfig::new(vec![trusted_alice])
-            .with_trust_multiplier(2.0)
-            .with_trust_boost(0.5); // 50% boost
+        let trust_config =
+            TrustConfig::new(vec![trusted_alice]).with_trust_multiplier(2.0).with_trust_boost(0.5); // 50% boost
 
         let config = PageRankConfig::default().with_trust_config(trust_config);
         let scores = graph.calculate_pagerank(&config);
@@ -715,21 +670,12 @@ mod tests {
         let bob_score = scores[&bob];
         let charlie_score = scores[&charlie];
 
-        assert!(
-            alice_score > bob_score,
-            "Trusted seed should have higher score"
-        );
-        assert!(
-            alice_score > charlie_score,
-            "Trusted seed should have higher score"
-        );
+        assert!(alice_score > bob_score, "Trusted seed should have higher score");
+        assert!(alice_score > charlie_score, "Trusted seed should have higher score");
 
         // Bob should benefit from trusted Alice's endorsement (though this might not always hold in complex graphs)
         // Just verify all scores are positive for now
-        assert!(
-            bob_score > 0.0 && charlie_score > 0.0,
-            "All nodes should have positive scores"
-        );
+        assert!(bob_score > 0.0 && charlie_score > 0.0, "All nodes should have positive scores");
     }
 
     #[test]
@@ -789,19 +735,10 @@ mod tests {
         // The trust multiplier effect is that edges from trusted seeds have 3x weight
         // This is reflected in how Diana and Eve have high scores despite Charlie also attesting to them
         println!("\nTrust multiplier test results:");
-        println!(
-            "  Diana (attested by Alice[trusted] + Charlie): {:.6}",
-            diana_score
-        );
-        println!(
-            "  Eve (attested by Bob[trusted] + Charlie): {:.6}",
-            eve_score
-        );
+        println!("  Diana (attested by Alice[trusted] + Charlie): {:.6}", diana_score);
+        println!("  Eve (attested by Bob[trusted] + Charlie): {:.6}", eve_score);
         println!("  Charlie (untrusted, no incoming): {:.6}", charlie_score);
-        println!(
-            "  Score ratio Diana/Charlie: {:.2}x",
-            diana_score / charlie_score
-        );
+        println!("  Score ratio Diana/Charlie: {:.2}x", diana_score / charlie_score);
     }
 
     #[test]
@@ -819,9 +756,8 @@ mod tests {
             .with_trust_multiplier(1.0) // No multiplier effect
             .with_trust_boost(0.0); // No boost
 
-        let trust_config_with_boost = TrustConfig::new(vec![trusted_alice])
-            .with_trust_multiplier(1.0)
-            .with_trust_boost(0.5); // 50% boost
+        let trust_config_with_boost =
+            TrustConfig::new(vec![trusted_alice]).with_trust_multiplier(1.0).with_trust_boost(0.5); // 50% boost
 
         let config_no_boost = PageRankConfig::default().with_trust_config(trust_config_no_boost);
         let config_with_boost =
@@ -869,10 +805,7 @@ mod tests {
 
         // Trusted seeds should have higher scores due to trust boost
         // Note: In some graph structures, the relationship between endorsed nodes may vary
-        assert!(
-            alice_score > 0.0 && bob_score > 0.0,
-            "Trusted seeds should have positive scores"
-        );
+        assert!(alice_score > 0.0 && bob_score > 0.0, "Trusted seeds should have positive scores");
         assert!(
             charlie_score > 0.0 && dave_score > 0.0,
             "Regular nodes should have positive scores"
@@ -892,22 +825,13 @@ mod tests {
         // Test trust multiplier validation (should be >= 1.0)
         let trust_config = TrustConfig::new(vec![alice]).with_trust_multiplier(0.5); // Should be clamped to 1.0
 
-        assert!(
-            trust_config.trust_multiplier >= 1.0,
-            "Trust multiplier should be at least 1.0"
-        );
+        assert!(trust_config.trust_multiplier >= 1.0, "Trust multiplier should be at least 1.0");
 
         // Test trust boost validation (should be 0.0-1.0)
         let trust_config_boost = TrustConfig::new(vec![alice]).with_trust_boost(1.5); // Should be clamped to 1.0
 
-        assert!(
-            trust_config_boost.trust_boost <= 1.0,
-            "Trust boost should be at most 1.0"
-        );
-        assert!(
-            trust_config_boost.trust_boost >= 0.0,
-            "Trust boost should be at least 0.0"
-        );
+        assert!(trust_config_boost.trust_boost <= 1.0, "Trust boost should be at most 1.0");
+        assert!(trust_config_boost.trust_boost >= 0.0, "Trust boost should be at least 0.0");
     }
 
     #[test]
@@ -927,18 +851,14 @@ mod tests {
         // Add a self-loop
         graph.add_edge(alice, alice, 1.0);
 
-        let trust_config = TrustConfig::new(vec![alice])
-            .with_trust_multiplier(2.0)
-            .with_trust_boost(0.5);
+        let trust_config =
+            TrustConfig::new(vec![alice]).with_trust_multiplier(2.0).with_trust_boost(0.5);
 
         let config = PageRankConfig::default().with_trust_config(trust_config);
         let scores = graph.calculate_pagerank(&config);
 
         // Single node should get all the score
-        assert!(
-            (scores[&alice] - 1.0).abs() < 1e-6,
-            "Single node should have score close to 1.0"
-        );
+        assert!((scores[&alice] - 1.0).abs() < 1e-6, "Single node should have score close to 1.0");
     }
 
     #[test]
@@ -1000,9 +920,8 @@ mod tests {
         graph.add_edge(diana, bob, 40.0);
 
         // Configure trust with Alice as trusted seed
-        let trust_config = TrustConfig::new(vec![alice])
-            .with_trust_multiplier(2.0)
-            .with_trust_boost(0.9); // 90% of teleportation goes to trusted seeds
+        let trust_config =
+            TrustConfig::new(vec![alice]).with_trust_multiplier(2.0).with_trust_boost(0.9); // 90% of teleportation goes to trusted seeds
 
         let config = PageRankConfig::default().with_trust_config(trust_config);
         let scores = graph.calculate_pagerank(&config);
@@ -1083,28 +1002,16 @@ mod tests {
 
         // Test adding trusted seeds
         trust_config.add_trusted_seed(alice);
-        assert!(
-            trust_config.is_trusted_seed(&alice),
-            "Alice should be trusted seed"
-        );
-        assert!(
-            !trust_config.is_trusted_seed(&bob),
-            "Bob should not be trusted seed"
-        );
+        assert!(trust_config.is_trusted_seed(&alice), "Alice should be trusted seed");
+        assert!(!trust_config.is_trusted_seed(&bob), "Bob should not be trusted seed");
 
         // Test removing trusted seeds
-        assert!(
-            trust_config.remove_trusted_seed(&alice),
-            "Should successfully remove Alice"
-        );
+        assert!(trust_config.remove_trusted_seed(&alice), "Should successfully remove Alice");
         assert!(
             !trust_config.remove_trusted_seed(&alice),
             "Should return false when removing non-existent seed"
         );
-        assert!(
-            !trust_config.is_trusted_seed(&alice),
-            "Alice should no longer be trusted seed"
-        );
+        assert!(!trust_config.is_trusted_seed(&alice), "Alice should no longer be trusted seed");
 
         // Test getting trusted seeds
         trust_config.add_trusted_seed(alice);
