@@ -48,17 +48,17 @@ contract DeployEAS is Common {
 
         uint256 chainId = block.chainid;
         bool isBase = (chainId == 8453 || chainId == 84532); // Base Mainnet (8453) or Base Sepolia (84532)
+        bool isOptimism = (chainId == 10);
 
         SchemaRegistry schemaRegistry;
         EAS eas;
 
-        if (isBase) {
-            // Use Base's native EAS contracts
-            console.log("Detected Base network (chainId:", chainId, ") - using native EAS contracts");
+        if (isBase || isOptimism) {
+            console.log("Detected Base/Optimism network (chainId:", chainId, ") - using native EAS contracts");
             schemaRegistry = SchemaRegistry(BASE_SCHEMA_REGISTRY);
             eas = EAS(BASE_EAS);
-            console.log("Using Base SchemaRegistry at:", address(schemaRegistry));
-            console.log("Using Base EAS at:", address(eas));
+            console.log("Using Base/Optimism SchemaRegistry at:", address(schemaRegistry));
+            console.log("Using Base/Optimism EAS at:", address(eas));
         } else {
             // Deploy our own EAS contracts for non-Base networks
             console.log("Deploying EAS contracts for chainId:", chainId);
