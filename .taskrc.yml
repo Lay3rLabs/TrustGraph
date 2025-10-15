@@ -1,2 +1,7 @@
+concurrency: 4
+
 remote:
-  insecure: true  # Skip checksum verification (not recommended)
+  insecure: true
+
+experiments:
+  REMOTE_TASKFILES: 1

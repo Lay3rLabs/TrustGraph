@@ -10,7 +10,7 @@ Install the required packages to build the Solidity contracts.
 
 ```bash
 # Install packages (npm & submodules)
-task setup
+task --yes setup
 
 # Build the contracts (`forge build` also works)
 task build:forge
@@ -34,7 +34,7 @@ Now build the WASI components into the `compiled` output directory.
 > `brew uninstall rust` & install it from <https://rustup.rs>
 
 ```bash
-task build:wasi
+task -y build:wasi
 ```
 
 ## WAVS
@@ -52,8 +52,8 @@ cp .env.example .env
 
 # update the .env for either LOCAL or TESTNET
 
-# Starts anvil + IPFS, WARG, Jaeger, and prometheus.
-task start-all-local
+# Starts Anvil, IPFS, & WARG registry.
+task -y start-all-local
 ```
 
 ## WAVS Deployment Script
@@ -62,7 +62,7 @@ This script automates the complete WAVS deployment process in a single command:
 
 ```bash
 # export SKIP_COMPONENT_UPLOAD=true && export SKIP_CONTRACT_UPLOAD=true
-task deploy:full && task deploy:single-operator-poa-local
+task -y deploy:full && task deploy:single-operator-poa-local
 ```
 
 # EAS Attestation Demo

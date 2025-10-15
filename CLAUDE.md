@@ -14,8 +14,6 @@ Use `task --list-all` to see all available commands.
 ### Test Commands
 - `task test` - Run all Solidity tests
 - `forge test -vvv` - Run tests with verbose output (use forge directly for flags)
-- `npm run test:unit` - Run unit tests matching Unit contracts
-- `npm run coverage` - Generate test coverage report
 
 ### Development Environment
 - `task start-all-local` - Start anvil, IPFS, WARG, Jaeger, and prometheus
@@ -23,8 +21,6 @@ Use `task --list-all` to see all available commands.
 - `task setup` - Install initial dependencies (npm + forge)
 
 ### Lint and Format Commands
-- `task lint:check` - Check Solidity linting and formatting
-- `task lint:fix` - Fix linting and formatting issues
 - `task fmt` - Format Solidity and Rust code
 
 ## Architecture Overview
