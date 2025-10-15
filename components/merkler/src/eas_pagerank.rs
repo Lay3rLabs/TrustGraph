@@ -1,5 +1,3 @@
-use wavs_merkle_sources::pagerank::{AttestationGraph, PageRankRewardSource};
-use wavs_merkle_sources::sources::{Source, SourceEvent};
 use alloy_provider::Provider;
 use alloy_rpc_types::TransactionInput;
 use alloy_sol_types::{sol, SolCall};
@@ -8,12 +6,14 @@ use async_trait::async_trait;
 use std::collections::HashMap;
 use wavs_indexer_api::solidity::IndexedEvent;
 use wavs_indexer_api::IndexedAttestation;
+use wavs_merkle_sources::pagerank::{AttestationGraph, PageRankRewardSource};
+use wavs_merkle_sources::sources::{Source, SourceEvent};
 use wavs_wasi_utils::evm::alloy_primitives::{hex, Address, FixedBytes, TxKind, U256};
 
 // Re-export modules for use in lib.rs
+use std::sync::Mutex;
 pub use wavs_merkle_sources::pagerank;
 pub use wavs_merkle_sources::sources;
-use std::sync::Mutex;
 
 /// EAS PageRank points source that calculates points based on PageRank algorithm
 pub struct EasPageRankSource {

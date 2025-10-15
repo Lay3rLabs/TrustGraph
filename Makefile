@@ -127,7 +127,7 @@ deploy-service:
 	@if [ -n "${WAVS_ENDPOINT}" ]; then \
 		echo "🔍 Checking WAVS service at ${WAVS_ENDPOINT}..."; \
 		attempt=1; \
-		max_attempts=3; \
+		max_attempts=10; \
 		while [ $$attempt -le $$max_attempts ]; do \
 			if [ "$$(curl -s -o /dev/null -w "%{http_code}" ${WAVS_ENDPOINT}/info)" = "200" ]; then \
 				echo "✅ WAVS service is running"; \

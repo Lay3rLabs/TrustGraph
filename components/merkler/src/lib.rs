@@ -1,8 +1,8 @@
 #[rustfmt::skip]
 pub mod bindings;
 mod config;
-mod trigger;
 mod eas_pagerank;
+mod trigger;
 
 use crate::bindings::{export, Guest, TriggerAction};
 
