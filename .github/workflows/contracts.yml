@@ -21,6 +21,11 @@ jobs:
         with:
           node-version: 21
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
       - name: Install Task
         uses: go-task/setup-task@v1
 
