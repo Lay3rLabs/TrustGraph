@@ -47,31 +47,31 @@ log_level = ["info", "wavs=debug"]
 
 # EVM chains
 [default.chains.evm.31337] # Local: anvil
-ws_endpoint = "ws://localhost:8545"
-http_endpoint = "http://localhost:8545"
+ws_endpoints = ["ws://localhost:8545"]
+http_endpoints = ["http://localhost:8545"]
 poll_interval_ms = 7000
 
 [default.chains.evm.17000] # Testnet: holesky | https://holesky-faucet.pk910.de/
-ws_endpoint = "wss://ethereum-holesky-rpc.publicnode.com"
-http_endpoint = "https://ethereum-holesky-rpc.publicnode.com"
+ws_endpoints = ["wss://ethereum-holesky-rpc.publicnode.com"]
+http_endpoint = ["https://ethereum-holesky-rpc.publicnode.com"]
 poll_interval_ms = 7000
 
 # [default.chains.evm.11155111] # Testnet: Sepolia | https://sepolia-faucet.pk910.de/
-# ws_endpoint = "wss://ethereum-sepolia-rpc.publicnode.com"
-# http_endpoint = "https://ethereum-sepolia-rpc.publicnode.com"
+# ws_endpoints = ["wss://ethereum-sepolia-rpc.publicnode.com"]
+# http_endpoint = ["https://ethereum-sepolia-rpc.publicnode.com"]
 # poll_interval_ms = 7000
 
 [default.chains.evm.8453] # Base L2 Mainnet | https://superbridge.app/base
-ws_endpoint = "wss://base-rpc.publicnode.com"
-http_endpoint = "https://base-rpc.publicnode.com"
+ws_endpoints = ["wss://base-rpc.publicnode.com"]
+http_endpoint = ["https://base-rpc.publicnode.com"]
 poll_interval_ms = 7000
 event_channel_size = 100000
 
 # [default.chains.dev.holesky-fork]
 # type = "evm"
 # chain_id = "17000"
-# ws_endpoint = "ws://localhost:8545"
-# http_endpoint = "http://localhost:8545"
+# ws_endpoints = ["ws://localhost:8545"
+# http_endpoint = ["http://localhost:8545"
 # poll_interval_ms = 7000
 
 # ----------------------------
@@ -103,8 +103,8 @@ port = 8041
 # Example:
 # [wavs.chains.evm.local]
 # chain_id = "31337"
-# ws_endpoint = "ws://localhost:8545"
-# http_endpoint = "http://localhost:8545"
+# ws_endpoints = ["ws://localhost:8545"
+# http_endpoint = ["http://localhost:8545"
 
 # ----------------------------
 # CLI specific settings
@@ -139,5 +139,5 @@ port = 8040
 # Example:
 # [aggregator.chains.evm.local]
 # chain_id = "31337"
-# ws_endpoint = "ws://localhost:8545"
-# http_endpoint = "http://localhost:8545"
+# ws_endpoints = ["ws://localhost:8545"
+# http_endpoint = ["http://localhost:8545"
