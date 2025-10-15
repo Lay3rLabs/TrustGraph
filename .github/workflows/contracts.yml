@@ -19,6 +19,9 @@ jobs:
         with:
           node-version: 21
 
+      - name: Install Task
+        uses: go-task/setup-task@v1
+
       - name: Install deps
         run: task setup
 
