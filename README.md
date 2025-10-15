@@ -113,3 +113,17 @@ This creates a realistic attestation network with:
 - Multiple patterns: chains, clusters, mutual relationships
 
 Perfect for testing PageRank-based reward algorithms!
+
+### 9. Explore other functionality
+
+```bash
+task forge:query-attestations
+
+task forge:update-rewards
+
+task forge:query-rewards
+
+task forge:claim-rewards
+
+task forge:query-rewards-balance
+```
