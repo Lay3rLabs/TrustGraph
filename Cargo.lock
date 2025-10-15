@@ -3274,33 +3274,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "merkler"
-version = "0.6.0"
-dependencies = [
- "alloy-dyn-abi",
- "alloy-network",
- "alloy-provider",
- "alloy-rpc-types",
- "alloy-sol-macro",
- "alloy-sol-types",
- "anyhow",
- "async-trait",
- "bs58 0.5.1",
- "cid",
- "futures",
- "multibase",
- "multihash 0.18.1",
- "serde",
- "serde_json",
- "wavs-indexer-api",
- "wavs-ipfs",
- "wavs-merkle-sources",
- "wavs-wasi-utils",
- "wit-bindgen-rt 0.44.0",
- "wstd",
-]
-
-[[package]]
 name = "merkler-pruner"
 version = "0.6.0"
 dependencies = [
@@ -5389,6 +5362,33 @@ checksum = "97d095ae15e245a057c8e8451bab9b3ee1e1f68e9ba2b4fbc18d0ac5237835f2"
 dependencies = [
  "pin-project",
  "tracing",
+]
+
+[[package]]
+name = "trust-graph"
+version = "0.6.0"
+dependencies = [
+ "alloy-dyn-abi",
+ "alloy-network",
+ "alloy-provider",
+ "alloy-rpc-types",
+ "alloy-sol-macro",
+ "alloy-sol-types",
+ "anyhow",
+ "async-trait",
+ "bs58 0.5.1",
+ "cid",
+ "futures",
+ "multibase",
+ "multihash 0.18.1",
+ "serde",
+ "serde_json",
+ "wavs-indexer-api",
+ "wavs-ipfs",
+ "wavs-merkle-sources",
+ "wavs-wasi-utils",
+ "wit-bindgen-rt 0.44.0",
+ "wstd",
 ]
 
 [[package]]

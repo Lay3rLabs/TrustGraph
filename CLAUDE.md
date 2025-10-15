@@ -39,7 +39,7 @@ TrustGraph is a WAVS (WASI AVS) project that implements attestation-based govern
 
 Components that handle different aspects of the attestation and governance workflow:
 - `eas-attest/`: Creates EAS attestations based on trigger events
-- `merkler/`: Calculates merkle trees for TrustGraph PageRank-based governance
+- `trust-graph/`: Calculates merkle trees for TrustGraph PageRank-based governance
 - `merkler-pruner/`: Prunes and maintains merkle tree data
 - `aggregator/`: Aggregates operator responses
 - `safe-signer-sync/`: Syncs Safe multisig signers
