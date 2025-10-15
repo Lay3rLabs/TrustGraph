@@ -22,6 +22,7 @@ wavs-indexer-api = { workspace = true }
 wavs-merkle-sources = { workspace = true }
 futures = { workspace = true }
 wavs-ipfs = { workspace = true }
+alloy-dyn-abi = { workspace = true }
 
 ## IPFS
 cid = { workspace = true }
