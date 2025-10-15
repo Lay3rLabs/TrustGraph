@@ -1,5 +1,5 @@
 [workspace]
-members = ["components/*"]
+members = ["components/*", "packages/*"]
 resolver = "2"
 
 [workspace.package]
@@ -24,6 +24,9 @@ wavs-eas = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "902c016b348
 wavs-indexer-api = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "902c016b3485d983e051956246c72657c0f2a3cd", package = "wavs-indexer-api" }
 wavs-merkle-sources = { git = "https://github.com/Lay3rLabs/wavs-tools",  rev = "902c016b3485d983e051956246c72657c0f2a3cd", package = "wavs-merkle-sources" }
 wavs-ipfs = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "902c016b3485d983e051956246c72657c0f2a3cd", package = "wavs-ipfs"}
+
+# Local packages
+trust-graph-merkle = { path = "packages/trust-graph-merkle" }
 
 # Other
 schemars = "1.0.4"

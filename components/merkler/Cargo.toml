@@ -23,6 +23,7 @@ wavs-merkle-sources = { workspace = true }
 futures = { workspace = true }
 wavs-ipfs = { workspace = true }
 alloy-dyn-abi = { workspace = true }
+trust-graph-merkle = { workspace = true }
 
 ## IPFS
 cid = { workspace = true }
@@ -32,7 +33,6 @@ bs58 = { workspace = true }
 
 ## Other
 async-trait = { workspace = true }
-merkle-tree-rs = "0.1.0"
 
 [lib]
 crate-type = ["cdylib"]

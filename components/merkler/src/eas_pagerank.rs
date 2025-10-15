@@ -1,5 +1,5 @@
-use crate::pagerank::{AttestationGraph, PageRankRewardSource};
-use crate::sources::SourceEvent;
+use wavs_merkle_sources::pagerank::{AttestationGraph, PageRankRewardSource};
+use wavs_merkle_sources::sources::{Source, SourceEvent};
 use alloy_provider::Provider;
 use alloy_rpc_types::TransactionInput;
 use alloy_sol_types::{sol, SolCall};
@@ -10,7 +10,9 @@ use wavs_indexer_api::solidity::IndexedEvent;
 use wavs_indexer_api::IndexedAttestation;
 use wavs_wasi_utils::evm::alloy_primitives::{hex, Address, FixedBytes, TxKind, U256};
 
-use super::Source;
+// Re-export modules for use in lib.rs
+pub use wavs_merkle_sources::pagerank;
+pub use wavs_merkle_sources::sources;
 use std::sync::Mutex;
 
 /// EAS PageRank points source that calculates points based on PageRank algorithm
@@ -57,7 +59,7 @@ impl EasPageRankSource {
 
     async fn get_total_schema_attestations(
         &self,
-        ctx: &super::SourceContext,
+        ctx: &sources::SourceContext,
         schema_uid: &str,
     ) -> Result<u64> {
         let schema = self.parse_schema_uid(schema_uid)?;
@@ -71,7 +73,7 @@ impl EasPageRankSource {
 
     async fn get_indexed_attestations(
         &self,
-        ctx: &super::SourceContext,
+        ctx: &sources::SourceContext,
         schema_uid: &str,
         start: u64,
         length: u64,
@@ -87,7 +89,7 @@ impl EasPageRankSource {
 
     async fn get_attestation_details(
         &self,
-        ctx: &super::SourceContext,
+        ctx: &sources::SourceContext,
         uid: FixedBytes<32>,
     ) -> Result<(Address, Address, Vec<u8>)> {
         let call = IEAS::getAttestationCall { uid };
@@ -107,7 +109,7 @@ impl EasPageRankSource {
     /// Build attestation graph from EAS data
     async fn build_attestation_graph(
         &self,
-        ctx: &super::SourceContext,
+        ctx: &sources::SourceContext,
     ) -> Result<AttestationGraph> {
         let schema_uid = &self.pagerank_config.schema_uid;
         println!("🏗️  Building attestation graph for schema: {}", schema_uid);
@@ -229,7 +231,7 @@ impl EasPageRankSource {
     /// Calculate PageRank scores and points
     async fn calculate_pagerank_points(
         &self,
-        ctx: &super::SourceContext,
+        ctx: &sources::SourceContext,
     ) -> Result<HashMap<Address, U256>> {
         let graph = self.build_attestation_graph(ctx).await?;
         let scores = graph.calculate_pagerank(&self.pagerank_config.config);
@@ -375,14 +377,14 @@ impl Source for EasPageRankSource {
         }
     }
 
-    async fn get_accounts(&self, ctx: &super::SourceContext) -> Result<Vec<String>> {
+    async fn get_accounts(&self, ctx: &sources::SourceContext) -> Result<Vec<String>> {
         let points = self.calculate_pagerank_points(ctx).await?;
         Ok(points.keys().map(|addr| addr.to_string()).collect())
     }
 
     async fn get_events_and_value(
         &self,
-        ctx: &super::SourceContext,
+        ctx: &sources::SourceContext,
         account: &Address,
     ) -> Result<(Vec<SourceEvent>, U256)> {
         let points = self.calculate_pagerank_points(ctx).await?;
@@ -400,7 +402,7 @@ impl Source for EasPageRankSource {
         Ok((source_events, total_value))
     }
 
-    async fn get_metadata(&self, ctx: &super::SourceContext) -> Result<serde_json::Value> {
+    async fn get_metadata(&self, ctx: &sources::SourceContext) -> Result<serde_json::Value> {
         let trust_info = if self.pagerank_config.config.has_trust_enabled() {
             serde_json::json!({
                 "enabled": true,

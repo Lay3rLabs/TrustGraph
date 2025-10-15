@@ -1,21 +1,18 @@
 #[rustfmt::skip]
 pub mod bindings;
 mod config;
-mod merkle;
 mod trigger;
-
-mod merkle_sources;
+mod eas_pagerank;
 
 use crate::bindings::{export, Guest, TriggerAction};
 
 use bindings::WasmResponse;
 use config::{MerklerConfig, PageRankSourceConfig};
-use merkle::{get_merkle_tree, MerkleTreeEntry, MerkleTreeIpfsData};
-use merkle_sources::{pagerank, sources};
-use merkle_tree_rs::standard::LeafType;
+use eas_pagerank::{pagerank, sources};
 use serde_json::json;
 use std::fs::File;
 use trigger::encode_trigger_output;
+use trust_graph_merkle::build_merkle_ipfs_data;
 use wavs_wasi_utils::evm::alloy_primitives::hex;
 use wstd::runtime::block_on;
 
@@ -89,35 +86,21 @@ impl Guest for Component {
                 .iter()
                 .map(|(account, (_, value))| vec![account.to_string(), value.to_string()])
                 .collect::<Vec<_>>();
-            let tree = get_merkle_tree(tree_data.clone())?;
-            let root = tree.root();
-            let root_bytes = hex::decode(&root).map_err(|e| e.to_string())?;
 
             let sources_with_metadata =
                 registry.get_sources_with_metadata(&ctx).await.map_err(|e| e.to_string())?;
 
-            println!("🌳 Generated merkle tree with root: {}", root);
-
-            let mut ipfs_data = MerkleTreeIpfsData {
-                id: root.clone(),
-                metadata: json!({
-                    "num_accounts": results.len(),
-                    "total_value": total_value.to_string(),
-                    "sources": sources_with_metadata,
-                }),
-                root: root.clone(),
-                tree: vec![],
-            };
-
-            // get proof for each value
-            tree_data.into_iter().for_each(|value| {
-                let proof = tree.get_proof(LeafType::LeafBytes(value.clone()));
-                ipfs_data.tree.push(MerkleTreeEntry {
-                    account: value[0].clone(),
-                    value: value[1].clone(),
-                    proof,
-                });
+            let metadata = json!({
+                "num_accounts": results.len(),
+                "total_value": total_value.to_string(),
+                "sources": sources_with_metadata,
             });
+
+            let ipfs_data = build_merkle_ipfs_data(tree_data, metadata)?;
+            let root = ipfs_data.root.clone();
+            let root_bytes = hex::decode(&root).map_err(|e| e.to_string())?;
+
+            println!("🌳 Generated merkle tree with root: {}", root);
 
             let ipfs_data_json = serde_json::to_string(&ipfs_data).map_err(|e| e.to_string())?;
             let cid = wavs_ipfs::upload_json_to_ipfs(
