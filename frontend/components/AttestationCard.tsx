@@ -1,6 +1,7 @@
 'use client'
 
 import { usePonderQuery } from '@ponder/react'
+import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Hex } from 'viem'
@@ -14,6 +15,7 @@ import { formatTimeAgo } from '@/lib/utils'
 import { AttestationDataDisplay } from './AttestationData'
 import { Card } from './Card'
 import { CopyableText } from './CopyableText'
+import { Address } from './ui/address'
 
 interface AttestationCardProps {
   uid: Hex
@@ -26,6 +28,7 @@ export function AttestationCard({
   onClick,
   clickable = false,
 }: AttestationCardProps) {
+  const router = useRouter()
   const { address } = useAccount()
   const { revokeAttestation } = useAttestation()
   const [isRevokingThis, setIsRevokingThis] = useState(false)
@@ -250,18 +253,26 @@ export function AttestationCard({
             <div className="text-muted-foreground text-xs font-medium mb-1">
               Attester
             </div>
-            <CopyableText
-              text={attestation.attester}
+            <Address
+              address={attestation.attester}
               className="text-foreground"
+              displayMode="auto"
+              showCopyIcon
+              onClick={(addr) => router.push(`/account/${addr}`)}
+              monospace
             />
           </div>
           <div>
             <div className="text-muted-foreground text-xs font-medium mb-1">
               Recipient
             </div>
-            <CopyableText
-              text={attestation.recipient}
-              className="text-foreground"
+            <Address
+              address={attestation.recipient}
+              className="text-foreground text-xs"
+              displayMode="auto"
+              showCopyIcon
+              onClick={(addr) => router.push(`/account/${addr}`)}
+              monospace
             />
           </div>
           <div>
@@ -270,7 +281,7 @@ export function AttestationCard({
             </div>
             <CopyableText
               text={attestation.schema}
-              className="text-foreground"
+              className="text-foreground text-xs"
             />
           </div>
           {attestation.ref &&
