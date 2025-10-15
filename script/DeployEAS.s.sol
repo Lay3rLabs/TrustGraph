@@ -41,15 +41,39 @@ contract DeployEAS is Common {
         string memory _contractsJson = "contracts";
         string memory _schemasJson = "schemas";
 
-        // 1. Deploy SchemaRegistry
-        SchemaRegistry schemaRegistry = new SchemaRegistry();
-        _contractsJson.serialize("schema_registry", Strings.toChecksumHexString(address(schemaRegistry)));
-        console.log("SchemaRegistry deployed at:", address(schemaRegistry));
+        // Base network native EAS addresses (predeploy contracts)
+        // See: https://docs.base.org/docs/contracts/
+        address BASE_EAS = 0x4200000000000000000000000000000000000021;
+        address BASE_SCHEMA_REGISTRY = 0x4200000000000000000000000000000000000020;
 
-        // 2. Deploy EAS
-        EAS eas = new EAS(ISchemaRegistry(address(schemaRegistry)));
+        uint256 chainId = block.chainid;
+        bool isBase = (chainId == 8453 || chainId == 84532); // Base Mainnet (8453) or Base Sepolia (84532)
+
+        SchemaRegistry schemaRegistry;
+        EAS eas;
+
+        if (isBase) {
+            // Use Base's native EAS contracts
+            console.log("Detected Base network (chainId:", chainId, ") - using native EAS contracts");
+            schemaRegistry = SchemaRegistry(BASE_SCHEMA_REGISTRY);
+            eas = EAS(BASE_EAS);
+            console.log("Using Base SchemaRegistry at:", address(schemaRegistry));
+            console.log("Using Base EAS at:", address(eas));
+        } else {
+            // Deploy our own EAS contracts for non-Base networks
+            console.log("Deploying EAS contracts for chainId:", chainId);
+
+            // 1. Deploy SchemaRegistry
+            schemaRegistry = new SchemaRegistry();
+            console.log("SchemaRegistry deployed at:", address(schemaRegistry));
+
+            // 2. Deploy EAS
+            eas = new EAS(ISchemaRegistry(address(schemaRegistry)));
+            console.log("EAS deployed at:", address(eas));
+        }
+
+        _contractsJson.serialize("schema_registry", Strings.toChecksumHexString(address(schemaRegistry)));
         _contractsJson.serialize("eas", Strings.toChecksumHexString(address(eas)));
-        console.log("EAS deployed at:", address(eas));
 
         // 3. Deploy EASIndexerResolver
         EASIndexerResolver indexerResolver = new EASIndexerResolver(IEAS(address(eas)));

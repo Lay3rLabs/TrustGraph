@@ -3293,6 +3293,7 @@ dependencies = [
  "serde",
  "serde_json",
  "wavs-indexer-api",
+ "wavs-ipfs",
  "wavs-merkle-sources",
  "wavs-wasi-utils",
  "wit-bindgen-rt 0.44.0",
@@ -5692,7 +5693,7 @@ dependencies = [
 [[package]]
 name = "wavs-eas"
 version = "0.6.0-alpha.1"
-source = "git+https://github.com/Lay3rLabs/wavs-tools?rev=d159899766e1f842addd4b4289f9487012b1803a#d159899766e1f842addd4b4289f9487012b1803a"
+source = "git+https://github.com/Lay3rLabs/wavs-tools?rev=902c016b3485d983e051956246c72657c0f2a3cd#902c016b3485d983e051956246c72657c0f2a3cd"
 dependencies = [
  "alloy-dyn-abi",
  "alloy-json-abi",
@@ -5770,7 +5771,7 @@ dependencies = [
 [[package]]
 name = "wavs-indexer-api"
 version = "0.6.0-alpha.1"
-source = "git+https://github.com/Lay3rLabs/wavs-tools?rev=d159899766e1f842addd4b4289f9487012b1803a#d159899766e1f842addd4b4289f9487012b1803a"
+source = "git+https://github.com/Lay3rLabs/wavs-tools?rev=902c016b3485d983e051956246c72657c0f2a3cd#902c016b3485d983e051956246c72657c0f2a3cd"
 dependencies = [
  "alloy-contract",
  "alloy-dyn-abi",
@@ -5793,9 +5794,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "wavs-ipfs"
+version = "0.6.0-alpha.1"
+source = "git+https://github.com/Lay3rLabs/wavs-tools?rev=902c016b3485d983e051956246c72657c0f2a3cd#902c016b3485d983e051956246c72657c0f2a3cd"
+dependencies = [
+ "anyhow",
+ "bs58 0.5.1",
+ "cid",
+ "multibase",
+ "multihash 0.18.1",
+ "serde",
+ "serde_json",
+ "wstd",
+]
+
+[[package]]
 name = "wavs-merkle-sources"
 version = "0.6.0-alpha.1"
-source = "git+https://github.com/Lay3rLabs/wavs-tools?rev=d159899766e1f842addd4b4289f9487012b1803a#d159899766e1f842addd4b4289f9487012b1803a"
+source = "git+https://github.com/Lay3rLabs/wavs-tools?rev=902c016b3485d983e051956246c72657c0f2a3cd#902c016b3485d983e051956246c72657c0f2a3cd"
 dependencies = [
  "alloy-contract",
  "alloy-dyn-abi",
