@@ -1,5 +1,5 @@
 [package]
-name = "merkler"
+name = "trust-graph"
 edition.workspace = true
 version.workspace = true
 authors.workspace = true
@@ -45,5 +45,5 @@ strip = true
 lto = true
 
 [package.metadata.component]
-package = "component:merkler"
+package = "component:trust-graph"
 target = "wavs:operator@=1.2.1"
