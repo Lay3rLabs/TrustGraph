@@ -25,7 +25,7 @@ jobs:
         uses: go-task/setup-task@v1
 
       - name: Install deps
-        run: task setup
+        run: task --yes setup
 
       - name: Run forge build
         run: forge build -vvv
