@@ -5693,7 +5693,7 @@ dependencies = [
 [[package]]
 name = "wavs-eas"
 version = "0.6.0-alpha.1"
-source = "git+https://github.com/Lay3rLabs/wavs-tools?rev=a4f9b5e7083f06b32e598a4e211165655ae68198#a4f9b5e7083f06b32e598a4e211165655ae68198"
+source = "git+https://github.com/Lay3rLabs/wavs-tools?rev=cd1c4271deb7686a7d995b5b41bc226d8185df6e#cd1c4271deb7686a7d995b5b41bc226d8185df6e"
 dependencies = [
  "alloy-dyn-abi",
  "alloy-json-abi",
@@ -5771,7 +5771,7 @@ dependencies = [
 [[package]]
 name = "wavs-indexer-api"
 version = "0.6.0-alpha.1"
-source = "git+https://github.com/Lay3rLabs/wavs-tools?rev=a4f9b5e7083f06b32e598a4e211165655ae68198#a4f9b5e7083f06b32e598a4e211165655ae68198"
+source = "git+https://github.com/Lay3rLabs/wavs-tools?rev=cd1c4271deb7686a7d995b5b41bc226d8185df6e#cd1c4271deb7686a7d995b5b41bc226d8185df6e"
 dependencies = [
  "alloy-contract",
  "alloy-dyn-abi",
@@ -5796,7 +5796,7 @@ dependencies = [
 [[package]]
 name = "wavs-ipfs"
 version = "0.6.0-alpha.1"
-source = "git+https://github.com/Lay3rLabs/wavs-tools?rev=a4f9b5e7083f06b32e598a4e211165655ae68198#a4f9b5e7083f06b32e598a4e211165655ae68198"
+source = "git+https://github.com/Lay3rLabs/wavs-tools?rev=cd1c4271deb7686a7d995b5b41bc226d8185df6e#cd1c4271deb7686a7d995b5b41bc226d8185df6e"
 dependencies = [
  "anyhow",
  "bs58 0.5.1",
@@ -5811,7 +5811,7 @@ dependencies = [
 [[package]]
 name = "wavs-merkle-sources"
 version = "0.6.0-alpha.1"
-source = "git+https://github.com/Lay3rLabs/wavs-tools?rev=a4f9b5e7083f06b32e598a4e211165655ae68198#a4f9b5e7083f06b32e598a4e211165655ae68198"
+source = "git+https://github.com/Lay3rLabs/wavs-tools?rev=cd1c4271deb7686a7d995b5b41bc226d8185df6e#cd1c4271deb7686a7d995b5b41bc226d8185df6e"
 dependencies = [
  "alloy-contract",
  "alloy-dyn-abi",

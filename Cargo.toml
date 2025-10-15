@@ -19,11 +19,11 @@ wasi = "0.14.2"
 wavs-wasi-utils = "=1.2.0"
 
 # WAVS (https://github.com/Lay3rLabs/wavs-tools/pull/123)
-wavs-llm = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "a4f9b5e7083f06b32e598a4e211165655ae68198", package = "wavs-llm"}
-wavs-eas = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "a4f9b5e7083f06b32e598a4e211165655ae68198", package = "wavs-eas" }
-wavs-indexer-api = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "a4f9b5e7083f06b32e598a4e211165655ae68198", package = "wavs-indexer-api" }
-wavs-merkle-sources = { git = "https://github.com/Lay3rLabs/wavs-tools",  rev = "a4f9b5e7083f06b32e598a4e211165655ae68198", package = "wavs-merkle-sources" }
-wavs-ipfs = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "a4f9b5e7083f06b32e598a4e211165655ae68198", package = "wavs-ipfs"}
+wavs-llm = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "cd1c4271deb7686a7d995b5b41bc226d8185df6e", package = "wavs-llm"}
+wavs-eas = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "cd1c4271deb7686a7d995b5b41bc226d8185df6e", package = "wavs-eas" }
+wavs-indexer-api = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "cd1c4271deb7686a7d995b5b41bc226d8185df6e", package = "wavs-indexer-api" }
+wavs-merkle-sources = { git = "https://github.com/Lay3rLabs/wavs-tools",  rev = "cd1c4271deb7686a7d995b5b41bc226d8185df6e", package = "wavs-merkle-sources" }
+wavs-ipfs = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "cd1c4271deb7686a7d995b5b41bc226d8185df6e", package = "wavs-ipfs"}
 
 # Local packages
 wavs-merkler = { path = "packages/wavs-merkler" }
