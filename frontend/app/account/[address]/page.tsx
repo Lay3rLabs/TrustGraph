@@ -11,21 +11,16 @@ import { StatisticCard } from '@/components/StatisticCard'
 import { Column, Table } from '@/components/Table'
 import { Address, TableAddress } from '@/components/ui/address'
 import { Button } from '@/components/ui/button'
-import { InfoTooltip } from '@/components/ui/info-tooltip'
 import { useAccountProfile } from '@/hooks/useAccountProfile'
 import { AttestationData } from '@/lib/attestation'
-import {
-  EXAMPLE_NETWORK,
-  NETWORKS,
-  Network,
-  isTrustedSeed,
-} from '@/lib/network'
-import { formatBigNumber } from '@/lib/utils'
+import { NETWORKS, Network, isTrustedSeed } from '@/lib/network'
+import { cn, formatBigNumber } from '@/lib/utils'
 
 interface NetworkParticipant {
   network: Network
-  rank: string
+  rank: number
   score: string
+  seed: boolean
   attestationsGiven: number
   attestationsReceived: number
 }
@@ -48,8 +43,6 @@ export default function AccountProfilePage() {
     refresh,
   } = useAccountProfile(address)
 
-  const trustedSeed = isTrustedSeed(EXAMPLE_NETWORK, address)
-
   const {
     networksData,
     maxScore,
@@ -61,8 +54,9 @@ export default function AccountProfilePage() {
     const networksData = NETWORKS.map(
       (network): NetworkParticipant => ({
         network,
-        rank: profileData?.rank?.toString() || '...',
+        rank: profileData?.rank || 0,
         score: profileData?.trustScore || '...',
+        seed: isTrustedSeed(network, address),
         attestationsReceived: profileData?.attestationsReceived || 0,
         attestationsGiven: profileData?.attestationsGiven || 0,
       })
@@ -112,32 +106,71 @@ export default function AccountProfilePage() {
       accessor: (row) => row.network.name,
     },
     {
-      key: 'rank',
-      header: 'RANK',
-      tooltip: 'The rank of the account in the network.',
-      sortable: true,
-      accessor: (row) => row.rank,
+      key: 'seed',
+      header: 'SEED',
+      tooltip:
+        'Indicates if this account is part of the initial seed group that bootstrapped this network. Seed member influence is designed to diminish as the network grows.',
+      sortable: false,
+      render: (row) => (
+        <div className="terminal-text text-sm text-gray-800">
+          {row.seed ? '⚡' : ''}
+        </div>
+      ),
     },
     {
-      key: 'score',
-      header: 'SCORE',
-      tooltip: 'The score of the account in the network.',
+      key: 'rank',
+      header: 'RANK',
+      tooltip:
+        "Member's position in this network ranked by Trust Score. Rank is recalculated as new attestations are made.",
       sortable: true,
-      accessor: (row) => row.score,
+      accessor: (row) => row.rank,
+      render: (row) => (
+        <div className="flex items-center space-x-2">
+          <span
+            className={cn(
+              'text-sm font-semibold',
+              row.rank === 1
+                ? 'text-yellow-600'
+                : row.rank === 2
+                ? 'text-gray-500'
+                : row.rank === 3
+                ? 'text-amber-700'
+                : 'text-gray-800'
+            )}
+          >
+            #{row.rank}
+          </span>
+          {row.rank <= 3 && (
+            <span className="text-xs">
+              {row.rank === 1 ? '🥇' : row.rank === 2 ? '🥈' : '🥉'}
+            </span>
+          )}
+        </div>
+      ),
     },
     {
       key: 'attestationsReceived',
-      header: 'ATTESTATIONS RECEIVED',
-      tooltip: 'The number of attestations received by the account.',
+      header: 'RECEIVED',
+      tooltip:
+        'The number of attestations this member has received from other participants in this network.',
       sortable: true,
       accessor: (row) => row.attestationsReceived,
     },
     {
       key: 'attestationsGiven',
-      header: 'ATTESTATIONS MADE',
-      tooltip: 'The number of attestations made by the account.',
+      header: 'SENT',
+      tooltip:
+        'The number of attestations this member has given to other participants, indicating their level of engagement in building network trust.',
       sortable: true,
       accessor: (row) => row.attestationsGiven,
+    },
+    {
+      key: 'score',
+      header: 'SCORE',
+      tooltip:
+        "This member's calculated Trust Score using a PageRank-style algorithm. Higher scores indicate stronger endorsement from trusted peers in the network.",
+      sortable: true,
+      accessor: (row) => row.score,
     },
   ]
 
@@ -230,31 +263,19 @@ export default function AccountProfilePage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="pb-4">
-        <div className="flex items-center justify-between flex-wrap gap-x-4 gap-y-2 mb-2">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <Address
-                address={address}
-                className="ascii-art-title [&>span]:!text-xl [&>span]:!font-bold"
-                displayMode="full"
-                showCopyIcon={true}
-                clickable={false}
-              />
-              {trustedSeed && (
-                <div className="flex items-center gap-1">
-                  <span title="Trusted Seed">⚡</span>
-                  <InfoTooltip title="This account is a trusted seed member with enhanced network privileges." />
-                </div>
-              )}
-            </div>
-          </div>
+      <div className="flex items-center justify-between flex-wrap gap-x-4 gap-y-2 mb-2">
+        <Address
+          address={address}
+          className="ascii-art-title [&>span]:!text-xl [&>span]:!font-bold"
+          displayMode="full"
+          showCopyIcon={true}
+          clickable={false}
+        />
 
-          {connectedAddress &&
-            connectedAddress.toLowerCase() === address.toLowerCase() && (
-              <CreateAttestationModal />
-            )}
-        </div>
+        {connectedAddress &&
+          connectedAddress.toLowerCase() === address.toLowerCase() && (
+            <CreateAttestationModal />
+          )}
       </div>
 
       {/* Loading State */}
@@ -286,11 +307,13 @@ export default function AccountProfilePage() {
       {!isLoading && profileData && (
         <>
           {/* Networks */}
-          <div className="pb-6 space-y-6">
+          <div className="py-6 space-y-6">
             <div className="overflow-x-auto">
               <Table
                 columns={networksColumns}
                 data={networksData}
+                defaultSortColumn="rank"
+                defaultSortDirection="asc"
                 getRowKey={(row) => row.network.id}
                 onRowClick={(row) => router.push(`/network/${row.network.id}`)}
                 rowClickTitle="Click to view network"
@@ -357,42 +380,6 @@ export default function AccountProfilePage() {
             </div>
           )}
 
-          {/* Attestations Given Section */}
-          <div className="border-b border-border pt-6 pb-12 space-y-6">
-            <h2 className="font-bold">ATTESTATIONS MADE</h2>
-
-            {isLoadingAttestationsGiven && (
-              <div className="text-center py-8">
-                <div className="terminal-bright text-sm text-gray-900">
-                  ◉ LOADING ATTESTATIONS ◉
-                </div>
-              </div>
-            )}
-
-            {!isLoadingAttestationsGiven && attestationsGiven.length === 0 && (
-              <div className="text-center py-8">
-                <div className="terminal-dim text-sm text-gray-600">
-                  NO ATTESTATIONS MADE
-                </div>
-                <div className="system-message text-xs mt-2 text-gray-700">
-                  ◆ THIS ACCOUNT HAS NOT MADE ANY ATTESTATIONS YET ◆
-                </div>
-              </div>
-            )}
-
-            {!isLoadingAttestationsGiven && attestationsGiven.length > 0 && (
-              <div className="overflow-x-auto">
-                <Table
-                  columns={attestationsGivenColumns}
-                  data={attestationsGiven}
-                  onRowClick={(row) => router.push(`/attestations/${row.uid}`)}
-                  getRowKey={(row) => row.uid}
-                  rowClickTitle="Click to view attestation details"
-                />
-              </div>
-            )}
-          </div>
-
           {/* Attestations Received Section */}
           <div className="border-b border-border pt-6 pb-12 space-y-6">
             <h2 className="font-bold">ATTESTATIONS RECEIVED</h2>
@@ -423,6 +410,8 @@ export default function AccountProfilePage() {
                   <Table
                     columns={attestationsReceivedColumns}
                     data={attestationsReceived}
+                    defaultSortColumn="time"
+                    defaultSortDirection="desc"
                     onRowClick={(row) =>
                       router.push(`/attestations/${row.uid}`)
                     }
@@ -431,6 +420,44 @@ export default function AccountProfilePage() {
                   />
                 </div>
               )}
+          </div>
+
+          {/* Attestations Given Section */}
+          <div className="border-b border-border pt-6 pb-12 space-y-6">
+            <h2 className="font-bold">ATTESTATIONS MADE</h2>
+
+            {isLoadingAttestationsGiven && (
+              <div className="text-center py-8">
+                <div className="terminal-bright text-sm text-gray-900">
+                  ◉ LOADING ATTESTATIONS ◉
+                </div>
+              </div>
+            )}
+
+            {!isLoadingAttestationsGiven && attestationsGiven.length === 0 && (
+              <div className="text-center py-8">
+                <div className="terminal-dim text-sm text-gray-600">
+                  NO ATTESTATIONS MADE
+                </div>
+                <div className="system-message text-xs mt-2 text-gray-700">
+                  ◆ THIS ACCOUNT HAS NOT MADE ANY ATTESTATIONS YET ◆
+                </div>
+              </div>
+            )}
+
+            {!isLoadingAttestationsGiven && attestationsGiven.length > 0 && (
+              <div className="overflow-x-auto">
+                <Table
+                  columns={attestationsGivenColumns}
+                  defaultSortColumn="time"
+                  defaultSortDirection="desc"
+                  data={attestationsGiven}
+                  onRowClick={(row) => router.push(`/attestations/${row.uid}`)}
+                  getRowKey={(row) => row.uid}
+                  rowClickTitle="Click to view attestation details"
+                />
+              </div>
+            )}
           </div>
 
           {/* Refresh Button */}

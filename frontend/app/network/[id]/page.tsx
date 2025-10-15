@@ -247,6 +247,8 @@ export default function NetworkPage() {
             <Table
               columns={columns}
               data={merkleData}
+              defaultSortDirection="asc"
+              defaultSortColumn="rank"
               onRowClick={(row) => router.push(`/account/${row.account}`)}
               getRowKey={(row) => row.account}
               rowClickTitle="Click to view account profile"

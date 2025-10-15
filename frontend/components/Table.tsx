@@ -42,6 +42,10 @@ export interface TableProps<T> {
   className?: string
   /** Optional title for the row click action */
   rowClickTitle?: string
+  /** Default sort column */
+  defaultSortColumn?: string
+  /** Default sort direction */
+  defaultSortDirection?: 'asc' | 'desc'
 }
 
 export function Table<T>({
@@ -52,9 +56,15 @@ export function Table<T>({
   rowClassName,
   className,
   rowClickTitle,
+  defaultSortColumn,
+  defaultSortDirection = 'desc',
 }: TableProps<T>) {
-  const [sortColumn, setSortColumn] = useState<string | null>(null)
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
+  const [sortColumn, setSortColumn] = useState<string | null>(
+    defaultSortColumn || null
+  )
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(
+    defaultSortDirection
+  )
 
   // Handle column header clicks for sorting
   const handleSort = (column: Column<T>) => {
