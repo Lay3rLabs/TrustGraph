@@ -100,7 +100,7 @@ export const WalletConnectionButton = ({
           <div className="flex flex-col gap-3 text-sm">
             <div className="flex flex-col gap-2 bg-secondary p-3 rounded-md border border-border -m-1">
               <p className="text-xs text-muted-foreground font-medium mb-1">
-                Balances
+                Optimism Balances
               </p>
 
               <div className="flex flex-row items-center gap-2 pl-2">
