@@ -2,19 +2,19 @@ import { ponder } from "ponder:registry";
 import { easAttestation } from "ponder:schema";
 import { easAbi } from "../../frontend/lib/contracts";
 
-ponder.on("eas:Attested", async ({ event, context }) => {
-  const { recipient, attester, uid, schemaUID } = event.args;
+ponder.on("easIndexerResolver:AttestationAttested", async ({ event, context }) => {
+  const { eas, uid } = event.args;
   const attestation = await context.client.readContract({
-    address: context.contracts.eas.address,
+    address: eas,
     abi: easAbi,
     functionName: "getAttestation",
     args: [uid],
   });
   await context.db.insert(easAttestation).values({
     uid,
-    schema: schemaUID,
-    attester,
-    recipient,
+    schema: attestation.schema,
+    attester: attestation.attester,
+    recipient: attestation.recipient,
     ref: attestation.refUID,
     revocable: attestation.revocable,
     expirationTime: attestation.expirationTime,
@@ -25,10 +25,10 @@ ponder.on("eas:Attested", async ({ event, context }) => {
   });
 });
 
-ponder.on("eas:Revoked", async ({ event, context }) => {
-  const { uid } = event.args;
+ponder.on("easIndexerResolver:AttestationRevoked", async ({ event, context }) => {
+  const { eas, uid } = event.args;
   const attestation = await context.client.readContract({
-    address: context.contracts.eas.address,
+    address: eas,
     abi: easAbi,
     functionName: "getAttestation",
     args: [uid],

@@ -36,7 +36,7 @@ try {
     ponder:
       env === 'development'
         ? 'http://localhost:65421'
-        : 'https://infra.en0va.xyz/ponder',
+        : 'https://trust-graph.wavs.xyz/ponder',
     ipfsGateway:
       env === 'development'
         ? 'http://127.0.0.1:8080/ipfs/'

@@ -1,15 +1,15 @@
-import { createConfig, factory } from "ponder";
+import { createConfig } from "ponder";
 
 import {
-  easAbi,
+  easIndexerResolverAbi,
   merkleSnapshotAbi,
   wavsIndexerAbi,
 } from "../frontend/lib/contracts";
 import deploymentSummary from "../.docker/deployment_summary.json";
 import { Hex } from "viem";
 
-// const CHAIN = "base" as const;
-// const CHAIN_ID = 8453;
+// const CHAIN = "optimism" as const;
+// const CHAIN_ID = 10;
 
 const CHAIN = "local" as const;
 const CHAIN_ID = 31337;
@@ -38,12 +38,12 @@ export default createConfig({
         [CHAIN]: { address: deploymentSummary.wavs_indexer as Hex },
       },
     },
-    eas: {
-      abi: easAbi,
+    easIndexerResolver: {
+      abi: easIndexerResolverAbi,
       startBlock: 1,
       // startBlock: 35855002,
       chain: {
-        [CHAIN]: { address: deploymentSummary.eas.contracts.eas as Hex },
+        [CHAIN]: { address: deploymentSummary.eas.contracts.indexer_resolver as Hex },
       },
     },
     merkleSnapshot: {
