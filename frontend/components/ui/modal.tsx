@@ -103,7 +103,7 @@ export function Modal({
             e.stopPropagation()
             onClose()
           }}
-          className="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors text-2xl leading-none z-10"
+          className="absolute top-6 right-6 text-muted-foreground hover:text-muted-foreground/80 transition-colors text-2xl leading-none z-10"
         >
           ×
         </button>
