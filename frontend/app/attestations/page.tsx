@@ -11,6 +11,7 @@ import { AttestationCard } from '@/components/AttestationCard'
 import { Card } from '@/components/Card'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
 import { intoAttestationsData } from '@/lib/attestation'
+import { EXAMPLE_NETWORK } from '@/lib/network'
 import { SCHEMAS } from '@/lib/schemas'
 import { easAttestation } from '@/ponder.schema'
 
@@ -67,7 +68,7 @@ export default function AttestationsPage() {
       <div className="border-b border-gray-700 pb-4">
         <div className="flex items-center justify-between mb-2">
           <div className="ascii-art-title text-lg">ATTESTATIONS</div>
-          <CreateAttestationModal />
+          <CreateAttestationModal network={EXAMPLE_NETWORK} />
         </div>
         {/*<div className="system-message text-sm">
           ◆ VERIFIABLE CREDENTIALS • REPUTATION NETWORKS • TRUST PROTOCOLS ◆It'

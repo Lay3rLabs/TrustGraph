@@ -4,7 +4,9 @@ import { Link } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
+import { Markdown } from '@/components/Markdown'
 import { NetworkGraph } from '@/components/NetworkGraph'
+import { RankRenderer } from '@/components/RankRenderer'
 import { StatisticCard } from '@/components/StatisticCard'
 import { Column, Table } from '@/components/Table'
 import { TableAddress } from '@/components/ui/address'
@@ -12,7 +14,7 @@ import { Button } from '@/components/ui/button'
 import { ExportButtons } from '@/components/ui/ExportButtons'
 import { NetworkEntry, useNetwork } from '@/hooks/useNetwork'
 import { NETWORKS, isTrustedSeed } from '@/lib/network'
-import { cn, formatBigNumber } from '@/lib/utils'
+import { formatBigNumber } from '@/lib/utils'
 
 export default function NetworkPage() {
   const router = useRouter()
@@ -46,29 +48,7 @@ export default function NetworkPage() {
         "Member's position in this network ranked by Trust Score. Rank is recalculated as new attestations are made.",
       sortable: true,
       accessor: (row) => row.rank,
-      render: (row) => (
-        <div className="flex items-center space-x-2">
-          <span
-            className={cn(
-              'text-sm font-semibold',
-              row.rank === 1
-                ? 'text-yellow-600'
-                : row.rank === 2
-                ? 'text-gray-500'
-                : row.rank === 3
-                ? 'text-amber-700'
-                : 'text-gray-800'
-            )}
-          >
-            #{row.rank}
-          </span>
-          {row.rank <= 3 && (
-            <span className="text-xs">
-              {row.rank === 1 ? '🥇' : row.rank === 2 ? '🥈' : '🥉'}
-            </span>
-          )}
-        </div>
-      ),
+      render: (row) => <RankRenderer rank={row.rank} />,
     },
     {
       key: 'account',
@@ -133,9 +113,9 @@ export default function NetworkPage() {
 
   return (
     <div className="space-y-12">
-      <div className="flex flex-col justify-start items-stretch md:flex-row md:items-start gap-x-12 gap-y-6">
-        <div className="flex flex-col items-start gap-4 max-w-full">
-          <h1 className="text-2xl font-bold">{name}</h1>
+      <div className="grid grid-cols-1 justify-start items-stretch lg:grid-cols-[2fr_3fr] lg:items-start gap-12">
+        <div className="flex flex-col items-start gap-4">
+          <h1 className="text-4xl font-bold">{name}</h1>
 
           <a
             className="flex flex-row items-center gap-2 text-sm"
@@ -151,16 +131,21 @@ export default function NetworkPage() {
           <p>{about}</p>
 
           <h2 className="mt-2 -mb-3 font-bold">CRITERIA</h2>
-          <p>{criteria}</p>
+          <div className="break-words text-left">
+            <Markdown>{criteria}</Markdown>
+          </div>
 
           <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-stretch mt-6">
-            <CreateAttestationModal title="Make Attestation" />
+            <CreateAttestationModal network={network} />
 
-            <ExportButtons data={merkleData} filename="trust-graph-network" />
+            <ExportButtons
+              data={merkleData}
+              filename={`TrustGraph_${name}_${new Date().toISOString()}`}
+            />
           </div>
         </div>
 
-        <div className="grow md:w-3/5 h-[50vh] max-h-full shrink-0">
+        <div className="h-[66vh] lg:h-4/5">
           <NetworkGraph network={network} />
         </div>
       </div>
@@ -178,7 +163,7 @@ export default function NetworkPage() {
             }
           />
           <StatisticCard
-            title="Total Network Score"
+            title="TOTAL NETWORK SCORE"
             tooltip="The sum of all Trust Scores across all network members, indicating overall network capacity and collective credibility."
             value={
               isLoading ? '...' : formatBigNumber(totalValue, undefined, true)

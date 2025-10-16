@@ -91,7 +91,7 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
 
   if (isLoading) {
     return (
-      <div className="w-full h-full flex justify-center items-center border-2 border-border rounded-md p-4">
+      <div className="w-full h-full flex justify-center items-center border border-border rounded-md p-4">
         <LoaderCircle size={24} className="animate-spin" />
       </div>
     )
@@ -99,7 +99,7 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
 
   if (error || !data) {
     return (
-      <div className="w-full h-full flex justify-center items-center border-2 border-destructive rounded-md p-4">
+      <div className="w-full h-full flex justify-center items-center border border-destructive rounded-md p-4">
         <p className="text-sm text-destructive">
           Error: {error?.message || 'No data'}
         </p>
@@ -111,7 +111,7 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
     <div className={cn('relative w-full h-full', className)}>
       {graph && (
         <SigmaContainer
-          className="!bg-transparent border-2 border-border rounded-md"
+          className="!bg-transparent border border-border rounded-md"
           settings={{
             allowInvalidContainer: true,
             renderLabels: true,

@@ -3,11 +3,14 @@
 import { Check, Copy } from 'lucide-react'
 import { useState } from 'react'
 
+import { cn } from '@/lib/utils'
+
 interface CopyableTextProps {
   text: string
   displayText?: string
   className?: string
   truncate?: boolean
+  truncateEnds?: [number, number]
   truncateOnMobile?: boolean
 }
 
@@ -17,6 +20,7 @@ export function CopyableText({
   className = '',
   truncate = false,
   truncateOnMobile = true,
+  truncateEnds = [6, 4],
 }: CopyableTextProps) {
   const [copied, setCopied] = useState(false)
 
@@ -28,12 +32,18 @@ export function CopyableText({
   }
 
   const display = displayText || text
-  const truncatedDisplay = `${display.slice(0, 6)}...${display.slice(-4)}`
+  const truncatedDisplay = `${display.slice(
+    0,
+    truncateEnds[0]
+  )}...${display.slice(-truncateEnds[1])}`
 
   return (
     <button
       onClick={handleCopy}
-      className={`group inline-flex items-center gap-2 font-mono text-xs hover:text-foreground transition-colors ${className}`}
+      className={cn(
+        'group inline-flex items-center gap-2 font-mono text-xs hover:text-foreground transition-colors',
+        className
+      )}
       title="Click to copy"
     >
       {truncate ? (

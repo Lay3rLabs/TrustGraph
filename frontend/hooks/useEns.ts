@@ -3,12 +3,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { useCallback, useMemo } from 'react'
 import { Hex } from 'viem'
-import { useEnsAvatar, useEnsName } from 'wagmi'
+import { normalize } from 'viem/ens'
+import { useEnsAddress, useEnsAvatar, useEnsName } from 'wagmi'
 import { getEnsAvatarQueryOptions, getEnsNameQueryOptions } from 'wagmi/query'
 
 import { config } from '@/lib/wagmi'
 
 interface EnsData {
+  address: string
   name: string | null
   avatar: string | null
   isLoading: boolean
@@ -40,6 +42,7 @@ const ENS_CACHE_KEY = 'ens-cache'
 const MAX_CACHE_SIZE = 500 // Maximum number of addresses to cache
 
 interface CacheEntry {
+  address: string
   name: string | null
   avatar: string | null
   timestamp: number
@@ -48,7 +51,14 @@ interface CacheEntry {
 
 class EnsCacheManager {
   private static instance: EnsCacheManager | null = null
+  /**
+   * Map of addresses to ENS data
+   */
   private cache: Record<string, CacheEntry> = {}
+  /**
+   * Map of ENS names to addresses
+   */
+  private nameCache: Record<string, string | null> = {}
   private initialized = false
 
   static getInstance(): EnsCacheManager {
@@ -74,6 +84,11 @@ class EnsCacheManager {
         const now = Date.now()
         this.cache = Object.fromEntries(
           Object.entries(parsed).filter(([, entry]) => entry.expiresAt > now)
+        )
+        this.nameCache = Object.fromEntries(
+          Object.entries(this.cache)
+            .filter(([, entry]) => entry.name)
+            .map(([address, entry]) => [normalize(entry.name!), address])
         )
       }
     } catch (error) {
@@ -112,6 +127,14 @@ class EnsCacheManager {
     return entry
   }
 
+  getByName(name: string): CacheEntry | null {
+    const address = this.nameCache[normalize(name)] || null
+    if (!address) {
+      return null
+    }
+    return this.get(address)
+  }
+
   set(
     address: string,
     name: string | null,
@@ -119,17 +142,24 @@ class EnsCacheManager {
     cacheDuration: number
   ) {
     const now = Date.now()
-    this.cache[address.toLowerCase()] = {
+    const lowerAddress = address.toLowerCase()
+    const cacheEntry: CacheEntry = {
+      address: lowerAddress,
       name,
       avatar,
       timestamp: now,
       expiresAt: now + cacheDuration,
+    }
+    this.cache[lowerAddress] = cacheEntry
+    if (name) {
+      this.nameCache[normalize(name)] = lowerAddress
     }
     this.saveToStorage()
   }
 
   clear() {
     this.cache = {}
+    this.nameCache = {}
     this.saveToStorage()
   }
 }
@@ -229,6 +259,7 @@ export function useEns(
   return useMemo(() => {
     if (!isValidAddress) {
       return {
+        address: '',
         name: null,
         avatar: null,
         isLoading: false,
@@ -238,6 +269,7 @@ export function useEns(
     // Use cached data if available
     if (cachedData && !nameLoading && !avatarLoading) {
       return {
+        address: cachedData.address,
         name: cachedData.name,
         avatar: cachedData.avatar,
         isLoading: false,
@@ -245,6 +277,7 @@ export function useEns(
     }
 
     return {
+      address: normalizedAddress!,
       name: ensName || cachedData?.name || null,
       avatar: ensAvatar || cachedData?.avatar || null,
       isLoading: nameLoading || avatarLoading,
@@ -259,6 +292,60 @@ export function useEns(
     nameError,
     avatarError,
   ])
+}
+
+/**
+ * Custom hook for ENS name resolution with advanced caching and performance optimizations
+ */
+export function useResolveEnsName(
+  name: string,
+  options: UseEnsOptions = {}
+): EnsData {
+  const opts = { ...DEFAULT_OPTIONS, ...options }
+  const cache = EnsCacheManager.getInstance()
+
+  let normalizedName: string | undefined
+  try {
+    normalizedName = name && normalize(name)
+  } catch {}
+
+  // Check cache first
+  const cachedData = useMemo(() => {
+    if (!normalizedName || !opts.persistCache) return null
+    return cache.getByName(normalizedName)
+  }, [normalizedName, opts.persistCache])
+
+  // ENS address resolution
+  const {
+    data: address,
+    isLoading: isResolvingEnsAddress,
+    error: ensAddressError,
+  } = useEnsAddress({
+    name: normalizedName,
+    chainId: opts.chainId,
+    query: {
+      enabled: Boolean(opts.enableName && normalizedName && !cachedData),
+      staleTime: opts.cacheDuration,
+      gcTime: opts.cacheDuration * 2,
+      retry: (failureCount) => failureCount < 2,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
+    },
+  })
+
+  const resolvedEns = useEns(address || undefined, opts)
+
+  return useMemo(
+    () =>
+      isResolvingEnsAddress || ensAddressError
+        ? {
+            address: '',
+            name: null,
+            avatar: null,
+            isLoading: isResolvingEnsAddress,
+          }
+        : resolvedEns,
+    [isResolvingEnsAddress, ensAddressError, resolvedEns]
+  )
 }
 
 /**
@@ -288,6 +375,7 @@ export function useBatchEnsQuery(
 
               if (cached) {
                 results[address] = {
+                  address,
                   name: cached.name,
                   avatar: cached.avatar,
                   isLoading: false,
@@ -316,6 +404,7 @@ export function useBatchEnsQuery(
                 )
 
                 results[address] = {
+                  address,
                   name: ensName,
                   avatar: ensAvatar,
                   isLoading: false,
@@ -323,6 +412,7 @@ export function useBatchEnsQuery(
               }
             } catch (error) {
               results[address] = {
+                address,
                 name: null,
                 avatar: null,
                 isLoading: false,

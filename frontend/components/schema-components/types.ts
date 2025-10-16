@@ -1,6 +1,7 @@
 import type React from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 
+import { Network } from '@/lib/network'
 import type { SchemaKey } from '@/lib/schemas'
 
 // Form data structure used across all schema components
@@ -31,6 +32,7 @@ export interface SchemaComponentProps {
   error?: Error | null
   isSuccess: boolean
   hash?: string | null
+  network?: Network
 }
 
 // Type for schema component registry

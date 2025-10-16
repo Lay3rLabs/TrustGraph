@@ -1,32 +1,31 @@
 'use client'
 
 import Link from 'next/link'
-import { ComponentType } from 'react'
 
 import { WalletConnectionButton } from '@/components/WalletConnectionButton'
 
 import Logo from './Logo'
 import { ButtonLink } from './ui/button'
 
-const menuItems: {
-  label: string
-  href: string
-  Icon?: ComponentType<{ className?: string }>
-  iconClassName?: string
-}[] = [
-  {
-    label: 'Attestations',
-    href: '/attestations',
-  },
-  {
-    label: 'Governance',
-    href: '/governance',
-  },
-  {
-    label: 'Network',
-    href: '/account',
-  },
-]
+// const menuItems: {
+//   label: string
+//   href: string
+//   Icon?: ComponentType<{ className?: string }>
+//   iconClassName?: string
+// }[] = [
+//   {
+//     label: 'Attestations',
+//     href: '/attestations',
+//   },
+//   {
+//     label: 'Governance',
+//     href: '/governance',
+//   },
+//   {
+//     label: 'Network',
+//     href: '/account',
+//   },
+// ]
 
 export const Nav = () => {
   return (

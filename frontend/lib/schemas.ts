@@ -129,12 +129,4 @@ export class SchemaManager {
 
     return parsedData
   }
-
-  static schemaHelperText(key: SchemaKey) {
-    switch (key) {
-      case 'vouching':
-        return 'Enter a numeric weight value representing the strength of your vouch'
-    }
-    return null
-  }
 }

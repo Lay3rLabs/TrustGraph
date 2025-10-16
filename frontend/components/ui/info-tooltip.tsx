@@ -1,7 +1,6 @@
 'use client'
 
 import { Info } from 'lucide-react'
-import * as React from 'react'
 
 import { cn } from '@/lib/utils'
 
@@ -19,19 +18,16 @@ export const InfoTooltip = ({
   iconClassName,
 }: InfoTooltipProps) => {
   return (
-    <Tooltip title={title}>
-      <button
-        type="button"
-        className={cn(
-          'inline-flex items-center justify-center rounded-full p-0.5 transition-colors',
-          'text-gray-400 hover:text-gray-600 focus:text-gray-600',
-          'focus:outline-none focus:ring-1 focus:ring-gray-400 focus:ring-offset-1',
-          className
-        )}
-      >
-        <Info size={14} className={cn('shrink-0', iconClassName)} />
-        <span className="sr-only">More information</span>
-      </button>
+    <Tooltip
+      title={title}
+      className={cn(
+        'inline-flex items-center justify-center rounded-full p-0.5 transition-colors',
+        'text-[#a1a1a1] hover:text-[#818181] focus:text-[#818181]',
+        'focus:outline-none focus:ring-1 focus:ring-[#a1a1a1] focus:ring-offset-1',
+        className
+      )}
+    >
+      <Info size={14} className={cn('shrink-0', iconClassName)} />
     </Tooltip>
   )
 }

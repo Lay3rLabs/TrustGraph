@@ -7,14 +7,20 @@ import { Hex } from 'viem'
 import { useAccount } from 'wagmi'
 
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
+import { RankRenderer } from '@/components/RankRenderer'
 import { StatisticCard } from '@/components/StatisticCard'
 import { Column, Table } from '@/components/Table'
 import { Address, TableAddress } from '@/components/ui/address'
 import { Button } from '@/components/ui/button'
 import { useAccountProfile } from '@/hooks/useAccountProfile'
 import { AttestationData } from '@/lib/attestation'
-import { NETWORKS, Network, isTrustedSeed } from '@/lib/network'
-import { cn, formatBigNumber } from '@/lib/utils'
+import {
+  EXAMPLE_NETWORK,
+  NETWORKS,
+  Network,
+  isTrustedSeed,
+} from '@/lib/network'
+import { formatBigNumber } from '@/lib/utils'
 
 interface NetworkParticipant {
   network: Network
@@ -120,29 +126,7 @@ export default function AccountProfilePage() {
         "Member's position in this network ranked by Trust Score. Rank is recalculated as new attestations are made.",
       sortable: true,
       accessor: (row) => row.rank,
-      render: (row) => (
-        <div className="flex items-center space-x-2">
-          <span
-            className={cn(
-              'text-sm font-semibold',
-              row.rank === 1
-                ? 'text-yellow-600'
-                : row.rank === 2
-                ? 'text-gray-500'
-                : row.rank === 3
-                ? 'text-amber-700'
-                : 'text-gray-800'
-            )}
-          >
-            #{row.rank}
-          </span>
-          {row.rank <= 3 && (
-            <span className="text-xs">
-              {row.rank === 1 ? '🥇' : row.rank === 2 ? '🥈' : '🥉'}
-            </span>
-          )}
-        </div>
-      ),
+      render: (row) => <RankRenderer rank={row.rank} />,
     },
     {
       key: 'attestationsReceived',
@@ -270,7 +254,7 @@ export default function AccountProfilePage() {
 
         {connectedAddress &&
           connectedAddress.toLowerCase() === address.toLowerCase() && (
-            <CreateAttestationModal />
+            <CreateAttestationModal network={EXAMPLE_NETWORK} />
           )}
       </div>
 
@@ -367,11 +351,11 @@ export default function AccountProfilePage() {
           {!profileData.networkParticipant && (
             <div className="border border-yellow-500 bg-yellow-50 p-4 rounded-sm">
               <div className="terminal-text text-sm text-yellow-700">
-                ⚠️ This account is not currently a participant in the trust
-                network merkle tree.
+                ⚠️ This account is not currently a participant in any
+                TrustNetworks.
               </div>
               <div className="terminal-dim text-xs mt-1 text-yellow-600">
-                Participate in attestations to appear in network rankings.
+                Participate in attestations to appear in Network rankings.
               </div>
             </div>
           )}

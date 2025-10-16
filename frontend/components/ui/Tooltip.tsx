@@ -6,10 +6,11 @@ import styles from './tooltip.module.css'
 
 export type TooltipProps = {
   title: string | ReactNode
+  className?: string
   children: ReactNode
 }
 
-export const Tooltip = ({ title, children }: TooltipProps) => {
+export const Tooltip = ({ title, children, className }: TooltipProps) => {
   if (!title) {
     return <>{children}</>
   }
@@ -17,7 +18,10 @@ export const Tooltip = ({ title, children }: TooltipProps) => {
   return (
     <T.Provider>
       <T.Root delay={0}>
-        <T.Trigger aria-label={typeof title === 'string' ? title : undefined}>
+        <T.Trigger
+          aria-label={typeof title === 'string' ? title : undefined}
+          className={className}
+        >
           {children}
         </T.Trigger>
         <T.Portal>

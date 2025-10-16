@@ -56,6 +56,7 @@ const StyledLink = ({
       target={isRemote ? '_blank' : undefined}
       rel={isRemote ? 'noopener noreferrer' : undefined}
       className="underline transition-opacity hover:opacity-80 active:opacity-70"
+      onClick={(e) => e.stopPropagation()}
     >
       {children}
     </Link>

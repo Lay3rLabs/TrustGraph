@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { SchemaManager } from '@/lib/schemas'
 
 import type { SchemaComponentProps } from './types'
 
@@ -34,11 +33,6 @@ export function GenericSchemaComponent({
 
   return (
     <div className="space-y-4">
-      {/* Schema Helper Text */}
-      <div className="text-muted-foreground text-sm">
-        {SchemaManager.schemaHelperText(schemaInfo.key)}
-      </div>
-
       {/* Dynamic Schema Fields */}
       {schemaInfo.fields.map(({ name, type }) => (
         <FormField

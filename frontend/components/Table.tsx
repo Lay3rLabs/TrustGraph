@@ -170,14 +170,14 @@ export function Table<T>({
               <th
                 key={column.key}
                 className={cn(
-                  'text-left p-4 terminal-dim text-xs text-gray-600 transition-colors select-none',
+                  'text-left px-4 py-2 terminal-dim text-xs text-black transition-colors select-none',
                   column.sortable && 'cursor-pointer hover:text-gray-900',
                   column.headerClassName
                 )}
                 onClick={() => handleSort(column)}
               >
                 <div className="flex items-center gap-1">
-                  {column.header}
+                  <span>{column.header}</span>
                   {column.tooltip && <InfoTooltip title={column.tooltip} />}
                   {getSortIndicator(column)}
                 </div>
@@ -200,8 +200,8 @@ export function Table<T>({
                 const isLast = index === columns.length - 1
                 const cellClasses = cn(
                   'p-4',
-                  isFirst && 'rounded-l-full',
-                  isLast && 'rounded-r-full',
+                  isFirst && 'rounded-l-md',
+                  isLast && 'rounded-r-md',
                   baseCellClasses,
                   getCellClassName(column, row)
                 )

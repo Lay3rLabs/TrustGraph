@@ -12,11 +12,11 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
 import { Slider } from '@/components/ui/slider'
 import { Textarea } from '@/components/ui/textarea'
 
 import type { SchemaComponentProps } from './types'
+import { Markdown } from '../Markdown'
 
 /**
  * Custom schema component for vouching attestations.
@@ -30,6 +30,7 @@ export function CreateVouchingSchema({
   error,
   isSuccess,
   hash,
+  network,
 }: SchemaComponentProps) {
   const [endorsementChecked, setEndorsementChecked] = useState(false)
 
@@ -45,8 +46,8 @@ export function CreateVouchingSchema({
   }, [form])
 
   // Handle slider change
-  const handleSliderChange = (values: number[]) => {
-    form.setValue('data.confidence', values[0].toString())
+  const handleSliderChange = (value: number) => {
+    form.setValue('data.confidence', value.toString())
   }
 
   // Handle number input change
@@ -76,9 +77,39 @@ export function CreateVouchingSchema({
   return (
     <div className="space-y-6">
       {/* Schema Description */}
-      <div className="text-muted-foreground text-sm">
-        Express your confidence in vouching for this person and optionally add a
-        comment.
+      <div className="text-primary text-sm">
+        Express your trust in this person and optionally add a comment.
+      </div>
+
+      {network && (
+        <div className="space-y-2">
+          <div className="text-sm text-muted-foreground">NETWORK CRITERIA</div>
+          <div className="text-sm break-words text-left">
+            <Markdown>{network.criteria}</Markdown>
+          </div>
+        </div>
+      )}
+
+      {/* Endorsement Checkbox */}
+      <div className="space-y-2">
+        <p className="text-sm text-muted-foreground">
+          I ENDORSE THIS PERSON MEETS THE NETWORK CRITERIA
+        </p>
+
+        <div className="flex flex-row gap-2 items-center">
+          <Checkbox
+            checked={endorsementChecked}
+            onCheckedChange={(checked: boolean) =>
+              setEndorsementChecked(!!checked)
+            }
+          />
+          <p
+            className="text-sm cursor-pointer"
+            onClick={() => setEndorsementChecked((c) => !c)}
+          >
+            Yes
+          </p>
+        </div>
       </div>
 
       {/* Confidence Slider */}
@@ -91,27 +122,28 @@ export function CreateVouchingSchema({
         }}
         render={({ field: _field }) => (
           <FormItem>
-            <FormLabel className="text-sm font-medium">
-              Confidence Level ({confidenceValue}%)
+            <FormLabel className="text-sm text-muted-foreground">
+              HOW CONFIDENT ARE YOU?
             </FormLabel>
             <FormControl>
-              <div className="space-y-3">
+              <div className="flex flex-row gap-2 items-center mt-1">
                 {/* Slider */}
-                <div className="px-2">
-                  <Slider
-                    value={[parseInt(confidenceValue) || 100]}
-                    onValueChange={handleSliderChange}
-                    max={100}
-                    min={0}
-                    step={1}
-                    className="w-full"
-                  />
-                </div>
+                <Slider
+                  value={confidenceValue ? parseInt(confidenceValue) : 100}
+                  onValueChange={handleSliderChange}
+                  max={100}
+                  min={0}
+                  className="grow"
+                />
+
+                <span className="text-sm text-muted-foreground w-[4ch] text-right">
+                  {confidenceValue}%
+                </span>
 
                 {/* Number Input */}
-                <div className="flex items-center space-x-2">
+                {/* <div className="flex items-center space-x-2">
                   <span className="text-sm text-muted-foreground">
-                    Or type:
+                    or type:
                   </span>
                   <Input
                     type="number"
@@ -122,7 +154,7 @@ export function CreateVouchingSchema({
                     className="w-20 text-sm"
                   />
                   <span className="text-sm text-muted-foreground">%</span>
-                </div>
+                </div> */}
               </div>
             </FormControl>
             <FormMessage className="text-xs" />
@@ -136,8 +168,8 @@ export function CreateVouchingSchema({
         name="data.comment"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-sm font-medium">
-              Comment <span className="text-muted-foreground">(Optional)</span>
+            <FormLabel className="text-sm text-muted-foreground">
+              COMMENT (OPTIONAL)
             </FormLabel>
             <FormControl>
               <Textarea
@@ -145,7 +177,7 @@ export function CreateVouchingSchema({
                 value={field.value || ''}
                 onChange={(e) => field.onChange(e.target.value)}
                 placeholder="Add any additional context about your vouching decision..."
-                className="text-sm min-h-20 resize-y"
+                className="text-sm min-h-20 resize-y mt-1"
               />
             </FormControl>
             <FormMessage className="text-xs" />
@@ -153,35 +185,8 @@ export function CreateVouchingSchema({
         )}
       />
 
-      {/* Endorsement Checkbox */}
-      <div className="border-t border-border pt-4">
-        <div className="flex items-start space-x-3">
-          <Checkbox
-            id="endorsement"
-            checked={endorsementChecked}
-            onCheckedChange={(checked: boolean) =>
-              setEndorsementChecked(!!checked)
-            }
-            className="mt-1"
-          />
-          <div className="space-y-1">
-            <label
-              htmlFor="endorsement"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-            >
-              I endorse this person meets the network criteria
-            </label>
-            <p className="text-xs text-muted-foreground">
-              By checking this box, you confirm that you believe this person
-              meets the network's standards for trustworthiness and
-              participation.
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Submit Section */}
-      <div className="pt-4 border-t border-border space-y-3">
+      <div className="space-y-3">
         <Button
           onClick={handleSubmit}
           disabled={isLoading || !endorsementChecked}

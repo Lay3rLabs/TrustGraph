@@ -100,13 +100,13 @@ export const Address = React.memo(function Address({
 
   const textClasses = cn(
     'break-all text-sm',
-    isShowingEns && 'text-blue-600 dark:text-blue-400 font-medium' // Highlight ENS names
+    isShowingEns && 'text-brand font-medium' // Highlight ENS names
   )
 
   const copyIcon = copied ? (
     <Check className="w-3 h-3 text-green-600 dark:text-green-400 flex-shrink-0" />
   ) : (
-    <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400" />
+    <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 cursor-pointer hover:text-brand" />
   )
 
   const renderText = () => {

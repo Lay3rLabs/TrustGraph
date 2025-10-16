@@ -1,9 +1,9 @@
 'use client'
 
-import clsx from 'clsx'
 import { ReactNode, useEffect, useRef } from 'react'
 
 import { useUpdatingRef } from '@/hooks/useUpdatingRef'
+import { cn } from '@/lib/utils'
 
 import { Card } from '../Card'
 
@@ -33,9 +33,6 @@ export function Modal({
       const scrollX = window.scrollX
       const scrollY = window.scrollY
       const width = document.documentElement.clientWidth
-      const scrollbarWidth =
-        window.innerWidth - document.documentElement.clientWidth
-      console.log('scrollbarWidth', scrollbarWidth)
       document.body.style.position = 'fixed'
       document.body.style.top = `-${scrollY}px`
       document.body.style.left = `-${scrollX}px`
@@ -81,7 +78,7 @@ export function Modal({
 
   return (
     <div
-      className={clsx(
+      className={cn(
         'fixed inset-0 z-50 flex items-center justify-center duration-200 backdrop-blur-sm',
         isOpen
           ? 'animate-in fade-in-0'
@@ -116,7 +113,7 @@ export function Modal({
       <Card
         type="popover"
         size="md"
-        className={clsx(
+        className={cn(
           'relative z-50 w-full max-w-md max-h-[90vh] mx-4 !p-0 flex flex-col overflow-hidden',
           isOpen ? 'animate-in zoom-in-95' : 'animate-out zoom-out-95',
           className
@@ -124,14 +121,14 @@ export function Modal({
       >
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between p-4 border-b border-gray-700 shrink09">
-            <h2 className="terminal-bright text-sm">{title}</h2>
+          <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
+            <h2 className="font-bold">{title}</h2>
           </div>
         )}
 
         {/* Content */}
         <div
-          className={clsx('p-4 overflow-y-auto grow min-h-0', contentClassName)}
+          className={cn('p-4 overflow-y-auto grow min-h-0', contentClassName)}
         >
           {children}
         </div>

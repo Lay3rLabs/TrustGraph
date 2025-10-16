@@ -100,7 +100,7 @@ export default function NetworkPage() {
       <div className="border-b border-gray-700 pb-4">
         <div className="flex items-center justify-between mb-2">
           <div className="ascii-art-title text-lg">TRUST NETWORK</div>
-          <CreateAttestationModal />
+          <CreateAttestationModal network={EXAMPLE_NETWORK} />
         </div>
         <div className="system-message text-sm">◆ RANKED BY REPUTATION ◆</div>
       </div>
@@ -327,7 +327,9 @@ export default function NetworkPage() {
           <div className="flex justify-center gap-4 pt-3 pb-4 border-t border-gray-200">
             <ExportButtons
               data={sortedMerkleData}
-              filename="trust-graph-network"
+              filename={`TrustGraph_${
+                EXAMPLE_NETWORK.name
+              }_${new Date().toISOString()}`}
             />
           </div>
         </div>
