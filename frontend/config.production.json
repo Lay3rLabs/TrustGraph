@@ -1,33 +1,29 @@
 {
-  "chain": "local",
+  "chain": "optimism",
   "apis": {
-    "ponder": "http://localhost:65421",
-    "ipfsGateway": "http://127.0.0.1:8080/ipfs/"
+    "ponder": "https://trust-graph.wavs.xyz/ponder",
+    "ipfsGateway": "https://gateway.pinata.cloud/ipfs/"
   },
-  "wavsServiceId": "06c2b36493c57e9ad9852b613aaf420e8d8abab29dc20adbcd38bae0337b3230",
+  "wavsServiceId": "1c1018875bf736a711f47e9f43ec4d3c82269acae2d132fef8971c0a13887865",
   "contracts": {
-    "IWavsServiceManager": "0xdf6f2abf8f7bafcc5fff4692a6adb5159b61380c",
-    "WavsIndexer": "0xddE08380E8716Ffb2D3E67dceb461B26908E485e",
-    "EASAttestTrigger": "0x6c9CAa8A70302730fFb682D40Da781ab1fDf75Db",
-    "WavsAttester": "0xfB00c87E8625Ab09C2724fc4d37324551d799C08",
-    "EAS": "0x32143D02dBbcF5c5D79ee18BB02985D8696B7dAF",
-    "EASIndexerResolver": "0xdaA66cD73C999E1Ab85E09c2E77C967a2B5A7614",
-    "SchemaRegistrar": "0x5658705805f2539993A19811Ce189D79347AC7DE",
-    "SchemaRegistry": "0x8d27e581Bf74537A6BA1E679fdBDf432A607561a",
-    "MerkleSnapshot": "0x7E4eba3d98e24aCfC60943d99226ec99d63115Cf",
-    "RewardDistributor": "0x310fcC5bCA186a1d381FB73Ef132f8900Afa322C",
-    "TEST": "0x5E6ee924257d2E4bFaF16d11BD169f7Faf7CB45f",
-    "GnosisSafe": "0x2fF02b8A39edd6065515C8E8be906f32799fD057",
-    "GnosisSafeProxy": "0x959cDAE80C610277080a9d9b5069EFE02983a3d8",
-    "MerkleGovModule": "0x794c44D4f3A409EE3A41910a7346B40844d60C64",
-    "SignerManagerModule": "0x1A58dd2ffeD25d5dc55BE0202d9d3827fD8870D8"
+    "IWavsServiceManager": "0x197484faccbdb900788f50f553907bbaea20701c",
+    "WavsIndexer": "0x1a4C2B7157C5b32035C4c6f4cdfb052c09ecba92",
+    "EASAttestTrigger": "0xc4cD7e58887834281091b2F2c63cce3481637E28",
+    "WavsAttester": "0xD95F4960c2620c1cE306022a8E0099476CEd84D0",
+    "EAS": "0x4200000000000000000000000000000000000021",
+    "EASIndexerResolver": "0xac03773647D933935d07a821e395915773D52297",
+    "SchemaRegistrar": "0xdc959ec48d50Cc02f9481419f9fAe1406bfE9EFd",
+    "SchemaRegistry": "0x4200000000000000000000000000000000000020",
+    "MerkleSnapshot": "0xCA481607a85cFe734340d3E83Dac78a508c6d363",
+    "RewardDistributor": "0x4076bE26914a72ff2ea103D811f188188034fb79",
+    "ERC20": "0x2F79E77Fd9c707404753c7B118C1bac71F6D46aB"
   },
   "schemas": {
     "vouching": {
-      "uid": "0x4d1912b465fb02992e4a05f3efe86620ad01190a1b5e8dcc41d3ee6b99351024",
+      "uid": "0xc12c9f27c0f29891a577aaab46a0603c3ebba46ef2750b4b8292003573fa1209",
       "name": "Vouching",
       "description": "Weighted endorsement",
-      "resolver": "0xdaA66cD73C999E1Ab85E09c2E77C967a2B5A7614",
+      "resolver": "0xac03773647D933935d07a821e395915773D52297",
       "revocable": true,
       "schema": "string comment,uint256 confidence",
       "fields": [
@@ -41,5 +37,11 @@
         }
       ]
     }
-  }
+  },
+  "trustedSeeds": [
+    "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+    "0x7d03C5c37f77Fd01211334B9115CA108C84E8f3B",
+    "0x733Fe4b4D26168532c668231d725C46C315c14b1",
+    "0x59DDA36bD196Ec849838CE2163E6821f946b37Dc"
+  ]
 }
