@@ -338,17 +338,15 @@ export function CreateAttestationModal({
               )}
 
               {selectedSchemaInfo && (
-                <div className="pt-4 border-t border-border">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsOpen(false)}
-                    disabled={isLoading}
-                    className="px-6 py-2 w-full"
-                  >
-                    Cancel
-                  </Button>
-                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsOpen(false)}
+                  disabled={isLoading}
+                  className="px-6 py-2 w-full"
+                >
+                  Cancel
+                </Button>
               )}
             </div>
           </Form>
