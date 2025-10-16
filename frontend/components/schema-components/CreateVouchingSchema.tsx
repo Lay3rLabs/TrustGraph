@@ -192,12 +192,12 @@ export function CreateVouchingSchema({
           disabled={isLoading || !endorsementChecked}
           className="px-6 py-2 w-full"
         >
-          {isLoading ? 'Creating Vouch...' : 'Create Vouch'}
+          {isLoading ? 'Making Attestation...' : 'Make Attestation'}
         </Button>
 
         {!endorsementChecked && (
           <p className="text-xs text-muted-foreground text-center">
-            You must confirm the endorsement above to create this vouch
+            You must confirm the endorsement above to make this attestation.
           </p>
         )}
 
