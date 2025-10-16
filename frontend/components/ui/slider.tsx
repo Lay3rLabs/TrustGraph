@@ -48,7 +48,7 @@ export const Slider = ({
     [min, max, onValueChangeRef]
   )
 
-  const handleDown = (e: MouseEvent | TouchEvent) => {
+  const handleStart = (e: MouseEvent | TouchEvent) => {
     setIsDragging(true)
     updateValue(e)
   }
@@ -58,17 +58,19 @@ export const Slider = ({
       return
     }
 
-    const handleMouseUp = () => {
+    const handleEnd = () => {
       setIsDragging(false)
     }
 
-    document.addEventListener('mouseup', handleMouseUp)
+    document.addEventListener('mouseup', handleEnd)
     document.addEventListener('mousemove', updateValue)
+    document.addEventListener('touchend', handleEnd)
     document.addEventListener('touchmove', updateValue)
 
     return () => {
-      document.removeEventListener('mouseup', handleMouseUp)
+      document.removeEventListener('mouseup', handleEnd)
       document.removeEventListener('mousemove', updateValue)
+      document.removeEventListener('touchend', handleEnd)
       document.removeEventListener('touchmove', updateValue)
     }
   }, [isDragging, updateValue])
@@ -80,8 +82,8 @@ export const Slider = ({
         'relative flex w-full overflow-hidden touch-none select-none items-center cursor-pointer rounded-full bg-secondary h-5',
         className
       )}
-      onMouseDown={(e) => handleDown(e.nativeEvent)}
-      onTouchStart={(e) => handleDown(e.nativeEvent)}
+      onMouseDown={(e) => handleStart(e.nativeEvent)}
+      onTouchStart={(e) => handleStart(e.nativeEvent)}
       onClick={(e) => updateValue(e.nativeEvent)}
     >
       {/* Progress bar */}

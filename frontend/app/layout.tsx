@@ -44,7 +44,7 @@ export default function RootLayout({
             <div className="flex flex-col min-h-[calc(100vh-2rem)]">
               <Nav />
 
-              <main className="py-2 mt-4 sm:py-4 sm:mt-6 flex-1 grow">
+              <main className="p-2 mt-4 sm:px-0 sm:py-4 sm:mt-6 flex-1 grow">
                 {children}
               </main>
             </div>
