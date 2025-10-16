@@ -10,3 +10,6 @@ onlyBuiltDependencies:
   - secp256k1
   - sharp
   - utf-8-validate
+
+patchedDependencies:
+  '@react-sigma/core': patches/@react-sigma__core.patch

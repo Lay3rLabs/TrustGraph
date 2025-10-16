@@ -4,6 +4,7 @@ import { Link } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
+import { NetworkGraph } from '@/components/NetworkGraph'
 import { StatisticCard } from '@/components/StatisticCard'
 import { Column, Table } from '@/components/Table'
 import { TableAddress } from '@/components/ui/address'
@@ -132,7 +133,7 @@ export default function NetworkPage() {
 
   return (
     <div className="space-y-12">
-      <div className="flex flex-col justify-start items-stretch md:flex-row md:items-start">
+      <div className="flex flex-col justify-start items-stretch md:flex-row md:items-start gap-x-12 gap-y-6">
         <div className="flex flex-col items-start gap-4 max-w-full">
           <h1 className="text-2xl font-bold">{name}</h1>
 
@@ -159,8 +160,8 @@ export default function NetworkPage() {
           </div>
         </div>
 
-        <div className="flex flex-row justify-center items-center grow md:w-3/5 h-[50vh] max-h-full shrink-0">
-          hey
+        <div className="grow md:w-3/5 h-[50vh] max-h-full shrink-0">
+          <NetworkGraph network={network} />
         </div>
       </div>
 

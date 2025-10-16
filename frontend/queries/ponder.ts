@@ -1,8 +1,11 @@
 'use client'
 
 import { queryOptions } from '@tanstack/react-query'
+import { Hex } from 'viem'
 
+import { AttestationData, intoAttestationsData } from '@/lib/attestation'
 import { APIS } from '@/lib/config'
+import { easAttestation } from '@/ponder.schema'
 
 // Query keys for consistent caching
 export const ponderKeys = {
@@ -26,6 +29,7 @@ export const ponderKeys = {
     attester?: string
     recipient?: string
   }) => [...ponderKeys.all, 'attestationCount', options] as const,
+  attestationsGraph: () => [...ponderKeys.all, 'attestationsGraph'] as const,
 }
 
 export type FollowerCount = {
@@ -67,23 +71,18 @@ export type MerkleTreeResponse = {
   entries: MerkleEntry[]
 }
 
-export type AttestationData = {
-  uid: `0x${string}`
-  schema: `0x${string}`
-  attester: `0x${string}`
-  recipient: `0x${string}`
-  data: `0x${string}`
-  revocationTime: number
-  expirationTime: number
-  timestamp: number
-  ref?: `0x${string}`
-  revocable?: boolean
-  blockNumber?: bigint
-}
-
 export type AttestationUID = {
   uid: `0x${string}`
   timestamp: number
+}
+
+export type AttestationGraph = {
+  accounts: {
+    account: Hex
+    sent: number
+    received: number
+  }[]
+  attestations: AttestationData[]
 }
 
 export const ponderQueries = {
@@ -164,6 +163,30 @@ export const ponderQueries = {
       } else {
         throw new Error(
           `Failed to fetch attestation counts: ${response.status} ${
+            response.statusText
+          } (${await response.text()})`
+        )
+      }
+    },
+    enabled: !!APIS.ponder,
+  }),
+  attestationsGraph: queryOptions({
+    queryKey: ponderKeys.attestationsGraph(),
+    queryFn: async (): Promise<AttestationGraph> => {
+      const response = await fetch(`${APIS.ponder}/network/graph`)
+
+      if (response.ok) {
+        const data = await response.json()
+
+        return {
+          accounts: data.accounts,
+          attestations: intoAttestationsData(
+            data.attestations as (typeof easAttestation.$inferSelect)[]
+          ),
+        }
+      } else {
+        throw new Error(
+          `Failed to fetch attestations graph: ${response.status} ${
             response.statusText
           } (${await response.text()})`
         )

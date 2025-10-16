@@ -3,13 +3,14 @@
 import { ChevronDown } from 'lucide-react'
 import { useState } from 'react'
 
+import { NetworkGraph } from '@/components/NetworkGraph'
 import { Button, ButtonLink } from '@/components/ui/button'
 import { EXAMPLE_NETWORK } from '@/lib/network'
 import { cn } from '@/lib/utils'
 
 export default function WavsGovHome() {
   return (
-    <div className="flex flex-col justify-start items-stretch md:flex-row md:items-start md:max-w-7xl md:mx-auto">
+    <div className="flex flex-col justify-start items-stretch md:flex-row md:items-start md:max-w-7xl md:mx-auto gap-x-12 gap-y-6">
       <div className="flex flex-col items-start gap-6 max-w-full">
         <h1 className="text-2xl font-bold">
           Networks that grow at the speed of trust
@@ -49,8 +50,8 @@ export default function WavsGovHome() {
         </div>
       </div>
 
-      <div className="flex flex-row justify-center items-center grow md:w-3/5 h-[50vh] max-h-full shrink-0">
-        hey
+      <div className="grow md:w-3/5 h-[50vh] max-h-full shrink-0">
+        <NetworkGraph network={EXAMPLE_NETWORK} />
       </div>
     </div>
   )
@@ -68,7 +69,7 @@ const FrequentlyAskedQuestion = ({
   return (
     <Button
       variant="outline"
-      className="border-2 !px-4 !py-3 !h-auto shadow-md flex flex-col items-stretch gap-4 overflow-hidden !whitespace-normal"
+      className="border-2 !px-4 !py-3 !h-auto shadow-md flex flex-col items-stretch gap-4 overflow-hidden !whitespace-normal text-left"
       size="lg"
       onClick={() => setIsOpen((o) => !o)}
     >

@@ -2,7 +2,11 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useCallback, useMemo } from 'react'
+import { Hex } from 'viem'
 import { useEnsAvatar, useEnsName } from 'wagmi'
+import { getEnsAvatarQueryOptions, getEnsNameQueryOptions } from 'wagmi/query'
+
+import { config } from '@/lib/wagmi'
 
 interface EnsData {
   name: string | null
@@ -260,62 +264,80 @@ export function useEns(
 /**
  * Hook for batch ENS resolution of multiple addresses
  */
-export function useBatchEns(
-  addresses: string[],
+export function useBatchEnsQuery(
+  addresses: Hex[],
   options: UseEnsOptions = {}
-): Record<string, EnsData> {
+) {
   const opts = { ...DEFAULT_OPTIONS, ...options }
 
-  return (
-    useQuery({
-      queryKey: ['batch-ens', addresses, opts],
-      queryFn: async () => {
-        const results: Record<string, EnsData> = {}
+  return useQuery({
+    queryKey: ['batch-ens', addresses, opts],
+    queryFn: async ({ client }) => {
+      const results: Record<string, EnsData> = {}
 
-        // Process addresses in batches to avoid overwhelming the RPC
-        const batchSize = 10
-        for (let i = 0; i < addresses.length; i += batchSize) {
-          const batch = addresses.slice(i, i + batchSize)
+      // Process addresses in batches to avoid overwhelming the RPC
+      const batchSize = 10
+      for (let i = 0; i < addresses.length; i += batchSize) {
+        const batch = addresses.slice(i, i + batchSize)
 
-          await Promise.all(
-            batch.map(async (address) => {
-              try {
-                const cache = EnsCacheManager.getInstance()
-                const cached = cache.get(address)
+        await Promise.all(
+          batch.map(async (address) => {
+            try {
+              const cache = EnsCacheManager.getInstance()
+              const cached = cache.get(address)
 
-                if (cached) {
-                  results[address] = {
-                    name: cached.name,
-                    avatar: cached.avatar,
-                    isLoading: false,
-                  }
-                } else {
-                  // This would need to be implemented with direct viem calls
-                  // for true batch processing. For now, we rely on React Query caching
-                  results[address] = {
-                    name: null,
-                    avatar: null,
-                    isLoading: false,
-                  }
-                }
-              } catch (error) {
+              if (cached) {
                 results[address] = {
-                  name: null,
-                  avatar: null,
+                  name: cached.name,
+                  avatar: cached.avatar,
+                  isLoading: false,
+                }
+              } else {
+                const ensName = await client.fetchQuery(
+                  getEnsNameQueryOptions(config, {
+                    chainId: opts.chainId,
+                    address,
+                  })
+                )
+                const ensAvatar = ensName
+                  ? await client.fetchQuery(
+                      getEnsAvatarQueryOptions(config, {
+                        chainId: opts.chainId,
+                        name: ensName,
+                      })
+                    )
+                  : null
+
+                cache.set(
+                  address.toLowerCase(),
+                  ensName,
+                  ensAvatar,
+                  opts.cacheDuration
+                )
+
+                results[address] = {
+                  name: ensName,
+                  avatar: ensAvatar,
                   isLoading: false,
                 }
               }
-            })
-          )
-        }
+            } catch (error) {
+              results[address] = {
+                name: null,
+                avatar: null,
+                isLoading: false,
+              }
+            }
+          })
+        )
+      }
 
-        return results
-      },
-      enabled: addresses.length > 0,
-      staleTime: opts.cacheDuration,
-      gcTime: opts.cacheDuration * 2,
-    }).data || {}
-  )
+      return results
+    },
+    enabled: addresses.length > 0,
+    staleTime: opts.cacheDuration,
+    gcTime: opts.cacheDuration * 2,
+  })
 }
 
 /**

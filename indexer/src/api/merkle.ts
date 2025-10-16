@@ -1,6 +1,7 @@
 import * as offchainSchema from "../../offchain.schema";
 import { Context, Hono } from "hono";
 import { drizzle } from "drizzle-orm/node-postgres";
+import { offchainDb } from "./db";
 
 declare global {
   interface BigInt {
@@ -14,20 +15,13 @@ BigInt.prototype.toJSON = function () {
 
 const merkleApp = new Hono();
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL is not set");
-}
-const offchainDb = drizzle(process.env.DATABASE_URL, {
-  schema: offchainSchema,
-});
-
 /**
  * Get the merkle tree with its entries.
  * @param c The context.
  * @param root The root of the merkle tree.
  * @returns The merkle tree with its entries.
  */
-const getMerkleTreeWithEntries = async (c: Context, root: string) => {
+export const getMerkleTreeWithEntries = async (c: Context, root: string) => {
   const tree = await offchainDb.query.merkleMetadata.findFirst({
     where: (t, { eq }) => eq(t.root, root),
   });
