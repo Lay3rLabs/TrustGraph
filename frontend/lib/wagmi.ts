@@ -1,6 +1,6 @@
 import { porto } from 'porto/wagmi'
 import { Chain } from 'viem'
-import { base } from 'viem/chains'
+import { optimism } from 'viem/chains'
 import { createConfig, fallback, http, webSocket } from 'wagmi'
 import { mainnet } from 'wagmi/chains'
 import {
@@ -33,13 +33,13 @@ export const localChain: Chain = {
 
 // Environment-based network configuration
 export const getCurrentChainConfig = (): Chain => {
-  if (CHAIN === 'base') {
-    const webSocketUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL_8453
+  if (CHAIN === 'optimism') {
+    const webSocketUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL_10
     return {
-      ...base,
+      ...optimism,
       rpcUrls: {
         default: {
-          http: ['/api/rpc/8453?id=0', '/api/rpc/8453?id=1'],
+          http: ['/api/rpc/10?id=0', '/api/rpc/10?id=1'],
           ...(webSocketUrl && { webSocket: [webSocketUrl] }),
         },
       },

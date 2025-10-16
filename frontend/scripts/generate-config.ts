@@ -31,7 +31,7 @@ try {
   console.log('📋 Found deployment data')
 
   // Set chain based on environment
-  configOutput.chain = env === 'development' ? 'local' : 'base'
+  configOutput.chain = env === 'development' ? 'local' : 'optimism'
   configOutput.apis = {
     ponder:
       env === 'development'
