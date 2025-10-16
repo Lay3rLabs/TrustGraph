@@ -65,13 +65,7 @@ try {
     // Merkler
     MerkleSnapshot: deployment.merkler.merkle_snapshot,
     RewardDistributor: deployment.merkler.reward_distributor,
-    TEST: deployment.merkler.reward_token,
-
-    // Zodiac safes
-    GnosisSafe: deployment.zodiac_safes.safe_singleton,
-    GnosisSafeProxy: deployment.zodiac_safes.safe_factory,
-    MerkleGovModule: deployment.zodiac_safes.safe1.merkle_gov_module,
-    SignerManagerModule: deployment.zodiac_safes.safe1.signer_module,
+    ERC20: deployment.merkler.reward_token,
   }
 
   // Make sure ABIs exist for all contracts, and copy them to the frontend.
