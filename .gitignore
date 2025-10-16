@@ -4,6 +4,7 @@ out/
 cache/
 broadcast/
 node_modules/
+.pnpm-store/
 
 # WAVS
 .env
