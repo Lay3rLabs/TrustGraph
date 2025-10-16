@@ -37,6 +37,7 @@ services:
 
   ponder-db:
     image: postgres:17
+    container_name: ponder-db
     environment:
       POSTGRES_DB: ponder
       POSTGRES_USER: ponder
@@ -50,6 +51,7 @@ services:
       interval: 1s
       timeout: 3s
       retries: 5
+    restart: unless-stopped
 
   # ponder:
   #   image: node:22-alpine
