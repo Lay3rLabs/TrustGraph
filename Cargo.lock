@@ -5392,6 +5392,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "trust-graph-aggregator"
+version = "0.6.0"
+dependencies = [
+ "alloy-network",
+ "alloy-primitives",
+ "alloy-provider",
+ "serde",
+ "serde_json",
+ "wavs-wasi-utils",
+ "wit-bindgen-rt 0.44.0",
+ "wstd",
+]
+
+[[package]]
 name = "try-lock"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5724,20 +5738,6 @@ dependencies = [
  "alloy-sol-types",
  "anyhow",
  "hex",
- "serde",
- "serde_json",
- "wavs-wasi-utils",
- "wit-bindgen-rt 0.44.0",
- "wstd",
-]
-
-[[package]]
-name = "wavs-gov-aggregator"
-version = "0.6.0"
-dependencies = [
- "alloy-network",
- "alloy-primitives",
- "alloy-provider",
  "serde",
  "serde_json",
  "wavs-wasi-utils",
