@@ -16,9 +16,21 @@ const paperMono = localFont({
 })
 
 export const metadata: Metadata = {
-  title: 'Trust Graph',
+  title: 'TrustGraph',
   description: 'Mapping trust networks through attestations.',
   applicationName: 'Trust Graph',
+  icons: [
+    {
+      url: '/images/icon-192.png',
+      sizes: '192x192',
+      type: 'image/png',
+    },
+    {
+      url: '/images/icon-512.png',
+      sizes: '512x512',
+      type: 'image/png',
+    },
+  ],
 }
 
 export const viewport: Viewport = {

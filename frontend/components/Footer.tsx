@@ -16,7 +16,7 @@ export const Footer = () => {
 
       <div className="flex flex-row items-center gap-3">
         <a
-          href="https://x.com/"
+          href="https://x.com/TrustGraphNet"
           target="_blank"
           rel="noopener noreferrer"
           className="transition-colors hover:text-foreground"
@@ -25,7 +25,7 @@ export const Footer = () => {
           <XIcon className="w-4 h-3.5" />
         </a>
         <a
-          href="https://github.com/"
+          href="https://github.com/Lay3rLabs/TrustGraph"
           target="_blank"
           rel="noopener noreferrer"
           className="transition-colors hover:text-foreground"
