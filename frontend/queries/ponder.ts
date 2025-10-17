@@ -79,6 +79,7 @@ export type AttestationUID = {
 export type AttestationGraph = {
   accounts: {
     account: Hex
+    value: string
     sent: number
     received: number
   }[]

@@ -39,19 +39,40 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
     const graph = new MultiDirectedGraph<{
       label: string
       size: number
+      value: bigint
       sent: number
       received: number
       forceLabel: boolean
     }>()
 
-    for (const { account, sent, received } of data.accounts) {
+    const maxValue = Number(
+      data.accounts.reduce(
+        (max, { value }) => (BigInt(value) > max ? BigInt(value) : max),
+        0n
+      )
+    )
+    const minValue = Number(
+      data.accounts.reduce(
+        (min, { value }) => (BigInt(value) < min ? BigInt(value) : min),
+        BigInt(maxValue)
+      )
+    )
+    const minSize = 5
+    const maxSize = 15
+
+    for (const { account, value, sent, received } of data.accounts) {
       graph.addNode(account, {
         label:
           ensData?.[account]?.name ||
           `${account.slice(0, 6)}...${account.slice(-4)}`,
-        size: 10,
+        value: BigInt(value),
         sent,
         received,
+        // Set size to relative value, scaled to a range
+        size:
+          minSize +
+          ((Number(value) - minValue) / (maxValue - minValue)) *
+            (maxSize - minSize),
         forceLabel: true,
       })
     }
@@ -66,25 +87,6 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
 
     // Assign layout.
     circular.assign(graph)
-
-    // Set size to number of attestations (degrees)
-    const minDegree = graph
-      .nodes()
-      .reduce((min, node) => Math.min(min, graph.degree(node)), Infinity)
-    const maxDegree = graph
-      .nodes()
-      .reduce((max, node) => Math.max(max, graph.degree(node)), 0)
-    const minSize = 5
-    const maxSize = 15
-    graph.forEachNode((node) => {
-      const degree = graph.degree(node)
-      graph.setNodeAttribute(
-        node,
-        'size',
-        minSize +
-          ((degree - minDegree) / (maxDegree - minDegree)) * (maxSize - minSize)
-      )
-    })
 
     return graph
   }, [data, ensData])
