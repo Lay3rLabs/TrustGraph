@@ -175,6 +175,7 @@ export default function AccountProfilePage() {
       sortable: false,
       render: (row) => (
         <TableAddress
+          showNavIcon
           address={row.recipient}
           onClick={(addr) => router.push(`/account/${addr}`)}
         />
@@ -217,6 +218,7 @@ export default function AccountProfilePage() {
       render: (row) => (
         <TableAddress
           address={row.attester}
+          showNavIcon
           onClick={(addr) => router.push(`/account/${addr}`)}
         />
       ),

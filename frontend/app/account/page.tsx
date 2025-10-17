@@ -284,6 +284,7 @@ export default function NetworkPage() {
                       <td className="p-4">
                         <TableAddress
                           address={entry.account}
+                          showNavIcon
                           onClick={(address) =>
                             router.push(`/account/${address}`)
                           }

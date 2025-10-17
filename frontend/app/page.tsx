@@ -20,7 +20,7 @@ export default function HomePage() {
         <p>
           TrustGraph is a governance tool that makes social trust visible and
           measurable. Participants give and receive attestations — digital
-          vouches that build a TrustGraph. Calculated TrustScores can be
+          endorsements that build a TrustGraph. Calculated TrustScores can be
           exported and used to inform governance decisions on external
           platforms, creating a foundation for legitimacy based on relationships
           rather than tokens.

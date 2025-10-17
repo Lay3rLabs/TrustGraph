@@ -58,6 +58,7 @@ export default function NetworkPage() {
       render: (row) => (
         <TableAddress
           address={row.account}
+          showNavIcon
           onClick={(address) => router.push(`/account/${address}`)}
         />
       ),
