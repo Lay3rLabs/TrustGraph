@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { db } from "ponder:api";
 import { easAttestation } from "ponder:schema";
-import { and, count, eq } from "drizzle-orm";
+import { and, count, eq, ne } from "drizzle-orm";
 
 const app = new Hono();
 
@@ -15,8 +15,13 @@ app.get("/counts", async (c) => {
         sent: count(easAttestation.uid),
       })
       .from(easAttestation)
-      // not revoked
-      .where(eq(easAttestation.revocationTime, 0n))
+      // not revoked, nor self-attested
+      .where(
+        and(
+          eq(easAttestation.revocationTime, 0n),
+          ne(easAttestation.attester, easAttestation.recipient)
+        )
+      )
       .groupBy(easAttestation.attester);
 
     // Get received counts (where account is recipient)
@@ -26,8 +31,13 @@ app.get("/counts", async (c) => {
         received: count(easAttestation.uid),
       })
       .from(easAttestation)
-      // not revoked
-      .where(eq(easAttestation.revocationTime, 0n))
+      // not revoked, nor self-attested
+      .where(
+        and(
+          eq(easAttestation.revocationTime, 0n),
+          ne(easAttestation.attester, easAttestation.recipient)
+        )
+      )
       .groupBy(easAttestation.recipient);
 
     // Combine the results
@@ -81,7 +91,9 @@ app.get("/counts/:account", async (c) => {
         and(
           eq(easAttestation.attester, account as `0x${string}`),
           // not revoked
-          eq(easAttestation.revocationTime, 0n)
+          eq(easAttestation.revocationTime, 0n),
+          // not self-attested
+          ne(easAttestation.attester, easAttestation.recipient)
         )
       );
 
@@ -93,7 +105,9 @@ app.get("/counts/:account", async (c) => {
         and(
           eq(easAttestation.recipient, account as `0x${string}`),
           // not revoked
-          eq(easAttestation.revocationTime, 0n)
+          eq(easAttestation.revocationTime, 0n),
+          // not self-attested
+          ne(easAttestation.attester, easAttestation.recipient)
         )
       );
 
