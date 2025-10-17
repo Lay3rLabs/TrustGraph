@@ -17,11 +17,11 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@ponder/client": "^0.13.0",
+    "@ponder/client": "^0.14.1",
     "drizzle-orm": "^0.41.0",
     "hono": "^4.5.0",
     "pg": "^8.16.3",
-    "ponder": "^0.13.8",
+    "ponder": "^0.14.1",
     "viem": "^2.21.3"
   },
   "devDependencies": {
@@ -30,7 +30,7 @@
     "dotenv": "^17.2.2",
     "drizzle-kit": "^0.31.4",
     "eslint": "^8.54.0",
-    "eslint-config-ponder": "^0.12.26",
+    "eslint-config-ponder": "^0.14.1",
     "typescript": "^5.3.2"
   },
   "engines": {
