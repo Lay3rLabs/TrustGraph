@@ -170,7 +170,7 @@ export function Table<T>({
               <th
                 key={column.key}
                 className={cn(
-                  'text-left px-4 py-2 terminal-dim text-xs text-black transition-colors select-none',
+                  'text-left px-4 py-2 text-xs text-black transition-colors select-none',
                   column.sortable && 'cursor-pointer hover:text-gray-900',
                   column.headerClassName
                 )}

@@ -1,5 +1,6 @@
 'use client'
 
+import { useSetAtom } from 'jotai'
 import { useParams, useRouter } from 'next/navigation'
 import type React from 'react'
 import { useMemo } from 'react'
@@ -13,6 +14,7 @@ import { Column, Table } from '@/components/Table'
 import { Address, TableAddress } from '@/components/ui/address'
 import { Button } from '@/components/ui/button'
 import { useAccountProfile } from '@/hooks/useAccountProfile'
+import { useResolveEnsName } from '@/hooks/useEns'
 import { AttestationData } from '@/lib/attestation'
 import {
   EXAMPLE_NETWORK,
@@ -20,7 +22,8 @@ import {
   Network,
   isTrustedSeed,
 } from '@/lib/network'
-import { formatBigNumber } from '@/lib/utils'
+import { formatBigNumber, mightBeEnsName } from '@/lib/utils'
+import { attestationBackAtom } from '@/state/nav'
 
 interface NetworkParticipant {
   network: Network
@@ -32,11 +35,18 @@ interface NetworkParticipant {
 }
 
 export default function AccountProfilePage() {
-  const params = useParams()
+  const _address = useParams().address as string
+
   const router = useRouter()
   const { address: connectedAddress } = useAccount()
 
-  const address = params.address as Hex
+  // Resolve ENS name if it is a valid ENS name.
+  const resolvedEns = useResolveEnsName(
+    mightBeEnsName(_address) ? _address : ''
+  )
+  const address = (resolvedEns.address || _address) as Hex
+
+  const setAttestationBack = useSetAtom(attestationBackAtom)
 
   const {
     isLoading,
@@ -66,7 +76,9 @@ export default function AccountProfilePage() {
         attestationsReceived: profileData?.attestationsReceived || 0,
         attestationsGiven: profileData?.attestationsGiven || 0,
       })
-    ).sort((a, b) => Number(b.score) - Number(a.score))
+    )
+      .filter((network) => network.score !== '0')
+      .sort((a, b) => Number(b.score) - Number(a.score))
 
     const maxScore = networksData.reduce(
       (max, network) => Math.max(max, Number(network.score)),
@@ -175,7 +187,7 @@ export default function AccountProfilePage() {
       sortable: true,
       accessor: (row) => Number(row.decodedData?.confidence || '0'),
       render: (row) => (
-        <div className="terminal-bright text-sm text-gray-900">
+        <div className="text-sm text-gray-900">
           {formatBigNumber(row.decodedData?.confidence || '0', undefined, true)}
         </div>
       ),
@@ -187,11 +199,9 @@ export default function AccountProfilePage() {
       sortable: true,
       accessor: (row) => Number(row.time),
       render: (row) => (
-        <div className="terminal-text text-sm text-gray-800">
+        <div className="text-sm text-gray-800">
           <div>{row.formattedTime}</div>
-          <div className="terminal-dim text-xs text-gray-600">
-            {row.formattedTimeAgo}
-          </div>
+          <div className="text-xs text-gray-600">{row.formattedTimeAgo}</div>
         </div>
       ),
     },
@@ -218,7 +228,7 @@ export default function AccountProfilePage() {
       sortable: true,
       accessor: (row) => Number(row.decodedData?.confidence || '0'),
       render: (row) => (
-        <div className="terminal-bright text-sm text-gray-900">
+        <div className="text-sm text-gray-900">
           {formatBigNumber(row.decodedData?.confidence || '0', undefined, true)}
         </div>
       ),
@@ -230,11 +240,9 @@ export default function AccountProfilePage() {
       sortable: true,
       accessor: (row) => Number(row.time),
       render: (row) => (
-        <div className="terminal-text text-sm text-gray-800">
+        <div className="text-sm text-gray-800">
           <div>{row.formattedTime}</div>
-          <div className="terminal-dim text-xs text-gray-600">
-            {row.formattedTimeAgo}
-          </div>
+          <div className="text-xs text-gray-600">{row.formattedTimeAgo}</div>
         </div>
       ),
     },
@@ -249,22 +257,25 @@ export default function AccountProfilePage() {
           className="ascii-art-title [&>span]:!text-xl [&>span]:!font-bold"
           displayMode="full"
           showCopyIcon={true}
+          noHighlight
           clickable={false}
         />
 
-        {connectedAddress &&
-          connectedAddress.toLowerCase() === address.toLowerCase() && (
-            <CreateAttestationModal network={EXAMPLE_NETWORK} />
-          )}
+        <CreateAttestationModal
+          network={EXAMPLE_NETWORK}
+          defaultRecipient={
+            connectedAddress?.toLowerCase() === address.toLowerCase()
+              ? undefined
+              : _address
+          }
+        />
       </div>
 
       {/* Loading State */}
       {isLoading && (
         <div className="text-center py-8">
-          <div className="terminal-bright text-sm text-gray-900">
-            ◉ LOADING PROFILE DATA ◉
-          </div>
-          <div className="terminal-dim text-xs mt-2 text-gray-600">
+          <div className="text-sm text-gray-900">◉ LOADING PROFILE DATA ◉</div>
+          <div className="text-xs mt-2 text-gray-600">
             Fetching account information...
           </div>
         </div>
@@ -274,10 +285,7 @@ export default function AccountProfilePage() {
       {error && (
         <div className="border border-red-500 bg-red-50 p-4 rounded-sm">
           <div className="error-text text-sm text-red-700">⚠️ {error}</div>
-          <Button
-            onClick={refresh}
-            className="mt-3 mobile-terminal-btn !px-4 !py-2"
-          >
+          <Button onClick={refresh} className="mt-3 !px-4 !py-2">
             <span className="text-xs">RETRY</span>
           </Button>
         </div>
@@ -286,9 +294,9 @@ export default function AccountProfilePage() {
       {/* Account Info */}
       {!isLoading && profileData && (
         <>
-          {/* Networks */}
-          <div className="py-6 space-y-6">
-            <div className="overflow-x-auto">
+          {/* Network Status */}
+          {networksData.length > 0 ? (
+            <div className="py-6 overflow-x-auto">
               <Table
                 columns={networksColumns}
                 data={networksData}
@@ -299,7 +307,17 @@ export default function AccountProfilePage() {
                 rowClickTitle="Click to view network"
               />
             </div>
-          </div>
+          ) : (
+            <div className="my-6 border border-yellow-500 bg-yellow-50 p-4 rounded-md">
+              <div className="text-sm text-yellow-700">
+                ⚠️ This account is not currently a participant in any
+                TrustNetworks.
+              </div>
+              <div className="text-xs mt-1 text-yellow-600">
+                Participate in attestations to appear in Network rankings.
+              </div>
+            </div>
+          )}
 
           {/* Statistics */}
           <div className="border-y border-border py-12 space-y-6">
@@ -347,42 +365,22 @@ export default function AccountProfilePage() {
             </div>
           </div>
 
-          {/* Network Status */}
-          {!profileData.networkParticipant && (
-            <div className="border border-yellow-500 bg-yellow-50 p-4 rounded-sm">
-              <div className="terminal-text text-sm text-yellow-700">
-                ⚠️ This account is not currently a participant in any
-                TrustNetworks.
-              </div>
-              <div className="terminal-dim text-xs mt-1 text-yellow-600">
-                Participate in attestations to appear in Network rankings.
-              </div>
-            </div>
-          )}
-
           {/* Attestations Received Section */}
           <div className="border-b border-border pt-6 pb-12 space-y-6">
-            <h2 className="font-bold">ATTESTATIONS RECEIVED</h2>
+            <h2 className="font-bold">
+              {!isLoadingAttestationsReceived &&
+              attestationsReceived.length === 0
+                ? 'NO ATTESTATIONS RECEIVED'
+                : 'ATTESTATIONS RECEIVED'}
+            </h2>
 
             {isLoadingAttestationsReceived && (
               <div className="text-center py-8">
-                <div className="terminal-bright text-sm text-gray-900">
-                  ◉ LOADING ATTESTATIONS ◉
+                <div className="text-sm text-gray-900">
+                  LOADING ATTESTATIONS
                 </div>
               </div>
             )}
-
-            {!isLoadingAttestationsReceived &&
-              attestationsReceived.length === 0 && (
-                <div className="text-center py-8">
-                  <div className="terminal-dim text-sm text-gray-600">
-                    NO ATTESTATIONS RECEIVED
-                  </div>
-                  <div className="system-message text-xs mt-2 text-gray-700">
-                    ◆ THIS ACCOUNT HAS NOT RECEIVED ANY ATTESTATIONS YET ◆
-                  </div>
-                </div>
-              )}
 
             {!isLoadingAttestationsReceived &&
               attestationsReceived.length > 0 && (
@@ -392,9 +390,10 @@ export default function AccountProfilePage() {
                     data={attestationsReceived}
                     defaultSortColumn="time"
                     defaultSortDirection="desc"
-                    onRowClick={(row) =>
+                    onRowClick={(row) => {
+                      setAttestationBack(`/account/${_address}`)
                       router.push(`/attestations/${row.uid}`)
-                    }
+                    }}
                     getRowKey={(row) => row.uid}
                     rowClickTitle="Click to view attestation details"
                   />
@@ -404,23 +403,16 @@ export default function AccountProfilePage() {
 
           {/* Attestations Given Section */}
           <div className="border-b border-border pt-6 pb-12 space-y-6">
-            <h2 className="font-bold">ATTESTATIONS MADE</h2>
+            <h2 className="font-bold">
+              {!isLoadingAttestationsGiven && attestationsGiven.length === 0
+                ? 'NO ATTESTATIONS MADE'
+                : 'ATTESTATIONS MADE'}
+            </h2>
 
             {isLoadingAttestationsGiven && (
               <div className="text-center py-8">
-                <div className="terminal-bright text-sm text-gray-900">
-                  ◉ LOADING ATTESTATIONS ◉
-                </div>
-              </div>
-            )}
-
-            {!isLoadingAttestationsGiven && attestationsGiven.length === 0 && (
-              <div className="text-center py-8">
-                <div className="terminal-dim text-sm text-gray-600">
-                  NO ATTESTATIONS MADE
-                </div>
-                <div className="system-message text-xs mt-2 text-gray-700">
-                  ◆ THIS ACCOUNT HAS NOT MADE ANY ATTESTATIONS YET ◆
+                <div className="text-sm text-gray-900">
+                  LOADING ATTESTATIONS
                 </div>
               </div>
             )}
@@ -432,23 +424,15 @@ export default function AccountProfilePage() {
                   defaultSortColumn="time"
                   defaultSortDirection="desc"
                   data={attestationsGiven}
-                  onRowClick={(row) => router.push(`/attestations/${row.uid}`)}
+                  onRowClick={(row) => {
+                    setAttestationBack(`/account/${_address}`)
+                    router.push(`/attestations/${row.uid}`)
+                  }}
                   getRowKey={(row) => row.uid}
                   rowClickTitle="Click to view attestation details"
                 />
               </div>
             )}
-          </div>
-
-          {/* Refresh Button */}
-          <div className="flex justify-center pt-4">
-            <Button
-              onClick={refresh}
-              className="mobile-terminal-btn !px-6 !py-2"
-              disabled={isLoading}
-            >
-              <span className="terminal-command text-xs">REFRESH PROFILE</span>
-            </Button>
           </div>
         </>
       )}
@@ -456,10 +440,8 @@ export default function AccountProfilePage() {
       {/* No Profile Data */}
       {!isLoading && !profileData && !error && (
         <div className="text-center py-12">
-          <div className="terminal-dim text-sm text-gray-600">
-            INVALID ACCOUNT ADDRESS
-          </div>
-          <div className="system-message text-xs mt-2 text-gray-700">
+          <div className="text-sm text-gray-600">INVALID ACCOUNT ADDRESS</div>
+          <div className="text-xs mt-2 text-gray-700">
             ◆ PLEASE PROVIDE A VALID ETHEREUM ADDRESS ◆
           </div>
         </div>

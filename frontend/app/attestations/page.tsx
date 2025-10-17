@@ -65,24 +65,19 @@ export default function AttestationsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="border-b border-gray-700 pb-4">
-        <div className="flex items-center justify-between mb-2">
-          <div className="ascii-art-title text-lg">ATTESTATIONS</div>
-          <CreateAttestationModal network={EXAMPLE_NETWORK} />
-        </div>
-        {/*<div className="system-message text-sm">
-          ◆ VERIFIABLE CREDENTIALS • REPUTATION NETWORKS • TRUST PROTOCOLS ◆It'
-        </div>*/}
+      <div className="flex items-center justify-between mb-6">
+        <div className="ascii-art-title text-lg">ATTESTATIONS</div>
+        <CreateAttestationModal network={EXAMPLE_NETWORK} />
       </div>
 
       {/* Filters */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className="terminal-dim text-sm mb-2 block">SCHEMA TYPE</label>
+          <label className="text-sm mb-2 block">SCHEMA TYPE</label>
           <select
             value={selectedSchema}
             onChange={(e) => setSelectedSchema(e.target.value)}
-            className="w-full terminal-text text-sm p-2 rounded-sm bg-card-foreground/30 shadow-md"
+            className="w-full text-sm p-2 rounded-sm bg-card-foreground/30 shadow-md cursor-pointer"
           >
             <option value="all">ALL SCHEMAS</option>
             {SCHEMAS.map((schema) => (
@@ -94,13 +89,11 @@ export default function AttestationsPage() {
         </div>
 
         <div>
-          <label className="terminal-dim text-sm mb-2 block">
-            VERIFICATION STATUS
-          </label>
+          <label className="text-sm mb-2 block">VERIFICATION STATUS</label>
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="w-full terminal-text text-sm p-2 rounded-sm bg-card-foreground/30 shadow-md"
+            className="w-full text-sm p-2 rounded-sm bg-card-foreground/30 shadow-md cursor-pointer"
           >
             <option value="all">ALL STATUS</option>
             <option value="verified">VERIFIED</option>
@@ -110,13 +103,13 @@ export default function AttestationsPage() {
         </div>
 
         <div>
-          <label className="terminal-dim text-sm mb-2 block">SORT ORDER</label>
+          <label className="text-sm mb-2 block">SORT ORDER</label>
           <select
             value={sortOrder}
             onChange={(e) =>
               setSortOrder(e.target.value as 'newest' | 'oldest')
             }
-            className="w-full terminal-text text-sm p-2 rounded-sm bg-card-foreground/30 shadow-md"
+            className="w-full text-sm p-2 rounded-sm bg-card-foreground/30 shadow-md cursor-pointer"
           >
             <option value="newest">NEWEST FIRST</option>
             <option value="oldest">OLDEST FIRST</option>
@@ -127,16 +120,16 @@ export default function AttestationsPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <Card type="detail" size="sm">
-          <div className="terminal-bright text-lg">{currentTotal}</div>
-          <div className="terminal-dim text-xs">FETCHED</div>
+          <div className="text-lg">{currentTotal}</div>
+          <div className="text-xs">FETCHED</div>
         </Card>
         <Card type="detail" size="sm">
-          <div className="terminal-bright text-lg">{totalAttestations}</div>
-          <div className="terminal-dim text-xs">TOTAL ATTESTATIONS</div>
+          <div className="text-lg">{totalAttestations}</div>
+          <div className="text-xs">TOTAL ATTESTATIONS</div>
         </Card>
         <Card type="detail" size="sm">
-          <div className="terminal-bright text-lg">{SCHEMAS.length}</div>
-          <div className="terminal-dim text-xs">SCHEMAS</div>
+          <div className="text-lg">{SCHEMAS.length}</div>
+          <div className="text-xs">SCHEMAS</div>
         </Card>
       </div>
 
@@ -145,10 +138,8 @@ export default function AttestationsPage() {
         isLoadingCurrentTotal ||
         isLoadingTotalAttestations) && (
         <div className="text-center py-8">
-          <div className="terminal-bright text-lg">
-            ◉ LOADING ATTESTATIONS ◉
-          </div>
-          <div className="terminal-dim text-sm mt-2">Fetching data...</div>
+          <div className="text-lg">◉ LOADING ATTESTATIONS ◉</div>
+          <div className="text-sm mt-2">Fetching data...</div>
         </div>
       )}
 
@@ -174,10 +165,8 @@ export default function AttestationsPage() {
         currentTotal === 0 &&
         totalAttestations > 0 && (
           <div className="text-center py-12">
-            <div className="terminal-dim text-sm">
-              NO ATTESTATIONS MATCH CURRENT FILTERS
-            </div>
-            <div className="system-message text-xs mt-2">
+            <div className="text-sm">NO ATTESTATIONS MATCH CURRENT FILTERS</div>
+            <div className="text-xs mt-2">
               ◆ TRY ADJUSTING YOUR FILTER SETTINGS ◆
             </div>
           </div>
@@ -185,8 +174,8 @@ export default function AttestationsPage() {
 
       {!isLoadingTotalAttestations && totalAttestations === 0 && (
         <div className="text-center py-12">
-          <div className="terminal-dim text-sm">NO ATTESTATIONS FOUND</div>
-          <div className="system-message text-xs mt-2">
+          <div className="text-sm">NO ATTESTATIONS FOUND</div>
+          <div className="text-xs mt-2">
             {selectedSchema !== 'all'
               ? '◆ NO ATTESTATIONS FOR SELECTED SCHEMA ◆'
               : '◆ NO ATTESTATIONS AVAILABLE ◆'}

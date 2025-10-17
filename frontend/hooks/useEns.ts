@@ -336,7 +336,14 @@ export function useResolveEnsName(
 
   return useMemo(
     () =>
-      isResolvingEnsAddress || ensAddressError
+      cachedData
+        ? {
+            address: cachedData.address,
+            name: cachedData.name,
+            avatar: cachedData.avatar,
+            isLoading: false,
+          }
+        : isResolvingEnsAddress || ensAddressError
         ? {
             address: '',
             name: null,
@@ -344,7 +351,7 @@ export function useResolveEnsName(
             isLoading: isResolvingEnsAddress,
           }
         : resolvedEns,
-    [isResolvingEnsAddress, ensAddressError, resolvedEns]
+    [isResolvingEnsAddress, ensAddressError, resolvedEns, cachedData]
   )
 }
 

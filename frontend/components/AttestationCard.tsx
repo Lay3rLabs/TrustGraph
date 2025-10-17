@@ -224,7 +224,7 @@ export function AttestationCard({
               <button
                 onClick={handleRevoke}
                 disabled={isRevokingThis}
-                className="px-3 py-1 border border-red-200 bg-red-50 text-red-700 rounded-md text-xs font-medium hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-3 py-1 border border-destructive/80 bg-destructive/80 text-destructive-foreground rounded-md text-xs font-medium hover:bg-destructive/60 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isRevokingThis ? 'Revoking...' : 'Revoke'}
               </button>
@@ -255,9 +255,10 @@ export function AttestationCard({
             </div>
             <Address
               address={attestation.attester}
-              className="text-foreground"
+              textClassName="text-foreground text-xs"
               displayMode="auto"
               showCopyIcon
+              showNavIcon
               onClick={(addr) => router.push(`/account/${addr}`)}
               monospace
             />
@@ -268,8 +269,9 @@ export function AttestationCard({
             </div>
             <Address
               address={attestation.recipient}
-              className="text-foreground text-xs"
+              textClassName="text-foreground text-xs"
               displayMode="auto"
+              showNavIcon
               showCopyIcon
               onClick={(addr) => router.push(`/account/${addr}`)}
               monospace

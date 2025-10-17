@@ -27,9 +27,7 @@ export default function ExplorerServicesPage() {
           <p className="text-gray-400 mb-6">
             Connect your wallet to view the service directory.
           </p>
-          <div className="system-message">
-            Neural link required for service access.
-          </div>
+          <div>Neural link required for service access.</div>
         </div>
       </div>
     )
@@ -45,9 +43,7 @@ export default function ExplorerServicesPage() {
           <div className="text-blue-400 text-lg mb-4">
             ◉ LOADING SERVICE DATA...
           </div>
-          <div className="system-message">
-            Synchronizing with IPFS network...
-          </div>
+          <div>Synchronizing with IPFS network...</div>
         </div>
       </div>
     )
@@ -66,7 +62,7 @@ export default function ExplorerServicesPage() {
               ? 'Service URI not set on contract. Please contact admin.'
               : 'Failed to load service data from IPFS.'}
           </p>
-          <div className="system-message text-xs">
+          <div className="text-xs">
             {error?.message || 'Service URI is empty or not configured'}
           </div>
           <div className="text-xs text-gray-500 mt-2">
@@ -100,7 +96,7 @@ export default function ExplorerServicesPage() {
         <div className="ascii-art-title text-lg mb-2">
           WAVS SERVICE DIRECTORY
         </div>
-        <div className="system-message text-sm">
+        <div className="text-sm">
           ◈ {serviceData?.name.toUpperCase()} SERVICE • STATUS:{' '}
           {serviceData?.status.toUpperCase()} ◈
         </div>
@@ -114,13 +110,11 @@ export default function ExplorerServicesPage() {
       {/* Filters */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="terminal-dim text-sm mb-2 block">
-            COMPONENT PACKAGE
-          </label>
+          <label className="text-sm mb-2 block">COMPONENT PACKAGE</label>
           <select
             value={selectedPackage}
             onChange={(e) => setSelectedPackage(e.target.value)}
-            className="w-full bg-black/20 border border-gray-700 terminal-text text-sm p-2 rounded-sm"
+            className="w-full bg-black/20 border border-gray-700 text-sm p-2 rounded-sm"
           >
             <option value="all">ALL PACKAGES</option>
             {uniquePackages.map((pkg) => (
@@ -132,13 +126,11 @@ export default function ExplorerServicesPage() {
         </div>
 
         <div>
-          <label className="terminal-dim text-sm mb-2 block">
-            CHAIN NETWORK
-          </label>
+          <label className="text-sm mb-2 block">CHAIN NETWORK</label>
           <select
             value={selectedChain}
             onChange={(e) => setSelectedChain(e.target.value)}
-            className="w-full bg-black/20 border border-gray-700 terminal-text text-sm p-2 rounded-sm"
+            className="w-full bg-black/20 border border-gray-700 text-sm p-2 rounded-sm"
           >
             <option value="all">ALL CHAINS</option>
             {uniqueChains.map((chain) => (
@@ -153,24 +145,22 @@ export default function ExplorerServicesPage() {
       {/* Network Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
-          <div className="terminal-bright text-lg">
-            {filteredWorkflows.length}
-          </div>
-          <div className="terminal-dim text-xs">WORKFLOWS</div>
+          <div className="text-lg">{filteredWorkflows.length}</div>
+          <div className="text-xs">WORKFLOWS</div>
         </div>
         <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
           <div className="text-lg">{uniquePackages.length}</div>
-          <div className="terminal-dim text-xs">PACKAGES</div>
+          <div className="text-xs">PACKAGES</div>
         </div>
         <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
-          <div className="terminal-bright text-lg">{uniqueChains.length}</div>
-          <div className="terminal-dim text-xs">CHAINS</div>
+          <div className="text-lg">{uniqueChains.length}</div>
+          <div className="text-xs">CHAINS</div>
         </div>
         <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
-          <div className="terminal-bright text-xs font-mono break-all">
+          <div className="text-xs font-mono break-all">
             {serviceData?.manager?.evm?.address || 'N/A'}
           </div>
-          <div className="terminal-dim text-xs">MANAGER</div>
+          <div className="text-xs">MANAGER</div>
         </div>
       </div>
 
@@ -185,13 +175,11 @@ export default function ExplorerServicesPage() {
               {/* Header */}
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="terminal-command text-base">
-                    {workflow.package}
-                  </h3>
-                  <div className="terminal-dim text-xs mt-1">
+                  <h3 className="text-base">{workflow.package}</h3>
+                  <div className="text-xs mt-1">
                     v{workflow.version} • {workflow.chain_name} chain
                   </div>
-                  <div className="terminal-text text-xs mt-1 font-mono">
+                  <div className="text-xs mt-1 font-mono">
                     ID: {workflow.id}
                   </div>
                 </div>
@@ -203,16 +191,12 @@ export default function ExplorerServicesPage() {
               {/* Registry Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <div className="terminal-dim text-xs mb-1">
-                    REGISTRY DOMAIN
-                  </div>
-                  <div className="terminal-text text-sm font-mono">
-                    {workflow.domain}
-                  </div>
+                  <div className="text-xs mb-1">REGISTRY DOMAIN</div>
+                  <div className="text-sm font-mono">{workflow.domain}</div>
                 </div>
                 <div>
-                  <div className="terminal-dim text-xs mb-1">DIGEST</div>
-                  <div className="terminal-text text-xs font-mono break-all">
+                  <div className="text-xs mb-1">DIGEST</div>
+                  <div className="text-xs font-mono break-all">
                     {workflow.digest}
                   </div>
                 </div>
@@ -221,16 +205,14 @@ export default function ExplorerServicesPage() {
               {/* Trigger Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <div className="terminal-dim text-xs mb-1">
-                    TRIGGER CONTRACT
-                  </div>
-                  <div className="terminal-text text-xs font-mono break-all">
+                  <div className="text-xs mb-1">TRIGGER CONTRACT</div>
+                  <div className="text-xs font-mono break-all">
                     {workflow.trigger_address}
                   </div>
                 </div>
                 <div>
-                  <div className="terminal-dim text-xs mb-1">EVENT HASH</div>
-                  <div className="terminal-text text-xs font-mono break-all">
+                  <div className="text-xs mb-1">EVENT HASH</div>
+                  <div className="text-xs font-mono break-all">
                     {workflow.trigger_event}
                   </div>
                 </div>
@@ -239,18 +221,14 @@ export default function ExplorerServicesPage() {
               {/* Aggregator Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <div className="terminal-dim text-xs mb-1">
-                    AGGREGATOR URL
-                  </div>
-                  <div className="terminal-text text-xs font-mono">
+                  <div className="text-xs mb-1">AGGREGATOR URL</div>
+                  <div className="text-xs font-mono">
                     {workflow.aggregator_url}
                   </div>
                 </div>
                 <div>
-                  <div className="terminal-dim text-xs mb-1">
-                    AGGREGATOR ADDRESS
-                  </div>
-                  <div className="terminal-text text-xs font-mono break-all">
+                  <div className="text-xs mb-1">AGGREGATOR ADDRESS</div>
+                  <div className="text-xs font-mono break-all">
                     {workflow.aggregator_address}
                   </div>
                 </div>
@@ -259,26 +237,22 @@ export default function ExplorerServicesPage() {
               {/* Limits */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
-                  <div className="terminal-dim text-xs mb-1">FUEL LIMIT</div>
-                  <div className="terminal-bright text-sm">
+                  <div className="text-xs mb-1">FUEL LIMIT</div>
+                  <div className="text-sm">
                     {workflow.fuel_limit.toLocaleString()}
                   </div>
                 </div>
                 <div>
-                  <div className="terminal-dim text-xs mb-1">TIME LIMIT</div>
-                  <div className="terminal-bright text-sm">
-                    {workflow.time_limit}s
-                  </div>
+                  <div className="text-xs mb-1">TIME LIMIT</div>
+                  <div className="text-sm">{workflow.time_limit}s</div>
                 </div>
                 <div>
-                  <div className="terminal-dim text-xs mb-1">ENV KEYS</div>
-                  <div className="terminal-bright text-sm">
-                    {workflow.env_keys.length}
-                  </div>
+                  <div className="text-xs mb-1">ENV KEYS</div>
+                  <div className="text-sm">{workflow.env_keys.length}</div>
                 </div>
                 <div>
-                  <div className="terminal-dim text-xs mb-1">CONFIG KEYS</div>
-                  <div className="terminal-bright text-sm">
+                  <div className="text-xs mb-1">CONFIG KEYS</div>
+                  <div className="text-sm">
                     {Object.keys(workflow.config).length}
                   </div>
                 </div>
@@ -286,12 +260,12 @@ export default function ExplorerServicesPage() {
 
               {/* Permissions */}
               <div>
-                <div className="terminal-dim text-xs mb-2">PERMISSIONS</div>
+                <div className="text-xs mb-2">PERMISSIONS</div>
                 <div className="flex flex-wrap gap-2">
                   {workflow.permissions.map((permission) => (
                     <span
                       key={permission}
-                      className="text-xs px-2 py-1 bg-black/40 border border-gray-600 rounded-sm terminal-text"
+                      className="text-xs px-2 py-1 bg-black/40 border border-gray-600 rounded-sm"
                     >
                       {permission}
                     </span>
@@ -302,19 +276,13 @@ export default function ExplorerServicesPage() {
               {/* Environment Variables */}
               {workflow.env_keys.length > 0 && (
                 <div>
-                  <div className="terminal-dim text-xs mb-2">
-                    ENVIRONMENT VARIABLES
-                  </div>
+                  <div className="text-xs mb-2">ENVIRONMENT VARIABLES</div>
                   <div className="bg-black/30 border border-gray-600 rounded-sm p-3">
                     <div className="space-y-1">
                       {workflow.env_keys.map((key) => (
                         <div key={key} className="flex items-center space-x-2">
-                          <span className="terminal-text text-xs font-mono">
-                            {key}
-                          </span>
-                          <span className="terminal-dim text-xs">
-                            = [REDACTED]
-                          </span>
+                          <span className="text-xs font-mono">{key}</span>
+                          <span className="text-xs">= [REDACTED]</span>
                         </div>
                       ))}
                     </div>
@@ -325,15 +293,15 @@ export default function ExplorerServicesPage() {
               {/* Configuration */}
               {Object.keys(workflow.config).length > 0 && (
                 <div>
-                  <div className="terminal-dim text-xs mb-2">CONFIGURATION</div>
+                  <div className="text-xs mb-2">CONFIGURATION</div>
                   <div className="bg-black/30 border border-gray-600 rounded-sm p-3">
                     <div className="space-y-1 max-h-32 overflow-y-auto">
                       {Object.entries(workflow.config).map(([key, value]) => (
                         <div key={key} className="flex items-start space-x-2">
-                          <span className="terminal-text text-xs font-mono min-w-0 flex-shrink-0">
+                          <span className="text-xs font-mono min-w-0 flex-shrink-0">
                             {key}:
                           </span>
-                          <span className="terminal-dim text-xs font-mono break-all">
+                          <span className="text-xs font-mono break-all">
                             {String(value)}
                           </span>
                         </div>
@@ -349,18 +317,14 @@ export default function ExplorerServicesPage() {
 
       {filteredWorkflows.length === 0 && (
         <div className="text-center py-12">
-          <div className="terminal-dim text-sm">
-            NO WORKFLOWS MATCH CURRENT FILTERS
-          </div>
-          <div className="system-message text-xs mt-2">
-            ◈ WAVS NETWORK ADAPTING ◈
-          </div>
+          <div className="text-sm">NO WORKFLOWS MATCH CURRENT FILTERS</div>
+          <div className="text-xs mt-2">◈ WAVS NETWORK ADAPTING ◈</div>
         </div>
       )}
 
       {/* Footer */}
       <div className="border-t border-gray-700 pt-4 mt-8">
-        <div className="system-message text-center text-sm">
+        <div className="text-center text-sm">
           <div>∞ WAVS NETWORK ∞</div>
           <div className="font-mono text-xs mt-1 break-all">
             MANAGER: {serviceData?.manager?.evm?.address || 'N/A'}

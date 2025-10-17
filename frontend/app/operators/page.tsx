@@ -29,9 +29,7 @@ export default function ExplorerOperatorsPage() {
           <p className="text-gray-400 mb-6">
             Connect your wallet to view the operator network.
           </p>
-          <div className="system-message">
-            Neural link required for network access.
-          </div>
+          <div>Neural link required for network access.</div>
         </div>
       </div>
     )
@@ -47,9 +45,7 @@ export default function ExplorerOperatorsPage() {
           <div className="text-blue-400 text-lg mb-4">
             ◉ LOADING NETWORK DATA...
           </div>
-          <div className="system-message">
-            Synchronizing with service manager...
-          </div>
+          <div>Synchronizing with service manager...</div>
         </div>
       </div>
     )
@@ -66,7 +62,7 @@ export default function ExplorerOperatorsPage() {
           <p className="text-gray-400 mb-6">
             Failed to load operator data from service manager.
           </p>
-          <div className="system-message text-xs">{error.message}</div>
+          <div className="text-xs">{error.message}</div>
         </div>
       </div>
     )
@@ -77,7 +73,7 @@ export default function ExplorerOperatorsPage() {
       {/* Header */}
       <div className="border-b border-gray-700 pb-4">
         <div className="ascii-art-title text-lg mb-2">OPERATOR NETWORK</div>
-        <div className="system-message text-sm">
+        <div className="text-sm">
           ◉ WAVS POA SERVICE OPERATORS • REALITY VALIDATORS ◉
         </div>
         {serviceURI && (
@@ -90,14 +86,12 @@ export default function ExplorerOperatorsPage() {
       {/* Network Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
-          <div className="terminal-bright text-lg">{operatorCount}</div>
-          <div className="terminal-dim text-xs">OPERATORS</div>
+          <div className="text-lg">{operatorCount}</div>
+          <div className="text-xs">OPERATORS</div>
         </div>
         <div className="bg-black/20 border border-gray-700 p-3 rounded-sm">
-          <div className="terminal-bright text-lg">
-            {totalWeight.toLocaleString()}
-          </div>
-          <div className="terminal-dim text-xs">TOTAL WEIGHT</div>
+          <div className="text-lg">{totalWeight.toLocaleString()}</div>
+          <div className="text-xs">TOTAL WEIGHT</div>
         </div>
       </div>
 
@@ -111,18 +105,16 @@ export default function ExplorerOperatorsPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <div>
-                  <div className="terminal-text text-sm">WAVS Operator</div>
-                  <div className="terminal-command text-base font-mono">
-                    {operator.address}
-                  </div>
+                  <div className="text-sm">WAVS Operator</div>
+                  <div className="text-base font-mono">{operator.address}</div>
                 </div>
                 <div className="px-2 py-1 border border-green-400 rounded-sm text-xs text-green-400">
                   ACTIVE
                 </div>
               </div>
               <div className="text-right">
-                <div className="terminal-dim text-xs">WEIGHT</div>
-                <div className="terminal-bright text-lg">
+                <div className="text-xs">WEIGHT</div>
+                <div className="text-lg">
                   {operator.weight.toLocaleString()}
                 </div>
               </div>
@@ -133,7 +125,7 @@ export default function ExplorerOperatorsPage() {
 
       {operators.length === 0 && !isLoading && (
         <div className="text-center py-12">
-          <div className="terminal-dim text-sm">NO OPERATORS REGISTERED</div>
+          <div className="text-sm">NO OPERATORS REGISTERED</div>
         </div>
       )}
     </div>

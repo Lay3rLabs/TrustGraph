@@ -83,7 +83,7 @@ export function CreateVouchingSchema({
 
       {network && (
         <div className="space-y-2">
-          <div className="text-sm text-muted-foreground">NETWORK CRITERIA</div>
+          <div className="text-sm font-bold">NETWORK CRITERIA</div>
           <div className="text-sm break-words text-left">
             <Markdown>{network.criteria}</Markdown>
           </div>
@@ -92,7 +92,7 @@ export function CreateVouchingSchema({
 
       {/* Endorsement Checkbox */}
       <div className="space-y-2">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm font-bold">
           I ENDORSE THIS PERSON MEETS THE NETWORK CRITERIA
         </p>
 
@@ -122,7 +122,7 @@ export function CreateVouchingSchema({
         }}
         render={({ field: _field }) => (
           <FormItem>
-            <FormLabel className="text-sm text-muted-foreground">
+            <FormLabel className="text-sm font-bold">
               HOW CONFIDENT ARE YOU?
             </FormLabel>
             <FormControl>
@@ -168,7 +168,7 @@ export function CreateVouchingSchema({
         name="data.comment"
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-sm text-muted-foreground">
+            <FormLabel className="text-sm font-bold">
               COMMENT (OPTIONAL)
             </FormLabel>
             <FormControl>

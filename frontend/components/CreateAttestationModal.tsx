@@ -34,6 +34,7 @@ import { useAttestation } from '@/hooks/useAttestation'
 import { useResolveEnsName } from '@/hooks/useEns'
 import { Network } from '@/lib/network'
 import { SCHEMAS, SchemaManager } from '@/lib/schemas'
+import { mightBeEnsName } from '@/lib/utils'
 
 import { CopyableText } from './CopyableText'
 import { EnsIcon } from './icons/EnsIcon'
@@ -46,6 +47,7 @@ interface CreateAttestationModalProps {
   isOpen?: boolean
   setIsOpen?: (value: boolean) => void
   network?: Network
+  defaultRecipient?: string
 }
 
 export function CreateAttestationModal({
@@ -55,6 +57,7 @@ export function CreateAttestationModal({
   isOpen: externalIsOpen,
   setIsOpen: externalSetIsOpen,
   network,
+  defaultRecipient = '',
 }: CreateAttestationModalProps) {
   const [internalIsOpen, setInternalIsOpen] = useState(false)
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen
@@ -69,13 +72,13 @@ export function CreateAttestationModal({
   const form = useForm<AttestationFormData>({
     defaultValues: {
       schema: 'vouching',
-      recipient: '',
+      recipient: defaultRecipient,
       data: {},
     },
   })
 
   const recipient = form.watch('recipient', '')
-  const shouldResolveEnsName = recipient.includes('.')
+  const shouldResolveEnsName = mightBeEnsName(recipient)
   const resolvedEnsName = useResolveEnsName(
     shouldResolveEnsName ? recipient : ''
   )
@@ -117,7 +120,7 @@ export function CreateAttestationModal({
       // Reset form to default values
       form.reset({
         schema: 'vouching',
-        recipient: '',
+        recipient: defaultRecipient,
         data: {
           comment: '',
           confidence: '100',
@@ -195,11 +198,11 @@ export function CreateAttestationModal({
                     }}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">
-                          Recipient Address
+                        <FormLabel className="text-sm font-bold">
+                          RECIPIENT
                         </FormLabel>
                         <FormControl>
-                          <div className="h-10 w-full relative">
+                          <div className="h-10 w-full relative mt-1">
                             <Input
                               {...field}
                               placeholder="0x..."
@@ -238,8 +241,8 @@ export function CreateAttestationModal({
                   />
 
                   {validResolvedEnsAddress && (
-                    <div className="flex items-center gap-2 ml-2 md:hidden">
-                      <EnsIcon className="w-4 h-4" />
+                    <div className="flex items-center gap-1.5 ml-2 md:hidden">
+                      <EnsIcon className="w-5 h-5" />
                       <CopyableText
                         truncate
                         truncateEnds={[10, 8]}
@@ -256,15 +259,15 @@ export function CreateAttestationModal({
                   rules={{ required: 'Schema selection is required' }}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium">
-                        Schema Type
+                      <FormLabel className="text-sm font-bold">
+                        SCHEMA
                       </FormLabel>
                       <Select
                         onValueChange={(value) => field.onChange(value)}
                         value={field.value}
                       >
                         <FormControl>
-                          <SelectTrigger className="text-sm">
+                          <SelectTrigger className="text-sm mt-1">
                             <SelectValue placeholder="Select schema..." />
                           </SelectTrigger>
                         </FormControl>

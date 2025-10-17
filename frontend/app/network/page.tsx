@@ -24,14 +24,10 @@ export default function NetworkListPage() {
                 </div>
 
                 {/* About */}
-                <div className="terminal-text text-sm text-gray-800">
-                  {network.about}
-                </div>
+                <div className="text-sm text-gray-800">{network.about}</div>
 
                 {/* View Link */}
-                <div className="terminal-bright text-sm text-gray-900 pt-2">
-                  VIEW NETWORK →
-                </div>
+                <div className="text-sm text-gray-900 pt-2">VIEW NETWORK →</div>
               </div>
             </div>
           </Link>

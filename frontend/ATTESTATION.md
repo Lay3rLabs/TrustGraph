@@ -22,7 +22,6 @@ This document describes the functional attestation UI implementation for the WAV
 - **Error Handling**: Displays contract and network errors
 
 ### 4. UI/UX Features
-- **Terminal Theme**: Consistent with the cyberpunk/terminal aesthetic
 - **Responsive Design**: Works on mobile and desktop
 - **Loading States**: Proper feedback during wallet connection and transactions
 - **Success States**: Shows transaction hash on successful attestation

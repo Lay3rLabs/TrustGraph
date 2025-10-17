@@ -1,8 +1,9 @@
 'use client'
 
-import { Check, Copy } from 'lucide-react'
+import { ArrowUpRight, Check, Copy } from 'lucide-react'
 import React, { useState } from 'react'
 import toast from 'react-hot-toast'
+import { useAccount } from 'wagmi'
 
 import { useEns } from '@/hooks/useEns'
 import { cn } from '@/lib/utils'
@@ -12,13 +13,16 @@ import { Tooltip } from './Tooltip'
 interface AddressProps {
   address: string
   className?: string
+  textClassName?: string
   /** Display mode for the address */
   displayMode?: 'full' | 'truncated' | 'auto'
   /** Whether to show ENS name if available */
   showEns?: boolean
   /** Custom display text (overrides ENS and address) */
   displayText?: string
-  /** Whether to show copy icon on hover */
+  /** Whether to show navigation icon (always) */
+  showNavIcon?: boolean
+  /** Whether to show copy icon (on hover) */
   showCopyIcon?: boolean
   /** Whether the component should be clickable */
   clickable?: boolean
@@ -26,6 +30,8 @@ interface AddressProps {
   onClick?: (address: string) => void
   /** Whether to use monospace font */
   monospace?: boolean
+  /** Whether to not highlight names that conceal the address */
+  noHighlight?: boolean
 
   /** Custom tooltip content */
   tooltipContent?: string
@@ -34,16 +40,25 @@ interface AddressProps {
 export const Address = React.memo(function Address({
   address,
   className = '',
+  textClassName = '',
   displayMode = 'auto',
   showEns = true,
   displayText,
+  showNavIcon = false,
   showCopyIcon = true,
   clickable = true,
   onClick,
   monospace = true,
+  noHighlight = false,
   tooltipContent,
 }: AddressProps) {
   const [copied, setCopied] = useState(false)
+  const { address: connectedAddress } = useAccount()
+
+  const isYou = connectedAddress?.toLowerCase() === address.toLowerCase()
+  if (isYou && !displayText) {
+    displayText = 'You'
+  }
 
   // Use our optimized ENS hook
   const { name: ensName } = useEns(address, {
@@ -69,6 +84,7 @@ export const Address = React.memo(function Address({
   const handleClick = (e: React.MouseEvent) => {
     if (onClick && clickable) {
       e.preventDefault()
+      e.stopPropagation()
       onClick(address)
     }
   }
@@ -88,25 +104,34 @@ export const Address = React.memo(function Address({
   const displayedText = getDisplayText()
   const truncatedText = getTruncatedText(displayedText)
   const isShowingEns = !!ensName && showEns && !displayText
+  const shouldHighlight = !noHighlight && (isShowingEns || isYou)
   const isLoading = false // Don't show loading state, just display address
 
   const baseClasses = cn(
-    'group inline-flex items-center gap-2 transition-colors',
-    monospace && !isShowingEns && 'font-mono',
-    clickable && onClick && 'cursor-pointer hover:text-foreground',
+    'group/address inline-flex items-center gap-2 transition-colors',
+    monospace && !shouldHighlight && 'font-mono',
+    clickable && onClick && 'cursor-pointer',
     !clickable && 'cursor-default',
     className
   )
 
+  const hoverClasses = cn(
+    'transition-colors',
+    shouldHighlight
+      ? 'text-brand group-hover/address:text-brand/80 peer-hover/copy:!text-brand'
+      : 'text-muted-foreground group-hover/address:text-brand peer-hover/copy:text-muted-foreground'
+  )
+
   const textClasses = cn(
-    'break-all text-sm',
-    isShowingEns && 'text-brand font-medium' // Highlight ENS names
+    'break-all text-sm transition-colors font-medium',
+    hoverClasses,
+    textClassName
   )
 
   const copyIcon = copied ? (
-    <Check className="w-3 h-3 text-green-600 dark:text-green-400 flex-shrink-0" />
+    <Check className="w-3 h-3 text-green-600 dark:text-green-400 shrink-0" />
   ) : (
-    <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 cursor-pointer hover:text-brand" />
+    <Copy className="w-3 h-3 shrink-0 hover:text-brand" />
   )
 
   const renderText = () => {
@@ -135,25 +160,18 @@ export const Address = React.memo(function Address({
       className={baseClasses}
       onClick={handleClick}
       role={clickable && onClick ? 'button' : 'text'}
-      tabIndex={clickable && onClick ? 0 : undefined}
-      onKeyDown={
-        clickable && onClick
-          ? (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                onClick(address)
-              }
-            }
-          : undefined
-      }
     >
       {renderText()}
+
+      {showNavIcon && (
+        <ArrowUpRight className={cn('-ml-1 w-3 h-3 shrink-0', hoverClasses)} />
+      )}
 
       {/* Copy button */}
       {showCopyIcon && !isLoading && (
         <button
           onClick={handleCopy}
-          className="opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 focus:outline-none"
+          className="opacity-0 group-hover/address:opacity-100 transition-opacity focus:opacity-100 focus:outline-none peer/copy"
           tabIndex={0}
           aria-label={`Copy address ${address}`}
           title={copied ? 'Copied!' : 'Copy address'}

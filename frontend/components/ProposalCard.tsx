@@ -128,7 +128,7 @@ export function ProposalCard({
             <div className="ascii-art-title text-lg text-gray-900">
               PROPOSAL #{proposalId}
             </div>
-            <div className="terminal-dim text-xs text-gray-600">
+            <div className="text-xs text-gray-600">
               Proposer: {proposal.proposer.slice(0, 10)}...
               {proposal.proposer.slice(-8)}
             </div>
@@ -148,16 +148,12 @@ export function ProposalCard({
               {getProposalStateText(state)}
             </div>
             {getTimeLeft() && (
-              <div className="terminal-dim text-xs text-gray-600">
-                {getTimeLeft()}
-              </div>
+              <div className="text-xs text-gray-600">{getTimeLeft()}</div>
             )}
           </div>
         </div>
 
-        <div className="terminal-text text-sm text-gray-800">
-          {proposal.description}
-        </div>
+        <div className="text-sm text-gray-800">{proposal.description}</div>
       </div>
 
       {/* Success Message */}
@@ -170,7 +166,7 @@ export function ProposalCard({
       {/* Actions */}
       {actions.length > 0 && (
         <div className="border-t border-gray-300 pt-4 space-y-3">
-          <div className="terminal-bright text-sm font-semibold text-gray-900">
+          <div className="text-sm font-semibold text-gray-900">
             PROPOSED ACTIONS
           </div>
           {actions.map((action, index) => (
@@ -179,37 +175,31 @@ export function ProposalCard({
               className="border border-gray-300 bg-gray-50 p-3 rounded-sm space-y-2"
             >
               <div className="flex justify-between items-start">
-                <div className="terminal-dim text-xs text-gray-600">
-                  ACTION #{index + 1}
-                </div>
+                <div className="text-xs text-gray-600">ACTION #{index + 1}</div>
                 {action.value !== '0' && (
-                  <div className="terminal-text text-xs text-gray-800">
+                  <div className="text-xs text-gray-800">
                     {formatVotingPower(action.value)} ETH
                   </div>
                 )}
               </div>
               <div className="space-y-1">
-                <div className="terminal-dim text-xs text-gray-600">TARGET</div>
-                <div className="terminal-text text-sm font-mono break-all text-gray-800">
+                <div className="text-xs text-gray-600">TARGET</div>
+                <div className="text-sm font-mono break-all text-gray-800">
                   {action.target}
                 </div>
               </div>
               {action.description && (
                 <div className="space-y-1">
-                  <div className="terminal-dim text-xs text-gray-600">
-                    DESCRIPTION
-                  </div>
-                  <div className="terminal-text text-sm text-gray-800">
+                  <div className="text-xs text-gray-600">DESCRIPTION</div>
+                  <div className="text-sm text-gray-800">
                     {action.description}
                   </div>
                 </div>
               )}
               {action.data !== '0x' && (
                 <div className="space-y-1">
-                  <div className="terminal-dim text-xs text-gray-600">
-                    CALLDATA
-                  </div>
-                  <div className="terminal-text text-xs font-mono break-all text-gray-800">
+                  <div className="text-xs text-gray-600">CALLDATA</div>
+                  <div className="text-xs font-mono break-all text-gray-800">
                     {action.data.slice(0, 100)}...
                   </div>
                 </div>
@@ -221,14 +211,14 @@ export function ProposalCard({
 
       {/* Vote Results */}
       <div className="border-t border-gray-300 pt-4 space-y-3">
-        <div className="terminal-bright text-sm font-semibold text-gray-900">
+        <div className="text-sm font-semibold text-gray-900">
           VOTING RESULTS
         </div>
         <div className="grid grid-cols-3 gap-4 text-xs">
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="terminal-dim text-gray-600">FOR</span>
-              <span className="terminal-text text-gray-800">
+              <span className="text-gray-600">FOR</span>
+              <span className="text-gray-800">
                 {proposal.forVotes.toString()}
               </span>
             </div>
@@ -238,14 +228,14 @@ export function ProposalCard({
                 style={{ width: `${forPercentage}%` }}
               />
             </div>
-            <div className="terminal-dim text-center text-gray-600">
+            <div className="text-center text-gray-600">
               {forPercentage.toFixed(1)}%
             </div>
           </div>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="terminal-dim text-gray-600">AGAINST</span>
-              <span className="terminal-text text-gray-800">
+              <span className="text-gray-600">AGAINST</span>
+              <span className="text-gray-800">
                 {proposal.againstVotes.toString()}
               </span>
             </div>
@@ -255,14 +245,14 @@ export function ProposalCard({
                 style={{ width: `${againstPercentage}%` }}
               />
             </div>
-            <div className="terminal-dim text-center text-gray-600">
+            <div className="text-center text-gray-600">
               {againstPercentage.toFixed(1)}%
             </div>
           </div>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="terminal-dim text-gray-600">ABSTAIN</span>
-              <span className="terminal-text text-gray-800">
+              <span className="text-gray-600">ABSTAIN</span>
+              <span className="text-gray-800">
                 {proposal.abstainVotes.toString()}
               </span>
             </div>
@@ -272,12 +262,12 @@ export function ProposalCard({
                 style={{ width: `${abstainPercentage}%` }}
               />
             </div>
-            <div className="terminal-dim text-center text-gray-600">
+            <div className="text-center text-gray-600">
               {abstainPercentage.toFixed(1)}%
             </div>
           </div>
         </div>
-        <div className="terminal-dim text-xs text-center text-gray-600">
+        <div className="text-xs text-center text-gray-600">
           Total: {totalVotes.toString()} votes
         </div>
       </div>
@@ -285,10 +275,10 @@ export function ProposalCard({
       {/* Voting Buttons */}
       {canVote && (
         <div className="border-t border-gray-300 pt-4 space-y-3">
-          <div className="terminal-bright text-sm font-semibold text-gray-900">
+          <div className="text-sm font-semibold text-gray-900">
             CAST YOUR VOTE
           </div>
-          <div className="terminal-dim text-xs text-gray-600">
+          <div className="text-xs text-gray-600">
             Your voting power: {userVotingPower!}
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
@@ -296,25 +286,25 @@ export function ProposalCard({
               onClick={() => handleVote(VoteType.For)}
               disabled={isVoting || isLoading}
               variant="outline"
-              className="flex-1 border-green-600 text-green-700 hover:bg-green-50 mobile-terminal-btn !px-4 !py-2"
+              className="flex-1 border-green-600 text-green-700 hover:bg-green-50 !px-4 !py-2"
             >
-              <span className="terminal-command text-xs">VOTE FOR</span>
+              <span className="text-xs">VOTE FOR</span>
             </Button>
             <Button
               onClick={() => handleVote(VoteType.Against)}
               disabled={isVoting || isLoading}
               variant="outline"
-              className="flex-1 border-red-600 text-red-700 hover:bg-red-50 mobile-terminal-btn !px-4 !py-2"
+              className="flex-1 border-red-600 text-red-700 hover:bg-red-50 !px-4 !py-2"
             >
-              <span className="terminal-command text-xs">VOTE AGAINST</span>
+              <span className="text-xs">VOTE AGAINST</span>
             </Button>
             <Button
               onClick={() => handleVote(VoteType.Abstain)}
               disabled={isVoting || isLoading}
               variant="outline"
-              className="flex-1 border-gray-500 text-gray-700 hover:bg-gray-50 mobile-terminal-btn !px-4 !py-2"
+              className="flex-1 border-gray-500 text-gray-700 hover:bg-gray-50 !px-4 !py-2"
             >
-              <span className="terminal-command text-xs">ABSTAIN</span>
+              <span className="text-xs">ABSTAIN</span>
             </Button>
           </div>
         </div>
@@ -323,10 +313,10 @@ export function ProposalCard({
       {/* Admin Actions */}
       {isSucceeded && (
         <div className="border-t border-gray-300 pt-4 space-y-3">
-          <div className="terminal-bright text-sm font-semibold text-gray-900">
+          <div className="text-sm font-semibold text-gray-900">
             PROPOSAL EXECUTION
           </div>
-          <div className="terminal-dim text-xs mb-3 text-gray-600">
+          <div className="text-xs mb-3 text-gray-600">
             Succeeded proposals can be executed immediately
           </div>
           <div className="flex gap-3">
@@ -335,11 +325,9 @@ export function ProposalCard({
                 onClick={handleExecute}
                 disabled={isLoading}
                 variant="outline"
-                className="border-purple-600 text-purple-700 hover:bg-purple-50 mobile-terminal-btn !px-4 !py-2"
+                className="border-purple-600 text-purple-700 hover:bg-purple-50 !px-4 !py-2"
               >
-                <span className="terminal-command text-xs">
-                  EXECUTE PROPOSAL
-                </span>
+                <span className="text-xs">EXECUTE PROPOSAL</span>
               </Button>
             )}
           </div>
@@ -349,10 +337,8 @@ export function ProposalCard({
       {/* No Voting Power Message */}
       {isActive && (!userVotingPower || Number(userVotingPower) === 0) && (
         <div className="border-t border-gray-300 pt-4 text-center">
-          <div className="terminal-dim text-sm text-gray-600">
-            NO VOTING POWER
-          </div>
-          <div className="system-message text-xs mt-2 text-gray-700">
+          <div className="text-sm text-gray-600">NO VOTING POWER</div>
+          <div className="text-xs mt-2 text-gray-700">
             ◆ YOU NEED VOTING POWER TO PARTICIPATE IN GOVERNANCE ◆
           </div>
         </div>

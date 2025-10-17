@@ -55,7 +55,7 @@ export default function RewardsPage() {
       {/* Header */}
       {/*<div className="border-b border-gray-700 pb-4">
         <div className="ascii-art-title text-lg mb-2">REWARD DISTRIBUTION SYSTEM</div>
-        <div className="system-message text-sm">
+        <div className="text-sm">
           ◆ EARN REWARDS • CLAIM TOKENS • TRACK PARTICIPATION ◆
         </div>
       </div>*/}
@@ -70,17 +70,12 @@ export default function RewardsPage() {
       {/* Wallet Connection */}
       {!isConnected && (
         <div className="border border-gray-700 bg-black/10 p-6 rounded-sm text-center space-y-4">
-          <div className="terminal-text text-lg">
-            WALLET CONNECTION REQUIRED
-          </div>
-          <div className="terminal-dim text-sm">
+          <div className="text-lg">WALLET CONNECTION REQUIRED</div>
+          <div className="text-sm">
             Connect your wallet to view and claim rewards
           </div>
-          <Button
-            onClick={openConnectWallet}
-            className="mobile-terminal-btn !px-6 !py-2"
-          >
-            <span className="terminal-command text-xs">CONNECT WALLET</span>
+          <Button onClick={openConnectWallet} className="!px-6 !py-2">
+            <span className="text-xs">CONNECT WALLET</span>
           </Button>
         </div>
       )}
@@ -108,9 +103,7 @@ export default function RewardsPage() {
         <div className="border border-gray-700 bg-black/10 p-6 rounded-sm space-y-4">
           <div className="border-b border-gray-700 pb-3">
             <div className="ascii-art-title text-lg mb-1">CLAIM HISTORY</div>
-            <div className="terminal-dim text-sm">
-              ◢◤ Your reward claim transactions ◢◤
-            </div>
+            <div className="text-sm">◢◤ Your reward claim transactions ◢◤</div>
           </div>
 
           <div className="space-y-3">
@@ -121,16 +114,14 @@ export default function RewardsPage() {
               >
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="space-y-1">
-                    <div className="terminal-dim text-xs">
-                      CLAIM #{index + 1}
-                    </div>
-                    <div className="terminal-text text-sm">
+                    <div className="text-xs">CLAIM #{index + 1}</div>
+                    <div className="text-sm">
                       {new Date(claim.timestamp).toLocaleDateString()}
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <div className="terminal-dim text-xs">AMOUNT CLAIMED</div>
-                    <div className="terminal-text text-sm">
+                    <div className="text-xs">AMOUNT CLAIMED</div>
+                    <div className="text-sm">
                       {(
                         Number(claim.claimed) /
                         Math.pow(10, rewardBalance?.decimals || 0)
@@ -139,13 +130,13 @@ export default function RewardsPage() {
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <div className="terminal-dim text-xs">TRANSACTION</div>
-                    <div className="terminal-text text-sm font-mono break-all">
+                    <div className="text-xs">TRANSACTION</div>
+                    <div className="text-sm font-mono break-all">
                       {claim.transactionHash}
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <div className="terminal-dim text-xs">STATUS</div>
+                    <div className="text-xs">STATUS</div>
                     <div className="text-green-400 text-sm">✓ CONFIRMED</div>
                   </div>
                 </div>
@@ -158,8 +149,8 @@ export default function RewardsPage() {
       {/* Instructions */}
       {isConnected && (
         <div className="border border-gray-700 bg-black/10 p-6 rounded-sm">
-          <div className="terminal-bright text-sm mb-3">HOW REWARDS WORK</div>
-          <div className="space-y-2 text-sm terminal-dim">
+          <div className="text-sm mb-3">HOW REWARDS WORK</div>
+          <div className="space-y-2 text-sm">
             <div>
               • Rewards are calculated based on your attestation activity
             </div>

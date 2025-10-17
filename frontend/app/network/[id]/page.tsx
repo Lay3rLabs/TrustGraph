@@ -78,9 +78,7 @@ export default function NetworkPage() {
       sortable: true,
       accessor: (row) => row.received || 0,
       render: (row) => (
-        <div className="terminal-text text-sm text-gray-800">
-          {row.received || 0}
-        </div>
+        <div className="text-sm text-gray-800">{row.received || 0}</div>
       ),
     },
     {
@@ -91,9 +89,7 @@ export default function NetworkPage() {
       sortable: true,
       accessor: (row) => row.sent || 0,
       render: (row) => (
-        <div className="terminal-text text-sm text-gray-800">
-          {row.sent || 0}
-        </div>
+        <div className="text-sm text-gray-800">{row.sent || 0}</div>
       ),
     },
     {
@@ -104,7 +100,7 @@ export default function NetworkPage() {
       sortable: true,
       accessor: (row) => Number(BigInt(row.value || '0')),
       render: (row) => (
-        <div className="terminal-bright text-sm text-gray-900">
+        <div className="text-sm text-gray-900">
           {formatBigNumber(row.value, undefined, true)}
         </div>
       ),
@@ -113,12 +109,12 @@ export default function NetworkPage() {
 
   return (
     <div className="space-y-12">
-      <div className="grid grid-cols-1 justify-start items-stretch lg:grid-cols-[2fr_3fr] lg:items-start gap-12">
+      <div className="grid grid-cols-1 justify-start items-stretch lg:grid-cols-2 lg:items-start gap-12">
         <div className="flex flex-col items-start gap-4">
           <h1 className="text-4xl font-bold">{name}</h1>
 
           <a
-            className="flex flex-row items-center gap-2 text-sm"
+            className="flex flex-row items-center gap-2 text-sm text-brand hover:text-brand/80 transition-colors"
             href={url}
             target="_blank"
             rel="noopener noreferrer"
@@ -193,7 +189,7 @@ export default function NetworkPage() {
           {/* Refresh Button */}
           {!isLoading && (
             <Button onClick={refresh} size="sm" disabled={isLoading}>
-              <span className="terminal-command text-xs">REFRESH</span>
+              <span className="text-xs">REFRESH</span>
             </Button>
           )}
         </div>
@@ -201,10 +197,10 @@ export default function NetworkPage() {
         {/* Loading State */}
         {isLoading && (
           <div className="text-center py-8">
-            <div className="terminal-bright text-sm text-gray-900">
+            <div className="text-sm text-gray-900">
               ◉ LOADING NETWORK DATA ◉
             </div>
-            <div className="terminal-dim text-xs mt-2 text-gray-600">
+            <div className="text-xs mt-2 text-gray-600">
               Fetching latest TrustGraph data...
             </div>
           </div>
@@ -214,10 +210,7 @@ export default function NetworkPage() {
         {error && (
           <div className="border border-red-500 bg-red-50 p-4 rounded-sm">
             <div className="error-text text-sm text-red-700">⚠️ {error}</div>
-            <Button
-              onClick={refresh}
-              className="mt-3 mobile-terminal-btn !px-4 !py-2"
-            >
+            <Button onClick={refresh} className="mt-3 !px-4 !py-2">
               <span className="text-xs">RETRY</span>
             </Button>
           </div>
@@ -241,10 +234,10 @@ export default function NetworkPage() {
         {/* No Data Message */}
         {!isLoading && (!merkleData || merkleData.length === 0) && !error && (
           <div className="text-center py-8 border border-gray-300 bg-white rounded-sm shadow-sm">
-            <div className="terminal-dim text-sm text-gray-600">
+            <div className="text-sm text-gray-600">
               NO NETWORK DATA AVAILABLE
             </div>
-            <div className="system-message text-xs mt-2 text-gray-700">
+            <div className="text-xs mt-2 text-gray-700">
               ◆ PARTICIPATE IN ATTESTATIONS TO APPEAR ON NETWORK ◆
             </div>
           </div>

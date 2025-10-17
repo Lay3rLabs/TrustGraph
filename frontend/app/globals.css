@@ -155,6 +155,11 @@ html {
   );
 }
 
+h1 {
+  line-height: 1.3em;
+  letter-spacing: -1px;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

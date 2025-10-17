@@ -148,3 +148,13 @@ export const writeEthContractAndWait = async <
 
   return checkConfirmations(1)
 }
+
+/**
+ * Check if a string might be an ENS name.
+ *
+ * @param name - The string to check.
+ * @returns True if the string might be an ENS name, false otherwise.
+ */
+export const mightBeEnsName = (name: string) => {
+  return name.includes('.')
+}

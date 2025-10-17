@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils'
 
 export default function HomePage() {
   return (
-    <div className="grid grid-cols-1 justify-start items-stretch lg:grid-cols-[2fr_3fr] lg:items-start gap-12">
+    <div className="grid grid-cols-1 justify-start items-stretch lg:grid-cols-2 lg:items-start gap-12">
       <div className="flex flex-col items-start gap-6">
         <h1 className="text-5xl font-bold">
           Networks that grow at the speed of trust

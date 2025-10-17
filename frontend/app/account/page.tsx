@@ -102,16 +102,14 @@ export default function NetworkPage() {
           <div className="ascii-art-title text-lg">TRUST NETWORK</div>
           <CreateAttestationModal network={EXAMPLE_NETWORK} />
         </div>
-        <div className="system-message text-sm">◆ RANKED BY REPUTATION ◆</div>
+        <div className="text-sm">◆ RANKED BY REPUTATION ◆</div>
       </div>
 
       {/* Loading State */}
       {isLoading && (
         <div className="text-center py-8">
-          <div className="terminal-bright text-sm text-gray-900">
-            ◉ LOADING NETWORK DATA ◉
-          </div>
-          <div className="terminal-dim text-xs mt-2 text-gray-600">
+          <div className="text-sm text-gray-900">◉ LOADING NETWORK DATA ◉</div>
+          <div className="text-xs mt-2 text-gray-600">
             Fetching latest TrustGraph data...
           </div>
         </div>
@@ -121,10 +119,7 @@ export default function NetworkPage() {
       {error && (
         <div className="border border-red-500 bg-red-50 p-4 rounded-sm">
           <div className="error-text text-sm text-red-700">⚠️ {error}</div>
-          <Button
-            onClick={refresh}
-            className="mt-3 mobile-terminal-btn !px-4 !py-2"
-          >
+          <Button onClick={refresh} className="mt-3 !px-4 !py-2">
             <span className="text-xs">RETRY</span>
           </Button>
         </div>
@@ -135,23 +130,21 @@ export default function NetworkPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="border border-gray-300 bg-white p-4 rounded-sm shadow-sm">
             <div className="space-y-2">
-              <div className="terminal-dim text-xs text-gray-600 flex items-center gap-1">
+              <div className="text-xs text-gray-600 flex items-center gap-1">
                 MEMBERS
                 <InfoTooltip title="The number of people belonging to this network." />
               </div>
-              <div className="terminal-bright text-2xl text-gray-900">
-                {totalParticipants}
-              </div>
+              <div className="text-2xl text-gray-900">{totalParticipants}</div>
             </div>
           </div>
 
           <div className="border border-gray-300 bg-white p-4 rounded-sm shadow-sm">
             <div className="space-y-2">
-              <div className="terminal-dim text-xs text-gray-600 flex items-center gap-1">
+              <div className="text-xs text-gray-600 flex items-center gap-1">
                 TOTAL NETWORK SCORE
                 <InfoTooltip title="The sum of all trust scores in the network." />
               </div>
-              <div className="terminal-bright text-2xl text-gray-900">
+              <div className="text-2xl text-gray-900">
                 {formatBigNumber(totalValue, undefined, true)}
               </div>
             </div>
@@ -159,11 +152,11 @@ export default function NetworkPage() {
 
           <div className="border border-gray-300 bg-white p-4 rounded-sm shadow-sm">
             <div className="space-y-2">
-              <div className="terminal-dim text-xs text-gray-600 flex items-center gap-1">
+              <div className="text-xs text-gray-600 flex items-center gap-1">
                 AVERAGE TRUST SCORE
                 <InfoTooltip title="The average trust score across the network." />
               </div>
-              <div className="terminal-bright text-2xl text-gray-900">
+              <div className="text-2xl text-gray-900">
                 {totalParticipants > 0
                   ? formatBigNumber(
                       BigInt(totalValue) / BigInt(totalParticipants),
@@ -184,7 +177,7 @@ export default function NetworkPage() {
             <div className="ascii-art-title text-lg mb-1 text-gray-900">
               NETWORK MEMBERSHIP
             </div>
-            <div className="terminal-dim text-sm text-gray-600">
+            <div className="text-sm text-gray-600">
               ◢◤ Ranked by reputation ◢◤
             </div>
           </div>
@@ -194,7 +187,7 @@ export default function NetworkPage() {
               <thead>
                 <tr className="border-b border-gray-300">
                   <th
-                    className="text-left p-4 terminal-dim text-xs text-gray-600 cursor-pointer hover:text-gray-900 transition-colors select-none"
+                    className="text-left p-4 text-xs text-gray-600 cursor-pointer hover:text-gray-900 transition-colors select-none"
                     onClick={() => handleSort('rank')}
                   >
                     <div className="flex items-center">
@@ -202,17 +195,17 @@ export default function NetworkPage() {
                       {getSortIndicator('rank')}
                     </div>
                   </th>
-                  <th className="text-left p-4 terminal-dim text-xs text-gray-600">
+                  <th className="text-left p-4 text-xs text-gray-600">
                     ACCOUNT
                   </th>
-                  <th className="text-left p-4 terminal-dim text-xs text-gray-600">
+                  <th className="text-left p-4 text-xs text-gray-600">
                     <div className="flex items-center gap-1">
                       SEED
                       <InfoTooltip title="Seed members carry additional weight with their attestations." />
                     </div>
                   </th>
                   <th
-                    className="text-left p-4 terminal-dim text-xs text-gray-600 cursor-pointer hover:text-gray-900 transition-colors select-none"
+                    className="text-left p-4 text-xs text-gray-600 cursor-pointer hover:text-gray-900 transition-colors select-none"
                     onClick={() => handleSort('received')}
                   >
                     <div className="flex items-center gap-1">
@@ -222,7 +215,7 @@ export default function NetworkPage() {
                     </div>
                   </th>
                   <th
-                    className="text-left p-4 terminal-dim text-xs text-gray-600 cursor-pointer hover:text-gray-900 transition-colors select-none"
+                    className="text-left p-4 text-xs text-gray-600 cursor-pointer hover:text-gray-900 transition-colors select-none"
                     onClick={() => handleSort('sent')}
                   >
                     <div className="flex items-center gap-1">
@@ -232,7 +225,7 @@ export default function NetworkPage() {
                     </div>
                   </th>
                   <th
-                    className="text-left p-4 terminal-dim text-xs text-gray-600 cursor-pointer hover:text-gray-900 transition-colors select-none"
+                    className="text-left p-4 text-xs text-gray-600 cursor-pointer hover:text-gray-900 transition-colors select-none"
                     onClick={() => handleSort('score')}
                   >
                     <div className="flex items-center gap-1">
@@ -297,24 +290,24 @@ export default function NetworkPage() {
                         />
                       </td>
                       <td className="p-4">
-                        <div className="terminal-text text-sm text-gray-800">
+                        <div className="text-sm text-gray-800">
                           {EXAMPLE_NETWORK.trustedSeeds.includes(entry.account)
                             ? '🌱'
                             : '-'}
                         </div>
                       </td>
                       <td className="p-4">
-                        <div className="terminal-text text-sm text-gray-800">
+                        <div className="text-sm text-gray-800">
                           {entry.received}
                         </div>
                       </td>
                       <td className="p-4">
-                        <div className="terminal-text text-sm text-gray-800">
+                        <div className="text-sm text-gray-800">
                           {entry.sent}
                         </div>
                       </td>
                       <td className="p-4">
-                        <div className="terminal-bright text-sm text-gray-900">
+                        <div className="text-sm text-gray-900">
                           {formatBigNumber(entry.value, undefined, true)}
                         </div>
                       </td>
@@ -338,10 +331,8 @@ export default function NetworkPage() {
       {/* No Data Message */}
       {!isLoading && (!merkleData || merkleData.length === 0) && !error && (
         <div className="text-center py-8 border border-gray-300 bg-white rounded-sm shadow-sm">
-          <div className="terminal-dim text-sm text-gray-600">
-            NO NETWORK DATA AVAILABLE
-          </div>
-          <div className="system-message text-xs mt-2 text-gray-700">
+          <div className="text-sm text-gray-600">NO NETWORK DATA AVAILABLE</div>
+          <div className="text-xs mt-2 text-gray-700">
             ◆ PARTICIPATE IN ATTESTATIONS TO APPEAR ON NETWORK ◆
           </div>
         </div>
@@ -352,10 +343,10 @@ export default function NetworkPage() {
         <div className="flex justify-center pt-4">
           <Button
             onClick={refresh}
-            className="mobile-terminal-btn !px-6 !py-2"
+            className="!px-6 !py-2"
             disabled={isLoading}
           >
-            <span className="terminal-command text-xs">REFRESH NETWORK</span>
+            <span className="text-xs">REFRESH NETWORK</span>
           </Button>
         </div>
       )}
