@@ -17,6 +17,7 @@ import {
   // rewardDistributorAbi,
   // rewardDistributorAddress,
 } from '@/lib/contracts'
+import { parseErrorMessage } from '@/lib/error'
 import { txToast } from '@/lib/tx'
 
 const rewardDistributorAddress = '0x0000000000000000000000000000000000000000'
@@ -211,7 +212,7 @@ export function useRewards() {
       return transactionHash
     } catch (err: any) {
       console.error('Error triggering reward update:', err)
-      setError(`Failed to trigger update: ${err.message}`)
+      setError(`Failed to trigger update: ${parseErrorMessage(err)}`)
       return null
     }
   }, [isConnected, merkleSnapshotAddress, writeContract])
@@ -257,7 +258,7 @@ export function useRewards() {
       return transactionHash
     } catch (err: any) {
       console.error('Error claiming rewards:', err)
-      setError(`Failed to claim rewards: ${err.message}`)
+      setError(`Failed to claim rewards: ${parseErrorMessage(err)}`)
       return null
     }
   }, [

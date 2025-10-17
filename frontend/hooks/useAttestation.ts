@@ -12,6 +12,7 @@ import {
   wavsIndexerAbi,
   wavsIndexerConfig,
 } from '@/lib/contracts'
+import { parseErrorMessage, shouldRetryTxError } from '@/lib/error'
 import { SchemaKey, SchemaManager } from '@/lib/schemas'
 import { txToast } from '@/lib/tx'
 import { attestationKeys } from '@/queries/attestation'
@@ -31,7 +32,7 @@ export function useAttestation() {
 
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
-  const [error, setError] = useState<Error | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const [hash, setHash] = useState<`0x${string}` | null>(null)
 
   // Watch for EventIndexed events with eventType "attestation"
@@ -150,44 +151,8 @@ export function useAttestation() {
       try {
         await executeTransaction()
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message.toLowerCase() : ''
-
-        // Don't retry if user rejected the transaction
-        if (
-          errorMessage.includes('user rejected') ||
-          errorMessage.includes('user denied')
-        ) {
-          throw error
-        }
-
-        // Check if we should retry (actual nonce conflicts or Anvil errors)
-        const shouldRetry =
-          errorMessage.includes('nonce too low') ||
-          errorMessage.includes('nonce too high') ||
-          errorMessage.includes('transaction underpriced') ||
-          errorMessage.includes('replacement transaction underpriced') ||
-          errorMessage.includes('internal json-rpc error') ||
-          errorMessage.includes('internal error')
-
-        if (shouldRetry) {
-          console.warn(
-            'Transaction failed, retrying with fresh nonce:',
-            errorMessage
-          )
-
-          // Test Anvil responsiveness for internal errors
-          if (errorMessage.includes('internal')) {
-            try {
-              await publicClient!.getBlockNumber()
-              await new Promise((resolve) => setTimeout(resolve, 1000))
-            } catch (nodeErr) {
-              throw new Error(
-                'Anvil node appears unresponsive. Please restart anvil and try again.'
-              )
-            }
-          }
-
+        if (shouldRetryTxError(error)) {
+          console.warn('Transaction failed, retrying with fresh nonce:', error)
           // Retry once with fresh nonce
           await executeTransaction(1)
         } else {
@@ -196,7 +161,7 @@ export function useAttestation() {
       }
     } catch (err) {
       console.error('Error creating attestation:', err)
-      setError(err instanceof Error ? err : new Error(String(err)))
+      setError(parseErrorMessage(err))
       throw err
     } finally {
       setIsLoading(false)
@@ -289,44 +254,8 @@ export function useAttestation() {
       try {
         await executeTransaction()
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message.toLowerCase() : ''
-
-        // Don't retry if user rejected the transaction
-        if (
-          errorMessage.includes('user rejected') ||
-          errorMessage.includes('user denied')
-        ) {
-          throw error
-        }
-
-        // Check if we should retry (actual nonce conflicts or Anvil errors)
-        const shouldRetry =
-          errorMessage.includes('nonce too low') ||
-          errorMessage.includes('nonce too high') ||
-          errorMessage.includes('transaction underpriced') ||
-          errorMessage.includes('replacement transaction underpriced') ||
-          errorMessage.includes('internal json-rpc error') ||
-          errorMessage.includes('internal error')
-
-        if (shouldRetry) {
-          console.warn(
-            'Transaction failed, retrying with fresh nonce:',
-            errorMessage
-          )
-
-          // Test Anvil responsiveness for internal errors
-          if (errorMessage.includes('internal')) {
-            try {
-              await publicClient!.getBlockNumber()
-              await new Promise((resolve) => setTimeout(resolve, 1000))
-            } catch (nodeErr) {
-              throw new Error(
-                'Anvil node appears unresponsive. Please restart anvil and try again.'
-              )
-            }
-          }
-
+        if (shouldRetryTxError(error)) {
+          console.warn('Transaction failed, retrying with fresh nonce:', error)
           // Retry once with fresh nonce
           await executeTransaction(1)
         } else {
@@ -335,7 +264,7 @@ export function useAttestation() {
       }
     } catch (err) {
       console.error('Error revoking attestation:', err)
-      setError(err instanceof Error ? err : new Error(String(err)))
+      setError(parseErrorMessage(err))
       throw err
     } finally {
       setIsLoading(false)

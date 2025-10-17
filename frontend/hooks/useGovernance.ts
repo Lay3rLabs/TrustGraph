@@ -10,6 +10,7 @@ import {
 } from 'wagmi'
 
 import { merkleGovModuleAbi, merkleGovModuleAddress } from '@/lib/contracts'
+import { parseErrorMessage } from '@/lib/error'
 import { txToast } from '@/lib/tx'
 
 // Types matching the MerkleGovModule contract structs
@@ -429,11 +430,7 @@ export function useGovernance() {
         return receipt.transactionHash
       } catch (err: any) {
         console.error('Error creating proposal:', err)
-        setError(
-          `Failed to create proposal: ${
-            err.message || err.shortMessage || 'Unknown error'
-          }`
-        )
+        setError(`Failed to create proposal: ${parseErrorMessage(err)}`)
         return null
       } finally {
         setIsLoading(false)
@@ -527,11 +524,7 @@ export function useGovernance() {
         return receipt.transactionHash
       } catch (err: any) {
         console.error('Error casting vote:', err)
-        setError(
-          `Failed to cast vote: ${
-            err.message || err.shortMessage || 'Unknown error'
-          }`
-        )
+        setError(`Failed to cast vote: ${parseErrorMessage(err)}`)
         return null
       } finally {
         setIsLoading(false)
@@ -611,11 +604,7 @@ export function useGovernance() {
         return receipt.transactionHash
       } catch (err: any) {
         console.error('Error executing proposal:', err)
-        setError(
-          `Failed to execute proposal: ${
-            err.message || err.shortMessage || 'Unknown error'
-          }`
-        )
+        setError(`Failed to execute proposal: ${parseErrorMessage(err)}`)
         return null
       } finally {
         setIsLoading(false)

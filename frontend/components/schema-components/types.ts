@@ -29,7 +29,7 @@ export interface SchemaComponentProps {
   schemaInfo: SchemaInfo
   onSubmit: (data: AttestationFormData) => void
   isLoading: boolean
-  error?: Error | null
+  error?: string | null
   isSuccess: boolean
   hash?: string | null
   network?: Network
