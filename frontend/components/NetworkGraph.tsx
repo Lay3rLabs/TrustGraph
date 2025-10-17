@@ -10,7 +10,7 @@ import { LoaderCircle } from 'lucide-react'
 import { useMemo } from 'react'
 
 import { useBatchEnsQuery } from '@/hooks/useEns'
-import { Network } from '@/lib/network'
+import { Network, isTrustedSeed } from '@/lib/network'
 import { cn } from '@/lib/utils'
 import { ponderQueries } from '@/queries/ponder'
 
@@ -63,8 +63,9 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
     for (const { account, value, sent, received } of data.accounts) {
       graph.addNode(account, {
         label:
-          ensData?.[account]?.name ||
-          `${account.slice(0, 6)}...${account.slice(-4)}`,
+          (ensData?.[account]?.name ||
+            `${account.slice(0, 6)}...${account.slice(-4)}`) +
+          (isTrustedSeed(network, account) ? ' 🌱' : ''),
         value: BigInt(value),
         sent,
         received,
