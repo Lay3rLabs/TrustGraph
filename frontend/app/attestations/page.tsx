@@ -4,13 +4,13 @@ import { usePonderQuery } from '@ponder/react'
 import { useRouter } from 'next/navigation'
 import { count, eq } from 'ponder'
 import type React from 'react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Hex } from 'viem'
 
 import { AttestationCard } from '@/components/AttestationCard'
 import { Card } from '@/components/Card'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
-import { intoAttestationsData } from '@/lib/attestation'
+import { useIntoAttestationsData } from '@/hooks/useAttestation'
 import { EXAMPLE_NETWORK } from '@/lib/network'
 import { SCHEMAS } from '@/lib/schemas'
 import { easAttestation } from '@/ponder.schema'
@@ -44,7 +44,7 @@ export default function AttestationsPage() {
         ),
   })
 
-  const { data: _attestations, isLoading: isLoadingAttestations } =
+  const { data: attestations = [], isLoading: isLoadingAttestations } =
     usePonderQuery({
       queryFn: (db) =>
         db.query.easAttestation.findMany({
@@ -56,11 +56,8 @@ export default function AttestationsPage() {
             sortOrder === 'newest' ? desc(t.timestamp) : asc(t.timestamp),
           limit,
         }),
+      select: useIntoAttestationsData(),
     })
-  const attestations = useMemo(
-    () => intoAttestationsData(_attestations || []),
-    [_attestations]
-  )
 
   return (
     <div className="space-y-6">

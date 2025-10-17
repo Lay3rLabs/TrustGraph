@@ -5,6 +5,7 @@ import { useCallback, useState } from 'react'
 import { Hex, WatchContractEventOnLogsFn, keccak256, stringToBytes } from 'viem'
 import { useAccount, usePublicClient, useWatchContractEvent } from 'wagmi'
 
+import { intoAttestationData, intoAttestationsData } from '@/lib/attestation'
 import {
   easAbi,
   easAddress,
@@ -353,3 +354,7 @@ export function useAttestation() {
     userAddress: address,
   }
 }
+
+export const useIntoAttestationData = () => useCallback(intoAttestationData, [])
+export const useIntoAttestationsData = () =>
+  useCallback(intoAttestationsData, [])

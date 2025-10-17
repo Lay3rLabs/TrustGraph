@@ -2,13 +2,13 @@
 
 import { usePonderQuery } from '@ponder/react'
 import { useRouter } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { Hex } from 'viem'
 import { useAccount } from 'wagmi'
 
-import { useAttestation } from '@/hooks/useAttestation'
-import { AttestationData, intoAttestationData } from '@/lib/attestation'
+import { useAttestation, useIntoAttestationData } from '@/hooks/useAttestation'
+import { AttestationData } from '@/lib/attestation'
 import { SchemaManager } from '@/lib/schemas'
 import { formatTimeAgo } from '@/lib/utils'
 
@@ -34,7 +34,7 @@ export function AttestationCard({
   const [isRevokingThis, setIsRevokingThis] = useState(false)
 
   const {
-    data: _attestation,
+    data: attestation,
     isLoading,
     error,
   } = usePonderQuery({
@@ -42,11 +42,8 @@ export function AttestationCard({
       db.query.easAttestation.findFirst({
         where: (t, { eq }) => eq(t.uid, uid),
       }),
+    select: useIntoAttestationData(),
   })
-  const attestation = useMemo(
-    () => intoAttestationData(_attestation),
-    [_attestation]
-  )
 
   const handleRevoke = async (e: React.MouseEvent) => {
     e.stopPropagation() // Prevent card click when revoking

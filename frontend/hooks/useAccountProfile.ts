@@ -1,11 +1,12 @@
 'use client'
 
 import { usePonderQuery } from '@ponder/react'
-import { useCallback, useMemo } from 'react'
+import { useCallback } from 'react'
 import { Hex } from 'viem'
 
 import { useNetwork } from '@/hooks/useNetwork'
-import { intoAttestationsData } from '@/lib/attestation'
+
+import { useIntoAttestationsData } from './useAttestation'
 
 interface AccountProfileData {
   account: string
@@ -66,12 +67,9 @@ export function useAccountProfile(address: Hex) {
         orderBy: (t, { desc }) => desc(t.timestamp),
         limit: 100,
       }),
+    select: useIntoAttestationsData(),
     enabled: !!address,
   })
-  const attestationsGiven = useMemo(
-    () => intoAttestationsData(attestationsGivenQuery.data || []),
-    [attestationsGivenQuery.data]
-  )
 
   // Query for attestations received by this account (as recipient), excluding revoked and self-attested ones
   const attestationsReceivedQuery = usePonderQuery({
@@ -88,12 +86,9 @@ export function useAccountProfile(address: Hex) {
         orderBy: (t, { desc }) => desc(t.timestamp),
         limit: 100,
       }),
+    select: useIntoAttestationsData(),
     enabled: !!address,
   })
-  const attestationsReceived = useMemo(
-    () => intoAttestationsData(attestationsReceivedQuery.data || []),
-    [attestationsReceivedQuery.data]
-  )
 
   // Transform data into profile format
   const profileData: AccountProfileData | null = accountNetworkData
@@ -111,7 +106,7 @@ export function useAccountProfile(address: Hex) {
         trustScore: '0',
         rank: 0,
         attestationsReceived: attestationsReceivedQuery.data?.length || 0,
-        attestationsGiven: attestationsGiven.length,
+        attestationsGiven: attestationsGivenQuery.data?.length || 0,
         networkParticipant: false,
       }
     : null
@@ -151,8 +146,8 @@ export function useAccountProfile(address: Hex) {
     profileData,
 
     // Attestation lists
-    attestationsGiven,
-    attestationsReceived,
+    attestationsGiven: attestationsGivenQuery.data || [],
+    attestationsReceived: attestationsReceivedQuery.data || [],
 
     // Individual loading states for more granular control
     isLoadingProfile: networkLoading,
