@@ -21,6 +21,16 @@
       "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
     },
     {
+      "filename": "trust_graph.wasm",
+      "package_name": "trust-graph",
+      "package_version": "0.8.1",
+      "trigger_event": "EventDeleted(bytes32)",
+      "trigger_json_path": "wavs_indexer",
+      "submit_json_path": "merkler.merkle_snapshot",
+      "config_file": "trust_graph.json",
+      "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
+    },
+    {
       "filename": "merkler_pruner.wasm",
       "package_name": "merkler-pruner",
       "package_version": "0.7.0",
