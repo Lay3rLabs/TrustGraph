@@ -3,7 +3,7 @@
     {
       "filename": "trust_graph.wasm",
       "package_name": "trust-graph",
-      "package_version": "0.8.0",
+      "package_version": "0.8.1",
       "trigger_event": "MerklerTrigger(uint64)",
       "trigger_json_path": "merkler.merkle_snapshot",
       "submit_json_path": "merkler.merkle_snapshot",
@@ -13,7 +13,7 @@
     {
       "filename": "trust_graph.wasm",
       "package_name": "trust-graph",
-      "package_version": "0.8.0",
+      "package_version": "0.8.1",
       "trigger_event": "EventIndexed(bytes32,address,string,address[],string[])",
       "trigger_json_path": "wavs_indexer",
       "submit_json_path": "merkler.merkle_snapshot",

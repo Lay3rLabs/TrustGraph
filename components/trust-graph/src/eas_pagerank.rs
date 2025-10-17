@@ -448,6 +448,8 @@ impl Source for EasPageRankSource {
                 "damping_factor": self.config.pagerank_config.damping_factor,
                 "max_iterations": self.config.pagerank_config.max_iterations,
                 "tolerance": self.config.pagerank_config.tolerance,
+                "min_weight": self.config.pagerank_config.min_weight,
+                "max_weight": self.config.pagerank_config.max_weight,
                 "min_score_threshold": self.config.min_score_threshold,
             },
             "trust_config": trust_info
