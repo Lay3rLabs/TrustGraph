@@ -177,7 +177,12 @@ export function CreateAttestationModal({
           {/* Attestation Form */}
           <Form {...form}>
             <div className="flex flex-col gap-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div
+                className={clsx(
+                  'grid grid-cols-1 gap-4',
+                  SCHEMAS.length > 1 && 'md:grid-cols-2'
+                )}
+              >
                 <div className="flex flex-col gap-3">
                   <FormField
                     control={form.control}
@@ -253,36 +258,39 @@ export function CreateAttestationModal({
                   )}
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name="schema"
-                  rules={{ required: 'Schema selection is required' }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-bold">
-                        SCHEMA
-                      </FormLabel>
-                      <Select
-                        onValueChange={(value) => field.onChange(value)}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="text-sm mt-1">
-                            <SelectValue placeholder="Select schema..." />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {SCHEMAS.map((schema) => (
-                            <SelectItem key={schema.key} value={schema.key}>
-                              {schema.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage className="text-xs" />
-                    </FormItem>
-                  )}
-                />
+                {/* Only show schema selection if there are multiple schemas */}
+                {SCHEMAS.length > 1 && (
+                  <FormField
+                    control={form.control}
+                    name="schema"
+                    rules={{ required: 'Schema selection is required' }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-bold">
+                          SCHEMA
+                        </FormLabel>
+                        <Select
+                          onValueChange={(value) => field.onChange(value)}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="text-sm mt-1">
+                              <SelectValue placeholder="Select schema..." />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {SCHEMAS.map((schema) => (
+                              <SelectItem key={schema.key} value={schema.key}>
+                                {schema.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                )}
               </div>
 
               {validResolvedEnsAddress && (
