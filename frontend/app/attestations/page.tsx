@@ -1,8 +1,8 @@
 'use client'
 
+import { count, eq } from '@ponder/client'
 import { usePonderQuery } from '@ponder/react'
 import { useRouter } from 'next/navigation'
-import { count, eq } from 'ponder'
 import type React from 'react'
 import { useState } from 'react'
 import { Hex } from 'viem'

@@ -241,9 +241,6 @@ importers:
       pino-pretty:
         specifier: ^13.1.1
         version: 13.1.2
-      ponder:
-        specifier: ^0.14.3
-        version: 0.14.3(@opentelemetry/api@1.9.0)(@types/node@22.15.3)(@types/pg@8.15.5)(bufferutil@4.0.9)(hono@4.9.12)(lightningcss@1.30.1)(terser@5.44.0)(typescript@5.5.4)(utf-8-validate@5.0.10)(viem@2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67))(zod@3.25.67)
       porto:
         specifier: ^0.2.19
         version: 0.2.28(c7de008c79807147800cfc2a51349edd)
@@ -17619,87 +17616,6 @@ snapshots:
       - utf-8-validate
       - zod
 
-  ponder@0.14.3(@opentelemetry/api@1.9.0)(@types/node@22.15.3)(@types/pg@8.15.5)(bufferutil@4.0.9)(hono@4.9.12)(lightningcss@1.30.1)(terser@5.44.0)(typescript@5.5.4)(utf-8-validate@5.0.10)(viem@2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67))(zod@3.25.67):
-    dependencies:
-      '@babel/code-frame': 7.27.1
-      '@commander-js/extra-typings': 12.1.0(commander@12.1.0)
-      '@electric-sql/pglite': 0.2.13
-      '@escape.tech/graphql-armor-max-aliases': 2.6.2
-      '@escape.tech/graphql-armor-max-depth': 2.4.2
-      '@escape.tech/graphql-armor-max-tokens': 2.5.1
-      '@hono/node-server': 1.19.5(hono@4.9.12)
-      '@ponder/utils': 0.2.14(typescript@5.5.4)(viem@2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67))
-      abitype: 0.10.3(typescript@5.5.4)(zod@3.25.67)
-      ansi-escapes: 7.1.1
-      commander: 12.1.0
-      conf: 12.0.0
-      dataloader: 2.2.3
-      detect-package-manager: 3.0.2
-      dotenv: 16.6.1
-      drizzle-orm: 0.41.0(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)
-      glob: 10.4.5
-      graphql: 16.11.0
-      graphql-yoga: 5.16.0(graphql@16.11.0)
-      hono: 4.9.12
-      http-terminator: 3.2.0
-      kysely: 0.26.3
-      pg: 8.16.3
-      pg-connection-string: 2.9.1
-      pg-copy-streams: 6.0.6
-      pg-query-emscripten: 5.1.0
-      picocolors: 1.1.1
-      pino: 8.21.0
-      prom-client: 15.1.3
-      semver: 7.7.1
-      stacktrace-parser: 0.1.11
-      superjson: 2.2.2
-      terminal-size: 4.0.0
-      viem: 2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67)
-      vite: 5.0.7(@types/node@22.15.3)(lightningcss@1.30.1)(terser@5.44.0)
-      vite-node: 1.0.2(@types/node@22.15.3)(lightningcss@1.30.1)(terser@5.44.0)
-      vite-tsconfig-paths: 4.3.1(typescript@5.5.4)(vite@5.0.7(@types/node@22.15.3)(lightningcss@1.30.1)(terser@5.44.0))
-      ws: 8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)
-    optionalDependencies:
-      typescript: 5.5.4
-    transitivePeerDependencies:
-      - '@aws-sdk/client-rds-data'
-      - '@cloudflare/workers-types'
-      - '@libsql/client'
-      - '@libsql/client-wasm'
-      - '@neondatabase/serverless'
-      - '@op-engineering/op-sqlite'
-      - '@opentelemetry/api'
-      - '@planetscale/database'
-      - '@prisma/client'
-      - '@tidbcloud/serverless'
-      - '@types/better-sqlite3'
-      - '@types/node'
-      - '@types/pg'
-      - '@types/sql.js'
-      - '@vercel/postgres'
-      - '@xata.io/client'
-      - better-sqlite3
-      - bufferutil
-      - bun-types
-      - expo-sqlite
-      - gel
-      - knex
-      - less
-      - lightningcss
-      - mysql2
-      - pg-native
-      - postgres
-      - prisma
-      - sass
-      - sql.js
-      - sqlite3
-      - stylus
-      - sugarss
-      - supports-color
-      - terser
-      - utf-8-validate
-      - zod
-
   pony-cause@2.1.11: {}
 
   porto@0.2.19(@tanstack/react-query@5.90.3(react@19.2.0))(@types/react@19.2.2)(@wagmi/core@2.22.1(@tanstack/query-core@5.90.3)(@types/react@19.2.2)(react@19.2.0)(typescript@5.5.4)(use-sync-external-store@1.6.0(react@19.2.0))(viem@2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67)))(react@19.2.0)(typescript@5.5.4)(use-sync-external-store@1.4.0(react@19.2.0))(viem@2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67))(wagmi@2.18.1(@react-native-async-storage/async-storage@1.24.0(react-native@0.82.0(@babel/core@7.28.4)(@types/react@19.2.2)(bufferutil@4.0.9)(react@19.2.0)(utf-8-validate@5.0.10)))(@tanstack/query-core@5.90.3)(@tanstack/react-query@5.90.3(react@19.2.0))(@types/react@19.2.2)(bufferutil@4.0.9)(react@19.2.0)(typescript@5.5.4)(utf-8-validate@5.0.10)(viem@2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67))(zod@3.25.67)):
@@ -19201,23 +19117,6 @@ snapshots:
       - supports-color
       - terser
 
-  vite-node@1.0.2(@types/node@22.15.3)(lightningcss@1.30.1)(terser@5.44.0):
-    dependencies:
-      cac: 6.7.14
-      debug: 4.4.3(supports-color@8.1.1)
-      pathe: 1.1.2
-      picocolors: 1.1.1
-      vite: 5.0.7(@types/node@22.15.3)(lightningcss@1.30.1)(terser@5.44.0)
-    transitivePeerDependencies:
-      - '@types/node'
-      - less
-      - lightningcss
-      - sass
-      - stylus
-      - sugarss
-      - supports-color
-      - terser
-
   vite-tsconfig-paths@4.3.1(typescript@5.5.4)(vite@5.0.7(@types/node@20.19.21)(lightningcss@1.30.1)(terser@5.44.0)):
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
@@ -19229,17 +19128,6 @@ snapshots:
       - supports-color
       - typescript
 
-  vite-tsconfig-paths@4.3.1(typescript@5.5.4)(vite@5.0.7(@types/node@22.15.3)(lightningcss@1.30.1)(terser@5.44.0)):
-    dependencies:
-      debug: 4.4.3(supports-color@8.1.1)
-      globrex: 0.1.2
-      tsconfck: 3.1.6(typescript@5.5.4)
-    optionalDependencies:
-      vite: 5.0.7(@types/node@22.15.3)(lightningcss@1.30.1)(terser@5.44.0)
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-
   vite@5.0.7(@types/node@20.19.21)(lightningcss@1.30.1)(terser@5.44.0):
     dependencies:
       esbuild: 0.19.12
@@ -19247,17 +19135,6 @@ snapshots:
       rollup: 4.52.4
     optionalDependencies:
       '@types/node': 20.19.21
-      fsevents: 2.3.3
-      lightningcss: 1.30.1
-      terser: 5.44.0
-
-  vite@5.0.7(@types/node@22.15.3)(lightningcss@1.30.1)(terser@5.44.0):
-    dependencies:
-      esbuild: 0.19.12
-      postcss: 8.5.6
-      rollup: 4.52.4
-    optionalDependencies:
-      '@types/node': 22.15.3
       fsevents: 2.3.3
       lightningcss: 1.30.1
       terser: 5.44.0
