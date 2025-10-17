@@ -142,6 +142,7 @@ upload_package() {
 
     if [[ "$output" =~ "Unauthorized" ]]; then
         log "[$num] ❌ ${PKG_NAME} failed: ${output}"
+        log "[$num] 🔧 Run manually: warg publish release --name \"${FULL_PKG_NAME}\" --version \"${PKG_VERSION}\" \"${component_file}\""
         return 1
     elif [[ "$output" =~ "already released" ]] || [[ "$output" =~ "failed to prove inclusion" ]]; then
         log "[$num] ✅ ${PKG_NAME}:${PKG_VERSION} already released (did not re-upload)"
@@ -151,6 +152,7 @@ upload_package() {
         return 0
     else
         log "[$num] ❌ ${PKG_NAME} failed: ${output}"
+        log "[$num] 🔧 Run manually: warg publish release --name \"${FULL_PKG_NAME}\" --version \"${PKG_VERSION}\" \"${component_file}\""
         return 1
     fi
 }
