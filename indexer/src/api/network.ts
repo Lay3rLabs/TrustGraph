@@ -20,6 +20,7 @@ app.get("/graph", async (c) => {
     const allAccounts = await offchainDb.query.merkleEntry.findMany({
       columns: {
         account: true,
+        value: true,
       },
       where: (t, { eq }) => eq(t.root, latestMerkleTree.root),
       orderBy: (t, { asc }) => asc(t.account),
@@ -27,28 +28,29 @@ app.get("/graph", async (c) => {
 
     const attestations = await db.select().from(easAttestation);
 
-    const accountsMap: Map<string, { sent: number; received: number }> =
+    const accountsMap: Map<string, { value: bigint; sent: number; received: number }> =
       new Map();
     for (const account of allAccounts) {
-      accountsMap.set(account.account, { sent: 0, received: 0 });
+      accountsMap.set(account.account, { value: account.value, sent: 0, received: 0 });
     }
 
     for (const attestation of attestations) {
       if (!accountsMap.has(attestation.attester)) {
-        accountsMap.set(attestation.attester, { sent: 0, received: 0 });
+        accountsMap.set(attestation.attester, { value: 0n, sent: 0, received: 0 });
       }
       if (!accountsMap.has(attestation.recipient)) {
-        accountsMap.set(attestation.recipient, { sent: 0, received: 0 });
+        accountsMap.set(attestation.recipient, { value: 0n, sent: 0, received: 0 });
       }
       accountsMap.get(attestation.attester)!.sent++;
       accountsMap.get(attestation.recipient)!.received++;
     }
 
     const accounts = Array.from(accountsMap)
-      .map(([account, counts]) => ({
+      .map(([account, { value, sent, received }]) => ({
         account,
-        sent: counts.sent,
-        received: counts.received,
+        value: value.toString(),
+        sent,
+        received,
       }))
       .sort((a, b) => a.account.localeCompare(b.account));
 
