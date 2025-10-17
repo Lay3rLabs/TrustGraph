@@ -4,7 +4,7 @@
   "indexer_address": "${INDEXER_ADDRESS}",
   "chain_name": "${CHAIN_NAME}",
   "vouching_schema_uid": "${VOUCHING_SCHEMA_UID}",
-  "vouching_schema_abi": "string,uint256",
+  "vouching_schema_abi": "(string,uint256)",
   "vouching_schema_abi_weight_index": "1",
   "pagerank_enabled": "true",
   "pagerank_points_pool": "10000",
