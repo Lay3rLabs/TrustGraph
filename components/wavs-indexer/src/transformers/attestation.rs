@@ -99,7 +99,11 @@ impl AttestationTransformer {
                 .ok_or(anyhow::anyhow!("Aggregator config not found"))?
                 .1
                 .parse()?,
-            _ => return Err(anyhow::anyhow!("WavsIndexer address not found")),
+            _ => host::config_var("indexer_address")
+                .ok_or(anyhow::anyhow!(
+                    "Failed to get indexer address from workflow submit config and config_var"
+                ))?
+                .parse()?,
         };
 
         let chain: crate::bindings::wavs::types::chain::EvmChainConfig =
