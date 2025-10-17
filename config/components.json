@@ -78,6 +78,7 @@
       "submit_json_path": "wavs_indexer"
     },
     {
+      "disabled": true,
       "filename": "wavs_safe_signer_sync.wasm",
       "package_name": "wavs-safe-signer-sync",
       "package_version": "0.7.0",
