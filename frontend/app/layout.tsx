@@ -31,6 +31,10 @@ export const metadata: Metadata = {
       type: 'image/png',
     },
   ],
+  openGraph: {
+    type: 'website',
+    url: 'https://trustgraph.network',
+  },
 }
 
 export const viewport: Viewport = {
