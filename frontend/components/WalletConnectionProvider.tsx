@@ -56,19 +56,19 @@ export const WalletConnectionProvider = ({
     }
   }
 
-  const { switchChain } = useSwitchChain()
+  const { switchChainAsync } = useSwitchChain()
   const { isConnected, chain } = useAccount()
 
   const handleSwitchToTarget = async () => {
     try {
       const targetChainId = getTargetChainId()
-      switchChain({ chainId: targetChainId })
+      await switchChainAsync({ chainId: targetChainId })
     } catch (err) {
       console.error('Failed to switch network:', err)
       try {
         await addTargetNetwork()
         const targetChainId = getTargetChainId()
-        switchChain({ chainId: targetChainId })
+        await switchChainAsync({ chainId: targetChainId })
       } catch (addErr) {
         console.error('Failed to add and switch network:', addErr)
       }

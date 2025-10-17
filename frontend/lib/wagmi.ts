@@ -42,6 +42,7 @@ export const getCurrentChainConfig = (): Chain => {
           http: ['/api/rpc/10?id=0', '/api/rpc/10?id=1'],
           ...(webSocketUrl && { webSocket: [webSocketUrl] }),
         },
+        provided: optimism.rpcUrls.default,
       },
     }
   } else if (CHAIN === 'local') {
@@ -96,7 +97,7 @@ export const createNetworkAddParams = (config: Chain) => {
     chainId: `0x${config.id.toString(16)}`,
     chainName: config.name,
     nativeCurrency: config.nativeCurrency,
-    rpcUrls: config.rpcUrls.default.http,
+    rpcUrls: config.rpcUrls.provided?.http || config.rpcUrls.default.http,
     blockExplorerUrls: config.blockExplorers?.default?.url
       ? [config.blockExplorers.default.url]
       : undefined,
