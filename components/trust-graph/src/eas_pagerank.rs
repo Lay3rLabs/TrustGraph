@@ -1,50 +1,47 @@
-use alloy_provider::Provider;
-use alloy_rpc_types::TransactionInput;
-use alloy_sol_types::{sol, SolCall};
+use alloy_sol_types::sol;
 use anyhow::Result;
 use async_trait::async_trait;
 use std::collections::HashMap;
 use wavs_indexer_api::solidity::IndexedEvent;
 use wavs_indexer_api::IndexedAttestation;
 use wavs_merkle_sources::sources::{Source, SourceEvent};
-use wavs_wasi_utils::evm::alloy_primitives::{hex, Address, FixedBytes, TxKind, U256};
+use wavs_wasi_utils::evm::alloy_primitives::{hex, Address, FixedBytes, U256};
 
-// Re-export modules for use in lib.rs
-use std::sync::Mutex;
+use futures::lock::Mutex;
 pub use wavs_merkle_sources::sources;
 
-use crate::pagerank::{AttestationGraph, PageRankRewardSource};
+use crate::{attestation_graph::AttestationGraph, config::PageRankSourceConfig};
 
 /// EAS PageRank points source that calculates points based on PageRank algorithm
 pub struct EasPageRankSource {
     /// PageRank points configuration
-    pub pagerank_config: PageRankRewardSource,
+    pub config: PageRankSourceConfig,
     /// Cached points to avoid recalculation
     cached_points: Mutex<Option<HashMap<Address, U256>>>,
 }
 
 impl EasPageRankSource {
-    pub fn new(pagerank_config: PageRankRewardSource) -> Result<Self> {
-        if pagerank_config.total_pool.is_zero() {
+    pub fn new(config: PageRankSourceConfig) -> Result<Self> {
+        if config.total_pool.is_zero() {
             return Err(anyhow::anyhow!("PageRank points pool cannot be zero"));
         }
 
         // Validate trust configuration if enabled
-        if pagerank_config.config.has_trust_enabled() {
+        if config.has_trust_enabled() {
             println!(
                 "🔒 Trust Aware PageRank enabled with {} trusted seeds",
-                pagerank_config.config.trust_config.trusted_seeds.len()
+                config.pagerank_config.trust_config.trusted_seeds.len()
             );
 
             // Log trusted seeds for transparency
-            for (i, seed) in pagerank_config.config.trust_config.trusted_seeds.iter().enumerate() {
+            for (i, seed) in config.pagerank_config.trust_config.trusted_seeds.iter().enumerate() {
                 println!("   {}. {}", i + 1, seed);
             }
         } else {
             println!("📊 Standard PageRank (no trust seeds configured)");
         }
 
-        Ok(Self { pagerank_config, cached_points: Mutex::new(None) })
+        Ok(Self { config, cached_points: Mutex::new(None) })
     }
 
     fn parse_schema_uid(&self, schema_uid: &str) -> Result<FixedBytes<32>> {
@@ -87,31 +84,31 @@ impl EasPageRankSource {
         Ok(attestations)
     }
 
-    async fn get_attestation_details(
-        &self,
-        ctx: &sources::SourceContext,
-        uid: FixedBytes<32>,
-    ) -> Result<(Address, Address, Vec<u8>)> {
-        let call = IEAS::getAttestationCall { uid };
-        let tx: alloy_rpc_types::TransactionRequest = alloy_rpc_types::eth::TransactionRequest {
-            to: Some(TxKind::Call(ctx.eas_address)),
-            input: TransactionInput { input: Some(call.abi_encode().into()), data: None },
-            ..Default::default()
-        };
+    // async fn get_attestation_details(
+    //     &self,
+    //     ctx: &sources::SourceContext,
+    //     uid: FixedBytes<32>,
+    // ) -> Result<(Address, Address, Vec<u8>)> {
+    //     let call = IEAS::getAttestationCall { uid };
+    //     let tx: alloy_rpc_types::TransactionRequest = alloy_rpc_types::eth::TransactionRequest {
+    //         to: Some(TxKind::Call(ctx.eas_address)),
+    //         input: TransactionInput { input: Some(call.abi_encode().into()), data: None },
+    //         ..Default::default()
+    //     };
 
-        let result = ctx.provider.call(tx).await?;
+    //     let result = ctx.provider.call(tx).await?;
 
-        let decoded = IEAS::getAttestationCall::abi_decode_returns(&result)
-            .map_err(|e| anyhow::anyhow!("Failed to decode attestation: {}", e))?;
-        Ok((decoded.attester, decoded.recipient, decoded.data.to_vec()))
-    }
+    //     let decoded = IEAS::getAttestationCall::abi_decode_returns(&result)
+    //         .map_err(|e| anyhow::anyhow!("Failed to decode attestation: {}", e))?;
+    //     Ok((decoded.attester, decoded.recipient, decoded.data.to_vec()))
+    // }
 
     /// Build attestation graph from EAS data
     async fn build_attestation_graph(
         &self,
         ctx: &sources::SourceContext,
     ) -> Result<AttestationGraph> {
-        let schema_uid = &self.pagerank_config.schema_uid;
+        let schema_uid = &self.config.schema_uid;
         println!("🏗️  Building attestation graph for schema: {}", schema_uid);
 
         let total_attestations = self.get_total_schema_attestations(ctx, schema_uid).await?;
@@ -140,7 +137,7 @@ impl EasPageRankSource {
                 schema_uid,
                 attester,
                 recipient,
-                event: IndexedEvent { data, .. },
+                event: IndexedEvent { deleted, data, .. },
             } in attestations
             {
                 // Debug attestation data
@@ -150,52 +147,59 @@ impl EasPageRankSource {
                 println!("   Recipient: {}", recipient);
                 println!("   Data length: {}", data.len());
 
+                if deleted {
+                    println!("❌  Attestation was revoked, skipping...");
+                    continue;
+                }
+
                 if data.len() > 0 {
                     println!("   Data (hex): 0x{}", hex::encode(&data[..data.len().min(64)]));
                 }
 
-                // Decode weight from attestation data
-                let weight = if data.len() >= 32 {
-                    // Data is ABI encoded uint256
-                    let mut weight_bytes = [0u8; 32];
-                    weight_bytes.copy_from_slice(&data[..32]);
-                    let weight_u256 = U256::from_be_bytes(weight_bytes);
-
-                    println!("   Raw weight U256: {}", weight_u256);
-                    println!("   Weight hex: 0x{}", hex::encode(&weight_bytes));
-                    println!("   u64::MAX: {}", u64::MAX);
-                    println!(
-                        "   Overflow check: {} > {} = {}",
-                        weight_u256,
-                        U256::from(u64::MAX),
-                        weight_u256 > U256::from(u64::MAX)
-                    );
-
-                    // Handle potential overflow when converting U256 to u64
-                    // Cap weight at reasonable maximum or scale down large values
-                    if weight_u256 > U256::from(u64::MAX) {
-                        println!("⚠️  Large weight detected ({}), capping at maximum", weight_u256);
-                        // For very large values, scale them down to a reasonable range
-                        // Use logarithmic scaling to handle extreme values
-                        let scaled_weight =
-                            (weight_u256.to_string().len() as f64).max(1.0).min(1000.0);
-                        println!("   Scaled weight: {}", scaled_weight);
-                        scaled_weight
-                    } else if weight_u256.is_zero() {
-                        // Avoid zero weights which can cause issues in PageRank
-                        println!("   Zero weight, using default: 1.0");
-                        1.0
-                    } else {
-                        // Safe conversion for values that fit in u64
-                        let converted_weight = weight_u256.to::<u64>() as f64;
-                        println!("   Converted weight: {}", converted_weight);
-                        converted_weight
+                let weight: Option<f64> = match self.config.schema_abi.abi_decode_params(&data) {
+                    Err(e) => {
+                        println!("⚠️  Failed to decode attestation data: {e}");
+                        None
                     }
-                } else {
-                    // Default weight if data is missing or invalid
-                    println!("   Data too short, using default weight: 1.0");
-                    1.0
+                    Ok(decoded_data) => match decoded_data.as_tuple() {
+                        None => {
+                            println!("⚠️  Attestation data is not a tuple");
+                            None
+                        }
+                        Some(decoded_data) => match decoded_data
+                            .get(self.config.schema_abi_weight_index)
+                            .map(|v| v.as_uint())
+                        {
+                            None => {
+                                println!(
+                                    "⚠️  Index {} not found in attestation data",
+                                    self.config.schema_abi_weight_index
+                                );
+                                None
+                            }
+                            Some(None) => {
+                                println!(
+                                    "⚠️  Attestation data field at index {} is not a uint",
+                                    self.config.schema_abi_weight_index
+                                );
+                                None
+                            }
+                            Some(Some((value, _))) => match value.try_into() {
+                                Err(e) => {
+                                    println!("⚠️  Failed to convert attestation data field at index {} to f64: {e}", self.config.schema_abi_weight_index);
+                                    None
+                                }
+                                Ok(value) => Some(value),
+                            },
+                        },
+                    },
                 };
+
+                // Cap weight to min and max values
+                let weight = weight
+                    .unwrap_or_default()
+                    .max(self.config.pagerank_config.min_weight)
+                    .min(self.config.pagerank_config.max_weight);
 
                 graph.add_edge(attester, recipient, weight);
                 edge_count += 1;
@@ -233,8 +237,17 @@ impl EasPageRankSource {
         &self,
         ctx: &sources::SourceContext,
     ) -> Result<HashMap<Address, U256>> {
+        // Lock for the entire function to prevent simultaneous calculations
+        let mut lock = self.cached_points.lock().await;
+
+        // Check if we already have cached points
+        if let Some(ref cached) = *lock {
+            println!("✅ Using cached PageRank points");
+            return Ok(cached.clone());
+        }
+
         let graph = self.build_attestation_graph(ctx).await?;
-        let scores = graph.calculate_pagerank(&self.pagerank_config.config);
+        let scores: HashMap<Address, f64> = graph.calculate_pagerank(&self.config.pagerank_config);
 
         println!("\n🎲 Raw PageRank scores:");
         let mut sorted_scores: Vec<_> = scores.iter().collect();
@@ -244,7 +257,7 @@ impl EasPageRankSource {
         }
 
         let mut points_map = HashMap::new();
-        let total_pool = self.pagerank_config.total_pool;
+        let total_pool = self.config.total_pool;
 
         println!("\n🎯 Distributing {} total points based on PageRank scores", total_pool);
 
@@ -252,13 +265,10 @@ impl EasPageRankSource {
         let total_accounts = scores.len();
         let filtered_scores: HashMap<Address, f64> = scores
             .into_iter()
-            .filter(|(_, score)| *score >= self.pagerank_config.min_score_threshold)
+            .filter(|(_, score)| *score >= self.config.min_score_threshold)
             .collect();
 
-        println!(
-            "🔍 Filtering scores above threshold: {}",
-            self.pagerank_config.min_score_threshold
-        );
+        println!("🔍 Filtering scores above threshold: {}", self.config.min_score_threshold);
         println!("   - Before filter: {} accounts", total_accounts);
         println!("   - After filter: {} accounts", filtered_scores.len());
 
@@ -363,6 +373,9 @@ impl EasPageRankSource {
             println!("  {}. {}: {} tokens (PageRank: {:.6})", i + 1, addr, points, score);
         }
 
+        // Cache the calculated points for future calls
+        *lock = Some(points_map.clone());
+
         Ok(points_map)
     }
 }
@@ -370,7 +383,7 @@ impl EasPageRankSource {
 #[async_trait(?Send)]
 impl Source for EasPageRankSource {
     fn get_name(&self) -> &str {
-        if self.pagerank_config.config.has_trust_enabled() {
+        if self.config.has_trust_enabled() {
             "Trust-Aware-EAS-PageRank"
         } else {
             "EAS-PageRank"
@@ -403,14 +416,14 @@ impl Source for EasPageRankSource {
     }
 
     async fn get_metadata(&self, ctx: &sources::SourceContext) -> Result<serde_json::Value> {
-        let trust_info = if self.pagerank_config.config.has_trust_enabled() {
+        let trust_info = if self.config.has_trust_enabled() {
             serde_json::json!({
                 "enabled": true,
-                "trusted_seeds": self.pagerank_config.config.trust_config.trusted_seeds.iter()
+                "trusted_seeds": self.config.pagerank_config.trust_config.trusted_seeds.iter()
                     .map(|addr| addr.to_string())
                     .collect::<Vec<_>>(),
-                "trust_multiplier": self.pagerank_config.config.trust_config.trust_multiplier,
-                "trust_boost": self.pagerank_config.config.trust_config.trust_boost,
+                "trust_multiplier": self.config.pagerank_config.trust_config.trust_multiplier,
+                "trust_boost": self.config.pagerank_config.trust_config.trust_boost,
             })
         } else {
             serde_json::json!({
@@ -422,18 +435,20 @@ impl Source for EasPageRankSource {
             "eas_address": ctx.eas_address.to_string(),
             "indexer_address": ctx.indexer_address.to_string(),
             "chain_name": ctx.chain_name,
-            "type": if self.pagerank_config.config.has_trust_enabled() {
+            "type": if self.config.pagerank_config.has_trust_enabled() {
                 "trust_aware_pagerank_attestations"
             } else {
                 "pagerank_attestations"
             },
-            "schema_uid": self.pagerank_config.schema_uid,
-            "total_pool": self.pagerank_config.total_pool.to_string(),
+            "schema_uid": self.config.schema_uid,
+            "schema_abi": self.config.schema_abi.to_string(),
+            "schema_abi_weight_index": self.config.schema_abi_weight_index,
+            "total_pool": self.config.total_pool.to_string(),
             "pagerank_config": {
-                "damping_factor": self.pagerank_config.config.damping_factor,
-                "max_iterations": self.pagerank_config.config.max_iterations,
-                "tolerance": self.pagerank_config.config.tolerance,
-                "min_score_threshold": self.pagerank_config.min_score_threshold,
+                "damping_factor": self.config.pagerank_config.damping_factor,
+                "max_iterations": self.config.pagerank_config.max_iterations,
+                "tolerance": self.config.pagerank_config.tolerance,
+                "min_score_threshold": self.config.min_score_threshold,
             },
             "trust_config": trust_info
         }))

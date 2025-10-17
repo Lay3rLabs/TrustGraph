@@ -1,8 +1,8 @@
 #[rustfmt::skip]
 pub mod bindings;
+mod attestation_graph;
 mod config;
 mod eas_pagerank;
-mod pagerank;
 mod trigger;
 
 use crate::bindings::{export, Guest, TriggerAction};
@@ -30,27 +30,18 @@ impl Guest for Component {
 
         // Add PageRank-based EAS points if configured
         if let Some(pagerank_config) = PageRankSourceConfig::load()? {
-            let pagerank_source_config = pagerank::PageRankRewardSource::new(
-                pagerank_config.vouching_schema_uid.clone(),
-                pagerank_config.points_pool,
-                pagerank_config.pagerank_config.clone(),
-            )
-            .with_min_threshold(pagerank_config.min_threshold);
-
-            let has_trust = pagerank_source_config.has_trust_enabled();
-            match EasPageRankSource::new(pagerank_source_config) {
+            let has_trust = pagerank_config.has_trust_enabled();
+            match EasPageRankSource::new(pagerank_config) {
                 Ok(pagerank_source) => {
+                    let total_pool = pagerank_source.config.total_pool.to_string();
                     registry.add_source(pagerank_source);
                     if has_trust {
                         println!(
                             "✅ Added Trust Aware EAS PageRank source with {} points pool",
-                            pagerank_config.points_pool
+                            total_pool
                         );
                     } else {
-                        println!(
-                            "✅ Added EAS PageRank source with {} points pool",
-                            pagerank_config.points_pool
-                        );
+                        println!("✅ Added EAS PageRank source with {} points pool", total_pool);
                     }
                 }
                 Err(e) => {

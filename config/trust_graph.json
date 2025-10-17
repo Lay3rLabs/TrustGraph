@@ -4,9 +4,13 @@
   "indexer_address": "${INDEXER_ADDRESS}",
   "chain_name": "${CHAIN_NAME}",
   "vouching_schema_uid": "${VOUCHING_SCHEMA_UID}",
+  "vouching_schema_abi": "string,uint256",
+  "vouching_schema_abi_weight_index": "1",
   "pagerank_enabled": "true",
   "pagerank_points_pool": "10000",
   "pagerank_trusted_seeds": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8,0x7d03C5c37f77Fd01211334B9115CA108C84E8f3B,0x733Fe4b4D26168532c668231d725C46C315c14b1,0x59DDA36bD196Ec849838CE2163E6821f946b37Dc,0x45CbC00e0618880bfB2dBDdEAed1ef1411dd5eeE,0x7d7ec12d1252Ac65bb2a5f1dA75d415b665c5a42,0xD2C392084761cb6E44c544B6f39dcc001fDe9775",
   "pagerank_trust_multiplier": "10.5",
-  "pagerank_trust_boost": "0.99"
+  "pagerank_trust_boost": "0.99",
+  "pagerank_min_weight": "0",
+  "pagerank_max_weight": "100"
 }

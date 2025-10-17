@@ -1,6 +1,4 @@
 pub mod attestation;
-pub mod interaction;
-// pub mod market_resolution;
 
 use crate::solidity::IndexingPayload;
 use crate::trigger::EventData;

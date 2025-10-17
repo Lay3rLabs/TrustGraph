@@ -1,113 +1,7 @@
-use std::collections::{HashMap, HashSet};
-use std::str::FromStr;
-use wavs_wasi_utils::evm::alloy_primitives::{Address, U256};
+use std::collections::HashMap;
+use wavs_wasi_utils::evm::alloy_primitives::Address;
 
-/// Trust configuration for Trust Aware PageRank
-#[derive(Clone, Debug)]
-pub struct TrustConfig {
-    /// Set of trusted seed attestors
-    pub trusted_seeds: HashSet<Address>,
-    /// Weight multiplier for attestations from trusted seeds (e.g., 2.0 = 2x weight)
-    pub trust_multiplier: f64,
-    /// Boost factor for initial scores of trusted seeds (0.0-1.0)
-    pub trust_boost: f64,
-}
-
-impl Default for TrustConfig {
-    fn default() -> Self {
-        Self {
-            trusted_seeds: HashSet::new(),
-            trust_multiplier: 1.0, // No trust boost by default
-            trust_boost: 0.0,      // No initial boost by default
-        }
-    }
-}
-
-impl TrustConfig {
-    /// Create a new trust configuration with trusted seeds
-    pub fn new(trusted_seeds: Vec<Address>) -> Self {
-        Self {
-            trusted_seeds: trusted_seeds.into_iter().collect(),
-            trust_multiplier: 2.0, // Default 2x weight for trusted attestors
-            trust_boost: 0.15,     // Default 15% of total initial score goes to trusted seeds
-        }
-    }
-
-    /// Set trust multiplier for attestations from trusted seeds
-    pub fn with_trust_multiplier(mut self, multiplier: f64) -> Self {
-        self.trust_multiplier = multiplier.max(1.0); // Ensure at least 1.0x
-        self
-    }
-
-    /// Set trust boost for initial scores (0.0-1.0)
-    pub fn with_trust_boost(mut self, boost: f64) -> Self {
-        self.trust_boost = boost.clamp(0.0, 1.0);
-        self
-    }
-
-    /// Check if an address is a trusted seed
-    pub fn is_trusted_seed(&self, address: &Address) -> bool {
-        self.trusted_seeds.contains(address)
-    }
-
-    /// Add a trusted seed
-    pub fn add_trusted_seed(&mut self, address: Address) {
-        self.trusted_seeds.insert(address);
-    }
-
-    /// Remove a trusted seed
-    pub fn remove_trusted_seed(&mut self, address: &Address) -> bool {
-        self.trusted_seeds.remove(address)
-    }
-
-    /// Get all trusted seeds
-    pub fn get_trusted_seeds(&self) -> &HashSet<Address> {
-        &self.trusted_seeds
-    }
-}
-
-/// Configuration for the Trust Aware PageRank algorithm
-#[derive(Clone, Debug)]
-pub struct PageRankConfig {
-    /// Damping factor (usually 0.85)
-    pub damping_factor: f64,
-    /// Maximum number of iterations
-    pub max_iterations: usize,
-    /// Convergence threshold
-    pub tolerance: f64,
-    /// Trust configuration for Trust Aware PageRank
-    pub trust_config: TrustConfig,
-}
-
-impl Default for PageRankConfig {
-    fn default() -> Self {
-        Self {
-            damping_factor: 0.85,
-            max_iterations: 100,
-            tolerance: 1e-6,
-            trust_config: TrustConfig::default(),
-        }
-    }
-}
-
-impl PageRankConfig {
-    /// Create configuration with trust settings
-    pub fn with_trust_config(mut self, trust_config: TrustConfig) -> Self {
-        self.trust_config = trust_config;
-        self
-    }
-
-    /// Enable trust features with trusted seed addresses
-    pub fn with_trusted_seeds(mut self, seeds: Vec<Address>) -> Self {
-        self.trust_config = TrustConfig::new(seeds);
-        self
-    }
-
-    /// Check if trust features are enabled
-    pub fn has_trust_enabled(&self) -> bool {
-        !self.trust_config.trusted_seeds.is_empty()
-    }
-}
+use crate::config::{PageRankConfig, TrustConfig};
 
 /// A directed graph for Trust Aware PageRank calculation
 #[derive(Debug, Clone)]
@@ -215,33 +109,40 @@ impl AttestationGraph {
         for iteration in 0..config.max_iterations {
             let mut max_delta = 0.0;
 
-            for &node in &sorted_nodes {
-                let mut new_rank = self.calculate_base_rank(&node, n, config);
+            for &recipient_node in &sorted_nodes {
+                let mut new_rank = self.calculate_base_rank(&recipient_node, n, config);
 
                 // Skip isolated nodes (unreachable from trusted seeds) if trust is enabled
                 if let Some(ref distances) = trust_distances {
-                    if distances.get(&node) == Some(&usize::MAX) {
+                    if distances.get(&recipient_node) == Some(&usize::MAX) {
                         // Isolated node - gets only minimal base rank
-                        new_ranks.insert(node, new_rank);
+                        new_ranks.insert(recipient_node, new_rank);
                         continue;
                     }
                 }
 
                 // Sum contributions from incoming edges with trust-aware weights
-                for &other_node in &sorted_nodes {
-                    if let Some(outgoing_edges) = self.outgoing.get(&other_node) {
+                for &attester_node in &sorted_nodes {
+                    // Skip the recipient node itself
+                    if attester_node == recipient_node {
+                        continue;
+                    }
+
+                    if let Some(outgoing_edges) = self.outgoing.get(&attester_node) {
                         // Create sorted copy of outgoing edges for deterministic iteration
                         let mut sorted_edges = outgoing_edges.clone();
                         sorted_edges.sort_by_key(|(addr, _)| *addr);
 
-                        // Filter out self-loops when calculating outgoing weights
+                        // Filter out self-loops when calculating outgoing weights and zero-weight edges
                         let filtered_edges: Vec<_> = sorted_edges
                             .iter()
-                            .filter(|(target, _)| *target != other_node) // Exclude self-loops
+                            .filter(|(target, base_weight)| {
+                                *target != attester_node && *base_weight > 0.0
+                            }) // Exclude self-loops and zero-weight edges
                             .collect();
 
                         if filtered_edges.is_empty() {
-                            continue; // Node only has self-loops, skip it
+                            continue; // Node only has self-loops or zero-weight edges, skip it
                         }
 
                         // Calculate total outgoing weight from this node (trust-adjusted, excluding self-loops)
@@ -249,56 +150,64 @@ impl AttestationGraph {
                             .iter()
                             .map(|(_, base_weight)| {
                                 self.calculate_edge_weight(
-                                    &other_node,
+                                    &attester_node,
                                     *base_weight,
                                     &config.trust_config,
                                 )
                             })
                             .sum();
 
-                        // Find edges to current node and calculate contributions
-                        for &(target, base_weight) in &sorted_edges {
-                            if target == node && other_node != node && total_outgoing_weight > 0.0 {
-                                let effective_weight = self.calculate_edge_weight(
-                                    &other_node,
-                                    base_weight,
-                                    &config.trust_config,
-                                );
+                        // If total outgoing weight is 0, skip the node. This should not happen as we filter out zero-weight edges and skip above.
+                        if total_outgoing_weight == 0.0 {
+                            continue;
+                        }
 
-                                // Apply trust decay based on distance from trusted seeds
-                                let trust_decay = if let Some(ref distances) = trust_distances {
-                                    let source_distance =
-                                        distances.get(&other_node).copied().unwrap_or(usize::MAX);
-                                    let target_distance =
-                                        distances.get(&node).copied().unwrap_or(usize::MAX);
-
-                                    // Decay factor: closer to trusted seeds = less decay
-                                    let max_distance = source_distance.max(target_distance);
-                                    if max_distance == usize::MAX {
-                                        0.01 // Minimal contribution from unreachable nodes
-                                    } else {
-                                        // Exponential decay: 0.8^distance
-                                        0.8_f64.powi(max_distance as i32)
-                                    }
-                                } else {
-                                    1.0 // No decay in standard PageRank
-                                };
-
-                                let contribution = ranks[&other_node]
-                                    * (effective_weight / total_outgoing_weight)
-                                    * trust_decay;
-                                new_rank += config.damping_factor * contribution;
+                        // Find nonzero edges to recipient node and calculate contributions
+                        for &(target, base_weight) in filtered_edges {
+                            // Skip if the target is not the recipient
+                            if target != recipient_node {
+                                continue;
                             }
+
+                            let effective_weight = self.calculate_edge_weight(
+                                &attester_node,
+                                base_weight,
+                                &config.trust_config,
+                            );
+
+                            // Apply trust decay based on distance from trusted seeds
+                            let trust_decay = if let Some(ref distances) = trust_distances {
+                                let source_distance =
+                                    distances.get(&attester_node).copied().unwrap_or(usize::MAX);
+                                let target_distance =
+                                    distances.get(&recipient_node).copied().unwrap_or(usize::MAX);
+
+                                // Decay factor: closer to trusted seeds = less decay
+                                let max_distance = source_distance.max(target_distance);
+                                if max_distance == usize::MAX {
+                                    0.01 // Minimal contribution from unreachable nodes
+                                } else {
+                                    // Exponential decay: 0.8^distance
+                                    0.8_f64.powi(max_distance as i32)
+                                }
+                            } else {
+                                1.0 // No decay in standard PageRank
+                            };
+
+                            let contribution = ranks[&attester_node]
+                                * (effective_weight / total_outgoing_weight)
+                                * trust_decay;
+                            new_rank += config.damping_factor * contribution;
                         }
                     }
                 }
 
-                let delta = (new_rank - ranks[&node]).abs();
+                let delta = (new_rank - ranks[&recipient_node]).abs();
                 if delta > max_delta {
                     max_delta = delta;
                 }
 
-                new_ranks.insert(node, new_rank);
+                new_ranks.insert(recipient_node, new_rank);
             }
 
             ranks = new_ranks.clone();
@@ -550,64 +459,6 @@ impl AttestationGraph {
                 println!("    {}. {}: {:.6} ({})", i + 1, addr, score, distance_str);
             }
         }
-    }
-}
-
-/// Trust Aware PageRank-based source configuration
-pub struct PageRankRewardSource {
-    /// Schema UID for attestations
-    pub schema_uid: String,
-    /// Total pool to distribute
-    pub total_pool: U256,
-    /// PageRank configuration (including trust settings)
-    pub config: PageRankConfig,
-    /// Minimum PageRank score to receive points (to filter out very low scores)
-    pub min_score_threshold: f64,
-}
-
-impl PageRankRewardSource {
-    pub fn new(schema_uid: String, total_pool: U256, config: PageRankConfig) -> Self {
-        Self {
-            schema_uid,
-            total_pool,
-            config,
-            min_score_threshold: 0.0001, // 0.01% minimum
-        }
-    }
-
-    pub fn with_min_threshold(mut self, threshold: f64) -> Self {
-        self.min_score_threshold = threshold;
-        self
-    }
-
-    /// Create a Trust Aware PageRank source
-    pub fn with_trusted_seeds(
-        schema_uid: String,
-        total_pool: U256,
-        trusted_seeds: Vec<&str>,
-    ) -> Result<Self, Box<dyn std::error::Error>> {
-        // Parse trusted seed addresses
-        let mut parsed_seeds = Vec::new();
-        for seed_str in trusted_seeds {
-            let address = Address::from_str(seed_str)
-                .map_err(|e| format!("Invalid trusted seed address '{}': {}", seed_str, e))?;
-            parsed_seeds.push(address);
-        }
-
-        let trust_config = TrustConfig::new(parsed_seeds);
-        let config = PageRankConfig::default().with_trust_config(trust_config);
-
-        Ok(Self::new(schema_uid, total_pool, config))
-    }
-
-    /// Check if this source uses trust features
-    pub fn has_trust_enabled(&self) -> bool {
-        self.config.has_trust_enabled()
-    }
-
-    /// Get trusted seed addresses
-    pub fn get_trusted_seeds(&self) -> Vec<Address> {
-        self.config.trust_config.trusted_seeds.iter().copied().collect()
     }
 }
 
@@ -1047,36 +898,31 @@ mod tests {
         graph.add_edge(addr3, addr1, 1.0); // Create some cycles
 
         // Test both standard PageRank and trust-aware PageRank
-        let configs = vec![
-            PageRankConfig::default(), // Standard PageRank
-            PageRankConfig::default().with_trusted_seeds(vec![addr1, addr3]), // Trust-aware
-        ];
+        let config = PageRankConfig::default();
 
-        for config in configs {
-            // Run PageRank calculation multiple times
-            let mut results = Vec::new();
-            for _ in 0..5 {
-                let result = graph.calculate_pagerank(&config);
-                results.push(result);
-            }
+        // Run PageRank calculation multiple times
+        let mut results = Vec::new();
+        for _ in 0..5 {
+            let result = graph.calculate_pagerank(&config);
+            results.push(result);
+        }
 
-            // Verify all results are identical
-            for i in 1..results.len() {
-                assert_eq!(
-                    results[0].len(),
-                    results[i].len(),
-                    "Result {} has different number of nodes",
-                    i
-                );
+        // Verify all results are identical
+        for i in 1..results.len() {
+            assert_eq!(
+                results[0].len(),
+                results[i].len(),
+                "Result {} has different number of nodes",
+                i
+            );
 
-                for (addr, score0) in &results[0] {
-                    let score_i = results[i]
-                        .get(addr)
-                        .expect(&format!("Address {:?} missing in result {}", addr, i));
-                    assert!((score0 - score_i).abs() < 1e-15,
+            for (addr, score0) in &results[0] {
+                let score_i = results[i]
+                    .get(addr)
+                    .expect(&format!("Address {:?} missing in result {}", addr, i));
+                assert!((score0 - score_i).abs() < 1e-15,
                         "Non-deterministic result for address {:?}: {} vs {} (diff: {}) in iteration {}",
                         addr, score0, score_i, (score0 - score_i).abs(), i);
-                }
             }
         }
     }
