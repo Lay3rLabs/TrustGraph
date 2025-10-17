@@ -1,4 +1,4 @@
-import { InfoTooltip } from './ui/info-tooltip'
+import { InfoTooltip } from './InfoTooltip'
 
 export const StatisticCard = ({
   title,

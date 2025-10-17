@@ -5,7 +5,7 @@ import { ReactNode, useEffect, useRef } from 'react'
 import { useUpdatingRef } from '@/hooks/useUpdatingRef'
 import { cn } from '@/lib/utils'
 
-import { Card } from '../Card'
+import { Card } from './Card'
 
 interface ModalProps {
   isOpen: boolean

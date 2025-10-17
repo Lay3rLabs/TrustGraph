@@ -13,7 +13,7 @@ export type Network = {
 
 export const NETWORKS: Network[] = [
   {
-    id: 'localism',
+    id: 'localism-fund',
     name: 'Localism Fund',
     url: 'https://localism.fund',
     about:

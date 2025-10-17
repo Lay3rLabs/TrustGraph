@@ -11,9 +11,9 @@ import { useAccount, useBalance, useConnect, useDisconnect } from 'wagmi'
 import { parseErrorMessage } from '@/lib/error'
 import { formatBigNumber } from '@/lib/utils'
 
+import { Button } from './Button'
 import { EthIcon } from './icons/EthIcon'
 import { Popup } from './Popup'
-import { Button } from './ui/button'
 import { useWalletConnectionContext } from './WalletConnectionProvider'
 
 export interface WalletConnectionButtonProps {

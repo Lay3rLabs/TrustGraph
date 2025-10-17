@@ -4,8 +4,8 @@ import type React from 'react'
 import { useCallback, useState } from 'react'
 import { useAccount } from 'wagmi'
 
+import { Button } from '@/components/Button'
 import { RewardsCard } from '@/components/RewardsCard'
-import { Button } from '@/components/ui/button'
 import { useOpenWalletConnector } from '@/components/WalletConnectionProvider'
 import { useRewards } from '@/hooks/useRewards'
 

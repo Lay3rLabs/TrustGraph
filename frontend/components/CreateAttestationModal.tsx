@@ -7,12 +7,7 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useAccount } from 'wagmi'
 
-import {
-  AttestationFormData,
-  GenericSchemaComponent,
-  schemaComponentRegistry,
-} from '@/components/schema-components'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/Button'
 import {
   Form,
   FormControl,
@@ -20,16 +15,21 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { Modal } from '@/components/ui/modal'
+} from '@/components/Form'
+import { Input } from '@/components/Input'
+import { Modal } from '@/components/Modal'
+import {
+  AttestationFormData,
+  GenericSchemaComponent,
+  schemaComponentRegistry,
+} from '@/components/schema-components'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@/components/Select'
 import { useAttestation } from '@/hooks/useAttestation'
 import { useResolveEnsName } from '@/hooks/useEns'
 import { Network } from '@/lib/network'

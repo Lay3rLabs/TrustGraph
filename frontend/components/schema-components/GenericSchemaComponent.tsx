@@ -2,16 +2,16 @@
 
 import type React from 'react'
 
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/Button'
 import {
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+} from '@/components/Form'
+import { Input } from '@/components/Input'
+import { Textarea } from '@/components/Textarea'
 
 import type { SchemaComponentProps } from './types'
 

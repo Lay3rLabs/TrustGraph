@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 
 import { cn } from '@/lib/utils'
 
-import { InfoTooltip } from './ui/info-tooltip'
+import { InfoTooltip } from './InfoTooltip'
 
 export interface Column<T> {
   /** Unique key for the column */

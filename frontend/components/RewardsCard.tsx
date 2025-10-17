@@ -2,7 +2,7 @@
 
 import type React from 'react'
 
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/Button'
 // import { enovaAddress } from '@/lib/contracts'
 
 const enovaAddress = '0x0000000000000000000000000000000000000000'

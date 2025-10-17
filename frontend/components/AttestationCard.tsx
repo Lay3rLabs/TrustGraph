@@ -12,10 +12,10 @@ import { AttestationData } from '@/lib/attestation'
 import { SchemaManager } from '@/lib/schemas'
 import { formatTimeAgo } from '@/lib/utils'
 
+import { Address } from './Address'
 import { AttestationDataDisplay } from './AttestationData'
 import { Card } from './Card'
 import { CopyableText } from './CopyableText'
-import { Address } from './ui/address'
 
 interface AttestationCardProps {
   uid: Hex

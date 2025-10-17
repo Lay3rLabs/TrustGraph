@@ -4,8 +4,8 @@ import Link from 'next/link'
 
 import { WalletConnectionButton } from '@/components/WalletConnectionButton'
 
+import { ButtonLink } from './Button'
 import Logo from './Logo'
-import { ButtonLink } from './ui/button'
 
 // const menuItems: {
 //   label: string

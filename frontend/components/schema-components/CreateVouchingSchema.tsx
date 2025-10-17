@@ -3,17 +3,17 @@
 import type React from 'react'
 import { useEffect, useState } from 'react'
 
-import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
+import { Button } from '@/components/Button'
+import { Checkbox } from '@/components/Checkbox'
 import {
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Slider } from '@/components/ui/slider'
-import { Textarea } from '@/components/ui/textarea'
+} from '@/components/Form'
+import { Slider } from '@/components/Slider'
+import { Textarea } from '@/components/Textarea'
 
 import type { SchemaComponentProps } from './types'
 import { Markdown } from '../Markdown'

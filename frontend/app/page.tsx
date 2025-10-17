@@ -3,9 +3,9 @@
 import { ChevronDown } from 'lucide-react'
 import { useState } from 'react'
 
+import { Button, ButtonLink } from '@/components/Button'
 import { Markdown } from '@/components/Markdown'
 import { NetworkGraph } from '@/components/NetworkGraph'
-import { Button, ButtonLink } from '@/components/ui/button'
 import { EXAMPLE_NETWORK } from '@/lib/network'
 import { cn } from '@/lib/utils'
 

@@ -4,9 +4,9 @@ import type React from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import { useAccount } from 'wagmi'
 
+import { Button } from '@/components/Button'
 import { CreateProposalForm } from '@/components/CreateProposalForm'
 import { ProposalCard } from '@/components/ProposalCard'
-import { Button } from '@/components/ui/button'
 import { useOpenWalletConnector } from '@/components/WalletConnectionProvider'
 import {
   ProposalAction,

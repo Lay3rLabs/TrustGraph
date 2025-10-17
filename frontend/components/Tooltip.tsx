@@ -6,11 +6,12 @@ import { Markdown } from './Markdown'
 import styles from './tooltip.module.css'
 
 export type TooltipProps = {
-  title: string
+  title: string | ReactNode
+  className?: string
   children: ReactNode
 }
 
-export const Tooltip = ({ title, children }: TooltipProps) => {
+export const Tooltip = ({ title, children, className }: TooltipProps) => {
   if (!title) {
     return <>{children}</>
   }
@@ -18,7 +19,12 @@ export const Tooltip = ({ title, children }: TooltipProps) => {
   return (
     <T.Provider>
       <T.Root delay={0}>
-        <T.Trigger aria-label={title}>{children}</T.Trigger>
+        <T.Trigger
+          aria-label={typeof title === 'string' ? title : undefined}
+          className={className}
+        >
+          {children}
+        </T.Trigger>
         <T.Portal>
           <T.Positioner sideOffset={10} side="bottom">
             <T.Popup
@@ -32,7 +38,7 @@ export const Tooltip = ({ title, children }: TooltipProps) => {
               >
                 <ArrowSvg />
               </T.Arrow>
-              <Markdown>{title}</Markdown>
+              {typeof title === 'string' ? <Markdown>{title}</Markdown> : title}
             </T.Popup>
           </T.Positioner>
         </T.Portal>
