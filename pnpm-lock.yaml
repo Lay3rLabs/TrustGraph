@@ -5,9 +5,6 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
-  '@ponder/react':
-    hash: 238c9e64b0f5530e3d69b22bf8ff591853ed3264fce6fdcf89789c8ad772065d
-    path: patches/@ponder__react.patch
   '@react-sigma/core':
     hash: 3aa557ae34273b3f12608afd88fe60a88110545f5975165953fd5c51ff5052b3
     path: patches/@react-sigma__core.patch
@@ -65,11 +62,11 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0
       '@ponder/client':
-        specifier: ^0.14.1
-        version: 0.14.1(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)(typescript@5.5.4)
+        specifier: ^0.14.3
+        version: 0.14.3(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)(typescript@5.5.4)
       '@ponder/react':
-        specifier: ^0.14.1
-        version: 0.14.1(patch_hash=238c9e64b0f5530e3d69b22bf8ff591853ed3264fce6fdcf89789c8ad772065d)(@ponder/client@0.14.1(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)(typescript@5.5.4))(@tanstack/react-query@5.90.3(react@19.2.0))(react@19.2.0)(typescript@5.5.4)
+        specifier: ^0.14.3
+        version: 0.14.3(@ponder/client@0.14.3(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)(typescript@5.5.4))(@tanstack/react-query@5.90.3(react@19.2.0))(react@19.2.0)(typescript@5.5.4)
       '@radix-ui/react-accordion':
         specifier: 1.2.2
         version: 1.2.2(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -245,8 +242,8 @@ importers:
         specifier: ^13.1.1
         version: 13.1.2
       ponder:
-        specifier: ^0.14.1
-        version: 0.14.1(@opentelemetry/api@1.9.0)(@types/node@22.15.3)(@types/pg@8.15.5)(bufferutil@4.0.9)(hono@4.9.12)(lightningcss@1.30.1)(terser@5.44.0)(typescript@5.5.4)(utf-8-validate@5.0.10)(viem@2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67))(zod@3.25.67)
+        specifier: ^0.14.3
+        version: 0.14.3(@opentelemetry/api@1.9.0)(@types/node@22.15.3)(@types/pg@8.15.5)(bufferutil@4.0.9)(hono@4.9.12)(lightningcss@1.30.1)(terser@5.44.0)(typescript@5.5.4)(utf-8-validate@5.0.10)(viem@2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67))(zod@3.25.67)
       porto:
         specifier: ^0.2.19
         version: 0.2.28(c7de008c79807147800cfc2a51349edd)
@@ -372,8 +369,8 @@ importers:
   indexer:
     dependencies:
       '@ponder/client':
-        specifier: ^0.14.1
-        version: 0.14.1(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)(typescript@5.5.4)
+        specifier: ^0.14.3
+        version: 0.14.3(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)(typescript@5.5.4)
       drizzle-orm:
         specifier: ^0.41.0
         version: 0.41.0(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)
@@ -384,8 +381,8 @@ importers:
         specifier: ^8.16.3
         version: 8.16.3
       ponder:
-        specifier: ^0.14.1
-        version: 0.14.1(@opentelemetry/api@1.9.0)(@types/node@20.19.21)(@types/pg@8.15.5)(bufferutil@4.0.9)(hono@4.9.12)(lightningcss@1.30.1)(terser@5.44.0)(typescript@5.5.4)(utf-8-validate@5.0.10)(viem@2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67))(zod@3.25.67)
+        specifier: ^0.14.3
+        version: 0.14.3(@opentelemetry/api@1.9.0)(@types/node@20.19.21)(@types/pg@8.15.5)(bufferutil@4.0.9)(hono@4.9.12)(lightningcss@1.30.1)(terser@5.44.0)(typescript@5.5.4)(utf-8-validate@5.0.10)(viem@2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67))(zod@3.25.67)
       viem:
         specifier: ^2.21.3
         version: 2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67)
@@ -406,8 +403,8 @@ importers:
         specifier: ^8.54.0
         version: 8.57.1
       eslint-config-ponder:
-        specifier: ^0.14.1
-        version: 0.14.1(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1)(typescript@5.5.4))(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1)
+        specifier: ^0.14.3
+        version: 0.14.3(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1)(typescript@5.5.4))(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1)
       typescript:
         specifier: ^5.3.2
         version: 5.5.4
@@ -2436,18 +2433,18 @@ packages:
     resolution: {integrity: sha512-c83qWb22rNRuB0UaVCI0uRPNRr8Z0FWnEIvT47jiHAmOIUHbBOg5XvV7pM5x+rKn9HRpjxquDbXYSXr3fAKFcw==}
     engines: {node: '>=12'}
 
-  '@ponder/client@0.14.1':
-    resolution: {integrity: sha512-1H6citZzHpTh1Xz2Eu3X8WRatJJbtlbPozGMUmCSTVI5hPEIKwAc97o7v7e9O9piccFYBgUIG5/YInXtzFI8rA==}
+  '@ponder/client@0.14.3':
+    resolution: {integrity: sha512-lE1PyqzEbXvXa3QUJHascQjEq1/h6H8MzUmQPjkMvS3iHUPsR0s+rB09oJBE5vvV517dMYaV1APwBxI8lkUWPw==}
     peerDependencies:
       typescript: '>=5.0.4'
     peerDependenciesMeta:
       typescript:
         optional: true
 
-  '@ponder/react@0.14.1':
-    resolution: {integrity: sha512-FOW4zDkX54OrQO0iRzwpLQ91GhzZ5PZatKBpd9mD/81dKlV5dBm1lChxV7UvysoTDRrFIoRzdiU9I8xZ1lrfFg==}
+  '@ponder/react@0.14.3':
+    resolution: {integrity: sha512-vrmIJDl0MfLDmUSNvp9yejBFSEHBma99DLXHgfB53meNG3Waeiv0jJD6YosCdA4EwA2pqkoNfuB1wB8tCmei5g==}
     peerDependencies:
-      '@ponder/client': '>=0.14.1'
+      '@ponder/client': '>=0.14.3'
       '@tanstack/react-query': '>=5.0.0'
       react: '>=18'
       typescript: '>=5.0.4'
@@ -5096,8 +5093,8 @@ packages:
     resolution: {integrity: sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==}
     engines: {node: '>=10'}
 
-  eslint-config-ponder@0.14.1:
-    resolution: {integrity: sha512-ObeyB7klL3LWnwScN68t9vq02KbB5GH2QujWhS8Bgj7yQ/rxRXHhbGVTEUXnrp9Vxf/jVeJWRtrPnLvrwapCjg==}
+  eslint-config-ponder@0.14.3:
+    resolution: {integrity: sha512-sQ9rvxPWFdjR82K5RBfq1SfvwP+Q3bHchIEZj9dKbnf9EJzAgKQu50Gl08lNdVUFlykrJtYMm4ndj9hviuWzog==}
     peerDependencies:
       '@typescript-eslint/eslint-plugin': ^6.3.0
       '@typescript-eslint/parser': ^6.3.0
@@ -7244,8 +7241,8 @@ packages:
     resolution: {integrity: sha512-40QW5YalBNfQo5yRYmiw7Yz6TKKVr3h6970B2YE+3fQpsWcrbj1PzJgxeJ19DRQjhMbKPIuMY8rFaXc8moolVw==}
     engines: {node: '>=10.13.0'}
 
-  ponder@0.14.1:
-    resolution: {integrity: sha512-PQ1aOxW3xqAVdYur3khiEQCSedhxFxqNHStj7Ku4kO801ISooExbbrxqp0SsxuxLtU/vT544VCVdNALIN0+j3g==}
+  ponder@0.14.3:
+    resolution: {integrity: sha512-JXAGqulmoGmIrHb2mkqCw4iy/UpaHR7TO4D+x3KSS7Gr6WzXvea8DExkiUD4omqMzT/Va33xTgrrmC1Q88CC7A==}
     engines: {node: '>=18.14'}
     hasBin: true
     peerDependencies:
@@ -11210,7 +11207,7 @@ snapshots:
       '@pnpm/network.ca-file': 1.0.2
       config-chain: 1.1.13
 
-  '@ponder/client@0.14.1(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)(typescript@5.5.4)':
+  '@ponder/client@0.14.3(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)(typescript@5.5.4)':
     dependencies:
       drizzle-orm: 0.41.0(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)
       eventsource: 3.0.7
@@ -11247,9 +11244,9 @@ snapshots:
       - sql.js
       - sqlite3
 
-  '@ponder/react@0.14.1(patch_hash=238c9e64b0f5530e3d69b22bf8ff591853ed3264fce6fdcf89789c8ad772065d)(@ponder/client@0.14.1(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)(typescript@5.5.4))(@tanstack/react-query@5.90.3(react@19.2.0))(react@19.2.0)(typescript@5.5.4)':
+  '@ponder/react@0.14.3(@ponder/client@0.14.3(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)(typescript@5.5.4))(@tanstack/react-query@5.90.3(react@19.2.0))(react@19.2.0)(typescript@5.5.4)':
     dependencies:
-      '@ponder/client': 0.14.1(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)(typescript@5.5.4)
+      '@ponder/client': 0.14.3(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)(typescript@5.5.4)
       '@tanstack/react-query': 5.90.3(react@19.2.0)
       react: 19.2.0
       superjson: 2.2.2
@@ -14861,7 +14858,7 @@ snapshots:
 
   escape-string-regexp@4.0.0: {}
 
-  eslint-config-ponder@0.14.1(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1)(typescript@5.5.4))(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1):
+  eslint-config-ponder@0.14.3(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1)(typescript@5.5.4))(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1):
     dependencies:
       '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1)(typescript@5.5.4)
       '@typescript-eslint/parser': 7.18.0(eslint@8.57.1)(typescript@5.5.4)
@@ -17541,7 +17538,7 @@ snapshots:
 
   pngjs@5.0.0: {}
 
-  ponder@0.14.1(@opentelemetry/api@1.9.0)(@types/node@20.19.21)(@types/pg@8.15.5)(bufferutil@4.0.9)(hono@4.9.12)(lightningcss@1.30.1)(terser@5.44.0)(typescript@5.5.4)(utf-8-validate@5.0.10)(viem@2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67))(zod@3.25.67):
+  ponder@0.14.3(@opentelemetry/api@1.9.0)(@types/node@20.19.21)(@types/pg@8.15.5)(bufferutil@4.0.9)(hono@4.9.12)(lightningcss@1.30.1)(terser@5.44.0)(typescript@5.5.4)(utf-8-validate@5.0.10)(viem@2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67))(zod@3.25.67):
     dependencies:
       '@babel/code-frame': 7.27.1
       '@commander-js/extra-typings': 12.1.0(commander@12.1.0)
@@ -17622,7 +17619,7 @@ snapshots:
       - utf-8-validate
       - zod
 
-  ponder@0.14.1(@opentelemetry/api@1.9.0)(@types/node@22.15.3)(@types/pg@8.15.5)(bufferutil@4.0.9)(hono@4.9.12)(lightningcss@1.30.1)(terser@5.44.0)(typescript@5.5.4)(utf-8-validate@5.0.10)(viem@2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67))(zod@3.25.67):
+  ponder@0.14.3(@opentelemetry/api@1.9.0)(@types/node@22.15.3)(@types/pg@8.15.5)(bufferutil@4.0.9)(hono@4.9.12)(lightningcss@1.30.1)(terser@5.44.0)(typescript@5.5.4)(utf-8-validate@5.0.10)(viem@2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67))(zod@3.25.67):
     dependencies:
       '@babel/code-frame': 7.27.1
       '@commander-js/extra-typings': 12.1.0(commander@12.1.0)
