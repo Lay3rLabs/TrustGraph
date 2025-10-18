@@ -287,7 +287,7 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
   }
 
   return (
-    <div className={cn('relative w-full h-full', className)}>
+    <div className={cn('relative w-full h-full overflow-hidden', className)}>
       {graph && (
         <SigmaContainer
           className={cn(
@@ -341,17 +341,13 @@ const SigmaControls = ({
     })
 
   const [layout, setLayout] = useState<'circular' | 'forceatlas2'>('circular')
-  const [_hoverState, setHoverState] = useState<{
+  const [hoverState, setHoverState] = useState<{
+    target: string
     nodes: string[]
     edges: string[]
+    /** Whether or not the hover state is ready (not ready while hover edge delay is active). */
+    ready: boolean
   } | null>(null)
-
-  const [isMouseDown, setIsMouseDown] = useState(false)
-  const [_isMoving, setIsMoving] = useState(false)
-  const isMoving = isMouseDown && _isMoving
-
-  const [isTouching, setIsTouching] = useState(false)
-  const hoverState = isMoving || isTouching ? null : _hoverState
 
   const stopAnimationRef = useRef<() => void>(() => {})
 
@@ -386,21 +382,6 @@ const SigmaControls = ({
     stopAnimationRef.current = stop
   }, [startForceAtlas2, stopForceAtlas2, recenter])
 
-  const setHoverNode = (node: string) => {
-    setHoverState({
-      nodes: [...new Set([node, ...graph.neighbors(node)])],
-      edges: graph.edges(node),
-    })
-    setIsHovering(true)
-  }
-  const setHoverEdge = (edge: string) => {
-    setHoverState({
-      nodes: graph.extremities(edge),
-      edges: [edge],
-    })
-    setIsHovering(true)
-  }
-
   useEffect(() => {
     loadGraph(graph)
     if (layout === 'circular') {
@@ -410,65 +391,200 @@ const SigmaControls = ({
     }
   }, [graph, loadGraph, layout, setCircularLayout, setForceAtlas2Layout])
 
-  // Don't re-register event listeners on every state change.
-  const stateRef = useUpdatingRef({
-    isTouching,
-    isMoving,
-  })
+  const tooltipRefs = useRef<Record<string, HTMLDivElement>>({})
+  const tooltipPaddingX = 10
+  const tooltipPaddingY = 16
+
+  const { width: viewWidth } = sigma.getDimensions()
+  const getNodeTooltipPosition = useCallback(
+    (node: string) => {
+      const { x, y, size } = graph.getNodeAttributes(node)
+      const { x: viewportX, y: viewportY } = sigma.graphToViewport({ x, y })
+      const isOnRight = viewportX > viewWidth / 2
+      return {
+        // Use left for positioning if on the left side of the screen, and right if on the right side, so that the tooltip overflows the screen on the side it's on with its node. Just using the left position causes the tooltip to scrunch up against the right side of the screen in an unintuitive way.
+        ...(isOnRight
+          ? {
+              left: 'unset',
+              // Set the right position where the left edge should be, and then translate it to the right by the width of the tooltip (since it's dynamically sized, we can't subtract it from the right position).
+              right: viewWidth - (viewportX + size / 2 + tooltipPaddingX),
+              transform: 'translateX(100%)',
+            }
+          : {
+              left: viewportX + size / 2 + tooltipPaddingX,
+              right: 'unset',
+              transform: 'translateX(0)',
+            }),
+        top: viewportY + size / 2 + tooltipPaddingY,
+      }
+    },
+    [sigma]
+  )
+
+  const hoverStateRef = useUpdatingRef(hoverState)
   useEffect(() => {
+    const setHoverNode = (node: string) => {
+      setHoverState({
+        ready: true,
+        target: `node:${node}`,
+        nodes: [...new Set([node, ...graph.neighbors(node)])],
+        edges: graph.edges(node),
+      })
+      setIsHovering(true)
+    }
+    const setHoverEdge = (edge: string, ready: boolean) => {
+      setHoverState({
+        ready,
+        target: `edge:${edge}`,
+        nodes: graph.extremities(edge),
+        edges: [edge],
+      })
+      setIsHovering(true)
+    }
+    const updateTooltipPositions = () => {
+      Object.entries(tooltipRefs.current).forEach(([node, el]) => {
+        Object.entries(getNodeTooltipPosition(node)).forEach(([key, value]) => {
+          el.style[key as 'left' | 'top' | 'right' | 'transform'] =
+            typeof value === 'number' ? value + 'px' : value
+        })
+      })
+    }
+
+    let isHoldingDown = false
+    let didMove = false
+    const isDragging = () => isHoldingDown && didMove
+
+    let unsetHoverNodeTimeout: NodeJS.Timeout | null = null
+    const clearUnsetHoverNodeTimeout = () => {
+      if (unsetHoverNodeTimeout) {
+        clearTimeout(unsetHoverNodeTimeout)
+        unsetHoverNodeTimeout = null
+      }
+    }
+    const beginUnhoverNode = (node: string) => {
+      clearUnsetHoverNodeTimeout()
+      // Set a delay on node unhover in case the user moved onto an edge. `leaveNode` fires before `enterEdge`, so give it a moment to fire to prevent flickering.
+      unsetHoverNodeTimeout = setTimeout(() => {
+        // Only clear hover state if the node is the current hover target.
+        if (hoverStateRef.current?.target === `node:${node}`) {
+          setHoverState(null)
+          setIsHovering(false)
+        }
+      }, 50)
+    }
+
+    let setHoverEdgeTimeout: NodeJS.Timeout | null = null
+    const clearSetHoverEdgeTimeout = () => {
+      if (setHoverEdgeTimeout) {
+        clearTimeout(setHoverEdgeTimeout)
+        setHoverEdgeTimeout = null
+      }
+    }
+    const beginHoverEdge = (edge: string) => {
+      clearSetHoverEdgeTimeout()
+      clearUnsetHoverNodeTimeout()
+      // If already hovering something, just switch the hover. Otherwise, set a timeout to hover the edge after a delay to prevent flickering when the mouse is moving quickly.
+      if (hoverStateRef.current?.ready) {
+        setHoverEdge(edge, true)
+      } else {
+        // Enable cursor pointer so the user knows they can hover the edge.
+        setHoverEdge(edge, false)
+        setHoverEdgeTimeout = setTimeout(() => setHoverEdge(edge, true), 80)
+      }
+    }
+
+    const unhoverEdge = (edge: string) => {
+      clearSetHoverEdgeTimeout()
+      clearUnsetHoverNodeTimeout()
+
+      // Only clear hover state if the edge is the current hover target.
+      if (hoverStateRef.current?.target === `edge:${edge}`) {
+        setHoverState(null)
+        setIsHovering(false)
+      } else if (!hoverStateRef.current) {
+        // Clear cursor pointer if no longer hovering anything.
+        setIsHovering(false)
+      }
+    }
+
+    const contactStart = () => {
+      isHoldingDown = true
+      didMove = false
+    }
+    const contactEnd = () => {
+      isHoldingDown = false
+      didMove = false
+    }
+    const contactMove = () => {
+      if (!isHoldingDown) {
+        return
+      }
+      didMove = true
+      updateTooltipPositions()
+    }
+
     registerEvents({
-      enterNode: (payload) => {
-        if (stateRef.current.isTouching || stateRef.current.isMoving) {
+      enterNode: ({ node }) => {
+        if (isDragging()) {
           return
         }
 
-        setHoverNode(payload.node)
+        clearSetHoverEdgeTimeout()
+        clearUnsetHoverNodeTimeout()
+        setHoverNode(node)
       },
-      leaveNode: () => {
-        setHoverState(null)
-        setIsHovering(false)
+      leaveNode: ({ node }) => {
+        if (isDragging()) {
+          return
+        }
+
+        beginUnhoverNode(node)
       },
       clickNode: ({ node }) => {
-        if (!stateRef.current.isTouching) {
+        // If already hovering the node, open the account in a new tab.
+        if (hoverStateRef.current?.nodes.includes(node)) {
           window.open(`/account/${node}`, '_blank')
+        } else {
+          // If not hovering the node, begin hovering it.
+          setHoverNode(node)
         }
       },
-      enterEdge: (payload) => {
-        if (stateRef.current.isTouching || stateRef.current.isMoving) {
+      enterEdge: ({ edge }) => {
+        if (isDragging()) {
           return
         }
-        // doFadeEdges(sigma, 1_000, 'out', [payload.edge])
 
-        setHoverEdge(payload.edge)
+        beginHoverEdge(edge)
       },
-      leaveEdge: () => {
-        setHoverState(null)
-        setIsHovering(false)
-      },
+      leaveEdge: ({ edge }) => {
+        if (isDragging()) {
+          return
+        }
 
-      mousedown: () => setIsMouseDown(true),
-      mousemove: () => setIsMoving(true),
-      mouseup: () => {
-        setIsMoving(false)
-        setIsMouseDown(false)
-      },
-
-      touchdown: () => setIsTouching(true),
-      touchmove: () => setIsTouching(true),
-      touchmovebody: () => setIsTouching(true),
-      touchup: () => {
-        setIsTouching(false)
-        setHoverState(null)
-        setIsHovering(false)
+        unhoverEdge(edge)
       },
 
       clickEdge: ({ edge }) => {
-        if (!stateRef.current.isTouching) {
+        // If already hovering the edge, open the attestation in a new tab.
+        if (hoverStateRef.current?.edges.includes(edge)) {
           window.open(`/attestations/${edge}`, '_blank')
+        } else {
+          // If not hovering the edge, begin hovering it.
+          clearSetHoverEdgeTimeout()
+          setHoverEdge(edge, true)
         }
       },
+
+      mousedown: contactStart,
+      touchdown: contactStart,
+
+      mousemovebody: contactMove,
+      touchmovebody: contactMove,
+
+      mouseup: contactEnd,
+      touchup: contactEnd,
     })
-  }, [registerEvents, graph, stateRef])
+  }, [registerEvents, graph, getNodeTooltipPosition])
 
   useEffect(() => {
     setSettings({
@@ -478,14 +594,14 @@ const SigmaControls = ({
           highlighted: data.highlighted || false,
         }
 
-        if (hoverState) {
+        if (hoverState?.ready) {
           if (hoverState.nodes.includes(node)) {
             newData.highlighted = true
           } else {
-            // newData.color = '#E2E2E2'
-            // newData.highlighted = false
-            // newData.label = ''
-            newData.hidden = true
+            newData.color = '#E2E2E2'
+            newData.highlighted = false
+            newData.label = ''
+            // newData.hidden = true
           }
         }
 
@@ -493,15 +609,10 @@ const SigmaControls = ({
       },
       edgeReducer: (edge, data) => ({
         ...data,
-        hidden: !!hoverState && !hoverState.edges.includes(edge),
-        // color: `rgba(216, 216, 216, ${data.opacity || 1})`,
+        hidden: !!hoverState?.ready && !hoverState.edges.includes(edge),
       }),
     })
   }, [setSettings, sigma, hoverState, graph])
-
-  // const { height: viewHeight } = sigma.getDimensions()
-  const tooltipPaddingX = 10
-  const tooltipPaddingY = 16
 
   return (
     <>
@@ -524,68 +635,33 @@ const SigmaControls = ({
         )}
       </ControlsContainer>
 
-      {!!hoverState?.nodes.length &&
-        hoverState.nodes.map((node) => {
-          const { x, y, value, size } = graph.getNodeAttributes(node)
-          const { x: viewportX, y: viewportY } = sigma.graphToViewport({ x, y })
-          // const verticalSide = viewportY > viewHeight / 2 ? 'top' : 'bottom'
-          const verticalSide = 'bottom'
+      {graph.nodes().map((node) => {
+        const visible = !!hoverState?.ready && hoverState.nodes.includes(node)
+        const { value } = graph.getNodeAttributes(node)
+        const style = getNodeTooltipPosition(node)
 
-          return (
-            <div
-              key={node}
-              className={cn(
-                'absolute flex flex-col items-center justify-center rounded-sm px-3 py-2 bg-primary/10 text-primary backdrop-blur-xs pointer-events-none animate-in fade-in-0 duration-150'
-              )}
-              style={{
-                left: viewportX + size / 2 + tooltipPaddingX,
-                top:
-                  verticalSide === 'bottom'
-                    ? viewportY + size / 2 + tooltipPaddingY
-                    : undefined,
-                // bottom:
-                //   verticalSide === 'top'
-                //     ? viewHeight - (viewportY - size / 2 - tooltipPaddingY)
-                //     : undefined,
-              }}
-            >
-              <p className="text-xs">
-                Score: {formatBigNumber(value, undefined, true)}
-              </p>
-            </div>
-          )
-        })}
+        return (
+          <div
+            ref={(el) => {
+              if (el) {
+                tooltipRefs.current[node] = el
+              } else {
+                delete tooltipRefs.current[node]
+              }
+            }}
+            key={node}
+            className={cn(
+              'absolute flex flex-col items-center justify-center rounded-sm px-3 py-2 bg-primary/10 text-primary backdrop-blur-xs pointer-events-none transition-opacity duration-150',
+              visible ? 'opacity-100' : 'opacity-0'
+            )}
+            style={style}
+          >
+            <p className="text-xs">
+              Score: {formatBigNumber(value, undefined, true)}
+            </p>
+          </div>
+        )
+      })}
     </>
   )
 }
-
-// const doFadeEdges = (
-//   sigma: Sigma,
-//   duration: number,
-//   direction: 'out' | 'in',
-//   exceptEdges: string[]
-// ) => {
-//   const graph = sigma.getGraph()
-//   const start = performance.now()
-
-//   const fadeEdges = () => {
-//     const now = performance.now()
-//     const elapsed = now - start
-//     const progress = Math.min(elapsed / duration, 1)
-//     const opacity = direction === 'out' ? 1 - progress : progress
-
-//     graph.forEachEdge((edge) => {
-//       if (!exceptEdges.includes(edge)) {
-//         graph.setEdgeAttribute(edge, 'opacity', opacity)
-//       }
-//     })
-
-//     sigma.scheduleRefresh()
-
-//     if (elapsed < duration) {
-//       requestAnimationFrame(fadeEdges)
-//     }
-//   }
-
-//   requestAnimationFrame(fadeEdges)
-// }
