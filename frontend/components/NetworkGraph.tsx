@@ -411,6 +411,8 @@ const SigmaControls = ({
         setHoverState(null)
         setIsHovering(false)
       },
+      mousemove: () => setIsHovering(false),
+      touchmove: () => setIsHovering(false),
       clickEdge: ({ edge }) => window.open(`/attestations/${edge}`, '_blank'),
     })
   }, [registerEvents, graph, loadGraph])
