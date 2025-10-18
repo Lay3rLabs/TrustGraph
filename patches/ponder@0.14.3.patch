@@ -1,0 +1,10 @@
+diff --git a/dist/esm/client/index.js b/dist/esm/client/index.js
+index 32de351d8280072bb8b147fe48a12c487165b75d..8ee25418086be257cd967f885a09b6f8e15451d9 100644
+--- a/dist/esm/client/index.js
++++ b/dist/esm/client/index.js
+@@ -1,4 +1,4 @@
+-import crypto from "node:crypto";
++import crypto from "crypto";
+ import { promiseWithResolvers } from '../utils/promiseWithResolvers.js';
+ import { createMiddleware } from "hono/factory";
+ import { streamSSE } from "hono/streaming";
