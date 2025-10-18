@@ -22,15 +22,15 @@ import {
 } from '@sigma/edge-curve'
 import { useQuery } from '@tanstack/react-query'
 import { MultiDirectedGraph } from 'graphology'
-import { circular } from 'graphology-layout'
 import forceAtlas2 from 'graphology-layout-forceatlas2'
 import { CircleDashed, LoaderCircle, Waypoints } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { EdgeArrowProgram } from 'sigma/rendering'
-import { MouseCoords, NodeDisplayData } from 'sigma/types'
+import { NodeDisplayData } from 'sigma/types'
 import { animateNodes } from 'sigma/utils'
 
 import { useBatchEnsQuery } from '@/hooks/useEns'
+import { useUpdatingRef } from '@/hooks/useUpdatingRef'
 import { Network, isTrustedSeed } from '@/lib/network'
 import { cn, formatBigNumber } from '@/lib/utils'
 import { ponderQueries } from '@/queries/ponder'
@@ -265,9 +265,6 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
       }
     )
 
-    // Default to circular layout.
-    circular.assign(graph)
-
     return graph
   }, [data, ensData])
 
@@ -329,6 +326,7 @@ const SigmaControls = ({
   const setSettings = useSetSettings()
   const { reset: recenter } = useCamera()
 
+  const { positions: circularPositions } = useLayoutCircular({ scale: 100 })
   const { start: startForceAtlas2, stop: stopForceAtlas2 } =
     useWorkerLayoutForceAtlas2({
       settings: {
@@ -341,14 +339,19 @@ const SigmaControls = ({
         // outboundAttractionDistribution: true,
       },
     })
-  const { positions: circularPositions } = useLayoutCircular({ scale: 100 })
 
   const [layout, setLayout] = useState<'circular' | 'forceatlas2'>('circular')
-  const [hoverState, setHoverState] = useState<{
+  const [_hoverState, setHoverState] = useState<{
     nodes: string[]
     edges: string[]
-    coords: MouseCoords
   } | null>(null)
+
+  const [isMouseDown, setIsMouseDown] = useState(false)
+  const [_isMoving, setIsMoving] = useState(false)
+  const isMoving = isMouseDown && _isMoving
+
+  const [isTouching, setIsTouching] = useState(false)
+  const hoverState = isMoving || isTouching ? null : _hoverState
 
   const stopAnimationRef = useRef<() => void>(() => {})
 
@@ -383,39 +386,89 @@ const SigmaControls = ({
     stopAnimationRef.current = stop
   }, [startForceAtlas2, stopForceAtlas2, recenter])
 
+  const setHoverNode = (node: string) => {
+    setHoverState({
+      nodes: [...new Set([node, ...graph.neighbors(node)])],
+      edges: graph.edges(node),
+    })
+    setIsHovering(true)
+  }
+  const setHoverEdge = (edge: string) => {
+    setHoverState({
+      nodes: graph.extremities(edge),
+      edges: [edge],
+    })
+    setIsHovering(true)
+  }
+
   useEffect(() => {
     loadGraph(graph)
+    if (layout === 'circular') {
+      setCircularLayout()
+    } else {
+      setForceAtlas2Layout()
+    }
+  }, [graph, loadGraph, layout, setCircularLayout, setForceAtlas2Layout])
+
+  // Don't re-register event listeners on every state change.
+  const stateRef = useUpdatingRef({
+    isTouching,
+    isMoving,
+  })
+  useEffect(() => {
     registerEvents({
       enterNode: (payload) => {
-        setHoverState({
-          nodes: [...new Set([payload.node, ...graph.neighbors(payload.node)])],
-          edges: graph.edges(payload.node),
-          coords: payload.event,
-        })
-        setIsHovering(true)
+        if (stateRef.current.isTouching || stateRef.current.isMoving) {
+          return
+        }
+
+        setHoverNode(payload.node)
       },
       leaveNode: () => {
         setHoverState(null)
         setIsHovering(false)
       },
-      clickNode: ({ node }) => window.open(`/account/${node}`, '_blank'),
+      clickNode: ({ node }) => {
+        if (!stateRef.current.isTouching) {
+          window.open(`/account/${node}`, '_blank')
+        }
+      },
       enterEdge: (payload) => {
-        setHoverState({
-          nodes: [...new Set(graph.extremities(payload.edge))],
-          edges: [payload.edge],
-          coords: payload.event,
-        })
-        setIsHovering(true)
+        if (stateRef.current.isTouching || stateRef.current.isMoving) {
+          return
+        }
+        // doFadeEdges(sigma, 1_000, 'out', [payload.edge])
+
+        setHoverEdge(payload.edge)
       },
       leaveEdge: () => {
         setHoverState(null)
         setIsHovering(false)
       },
-      mousemove: () => setIsHovering(false),
-      touchmove: () => setIsHovering(false),
-      clickEdge: ({ edge }) => window.open(`/attestations/${edge}`, '_blank'),
+
+      mousedown: () => setIsMouseDown(true),
+      mousemove: () => setIsMoving(true),
+      mouseup: () => {
+        setIsMoving(false)
+        setIsMouseDown(false)
+      },
+
+      touchdown: () => setIsTouching(true),
+      touchmove: () => setIsTouching(true),
+      touchmovebody: () => setIsTouching(true),
+      touchup: () => {
+        setIsTouching(false)
+        setHoverState(null)
+        setIsHovering(false)
+      },
+
+      clickEdge: ({ edge }) => {
+        if (!stateRef.current.isTouching) {
+          window.open(`/attestations/${edge}`, '_blank')
+        }
+      },
     })
-  }, [registerEvents, graph, loadGraph])
+  }, [registerEvents, graph, stateRef])
 
   useEffect(() => {
     setSettings({
@@ -441,11 +494,12 @@ const SigmaControls = ({
       edgeReducer: (edge, data) => ({
         ...data,
         hidden: !!hoverState && !hoverState.edges.includes(edge),
+        // color: `rgba(216, 216, 216, ${data.opacity || 1})`,
       }),
     })
   }, [setSettings, sigma, hoverState, graph])
 
-  const { height: viewHeight } = sigma.getDimensions()
+  // const { height: viewHeight } = sigma.getDimensions()
   const tooltipPaddingX = 10
   const tooltipPaddingY = 16
 
@@ -474,7 +528,8 @@ const SigmaControls = ({
         hoverState.nodes.map((node) => {
           const { x, y, value, size } = graph.getNodeAttributes(node)
           const { x: viewportX, y: viewportY } = sigma.graphToViewport({ x, y })
-          const verticalSide = viewportY > viewHeight / 2 ? 'top' : 'bottom'
+          // const verticalSide = viewportY > viewHeight / 2 ? 'top' : 'bottom'
+          const verticalSide = 'bottom'
 
           return (
             <div
@@ -488,10 +543,10 @@ const SigmaControls = ({
                   verticalSide === 'bottom'
                     ? viewportY + size / 2 + tooltipPaddingY
                     : undefined,
-                bottom:
-                  verticalSide === 'top'
-                    ? viewHeight - (viewportY - size / 2 - tooltipPaddingY)
-                    : undefined,
+                // bottom:
+                //   verticalSide === 'top'
+                //     ? viewHeight - (viewportY - size / 2 - tooltipPaddingY)
+                //     : undefined,
               }}
             >
               <p className="text-xs">
@@ -503,3 +558,34 @@ const SigmaControls = ({
     </>
   )
 }
+
+// const doFadeEdges = (
+//   sigma: Sigma,
+//   duration: number,
+//   direction: 'out' | 'in',
+//   exceptEdges: string[]
+// ) => {
+//   const graph = sigma.getGraph()
+//   const start = performance.now()
+
+//   const fadeEdges = () => {
+//     const now = performance.now()
+//     const elapsed = now - start
+//     const progress = Math.min(elapsed / duration, 1)
+//     const opacity = direction === 'out' ? 1 - progress : progress
+
+//     graph.forEachEdge((edge) => {
+//       if (!exceptEdges.includes(edge)) {
+//         graph.setEdgeAttribute(edge, 'opacity', opacity)
+//       }
+//     })
+
+//     sigma.scheduleRefresh()
+
+//     if (elapsed < duration) {
+//       requestAnimationFrame(fadeEdges)
+//     }
+//   }
+
+//   requestAnimationFrame(fadeEdges)
+// }
