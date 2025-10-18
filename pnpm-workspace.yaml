@@ -12,5 +12,4 @@ onlyBuiltDependencies:
   - utf-8-validate
 
 patchedDependencies:
-  '@react-sigma/core': patches/@react-sigma__core.patch
   ponder@0.14.3: patches/ponder@0.14.3.patch

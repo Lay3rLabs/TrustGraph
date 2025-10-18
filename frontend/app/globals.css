@@ -148,6 +148,10 @@
 
 html {
   position: relative;
+}
+
+html,
+:fullscreen .sigma-container {
   background: linear-gradient(
     135deg,
     oklch(0.98 0 0) 0%,
@@ -224,8 +228,13 @@ h1 {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-
 pre {
   white-space: pre-wrap;
   word-wrap: break-word;
+}
+
+.react-sigma-control > button {
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
 }

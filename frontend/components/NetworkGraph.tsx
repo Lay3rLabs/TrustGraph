@@ -2,17 +2,116 @@
 
 import '@react-sigma/core/lib/style.css'
 
-import { SigmaContainer } from '@react-sigma/core'
+import {
+  ControlsContainer,
+  FullScreenControl,
+  SigmaContainer,
+  ZoomControl,
+  useCamera,
+  useLoadGraph,
+  useRegisterEvents,
+  useSetSettings,
+  useSigma,
+} from '@react-sigma/core'
+import {
+  DEFAULT_EDGE_CURVATURE,
+  EdgeCurvedArrowProgram,
+  indexParallelEdgesIndex,
+} from '@sigma/edge-curve'
 import { useQuery } from '@tanstack/react-query'
 import { MultiDirectedGraph } from 'graphology'
 import { circular } from 'graphology-layout'
 import { LoaderCircle } from 'lucide-react'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { EdgeArrowProgram } from 'sigma/rendering'
+import { MouseCoords, NodeDisplayData } from 'sigma/types'
 
 import { useBatchEnsQuery } from '@/hooks/useEns'
 import { Network, isTrustedSeed } from '@/lib/network'
 import { cn } from '@/lib/utils'
 import { ponderQueries } from '@/queries/ponder'
+
+// https://github.com/jacomyal/sigma.js/blob/main/packages/storybook/stories/3-additional-packages/edge-curve/parallel-edges.ts
+const getCurvature = (index: number, maxIndex: number): number => {
+  if (maxIndex <= 0) throw new Error('Invalid maxIndex')
+  if (index < 0) return -getCurvature(-index, maxIndex)
+  const amplitude = 3.5
+  const maxCurvature =
+    amplitude * (1 - Math.exp(-maxIndex / amplitude)) * DEFAULT_EDGE_CURVATURE
+  return (maxCurvature * index) / maxIndex
+}
+
+// Helper function to get color based on value (0-100)
+const getColorFromValue = (value: number): string => {
+  // Clamp value between 0 and 100
+  const clampedValue = Math.max(0, Math.min(100, value))
+
+  // Red -> Yellow -> Green
+  // if (clampedValue <= 50) {
+  //   // Interpolate from red to yellow (0-50)
+  //   const ratio = clampedValue / 50
+  //   const red = 255
+  //   const green = Math.round(255 * ratio)
+  //   const blue = 0
+  //   return `rgb(${red}, ${green}, ${blue})`
+  // } else {
+  //   // Interpolate from yellow to green (50-100)
+  //   const ratio = (clampedValue - 50) / 50
+  //   const red = Math.round(255 * (1 - ratio))
+  //   const green = 255
+  //   const blue = 0
+  //   return `rgb(${red}, ${green}, ${blue})`
+  // }
+
+  // Red -> Blue
+  // const ratio = clampedValue / 100
+  // const red = Math.round(255 * (1 - ratio))
+  // const green = 0
+  // const blue = Math.round(255 * ratio)
+  // return `rgb(${red}, ${green}, ${blue})`
+
+  // Purple -> Blue -> Cyan
+  // if (clampedValue <= 50) {
+  //   // Purple to Blue (0-50)
+  //   const ratio = clampedValue / 50
+  //   const red = Math.round(128 * (1 - ratio) + 65 * ratio)
+  //   const green = Math.round(0 * (1 - ratio) + 105 * ratio)
+  //   const blue = Math.round(128 * (1 - ratio) + 225 * ratio)
+  //   return `rgb(${red}, ${green}, ${blue})`
+  // } else {
+  //   // Blue to Cyan (50-100)
+  //   const ratio = (clampedValue - 50) / 50
+  //   const red = Math.round(65 * (1 - ratio) + 0 * ratio)
+  //   const green = Math.round(105 * (1 - ratio) + 206 * ratio)
+  //   const blue = Math.round(225 * (1 - ratio) + 209 * ratio)
+  //   return `rgb(${red}, ${green}, ${blue})`
+  // }
+
+  // Simplified viridis-like gradient: Dark Blue → Teal → Yellow
+  // const ratio = clampedValue / 100
+  // if (ratio < 0.5) {
+  //   const t = ratio * 2
+  //   const red = Math.round(68 * (1 - t) + 35 * t)
+  //   const green = Math.round(1 * (1 - t) + 139 * t)
+  //   const blue = Math.round(84 * (1 - t) + 140 * t)
+  //   return `rgb(${red}, ${green}, ${blue})`
+  // } else {
+  //   const t = (ratio - 0.5) * 2
+  //   const red = Math.round(35 * (1 - t) + 253 * t)
+  //   const green = Math.round(139 * (1 - t) + 231 * t)
+  //   const blue = Math.round(140 * (1 - t) + 37 * t)
+  //   return `rgb(${red}, ${green}, ${blue})`
+  // }
+
+  // Light blue to deep blue
+  const ratio = clampedValue / 100
+  const red = Math.round(173 * (1 - ratio) + 25 * ratio)
+  const green = Math.round(216 * (1 - ratio) + 25 * ratio)
+  const blue = Math.round(230 * (1 - ratio) + 112 * ratio)
+  return `rgb(${red}, ${green}, ${blue})`
+
+  return '#888'
+}
 
 export interface NetworkGraphProps {
   network: Network
@@ -30,6 +129,8 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
     data?.accounts.map((account) => account.account) || []
   )
 
+  const [isHovering, setIsHovering] = useState(false)
+
   const graph = useMemo(() => {
     if (!data) {
       return null
@@ -42,7 +143,7 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
       value: bigint
       sent: number
       received: number
-      forceLabel: boolean
+      color?: string
     }>()
 
     const maxValue = Number(
@@ -57,10 +158,22 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
         BigInt(maxValue)
       )
     )
-    const minSize = 5
-    const maxSize = 15
+
+    const minNodeSize = 8
+    const maxNodeSize = 16
+
+    const minConfidence = 0
+    const maxConfidence = 100
+    const minEdgeSize = 2
+    const maxEdgeSize = 8
 
     for (const { account, value, sent, received } of data.accounts) {
+      // Normalize value to 0-100 scale
+      const normalizedValue =
+        maxValue === minValue
+          ? 50 // Default to middle if all values are the same
+          : ((Number(value) - minValue) / (maxValue - minValue)) * 100
+
       graph.addNode(account, {
         label:
           (ensData?.[account]?.name ||
@@ -71,20 +184,76 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
         received,
         // Set size to relative value, scaled to a range
         size:
-          minSize +
+          minNodeSize +
           ((Number(value) - minValue) / (maxValue - minValue)) *
-            (maxSize - minSize),
-        forceLabel: true,
+            (maxNodeSize - minNodeSize),
+        // Set node color gradient from red to yellow to green based on value
+        color: getColorFromValue(normalizedValue),
       })
     }
+
     for (const attestation of data.attestations) {
+      const confidence = Number(attestation.decodedData?.confidence || 50)
+      const size =
+        minEdgeSize +
+        ((confidence - minConfidence) / (maxConfidence - minConfidence)) *
+          (maxEdgeSize - minEdgeSize)
       graph.addEdgeWithKey(
         attestation.uid,
         attestation.attester,
         attestation.recipient,
-        { label: attestation.decodedData?.confidence?.toString() || 'unknown' }
+        {
+          label: attestation.decodedData?.confidence?.toString() || 'unknown',
+          size,
+        }
       )
     }
+
+    // Curve parallel edges so they're all visible / not overlapping
+    // https://github.com/jacomyal/sigma.js/blob/main/packages/storybook/stories/3-additional-packages/edge-curve/parallel-edges.ts
+
+    // Use dedicated helper to identify parallel edges:
+    indexParallelEdgesIndex(graph, {
+      edgeIndexAttribute: 'parallelIndex',
+      edgeMinIndexAttribute: 'parallelMinIndex',
+      edgeMaxIndexAttribute: 'parallelMaxIndex',
+    })
+
+    // Adapt types and curvature of parallel edges for rendering:
+    graph.forEachEdge(
+      (
+        edge,
+        {
+          parallelIndex,
+          parallelMinIndex,
+          parallelMaxIndex,
+        }:
+          | {
+              parallelIndex: number
+              parallelMinIndex?: number
+              parallelMaxIndex: number
+            }
+          | {
+              parallelIndex?: null
+              parallelMinIndex?: null
+              parallelMaxIndex?: null
+            }
+      ) => {
+        if (typeof parallelMinIndex === 'number') {
+          graph.mergeEdgeAttributes(edge, {
+            type: parallelIndex ? 'curved' : 'straight',
+            curvature: getCurvature(parallelIndex, parallelMaxIndex),
+          })
+        } else if (typeof parallelIndex === 'number') {
+          graph.mergeEdgeAttributes(edge, {
+            type: 'curved',
+            curvature: getCurvature(parallelIndex, parallelMaxIndex),
+          })
+        } else {
+          graph.setEdgeAttribute(edge, 'type', 'straight')
+        }
+      }
+    )
 
     // Assign layout.
     circular.assign(graph)
@@ -114,19 +283,115 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
     <div className={cn('relative w-full h-full', className)}>
       {graph && (
         <SigmaContainer
-          className="!bg-transparent border border-border rounded-md"
+          className={cn(
+            '!bg-transparent border border-border rounded-md',
+            isHovering && 'cursor-pointer'
+          )}
           settings={{
-            allowInvalidContainer: true,
             renderLabels: true,
-            // https://github.com/jacomyal/sigma.js/blob/main/packages/storybook/stories/3-additional-packages/edge-curve/parallel-edges.ts
-            // defaultEdgeType: 'curved',
-            // edgeProgramClasses: {
-            //   curved: EdgeCurvedArrowProgram,
-            // },
+            allowInvalidContainer: true,
+            defaultEdgeType: 'straight',
+            enableEdgeEvents: true,
+            edgeProgramClasses: {
+              straight: EdgeArrowProgram,
+              curved: EdgeCurvedArrowProgram,
+            },
           }}
-          graph={graph}
-        />
+          graph={MultiDirectedGraph}
+        >
+          <SigmaCustomizer graph={graph} setIsHovering={setIsHovering} />
+
+          <ControlsContainer position="top-left">
+            <ZoomControl />
+            <FullScreenControl />
+          </ControlsContainer>
+        </SigmaContainer>
       )}
     </div>
   )
+}
+
+const SigmaCustomizer = ({
+  graph,
+  setIsHovering,
+}: {
+  graph: MultiDirectedGraph
+  setIsHovering: (hovering: boolean) => void
+}) => {
+  const sigma = useSigma()
+  const registerEvents = useRegisterEvents()
+  const loadGraph = useLoadGraph()
+  const setSettings = useSetSettings()
+  const { zoomOut } = useCamera()
+  const [hoverState, setHoverState] = useState<{
+    node?: boolean
+    nodes: string[]
+    edges: string[]
+    coords: MouseCoords
+  } | null>(null)
+
+  useEffect(() => {
+    loadGraph(graph)
+    zoomOut({ factor: 1.1, duration: 500 })
+    registerEvents({
+      enterNode: (payload) => {
+        setHoverState({
+          node: true,
+          nodes: [payload.node, ...graph.neighbors(payload.node)],
+          edges: graph.edges(payload.node),
+          coords: payload.event,
+        })
+        setIsHovering(true)
+      },
+      leaveNode: () => {
+        setHoverState(null)
+        setIsHovering(false)
+      },
+      clickNode: ({ node }) => window.open(`/account/${node}`, '_blank'),
+      enterEdge: (payload) => {
+        setHoverState({
+          node: false,
+          nodes: graph.extremities(payload.edge),
+          edges: [payload.edge],
+          coords: payload.event,
+        })
+        setIsHovering(true)
+      },
+      leaveEdge: () => {
+        setHoverState(null)
+        setIsHovering(false)
+      },
+      clickEdge: ({ edge }) => window.open(`/attestations/${edge}`, '_blank'),
+    })
+  }, [registerEvents, graph, loadGraph, zoomOut])
+
+  useEffect(() => {
+    setSettings({
+      nodeReducer: (node, data) => {
+        const newData: Partial<NodeDisplayData> = {
+          ...data,
+          highlighted: data.highlighted || false,
+        }
+
+        if (hoverState) {
+          if (hoverState.nodes.includes(node)) {
+            newData.highlighted = true
+          } else {
+            // newData.color = '#E2E2E2'
+            // newData.highlighted = false
+            // newData.label = ''
+            newData.hidden = true
+          }
+        }
+
+        return newData
+      },
+      edgeReducer: (edge, data) => ({
+        ...data,
+        hidden: !!hoverState && !hoverState.edges.includes(edge),
+      }),
+    })
+  }, [setSettings, sigma, hoverState, graph])
+
+  return null
 }
