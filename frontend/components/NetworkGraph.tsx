@@ -32,7 +32,7 @@ import { animateNodes } from 'sigma/utils'
 
 import { useBatchEnsQuery } from '@/hooks/useEns'
 import { Network, isTrustedSeed } from '@/lib/network'
-import { cn } from '@/lib/utils'
+import { cn, formatBigNumber } from '@/lib/utils'
 import { ponderQueries } from '@/queries/ponder'
 
 // https://github.com/jacomyal/sigma.js/blob/main/packages/storybook/stories/3-additional-packages/edge-curve/parallel-edges.ts
@@ -117,6 +117,17 @@ const getColorFromValue = (value: number): string => {
   return '#888'
 }
 
+export interface NetworkGraphNode {
+  label: string
+  x: number
+  y: number
+  size: number
+  value: bigint
+  sent: number
+  received: number
+  color?: string
+}
+
 export interface NetworkGraphProps {
   network: Network
   className?: string
@@ -141,14 +152,7 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
     }
 
     // Create the graph
-    const graph = new MultiDirectedGraph<{
-      label: string
-      size: number
-      value: bigint
-      sent: number
-      received: number
-      color?: string
-    }>()
+    const graph = new MultiDirectedGraph<NetworkGraphNode>()
 
     const maxValue = Number(
       data.accounts.reduce(
@@ -183,6 +187,8 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
           (ensData?.[account]?.name ||
             `${account.slice(0, 6)}...${account.slice(-4)}`) +
           (isTrustedSeed(network, account) ? ' 🌱' : ''),
+        x: 0,
+        y: 0,
         value: BigInt(value),
         sent,
         received,
@@ -303,12 +309,7 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
           }}
           graph={MultiDirectedGraph}
         >
-          <ControlsContainer position="top-left">
-            <ZoomControl />
-            <FullScreenControl />
-
-            <SigmaControls graph={graph} setIsHovering={setIsHovering} />
-          </ControlsContainer>
+          <SigmaControls graph={graph} setIsHovering={setIsHovering} />
         </SigmaContainer>
       )}
     </div>
@@ -319,7 +320,7 @@ const SigmaControls = ({
   graph,
   setIsHovering,
 }: {
-  graph: MultiDirectedGraph
+  graph: MultiDirectedGraph<NetworkGraphNode>
   setIsHovering: (hovering: boolean) => void
 }) => {
   const sigma = useSigma()
@@ -344,7 +345,6 @@ const SigmaControls = ({
 
   const [layout, setLayout] = useState<'circular' | 'forceatlas2'>('circular')
   const [hoverState, setHoverState] = useState<{
-    node?: boolean
     nodes: string[]
     edges: string[]
     coords: MouseCoords
@@ -388,8 +388,7 @@ const SigmaControls = ({
     registerEvents({
       enterNode: (payload) => {
         setHoverState({
-          node: true,
-          nodes: [payload.node, ...graph.neighbors(payload.node)],
+          nodes: [...new Set([payload.node, ...graph.neighbors(payload.node)])],
           edges: graph.edges(payload.node),
           coords: payload.event,
         })
@@ -402,8 +401,7 @@ const SigmaControls = ({
       clickNode: ({ node }) => window.open(`/account/${node}`, '_blank'),
       enterEdge: (payload) => {
         setHoverState({
-          node: false,
-          nodes: graph.extremities(payload.edge),
+          nodes: [...new Set(graph.extremities(payload.edge))],
           edges: [payload.edge],
           coords: payload.event,
         })
@@ -445,21 +443,61 @@ const SigmaControls = ({
     })
   }, [setSettings, sigma, hoverState, graph])
 
+  const { height: viewHeight } = sigma.getDimensions()
+  const tooltipPaddingX = 10
+  const tooltipPaddingY = 16
+
   return (
     <>
-      {layout === 'circular' ? (
-        <div className="react-sigma-control">
-          <button title="Spread Out" onClick={setForceAtlas2Layout}>
-            <Waypoints width="1em" height="1em" />
-          </button>
-        </div>
-      ) : (
-        <div className="react-sigma-control">
-          <button title="Round Out" onClick={setCircularLayout}>
-            <CircleDashed width="1em" height="1em" />
-          </button>
-        </div>
-      )}
+      <ControlsContainer position="top-left">
+        <ZoomControl />
+        <FullScreenControl />
+
+        {layout === 'circular' ? (
+          <div className="react-sigma-control">
+            <button title="Spread Out" onClick={setForceAtlas2Layout}>
+              <Waypoints width="1em" height="1em" />
+            </button>
+          </div>
+        ) : (
+          <div className="react-sigma-control">
+            <button title="Round Out" onClick={setCircularLayout}>
+              <CircleDashed width="1em" height="1em" />
+            </button>
+          </div>
+        )}
+      </ControlsContainer>
+
+      {!!hoverState?.nodes.length &&
+        hoverState.nodes.map((node) => {
+          const { x, y, value, size } = graph.getNodeAttributes(node)
+          const { x: viewportX, y: viewportY } = sigma.graphToViewport({ x, y })
+          const verticalSide = viewportY > viewHeight / 2 ? 'top' : 'bottom'
+
+          return (
+            <div
+              key={node}
+              className={cn(
+                'absolute flex flex-col items-center justify-center rounded-sm px-3 py-2 bg-primary/10 text-primary backdrop-blur-xs pointer-events-none animate-in fade-in-0 duration-150'
+              )}
+              style={{
+                left: viewportX + size / 2 + tooltipPaddingX,
+                top:
+                  verticalSide === 'bottom'
+                    ? viewportY + size / 2 + tooltipPaddingY
+                    : undefined,
+                bottom:
+                  verticalSide === 'top'
+                    ? viewHeight - (viewportY - size / 2 - tooltipPaddingY)
+                    : undefined,
+              }}
+            >
+              <p className="text-xs">
+                Score: {formatBigNumber(value, undefined, true)}
+              </p>
+            </div>
+          )
+        })}
     </>
   )
 }
