@@ -33,7 +33,6 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     type: 'website',
-    url: 'https://trustgraph.network',
   },
 }
 
