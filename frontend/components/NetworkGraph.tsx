@@ -13,6 +13,8 @@ import {
   useSetSettings,
   useSigma,
 } from '@react-sigma/core'
+import { useLayoutCircular } from '@react-sigma/layout-circular'
+import { useWorkerLayoutForceAtlas2 } from '@react-sigma/layout-forceatlas2'
 import {
   DEFAULT_EDGE_CURVATURE,
   EdgeCurvedArrowProgram,
@@ -21,10 +23,12 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { MultiDirectedGraph } from 'graphology'
 import { circular } from 'graphology-layout'
-import { LoaderCircle } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import forceAtlas2 from 'graphology-layout-forceatlas2'
+import { CircleDashed, LoaderCircle, Waypoints } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { EdgeArrowProgram } from 'sigma/rendering'
 import { MouseCoords, NodeDisplayData } from 'sigma/types'
+import { animateNodes } from 'sigma/utils'
 
 import { useBatchEnsQuery } from '@/hooks/useEns'
 import { Network, isTrustedSeed } from '@/lib/network'
@@ -255,7 +259,7 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
       }
     )
 
-    // Assign layout.
+    // Default to circular layout.
     circular.assign(graph)
 
     return graph
@@ -299,11 +303,11 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
           }}
           graph={MultiDirectedGraph}
         >
-          <SigmaCustomizer graph={graph} setIsHovering={setIsHovering} />
-
           <ControlsContainer position="top-left">
             <ZoomControl />
             <FullScreenControl />
+
+            <SigmaControls graph={graph} setIsHovering={setIsHovering} />
           </ControlsContainer>
         </SigmaContainer>
       )}
@@ -311,7 +315,7 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
   )
 }
 
-const SigmaCustomizer = ({
+const SigmaControls = ({
   graph,
   setIsHovering,
 }: {
@@ -322,7 +326,23 @@ const SigmaCustomizer = ({
   const registerEvents = useRegisterEvents()
   const loadGraph = useLoadGraph()
   const setSettings = useSetSettings()
-  const { zoomOut } = useCamera()
+  const { reset: recenter } = useCamera()
+
+  const { start: startForceAtlas2, stop: stopForceAtlas2 } =
+    useWorkerLayoutForceAtlas2({
+      settings: {
+        ...forceAtlas2.inferSettings(graph),
+
+        // Bind nodes more tightly together.
+        gravity: 1,
+
+        // Push hubs outwards to highlight them (disrupts spatial balance)
+        // outboundAttractionDistribution: true,
+      },
+    })
+  const { positions: circularPositions } = useLayoutCircular({ scale: 100 })
+
+  const [layout, setLayout] = useState<'circular' | 'forceatlas2'>('circular')
   const [hoverState, setHoverState] = useState<{
     node?: boolean
     nodes: string[]
@@ -330,9 +350,41 @@ const SigmaCustomizer = ({
     coords: MouseCoords
   } | null>(null)
 
+  const stopAnimationRef = useRef<() => void>(() => {})
+
+  const setCircularLayout = useCallback(() => {
+    stopAnimationRef.current()
+    setLayout('circular')
+    recenter()
+    stopAnimationRef.current = animateNodes(
+      sigma.getGraph(),
+      circularPositions(),
+      {
+        duration: 500,
+        easing: 'linear',
+      },
+      () => recenter()
+    )
+  }, [sigma, circularPositions, recenter])
+
+  const setForceAtlas2Layout = useCallback(() => {
+    stopAnimationRef.current()
+    setLayout('forceatlas2')
+    recenter()
+    startForceAtlas2()
+
+    const stop = () => {
+      stopForceAtlas2()
+      recenter()
+      clearTimeout(timeout)
+      stopAnimationRef.current = () => {}
+    }
+    const timeout = setTimeout(stop, 500)
+    stopAnimationRef.current = stop
+  }, [startForceAtlas2, stopForceAtlas2, recenter])
+
   useEffect(() => {
     loadGraph(graph)
-    zoomOut({ factor: 1.1, duration: 500 })
     registerEvents({
       enterNode: (payload) => {
         setHoverState({
@@ -363,7 +415,7 @@ const SigmaCustomizer = ({
       },
       clickEdge: ({ edge }) => window.open(`/attestations/${edge}`, '_blank'),
     })
-  }, [registerEvents, graph, loadGraph, zoomOut])
+  }, [registerEvents, graph, loadGraph])
 
   useEffect(() => {
     setSettings({
@@ -393,5 +445,21 @@ const SigmaCustomizer = ({
     })
   }, [setSettings, sigma, hoverState, graph])
 
-  return null
+  return (
+    <>
+      {layout === 'circular' ? (
+        <div className="react-sigma-control">
+          <button title="Spread Out" onClick={setForceAtlas2Layout}>
+            <Waypoints width="1em" height="1em" />
+          </button>
+        </div>
+      ) : (
+        <div className="react-sigma-control">
+          <button title="Round Out" onClick={setCircularLayout}>
+            <CircleDashed width="1em" height="1em" />
+          </button>
+        </div>
+      )}
+    </>
+  )
 }
