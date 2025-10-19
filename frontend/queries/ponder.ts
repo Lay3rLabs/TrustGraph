@@ -1,5 +1,3 @@
-'use client'
-
 import { Client } from '@ponder/client'
 import { ResolvedSchema } from '@ponder/react'
 import { queryOptions } from '@tanstack/react-query'
