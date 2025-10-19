@@ -286,7 +286,12 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
   }
 
   return (
-    <div className={cn('relative w-full h-full overflow-hidden', className)}>
+    <div
+      className={cn(
+        'relative w-full h-full overflow-hidden isolate',
+        className
+      )}
+    >
       {graph && (
         <SigmaContainer
           className={cn(
