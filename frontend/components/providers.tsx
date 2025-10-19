@@ -2,13 +2,13 @@
 
 import Clarity from '@microsoft/clarity'
 import { PonderProvider } from '@ponder/react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
 import PlausibleProvider from 'next-plausible'
 import React from 'react'
 import { WagmiProvider } from 'wagmi'
-import { hashFn } from 'wagmi/query'
 
 import { ponderClient } from '@/lib/ponder'
+import { makeQueryClient } from '@/lib/query'
 import { config } from '@/lib/wagmi'
 
 import { Toaster } from './toasts/Toaster'
@@ -16,27 +16,7 @@ import { WalletConnectionProvider } from './WalletConnectionProvider'
 
 Clarity.init('tjxevwhvhb')
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      // Stale time for blockchain data - keep fresh for 30 seconds
-      staleTime: 30 * 1000,
-      // Cache blockchain data for 5 minutes
-      gcTime: 5 * 60 * 1000,
-      // Retry on failure (network issues common in blockchain apps)
-      retry: 3,
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-      // Refetch on window focus for real-time blockchain data
-      refetchOnWindowFocus: true,
-      // Serialize BigInts in parameters
-      queryKeyHashFn: hashFn,
-    },
-    mutations: {
-      // Retry mutations once on failure
-      retry: 1,
-    },
-  },
-})
+const queryClient = makeQueryClient()
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = React.useState(false)

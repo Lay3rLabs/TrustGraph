@@ -1,54 +1,36 @@
-'use client'
+import { getPonderQueryOptions } from '@ponder/react'
+import { HydrationBoundary, dehydrate } from '@tanstack/react-query'
 
-import { useAtom } from 'jotai'
-import { ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { ponderClient } from '@/lib/ponder'
+import { makeQueryClient } from '@/lib/query'
+import { ponderQueryFns } from '@/queries/ponder'
 
-import { AttestationCard } from '@/components/AttestationCard'
-import { attestationBackAtom } from '@/state/nav'
+import { AttestationDetailPage } from './component'
 
 interface AttestationDetailPageProps {
-  params: {
-    uid: `0x${string}`
-  }
+  uid: `0x${string}`
 }
 
-export default function AttestationDetailPage({
-  params,
-}: AttestationDetailPageProps) {
-  const [breadcrumb, setBreadcrumb] = useState({
-    title: 'Attestations',
-    route: '/attestations',
-  })
+// Incremental Static Regeneration
+export const dynamic = 'force-static'
 
-  // If there is a preset attestation back link, use it.
-  const [attestationBack, setAttestationBack] = useAtom(attestationBackAtom)
-  useEffect(() => {
-    if (attestationBack) {
-      setBreadcrumb({
-        title: attestationBack.split('/').pop()!,
-        route: attestationBack,
-      })
-      setAttestationBack(null)
-    }
-  }, [attestationBack, setBreadcrumb])
+export default async function AttestationDetailPageServer({
+  params,
+}: {
+  params: Promise<AttestationDetailPageProps>
+}) {
+  const { uid } = await params
+
+  const queryClient = makeQueryClient()
+  await queryClient.prefetchQuery(
+    getPonderQueryOptions(ponderClient, ponderQueryFns.getAttestation(uid))
+  )
+
+  const dehydratedState = dehydrate(queryClient)
 
   return (
-    <div className="space-y-6">
-      {/* Header with back button */}
-      <Link
-        href={breadcrumb.route}
-        className="flex items-center gap-2 text-sm text-brand hover:text-brand/80 transition-colors mb-4"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Back to {breadcrumb.title}
-      </Link>
-
-      <div className="ascii-art-title text-lg">ATTESTATION DETAILS</div>
-
-      {/* Attestation Card */}
-      <AttestationCard uid={params.uid} />
-    </div>
+    <HydrationBoundary state={dehydratedState}>
+      <AttestationDetailPage uid={uid} />
+    </HydrationBoundary>
   )
 }

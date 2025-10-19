@@ -11,6 +11,7 @@ import { useAttestation, useIntoAttestationData } from '@/hooks/useAttestation'
 import { AttestationData } from '@/lib/attestation'
 import { SchemaManager } from '@/lib/schemas'
 import { formatTimeAgo } from '@/lib/utils'
+import { ponderQueryFns } from '@/queries/ponder'
 
 import { Address } from './Address'
 import { AttestationDataDisplay } from './AttestationData'
@@ -38,10 +39,7 @@ export function AttestationCard({
     isLoading,
     error,
   } = usePonderQuery({
-    queryFn: (db) =>
-      db.query.easAttestation.findFirst({
-        where: (t, { eq }) => eq(t.uid, uid),
-      }),
+    queryFn: ponderQueryFns.getAttestation(uid),
     select: useIntoAttestationData(),
   })
 

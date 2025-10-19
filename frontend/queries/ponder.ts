@@ -1,5 +1,7 @@
 'use client'
 
+import { Client } from '@ponder/client'
+import { ResolvedSchema } from '@ponder/react'
 import { queryOptions } from '@tanstack/react-query'
 import { Hex } from 'viem'
 
@@ -195,4 +197,11 @@ export const ponderQueries = {
     },
     enabled: !!APIS.ponder,
   }),
+}
+
+export const ponderQueryFns = {
+  getAttestation: (uid: `0x${string}`) => (db: Client<ResolvedSchema>['db']) =>
+    db.query.easAttestation.findFirst({
+      where: (t, { eq }) => eq(t.uid, uid),
+    }),
 }
