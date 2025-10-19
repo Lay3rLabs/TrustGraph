@@ -30,7 +30,7 @@ import { NodeDisplayData } from 'sigma/types'
 import { animateNodes } from 'sigma/utils'
 
 import { useBatchEnsQuery } from '@/hooks/useEns'
-import { useUpdatingRef } from '@/hooks/useUpdatingRef'
+import { HoverState, HoverStateMachine } from '@/lib/HoverStateMachine'
 import { Network, isTrustedSeed } from '@/lib/network'
 import { cn, formatBigNumber } from '@/lib/utils'
 import { ponderQueries } from '@/queries/ponder'
@@ -144,7 +144,7 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
     data?.accounts.map((account) => account.account) || []
   )
 
-  const [isHovering, setIsHovering] = useState(false)
+  const [showCursor, setShowCursor] = useState(false)
 
   const graph = useMemo(() => {
     if (!data) {
@@ -292,7 +292,7 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
         <SigmaContainer
           className={cn(
             '!bg-transparent border border-border rounded-md',
-            isHovering && 'cursor-pointer'
+            showCursor && 'cursor-pointer'
           )}
           settings={{
             renderLabels: true,
@@ -306,7 +306,7 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
           }}
           graph={MultiDirectedGraph}
         >
-          <SigmaControls graph={graph} setIsHovering={setIsHovering} />
+          <SigmaControls graph={graph} setShowCursor={setShowCursor} />
         </SigmaContainer>
       )}
     </div>
@@ -315,10 +315,10 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
 
 const SigmaControls = ({
   graph,
-  setIsHovering,
+  setShowCursor,
 }: {
   graph: MultiDirectedGraph<NetworkGraphNode>
-  setIsHovering: (hovering: boolean) => void
+  setShowCursor: (hovering: boolean) => void
 }) => {
   const sigma = useSigma()
   const registerEvents = useRegisterEvents()
@@ -341,13 +341,8 @@ const SigmaControls = ({
     })
 
   const [layout, setLayout] = useState<'circular' | 'forceatlas2'>('circular')
-  const [hoverState, setHoverState] = useState<{
-    target: string
-    nodes: string[]
-    edges: string[]
-    /** Whether or not the hover state is ready (not ready while hover edge delay is active). */
-    ready: boolean
-  } | null>(null)
+  const [hoverState, setHoverState] = useState<HoverState>(null)
+  const hoverMachine = useRef<HoverStateMachine | null>(null)
 
   const stopAnimationRef = useRef<() => void>(() => {})
 
@@ -397,8 +392,9 @@ const SigmaControls = ({
 
   const { width: viewWidth } = sigma.getDimensions()
   const getNodeTooltipPosition = useCallback(
-    (node: string) => {
-      const { x, y, size } = graph.getNodeAttributes(node)
+    (node: string, attributes?: NetworkGraphNode) => {
+      const { x, y, size } =
+        attributes ?? sigma.getGraph().getNodeAttributes(node)
       const { x: viewportX, y: viewportY } = sigma.graphToViewport({ x, y })
       const isOnRight = viewportX > viewWidth / 2
       return {
@@ -421,26 +417,25 @@ const SigmaControls = ({
     [sigma]
   )
 
-  const hoverStateRef = useUpdatingRef(hoverState)
+  // Initialize hover state machine
   useEffect(() => {
-    const setHoverNode = (node: string) => {
-      setHoverState({
-        ready: true,
-        target: `node:${node}`,
-        nodes: [...new Set([node, ...graph.neighbors(node)])],
-        edges: graph.edges(node),
-      })
-      setIsHovering(true)
-    }
-    const setHoverEdge = (edge: string, ready: boolean) => {
-      setHoverState({
-        ready,
-        target: `edge:${edge}`,
-        nodes: graph.extremities(edge),
-        edges: [edge],
-      })
-      setIsHovering(true)
-    }
+    hoverMachine.current = new HoverStateMachine(
+      graph,
+      {
+        hoverDelay: 50,
+        unhoverDelay: 75,
+      },
+      (state, shouldShowCursor) => {
+        setHoverState(state)
+        setShowCursor(shouldShowCursor)
+      }
+    )
+
+    return () => hoverMachine.current?.cleanup()
+  }, [graph, setShowCursor])
+
+  // Register event handlers
+  useEffect(() => {
     const updateTooltipPositions = () => {
       Object.entries(tooltipRefs.current).forEach(([node, el]) => {
         Object.entries(getNodeTooltipPosition(node)).forEach(([key, value]) => {
@@ -453,59 +448,6 @@ const SigmaControls = ({
     let isHoldingDown = false
     let didMove = false
     const isDragging = () => isHoldingDown && didMove
-
-    let unsetHoverNodeTimeout: NodeJS.Timeout | null = null
-    const clearUnsetHoverNodeTimeout = () => {
-      if (unsetHoverNodeTimeout) {
-        clearTimeout(unsetHoverNodeTimeout)
-        unsetHoverNodeTimeout = null
-      }
-    }
-    const beginUnhoverNode = (node: string) => {
-      clearUnsetHoverNodeTimeout()
-      // Set a delay on node unhover in case the user moved onto an edge. `leaveNode` fires before `enterEdge`, so give it a moment to fire to prevent flickering.
-      unsetHoverNodeTimeout = setTimeout(() => {
-        // Only clear hover state if the node is the current hover target.
-        if (hoverStateRef.current?.target === `node:${node}`) {
-          setHoverState(null)
-          setIsHovering(false)
-        }
-      }, 50)
-    }
-
-    let setHoverEdgeTimeout: NodeJS.Timeout | null = null
-    const clearSetHoverEdgeTimeout = () => {
-      if (setHoverEdgeTimeout) {
-        clearTimeout(setHoverEdgeTimeout)
-        setHoverEdgeTimeout = null
-      }
-    }
-    const beginHoverEdge = (edge: string) => {
-      clearSetHoverEdgeTimeout()
-      clearUnsetHoverNodeTimeout()
-      // If already hovering something, just switch the hover. Otherwise, set a timeout to hover the edge after a delay to prevent flickering when the mouse is moving quickly.
-      if (hoverStateRef.current?.ready) {
-        setHoverEdge(edge, true)
-      } else {
-        // Enable cursor pointer so the user knows they can hover the edge.
-        setHoverEdge(edge, false)
-        setHoverEdgeTimeout = setTimeout(() => setHoverEdge(edge, true), 80)
-      }
-    }
-
-    const unhoverEdge = (edge: string) => {
-      clearSetHoverEdgeTimeout()
-      clearUnsetHoverNodeTimeout()
-
-      // Only clear hover state if the edge is the current hover target.
-      if (hoverStateRef.current?.target === `edge:${edge}`) {
-        setHoverState(null)
-        setIsHovering(false)
-      } else if (!hoverStateRef.current) {
-        // Clear cursor pointer if no longer hovering anything.
-        setIsHovering(false)
-      }
-    }
 
     const contactStart = () => {
       isHoldingDown = true
@@ -525,54 +467,32 @@ const SigmaControls = ({
 
     registerEvents({
       enterNode: ({ node }) => {
-        if (isDragging()) {
-          return
-        }
-
-        clearSetHoverEdgeTimeout()
-        clearUnsetHoverNodeTimeout()
-        setHoverNode(node)
-      },
-      leaveNode: ({ node }) => {
-        if (isDragging()) {
-          return
-        }
-
-        beginUnhoverNode(node)
-      },
-      clickNode: ({ node }) => {
-        // If already hovering the node, open the account in a new tab.
-        if (hoverStateRef.current?.nodes.includes(node)) {
-          window.open(`/account/${node}`, '_blank')
-        } else {
-          // If not hovering the node, begin hovering it.
-          setHoverNode(node)
+        if (!isDragging()) {
+          hoverMachine.current?.hover('node', node)
         }
       },
       enterEdge: ({ edge }) => {
-        if (isDragging()) {
-          return
+        if (!isDragging()) {
+          console.log('enter edge', edge)
+          hoverMachine.current?.hover('edge', edge)
         }
-
-        beginHoverEdge(edge)
+      },
+      leaveNode: ({ node }) => {
+        if (!isDragging()) {
+          hoverMachine.current?.unhover('node', node)
+        }
       },
       leaveEdge: ({ edge }) => {
-        if (isDragging()) {
-          return
+        if (!isDragging()) {
+          console.log('leave edge', edge)
+          hoverMachine.current?.unhover('edge', edge)
         }
-
-        unhoverEdge(edge)
       },
-
+      clickNode: ({ node }) => {
+        hoverMachine.current?.clickNode(node)
+      },
       clickEdge: ({ edge }) => {
-        // If already hovering the edge, open the attestation in a new tab.
-        if (hoverStateRef.current?.edges.includes(edge)) {
-          window.open(`/attestations/${edge}`, '_blank')
-        } else {
-          // If not hovering the edge, begin hovering it.
-          clearSetHoverEdgeTimeout()
-          setHoverEdge(edge, true)
-        }
+        hoverMachine.current?.clickEdge(edge)
       },
 
       mousedown: contactStart,
@@ -584,7 +504,7 @@ const SigmaControls = ({
       mouseup: contactEnd,
       touchup: contactEnd,
     })
-  }, [registerEvents, graph, getNodeTooltipPosition])
+  }, [registerEvents, getNodeTooltipPosition])
 
   useEffect(() => {
     setSettings({
@@ -594,7 +514,7 @@ const SigmaControls = ({
           highlighted: data.highlighted || false,
         }
 
-        if (hoverState?.ready) {
+        if (hoverState) {
           if (hoverState.nodes.includes(node)) {
             newData.highlighted = true
           } else {
@@ -609,7 +529,7 @@ const SigmaControls = ({
       },
       edgeReducer: (edge, data) => ({
         ...data,
-        hidden: !!hoverState?.ready && !hoverState.edges.includes(edge),
+        hidden: !!hoverState && !hoverState.edges.includes(edge),
       }),
     })
   }, [setSettings, sigma, hoverState, graph])
@@ -635,10 +555,9 @@ const SigmaControls = ({
         )}
       </ControlsContainer>
 
-      {graph.nodes().map((node) => {
-        const visible = !!hoverState?.ready && hoverState.nodes.includes(node)
-        const { value } = graph.getNodeAttributes(node)
-        const style = getNodeTooltipPosition(node)
+      {Array.from(graph.nodeEntries()).map(({ node, attributes }) => {
+        const visible = !!hoverState && hoverState.nodes.includes(node)
+        const style = getNodeTooltipPosition(node, attributes)
 
         return (
           <div
@@ -657,7 +576,7 @@ const SigmaControls = ({
             style={style}
           >
             <p className="text-xs">
-              Score: {formatBigNumber(value, undefined, true)}
+              Score: {formatBigNumber(attributes.value, undefined, true)}
             </p>
           </div>
         )
