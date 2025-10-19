@@ -29,3 +29,34 @@ export const EXAMPLE_NETWORK = NETWORKS[0]
 
 export const isTrustedSeed = ({ trustedSeeds }: Network, address: string) =>
   trustedSeeds.some((s) => s.toLowerCase() === address.toLowerCase())
+
+export interface NetworkGraphNode {
+  href: string
+  label: string
+  x: number
+  y: number
+  size: number
+  value: bigint
+  sent: number
+  received: number
+  color?: string
+}
+
+export type NetworkGraphEdge = {
+  href: string
+  label: string
+  size: number
+  type?: 'straight' | 'curved'
+  curvature?: number
+} & (
+  | {
+      parallelIndex: number
+      parallelMinIndex?: number
+      parallelMaxIndex: number
+    }
+  | {
+      parallelIndex?: null
+      parallelMinIndex?: null
+      parallelMaxIndex?: null
+    }
+)

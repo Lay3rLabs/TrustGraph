@@ -30,8 +30,16 @@ import { NodeDisplayData } from 'sigma/types'
 import { animateNodes } from 'sigma/utils'
 
 import { useBatchEnsQuery } from '@/hooks/useEns'
-import { HoverState, HoverStateMachine } from '@/lib/HoverStateMachine'
-import { Network, isTrustedSeed } from '@/lib/network'
+import {
+  Network,
+  NetworkGraphEdge,
+  NetworkGraphNode,
+  isTrustedSeed,
+} from '@/lib/network'
+import {
+  NetworkGraphHoverState,
+  NetworkGraphManager,
+} from '@/lib/NetworkGraphManager'
 import { cn, formatBigNumber } from '@/lib/utils'
 import { ponderQueries } from '@/queries/ponder'
 
@@ -117,17 +125,6 @@ const getColorFromValue = (value: number): string => {
   return '#888'
 }
 
-export interface NetworkGraphNode {
-  label: string
-  x: number
-  y: number
-  size: number
-  value: bigint
-  sent: number
-  received: number
-  color?: string
-}
-
 export interface NetworkGraphProps {
   network: Network
   className?: string
@@ -152,7 +149,7 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
     }
 
     // Create the graph
-    const graph = new MultiDirectedGraph<NetworkGraphNode>()
+    const graph = new MultiDirectedGraph<NetworkGraphNode, NetworkGraphEdge>()
 
     const maxValue = Number(
       data.accounts.reduce(
@@ -183,6 +180,7 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
           : ((Number(value) - minValue) / (maxValue - minValue)) * 100
 
       graph.addNode(account, {
+        href: `/account/${account}`,
         label:
           (ensData?.[account]?.name ||
             `${account.slice(0, 6)}...${account.slice(-4)}`) +
@@ -213,6 +211,7 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
         attestation.attester,
         attestation.recipient,
         {
+          href: `/attestations/${attestation.uid}`,
           label: attestation.decodedData?.confidence?.toString() || 'unknown',
           size,
         }
@@ -317,7 +316,7 @@ const SigmaControls = ({
   graph,
   setShowCursor,
 }: {
-  graph: MultiDirectedGraph<NetworkGraphNode>
+  graph: MultiDirectedGraph<NetworkGraphNode, NetworkGraphEdge>
   setShowCursor: (hovering: boolean) => void
 }) => {
   const sigma = useSigma()
@@ -415,9 +414,9 @@ const SigmaControls = ({
     [sigma]
   )
 
-  const [hoverState, setHoverState] = useState<HoverState>(null)
+  const [hoverState, setHoverState] = useState<NetworkGraphHoverState>(null)
   useEffect(() => {
-    const hoverMachine = new HoverStateMachine({
+    const manager = new NetworkGraphManager({
       graph,
       hoverDelay: 50,
       unhoverDelay: 75,
@@ -438,9 +437,9 @@ const SigmaControls = ({
     })
 
     // Register event handlers
-    hoverMachine.register(registerEvents)
+    manager.register(registerEvents)
 
-    return () => hoverMachine.cleanup()
+    return () => manager.cleanup()
   }, [graph, setShowCursor, getNodeTooltipPosition, registerEvents])
 
   useEffect(() => {
