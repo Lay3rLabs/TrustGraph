@@ -341,8 +341,6 @@ const SigmaControls = ({
     })
 
   const [layout, setLayout] = useState<'circular' | 'forceatlas2'>('circular')
-  const [hoverState, setHoverState] = useState<HoverState>(null)
-  const hoverMachine = useRef<HoverStateMachine | null>(null)
 
   const stopAnimationRef = useRef<() => void>(() => {})
 
@@ -417,94 +415,33 @@ const SigmaControls = ({
     [sigma]
   )
 
-  // Initialize hover state machine
+  const [hoverState, setHoverState] = useState<HoverState>(null)
   useEffect(() => {
-    hoverMachine.current = new HoverStateMachine(
+    const hoverMachine = new HoverStateMachine({
       graph,
-      {
-        hoverDelay: 50,
-        unhoverDelay: 75,
-      },
-      (state, shouldShowCursor) => {
+      hoverDelay: 50,
+      unhoverDelay: 75,
+      onStateChange: (state, shouldShowCursor) => {
         setHoverState(state)
         setShowCursor(shouldShowCursor)
-      }
-    )
-
-    return () => hoverMachine.current?.cleanup()
-  }, [graph, setShowCursor])
-
-  // Register event handlers
-  useEffect(() => {
-    const updateTooltipPositions = () => {
-      Object.entries(tooltipRefs.current).forEach(([node, el]) => {
-        Object.entries(getNodeTooltipPosition(node)).forEach(([key, value]) => {
-          el.style[key as 'left' | 'top' | 'right' | 'transform'] =
-            typeof value === 'number' ? value + 'px' : value
+      },
+      onDrag: () => {
+        Object.entries(tooltipRefs.current).forEach(([node, el]) => {
+          Object.entries(getNodeTooltipPosition(node)).forEach(
+            ([key, value]) => {
+              el.style[key as 'left' | 'top' | 'right' | 'transform'] =
+                typeof value === 'number' ? value + 'px' : value
+            }
+          )
         })
-      })
-    }
-
-    let isHoldingDown = false
-    let didMove = false
-    const isDragging = () => isHoldingDown && didMove
-
-    const contactStart = () => {
-      isHoldingDown = true
-      didMove = false
-    }
-    const contactEnd = () => {
-      isHoldingDown = false
-      didMove = false
-    }
-    const contactMove = () => {
-      if (!isHoldingDown) {
-        return
-      }
-      didMove = true
-      updateTooltipPositions()
-    }
-
-    registerEvents({
-      enterNode: ({ node }) => {
-        if (!isDragging()) {
-          hoverMachine.current?.hover('node', node)
-        }
       },
-      enterEdge: ({ edge }) => {
-        if (!isDragging()) {
-          console.log('enter edge', edge)
-          hoverMachine.current?.hover('edge', edge)
-        }
-      },
-      leaveNode: ({ node }) => {
-        if (!isDragging()) {
-          hoverMachine.current?.unhover('node', node)
-        }
-      },
-      leaveEdge: ({ edge }) => {
-        if (!isDragging()) {
-          console.log('leave edge', edge)
-          hoverMachine.current?.unhover('edge', edge)
-        }
-      },
-      clickNode: ({ node }) => {
-        hoverMachine.current?.clickNode(node)
-      },
-      clickEdge: ({ edge }) => {
-        hoverMachine.current?.clickEdge(edge)
-      },
-
-      mousedown: contactStart,
-      touchdown: contactStart,
-
-      mousemovebody: contactMove,
-      touchmovebody: contactMove,
-
-      mouseup: contactEnd,
-      touchup: contactEnd,
     })
-  }, [registerEvents, getNodeTooltipPosition])
+
+    // Register event handlers
+    hoverMachine.register(registerEvents)
+
+    return () => hoverMachine.cleanup()
+  }, [graph, setShowCursor, getNodeTooltipPosition, registerEvents])
 
   useEffect(() => {
     setSettings({

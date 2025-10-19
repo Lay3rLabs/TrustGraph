@@ -1,3 +1,4 @@
+import { EventHandlers } from '@react-sigma/core'
 import { MultiDirectedGraph } from 'graphology'
 
 export type HoverTargetType = 'node' | 'edge'
@@ -8,6 +9,8 @@ export type HoverState = {
   nodes: string[]
   edges: string[]
 } | null
+
+export type DragState = 'IDLE' | 'DRAG_START' | 'DRAGGING'
 
 export type HoverConfig = {
   hoverDelay: number
@@ -21,30 +24,69 @@ type InternalState =
   | 'PREPARING_UNHOVER'
 
 export class HoverStateMachine {
+  private graph: MultiDirectedGraph
+  private config: HoverConfig
+  private onStateChange: (state: HoverState, showCursor: boolean) => void
+  private onDrag: () => void
+
   private state: InternalState = 'IDLE'
   private hoverState: HoverState | null = null
   private timeout: NodeJS.Timeout | null = null
-  private config: HoverConfig
-  private onStateChange: (state: HoverState, showCursor: boolean) => void
-  private graph: MultiDirectedGraph
 
-  constructor(
-    graph: MultiDirectedGraph,
-    config: HoverConfig,
+  private dragState: DragState = 'IDLE'
+
+  constructor({
+    graph,
+    onStateChange,
+    onDrag,
+    ...config
+  }: {
+    graph: MultiDirectedGraph
     onStateChange: (state: HoverState, showCursor: boolean) => void
-  ) {
+    onDrag: () => void
+  } & HoverConfig) {
     this.graph = graph
     this.config = config
     this.onStateChange = onStateChange
+    this.onDrag = onDrag
   }
 
   // Public API - called by event handlers
 
+  register(
+    registerEvents: (eventHandlers: Partial<EventHandlers>) => void
+  ): void {
+    registerEvents({
+      enterNode: ({ node }) => this.hover('node', node),
+      enterEdge: ({ edge }) => this.hover('edge', edge),
+      leaveNode: ({ node }) => this.unhover('node', node),
+      leaveEdge: ({ edge }) => this.unhover('edge', edge),
+      clickNode: ({ node }) => this.clickNode(node),
+      clickEdge: ({ edge }) => this.clickEdge(edge),
+      mousedown: () => this.dragStart(),
+      touchdown: () => this.dragStart(),
+      mouseup: () => this.dragEnd(),
+      touchup: () => this.dragEnd(),
+      mousemovebody: () => this.maybeDragMove(),
+      touchmovebody: () => this.maybeDragMove(),
+    })
+  }
+
   hover(type: HoverTargetType, target: string): void {
+    // Don't change hover state if we're dragging
+    if (this.isDragging()) {
+      return
+    }
+
     this.setHover(type, target)
   }
 
   unhover(type: HoverTargetType, target: string): void {
+    // Don't unhover if we're dragging
+    if (this.isDragging()) {
+      return
+    }
+
     // Only unhover if we're hovering the target or about to be hovering.
     if (
       this.isHoveringOrPreparingTo() &&
@@ -82,6 +124,22 @@ export class HoverStateMachine {
       // Not hovering yet, begin hovering immediately
       this.setHover('edge', edge, true)
     }
+  }
+
+  dragStart(): void {
+    this.dragState = 'DRAG_START'
+  }
+
+  dragEnd(): void {
+    this.dragState = 'IDLE'
+  }
+
+  maybeDragMove(): void {
+    if (this.dragState !== 'DRAG_START') {
+      return
+    }
+    this.dragState = 'DRAGGING'
+    this.onDrag()
   }
 
   cleanup(): void {
@@ -145,6 +203,10 @@ export class HoverStateMachine {
 
   private isHoveringOrPreparingTo(): boolean {
     return this.isHovering() || this.state === 'PREPARING_HOVER'
+  }
+
+  private isDragging(): boolean {
+    return this.dragState === 'DRAGGING'
   }
 
   private notifyChange(state: HoverState): void {
