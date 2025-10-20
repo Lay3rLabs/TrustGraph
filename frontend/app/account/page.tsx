@@ -2,26 +2,21 @@
 
 import { useRouter } from 'next/navigation'
 import type React from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 
 import { TableAddress } from '@/components/Address'
 import { Button } from '@/components/Button'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
 import { ExportButtons } from '@/components/ExportButtons'
 import { InfoTooltip } from '@/components/InfoTooltip'
-import { useNetwork } from '@/hooks/useNetwork'
-import { EXAMPLE_NETWORK } from '@/lib/network'
+import { RankRenderer } from '@/components/RankRenderer'
+import { Column, Table } from '@/components/Table'
+import { NetworkEntry, useNetwork } from '@/hooks/useNetwork'
+import { EXAMPLE_NETWORK, isTrustedSeed } from '@/lib/network'
 import { formatBigNumber } from '@/lib/utils'
-
-type SortColumn = 'rank' | 'received' | 'sent' | 'score'
-type SortDirection = 'asc' | 'desc'
 
 export default function NetworkPage() {
   const router = useRouter()
-
-  // Sorting state
-  const [sortColumn, setSortColumn] = useState<SortColumn>('score')
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
   const {
     isLoading,
@@ -32,73 +27,78 @@ export default function NetworkPage() {
     refresh,
   } = useNetwork()
 
-  // Handle column header clicks
-  const handleSort = (column: SortColumn) => {
-    if (sortColumn === column) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortColumn(column)
-      setSortDirection(
-        ['score', 'received', 'sent'].includes(column) ? 'desc' : 'asc'
-      ) // Default to desc for score/received/sent, asc for others
-    }
-  }
-
-  useEffect(() => {
-    merkleData?.forEach((entry) => {
-      router.prefetch(`/account/${entry.account}`)
-    })
-  }, [merkleData, router])
-
-  // Sort the data
-  const sortedMerkleData = useMemo(() => {
+  // Add rank to merkle data for display
+  const merkleDataWithRank = useMemo(() => {
     if (!merkleData) return []
+    return merkleData.map((entry, index) => ({
+      ...entry,
+      rank: index + 1,
+    }))
+  }, [merkleData])
 
-    const sorted = [...merkleData].sort((a, b) => {
-      let aValue: number, bValue: number
-
-      switch (sortColumn) {
-        case 'rank':
-          aValue = merkleData.indexOf(a) + 1
-          bValue = merkleData.indexOf(b) + 1
-          break
-        case 'received':
-          aValue = a.received || 0
-          bValue = b.received || 0
-          break
-        case 'sent':
-          aValue = a.sent || 0
-          bValue = b.sent || 0
-          break
-        case 'score':
-          aValue = Number(BigInt(a.value || '0'))
-          bValue = Number(BigInt(b.value || '0'))
-          break
-        default:
-          return 0
-      }
-
-      if (sortDirection === 'asc') {
-        return aValue - bValue
-      } else {
-        return bValue - aValue
-      }
-    })
-
-    return sorted
-  }, [merkleData, sortColumn, sortDirection])
-
-  // Helper function to render sort indicator
-  const getSortIndicator = (column: SortColumn) => {
-    if (sortColumn !== column) {
-      return <span className="text-gray-400 ml-1">↕</span>
-    }
-    return sortDirection === 'asc' ? (
-      <span className="text-gray-900 ml-1">↑</span>
-    ) : (
-      <span className="text-gray-900 ml-1">↓</span>
-    )
-  }
+  // Define table columns
+  const columns: Column<NetworkEntry & { rank: number }>[] = [
+    {
+      key: 'rank',
+      header: 'RANK',
+      tooltip:
+        "Member's position in this network ranked by Trust Score. Rank is recalculated as new attestations are made.",
+      sortable: true,
+      accessor: (row) => row.rank,
+      render: (row) => <RankRenderer rank={row.rank} />,
+    },
+    {
+      key: 'account',
+      header: 'ACCOUNT',
+      tooltip: 'The wallet address or ENS name of this network member.',
+      sortable: false,
+      render: (row) => <TableAddress address={row.account} showNavIcon />,
+    },
+    {
+      key: 'seed',
+      header: 'SEED',
+      tooltip:
+        'Indicates if this member is part of the initial seed group that bootstrapped this network. Seed member influence is designed to diminish as the network grows.',
+      sortable: false,
+      render: (row) =>
+        isTrustedSeed(EXAMPLE_NETWORK, row.account) ? '🌱' : '',
+    },
+    {
+      key: 'received',
+      header: 'RECEIVED',
+      tooltip:
+        'The number of attestations this member has received from other participants in this network.',
+      sortable: true,
+      accessor: (row) => row.received || 0,
+      render: (row) => (
+        <div className="text-sm text-gray-800">{row.received || 0}</div>
+      ),
+    },
+    {
+      key: 'sent',
+      header: 'SENT',
+      tooltip:
+        'The number of attestations this member has given to other participants, indicating their level of engagement in building network trust.',
+      sortable: true,
+      accessor: (row) => row.sent || 0,
+      render: (row) => (
+        <div className="text-sm text-gray-800">{row.sent || 0}</div>
+      ),
+    },
+    {
+      key: 'score',
+      header: 'SCORE',
+      tooltip:
+        "This member's calculated Trust Score using a PageRank-style algorithm. Higher scores indicate stronger endorsement from trusted peers in the network.",
+      sortable: true,
+      accessor: (row) => Number(BigInt(row.value || '0')),
+      render: (row) => (
+        <div className="text-sm text-gray-900">
+          {formatBigNumber(row.value, undefined, true)}
+        </div>
+      ),
+    },
+  ]
 
   return (
     <div className="space-y-6">
@@ -186,139 +186,23 @@ export default function NetworkPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-300">
-                  <th
-                    className="text-left p-4 text-xs text-gray-600 cursor-pointer hover:text-gray-900 transition-colors select-none"
-                    onClick={() => handleSort('rank')}
-                  >
-                    <div className="flex items-center">
-                      RANK
-                      {getSortIndicator('rank')}
-                    </div>
-                  </th>
-                  <th className="text-left p-4 text-xs text-gray-600">
-                    ACCOUNT
-                  </th>
-                  <th className="text-left p-4 text-xs text-gray-600">
-                    <div className="flex items-center gap-1">
-                      SEED
-                      <InfoTooltip title="Seed members carry additional weight with their attestations." />
-                    </div>
-                  </th>
-                  <th
-                    className="text-left p-4 text-xs text-gray-600 cursor-pointer hover:text-gray-900 transition-colors select-none"
-                    onClick={() => handleSort('received')}
-                  >
-                    <div className="flex items-center gap-1">
-                      RECEIVED
-                      <InfoTooltip title="The number of attestations an entity has received." />
-                      {getSortIndicator('received')}
-                    </div>
-                  </th>
-                  <th
-                    className="text-left p-4 text-xs text-gray-600 cursor-pointer hover:text-gray-900 transition-colors select-none"
-                    onClick={() => handleSort('sent')}
-                  >
-                    <div className="flex items-center gap-1">
-                      SENT
-                      <InfoTooltip title="The number of attestations an entity has given out." />
-                      {getSortIndicator('sent')}
-                    </div>
-                  </th>
-                  <th
-                    className="text-left p-4 text-xs text-gray-600 cursor-pointer hover:text-gray-900 transition-colors select-none"
-                    onClick={() => handleSort('score')}
-                  >
-                    <div className="flex items-center gap-1">
-                      SCORE
-                      <InfoTooltip title="The TrustScore for a particular account, based on reputation in the network. Attestations from members with higher reputations carry more weight." />
-                      {getSortIndicator('score')}
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedMerkleData.map((entry) => {
-                  // Find original index for rank calculation
-                  const originalIndex = merkleData.findIndex(
-                    (item) => item.account === entry.account
-                  )
-                  return (
-                    <tr
-                      key={entry.account}
-                      className={`border-b border-gray-200 cursor-pointer transition-colors ${
-                        originalIndex < 3
-                          ? 'bg-gray-50 hover:bg-gray-100'
-                          : originalIndex < 10
-                          ? 'bg-gray-50 hover:bg-gray-100'
-                          : 'hover:bg-gray-50'
-                      }`}
-                      onClick={() => router.push(`/account/${entry.account}`)}
-                      title="Click to view account profile"
-                    >
-                      <td className="p-4">
-                        <div className="flex items-center space-x-2">
-                          <span
-                            className={`text-sm font-semibold ${
-                              originalIndex === 0
-                                ? 'text-yellow-600'
-                                : originalIndex === 1
-                                ? 'text-gray-500'
-                                : originalIndex === 2
-                                ? 'text-amber-700'
-                                : 'text-gray-800'
-                            }`}
-                          >
-                            #{originalIndex + 1}
-                          </span>
-                          {originalIndex < 3 && (
-                            <span className="text-xs">
-                              {originalIndex === 0
-                                ? '🥇'
-                                : originalIndex === 1
-                                ? '🥈'
-                                : '🥉'}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <TableAddress address={entry.account} showNavIcon />
-                      </td>
-                      <td className="p-4">
-                        <div className="text-sm text-gray-800">
-                          {EXAMPLE_NETWORK.trustedSeeds.includes(entry.account)
-                            ? '🌱'
-                            : '-'}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="text-sm text-gray-800">
-                          {entry.received}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="text-sm text-gray-800">
-                          {entry.sent}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="text-sm text-gray-900">
-                          {formatBigNumber(entry.value, undefined, true)}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+          <div className="overflow-x-auto px-4 py-2">
+            <Table
+              columns={columns}
+              data={merkleDataWithRank}
+              defaultSortColumn="rank"
+              defaultSortDirection="asc"
+              onRowClick={
+                // Will be prefetched in the TableAddress component
+                (row) => router.push(`/account/${row.account}`)
+              }
+              getRowKey={(row) => row.account}
+              rowClickTitle="Click to view account profile"
+            />
           </div>
           <div className="flex justify-center gap-4 pt-3 pb-4 border-t border-gray-200">
             <ExportButtons
-              data={sortedMerkleData}
+              data={merkleDataWithRank}
               filename={`TrustGraph_${
                 EXAMPLE_NETWORK.name
               }_${new Date().toISOString()}`}
