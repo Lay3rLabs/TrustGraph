@@ -11,6 +11,7 @@ import { ponderClient } from '@/lib/ponder'
 import { makeQueryClient } from '@/lib/query'
 import { makeWagmiConfig } from '@/lib/wagmi'
 
+import { BreadcrumbSync } from './BreadcrumbSync'
 import { Toaster } from './toasts/Toaster'
 import { WalletConnectionProvider } from './WalletConnectionProvider'
 
@@ -29,6 +30,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
               {children}
 
               <Toaster />
+              <BreadcrumbSync />
 
               {/* {process.env.NODE_ENV === "development" && (
                 <ReactQueryDevtools initialIsOpen={false} />

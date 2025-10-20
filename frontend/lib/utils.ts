@@ -81,5 +81,5 @@ export const formatTimeAgo = (timestampOrMs: Date | number) => {
  * @returns True if the string might be an ENS name, false otherwise.
  */
 export const mightBeEnsName = (name: string) => {
-  return name.includes('.')
+  return name.endsWith('.eth')
 }

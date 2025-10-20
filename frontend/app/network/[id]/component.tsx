@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Suspense } from 'react'
 
 import { TableAddress } from '@/components/Address'
+import { BreadcrumbRenderer } from '@/components/BreadcrumbRenderer'
 import { Button } from '@/components/Button'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
 import { ExportButtons } from '@/components/ExportButtons'
@@ -14,6 +15,7 @@ import { RankRenderer } from '@/components/RankRenderer'
 import { StatisticCard } from '@/components/StatisticCard'
 import { Column, Table } from '@/components/Table'
 import { NetworkEntry, useNetwork } from '@/hooks/useNetwork'
+import { usePushBreadcrumb } from '@/hooks/usePushBreadcrumb'
 import { Network, isTrustedSeed } from '@/lib/network'
 import { formatBigNumber } from '@/lib/utils'
 
@@ -27,6 +29,7 @@ const NetworkGraph = dynamic(
 
 export const NetworkPage = ({ network }: { network: Network }) => {
   const router = useRouter()
+  const pushBreadcrumb = usePushBreadcrumb()
 
   const {
     isLoading,
@@ -108,6 +111,8 @@ export const NetworkPage = ({ network }: { network: Network }) => {
     <div className="space-y-12">
       <div className="grid grid-cols-1 justify-start items-stretch lg:grid-cols-2 lg:items-start gap-12">
         <div className="flex flex-col items-start gap-4">
+          <BreadcrumbRenderer className="mb-2" />
+
           <h1 className="text-4xl font-bold">{name}</h1>
 
           <a
@@ -225,7 +230,10 @@ export const NetworkPage = ({ network }: { network: Network }) => {
               defaultSortColumn="rank"
               onRowClick={
                 // Will be prefetched in the TableAddress component
-                (row) => router.push(`/account/${row.account}`)
+                (row) => {
+                  pushBreadcrumb()
+                  router.push(`/account/${row.ensName || row.account}`)
+                }
               }
               getRowKey={(row) => row.account}
             />

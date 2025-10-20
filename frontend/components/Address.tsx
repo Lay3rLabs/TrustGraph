@@ -7,6 +7,7 @@ import toast from 'react-hot-toast'
 import { useAccount } from 'wagmi'
 
 import { useEns } from '@/hooks/useEns'
+import { usePushBreadcrumb } from '@/hooks/usePushBreadcrumb'
 import { cn } from '@/lib/utils'
 
 import { Tooltip } from './Tooltip'
@@ -53,8 +54,10 @@ export const Address = ({
   noHighlightEns = false,
   tooltip,
 }: AddressProps) => {
-  const [copied, setCopied] = useState(false)
+  const pushBreadcrumb = usePushBreadcrumb()
   const { address: connectedAddress } = useAccount()
+
+  const [copied, setCopied] = useState(false)
 
   const clickable = link !== false
 
@@ -63,12 +66,9 @@ export const Address = ({
     displayText = 'You'
   }
 
-  // Use our optimized ENS hook
   const { name: ensName } = useEns(address, {
     enableName: showEns,
-    enableAvatar: false, // We don't need avatar for this component
-    cacheDuration: 5 * 60 * 1000, // 5 minutes
-    persistCache: true,
+    enableAvatar: false,
   })
 
   const handleCopy = async (e: React.MouseEvent) => {
@@ -193,8 +193,13 @@ export const Address = ({
           className={baseClasses}
           onClick={(e) => {
             e.stopPropagation()
+            pushBreadcrumb()
           }}
-          href={link === 'account' ? `/account/${address}` : '#'}
+          href={
+            link === 'account'
+              ? `/account/${(showEns && ensName) || address}`
+              : '#'
+          }
         >
           {content}
         </Link>

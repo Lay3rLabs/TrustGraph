@@ -11,12 +11,14 @@ import { AttestationCard } from '@/components/AttestationCard'
 import { Card } from '@/components/Card'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
 import { useIntoAttestationsData } from '@/hooks/useAttestation'
+import { usePushBreadcrumb } from '@/hooks/usePushBreadcrumb'
 import { EXAMPLE_NETWORK } from '@/lib/network'
 import { SCHEMAS } from '@/lib/schemas'
 import { easAttestation } from '@/ponder.schema'
 
 export default function AttestationsPage() {
   const router = useRouter()
+  const pushBreadcrumb = usePushBreadcrumb()
   const [selectedSchema, setSelectedSchema] = useState<string>('all')
   const [selectedStatus, setSelectedStatus] = useState<string>('all')
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest')
@@ -152,7 +154,10 @@ export default function AttestationsPage() {
               <AttestationCard
                 key={item.uid}
                 uid={item.uid}
-                onClick={() => router.push(`/attestations/${item.uid}`)}
+                onClick={() => {
+                  pushBreadcrumb()
+                  router.push(`/attestation/${item.uid}`)
+                }}
               />
             ))}
       </div>

@@ -1,3 +1,9 @@
 import { atom } from 'jotai'
 
-export const attestationBackAtom = atom<string | null>(null)
+export type Breadcrumb = {
+  title: string
+  route: string
+}
+
+/** Active breadcrumbs. */
+export const breadcrumbsAtom = atom<Breadcrumb[]>([])

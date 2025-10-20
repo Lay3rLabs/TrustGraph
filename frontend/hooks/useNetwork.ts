@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useCallback, useMemo } from 'react'
+import { Hex } from 'viem'
 
 import { ponderQueries } from '@/queries/ponder'
 import type {
@@ -9,8 +10,11 @@ import type {
   MerkleEntry as PonderMerkleEntry,
 } from '@/queries/ponder'
 
+import { useBatchEnsQuery } from './useEns'
+
 export interface NetworkEntry {
   account: string
+  ensName?: string
   value: string
   rank: number
   sent: number
@@ -40,6 +44,11 @@ export function useNetwork() {
     refetchInterval: 10_000,
   })
 
+  // Load ENS data
+  const { data: ensData } = useBatchEnsQuery(
+    merkleTreeData?.entries.map((entry) => entry.account as Hex) || []
+  )
+
   // Create a map of attestation counts by account
   const merkleData = useMemo((): NetworkEntry[] => {
     if (!merkleTreeData?.entries?.length) {
@@ -67,15 +76,18 @@ export function useNetwork() {
           received: 0,
         }
 
+        const ensName = ensData?.[entry.account]?.name || undefined
+
         return {
           account: entry.account,
+          ...(ensName ? { ensName } : {}),
           value: entry.value,
           rank: index + 1,
           sent: attestationData.sent,
           received: attestationData.received,
         }
       })
-  }, [merkleTreeData, attestationCounts])
+  }, [merkleTreeData, attestationCounts, ensData])
 
   // Calculate derived values
   const totalValue = Number(merkleTreeData?.tree?.totalValue || '0')

@@ -2,13 +2,13 @@
 
 import { Check, Copy, LoaderCircle, LogOut, User, Wallet } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { usePlausible } from 'next-plausible'
 import type React from 'react'
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAccount, useBalance, useConnect, useDisconnect } from 'wagmi'
 
+import { useEns } from '@/hooks/useEns'
 import { parseErrorMessage } from '@/lib/error'
 import { formatBigNumber } from '@/lib/utils'
 
@@ -28,7 +28,6 @@ export const WalletConnectionButton = ({
   const { address, isConnected } = useAccount()
   const { connectors, connectAsync, isPending: isConnecting } = useConnect()
   const { disconnect } = useDisconnect()
-  const router = useRouter()
   const plausible = usePlausible()
 
   const formatAddress = (addr: string) => {
@@ -60,6 +59,9 @@ export const WalletConnectionButton = ({
       setOpenRef.current?.(true)
     }
   }, [_openId])
+
+  const { name: ensName } = useEns(address, { enableAvatar: false })
+  const accountHref = `/account/${ensName || address}`
 
   return (
     <>
@@ -134,7 +136,7 @@ export const WalletConnectionButton = ({
               </button>
 
               <Link
-                href={`/account/${address}`}
+                href={accountHref}
                 className="flex flex-row items-center gap-3 p-2 rounded-md bg-transparent text-foreground transition-all hover:bg-secondary active:bg-muted"
                 onClick={() => {
                   setOpenRef.current?.(false)

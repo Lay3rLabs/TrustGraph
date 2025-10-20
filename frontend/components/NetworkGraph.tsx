@@ -133,6 +133,7 @@ export interface NetworkGraphProps {
 
 export function NetworkGraph({ network, className }: NetworkGraphProps) {
   const router = useRouter()
+
   const { isLoading, error, data } = useQuery({
     ...ponderQueries.attestationsGraph,
     refetchInterval: 10_000,
@@ -181,14 +182,14 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
           ? 50 // Default to middle if all values are the same
           : ((Number(value) - minValue) / (maxValue - minValue)) * 100
 
-      const href = `/account/${account}`
+      const ensName = ensData?.[account]?.name
+      const href = `/account/${ensName || account}`
       router.prefetch(href)
 
       graph.addNode(account, {
         href,
         label:
-          (ensData?.[account]?.name ||
-            `${account.slice(0, 6)}...${account.slice(-4)}`) +
+          (ensName || `${account.slice(0, 6)}...${account.slice(-4)}`) +
           (isTrustedSeed(network, account) ? ' 🌱' : ''),
         x: 0,
         y: 0,
@@ -216,7 +217,7 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
         attestation.attester,
         attestation.recipient,
         {
-          href: `/attestations/${attestation.uid}`,
+          href: `/attestation/${attestation.uid}`,
           label: attestation.decodedData?.confidence?.toString() || 'unknown',
           size,
         }

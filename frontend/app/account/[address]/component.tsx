@@ -1,6 +1,5 @@
 'use client'
 
-import { useSetAtom } from 'jotai'
 import { useRouter } from 'next/navigation'
 import type React from 'react'
 import { useEffect, useMemo } from 'react'
@@ -8,13 +7,14 @@ import { Hex } from 'viem'
 import { useAccount } from 'wagmi'
 
 import { Address, TableAddress } from '@/components/Address'
+import { BreadcrumbRenderer } from '@/components/BreadcrumbRenderer'
 import { Button } from '@/components/Button'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
 import { RankRenderer } from '@/components/RankRenderer'
 import { StatisticCard } from '@/components/StatisticCard'
 import { Column, Table } from '@/components/Table'
 import { useAccountProfile } from '@/hooks/useAccountProfile'
-import { useResolveEnsName } from '@/hooks/useEns'
+import { usePushBreadcrumb } from '@/hooks/usePushBreadcrumb'
 import { AttestationData } from '@/lib/attestation'
 import {
   EXAMPLE_NETWORK,
@@ -22,8 +22,7 @@ import {
   Network,
   isTrustedSeed,
 } from '@/lib/network'
-import { formatBigNumber, mightBeEnsName } from '@/lib/utils'
-import { attestationBackAtom } from '@/state/nav'
+import { formatBigNumber } from '@/lib/utils'
 
 interface NetworkParticipant {
   network: Network
@@ -35,20 +34,19 @@ interface NetworkParticipant {
 }
 
 export const AccountProfilePage = ({
-  address: _address,
+  address,
+  ensName,
 }: {
-  address: string
+  address: Hex
+  ensName: string | null
 }) => {
   const router = useRouter()
+
   const { address: connectedAddress } = useAccount()
-
-  // Resolve ENS name if it is a valid ENS name.
-  const resolvedEns = useResolveEnsName(
-    mightBeEnsName(_address) ? _address : ''
-  )
-  const address = (resolvedEns.address || _address) as Hex
-
-  const setAttestationBack = useSetAtom(attestationBackAtom)
+  const pushBreadcrumb = usePushBreadcrumb({
+    route: `/account/${ensName || address}`,
+    title: ensName || undefined,
+  })
 
   const {
     isLoading,
@@ -66,10 +64,10 @@ export const AccountProfilePage = ({
       router.prefetch(`/network/${network.id}`)
     })
     attestationsGiven.forEach((attestation) => {
-      router.prefetch(`/attestations/${attestation.uid}`)
+      router.prefetch(`/attestation/${attestation.uid}`)
     })
     attestationsReceived.forEach((attestation) => {
-      router.prefetch(`/attestations/${attestation.uid}`)
+      router.prefetch(`/attestation/${attestation.uid}`)
     })
   }, [router, attestationsGiven, attestationsReceived])
 
@@ -254,11 +252,13 @@ export const AccountProfilePage = ({
 
   return (
     <div className="space-y-6">
+      <BreadcrumbRenderer />
+
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-x-4 gap-y-2 mb-2">
         <Address
           address={address}
-          className="[&>span]:!text-xl [&>span]:!font-bold"
+          textClassName="text-xl font-bold"
           displayMode="full"
           showCopyIcon={true}
           noHighlight
@@ -269,7 +269,7 @@ export const AccountProfilePage = ({
           defaultRecipient={
             connectedAddress?.toLowerCase() === address.toLowerCase()
               ? undefined
-              : _address
+              : address
           }
         />
       </div>
@@ -306,7 +306,10 @@ export const AccountProfilePage = ({
                 defaultSortColumn="rank"
                 defaultSortDirection="asc"
                 getRowKey={(row) => row.network.id}
-                onRowClick={(row) => router.push(`/network/${row.network.id}`)}
+                onRowClick={(row) => {
+                  pushBreadcrumb()
+                  router.push(`/network/${row.network.id}`)
+                }}
               />
             </div>
           ) : (
@@ -393,8 +396,8 @@ export const AccountProfilePage = ({
                     defaultSortColumn="time"
                     defaultSortDirection="desc"
                     onRowClick={(row) => {
-                      setAttestationBack(`/account/${_address}`)
-                      router.push(`/attestations/${row.uid}`)
+                      pushBreadcrumb()
+                      router.push(`/attestation/${row.uid}`)
                     }}
                     getRowKey={(row) => row.uid}
                   />
@@ -426,8 +429,8 @@ export const AccountProfilePage = ({
                   defaultSortDirection="desc"
                   data={attestationsGiven}
                   onRowClick={(row) => {
-                    setAttestationBack(`/account/${_address}`)
-                    router.push(`/attestations/${row.uid}`)
+                    pushBreadcrumb()
+                    router.push(`/attestation/${row.uid}`)
                   }}
                   getRowKey={(row) => row.uid}
                 />

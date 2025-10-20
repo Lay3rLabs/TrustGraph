@@ -51,13 +51,6 @@ export function useServiceData() {
     functionName: 'getServiceURI',
   })
 
-  // Debug logging
-  console.log('ServiceURI loading:', {
-    serviceURI,
-    isServiceURILoading,
-    serviceURIError,
-  })
-
   // Fetch service data from IPFS
   const serviceDataQuery = useQuery({
     queryKey: ['serviceData', serviceURI],

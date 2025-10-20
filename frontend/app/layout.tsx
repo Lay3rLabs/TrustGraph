@@ -16,6 +16,7 @@ const paperMono = localFont({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://trustgraph.network'),
   title: 'TrustGraph',
   description: 'Mapping trust networks through attestations.',
   applicationName: 'Trust Graph',
