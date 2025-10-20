@@ -125,9 +125,7 @@ export function ProposalCard({
       <div className="space-y-2">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
-            <div className="ascii-art-title text-lg text-gray-900">
-              PROPOSAL #{proposalId}
-            </div>
+            <div className="text-lg text-gray-900">PROPOSAL #{proposalId}</div>
             <div className="text-xs text-gray-600">
               Proposer: {proposal.proposer.slice(0, 10)}...
               {proposal.proposer.slice(-8)}

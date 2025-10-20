@@ -198,8 +198,35 @@ export const ponderQueries = {
 }
 
 export const ponderQueryFns = {
-  getAttestation: (uid: `0x${string}`) => (db: Client<ResolvedSchema>['db']) =>
+  getAttestation: (uid: Hex) => (db: Client<ResolvedSchema>['db']) =>
     db.query.easAttestation.findFirst({
       where: (t, { eq }) => eq(t.uid, uid),
     }),
+  getAttestationsGiven: (address: Hex) => (db: Client<ResolvedSchema>['db']) =>
+    db.query.easAttestation.findMany({
+      where: (t, { eq, ne, and }) =>
+        and(
+          eq(t.attester, address),
+          // not self-attested
+          ne(t.attester, t.recipient),
+          // not revoked
+          eq(t.revocationTime, 0n)
+        ),
+      orderBy: (t, { desc }) => desc(t.timestamp),
+      limit: 100,
+    }),
+  getAttestationsReceived:
+    (address: Hex) => (db: Client<ResolvedSchema>['db']) =>
+      db.query.easAttestation.findMany({
+        where: (t, { eq, ne, and }) =>
+          and(
+            eq(t.recipient, address),
+            // not self-attested
+            ne(t.attester, t.recipient),
+            // not revoked
+            eq(t.revocationTime, 0n)
+          ),
+        orderBy: (t, { desc }) => desc(t.timestamp),
+        limit: 100,
+      }),
 }

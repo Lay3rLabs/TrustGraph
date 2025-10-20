@@ -79,9 +79,14 @@ export const _makeWagmiConfig = () =>
       ...(CHAIN !== 'local' ? [porto()] : []),
       metaMask(),
       coinbaseWallet(),
-      walletConnect({
-        projectId: 'c6abc47a50f2aebfc9cbd1cac562759c',
-      }),
+      // Only include WalletConnect on the browser to avoid logging annoying warnings on the server.
+      ...(typeof window !== 'undefined'
+        ? [
+            walletConnect({
+              projectId: 'c6abc47a50f2aebfc9cbd1cac562759c',
+            }),
+          ]
+        : []),
     ],
     transports: supportedChains.reduce((acc, chain) => {
       const transports = [

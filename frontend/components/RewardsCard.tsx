@@ -60,7 +60,7 @@ export function RewardsCard({
     <div className="border border-gray-700 bg-black/10 p-6 rounded-sm space-y-4">
       {/* Header */}
       <div className="border-b border-gray-700 pb-3">
-        <div className="ascii-art-title text-lg mb-1">REWARD DISTRIBUTION</div>
+        <div className="text-lg mb-1">REWARD DISTRIBUTION</div>
         <div className="text-sm">
           ◢◤ On-chain reward claims and distribution tracking ◢◤
         </div>

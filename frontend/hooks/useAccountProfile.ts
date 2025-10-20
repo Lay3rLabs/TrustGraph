@@ -5,6 +5,7 @@ import { useCallback } from 'react'
 import { Hex } from 'viem'
 
 import { useNetwork } from '@/hooks/useNetwork'
+import { ponderQueryFns } from '@/queries/ponder'
 
 import { useIntoAttestationsData } from './useAttestation'
 
@@ -54,38 +55,14 @@ export function useAccountProfile(address: Hex) {
 
   // Query for attestations given by this account (as attester), excluding revoked and self-attested ones
   const attestationsGivenQuery = usePonderQuery({
-    queryFn: (db) =>
-      db.query.easAttestation.findMany({
-        where: (t, { eq, ne, and }) =>
-          and(
-            eq(t.attester, address),
-            // not self-attested
-            ne(t.attester, t.recipient),
-            // not revoked
-            eq(t.revocationTime, 0n)
-          ),
-        orderBy: (t, { desc }) => desc(t.timestamp),
-        limit: 100,
-      }),
+    queryFn: ponderQueryFns.getAttestationsGiven(address),
     select: useIntoAttestationsData(),
     enabled: !!address,
   })
 
   // Query for attestations received by this account (as recipient), excluding revoked and self-attested ones
   const attestationsReceivedQuery = usePonderQuery({
-    queryFn: (db) =>
-      db.query.easAttestation.findMany({
-        where: (t, { eq, ne, and }) =>
-          and(
-            eq(t.recipient, address),
-            // not self-attested
-            ne(t.attester, t.recipient),
-            // not revoked
-            eq(t.revocationTime, 0n)
-          ),
-        orderBy: (t, { desc }) => desc(t.timestamp),
-        limit: 100,
-      }),
+    queryFn: ponderQueryFns.getAttestationsReceived(address),
     select: useIntoAttestationsData(),
     enabled: !!address,
   })

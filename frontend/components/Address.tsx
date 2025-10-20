@@ -118,8 +118,16 @@ export const Address = React.memo(function Address({
   const hoverClasses = cn(
     'transition-colors',
     shouldHighlight
-      ? 'text-brand group-hover/address:text-brand/80 peer-hover/copy:!text-brand'
-      : 'text-muted-foreground group-hover/address:text-brand peer-hover/copy:text-muted-foreground'
+      ? [
+          'text-brand',
+          clickable &&
+            'group-hover/address:text-brand/80 peer-hover/copy:!text-brand',
+        ]
+      : [
+          'text-muted-foreground',
+          clickable &&
+            'group-hover/address:text-brand peer-hover/copy:text-muted-foreground',
+        ]
   )
 
   const textClasses = cn(

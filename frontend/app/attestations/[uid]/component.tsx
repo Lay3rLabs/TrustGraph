@@ -41,7 +41,7 @@ export const AttestationDetailPage = ({ uid }: AttestationDetailPageProps) => {
         Back to {breadcrumb.title}
       </Link>
 
-      <div className="ascii-art-title text-lg">ATTESTATION DETAILS</div>
+      <div className="text-lg">ATTESTATION DETAILS</div>
 
       {/* Attestation Card */}
       <AttestationCard uid={uid} />

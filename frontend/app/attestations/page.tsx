@@ -63,7 +63,7 @@ export default function AttestationsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <div className="ascii-art-title text-lg">ATTESTATIONS</div>
+        <div className="text-lg">ATTESTATIONS</div>
         <CreateAttestationModal network={EXAMPLE_NETWORK} />
       </div>
 

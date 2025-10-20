@@ -93,9 +93,7 @@ export default function ExplorerServicesPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="border-b border-gray-700 pb-4">
-        <div className="ascii-art-title text-lg mb-2">
-          WAVS SERVICE DIRECTORY
-        </div>
+        <div className="text-lg mb-2">WAVS SERVICE DIRECTORY</div>
         <div className="text-sm">
           ◈ {serviceData?.name.toUpperCase()} SERVICE • STATUS:{' '}
           {serviceData?.status.toUpperCase()} ◈

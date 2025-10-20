@@ -54,7 +54,7 @@ export default function RewardsPage() {
     <div className="space-y-6">
       {/* Header */}
       {/*<div className="border-b border-gray-700 pb-4">
-        <div className="ascii-art-title text-lg mb-2">REWARD DISTRIBUTION SYSTEM</div>
+        <div className="text-lg mb-2">REWARD DISTRIBUTION SYSTEM</div>
         <div className="text-sm">
           ◆ EARN REWARDS • CLAIM TOKENS • TRACK PARTICIPATION ◆
         </div>
@@ -102,7 +102,7 @@ export default function RewardsPage() {
       {isConnected && claimHistory.length > 0 && (
         <div className="border border-gray-700 bg-black/10 p-6 rounded-sm space-y-4">
           <div className="border-b border-gray-700 pb-3">
-            <div className="ascii-art-title text-lg mb-1">CLAIM HISTORY</div>
+            <div className="text-lg mb-1">CLAIM HISTORY</div>
             <div className="text-sm">◢◤ Your reward claim transactions ◢◤</div>
           </div>
 

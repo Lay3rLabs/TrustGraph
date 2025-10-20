@@ -99,7 +99,7 @@ export default function NetworkPage() {
       {/* Header */}
       <div className="border-b border-gray-700 pb-4">
         <div className="flex items-center justify-between mb-2">
-          <div className="ascii-art-title text-lg">TRUST NETWORK</div>
+          <div className="text-lg">TRUST NETWORK</div>
           <CreateAttestationModal network={EXAMPLE_NETWORK} />
         </div>
         <div className="text-sm">◆ RANKED BY REPUTATION ◆</div>
@@ -174,9 +174,7 @@ export default function NetworkPage() {
       {!isLoading && merkleData && merkleData.length > 0 && (
         <div className="border border-gray-300 bg-white rounded-sm shadow-sm">
           <div className="border-b border-gray-300 p-4">
-            <div className="ascii-art-title text-lg mb-1 text-gray-900">
-              NETWORK MEMBERSHIP
-            </div>
+            <div className="text-lg mb-1 text-gray-900">NETWORK MEMBERSHIP</div>
             <div className="text-sm text-gray-600">
               ◢◤ Ranked by reputation ◢◤
             </div>
