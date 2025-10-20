@@ -64,13 +64,7 @@ export default function NetworkPage() {
       header: 'ACCOUNT',
       tooltip: 'The wallet address or ENS name of this network member.',
       sortable: false,
-      render: (row) => (
-        <TableAddress
-          address={row.account}
-          showNavIcon
-          onClick={(address) => router.push(`/account/${address}`)}
-        />
-      ),
+      render: (row) => <TableAddress address={row.account} showNavIcon />,
     },
     {
       key: 'seed',
@@ -236,7 +230,10 @@ export default function NetworkPage() {
               data={merkleData}
               defaultSortDirection="asc"
               defaultSortColumn="rank"
-              onRowClick={(row) => router.push(`/account/${row.account}`)}
+              onRowClick={
+                // Will be prefetched in the TableAddress component
+                (row) => router.push(`/account/${row.account}`)
+              }
               getRowKey={(row) => row.account}
             />
           </div>

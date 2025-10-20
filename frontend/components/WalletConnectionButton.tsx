@@ -1,6 +1,7 @@
 'use client'
 
 import { Check, Copy, LoaderCircle, LogOut, User, Wallet } from 'lucide-react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { usePlausible } from 'next-plausible'
 import type React from 'react'
@@ -132,16 +133,16 @@ export const WalletConnectionButton = ({
                 <p className="text-sm">Copy address</p>
               </button>
 
-              <button
+              <Link
+                href={`/account/${address}`}
                 className="flex flex-row items-center gap-3 p-2 rounded-md bg-transparent text-foreground transition-all hover:bg-secondary active:bg-muted"
                 onClick={() => {
                   setOpenRef.current?.(false)
-                  router.push(`/account/${address}`)
                 }}
               >
                 <User className="w-4 h-4 text-muted-foreground" />
                 <p className="text-sm">View profile</p>
-              </button>
+              </Link>
 
               <button
                 className="flex flex-row items-center gap-3 p-2 rounded-md bg-transparent transition-all hover:bg-destructive/10 active:bg-destructive/15"

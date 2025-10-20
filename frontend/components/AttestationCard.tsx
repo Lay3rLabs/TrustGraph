@@ -1,7 +1,6 @@
 'use client'
 
 import { usePonderQuery } from '@ponder/react'
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { Hex } from 'viem'
@@ -21,15 +20,9 @@ import { CopyableText } from './CopyableText'
 interface AttestationCardProps {
   uid: Hex
   onClick?: () => void
-  clickable?: boolean
 }
 
-export function AttestationCard({
-  uid,
-  onClick,
-  clickable = false,
-}: AttestationCardProps) {
-  const router = useRouter()
+export function AttestationCard({ uid, onClick }: AttestationCardProps) {
   const { address } = useAccount()
   const { revokeAttestation } = useAttestation()
   const [isRevokingThis, setIsRevokingThis] = useState(false)
@@ -196,11 +189,11 @@ export function AttestationCard({
       type="primary"
       size="lg"
       className={
-        clickable
+        onClick
           ? 'cursor-pointer hover:border-foreground/50 transition-colors'
           : ''
       }
-      onClick={clickable ? onClick : undefined}
+      onClick={onClick}
     >
       <div className="space-y-4">
         {/* Header */}
@@ -254,7 +247,6 @@ export function AttestationCard({
               displayMode="auto"
               showCopyIcon
               showNavIcon
-              onClick={(addr) => router.push(`/account/${addr}`)}
               monospace
             />
           </div>
@@ -268,7 +260,6 @@ export function AttestationCard({
               displayMode="auto"
               showNavIcon
               showCopyIcon
-              onClick={(addr) => router.push(`/account/${addr}`)}
               monospace
             />
           </div>

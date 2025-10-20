@@ -152,7 +152,6 @@ export default function AttestationsPage() {
               <AttestationCard
                 key={item.uid}
                 uid={item.uid}
-                clickable
                 onClick={() => router.push(`/attestations/${item.uid}`)}
               />
             ))}

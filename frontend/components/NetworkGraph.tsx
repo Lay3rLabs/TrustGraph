@@ -24,6 +24,7 @@ import { useQuery } from '@tanstack/react-query'
 import { MultiDirectedGraph } from 'graphology'
 import forceAtlas2 from 'graphology-layout-forceatlas2'
 import { CircleDashed, LoaderCircle, Waypoints } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { EdgeArrowProgram } from 'sigma/rendering'
 import { NodeDisplayData } from 'sigma/types'
@@ -131,6 +132,7 @@ export interface NetworkGraphProps {
 }
 
 export function NetworkGraph({ network, className }: NetworkGraphProps) {
+  const router = useRouter()
   const { isLoading, error, data } = useQuery({
     ...ponderQueries.attestationsGraph,
     refetchInterval: 10_000,
@@ -179,8 +181,11 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
           ? 50 // Default to middle if all values are the same
           : ((Number(value) - minValue) / (maxValue - minValue)) * 100
 
+      const href = `/account/${account}`
+      router.prefetch(href)
+
       graph.addNode(account, {
-        href: `/account/${account}`,
+        href,
         label:
           (ensData?.[account]?.name ||
             `${account.slice(0, 6)}...${account.slice(-4)}`) +

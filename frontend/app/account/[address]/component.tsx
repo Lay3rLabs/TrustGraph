@@ -3,7 +3,7 @@
 import { useSetAtom } from 'jotai'
 import { useRouter } from 'next/navigation'
 import type React from 'react'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Hex } from 'viem'
 import { useAccount } from 'wagmi'
 
@@ -60,6 +60,18 @@ export const AccountProfilePage = ({
     isLoadingAttestationsReceived,
     refresh,
   } = useAccountProfile(address)
+
+  useEffect(() => {
+    NETWORKS.forEach((network) => {
+      router.prefetch(`/network/${network.id}`)
+    })
+    attestationsGiven.forEach((attestation) => {
+      router.prefetch(`/attestations/${attestation.uid}`)
+    })
+    attestationsReceived.forEach((attestation) => {
+      router.prefetch(`/attestations/${attestation.uid}`)
+    })
+  }, [router, attestationsGiven, attestationsReceived])
 
   const {
     networksData,
@@ -175,13 +187,7 @@ export const AccountProfilePage = ({
       header: 'RECIPIENT',
       tooltip: 'The account that received the attestation.',
       sortable: false,
-      render: (row) => (
-        <TableAddress
-          showNavIcon
-          address={row.recipient}
-          onClick={(addr) => router.push(`/account/${addr}`)}
-        />
-      ),
+      render: (row) => <TableAddress showNavIcon address={row.recipient} />,
     },
     {
       key: 'confidence',
@@ -217,13 +223,7 @@ export const AccountProfilePage = ({
       header: 'ATTESTER',
       tooltip: 'The account that made the attestation.',
       sortable: false,
-      render: (row) => (
-        <TableAddress
-          address={row.attester}
-          showNavIcon
-          onClick={(addr) => router.push(`/account/${addr}`)}
-        />
-      ),
+      render: (row) => <TableAddress address={row.attester} showNavIcon />,
     },
     {
       key: 'confidence',
@@ -262,7 +262,6 @@ export const AccountProfilePage = ({
           displayMode="full"
           showCopyIcon={true}
           noHighlight
-          clickable={false}
         />
 
         <CreateAttestationModal

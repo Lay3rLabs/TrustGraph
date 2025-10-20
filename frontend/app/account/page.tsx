@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import type React from 'react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { TableAddress } from '@/components/Address'
 import { Button } from '@/components/Button'
@@ -43,6 +43,12 @@ export default function NetworkPage() {
       ) // Default to desc for score/received/sent, asc for others
     }
   }
+
+  useEffect(() => {
+    merkleData?.forEach((entry) => {
+      router.prefetch(`/account/${entry.account}`)
+    })
+  }, [merkleData, router])
 
   // Sort the data
   const sortedMerkleData = useMemo(() => {
@@ -280,13 +286,7 @@ export default function NetworkPage() {
                         </div>
                       </td>
                       <td className="p-4">
-                        <TableAddress
-                          address={entry.account}
-                          showNavIcon
-                          onClick={(address) =>
-                            router.push(`/account/${address}`)
-                          }
-                        />
+                        <TableAddress address={entry.account} showNavIcon />
                       </td>
                       <td className="p-4">
                         <div className="text-sm text-gray-800">

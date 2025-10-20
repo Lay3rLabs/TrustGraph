@@ -1,6 +1,7 @@
 'use client'
 
 import { ArrowUpRight, Check, Copy } from 'lucide-react'
+import Link from 'next/link'
 import React, { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAccount } from 'wagmi'
@@ -24,10 +25,8 @@ interface AddressProps {
   showNavIcon?: boolean
   /** Whether to show copy icon (on hover) */
   showCopyIcon?: boolean
-  /** Whether the component should be clickable */
-  clickable?: boolean
-  /** Click handler for the address */
-  onClick?: (address: string) => void
+  /** Link to page for the address. Defaults to account page. */
+  link?: 'account' | false
   /** Whether to use monospace font */
   monospace?: boolean
   /** Whether to not highlight names that conceal the address */
@@ -39,7 +38,7 @@ interface AddressProps {
   tooltip?: string
 }
 
-export const Address = React.memo(function Address({
+export const Address = ({
   address,
   className = '',
   textClassName = '',
@@ -48,15 +47,16 @@ export const Address = React.memo(function Address({
   displayText,
   showNavIcon = false,
   showCopyIcon = true,
-  clickable = true,
-  onClick,
+  link = 'account',
   monospace = true,
   noHighlight = false,
   noHighlightEns = false,
   tooltip,
-}: AddressProps) {
+}: AddressProps) => {
   const [copied, setCopied] = useState(false)
   const { address: connectedAddress } = useAccount()
+
+  const clickable = link !== false
 
   const isYou = connectedAddress?.toLowerCase() === address.toLowerCase()
   if (isYou && !displayText) {
@@ -72,6 +72,7 @@ export const Address = React.memo(function Address({
   })
 
   const handleCopy = async (e: React.MouseEvent) => {
+    e.preventDefault()
     e.stopPropagation()
     try {
       await navigator.clipboard.writeText(address)
@@ -81,14 +82,6 @@ export const Address = React.memo(function Address({
     } catch (err) {
       console.error('Failed to copy address:', err)
       toast.error('Failed to copy address')
-    }
-  }
-
-  const handleClick = (e: React.MouseEvent) => {
-    if (onClick && clickable) {
-      e.preventDefault()
-      e.stopPropagation()
-      onClick(address)
     }
   }
 
@@ -114,8 +107,7 @@ export const Address = React.memo(function Address({
   const baseClasses = cn(
     'group/address inline-flex items-center gap-2 transition-colors',
     monospace && !shouldHighlight && 'font-mono',
-    clickable && onClick && 'cursor-pointer',
-    !clickable && 'cursor-default',
+    clickable ? 'cursor-pointer' : 'cursor-default',
     className
   )
 
@@ -131,14 +123,11 @@ export const Address = React.memo(function Address({
           'text-muted-foreground',
           clickable &&
             'group-hover/address:text-brand peer-hover/copy:text-muted-foreground',
-        ]
-  )
-
-  const textClasses = cn(
-    'break-all text-sm transition-colors font-medium',
-    hoverClasses,
+        ],
     textClassName
   )
+
+  const textClasses = cn('break-all text-sm font-medium', hoverClasses)
 
   const copyIcon = copied ? (
     <Check className="w-3 h-3 text-green-600 dark:text-green-400 shrink-0" />
@@ -168,11 +157,7 @@ export const Address = React.memo(function Address({
   }
 
   const content = (
-    <div
-      className={baseClasses}
-      onClick={handleClick}
-      role={clickable && onClick ? 'button' : 'text'}
-    >
+    <>
       {renderText()}
 
       {showNavIcon && (
@@ -191,7 +176,7 @@ export const Address = React.memo(function Address({
           {copyIcon}
         </button>
       )}
-    </div>
+    </>
   )
 
   return (
@@ -203,45 +188,23 @@ export const Address = React.memo(function Address({
           : undefined)
       }
     >
-      {content}
+      {clickable ? (
+        <Link
+          className={baseClasses}
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+          }}
+          href={link === 'account' ? `/account/${address}` : '#'}
+        >
+          {content}
+        </Link>
+      ) : (
+        <div className={baseClasses}>{content}</div>
+      )}
     </Tooltip>
   )
-})
-
-Address.displayName = 'Address'
-
-// Export some common preset configurations for convenience
-export const AddressShort = React.memo(
-  (props: Omit<AddressProps, 'displayMode'>) => (
-    <Address {...props} displayMode="truncated" />
-  )
-)
-
-export const AddressFull = React.memo(
-  (props: Omit<AddressProps, 'displayMode'>) => (
-    <Address {...props} displayMode="full" />
-  )
-)
-
-export const AddressWithoutCopy = React.memo(
-  (props: Omit<AddressProps, 'showCopyIcon'>) => (
-    <Address {...props} showCopyIcon={false} />
-  )
-)
-
-export const AddressClickable = React.memo(
-  (props: AddressProps & { onAddressClick: (address: string) => void }) => {
-    const { onAddressClick, ...rest } = props
-    return (
-      <Address
-        {...rest}
-        clickable={true}
-        onClick={onAddressClick}
-        className={cn('hover:underline cursor-pointer', rest.className)}
-      />
-    )
-  }
-)
+}
 
 // Utility component for addresses in tables
 export const TableAddress = React.memo(
