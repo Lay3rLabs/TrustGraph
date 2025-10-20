@@ -10,6 +10,3 @@ onlyBuiltDependencies:
   - secp256k1
   - sharp
   - utf-8-validate
-
-patchedDependencies:
-  ponder@0.14.3: patches/ponder@0.14.3.patch

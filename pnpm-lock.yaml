@@ -4,18 +4,13 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-patchedDependencies:
-  ponder@0.14.3:
-    hash: 4b7e6d700cd68fd923b1f88b2001ead336c801186a0eda56004c06c8fe169113
-    path: patches/ponder@0.14.3.patch
-
 importers:
 
   .:
     dependencies:
       '@commitlint/cli':
         specifier: 19.3.0
-        version: 19.3.0(@types/node@22.15.3)(typescript@5.8.3)
+        version: 19.3.0(@types/node@22.18.11)(typescript@5.8.3)
       '@commitlint/config-conventional':
         specifier: 19.2.2
         version: 19.2.2
@@ -62,11 +57,11 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0
       '@ponder/client':
-        specifier: ^0.14.3
-        version: 0.14.3(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)(typescript@5.5.4)
+        specifier: ^0.14.4
+        version: 0.14.4(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)(typescript@5.5.4)
       '@ponder/react':
-        specifier: ^0.14.3
-        version: 0.14.3(@ponder/client@0.14.3(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)(typescript@5.5.4))(@tanstack/react-query@5.90.3(react@19.2.0))(react@19.2.0)(typescript@5.5.4)
+        specifier: ^0.14.4
+        version: 0.14.4(@ponder/client@0.14.4(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)(typescript@5.5.4))(@tanstack/react-query@5.90.3(react@19.2.0))(react@19.2.0)(typescript@5.5.4)
       '@radix-ui/react-accordion':
         specifier: 1.2.2
         version: 1.2.2(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -246,13 +241,13 @@ importers:
         version: 0.4.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       openai:
         specifier: ^5.22.0
-        version: 5.23.2(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.25.67)
+        version: 5.23.2(ws@8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.25.67)
       pino-pretty:
         specifier: ^13.1.1
         version: 13.1.2
       ponder:
-        specifier: ^0.14.3
-        version: 0.14.3(patch_hash=4b7e6d700cd68fd923b1f88b2001ead336c801186a0eda56004c06c8fe169113)(@opentelemetry/api@1.9.0)(@types/node@22.15.3)(@types/pg@8.15.5)(bufferutil@4.0.9)(hono@4.9.12)(lightningcss@1.30.1)(terser@5.44.0)(typescript@5.5.4)(utf-8-validate@5.0.10)(viem@2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67))(zod@3.25.67)
+        specifier: ^0.14.4
+        version: 0.14.4(@opentelemetry/api@1.9.0)(@types/node@22.15.3)(@types/pg@8.15.5)(bufferutil@4.0.9)(hono@4.9.12)(lightningcss@1.30.1)(terser@5.44.0)(typescript@5.5.4)(utf-8-validate@5.0.10)(viem@2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67))(zod@3.25.67)
       porto:
         specifier: ^0.2.19
         version: 0.2.28(ac7f422f77653bc51d155b517eb0b19d)
@@ -378,8 +373,8 @@ importers:
   indexer:
     dependencies:
       '@ponder/client':
-        specifier: ^0.14.3
-        version: 0.14.3(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)(typescript@5.5.4)
+        specifier: ^0.14.4
+        version: 0.14.4(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)(typescript@5.5.4)
       drizzle-orm:
         specifier: ^0.41.0
         version: 0.41.0(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)
@@ -390,8 +385,8 @@ importers:
         specifier: ^8.16.3
         version: 8.16.3
       ponder:
-        specifier: ^0.14.3
-        version: 0.14.3(patch_hash=4b7e6d700cd68fd923b1f88b2001ead336c801186a0eda56004c06c8fe169113)(@opentelemetry/api@1.9.0)(@types/node@20.19.21)(@types/pg@8.15.5)(bufferutil@4.0.9)(hono@4.9.12)(lightningcss@1.30.1)(terser@5.44.0)(typescript@5.5.4)(utf-8-validate@5.0.10)(viem@2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67))(zod@3.25.67)
+        specifier: ^0.14.4
+        version: 0.14.4(@opentelemetry/api@1.9.0)(@types/node@20.19.21)(@types/pg@8.15.5)(bufferutil@4.0.9)(hono@4.9.12)(lightningcss@1.30.1)(terser@5.44.0)(typescript@5.5.4)(utf-8-validate@5.0.10)(viem@2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67))(zod@3.25.67)
       viem:
         specifier: ^2.21.3
         version: 2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67)
@@ -412,8 +407,8 @@ importers:
         specifier: ^8.54.0
         version: 8.57.1
       eslint-config-ponder:
-        specifier: ^0.14.3
-        version: 0.14.3(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1)(typescript@5.5.4))(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1)
+        specifier: ^0.14.4
+        version: 0.14.4(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1)(typescript@5.5.4))(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1)
       typescript:
         specifier: ^5.3.2
         version: 5.5.4
@@ -2442,18 +2437,18 @@ packages:
     resolution: {integrity: sha512-c83qWb22rNRuB0UaVCI0uRPNRr8Z0FWnEIvT47jiHAmOIUHbBOg5XvV7pM5x+rKn9HRpjxquDbXYSXr3fAKFcw==}
     engines: {node: '>=12'}
 
-  '@ponder/client@0.14.3':
-    resolution: {integrity: sha512-lE1PyqzEbXvXa3QUJHascQjEq1/h6H8MzUmQPjkMvS3iHUPsR0s+rB09oJBE5vvV517dMYaV1APwBxI8lkUWPw==}
+  '@ponder/client@0.14.4':
+    resolution: {integrity: sha512-mJBExB7ACeqMNZwDodFpuZPYMLWPlTHDzo/TJNtQrYURpvBJs9cWHY/17HWhd86IUDJDjoc7cu5Cgd4q80T29A==}
     peerDependencies:
       typescript: '>=5.0.4'
     peerDependenciesMeta:
       typescript:
         optional: true
 
-  '@ponder/react@0.14.3':
-    resolution: {integrity: sha512-vrmIJDl0MfLDmUSNvp9yejBFSEHBma99DLXHgfB53meNG3Waeiv0jJD6YosCdA4EwA2pqkoNfuB1wB8tCmei5g==}
+  '@ponder/react@0.14.4':
+    resolution: {integrity: sha512-cd4rgLY56VBKx5hUL9ns/UXOi0XfYVF2SnV5YiQIFRG+SJjb/j/D574is7/DPZOzmzICY+jFX3qQGP0rVF5r5Q==}
     peerDependencies:
-      '@ponder/client': '>=0.14.3'
+      '@ponder/client': '>=0.14.4'
       '@tanstack/react-query': '>=5.0.0'
       react: '>=18'
       typescript: '>=5.0.4'
@@ -3617,6 +3612,9 @@ packages:
 
   '@types/node@22.15.3':
     resolution: {integrity: sha512-lX7HFZeHf4QG/J7tBZqrCAXwz9J5RD56Y6MpP0eJkka8p+K0RY/yBTW7CYFJ4VGCclxqOLKmiGP5juQc6MKgcw==}
+
+  '@types/node@22.18.11':
+    resolution: {integrity: sha512-Gd33J2XIrXurb+eT2ktze3rJAfAp9ZNjlBdh4SVgyrKEOADwCbdUDaK7QgJno8Ue4kcajscsKqu6n8OBG3hhCQ==}
 
   '@types/node@22.7.5':
     resolution: {integrity: sha512-jML7s2NAzMWc//QSJ1a3prpk78cOPchGvXJsC3C6R6PSMoooztvRVQEz89gmBTBY1SPMaqo5teB4uNHPdetShQ==}
@@ -5115,8 +5113,8 @@ packages:
     resolution: {integrity: sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==}
     engines: {node: '>=10'}
 
-  eslint-config-ponder@0.14.3:
-    resolution: {integrity: sha512-sQ9rvxPWFdjR82K5RBfq1SfvwP+Q3bHchIEZj9dKbnf9EJzAgKQu50Gl08lNdVUFlykrJtYMm4ndj9hviuWzog==}
+  eslint-config-ponder@0.14.4:
+    resolution: {integrity: sha512-FnVH4u/PouVsR8iYvTJDliulLoJJhS1QQ7fXPYA+isIeiHlUz3AeBzm+B5skW1eO2Izoxn1UGwnV4GtjKy/Szw==}
     peerDependencies:
       '@typescript-eslint/eslint-plugin': ^6.3.0
       '@typescript-eslint/parser': ^6.3.0
@@ -5558,6 +5556,10 @@ packages:
 
   glob@7.2.0:
     resolution: {integrity: sha512-lmLf6gtyrPq8tTjSmrO94wBeQbFR3HbLHbuyD69wuyQkImp2hWqMGB47OX65FBkPffO641IP9jWa1z4ivqG26Q==}
+    deprecated: Glob versions prior to v9 are no longer supported
+
+  glob@7.2.3:
+    resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
     deprecated: Glob versions prior to v9 are no longer supported
 
   glob@8.1.0:
@@ -7268,8 +7270,8 @@ packages:
     resolution: {integrity: sha512-40QW5YalBNfQo5yRYmiw7Yz6TKKVr3h6970B2YE+3fQpsWcrbj1PzJgxeJ19DRQjhMbKPIuMY8rFaXc8moolVw==}
     engines: {node: '>=10.13.0'}
 
-  ponder@0.14.3:
-    resolution: {integrity: sha512-JXAGqulmoGmIrHb2mkqCw4iy/UpaHR7TO4D+x3KSS7Gr6WzXvea8DExkiUD4omqMzT/Va33xTgrrmC1Q88CC7A==}
+  ponder@0.14.4:
+    resolution: {integrity: sha512-W5jR3vpMFghexDM4BvEJsTqGim+xbQHVu0JdPW9/pJLOBFttzlNLte+6L3JNQ1Rwy9USc0P0temdv/bPm7Z5xg==}
     engines: {node: '>=18.14'}
     hasBin: true
     peerDependencies:
@@ -7804,6 +7806,11 @@ packages:
 
   semver@7.7.1:
     resolution: {integrity: sha512-hlq8tAfn0m/61p4BVRcPzIGr6LKiMwo4VM6dGi6pt4qcRkmNzTcWq6eCEjEh+qXjkMDvPlOFFSGwQjoEa6gyMA==}
+    engines: {node: '>=10'}
+    hasBin: true
+
+  semver@7.7.3:
+    resolution: {integrity: sha512-SdsKMrI9TdgjdweUSR9MweHA4EJ8YxHn8DFaDisvhVlUOe4BF1tLD7GAj0lIqWVl+dPb/rExr0Btby5loQm20Q==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -9843,11 +9850,11 @@ snapshots:
     dependencies:
       commander: 12.1.0
 
-  '@commitlint/cli@19.3.0(@types/node@22.15.3)(typescript@5.8.3)':
+  '@commitlint/cli@19.3.0(@types/node@22.18.11)(typescript@5.8.3)':
     dependencies:
       '@commitlint/format': 19.8.0
       '@commitlint/lint': 19.8.0
-      '@commitlint/load': 19.8.0(@types/node@22.15.3)(typescript@5.8.3)
+      '@commitlint/load': 19.8.0(@types/node@22.18.11)(typescript@5.8.3)
       '@commitlint/read': 19.8.0
       '@commitlint/types': 19.8.0
       execa: 8.0.1
@@ -9894,7 +9901,7 @@ snapshots:
       '@commitlint/rules': 19.8.0
       '@commitlint/types': 19.8.0
 
-  '@commitlint/load@19.8.0(@types/node@22.15.3)(typescript@5.8.3)':
+  '@commitlint/load@19.8.0(@types/node@22.18.11)(typescript@5.8.3)':
     dependencies:
       '@commitlint/config-validator': 19.8.0
       '@commitlint/execute-rule': 19.8.0
@@ -9902,7 +9909,7 @@ snapshots:
       '@commitlint/types': 19.8.0
       chalk: 5.4.1
       cosmiconfig: 9.0.0(typescript@5.8.3)
-      cosmiconfig-typescript-loader: 6.1.0(@types/node@22.15.3)(cosmiconfig@9.0.0(typescript@5.8.3))(typescript@5.8.3)
+      cosmiconfig-typescript-loader: 6.1.0(@types/node@22.18.11)(cosmiconfig@9.0.0(typescript@5.8.3))(typescript@5.8.3)
       lodash.isplainobject: 4.0.6
       lodash.merge: 4.6.2
       lodash.uniq: 4.5.0
@@ -10691,14 +10698,14 @@ snapshots:
     dependencies:
       '@jest/fake-timers': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 22.15.3
+      '@types/node': 22.18.11
       jest-mock: 29.7.0
 
   '@jest/fake-timers@29.7.0':
     dependencies:
       '@jest/types': 29.6.3
       '@sinonjs/fake-timers': 10.3.0
-      '@types/node': 22.15.3
+      '@types/node': 22.18.11
       jest-message-util: 29.7.0
       jest-mock: 29.7.0
       jest-util: 29.7.0
@@ -10732,7 +10739,7 @@ snapshots:
       '@jest/schemas': 29.6.3
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
-      '@types/node': 22.15.3
+      '@types/node': 22.18.11
       '@types/yargs': 17.0.33
       chalk: 4.1.2
 
@@ -10935,7 +10942,7 @@ snapshots:
       '@ethereumjs/tx': 4.2.0
       '@types/debug': 4.1.12
       debug: 4.4.3(supports-color@8.1.1)
-      semver: 7.7.1
+      semver: 7.7.3
       superstruct: 1.0.4
     transitivePeerDependencies:
       - supports-color
@@ -11199,7 +11206,7 @@ snapshots:
       '@pnpm/network.ca-file': 1.0.2
       config-chain: 1.1.13
 
-  '@ponder/client@0.14.3(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)(typescript@5.5.4)':
+  '@ponder/client@0.14.4(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)(typescript@5.5.4)':
     dependencies:
       drizzle-orm: 0.41.0(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)
       eventsource: 3.0.7
@@ -11236,9 +11243,9 @@ snapshots:
       - sql.js
       - sqlite3
 
-  '@ponder/react@0.14.3(@ponder/client@0.14.3(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)(typescript@5.5.4))(@tanstack/react-query@5.90.3(react@19.2.0))(react@19.2.0)(typescript@5.5.4)':
+  '@ponder/react@0.14.4(@ponder/client@0.14.4(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)(typescript@5.5.4))(@tanstack/react-query@5.90.3(react@19.2.0))(react@19.2.0)(typescript@5.5.4)':
     dependencies:
-      '@ponder/client': 0.14.3(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)(typescript@5.5.4)
+      '@ponder/client': 0.14.4(@electric-sql/pglite@0.2.13)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(kysely@0.26.3)(pg@8.16.3)(typescript@5.5.4)
       '@tanstack/react-query': 5.90.3(react@19.2.0)
       react: 19.2.0
       superjson: 2.2.2
@@ -11934,7 +11941,7 @@ snapshots:
     dependencies:
       '@babel/core': 7.28.4
       '@babel/parser': 7.28.4
-      glob: 7.2.0
+      glob: 7.2.3
       hermes-parser: 0.32.0
       invariant: 2.2.4
       nullthrows: 1.1.1
@@ -11948,7 +11955,7 @@ snapshots:
       metro: 0.83.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       metro-config: 0.83.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       metro-core: 0.83.3
-      semver: 7.7.1
+      semver: 7.7.3
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -12639,7 +12646,7 @@ snapshots:
 
   '@types/graceful-fs@4.1.9':
     dependencies:
-      '@types/node': 22.15.3
+      '@types/node': 22.18.11
 
   '@types/hast@3.0.4':
     dependencies:
@@ -12676,6 +12683,10 @@ snapshots:
       undici-types: 6.21.0
 
   '@types/node@22.15.3':
+    dependencies:
+      undici-types: 6.21.0
+
+  '@types/node@22.18.11':
     dependencies:
       undici-types: 6.21.0
 
@@ -14091,7 +14102,7 @@ snapshots:
 
   chrome-launcher@0.15.2:
     dependencies:
-      '@types/node': 22.15.3
+      '@types/node': 22.18.11
       escape-string-regexp: 4.0.0
       is-wsl: 2.2.0
       lighthouse-logger: 1.4.2
@@ -14100,7 +14111,7 @@ snapshots:
 
   chromium-edge-launcher@0.2.0:
     dependencies:
-      '@types/node': 22.15.3
+      '@types/node': 22.18.11
       escape-string-regexp: 4.0.0
       is-wsl: 2.2.0
       lighthouse-logger: 1.4.2
@@ -14272,9 +14283,9 @@ snapshots:
 
   core-util-is@1.0.3: {}
 
-  cosmiconfig-typescript-loader@6.1.0(@types/node@22.15.3)(cosmiconfig@9.0.0(typescript@5.8.3))(typescript@5.8.3):
+  cosmiconfig-typescript-loader@6.1.0(@types/node@22.18.11)(cosmiconfig@9.0.0(typescript@5.8.3))(typescript@5.8.3):
     dependencies:
-      '@types/node': 22.15.3
+      '@types/node': 22.18.11
       cosmiconfig: 9.0.0(typescript@5.8.3)
       jiti: 2.6.1
       typescript: 5.8.3
@@ -14861,7 +14872,7 @@ snapshots:
 
   escape-string-regexp@4.0.0: {}
 
-  eslint-config-ponder@0.14.3(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1)(typescript@5.5.4))(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1):
+  eslint-config-ponder@0.14.4(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1)(typescript@5.5.4))(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1):
     dependencies:
       '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.5.4))(eslint@8.57.1)(typescript@5.5.4)
       '@typescript-eslint/parser': 7.18.0(eslint@8.57.1)(typescript@5.5.4)
@@ -15389,6 +15400,15 @@ snapshots:
       path-scurry: 1.11.1
 
   glob@7.2.0:
+    dependencies:
+      fs.realpath: 1.0.0
+      inflight: 1.0.6
+      inherits: 2.0.4
+      minimatch: 3.1.2
+      once: 1.4.0
+      path-is-absolute: 1.0.1
+
+  glob@7.2.3:
     dependencies:
       fs.realpath: 1.0.0
       inflight: 1.0.6
@@ -16105,7 +16125,7 @@ snapshots:
       '@jest/environment': 29.7.0
       '@jest/fake-timers': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 22.15.3
+      '@types/node': 22.18.11
       jest-mock: 29.7.0
       jest-util: 29.7.0
 
@@ -16115,7 +16135,7 @@ snapshots:
     dependencies:
       '@jest/types': 29.6.3
       '@types/graceful-fs': 4.1.9
-      '@types/node': 22.15.3
+      '@types/node': 22.18.11
       anymatch: 3.1.3
       fb-watchman: 2.0.2
       graceful-fs: 4.2.11
@@ -16142,7 +16162,7 @@ snapshots:
   jest-mock@29.7.0:
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 22.15.3
+      '@types/node': 22.18.11
       jest-util: 29.7.0
 
   jest-regex-util@29.6.3: {}
@@ -16150,7 +16170,7 @@ snapshots:
   jest-util@29.7.0:
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 22.15.3
+      '@types/node': 22.18.11
       chalk: 4.1.2
       ci-info: 3.9.0
       graceful-fs: 4.2.11
@@ -16167,7 +16187,7 @@ snapshots:
 
   jest-worker@29.7.0:
     dependencies:
-      '@types/node': 22.15.3
+      '@types/node': 22.18.11
       jest-util: 29.7.0
       merge-stream: 2.0.0
       supports-color: 8.1.1
@@ -17180,9 +17200,9 @@ snapshots:
       is-docker: 2.2.1
       is-wsl: 2.2.0
 
-  openai@5.23.2(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.25.67):
+  openai@5.23.2(ws@8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(zod@3.25.67):
     optionalDependencies:
-      ws: 8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      ws: 8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       zod: 3.25.67
 
   openapi-fetch@0.13.8:
@@ -17546,7 +17566,7 @@ snapshots:
 
   pngjs@5.0.0: {}
 
-  ponder@0.14.3(patch_hash=4b7e6d700cd68fd923b1f88b2001ead336c801186a0eda56004c06c8fe169113)(@opentelemetry/api@1.9.0)(@types/node@20.19.21)(@types/pg@8.15.5)(bufferutil@4.0.9)(hono@4.9.12)(lightningcss@1.30.1)(terser@5.44.0)(typescript@5.5.4)(utf-8-validate@5.0.10)(viem@2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67))(zod@3.25.67):
+  ponder@0.14.4(@opentelemetry/api@1.9.0)(@types/node@20.19.21)(@types/pg@8.15.5)(bufferutil@4.0.9)(hono@4.9.12)(lightningcss@1.30.1)(terser@5.44.0)(typescript@5.5.4)(utf-8-validate@5.0.10)(viem@2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67))(zod@3.25.67):
     dependencies:
       '@babel/code-frame': 7.27.1
       '@commander-js/extra-typings': 12.1.0(commander@12.1.0)
@@ -17627,7 +17647,7 @@ snapshots:
       - utf-8-validate
       - zod
 
-  ponder@0.14.3(patch_hash=4b7e6d700cd68fd923b1f88b2001ead336c801186a0eda56004c06c8fe169113)(@opentelemetry/api@1.9.0)(@types/node@22.15.3)(@types/pg@8.15.5)(bufferutil@4.0.9)(hono@4.9.12)(lightningcss@1.30.1)(terser@5.44.0)(typescript@5.5.4)(utf-8-validate@5.0.10)(viem@2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67))(zod@3.25.67):
+  ponder@0.14.4(@opentelemetry/api@1.9.0)(@types/node@22.15.3)(@types/pg@8.15.5)(bufferutil@4.0.9)(hono@4.9.12)(lightningcss@1.30.1)(terser@5.44.0)(typescript@5.5.4)(utf-8-validate@5.0.10)(viem@2.38.2(bufferutil@4.0.9)(typescript@5.5.4)(utf-8-validate@5.0.10)(zod@3.25.67))(zod@3.25.67):
     dependencies:
       '@babel/code-frame': 7.27.1
       '@commander-js/extra-typings': 12.1.0(commander@12.1.0)
@@ -17958,7 +17978,7 @@ snapshots:
       base64-js: 1.5.1
       commander: 12.1.0
       flow-enums-runtime: 0.0.6
-      glob: 7.2.0
+      glob: 7.2.3
       hermes-compiler: 0.0.0
       invariant: 2.2.4
       jest-environment-node: 29.7.0
@@ -17973,7 +17993,7 @@ snapshots:
       react-refresh: 0.14.2
       regenerator-runtime: 0.13.11
       scheduler: 0.26.0
-      semver: 7.7.1
+      semver: 7.7.3
       stacktrace-parser: 0.1.11
       whatwg-fetch: 3.6.20
       ws: 6.2.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)
@@ -18279,6 +18299,8 @@ snapshots:
   semver@6.3.1: {}
 
   semver@7.7.1: {}
+
+  semver@7.7.3: {}
 
   send@0.19.0:
     dependencies:
@@ -18768,7 +18790,7 @@ snapshots:
   test-exclude@6.0.0:
     dependencies:
       '@istanbuljs/schema': 0.1.3
-      glob: 7.2.0
+      glob: 7.2.3
       minimatch: 3.1.2
 
   text-extensions@2.4.0: {}
