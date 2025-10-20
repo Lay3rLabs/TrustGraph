@@ -40,6 +40,7 @@
   --sidebar-border: oklch(0.88 0 0);
   --sidebar-ring: oklch(0.5 0 0);
   --brand: #1f88c1;
+  --brand-dark: #176690;
 
   /* Trust indicators */
   --trust-high: oklch(0.4 0 0);
@@ -83,6 +84,7 @@
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
   --brand: #1f88c1;
+  --brand-dark: #15618a;
 }
 
 .root {
@@ -130,7 +132,8 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-brand: var(--brand);
-
+  --color-brand-dark: var(--brand-dark);
+  
   --breakpoint-xs: 410px;
 }
 
@@ -144,6 +147,9 @@
   button {
     @apply cursor-pointer;
   }
+  ul {
+    @apply list-disc list-outside pl-6;
+  }
 }
 
 html {
@@ -151,12 +157,12 @@ html {
 }
 
 html,
-:fullscreen .sigma-container {
+.react-sigma {
   background: linear-gradient(
     135deg,
     oklch(0.98 0 0) 0%,
     oklch(0.96 0 0) 100%
-  );
+  ) !important;
 }
 
 h1 {

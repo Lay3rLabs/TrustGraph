@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useAccount } from 'wagmi'
 
-import { Button } from '@/components/Button'
+import { Button, ButtonProps } from '@/components/Button'
 import {
   Form,
   FormControl,
@@ -48,6 +48,8 @@ interface CreateAttestationModalProps {
   setIsOpen?: (value: boolean) => void
   network?: Network
   defaultRecipient?: string
+  variant?: ButtonProps['variant']
+  className?: string
 }
 
 export function CreateAttestationModal({
@@ -58,6 +60,8 @@ export function CreateAttestationModal({
   setIsOpen: externalSetIsOpen,
   network,
   defaultRecipient = '',
+  variant = 'default',
+  className,
 }: CreateAttestationModalProps) {
   const [internalIsOpen, setInternalIsOpen] = useState(false)
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen
@@ -151,7 +155,12 @@ export function CreateAttestationModal({
     <Tooltip
       title={!isConnected ? 'Connect your wallet to make attestations' : ''}
     >
-      <Button onClick={() => setIsOpen(true)} disabled={!isConnected}>
+      <Button
+        onClick={() => setIsOpen(true)}
+        disabled={!isConnected}
+        variant={variant}
+        className={className}
+      >
         {title}
       </Button>
     </Tooltip>

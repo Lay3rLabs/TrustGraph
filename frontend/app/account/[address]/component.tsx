@@ -16,12 +16,7 @@ import { Column, Table } from '@/components/Table'
 import { useAccountProfile } from '@/hooks/useAccountProfile'
 import { usePushBreadcrumb } from '@/hooks/usePushBreadcrumb'
 import { AttestationData } from '@/lib/attestation'
-import {
-  EXAMPLE_NETWORK,
-  NETWORKS,
-  Network,
-  isTrustedSeed,
-} from '@/lib/network'
+import { LOCALISM_FUND, NETWORKS, Network, isTrustedSeed } from '@/lib/network'
 import { formatBigNumber } from '@/lib/utils'
 
 interface NetworkParticipant {
@@ -265,7 +260,7 @@ export const AccountProfilePage = ({
         />
 
         <CreateAttestationModal
-          network={EXAMPLE_NETWORK}
+          network={LOCALISM_FUND}
           defaultRecipient={
             connectedAddress?.toLowerCase() === address.toLowerCase()
               ? undefined

@@ -4,28 +4,49 @@ import { merkleSnapshotAddress } from './contracts'
 export type Network = {
   id: string
   name: string
-  url: string
+  link?: {
+    prefix: string
+    label: string
+    href: string
+  }
   about: string
+  callToAction?: {
+    label: string
+    href: string
+  }
   criteria: string
   trustedSeeds: string[]
   merkleSnapshotContract: string
 }
 
-export const NETWORKS: Network[] = [
-  {
-    id: 'localism-fund',
-    name: 'Localism Fund',
-    url: 'https://localism.fund',
-    about:
-      'The Localism Fund is an experimental governance system that uses attestations to map trust relationships between community members. Participants can vouch for others through attestations, building a web of trust that informs funding decisions. The fund aims to distribute resources effectively to those who are trusted by the community.',
-    criteria:
-      "Attestations should speak to a participant's track record of responsible resource allocation, community building, and alignment with regenerative values. Higher trust scores are earned through consistent positive attestations from well-connected members over time. Members are expected to actively participate by both giving and receiving attestations to strengthen the network. The program emphasizes quality of relationships over quantity of connections.",
-    trustedSeeds: TRUSTED_SEEDS,
-    merkleSnapshotContract: merkleSnapshotAddress,
+export const LOCALISM_FUND: Network = {
+  id: 'localism-fund',
+  name: 'Localism Fund',
+  link: {
+    prefix: 'Learn more:',
+    label: 'localism.fund/expert-network',
+    href: 'https://localism.fund/expert-network',
   },
-]
+  about:
+    'The **Localism Fund Expert Network** is a curated, peer-attested collective of practitioners advancing the intersection of **localism and Ethereum-based coordination**. Experts in the network bring proven experience across Grant-making, Web3 / Ethereum Tooling, or Localism.',
+  callToAction: {
+    label: 'Learn more & apply to join',
+    href: 'https://localism.fund/expert-network',
+  },
+  criteria: `
+Localism Fund Experts should meet the following criteria:
 
-export const EXAMPLE_NETWORK = NETWORKS[0]
+- **Expertise** — Demonstrates relevant experience or insight in at least one of the following areas: Grant-making, Web3 / Ethereum Tooling, Localism.
+- **Ethical Alignment** — Commits to upholding the **[OpenCivics Ethical Standards](https://wiki.opencivics.co/OpenCivics+Network/Membership/Ethical+Standards).**
+- **Contribution** — Intends to contribute constructively to the broader Localism Fund ecosystem.
+
+By attesting, you are making **two signals of trust**. You're **vouching for inclusion**, meaning you believe this person meets the above criteria, has completed the onboarding form (appearing in the [**Expert Network Database**](https://www.localism.fund/expert-network-db)), and you believe they should be welcomed as a peer within the Localism Fund Expert Network. You're also **vouching for accuracy**, using the slider to express how confident you are in the **self-assessments** the applicant provided.
+`.trim(),
+  trustedSeeds: TRUSTED_SEEDS,
+  merkleSnapshotContract: merkleSnapshotAddress,
+}
+
+export const NETWORKS: Network[] = [LOCALISM_FUND]
 
 export const isTrustedSeed = ({ trustedSeeds }: Network, address: string) =>
   trustedSeeds.some((s) => s.toLowerCase() === address.toLowerCase())

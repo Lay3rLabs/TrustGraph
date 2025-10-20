@@ -70,17 +70,15 @@ export function CreateVouchingSchema({
 
   return (
     <div className="space-y-6">
-      {/* Schema Description */}
-      <div className="text-primary text-sm">
-        Express your trust in this person and optionally add a comment.
-      </div>
-
-      {network && (
+      {network ? (
         <div className="space-y-2">
           <div className="text-sm font-bold">NETWORK CRITERIA</div>
-          <div className="text-sm break-words text-left">
-            <Markdown>{network.criteria}</Markdown>
-          </div>
+          <Markdown className="text-sm">{network.criteria}</Markdown>
+        </div>
+      ) : (
+        // Default message if no network is provided
+        <div className="text-primary text-sm">
+          Express your trust in this person and optionally add a comment.
         </div>
       )}
 

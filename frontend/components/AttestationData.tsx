@@ -40,9 +40,9 @@ export function AttestationDataDisplay({
                 <div className="text-muted-foreground text-xs font-medium">
                   {field.name}
                 </div>
-                <div className="text-muted-foreground text-xs opacity-60">
+                {/* <div className="text-muted-foreground text-xs opacity-60">
                   {field.type}
-                </div>
+                </div> */}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-foreground text-xs font-mono break-all">

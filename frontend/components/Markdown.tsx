@@ -8,21 +8,31 @@ import rehypeRaw from 'rehype-raw'
 
 export type MarkdownProps = {
   children: string
+  className?: string
   rawHtml?: boolean
   textFade?: boolean
 }
 
-export const Markdown = ({ children, textFade, rawHtml }: MarkdownProps) => {
+export const Markdown = ({
+  children,
+  className,
+  textFade,
+  rawHtml,
+}: MarkdownProps) => {
   return (
-    <ReactMarkdown
-      components={{
-        ...(textFade ? { p: SlideFadeInParagraph as any } : {}),
-        a: StyledLink as any,
-      }}
-      rehypePlugins={rawHtml ? [rehypeRaw] : undefined}
+    <div
+      className={clsx(className, 'flex flex-col gap-4 break-words text-left')}
     >
-      {children}
-    </ReactMarkdown>
+      <ReactMarkdown
+        components={{
+          ...(textFade ? { p: SlideFadeInParagraph as any } : {}),
+          a: StyledLink as any,
+        }}
+        rehypePlugins={rawHtml ? [rehypeRaw] : undefined}
+      >
+        {children}
+      </ReactMarkdown>
+    </div>
   )
 }
 

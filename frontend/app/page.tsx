@@ -6,7 +6,7 @@ import { Suspense, useState } from 'react'
 
 import { Button, ButtonLink } from '@/components/Button'
 import { Markdown } from '@/components/Markdown'
-import { EXAMPLE_NETWORK } from '@/lib/network'
+import { LOCALISM_FUND } from '@/lib/network'
 import { cn } from '@/lib/utils'
 
 // Uses web2gl, which is not supported on the server
@@ -21,7 +21,7 @@ export default function HomePage() {
   return (
     <div className="grid grid-cols-1 justify-start items-stretch lg:grid-cols-2 lg:items-start gap-12">
       <div className="flex flex-col items-start gap-6">
-        <h1 className="text-5xl font-bold">
+        <h1 className="text-3xl sm:text-5xl font-bold">
           Networks that grow at the speed of trust
         </h1>
 
@@ -34,8 +34,8 @@ export default function HomePage() {
           rather than tokens.
         </p>
 
-        <ButtonLink href={`/network/${EXAMPLE_NETWORK.id}`} size="lg">
-          View Example Network
+        <ButtonLink href={`/network/${LOCALISM_FUND.id}`} size="lg">
+          View Network: Localism Fund
         </ButtonLink>
 
         <h2 className="mt-6 -mb-3">FREQUENTLY ASKED QUESTIONS</h2>
@@ -61,7 +61,7 @@ export default function HomePage() {
 
       <div className="h-[66vh] lg:h-4/5">
         <Suspense fallback={null}>
-          <NetworkGraph network={EXAMPLE_NETWORK} />
+          <NetworkGraph network={LOCALISM_FUND} />
         </Suspense>
       </div>
     </div>
@@ -95,9 +95,7 @@ const FrequentlyAskedQuestion = ({
       </div>
 
       {isOpen && (
-        <div className="text-sm break-words text-left animate-in fade-in-0">
-          <Markdown>{answer}</Markdown>
-        </div>
+        <Markdown className="text-sm animate-in fade-in-0">{answer}</Markdown>
       )}
     </Button>
   )

@@ -301,7 +301,7 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
       {graph && (
         <SigmaContainer
           className={cn(
-            '!bg-transparent border border-border rounded-md',
+            'border border-border rounded-md',
             showCursor && 'cursor-pointer'
           )}
           settings={{

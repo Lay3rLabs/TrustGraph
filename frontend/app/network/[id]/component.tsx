@@ -7,7 +7,7 @@ import { Suspense } from 'react'
 
 import { TableAddress } from '@/components/Address'
 import { BreadcrumbRenderer } from '@/components/BreadcrumbRenderer'
-import { Button } from '@/components/Button'
+import { Button, ButtonLink } from '@/components/Button'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
 import { ExportButtons } from '@/components/ExportButtons'
 import { Markdown } from '@/components/Markdown'
@@ -42,7 +42,7 @@ export const NetworkPage = ({ network }: { network: Network }) => {
     refresh,
   } = useNetwork()
 
-  const { name, url, about, criteria } = network
+  const { name, link, about, callToAction, criteria } = network
 
   // Define table columns
   const columns: Column<NetworkEntry>[] = [
@@ -115,32 +115,40 @@ export const NetworkPage = ({ network }: { network: Network }) => {
 
           <h1 className="text-4xl font-bold">{name}</h1>
 
-          <a
-            className="flex flex-row items-center gap-2 text-sm text-brand hover:text-brand/80 transition-colors"
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Link className="w-4 h-4" />
-            <span>{new URL(url).hostname}</span>
-          </a>
+          {link && (
+            <p className="text-sm flex flex-row items-center gap-2">
+              {link.prefix && <span>{link.prefix}</span>}
+              <a
+                className="inline-flex flex-row items-center gap-1.5 text-brand hover:text-brand/80 transition-colors underline"
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Link className="w-4 h-4" />
+                <span>{link.label}</span>
+              </a>
+            </p>
+          )}
 
-          <h2 className="mt-2 -mb-3 font-bold">ABOUT NETWORK</h2>
-          <p>{about}</p>
+          <h2 className="mt-2 -mb-3 font-bold text-lg">ABOUT NETWORK</h2>
+          <Markdown>{about}</Markdown>
 
-          <h2 className="mt-2 -mb-3 font-bold">CRITERIA</h2>
-          <div className="break-words text-left">
-            <Markdown>{criteria}</Markdown>
-          </div>
+          {callToAction && (
+            <ButtonLink
+              href={callToAction.href}
+              target="_blank"
+              variant="brand"
+              rel="noopener noreferrer"
+              className="mb-2"
+            >
+              {callToAction.label}
+            </ButtonLink>
+          )}
 
-          <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-stretch mt-6">
-            <CreateAttestationModal network={network} />
+          <h2 className="mt-2 -mb-3 font-bold text-lg">CRITERIA</h2>
+          <Markdown>{criteria}</Markdown>
 
-            <ExportButtons
-              data={merkleData}
-              filename={`TrustGraph_${name}_${new Date().toISOString()}`}
-            />
-          </div>
+          <CreateAttestationModal network={network} className="mt-3" />
         </div>
 
         <div className="h-[66vh] lg:h-4/5">
@@ -192,8 +200,14 @@ export const NetworkPage = ({ network }: { network: Network }) => {
 
           {/* Refresh Button */}
           {!isLoading && (
-            <Button onClick={refresh} size="sm" disabled={isLoading}>
-              <span className="text-xs">REFRESH</span>
+            <Button
+              onClick={refresh}
+              variant="secondary"
+              size="sm"
+              className="text-xs"
+              disabled={isLoading}
+            >
+              REFRESH
             </Button>
           )}
         </div>
@@ -222,22 +236,31 @@ export const NetworkPage = ({ network }: { network: Network }) => {
 
         {/* Merkle Table */}
         {!isLoading && merkleData.length > 0 && (
-          <div className="overflow-x-auto">
-            <Table
-              columns={columns}
-              data={merkleData}
-              defaultSortDirection="asc"
-              defaultSortColumn="rank"
-              onRowClick={
-                // Will be prefetched in the TableAddress component
-                (row) => {
-                  pushBreadcrumb()
-                  router.push(`/account/${row.ensName || row.account}`)
+          <>
+            <div className="overflow-x-auto">
+              <Table
+                columns={columns}
+                data={merkleData}
+                defaultSortDirection="asc"
+                defaultSortColumn="rank"
+                onRowClick={
+                  // Will be prefetched in the TableAddress component
+                  (row) => {
+                    pushBreadcrumb()
+                    router.push(`/account/${row.ensName || row.account}`)
+                  }
                 }
-              }
-              getRowKey={(row) => row.account}
-            />
-          </div>
+                getRowKey={(row) => row.account}
+              />
+            </div>
+
+            <div className="flex flex-row justify-center items-center gap-4 flex-wrap">
+              <ExportButtons
+                data={merkleData}
+                filename={`TrustGraph_${name}_${new Date().toISOString()}`}
+              />
+            </div>
+          </>
         )}
 
         {/* No Data Message */}

@@ -12,7 +12,7 @@ import { Card } from '@/components/Card'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
 import { useIntoAttestationsData } from '@/hooks/useAttestation'
 import { usePushBreadcrumb } from '@/hooks/usePushBreadcrumb'
-import { EXAMPLE_NETWORK } from '@/lib/network'
+import { LOCALISM_FUND } from '@/lib/network'
 import { SCHEMAS } from '@/lib/schemas'
 import { easAttestation } from '@/ponder.schema'
 
@@ -66,7 +66,7 @@ export default function AttestationsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="text-lg">ATTESTATIONS</div>
-        <CreateAttestationModal network={EXAMPLE_NETWORK} />
+        <CreateAttestationModal network={LOCALISM_FUND} />
       </div>
 
       {/* Filters */}
