@@ -294,19 +294,18 @@ export const AccountProfilePage = ({
         <>
           {/* Network Status */}
           {networksData.length > 0 ? (
-            <div className="py-6 overflow-x-auto">
-              <Table
-                columns={networksColumns}
-                data={networksData}
-                defaultSortColumn="rank"
-                defaultSortDirection="asc"
-                getRowKey={(row) => row.network.id}
-                onRowClick={(row) => {
-                  pushBreadcrumb()
-                  router.push(`/network/${row.network.id}`)
-                }}
-              />
-            </div>
+            <Table
+              className="py-6"
+              columns={networksColumns}
+              data={networksData}
+              defaultSortColumn="rank"
+              defaultSortDirection="asc"
+              getRowKey={(row) => row.network.id}
+              onRowClick={(row) => {
+                pushBreadcrumb()
+                router.push(`/network/${row.network.id}`)
+              }}
+            />
           ) : (
             <div className="my-6 border border-yellow-500 bg-yellow-50 p-4 rounded-md">
               <div className="text-sm text-yellow-700">
@@ -384,19 +383,17 @@ export const AccountProfilePage = ({
 
             {!isLoadingAttestationsReceived &&
               attestationsReceived.length > 0 && (
-                <div className="overflow-x-auto">
-                  <Table
-                    columns={attestationsReceivedColumns}
-                    data={attestationsReceived}
-                    defaultSortColumn="time"
-                    defaultSortDirection="desc"
-                    onRowClick={(row) => {
-                      pushBreadcrumb()
-                      router.push(`/attestation/${row.uid}`)
-                    }}
-                    getRowKey={(row) => row.uid}
-                  />
-                </div>
+                <Table
+                  columns={attestationsReceivedColumns}
+                  data={attestationsReceived}
+                  defaultSortColumn="time"
+                  defaultSortDirection="desc"
+                  onRowClick={(row) => {
+                    pushBreadcrumb()
+                    router.push(`/attestation/${row.uid}`)
+                  }}
+                  getRowKey={(row) => row.uid}
+                />
               )}
           </div>
 
@@ -417,19 +414,17 @@ export const AccountProfilePage = ({
             )}
 
             {!isLoadingAttestationsGiven && attestationsGiven.length > 0 && (
-              <div className="overflow-x-auto">
-                <Table
-                  columns={attestationsGivenColumns}
-                  defaultSortColumn="time"
-                  defaultSortDirection="desc"
-                  data={attestationsGiven}
-                  onRowClick={(row) => {
-                    pushBreadcrumb()
-                    router.push(`/attestation/${row.uid}`)
-                  }}
-                  getRowKey={(row) => row.uid}
-                />
-              </div>
+              <Table
+                columns={attestationsGivenColumns}
+                defaultSortColumn="time"
+                defaultSortDirection="desc"
+                data={attestationsGiven}
+                onRowClick={(row) => {
+                  pushBreadcrumb()
+                  router.push(`/attestation/${row.uid}`)
+                }}
+                getRowKey={(row) => row.uid}
+              />
             )}
           </div>
         </>

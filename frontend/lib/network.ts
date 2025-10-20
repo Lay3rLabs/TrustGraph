@@ -30,7 +30,7 @@ export const LOCALISM_FUND: Network = {
   about:
     'The **Localism Fund Expert Network** is a curated, peer-attested collective of practitioners advancing the intersection of **localism and Ethereum-based coordination**. Experts in the network bring proven experience across Grant-making, Web3 / Ethereum Tooling, or Localism.',
   callToAction: {
-    label: 'Learn more & apply to join',
+    label: 'Apply as Expert',
     href: 'https://localism.fund/expert-network',
   },
   criteria: `

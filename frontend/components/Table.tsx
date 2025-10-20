@@ -160,66 +160,69 @@ export function Table<T>({
     : 'bg-accent/70'
 
   return (
-    <table
-      className={cn('w-full border-separate border-spacing-y-2', className)}
-    >
-      <thead>
-        <tr>
-          {columns.map((column) => {
+    <div className={cn('w-full min-w-0 grow overflow-x-auto', className)}>
+      <table className="border-separate border-spacing-y-2 w-full h-full">
+        <thead>
+          <tr>
+            {columns.map((column) => {
+              return (
+                <th
+                  key={column.key}
+                  className={cn(
+                    'text-left px-4 py-2 text-xs text-black transition-colors select-none',
+                    column.sortable && 'cursor-pointer hover:text-gray-900',
+                    column.headerClassName
+                  )}
+                  onClick={() => handleSort(column)}
+                >
+                  <div className="flex items-center gap-1">
+                    <span>{column.header}</span>
+                    {column.tooltip && <InfoTooltip title={column.tooltip} />}
+                    {getSortIndicator(column)}
+                  </div>
+                </th>
+              )
+            })}
+          </tr>
+        </thead>
+        <tbody>
+          {sortedData.map((row) => {
             return (
-              <th
-                key={column.key}
+              <tr
+                key={getRowKey(row)}
                 className={cn(
-                  'text-left px-4 py-2 text-xs text-black transition-colors select-none',
-                  column.sortable && 'cursor-pointer hover:text-gray-900',
-                  column.headerClassName
+                  'group/row whitespace-nowrap',
+                  getRowClassName(row)
                 )}
-                onClick={() => handleSort(column)}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                title={onRowClick ? rowClickTitle : undefined}
               >
-                <div className="flex items-center gap-1">
-                  <span>{column.header}</span>
-                  {column.tooltip && <InfoTooltip title={column.tooltip} />}
-                  {getSortIndicator(column)}
-                </div>
-              </th>
+                {columns.map((column, index) => {
+                  const isFirst = index === 0
+                  const isLast = index === columns.length - 1
+                  const cellClasses = cn(
+                    'p-4',
+                    isFirst && 'rounded-l-md',
+                    isLast && 'rounded-r-md',
+                    baseCellClasses,
+                    getCellClassName(column, row)
+                  )
+
+                  return (
+                    <td key={column.key} className={cellClasses}>
+                      {column.render
+                        ? column.render(row)
+                        : column.accessor
+                        ? String(column.accessor(row))
+                        : null}
+                    </td>
+                  )
+                })}
+              </tr>
             )
           })}
-        </tr>
-      </thead>
-      <tbody>
-        {sortedData.map((row) => {
-          return (
-            <tr
-              key={getRowKey(row)}
-              className={cn('group/row', getRowClassName(row))}
-              onClick={onRowClick ? () => onRowClick(row) : undefined}
-              title={onRowClick ? rowClickTitle : undefined}
-            >
-              {columns.map((column, index) => {
-                const isFirst = index === 0
-                const isLast = index === columns.length - 1
-                const cellClasses = cn(
-                  'p-4',
-                  isFirst && 'rounded-l-md',
-                  isLast && 'rounded-r-md',
-                  baseCellClasses,
-                  getCellClassName(column, row)
-                )
-
-                return (
-                  <td key={column.key} className={cellClasses}>
-                    {column.render
-                      ? column.render(row)
-                      : column.accessor
-                      ? String(column.accessor(row))
-                      : null}
-                  </td>
-                )
-              })}
-            </tr>
-          )
-        })}
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    </div>
   )
 }

@@ -39,8 +39,7 @@
   --sidebar-accent-foreground: oklch(0.2 0 0);
   --sidebar-border: oklch(0.88 0 0);
   --sidebar-ring: oklch(0.5 0 0);
-  --brand: #1f88c1;
-  --brand-dark: #176690;
+  --brand: #1a709e;
 
   /* Trust indicators */
   --trust-high: oklch(0.4 0 0);
@@ -83,8 +82,7 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
-  --brand: #1f88c1;
-  --brand-dark: #15618a;
+  --brand: #1a709e;
 }
 
 .root {
@@ -132,7 +130,6 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-brand: var(--brand);
-  --color-brand-dark: var(--brand-dark);
   
   --breakpoint-xs: 410px;
 }

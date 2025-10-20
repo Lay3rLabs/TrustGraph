@@ -116,7 +116,7 @@ export const NetworkPage = ({ network }: { network: Network }) => {
           <h1 className="text-4xl font-bold">{name}</h1>
 
           {link && (
-            <p className="text-sm flex flex-row items-center gap-2">
+            <p className="text-sm flex flex-row items-center gap-2 flex-wrap">
               {link.prefix && <span>{link.prefix}</span>}
               <a
                 className="inline-flex flex-row items-center gap-1.5 text-brand hover:text-brand/80 transition-colors underline"
@@ -237,22 +237,20 @@ export const NetworkPage = ({ network }: { network: Network }) => {
         {/* Merkle Table */}
         {!isLoading && merkleData.length > 0 && (
           <>
-            <div className="overflow-x-auto">
-              <Table
-                columns={columns}
-                data={merkleData}
-                defaultSortDirection="asc"
-                defaultSortColumn="rank"
-                onRowClick={
-                  // Will be prefetched in the TableAddress component
-                  (row) => {
-                    pushBreadcrumb()
-                    router.push(`/account/${row.ensName || row.account}`)
-                  }
+            <Table
+              columns={columns}
+              data={merkleData}
+              defaultSortDirection="asc"
+              defaultSortColumn="rank"
+              onRowClick={
+                // Will be prefetched in the TableAddress component
+                (row) => {
+                  pushBreadcrumb()
+                  router.push(`/account/${row.ensName || row.account}`)
                 }
-                getRowKey={(row) => row.account}
-              />
-            </div>
+              }
+              getRowKey={(row) => row.account}
+            />
 
             <div className="flex flex-row justify-center items-center gap-4 flex-wrap">
               <ExportButtons

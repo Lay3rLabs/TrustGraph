@@ -8,11 +8,18 @@ import { SCHEMA_CONFIG } from './config'
 
 export type SchemaKey = keyof typeof SCHEMA_CONFIG
 
+const SCHEMA_NAME_OVERRIDES = {
+  vouching: 'Vouch',
+}
+
 export const SCHEMAS = Object.entries(SCHEMA_CONFIG).map(
   ([key, schema]) =>
     ({
       key,
       ...schema,
+      name:
+        SCHEMA_NAME_OVERRIDES[key as keyof typeof SCHEMA_NAME_OVERRIDES] ||
+        schema.name,
     } as {
       uid: Hex
       key: SchemaKey
