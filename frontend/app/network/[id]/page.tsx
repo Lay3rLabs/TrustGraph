@@ -1,20 +1,29 @@
 'use client'
 
 import { Link } from 'lucide-react'
+import dynamic from 'next/dynamic'
 import { useParams, useRouter } from 'next/navigation'
+import { Suspense } from 'react'
 
 import { TableAddress } from '@/components/Address'
 import { Button } from '@/components/Button'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
 import { ExportButtons } from '@/components/ExportButtons'
 import { Markdown } from '@/components/Markdown'
-import { NetworkGraph } from '@/components/NetworkGraph'
 import { RankRenderer } from '@/components/RankRenderer'
 import { StatisticCard } from '@/components/StatisticCard'
 import { Column, Table } from '@/components/Table'
 import { NetworkEntry, useNetwork } from '@/hooks/useNetwork'
 import { NETWORKS, isTrustedSeed } from '@/lib/network'
 import { formatBigNumber } from '@/lib/utils'
+
+// Uses web2gl, which is not supported on the server
+const NetworkGraph = dynamic(
+  () => import('@/components/NetworkGraph').then((mod) => mod.NetworkGraph),
+  {
+    ssr: false,
+  }
+)
 
 export default function NetworkPage() {
   const router = useRouter()
@@ -143,7 +152,9 @@ export default function NetworkPage() {
         </div>
 
         <div className="h-[66vh] lg:h-4/5">
-          <NetworkGraph network={network} />
+          <Suspense fallback={null}>
+            <NetworkGraph network={network} />
+          </Suspense>
         </div>
       </div>
 

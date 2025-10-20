@@ -298,10 +298,6 @@ import { cn } from '@/lib/utils'
 - Proxies RPC requests to avoid exposing API keys
 - Used for Base network RPC calls
 
-### `/api/token-symbol/[address]`
-- Fetches ERC20 token symbol
-- Cached responses
-
 ## Testing
 
 Currently no automated tests configured. Manual testing workflow:

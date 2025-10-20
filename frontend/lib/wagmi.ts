@@ -61,27 +61,40 @@ const supportedChains = [
   mainnet,
 ] as readonly [Chain, ...Chain[]]
 
-export const config = createConfig({
-  chains: supportedChains,
-  connectors: [
-    injected(),
-    ...(CHAIN !== 'local' ? [porto()] : []),
-    metaMask(),
-    coinbaseWallet(),
-    walletConnect({
-      projectId: 'c6abc47a50f2aebfc9cbd1cac562759c',
-    }),
-  ],
-  transports: supportedChains.reduce((acc, chain) => {
-    const transports = [
-      ...(chain.rpcUrls.default.webSocket?.map((url) => webSocket(url)) || []),
-      ...(chain.rpcUrls.default.http.map((url) => http(url)) || []),
-    ]
+let wagmiConfig: ReturnType<typeof _makeWagmiConfig> | undefined
+/**
+ * Make the Wagmi config object. This should ideally only be called in the client side because WalletConnect uses some client-side only dependencies and logs annoying warnings on the server.
+ */
+export const makeWagmiConfig = () => {
+  if (!wagmiConfig) {
+    wagmiConfig = _makeWagmiConfig()
+  }
+  return wagmiConfig
+}
+export const _makeWagmiConfig = () =>
+  createConfig({
+    chains: supportedChains,
+    connectors: [
+      injected(),
+      ...(CHAIN !== 'local' ? [porto()] : []),
+      metaMask(),
+      coinbaseWallet(),
+      walletConnect({
+        projectId: 'c6abc47a50f2aebfc9cbd1cac562759c',
+      }),
+    ],
+    transports: supportedChains.reduce((acc, chain) => {
+      const transports = [
+        ...(chain.rpcUrls.default.webSocket?.map((url) => webSocket(url)) ||
+          []),
+        ...(chain.rpcUrls.default.http.map((url) => http(url)) || []),
+      ]
 
-    acc[chain.id] = transports.length > 1 ? fallback(transports) : transports[0]
-    return acc
-  }, {} as Record<number, any>),
-})
+      acc[chain.id] =
+        transports.length > 1 ? fallback(transports) : transports[0]
+      return acc
+    }, {} as Record<number, any>),
+  })
 
 // Export utility functions for network management
 export const getTargetChainId = (): number => {
@@ -106,6 +119,6 @@ export const createNetworkAddParams = (config: Chain) => {
 
 declare module 'wagmi' {
   interface Register {
-    config: typeof config
+    config: ReturnType<typeof makeWagmiConfig>
   }
 }

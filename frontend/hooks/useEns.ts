@@ -7,7 +7,7 @@ import { normalize } from 'viem/ens'
 import { useEnsAddress, useEnsAvatar, useEnsName } from 'wagmi'
 import { getEnsAvatarQueryOptions, getEnsNameQueryOptions } from 'wagmi/query'
 
-import { config } from '@/lib/wagmi'
+import { makeWagmiConfig } from '@/lib/wagmi'
 
 interface EnsData {
   address: string
@@ -388,15 +388,16 @@ export function useBatchEnsQuery(
                   isLoading: false,
                 }
               } else {
+                const wagmiConfig = makeWagmiConfig()
                 const ensName = await client.fetchQuery(
-                  getEnsNameQueryOptions(config, {
+                  getEnsNameQueryOptions(wagmiConfig, {
                     chainId: opts.chainId,
                     address,
                   })
                 )
                 const ensAvatar = ensName
                   ? await client.fetchQuery(
-                      getEnsAvatarQueryOptions(config, {
+                      getEnsAvatarQueryOptions(wagmiConfig, {
                         chainId: opts.chainId,
                         name: ensName,
                       })

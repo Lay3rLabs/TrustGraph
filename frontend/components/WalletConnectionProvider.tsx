@@ -1,6 +1,7 @@
+'use client'
+
 import {
   BaseSyntheticEvent,
-  MouseEvent,
   createContext,
   useCallback,
   useContext,

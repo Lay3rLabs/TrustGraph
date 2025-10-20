@@ -1,13 +1,21 @@
 'use client'
 
 import { ChevronDown } from 'lucide-react'
-import { useState } from 'react'
+import dynamic from 'next/dynamic'
+import { Suspense, useState } from 'react'
 
 import { Button, ButtonLink } from '@/components/Button'
 import { Markdown } from '@/components/Markdown'
-import { NetworkGraph } from '@/components/NetworkGraph'
 import { EXAMPLE_NETWORK } from '@/lib/network'
 import { cn } from '@/lib/utils'
+
+// Uses web2gl, which is not supported on the server
+const NetworkGraph = dynamic(
+  () => import('@/components/NetworkGraph').then((mod) => mod.NetworkGraph),
+  {
+    ssr: false,
+  }
+)
 
 export default function HomePage() {
   return (
@@ -52,7 +60,9 @@ export default function HomePage() {
       </div>
 
       <div className="h-[66vh] lg:h-4/5">
-        <NetworkGraph network={EXAMPLE_NETWORK} />
+        <Suspense fallback={null}>
+          <NetworkGraph network={EXAMPLE_NETWORK} />
+        </Suspense>
       </div>
     </div>
   )

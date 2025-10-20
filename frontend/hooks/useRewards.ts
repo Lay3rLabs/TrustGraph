@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { erc20Abi } from 'viem'
 import {
   useAccount,
   useBalance,
@@ -67,7 +68,6 @@ export function useRewards() {
   const [merkleData, setMerkleData] = useState<MerkleTreeData | null>(null)
   const [pendingReward, setPendingReward] = useState<PendingReward | null>(null)
   const [claimHistory, setClaimHistory] = useState<RewardClaim[]>([])
-  const [tokenSymbol, setTokenSymbol] = useState<string>('TOKEN')
 
   // Read merkle root from contract
   const {
@@ -170,23 +170,14 @@ export function useRewards() {
     loadMerkleData()
   }, [ipfsHashCid, address])
 
-  // Fetch token symbol when we have reward token address
-  useEffect(() => {
-    const fetchTokenSymbol = async () => {
-      try {
-        const response = await fetch(`/api/token-symbol/${enovaAddress}`)
-        if (response.ok) {
-          const data = await response.json()
-          setTokenSymbol(data.symbol || 'TOKEN')
-        }
-      } catch (err) {
-        console.error('Error fetching token symbol:', err)
-        setTokenSymbol('TOKEN')
-      }
-    }
-
-    fetchTokenSymbol()
-  }, [])
+  const { data: tokenSymbol = 'TOKEN' } = useReadContract({
+    address: enovaAddress,
+    abi: erc20Abi,
+    functionName: 'symbol',
+    query: {
+      enabled: !!enovaAddress,
+    },
+  })
 
   // Trigger merkle update
   const triggerUpdate = useCallback(async () => {
