@@ -192,7 +192,6 @@ export const Address = ({
         <Link
           className={baseClasses}
           onClick={(e) => {
-            e.preventDefault()
             e.stopPropagation()
           }}
           href={link === 'account' ? `/account/${address}` : '#'}
