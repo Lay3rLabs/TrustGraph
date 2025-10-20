@@ -238,7 +238,6 @@ export default function NetworkPage() {
               defaultSortColumn="rank"
               onRowClick={(row) => router.push(`/account/${row.account}`)}
               getRowKey={(row) => row.account}
-              rowClickTitle="Click to view account profile"
             />
           </div>
         )}

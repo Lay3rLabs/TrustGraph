@@ -308,7 +308,6 @@ export const AccountProfilePage = ({
                 defaultSortDirection="asc"
                 getRowKey={(row) => row.network.id}
                 onRowClick={(row) => router.push(`/network/${row.network.id}`)}
-                rowClickTitle="Click to view network"
               />
             </div>
           ) : (
@@ -399,7 +398,6 @@ export const AccountProfilePage = ({
                       router.push(`/attestations/${row.uid}`)
                     }}
                     getRowKey={(row) => row.uid}
-                    rowClickTitle="Click to view attestation details"
                   />
                 </div>
               )}
@@ -433,7 +431,6 @@ export const AccountProfilePage = ({
                     router.push(`/attestations/${row.uid}`)
                   }}
                   getRowKey={(row) => row.uid}
-                  rowClickTitle="Click to view attestation details"
                 />
               </div>
             )}

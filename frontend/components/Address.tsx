@@ -32,9 +32,11 @@ interface AddressProps {
   monospace?: boolean
   /** Whether to not highlight names that conceal the address */
   noHighlight?: boolean
+  /** Whether to not highlight ENS names only */
+  noHighlightEns?: boolean
 
   /** Custom tooltip content */
-  tooltipContent?: string
+  tooltip?: string
 }
 
 export const Address = React.memo(function Address({
@@ -50,7 +52,8 @@ export const Address = React.memo(function Address({
   onClick,
   monospace = true,
   noHighlight = false,
-  tooltipContent,
+  noHighlightEns = false,
+  tooltip,
 }: AddressProps) {
   const [copied, setCopied] = useState(false)
   const { address: connectedAddress } = useAccount()
@@ -104,7 +107,8 @@ export const Address = React.memo(function Address({
   const displayedText = getDisplayText()
   const truncatedText = getTruncatedText(displayedText)
   const isShowingEns = !!ensName && showEns && !displayText
-  const shouldHighlight = !noHighlight && (isShowingEns || isYou)
+  const shouldHighlight =
+    !noHighlight && ((!noHighlightEns && isShowingEns) || isYou)
   const isLoading = false // Don't show loading state, just display address
 
   const baseClasses = cn(
@@ -193,7 +197,7 @@ export const Address = React.memo(function Address({
   return (
     <Tooltip
       title={
-        tooltipContent ||
+        tooltip ||
         (isShowingEns
           ? `${address.slice(0, 10)}...${address.slice(-8)}`
           : undefined)
@@ -247,6 +251,7 @@ export const TableAddress = React.memo(
       displayMode="auto"
       className="text-xs"
       monospace={true}
+      noHighlightEns
     />
   )
 )
