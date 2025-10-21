@@ -13,7 +13,7 @@ import { AccountProfilePage } from './component'
 
 // Incremental Static Regeneration
 export const dynamic = 'force-static'
-export const revalidate = 15 * 60 // 15 minutes
+export const revalidate = 900 // 15 minutes
 
 export default async function AccountProfilePageServer({
   params,
