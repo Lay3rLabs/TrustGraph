@@ -302,22 +302,18 @@ impl AttestationGraph {
 
             // Check all outgoing edges from current node
             if let Some(outgoing) = self.outgoing.get(&current) {
-                // Sort edges for deterministic iteration
-                let mut sorted_outgoing = outgoing.clone();
-                sorted_outgoing.sort_by_key(|(addr, _)| *addr);
-
-                for &(neighbor, _) in &sorted_outgoing {
+                for (neighbor, _) in outgoing {
                     // Only process if we haven't visited this neighbor yet
-                    if !distances.contains_key(&neighbor) {
-                        distances.insert(neighbor, current_distance + 1);
-                        queue.push_back(neighbor);
+                    if !distances.contains_key(neighbor) {
+                        distances.insert(*neighbor, current_distance + 1);
+                        queue.push_back(*neighbor);
                     }
                 }
             }
         }
 
         // Log distance statistics
-        let reachable = distances.values().filter(|&&d| d != usize::MAX).count();
+        let reachable = distances.len();
         let unreachable = self.nodes.len() - reachable;
         println!(
             "🔍 Trust distance analysis: {} reachable, {} unreachable from trusted seeds",
@@ -354,7 +350,7 @@ impl AttestationGraph {
         let mut sorted_scores: Vec<_> = scores.iter().collect();
         sorted_scores.sort_by_key(|(addr, _)| **addr);
         for (addr, score) in sorted_scores {
-            let is_isolated = trust_distances.get(addr) == Some(&usize::MAX);
+            let is_isolated = trust_distances.get(addr) == None;
 
             if is_isolated {
                 isolated_count += 1;
@@ -400,11 +396,11 @@ impl AttestationGraph {
         if !non_trusted_scores.is_empty() {
             println!("\n  Top 5 non-trusted nodes:");
             for (i, (addr, score)) in non_trusted_scores.iter().take(5).enumerate() {
-                let distance = trust_distances.get(addr).copied().unwrap_or(usize::MAX);
-                let distance_str = if distance == usize::MAX {
-                    "isolated".to_string()
-                } else {
+                let distance = trust_distances.get(addr).copied();
+                let distance_str = if let Some(distance) = distance {
                     format!("distance {}", distance)
+                } else {
+                    "isolated".to_string()
                 };
                 println!("    {}. {}: {:.6} ({})", i + 1, addr, score, distance_str);
             }

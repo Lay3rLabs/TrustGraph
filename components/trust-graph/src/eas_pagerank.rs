@@ -252,7 +252,12 @@ impl EasPageRankSource {
         }
 
         let graph = self.build_attestation_graph(ctx).await?;
-        let scores: HashMap<Address, f64> = graph.calculate_pagerank(&self.config.pagerank_config);
+        let scores: HashMap<Address, f64> = graph
+            .calculate_pagerank(&self.config.pagerank_config)
+            .into_iter()
+            // Filter out scores with zero points
+            .filter(|(_, score)| *score > 0.0)
+            .collect();
 
         println!("\n🎲 Raw PageRank scores:");
         let mut sorted_scores: Vec<_> = scores.iter().collect();
