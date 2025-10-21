@@ -77,9 +77,7 @@ export const NetworkPage = ({ network }: { network: Network }) => {
         'The number of attestations this member has received from other participants in this network.',
       sortable: true,
       accessor: (row) => row.received || 0,
-      render: (row) => (
-        <div className="text-sm text-gray-800">{row.received || 0}</div>
-      ),
+      render: (row) => formatBigNumber(row.received || 0, undefined, true),
     },
     {
       key: 'sent',
@@ -88,22 +86,17 @@ export const NetworkPage = ({ network }: { network: Network }) => {
         'The number of attestations this member has given to other participants, indicating their level of engagement in building network trust.',
       sortable: true,
       accessor: (row) => row.sent || 0,
-      render: (row) => (
-        <div className="text-sm text-gray-800">{row.sent || 0}</div>
-      ),
+      render: (row) => formatBigNumber(row.sent || 0, undefined, true),
     },
     {
       key: 'score',
       header: 'SCORE',
       tooltip:
         "This member's calculated Trust Score using a PageRank-style algorithm. Higher scores indicate stronger endorsement from trusted peers in the network.",
+      cellClassName: 'text-brand',
       sortable: true,
       accessor: (row) => Number(BigInt(row.value || '0')),
-      render: (row) => (
-        <div className="text-sm text-gray-900">
-          {formatBigNumber(row.value, undefined, true)}
-        </div>
-      ),
+      render: (row) => formatBigNumber(row.value, undefined, true),
     },
   ]
 
@@ -249,6 +242,7 @@ export const NetworkPage = ({ network }: { network: Network }) => {
             columns={columns}
             data={merkleData}
             defaultSortDirection="asc"
+            rowClassName="text-sm"
             defaultSortColumn="rank"
             onRowClick={
               // Will be prefetched in the TableAddress component

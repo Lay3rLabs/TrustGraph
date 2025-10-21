@@ -177,6 +177,8 @@ export const AccountProfilePage = ({
         'The number of attestations this member has received from other participants in this network.',
       sortable: true,
       accessor: (row) => row.attestationsReceived,
+      render: (row) =>
+        formatBigNumber(row.attestationsReceived, undefined, true),
     },
     {
       key: 'attestationsGiven',
@@ -185,14 +187,17 @@ export const AccountProfilePage = ({
         'The number of attestations this member has given to other participants, indicating their level of engagement in building network trust.',
       sortable: true,
       accessor: (row) => row.attestationsGiven,
+      render: (row) => formatBigNumber(row.attestationsGiven, undefined, true),
     },
     {
       key: 'score',
       header: 'SCORE',
       tooltip:
         "This member's calculated Trust Score using a PageRank-style algorithm. Higher scores indicate stronger endorsement from trusted peers in the network.",
+      cellClassName: 'text-brand',
       sortable: true,
       accessor: (row) => row.score,
+      render: (row) => formatBigNumber(row.score, undefined, true),
     },
   ]
 
@@ -211,11 +216,8 @@ export const AccountProfilePage = ({
       tooltip: 'The strength of the attestation as specified by the attester.',
       sortable: true,
       accessor: (row) => Number(row.decodedData?.confidence || '0'),
-      render: (row) => (
-        <div className="text-sm text-gray-900">
-          {formatBigNumber(row.decodedData?.confidence || '0', undefined, true)}
-        </div>
-      ),
+      render: (row) =>
+        formatBigNumber(row.decodedData?.confidence || '0', undefined, true),
     },
     {
       key: 'time',
@@ -224,7 +226,7 @@ export const AccountProfilePage = ({
       sortable: true,
       accessor: (row) => Number(row.time),
       render: (row) => (
-        <div className="text-sm text-gray-800">
+        <div className="text-gray-800">
           <div>{row.formattedTime}</div>
           <div className="text-xs text-gray-600">{row.formattedTimeAgo}</div>
         </div>
@@ -339,6 +341,7 @@ export const AccountProfilePage = ({
           {networksData.length > 0 ? (
             <Table
               className="py-6"
+              cellClassName="text-sm"
               columns={networksColumns}
               data={networksData}
               defaultSortColumn="rank"
@@ -448,6 +451,7 @@ export const AccountProfilePage = ({
                 <Table
                   columns={attestationsReceivedColumns}
                   data={attestationsReceived}
+                  cellClassName="text-sm"
                   defaultSortColumn="time"
                   defaultSortDirection="desc"
                   onRowClick={(row) => {
@@ -479,6 +483,7 @@ export const AccountProfilePage = ({
               <Table
                 columns={attestationsGivenColumns}
                 defaultSortColumn="time"
+                cellClassName="text-sm"
                 defaultSortDirection="desc"
                 data={attestationsGiven}
                 onRowClick={(row) => {

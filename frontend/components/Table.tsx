@@ -42,6 +42,8 @@ export interface TableProps<T> {
   className?: string
   /** Optional title for the row click action */
   rowClickTitle?: string
+  /** Optional custom className for all cells */
+  cellClassName?: string
   /** Default sort column */
   defaultSortColumn?: string
   /** Default sort direction */
@@ -56,6 +58,7 @@ export function Table<T>({
   rowClassName,
   className,
   rowClickTitle,
+  cellClassName,
   defaultSortColumn,
   defaultSortDirection = 'desc',
 }: TableProps<T>) {
@@ -155,9 +158,12 @@ export function Table<T>({
   }
 
   // Base cell classes for consistent styling
-  const baseCellClasses = onRowClick
-    ? 'cursor-pointer transition-colors bg-accent/70 group-hover/row:bg-accent'
-    : 'bg-accent/70'
+  const baseCellClasses = cn(
+    onRowClick
+      ? 'cursor-pointer transition-colors bg-accent/70 group-hover/row:bg-accent'
+      : 'bg-accent/70',
+    cellClassName
+  )
 
   return (
     <div className={cn('w-full min-w-0 grow overflow-x-auto', className)}>

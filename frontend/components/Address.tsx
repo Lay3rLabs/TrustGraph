@@ -143,7 +143,9 @@ export const Address = ({
         return <span className={textClasses}>{truncatedText}</span>
       case 'auto':
       default:
-        return (
+        return isShowingEns ? (
+          <span className={textClasses}>{displayedText}</span>
+        ) : (
           <>
             <span className={cn(textClasses, 'hidden md:inline')}>
               {displayedText}
