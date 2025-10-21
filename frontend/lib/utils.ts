@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { formatUnits } from 'viem'
+import { Hex, formatUnits } from 'viem'
 
 export const cn = (...inputs: ClassValue[]) => {
   return twMerge(clsx(inputs))
@@ -82,4 +82,15 @@ export const formatTimeAgo = (timestampOrMs: Date | number) => {
  */
 export const mightBeEnsName = (name: string) => {
   return name.endsWith('.eth')
+}
+
+/**
+ * Check if two addresses are equal.
+ *
+ * @param address1 - The first address.
+ * @param address2 - The second address.
+ * @returns True if the addresses are equal, false otherwise.
+ */
+export const areAddressesEqual = (address1: Hex, address2: Hex) => {
+  return address1.toLowerCase() === address2.toLowerCase()
 }

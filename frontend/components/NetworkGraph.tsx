@@ -22,13 +22,16 @@ import {
 } from '@sigma/edge-curve'
 import { useQuery } from '@tanstack/react-query'
 import { MultiDirectedGraph } from 'graphology'
-import forceAtlas2 from 'graphology-layout-forceatlas2'
+import { circular } from 'graphology-layout'
+import forceAtlas2, { ForceAtlas2Settings } from 'graphology-layout-forceatlas2'
+import ForceAtlas2LayoutWorker from 'graphology-layout-forceatlas2/worker'
 import { CircleDashed, LoaderCircle, Waypoints } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { EdgeArrowProgram } from 'sigma/rendering'
 import { NodeDisplayData } from 'sigma/types'
 import { animateNodes } from 'sigma/utils'
+import { Hex } from 'viem'
 
 import { useBatchEnsQuery } from '@/hooks/useEns'
 import {
@@ -41,8 +44,17 @@ import {
   NetworkGraphHoverState,
   NetworkGraphManager,
 } from '@/lib/NetworkGraphManager'
-import { cn, formatBigNumber } from '@/lib/utils'
+import { areAddressesEqual, cn, formatBigNumber } from '@/lib/utils'
 import { ponderQueries } from '@/queries/ponder'
+
+const forceAtlas2SettingsOverrides: ForceAtlas2Settings = {
+  // Bind nodes more tightly together.
+  gravity: 1,
+
+  // Push hubs outwards to highlight them (disrupts spatial balance)
+  // outboundAttractionDistribution: true,
+}
+const forceAtlas2Duration = 250
 
 // https://github.com/jacomyal/sigma.js/blob/main/packages/storybook/stories/3-additional-packages/edge-curve/parallel-edges.ts
 const getCurvature = (index: number, maxIndex: number): number => {
@@ -58,30 +70,6 @@ const getCurvature = (index: number, maxIndex: number): number => {
 const getColorFromValue = (value: number): string => {
   // Clamp value between 0 and 100
   const clampedValue = Math.max(0, Math.min(100, value))
-
-  // Red -> Yellow -> Green
-  // if (clampedValue <= 50) {
-  //   // Interpolate from red to yellow (0-50)
-  //   const ratio = clampedValue / 50
-  //   const red = 255
-  //   const green = Math.round(255 * ratio)
-  //   const blue = 0
-  //   return `rgb(${red}, ${green}, ${blue})`
-  // } else {
-  //   // Interpolate from yellow to green (50-100)
-  //   const ratio = (clampedValue - 50) / 50
-  //   const red = Math.round(255 * (1 - ratio))
-  //   const green = 255
-  //   const blue = 0
-  //   return `rgb(${red}, ${green}, ${blue})`
-  // }
-
-  // Red -> Blue
-  // const ratio = clampedValue / 100
-  // const red = Math.round(255 * (1 - ratio))
-  // const green = 0
-  // const blue = Math.round(255 * ratio)
-  // return `rgb(${red}, ${green}, ${blue})`
 
   // Purple -> Blue -> Cyan
   // if (clampedValue <= 50) {
@@ -123,15 +111,25 @@ const getColorFromValue = (value: number): string => {
   const blue = Math.round(230 * (1 - ratio) + 112 * ratio)
   return `rgb(${red}, ${green}, ${blue})`
 
-  return '#888'
+  // Grey
+  return '#888888'
 }
 
 export interface NetworkGraphProps {
   network: Network
+  /** Only show attestations connected to this address. */
+  onlyAddress?: Hex
   className?: string
+  /** Initial zoom level. > 1.0 zooms out, < 1.0 zooms in. Defaults to 1.25. */
+  initialZoom?: number
 }
 
-export function NetworkGraph({ network, className }: NetworkGraphProps) {
+export function NetworkGraph({
+  network,
+  onlyAddress,
+  className,
+  initialZoom = 1.25,
+}: NetworkGraphProps) {
   const router = useRouter()
 
   const { isLoading, error, data } = useQuery({
@@ -146,10 +144,20 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
 
   const [showCursor, setShowCursor] = useState(false)
 
-  const graph = useMemo(() => {
+  const [isLoadingGraph, setIsLoadingGraph] = useState(false)
+  const [graph, setGraph] = useState<MultiDirectedGraph<
+    NetworkGraphNode,
+    NetworkGraphEdge
+  > | null>(null)
+
+  // Load graph from data.
+  useEffect(() => {
     if (!data) {
-      return null
+      setGraph(null)
+      return
     }
+
+    setIsLoadingGraph(true)
 
     // Create the graph
     const graph = new MultiDirectedGraph<NetworkGraphNode, NetworkGraphEdge>()
@@ -175,7 +183,26 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
     const minEdgeSize = 2
     const maxEdgeSize = 8
 
+    // Skip attestations that are not connected to the onlyAddress, if set.
+    const attestations = data.attestations.filter(
+      (attestation) =>
+        !onlyAddress ||
+        areAddressesEqual(attestation.attester, onlyAddress) ||
+        areAddressesEqual(attestation.recipient, onlyAddress)
+    )
+
     for (const { account, value, sent, received } of data.accounts) {
+      // Skip accounts not included in the graph.
+      if (
+        !attestations.some(
+          (attestation) =>
+            areAddressesEqual(attestation.attester, account) ||
+            areAddressesEqual(attestation.recipient, account)
+        )
+      ) {
+        continue
+      }
+
       // Normalize value to 0-100 scale
       const normalizedValue =
         maxValue === minValue
@@ -186,7 +213,7 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
       const href = `/account/${ensName || account}`
       router.prefetch(href)
 
-      graph.addNode(account, {
+      graph.addNode(account.toLowerCase(), {
         href,
         label:
           (ensName || `${account.slice(0, 6)}...${account.slice(-4)}`) +
@@ -206,7 +233,7 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
       })
     }
 
-    for (const attestation of data.attestations) {
+    for (const attestation of attestations) {
       const confidence = Number(attestation.decodedData?.confidence || 50)
       const size =
         minEdgeSize +
@@ -214,8 +241,8 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
           (maxEdgeSize - minEdgeSize)
       graph.addEdgeWithKey(
         attestation.uid,
-        attestation.attester,
-        attestation.recipient,
+        attestation.attester.toLowerCase(),
+        attestation.recipient.toLowerCase(),
         {
           href: `/attestation/${attestation.uid}`,
           label: attestation.decodedData?.confidence?.toString() || 'unknown',
@@ -270,26 +297,32 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
       }
     )
 
-    return graph
+    circular.assign(graph, {
+      scale: 100,
+    })
+
+    // Initialize force atlas 2 layout.
+    new Promise<void>(async (resolve) => {
+      const layout = new ForceAtlas2LayoutWorker(graph, {
+        settings: {
+          ...forceAtlas2.inferSettings(graph),
+          ...forceAtlas2SettingsOverrides,
+        },
+      })
+
+      layout.start()
+      await new Promise<void>((resolve) =>
+        setTimeout(resolve, forceAtlas2Duration)
+      )
+      layout.stop()
+      layout.kill()
+
+      setGraph(graph)
+      setIsLoadingGraph(false)
+
+      resolve()
+    })
   }, [data, ensData])
-
-  if (isLoading) {
-    return (
-      <div className="w-full h-full flex justify-center items-center border border-border rounded-md p-4">
-        <LoaderCircle size={24} className="animate-spin" />
-      </div>
-    )
-  }
-
-  if (error || !data) {
-    return (
-      <div className="w-full h-full flex justify-center items-center border border-destructive rounded-md p-4">
-        <p className="text-sm text-destructive">
-          Error: {error?.message || 'No data'}
-        </p>
-      </div>
-    )
-  }
 
   return (
     <div
@@ -298,26 +331,43 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
         className
       )}
     >
-      {graph && (
-        <SigmaContainer
-          className={cn(
-            'border border-border rounded-md',
-            showCursor && 'cursor-pointer'
-          )}
-          settings={{
-            renderLabels: true,
-            allowInvalidContainer: true,
-            defaultEdgeType: 'straight',
-            enableEdgeEvents: true,
-            edgeProgramClasses: {
-              straight: EdgeArrowProgram,
-              curved: EdgeCurvedArrowProgram,
-            },
-          }}
-          graph={MultiDirectedGraph}
-        >
-          <SigmaControls graph={graph} setShowCursor={setShowCursor} />
-        </SigmaContainer>
+      {isLoading || (isLoadingGraph && !graph) ? (
+        <div className="w-full h-full flex justify-center items-center border border-border rounded-md p-4">
+          <LoaderCircle size={24} className="animate-spin" />
+        </div>
+      ) : error || !data ? (
+        <div className="w-full h-full flex justify-center items-center border border-destructive rounded-md p-4">
+          <p className="text-sm text-destructive">
+            Error: {error?.message || 'No data'}
+          </p>
+        </div>
+      ) : (
+        graph && (
+          <SigmaContainer
+            className={cn(
+              'border border-border rounded-md',
+              showCursor && 'cursor-pointer'
+            )}
+            settings={{
+              renderLabels: true,
+              allowInvalidContainer: true,
+              defaultEdgeType: 'straight',
+              enableEdgeEvents: true,
+              edgeProgramClasses: {
+                straight: EdgeArrowProgram,
+                curved: EdgeCurvedArrowProgram,
+              },
+            }}
+            graph={MultiDirectedGraph}
+          >
+            <SigmaControls
+              graph={graph}
+              setShowCursor={setShowCursor}
+              defaultLayout="forceatlas2"
+              initialZoom={initialZoom}
+            />
+          </SigmaContainer>
+        )
       )}
     </div>
   )
@@ -326,9 +376,13 @@ export function NetworkGraph({ network, className }: NetworkGraphProps) {
 const SigmaControls = ({
   graph,
   setShowCursor,
+  defaultLayout,
+  initialZoom,
 }: {
   graph: MultiDirectedGraph<NetworkGraphNode, NetworkGraphEdge>
   setShowCursor: (hovering: boolean) => void
+  defaultLayout: 'circular' | 'forceatlas2'
+  initialZoom?: number
 }) => {
   const sigma = useSigma()
   const registerEvents = useRegisterEvents()
@@ -336,21 +390,24 @@ const SigmaControls = ({
   const setSettings = useSetSettings()
   const { reset: recenter } = useCamera()
 
+  useEffect(() => {
+    if (initialZoom) {
+      const camera = sigma.getCamera()
+      camera.ratio = initialZoom
+      sigma.refresh()
+    }
+  }, [sigma, initialZoom])
+
   const { positions: circularPositions } = useLayoutCircular({ scale: 100 })
   const { start: startForceAtlas2, stop: stopForceAtlas2 } =
     useWorkerLayoutForceAtlas2({
       settings: {
         ...forceAtlas2.inferSettings(graph),
-
-        // Bind nodes more tightly together.
-        gravity: 1,
-
-        // Push hubs outwards to highlight them (disrupts spatial balance)
-        // outboundAttractionDistribution: true,
+        ...forceAtlas2SettingsOverrides,
       },
     })
 
-  const [layout, setLayout] = useState<'circular' | 'forceatlas2'>('circular')
+  const [layout, setLayout] = useState<typeof defaultLayout>(defaultLayout)
 
   const stopAnimationRef = useRef<() => void>(() => {})
 
@@ -362,7 +419,7 @@ const SigmaControls = ({
       sigma.getGraph(),
       circularPositions(),
       {
-        duration: 500,
+        duration: forceAtlas2Duration,
         easing: 'linear',
       },
       () => recenter()
@@ -381,18 +438,9 @@ const SigmaControls = ({
       clearTimeout(timeout)
       stopAnimationRef.current = () => {}
     }
-    const timeout = setTimeout(stop, 500)
+    const timeout = setTimeout(stop, forceAtlas2Duration)
     stopAnimationRef.current = stop
   }, [startForceAtlas2, stopForceAtlas2, recenter])
-
-  useEffect(() => {
-    loadGraph(graph)
-    if (layout === 'circular') {
-      setCircularLayout()
-    } else {
-      setForceAtlas2Layout()
-    }
-  }, [graph, loadGraph, layout, setCircularLayout, setForceAtlas2Layout])
 
   const tooltipRefs = useRef<Record<string, HTMLDivElement>>({})
   const tooltipPaddingX = 10
@@ -425,8 +473,19 @@ const SigmaControls = ({
     [sigma]
   )
 
+  const updateTooltipPositions = useCallback(() => {
+    Object.entries(tooltipRefs.current).forEach(([node, el]) => {
+      Object.entries(getNodeTooltipPosition(node)).forEach(([key, value]) => {
+        el.style[key as 'left' | 'top' | 'right' | 'transform'] =
+          typeof value === 'number' ? value + 'px' : value
+      })
+    })
+  }, [getNodeTooltipPosition])
+
   const [hoverState, setHoverState] = useState<NetworkGraphHoverState>(null)
   useEffect(() => {
+    loadGraph(graph)
+
     const manager = new NetworkGraphManager({
       graph,
       hoverDelay: 50,
@@ -435,23 +494,21 @@ const SigmaControls = ({
         setHoverState(state)
         setShowCursor(shouldShowCursor)
       },
-      onDrag: () => {
-        Object.entries(tooltipRefs.current).forEach(([node, el]) => {
-          Object.entries(getNodeTooltipPosition(node)).forEach(
-            ([key, value]) => {
-              el.style[key as 'left' | 'top' | 'right' | 'transform'] =
-                typeof value === 'number' ? value + 'px' : value
-            }
-          )
-        })
-      },
+      onLayoutUpdate: updateTooltipPositions,
     })
 
     // Register event handlers
     manager.register(registerEvents)
 
     return () => manager.cleanup()
-  }, [graph, setShowCursor, getNodeTooltipPosition, registerEvents])
+  }, [
+    graph,
+    loadGraph,
+    registerEvents,
+    setHoverState,
+    setShowCursor,
+    updateTooltipPositions,
+  ])
 
   useEffect(() => {
     setSettings({

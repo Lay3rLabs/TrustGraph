@@ -16,6 +16,7 @@ export type NetworkGraphHoverState = {
 export type NetworkGraphDragState = 'IDLE' | 'DRAG_START' | 'DRAGGING'
 
 export type NetworkGraphHoverConfig = {
+  alwaysHoverNode?: string
   hoverDelay: number
   unhoverDelay: number
 }
@@ -33,7 +34,7 @@ export class NetworkGraphManager {
     state: NetworkGraphHoverState,
     showCursor: boolean
   ) => void
-  private onDrag: () => void
+  private onLayoutUpdate: () => void
 
   private state: NetworkGraphInternalState = 'IDLE'
   private hoverState: NetworkGraphHoverState | null = null
@@ -44,17 +45,17 @@ export class NetworkGraphManager {
   constructor({
     graph,
     onStateChange,
-    onDrag,
+    onLayoutUpdate,
     ...config
   }: {
     graph: MultiDirectedGraph<NetworkGraphNode, NetworkGraphEdge>
     onStateChange: (state: NetworkGraphHoverState, showCursor: boolean) => void
-    onDrag: () => void
+    onLayoutUpdate: () => void
   } & NetworkGraphHoverConfig) {
     this.graph = graph
     this.config = config
     this.onStateChange = onStateChange
-    this.onDrag = onDrag
+    this.onLayoutUpdate = onLayoutUpdate
   }
 
   // Public API - called by event handlers
@@ -63,10 +64,15 @@ export class NetworkGraphManager {
     registerEvents: (eventHandlers: Partial<EventHandlers>) => void
   ): void {
     registerEvents({
-      enterNode: ({ node }) => this.hover('node', node),
-      enterEdge: ({ edge }) => this.hover('edge', edge),
-      leaveNode: ({ node }) => this.unhover('node', node),
-      leaveEdge: ({ edge }) => this.unhover('edge', edge),
+      ...(!this.config.alwaysHoverNode
+        ? {
+            enterNode: ({ node }) => this.hover('node', node),
+            enterEdge: ({ edge }) => this.hover('edge', edge),
+            leaveNode: ({ node }) => this.unhover('node', node),
+            leaveEdge: ({ edge }) => this.unhover('edge', edge),
+          }
+        : {}),
+
       clickNode: ({ node }) => this.click('node', node),
       clickEdge: ({ edge }) => this.click('edge', edge),
       mousedown: () => this.dragStart(),
@@ -82,7 +88,12 @@ export class NetworkGraphManager {
       },
       mousemovebody: () => this.maybeDragMove(),
       touchmovebody: () => this.maybeDragMove(),
+      afterRender: () => this.onLayoutUpdate(),
     })
+
+    if (this.config.alwaysHoverNode) {
+      this.setHover('node', this.config.alwaysHoverNode, true)
+    }
   }
 
   hover(type: NetworkGraphTargetType, target: string): void {
@@ -155,11 +166,11 @@ export class NetworkGraphManager {
   }
 
   maybeDragMove(): void {
-    if (this.dragState !== 'DRAG_START') {
+    if (this.dragState === 'IDLE') {
       return
     }
     this.dragState = 'DRAGGING'
-    this.onDrag()
+    this.onLayoutUpdate()
   }
 
   cleanup(): void {

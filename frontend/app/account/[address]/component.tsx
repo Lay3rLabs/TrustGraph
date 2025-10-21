@@ -2,9 +2,10 @@
 
 import { useQueries } from '@tanstack/react-query'
 import { FileText } from 'lucide-react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import type React from 'react'
-import { useEffect, useMemo } from 'react'
+import { Suspense, useEffect, useMemo } from 'react'
 import { Hex } from 'viem'
 import { useAccount } from 'wagmi'
 
@@ -20,7 +21,7 @@ import { useAccountProfile } from '@/hooks/useAccountProfile'
 import { usePushBreadcrumb } from '@/hooks/usePushBreadcrumb'
 import { AttestationData } from '@/lib/attestation'
 import { LOCALISM_FUND, NETWORKS, Network, isTrustedSeed } from '@/lib/network'
-import { formatBigNumber } from '@/lib/utils'
+import { cn, formatBigNumber } from '@/lib/utils'
 import { ponderQueries } from '@/queries/ponder'
 
 interface NetworkParticipant {
@@ -31,6 +32,14 @@ interface NetworkParticipant {
   attestationsGiven: number
   attestationsReceived: number
 }
+
+// Uses web2gl, which is not supported on the server
+const NetworkGraph = dynamic(
+  () => import('@/components/NetworkGraph').then((mod) => mod.NetworkGraph),
+  {
+    ssr: false,
+  }
+)
 
 export const AccountProfilePage = ({
   address,
@@ -259,6 +268,9 @@ export const AccountProfilePage = ({
     },
   ]
 
+  const hasAttestations =
+    totalAttestationsReceived > 0 || totalAttestationsGiven > 0
+
   return (
     <div className="space-y-6">
       <BreadcrumbRenderer />
@@ -350,49 +362,68 @@ export const AccountProfilePage = ({
           )}
 
           {/* Statistics */}
-          <div className="border-y border-border py-12 space-y-6">
-            <h2 className="font-bold">STATISTICS</h2>
-            <div className="flex flex-row gap-4 flex-wrap">
-              <StatisticCard
-                title="NETWORKS"
-                tooltip="The number of networks this account is participating in."
-                value={formatBigNumber(networksData.length, undefined, true)}
-              />
-              <StatisticCard
-                title="HIGHEST SCORE"
-                tooltip="The account's highest Trust Score based on reputation in all their networks."
-                value={formatBigNumber(maxScore, undefined, true)}
-              />
-              {networksData.length > 1 && (
+          <div
+            className={cn(
+              'grid grid-cols-1 justify-start items-stretch gap-6 border-y border-border py-12',
+              hasAttestations && 'lg:grid-cols-2 lg:items-start'
+            )}
+          >
+            <div className="space-y-6">
+              <h2 className="font-bold">STATISTICS</h2>
+              <div className="flex flex-row gap-4 flex-wrap">
                 <StatisticCard
-                  title="AVERAGE + MEDIAN TRUST SCORE"
-                  tooltip="This account's typical Trust Scores in all their networks."
-                  value={
-                    averageScore === medianScore
-                      ? formatBigNumber(averageScore, undefined, true)
-                      : `${formatBigNumber(
-                          Math.round(averageScore),
-                          undefined,
-                          true
-                        )} / ${formatBigNumber(medianScore, undefined, true)}`
-                  }
+                  title="NETWORKS"
+                  tooltip="The number of networks this account is participating in."
+                  value={formatBigNumber(networksData.length, undefined, true)}
                 />
-              )}
-              <StatisticCard
-                title="ATTESTATIONS RECEIVED"
-                tooltip="Total number of attestations this account has received from others."
-                value={formatBigNumber(
-                  totalAttestationsReceived,
-                  undefined,
-                  true
+                <StatisticCard
+                  title="HIGHEST SCORE"
+                  tooltip="The account's highest Trust Score based on reputation in all their networks."
+                  value={formatBigNumber(maxScore, undefined, true)}
+                />
+                {networksData.length > 1 && (
+                  <StatisticCard
+                    title="AVERAGE + MEDIAN TRUST SCORE"
+                    tooltip="This account's typical Trust Scores in all their networks."
+                    value={
+                      averageScore === medianScore
+                        ? formatBigNumber(averageScore, undefined, true)
+                        : `${formatBigNumber(
+                            Math.round(averageScore),
+                            undefined,
+                            true
+                          )} / ${formatBigNumber(medianScore, undefined, true)}`
+                    }
+                  />
                 )}
-              />
-              <StatisticCard
-                title="ATTESTATIONS MADE"
-                tooltip="Total number of attestations this account has made to others."
-                value={formatBigNumber(totalAttestationsGiven, undefined, true)}
-              />
+                <StatisticCard
+                  title="ATTESTATIONS RECEIVED"
+                  tooltip="Total number of attestations this account has received from others."
+                  value={formatBigNumber(
+                    totalAttestationsReceived,
+                    undefined,
+                    true
+                  )}
+                />
+                <StatisticCard
+                  title="ATTESTATIONS MADE"
+                  tooltip="Total number of attestations this account has made to others."
+                  value={formatBigNumber(
+                    totalAttestationsGiven,
+                    undefined,
+                    true
+                  )}
+                />
+              </div>
             </div>
+
+            {hasAttestations && (
+              <div className="h-[66vh] lg:h-full">
+                <Suspense fallback={null}>
+                  <NetworkGraph network={LOCALISM_FUND} onlyAddress={address} />
+                </Suspense>
+              </div>
+            )}
           </div>
 
           {/* Attestations Received Section */}
