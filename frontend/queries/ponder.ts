@@ -30,6 +30,8 @@ export const ponderKeys = {
     recipient?: string
   }) => [...ponderKeys.all, 'attestationCount', options] as const,
   attestationsGraph: () => [...ponderKeys.all, 'attestationsGraph'] as const,
+  localismFundApplicationUrl: (address: string) =>
+    [...ponderKeys.all, 'localismFundApplicationUrl', address] as const,
 }
 
 export type FollowerCount = {
@@ -195,6 +197,33 @@ export const ponderQueries = {
     },
     enabled: !!APIS.ponder,
   }),
+  localismFundApplicationUrl: (address: string) =>
+    queryOptions({
+      queryKey: ponderKeys.localismFundApplicationUrl(address),
+      queryFn: async () => {
+        const response = await fetch(
+          `${APIS.ponder}/localism-fund/applications/${address}`
+        )
+
+        if (response.ok) {
+          const { url } = (await response.json()) as {
+            url: string
+          }
+          return url
+        } else {
+          if (response.status === 404) {
+            return null
+          }
+
+          throw new Error(
+            `Failed to fetch Localism Fund application: ${response.status} ${
+              response.statusText
+            } (${await response.text()})`
+          )
+        }
+      },
+      enabled: !!address && !!APIS.ponder,
+    }),
 }
 
 export const ponderQueryFns = {

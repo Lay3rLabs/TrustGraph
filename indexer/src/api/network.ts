@@ -1,8 +1,6 @@
 import { Hono } from "hono";
 import { db } from "ponder:api";
 import { easAttestation } from "ponder:schema";
-import { count, eq } from "drizzle-orm";
-import { getMerkleTreeWithEntries } from "./merkle";
 import { offchainDb } from "./db";
 
 const app = new Hono();
