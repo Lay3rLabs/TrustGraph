@@ -93,7 +93,6 @@ export const NetworkPage = ({ network }: { network: Network }) => {
       header: 'SCORE',
       tooltip:
         "This member's calculated Trust Score using a PageRank-style algorithm. Higher scores indicate stronger endorsement from trusted peers in the network.",
-      cellClassName: 'text-brand',
       sortable: true,
       accessor: (row) => Number(BigInt(row.value || '0')),
       render: (row) => formatBigNumber(row.value, undefined, true),
@@ -152,7 +151,7 @@ export const NetworkPage = ({ network }: { network: Network }) => {
       </div>
 
       <div className="border-y border-border py-12 space-y-6">
-        <h2 className="font-bold">NETWORK STATISTICS</h2>
+        <h2 className="font-bold text-lg">NETWORK STATISTICS</h2>
         <div className="flex flex-row gap-4 flex-wrap">
           <StatisticCard
             title="TOTAL MEMBERS"
@@ -189,7 +188,7 @@ export const NetworkPage = ({ network }: { network: Network }) => {
 
       <div className="space-y-6">
         <div className="flex flex-row justify-between items-center gap-x-8 gap-y-4 flex-wrap">
-          <h2 className="font-bold">NETWORK MEMBERS</h2>
+          <h2 className="font-bold text-lg">NETWORK MEMBERS</h2>
 
           {/* Refresh Button */}
           {!isLoading && (

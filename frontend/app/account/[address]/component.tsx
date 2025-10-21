@@ -194,43 +194,9 @@ export const AccountProfilePage = ({
       header: 'SCORE',
       tooltip:
         "This member's calculated Trust Score using a PageRank-style algorithm. Higher scores indicate stronger endorsement from trusted peers in the network.",
-      cellClassName: 'text-brand',
       sortable: true,
       accessor: (row) => row.score,
       render: (row) => formatBigNumber(row.score, undefined, true),
-    },
-  ]
-
-  // Define columns for attestations given
-  const attestationsGivenColumns: Column<AttestationData>[] = [
-    {
-      key: 'recipient',
-      header: 'RECIPIENT',
-      tooltip: 'The account that received the attestation.',
-      sortable: false,
-      render: (row) => <TableAddress showNavIcon address={row.recipient} />,
-    },
-    {
-      key: 'confidence',
-      header: 'CONFIDENCE',
-      tooltip: 'The strength of the attestation as specified by the attester.',
-      sortable: true,
-      accessor: (row) => Number(row.decodedData?.confidence || '0'),
-      render: (row) =>
-        formatBigNumber(row.decodedData?.confidence || '0', undefined, true),
-    },
-    {
-      key: 'time',
-      header: 'TIME',
-      tooltip: 'The time the attestation was made.',
-      sortable: true,
-      accessor: (row) => Number(row.time),
-      render: (row) => (
-        <div className="text-gray-800">
-          <div>{row.formattedTime}</div>
-          <div className="text-xs text-gray-600">{row.formattedTimeAgo}</div>
-        </div>
-      ),
     },
   ]
 
@@ -240,6 +206,7 @@ export const AccountProfilePage = ({
       key: 'attester',
       header: 'ATTESTER',
       tooltip: 'The account that made the attestation.',
+      cellClassName: 'w-1/2 lg:w-2/5',
       sortable: false,
       render: (row) => <TableAddress address={row.attester} showNavIcon />,
     },
@@ -247,6 +214,7 @@ export const AccountProfilePage = ({
       key: 'confidence',
       header: 'CONFIDENCE',
       tooltip: 'The strength of the attestation as specified by the attester.',
+      cellClassName: 'w-1/5 lg:w-3/10',
       sortable: true,
       accessor: (row) => Number(row.decodedData?.confidence || '0'),
       render: (row) => (
@@ -259,10 +227,47 @@ export const AccountProfilePage = ({
       key: 'time',
       header: 'TIME',
       tooltip: 'The time the attestation was made.',
+      cellClassName: 'w-3/10',
       sortable: true,
       accessor: (row) => Number(row.time),
       render: (row) => (
         <div className="text-sm text-gray-800">
+          <div>{row.formattedTime}</div>
+          <div className="text-xs text-gray-600">{row.formattedTimeAgo}</div>
+        </div>
+      ),
+    },
+  ]
+
+  // Define columns for attestations given
+  const attestationsGivenColumns: Column<AttestationData>[] = [
+    {
+      key: 'recipient',
+      header: 'RECIPIENT',
+      tooltip: 'The account that received the attestation.',
+      sortable: false,
+      cellClassName: 'w-1/2 lg:w-2/5',
+      render: (row) => <TableAddress showNavIcon address={row.recipient} />,
+    },
+    {
+      key: 'confidence',
+      header: 'CONFIDENCE',
+      tooltip: 'The strength of the attestation as specified by the attester.',
+      cellClassName: 'w-1/5 lg:w-3/10',
+      sortable: true,
+      accessor: (row) => Number(row.decodedData?.confidence || '0'),
+      render: (row) =>
+        formatBigNumber(row.decodedData?.confidence || '0', undefined, true),
+    },
+    {
+      key: 'time',
+      header: 'TIME',
+      tooltip: 'The time the attestation was made.',
+      cellClassName: 'w-3/10',
+      sortable: true,
+      accessor: (row) => Number(row.time),
+      render: (row) => (
+        <div className="text-gray-800">
           <div>{row.formattedTime}</div>
           <div className="text-xs text-gray-600">{row.formattedTimeAgo}</div>
         </div>
@@ -281,7 +286,7 @@ export const AccountProfilePage = ({
       <div className="flex items-center justify-between flex-wrap gap-x-4 gap-y-2 mb-2">
         <Address
           address={address}
-          textClassName="text-xl font-bold"
+          textClassName="text-xl text-primary font-bold"
           displayMode="full"
           showCopyIcon={true}
           noHighlight
