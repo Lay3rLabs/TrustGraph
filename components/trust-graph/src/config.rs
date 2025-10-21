@@ -87,7 +87,9 @@ pub struct TrustConfig {
     /// Weight multiplier for attestations from trusted seeds (e.g., 2.0 = 2x weight)
     pub trust_multiplier: f64,
     /// Boost factor for initial scores of trusted seeds (0.0-1.0)
-    pub trust_boost: f64,
+    pub trust_share: f64,
+    /// The decay factor for the trust distance degrees
+    pub trust_decay: f64,
 }
 
 impl Default for TrustConfig {
@@ -95,7 +97,8 @@ impl Default for TrustConfig {
         Self {
             trusted_seeds: HashSet::new(),
             trust_multiplier: 1.0, // No trust boost by default
-            trust_boost: 0.0,      // No initial boost by default
+            trust_share: 0.0,      // No initial share by default
+            trust_decay: 0.0,      // No decay by default
         }
     }
 }
@@ -106,7 +109,8 @@ impl TrustConfig {
         Self {
             trusted_seeds: trusted_seeds.into_iter().collect(),
             trust_multiplier: 2.0, // Default 2x weight for trusted attestors
-            trust_boost: 0.15,     // Default 15% of total initial score goes to trusted seeds
+            trust_share: 0.15,     // Default 15% of total initial score goes to trusted seeds
+            trust_decay: 0.8,      // Default 80% decay factor
         }
     }
 
@@ -116,9 +120,15 @@ impl TrustConfig {
         self
     }
 
-    /// Set trust boost for initial scores (0.0-1.0)
-    pub fn with_trust_boost(mut self, boost: f64) -> Self {
-        self.trust_boost = boost.clamp(0.0, 1.0);
+    /// Set trust share for initial scores (0.0-1.0)
+    pub fn with_trust_share(mut self, share: f64) -> Self {
+        self.trust_share = share.clamp(0.0, 1.0);
+        self
+    }
+
+    /// Set trust decay for the trust distance degrees
+    pub fn with_trust_decay(mut self, decay: f64) -> Self {
+        self.trust_decay = decay.clamp(0.0, 1.0);
         self
     }
 
@@ -201,8 +211,6 @@ pub struct PageRankSourceConfig {
     pub total_pool: U256,
     /// PageRank configuration (including trust settings)
     pub pagerank_config: PageRankConfig,
-    /// Minimum PageRank score to receive points (to filter out very low scores)
-    pub min_score_threshold: f64,
 }
 
 impl PageRankSourceConfig {
@@ -287,9 +295,15 @@ impl PageRankSourceConfig {
                     }
                 }
 
-                if let Some(boost_str) = config_var("pagerank_trust_boost") {
+                if let Some(boost_str) = config_var("pagerank_trust_share") {
                     if let Ok(boost) = boost_str.parse::<f64>() {
-                        trust_config = trust_config.with_trust_boost(boost);
+                        trust_config = trust_config.with_trust_share(boost);
+                    }
+                }
+
+                if let Some(decay_str) = config_var("pagerank_trust_decay") {
+                    if let Ok(decay) = decay_str.parse::<f64>() {
+                        trust_config = trust_config.with_trust_decay(decay);
                     }
                 }
 
@@ -303,8 +317,12 @@ impl PageRankSourceConfig {
                     pagerank_config.trust_config.trust_multiplier
                 );
                 println!(
-                    "   Trust boost: {:.1}%",
-                    pagerank_config.trust_config.trust_boost * 100.0
+                    "   Trust share: {:.1}%",
+                    pagerank_config.trust_config.trust_share * 100.0
+                );
+                println!(
+                    "   Trust decay: {:.1}%",
+                    pagerank_config.trust_config.trust_decay * 100.0
                 );
             } else {
                 println!("⚠️  No valid trusted seed addresses found, using standard PageRank");
@@ -313,16 +331,12 @@ impl PageRankSourceConfig {
             println!("ℹ️  No pagerank_trusted_seeds configured, using standard PageRank");
         }
 
-        let min_score_threshold =
-            config_var("pagerank_min_threshold").and_then(|s| s.parse().ok()).unwrap_or(0.0001);
-
         Ok(Some(Self {
             schema_uid: vouching_schema_uid.clone(),
             schema_abi: parsed_schema_abi,
             schema_abi_weight_index: vouching_schema_abi_weight_index,
             total_pool: points_pool,
             pagerank_config,
-            min_score_threshold,
         }))
     }
 

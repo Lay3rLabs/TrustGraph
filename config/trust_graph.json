@@ -9,8 +9,9 @@
   "pagerank_enabled": "true",
   "pagerank_points_pool": "10000",
   "pagerank_trusted_seeds": "0x7d03C5c37f77Fd01211334B9115CA108C84E8f3B,0x733Fe4b4D26168532c668231d725C46C315c14b1,0x59DDA36bD196Ec849838CE2163E6821f946b37Dc",
-  "pagerank_trust_multiplier": "10.5",
-  "pagerank_trust_boost": "0.99",
+  "pagerank_trust_multiplier": "2.0",
+  "pagerank_trust_share": "1.0",
+  "pagerank_trust_decay": "0.8",
   "pagerank_min_weight": "0",
   "pagerank_max_weight": "100"
 }

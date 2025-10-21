@@ -48,7 +48,6 @@ WAVS_ENV_pagerank_points_pool=1000000000000000000000  # 1000 tokens in wei
 WAVS_ENV_pagerank_damping_factor=0.85
 WAVS_ENV_pagerank_max_iterations=100
 WAVS_ENV_pagerank_tolerance=0.000001
-WAVS_ENV_pagerank_min_threshold=0.0001
 ```
 
 #### Trust Aware PageRank
@@ -58,11 +57,10 @@ WAVS_ENV_pagerank_min_threshold=0.0001
 WAVS_ENV_pagerank_points_pool=5000000000000000000000   # 5000 tokens in wei
 WAVS_ENV_pagerank_trusted_seeds="0x742d35Cc6634C0532925a3b8D58C9e5F9d6b2244,0x1234567890123456789012345678901234567890"
 WAVS_ENV_pagerank_trust_multiplier=2.5  # 2.5x weight for trusted attestors
-WAVS_ENV_pagerank_trust_boost=0.15      # 15% initial score boost for trusted seeds
+WAVS_ENV_pagerank_trust_share=0.15      # 15% initial score share for trusted seeds
 WAVS_ENV_pagerank_damping_factor=0.85
 WAVS_ENV_pagerank_max_iterations=100
 WAVS_ENV_pagerank_tolerance=0.000001
-WAVS_ENV_pagerank_min_threshold=0.0001
 ```
 
 ### Configuration Parameters
@@ -71,11 +69,10 @@ WAVS_ENV_pagerank_min_threshold=0.0001
 | --------------------------- | --------------------------------------------------- | ------- | ------------------------ |
 | `pagerank_trusted_seeds`    | Comma-separated list of trusted attestor addresses  | None    | Valid Ethereum addresses |
 | `pagerank_trust_multiplier` | Weight multiplier for trusted attestations          | 2.0     | ≥ 1.0                    |
-| `pagerank_trust_boost`      | Initial score boost for trusted seeds (as fraction) | 0.15    | 0.0 - 1.0                |
+| `pagerank_trust_share`      | Initial score share for trusted seeds (as fraction) | 0.15    | 0.0 - 1.0                |
 | `pagerank_damping_factor`   | PageRank damping factor                             | 0.85    | 0.0 - 1.0                |
 | `pagerank_max_iterations`   | Maximum iterations for convergence                  | 100     | > 0                      |
 | `pagerank_tolerance`        | Convergence tolerance                               | 1e-6    | > 0                      |
-| `pagerank_min_threshold`    | Minimum score to receive rewards                    | 0.0001  | ≥ 0                      |
 
 ## Usage Examples
 
@@ -87,7 +84,7 @@ Configure trusted founding members and key contributors:
 # Trusted DAO founders and core contributors
 WAVS_ENV_pagerank_trusted_seeds="0xFounder1...,0xFounder2...,0xCoreContrib1..."
 WAVS_ENV_pagerank_trust_multiplier=3.0  # 3x weight for founder endorsements
-WAVS_ENV_pagerank_trust_boost=0.2       # 20% initial boost
+WAVS_ENV_pagerank_trust_share=0.2       # 20% initial share
 ```
 
 ### Example 2: Content Platform
@@ -98,7 +95,7 @@ Use verified creators and moderators as trusted seeds:
 # Verified creators and platform moderators
 WAVS_ENV_pagerank_trusted_seeds="0xVerifiedCreator1...,0xModerator1..."
 WAVS_ENV_pagerank_trust_multiplier=2.0  # 2x weight for verified endorsements
-WAVS_ENV_pagerank_trust_boost=0.1       # 10% initial boost
+WAVS_ENV_pagerank_trust_share=0.1       # 10% initial share
 ```
 
 ### Example 3: Identity Verification Network
@@ -109,7 +106,7 @@ Government entities and certified organizations as trust anchors:
 # Government and certified organizations
 WAVS_ENV_pagerank_trusted_seeds="0xGovEntity...,0xCertifiedOrg..."
 WAVS_ENV_pagerank_trust_multiplier=5.0  # 5x weight for official endorsements
-WAVS_ENV_pagerank_trust_boost=0.25      # 25% initial boost
+WAVS_ENV_pagerank_trust_share=0.25      # 25% initial share
 ```
 
 ## Best Practices
@@ -139,11 +136,12 @@ WAVS_ENV_pagerank_trust_boost=0.25      # 25% initial boost
 - Moderate: 2.0x - 3.0x
 - Aggressive: 3.0x - 5.0x
 
-**Trust Boost Guidelines:**
+**Trust Share Guidelines:**
 
 - Subtle: 0.05 - 0.10 (5-10%)
 - Moderate: 0.10 - 0.20 (10-20%)
 - Strong: 0.20 - 0.30 (20-30%)
+- Full: 1.0 (100%)
 
 ### Monitoring
 
@@ -193,7 +191,7 @@ Monitor these metrics for system health:
 1. **Attestation Collection**: Gather attestations from EAS or other sources
 2. **Trust Validation**: Verify if attestors are trusted seeds
 3. **Weight Calculation**: Apply trust multipliers to attestation weights
-4. **Initial Scores**: Distribute initial PageRank scores with trust boost
+4. **Initial Scores**: Distribute initial PageRank scores with trust share
 5. **Iterative Computation**: Run PageRank with trust-weighted edges
 6. **Score Distribution**: Calculate proportional rewards based on final scores
 
@@ -203,7 +201,7 @@ Monitor these metrics for system health:
 // Example: Creating Trust Aware PageRank source
 let trust_config = TrustConfig::new(vec![trusted_address])
     .with_trust_multiplier(2.5)
-    .with_trust_boost(0.15);
+    .with_trust_share(0.15);
 
 let pagerank_config = PageRankConfig::default()
     .with_trust_config(trust_config);
@@ -229,7 +227,6 @@ let pagerank_source = PageRankRewardSource::new(
 
 - Check `pagerank_points_pool` > 0
 - Verify attestation data exists for schema
-- Ensure `pagerank_min_threshold` not too high
 
 **Slow convergence:**
 

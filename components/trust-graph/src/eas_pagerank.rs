@@ -118,7 +118,7 @@ impl EasPageRankSource {
             return Ok(AttestationGraph::new());
         }
 
-        let mut graph = AttestationGraph::new();
+        let mut graph = AttestationGraph::new().with_allow_duplicates(false);
         let mut edge_count = 0;
         let mut unique_attesters = std::collections::HashSet::new();
         let mut unique_recipients = std::collections::HashSet::new();
@@ -129,8 +129,10 @@ impl EasPageRankSource {
             let length = std::cmp::min(batch_size, total_attestations - start);
             println!("🔄 Processing attestation batch: {} to {}", start, start + length - 1);
 
-            let attestations =
+            let mut attestations =
                 self.get_indexed_attestations(ctx, schema_uid, start, length).await?;
+            // Sort ascending so the newest attestations are processed last and override existing edges.
+            attestations.sort_by_key(|a| a.event.timestamp);
 
             for IndexedAttestation {
                 uid,
@@ -201,6 +203,7 @@ impl EasPageRankSource {
                     .max(self.config.pagerank_config.min_weight)
                     .min(self.config.pagerank_config.max_weight);
 
+                // Override existing edge if it exists
                 graph.add_edge(attester, recipient, weight);
                 edge_count += 1;
                 unique_attesters.insert(attester);
@@ -215,6 +218,8 @@ impl EasPageRankSource {
 
             start += length;
         }
+
+        graph.sort();
 
         println!("✅ Built attestation graph:");
         println!("   - Total nodes: {}", graph.nodes().len());
@@ -261,19 +266,8 @@ impl EasPageRankSource {
 
         println!("\n🎯 Distributing {} total points based on PageRank scores", total_pool);
 
-        // Filter out accounts below minimum threshold and calculate points
-        let total_accounts = scores.len();
-        let filtered_scores: HashMap<Address, f64> = scores
-            .into_iter()
-            .filter(|(_, score)| *score >= self.config.min_score_threshold)
-            .collect();
-
-        println!("🔍 Filtering scores above threshold: {}", self.config.min_score_threshold);
-        println!("   - Before filter: {} accounts", total_accounts);
-        println!("   - After filter: {} accounts", filtered_scores.len());
-
-        if filtered_scores.is_empty() {
-            println!("⚠️  No accounts meet minimum PageRank threshold");
+        if scores.is_empty() {
+            println!("⚠️  No accounts to distribute points to");
             return Ok(points_map);
         }
 
@@ -281,7 +275,7 @@ impl EasPageRankSource {
         let precision_scale = 1_000_000_u64; // Scale factor for f64 -> u64 conversion
 
         // Convert f64 scores to scaled u64 integers, then to U256
-        let scaled_scores: Vec<(Address, U256)> = filtered_scores
+        let scaled_scores: Vec<(Address, U256)> = scores
             .iter()
             .map(|(addr, score)| {
                 // Convert f64 to scaled u64, avoiding floating-point in U256 operations
@@ -369,7 +363,7 @@ impl EasPageRankSource {
         println!("\n🏆 Top 10 points earned:");
         for (i, (addr, points)) in sorted_points.iter().take(10).enumerate() {
             // Find corresponding PageRank score
-            let score = filtered_scores.get(*addr).unwrap_or(&0.0);
+            let score = scores.get(*addr).unwrap_or(&0.0);
             println!("  {}. {}: {} tokens (PageRank: {:.6})", i + 1, addr, points, score);
         }
 
@@ -423,7 +417,7 @@ impl Source for EasPageRankSource {
                     .map(|addr| addr.to_string())
                     .collect::<Vec<_>>(),
                 "trust_multiplier": self.config.pagerank_config.trust_config.trust_multiplier,
-                "trust_boost": self.config.pagerank_config.trust_config.trust_boost,
+                "trust_share": self.config.pagerank_config.trust_config.trust_share,
             })
         } else {
             serde_json::json!({
@@ -450,7 +444,6 @@ impl Source for EasPageRankSource {
                 "tolerance": self.config.pagerank_config.tolerance,
                 "min_weight": self.config.pagerank_config.min_weight,
                 "max_weight": self.config.pagerank_config.max_weight,
-                "min_score_threshold": self.config.min_score_threshold,
             },
             "trust_config": trust_info
         }))

@@ -75,6 +75,7 @@ PR(i) = (1-d)/N + d * Σ(PR(j) * W(j,i) / L(j))
 ```
 
 Where:
+
 - `PR(i)` = PageRank score of node i
 - `d` = damping factor (typically 0.85)
 - `N` = total number of nodes
@@ -94,8 +95,8 @@ W(j,i) = {
 
 ```
 Initial_PR(i) = {
-    trust_boost / |TrustedSeeds|  if i ∈ TrustedSeeds
-    (1 - trust_boost) / (N - |TrustedSeeds|)  otherwise
+    trust_share / |TrustedSeeds|  if i ∈ TrustedSeeds
+    (1 - trust_share) / (N - |TrustedSeeds|)  otherwise
 }
 ```
 
@@ -179,4 +180,4 @@ Technical Improvements:
 
 ---
 
-*This document represents the initial specification for TrustAwarePageRank systems. Implementation details may evolve based on testing and community feedback.*
+_This document represents the initial specification for TrustAwarePageRank systems. Implementation details may evolve based on testing and community feedback._

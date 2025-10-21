@@ -12,11 +12,24 @@ pub struct AttestationGraph {
     incoming: HashMap<Address, usize>,
     /// All nodes in the graph
     nodes: Vec<Address>,
+    /// Allow duplicates in edges
+    allow_duplicates: bool,
 }
 
 impl AttestationGraph {
     pub fn new() -> Self {
-        Self { outgoing: HashMap::new(), incoming: HashMap::new(), nodes: Vec::new() }
+        Self {
+            outgoing: HashMap::new(),
+            incoming: HashMap::new(),
+            nodes: Vec::new(),
+            allow_duplicates: true,
+        }
+    }
+
+    /// Set allow duplicates in edges
+    pub fn with_allow_duplicates(mut self, allow_duplicates: bool) -> Self {
+        self.allow_duplicates = allow_duplicates;
+        self
     }
 
     /// Add an edge from attester to recipient with base weight
@@ -36,9 +49,23 @@ impl AttestationGraph {
             }
         }
 
-        // Add the edge
-        self.outgoing.get_mut(&from).unwrap().push((to, base_weight));
-        *self.incoming.get_mut(&to).unwrap() += 1;
+        let outgoing = self.outgoing.get_mut(&from).unwrap();
+
+        // Override existing if allow_duplicates is false and the edge already exists, otherwise add the edge.
+        if let (false, Some(index)) =
+            (self.allow_duplicates, outgoing.iter().position(|(addr, _)| *addr == to))
+        {
+            outgoing[index] = (to, base_weight);
+        } else {
+            outgoing.push((to, base_weight));
+            *self.incoming.get_mut(&to).unwrap() += 1;
+        }
+    }
+
+    /// Sort the nodes and edges for deterministic iteration
+    pub fn sort(&mut self) {
+        self.nodes.sort();
+        self.outgoing.values_mut().for_each(|edges| edges.sort_by_key(|(addr, _)| *addr));
     }
 
     /// Get all nodes in the graph
@@ -49,6 +76,12 @@ impl AttestationGraph {
     /// Get outgoing edges from a node
     pub fn get_outgoing(&self, node: &Address) -> Option<&Vec<(Address, f64)>> {
         self.outgoing.get(node)
+    }
+
+    /// Get incoming count to a node
+    #[cfg(test)]
+    pub fn get_incoming_count(&self, node: &Address) -> usize {
+        self.incoming.get(node).copied().unwrap_or_default()
     }
 
     /// Calculate the effective weight of an edge considering trust configuration
@@ -72,14 +105,11 @@ impl AttestationGraph {
             return HashMap::new();
         }
 
-        let mut ranks = self.initialize_scores(config);
-        let mut new_ranks = ranks.clone();
+        let initial_scores = self.initialize_scores(config);
+        let mut current_scores = initial_scores.clone();
+        let mut new_scores = initial_scores.clone();
 
-        // Create sorted node list for deterministic iteration
-        let mut sorted_nodes = self.nodes.clone();
-        sorted_nodes.sort();
-
-        // Calculate trust distances if trust is enabled
+        // Trust distances from trusted seeds to each node. If trust is disabled, this will be None. If a node is unreachable from a trusted seed, it will not be included in the map.
         let trust_distances = if config.has_trust_enabled() {
             println!(
                 "🔄 Starting Trust Aware PageRank calculation for {} nodes ({} trusted seeds)",
@@ -92,125 +122,104 @@ impl AttestationGraph {
             None
         };
 
-        // Count self-loops for logging
-        let self_loops: usize = sorted_nodes
-            .iter()
-            .filter(|&&node| {
-                self.outgoing
-                    .get(&node)
-                    .map(|edges| edges.iter().any(|(target, _)| *target == node))
-                    .unwrap_or(false)
-            })
-            .count();
-        if self_loops > 0 {
-            println!("⚠️  Detected {} nodes with self-loops (will be ignored)", self_loops);
-        }
-
+        // Create sorted node list for deterministic iteration
         for iteration in 0..config.max_iterations {
             let mut max_delta = 0.0;
 
-            for &recipient_node in &sorted_nodes {
-                let mut new_rank = self.calculate_base_rank(&recipient_node, n, config);
+            for recipient_node in &self.nodes {
+                // Calculate base score contribution (teleportation)
+                let mut new_score = (1.0 - config.damping_factor) * initial_scores[recipient_node];
 
                 // Skip isolated nodes (unreachable from trusted seeds) if trust is enabled
                 if let Some(ref distances) = trust_distances {
-                    if distances.get(&recipient_node) == Some(&usize::MAX) {
-                        // Isolated node - gets only minimal base rank
-                        new_ranks.insert(recipient_node, new_rank);
+                    if !distances.contains_key(recipient_node) {
+                        // Isolated node - gets only base score
+                        new_scores.insert(*recipient_node, new_score);
                         continue;
                     }
                 }
 
                 // Sum contributions from incoming edges with trust-aware weights
-                for &attester_node in &sorted_nodes {
+                for attester_node in &self.nodes {
                     // Skip the recipient node itself
                     if attester_node == recipient_node {
                         continue;
                     }
 
-                    if let Some(outgoing_edges) = self.outgoing.get(&attester_node) {
-                        // Create sorted copy of outgoing edges for deterministic iteration
-                        let mut sorted_edges = outgoing_edges.clone();
-                        sorted_edges.sort_by_key(|(addr, _)| *addr);
-
+                    if let Some(outgoing_edges) = self.outgoing.get(attester_node) {
                         // Filter out self-loops when calculating outgoing weights and zero-weight edges
-                        let filtered_edges: Vec<_> = sorted_edges
+                        let filtered_edges: Vec<_> = outgoing_edges
                             .iter()
                             .filter(|(target, base_weight)| {
-                                *target != attester_node && *base_weight > 0.0
+                                target != attester_node && *base_weight > 0.0
                             }) // Exclude self-loops and zero-weight edges
                             .collect();
 
+                        // Node only has self-loops or zero-weight edges, skip it.
                         if filtered_edges.is_empty() {
-                            continue; // Node only has self-loops or zero-weight edges, skip it
+                            continue;
                         }
 
-                        // Calculate total outgoing weight from this node (trust-adjusted, excluding self-loops)
-                        let total_outgoing_weight: f64 = filtered_edges
-                            .iter()
-                            .map(|(_, base_weight)| {
-                                self.calculate_edge_weight(
-                                    &attester_node,
-                                    *base_weight,
-                                    &config.trust_config,
-                                )
-                            })
-                            .sum();
+                        // Calculate max outgoing weight possible from this node (trust-adjusted, excluding self-loops).
+                        // This is the maximum weight that could have been achieved if all edges were at their maximum weight, so it's simply the sum of the max allowed weight per-edge.
+                        // This is used to normalize the contributions instead of the sum of all edges in order to preserve the relative contributions of the edges.
+                        // For example: we do not want a single 50/100 attestation to be weighted the same as a single 100/100 attestation.
+                        let max_outgoing_weight_possible = self.calculate_edge_weight(
+                            attester_node,
+                            filtered_edges.len() as f64 * config.max_weight,
+                            &config.trust_config,
+                        );
 
-                        // If total outgoing weight is 0, skip the node. This should not happen as we filter out zero-weight edges and skip above.
-                        if total_outgoing_weight == 0.0 {
+                        // If max outgoing weight possible is 0, skip the node. This should not happen as we filter out zero-weight edges and skip above.
+                        if max_outgoing_weight_possible == 0.0 {
                             continue;
                         }
 
                         // Find nonzero edges to recipient node and calculate contributions
-                        for &(target, base_weight) in filtered_edges {
+                        for (target, base_weight) in filtered_edges {
                             // Skip if the target is not the recipient
                             if target != recipient_node {
                                 continue;
                             }
 
                             let effective_weight = self.calculate_edge_weight(
-                                &attester_node,
-                                base_weight,
+                                attester_node,
+                                *base_weight,
                                 &config.trust_config,
                             );
 
                             // Apply trust decay based on distance from trusted seeds
-                            let trust_decay = if let Some(ref distances) = trust_distances {
-                                let source_distance =
-                                    distances.get(&attester_node).copied().unwrap_or(usize::MAX);
-                                let target_distance =
-                                    distances.get(&recipient_node).copied().unwrap_or(usize::MAX);
-
-                                // Decay factor: closer to trusted seeds = less decay
-                                let max_distance = source_distance.max(target_distance);
-                                if max_distance == usize::MAX {
-                                    0.01 // Minimal contribution from unreachable nodes
-                                } else {
-                                    // Exponential decay: 0.8^distance
-                                    0.8_f64.powi(max_distance as i32)
+                            let trust_decay = match trust_distances
+                                .as_ref()
+                                .map(|d| d.get(attester_node).copied())
+                            {
+                                // Exponential decay: closer to trusted seeds = less decay
+                                Some(Some(distance)) => {
+                                    config.trust_config.trust_decay.powi(distance as i32)
                                 }
-                            } else {
-                                1.0 // No decay in standard PageRank
+                                // If trust is enabled but the node does not exist (not reachable from a trusted seed), use
+                                Some(None) => 0.0,
+                                // No decay in Standard PageRank (trust disabled)
+                                None => 1.0,
                             };
 
-                            let contribution = ranks[&attester_node]
-                                * (effective_weight / total_outgoing_weight)
+                            let contribution = current_scores[attester_node]
+                                * (effective_weight / max_outgoing_weight_possible)
                                 * trust_decay;
-                            new_rank += config.damping_factor * contribution;
+                            new_score += config.damping_factor * contribution;
                         }
                     }
                 }
 
-                let delta = (new_rank - ranks[&recipient_node]).abs();
+                let delta = (new_score - current_scores[recipient_node]).abs();
                 if delta > max_delta {
                     max_delta = delta;
                 }
 
-                new_ranks.insert(recipient_node, new_rank);
+                new_scores.insert(*recipient_node, new_score);
             }
 
-            ranks = new_ranks.clone();
+            current_scores = new_scores.clone();
 
             if iteration % 10 == 0 {
                 println!("🔄 PageRank iteration {}: max delta = {:.8}", iteration, max_delta);
@@ -224,45 +233,36 @@ impl AttestationGraph {
 
         println!("🎯 PageRank calculation completed");
 
-        // Post-process: severely penalize isolated nodes in trust mode
-        if let Some(ref distances) = trust_distances {
-            for (&node, distance) in distances {
-                if *distance == usize::MAX {
-                    // Isolated nodes get near-zero score
-                    ranks.insert(node, 0.000001);
-                }
-            }
-        }
-
         // Normalize scores to ensure they sum to 1
-        let total_score: f64 = ranks.values().sum();
+        let total_score: f64 = current_scores.values().sum();
         if total_score > 0.0 {
-            ranks.iter_mut().for_each(|(_, score)| *score /= total_score);
+            current_scores.iter_mut().for_each(|(_, score)| *score /= total_score);
         }
 
         // Log trust statistics if trust is enabled
         if config.has_trust_enabled() {
-            self.log_trust_statistics(&ranks, config);
+            self.log_trust_statistics(&current_scores, config);
         }
 
-        ranks
+        current_scores
     }
 
     /// Initialize PageRank scores with trust-aware distribution
     fn initialize_scores(&self, config: &PageRankConfig) -> HashMap<Address, f64> {
         let n = self.nodes.len();
+        let trust_enabled = config.has_trust_enabled();
         let trusted_count = config.trust_config.trusted_seeds.len();
 
-        if !config.has_trust_enabled() {
+        if !trust_enabled {
             // Standard uniform initialization
-            let initial_rank = 1.0 / n as f64;
-            return self.nodes.iter().map(|&addr| (addr, initial_rank)).collect();
+            let initial_score = 1.0 / n as f64;
+            return self.nodes.iter().map(|&addr| (addr, initial_score)).collect();
         }
 
         // Trust-aware initialization
-        let trust_boost = config.trust_config.trust_boost;
-        let trusted_total_score = trust_boost;
-        let regular_total_score = 1.0 - trust_boost;
+        let trust_share = config.trust_config.trust_share;
+        let trusted_total_score = trust_share;
+        let regular_total_score = 1.0 - trust_share;
         let regular_count = n - trusted_count;
 
         let trusted_score =
@@ -281,31 +281,6 @@ impl AttestationGraph {
                 (addr, initial_score)
             })
             .collect()
-    }
-
-    /// Calculate base rank contribution (teleportation) for a specific node
-    fn calculate_base_rank(&self, node: &Address, n: usize, config: &PageRankConfig) -> f64 {
-        let base_factor = 1.0 - config.damping_factor;
-
-        if !config.has_trust_enabled() {
-            // Standard uniform teleportation
-            return base_factor / n as f64;
-        }
-
-        // Trust Aware teleportation - only trusted seeds get significant base rank
-        if config.trust_config.is_trusted_seed(node) {
-            // Trusted seeds get the majority of teleportation probability
-            let trusted_count = config.trust_config.trusted_seeds.len();
-            (base_factor * config.trust_config.trust_boost) / trusted_count as f64
-        } else {
-            // Non-trusted nodes get minimal teleportation (prevents isolated nodes from getting points)
-            let non_trusted_count = n - config.trust_config.trusted_seeds.len();
-            if non_trusted_count > 0 {
-                (base_factor * (1.0 - config.trust_config.trust_boost)) / non_trusted_count as f64
-            } else {
-                0.0
-            }
-        }
     }
 
     /// Calculate shortest distance from trusted seeds to each node (BFS)
@@ -339,36 +314,11 @@ impl AttestationGraph {
                     }
                 }
             }
-
-            // Also check incoming edges (treat graph as undirected for trust propagation)
-            // We need to find all nodes that have edges TO the current node
-            let mut sorted_sources: Vec<_> = self.outgoing.iter().collect();
-            sorted_sources.sort_by_key(|(addr, _)| **addr);
-
-            for (&source, edges) in sorted_sources {
-                // Sort edges for deterministic iteration
-                let mut sorted_edges = edges.clone();
-                sorted_edges.sort_by_key(|(addr, _)| *addr);
-
-                for &(target, _) in &sorted_edges {
-                    if target == current && !distances.contains_key(&source) {
-                        distances.insert(source, current_distance + 1);
-                        queue.push_back(source);
-                    }
-                }
-            }
-        }
-
-        // Mark unreachable nodes with MAX distance (use sorted iteration)
-        let mut sorted_nodes = self.nodes.clone();
-        sorted_nodes.sort();
-        for &node in &sorted_nodes {
-            distances.entry(node).or_insert(usize::MAX);
         }
 
         // Log distance statistics
         let reachable = distances.values().filter(|&&d| d != usize::MAX).count();
-        let unreachable = distances.values().filter(|&&d| d == usize::MAX).count();
+        let unreachable = self.nodes.len() - reachable;
         println!(
             "🔍 Trust distance analysis: {} reachable, {} unreachable from trusted seeds",
             reachable, unreachable
@@ -378,7 +328,7 @@ impl AttestationGraph {
     }
 
     /// Log statistics about trust distribution
-    fn log_trust_statistics(&self, ranks: &HashMap<Address, f64>, config: &PageRankConfig) {
+    fn log_trust_statistics(&self, scores: &HashMap<Address, f64>, config: &PageRankConfig) {
         let mut trusted_total_score = 0.0;
         let mut trusted_count = 0;
         let mut regular_total_score = 0.0;
@@ -401,9 +351,9 @@ impl AttestationGraph {
         }
 
         // Categorize nodes and calculate scores (sorted for deterministic iteration)
-        let mut sorted_ranks: Vec<_> = ranks.iter().collect();
-        sorted_ranks.sort_by_key(|(addr, _)| **addr);
-        for (addr, score) in sorted_ranks {
+        let mut sorted_scores: Vec<_> = scores.iter().collect();
+        sorted_scores.sort_by_key(|(addr, _)| **addr);
+        for (addr, score) in sorted_scores {
             let is_isolated = trust_distances.get(addr) == Some(&usize::MAX);
 
             if is_isolated {
@@ -440,7 +390,7 @@ impl AttestationGraph {
         }
 
         // Show top non-trusted nodes if any have significant scores
-        let mut non_trusted_scores: Vec<_> = ranks
+        let mut non_trusted_scores: Vec<_> = scores
             .iter()
             .filter(|(addr, _)| !config.trust_config.is_trusted_seed(addr))
             .map(|(addr, score)| (*addr, *score))
@@ -511,12 +461,12 @@ mod tests {
 
         // Configure trust with Alice as trusted seed
         let trust_config =
-            TrustConfig::new(vec![trusted_alice]).with_trust_multiplier(2.0).with_trust_boost(0.5); // 50% boost
+            TrustConfig::new(vec![trusted_alice]).with_trust_multiplier(2.0).with_trust_share(0.5); // 50% boost
 
         let config = PageRankConfig::default().with_trust_config(trust_config);
         let scores = graph.calculate_pagerank(&config);
 
-        // Alice (trusted) should have higher score than others due to trust boost and weighted attestations
+        // Alice (trusted) should have higher score than others due to trust share and weighted attestations
         let alice_score = scores[&trusted_alice];
         let bob_score = scores[&bob];
         let charlie_score = scores[&charlie];
@@ -555,7 +505,7 @@ mod tests {
         // Configure trust with multiplier
         let trust_config = TrustConfig::new(vec![trusted_alice, trusted_bob])
             .with_trust_multiplier(3.0)
-            .with_trust_boost(0.2); // Lower boost to isolate multiplier effect
+            .with_trust_share(0.2); // Lower boost to isolate multiplier effect
 
         let config = PageRankConfig::default().with_trust_config(trust_config);
         let scores = graph.calculate_pagerank(&config);
@@ -593,7 +543,7 @@ mod tests {
     }
 
     #[test]
-    fn test_trust_boost_effect() {
+    fn test_trust_share_effect() {
         let mut graph = AttestationGraph::new();
 
         let trusted_alice =
@@ -605,10 +555,10 @@ mod tests {
 
         let trust_config_no_boost = TrustConfig::new(vec![trusted_alice])
             .with_trust_multiplier(1.0) // No multiplier effect
-            .with_trust_boost(0.0); // No boost
+            .with_trust_share(0.0); // No boost
 
         let trust_config_with_boost =
-            TrustConfig::new(vec![trusted_alice]).with_trust_multiplier(1.0).with_trust_boost(0.5); // 50% boost
+            TrustConfig::new(vec![trusted_alice]).with_trust_multiplier(1.0).with_trust_share(0.5); // 50% boost
 
         let config_no_boost = PageRankConfig::default().with_trust_config(trust_config_no_boost);
         let config_with_boost =
@@ -620,10 +570,10 @@ mod tests {
         let alice_score_no_boost = scores_no_boost[&trusted_alice];
         let alice_score_with_boost = scores_with_boost[&trusted_alice];
 
-        // With trust boost, Alice should start with higher initial score
+        // With trust share, Alice should start with higher initial score
         assert!(
             alice_score_with_boost > alice_score_no_boost,
-            "Trust boost should increase trusted seed's score"
+            "Trust share should increase trusted seed's score"
         );
     }
 
@@ -643,7 +593,7 @@ mod tests {
 
         let trust_config = TrustConfig::new(vec![trusted_alice, trusted_bob])
             .with_trust_multiplier(2.0)
-            .with_trust_boost(0.5);
+            .with_trust_share(0.5);
 
         let config = PageRankConfig::default().with_trust_config(trust_config);
         let scores = graph.calculate_pagerank(&config);
@@ -654,7 +604,7 @@ mod tests {
         let charlie_score = scores[&charlie];
         let dave_score = scores[&dave];
 
-        // Trusted seeds should have higher scores due to trust boost
+        // Trusted seeds should have higher scores due to trust share
         // Note: In some graph structures, the relationship between endorsed nodes may vary
         assert!(alice_score > 0.0 && bob_score > 0.0, "Trusted seeds should have positive scores");
         assert!(
@@ -678,11 +628,11 @@ mod tests {
 
         assert!(trust_config.trust_multiplier >= 1.0, "Trust multiplier should be at least 1.0");
 
-        // Test trust boost validation (should be 0.0-1.0)
-        let trust_config_boost = TrustConfig::new(vec![alice]).with_trust_boost(1.5); // Should be clamped to 1.0
+        // Test trust share validation (should be 0.0-1.0)
+        let trust_config_share = TrustConfig::new(vec![alice]).with_trust_share(1.5); // Should be clamped to 1.0
 
-        assert!(trust_config_boost.trust_boost <= 1.0, "Trust boost should be at most 1.0");
-        assert!(trust_config_boost.trust_boost >= 0.0, "Trust boost should be at least 0.0");
+        assert!(trust_config_share.trust_share <= 1.0, "Trust share should be at most 1.0");
+        assert!(trust_config_share.trust_share >= 0.0, "Trust share should be at least 0.0");
     }
 
     #[test]
@@ -703,7 +653,7 @@ mod tests {
         graph.add_edge(alice, alice, 1.0);
 
         let trust_config =
-            TrustConfig::new(vec![alice]).with_trust_multiplier(2.0).with_trust_boost(0.5);
+            TrustConfig::new(vec![alice]).with_trust_multiplier(2.0).with_trust_share(0.5);
 
         let config = PageRankConfig::default().with_trust_config(trust_config);
         let scores = graph.calculate_pagerank(&config);
@@ -772,7 +722,7 @@ mod tests {
 
         // Configure trust with Alice as trusted seed
         let trust_config =
-            TrustConfig::new(vec![alice]).with_trust_multiplier(2.0).with_trust_boost(0.9); // 90% of teleportation goes to trusted seeds
+            TrustConfig::new(vec![alice]).with_trust_multiplier(2.0).with_trust_share(0.9); // 90% of teleportation goes to trusted seeds
 
         let config = PageRankConfig::default().with_trust_config(trust_config);
         let scores = graph.calculate_pagerank(&config);
@@ -925,5 +875,32 @@ mod tests {
                         addr, score0, score_i, (score0 - score_i).abs(), i);
             }
         }
+    }
+
+    #[test]
+    fn test_override_existing_edge() {
+        let mut graph = AttestationGraph::new().with_allow_duplicates(false);
+
+        let alice = Address::from_str("0x1111111111111111111111111111111111111111").unwrap();
+        let bob = Address::from_str("0x2222222222222222222222222222222222222222").unwrap();
+
+        assert_eq!(graph.get_incoming_count(&bob), 0);
+
+        // Add an edge
+        graph.add_edge(alice, bob, 1.0);
+        assert_eq!(graph.get_incoming_count(&bob), 1);
+
+        // Override the edge
+        graph.add_edge(alice, bob, 2.0);
+        assert_eq!(graph.get_incoming_count(&bob), 1);
+
+        // Verify the edge was overridden
+        let outgoing = graph.get_outgoing(&alice).unwrap();
+        assert_eq!(outgoing.len(), 1);
+        assert_eq!(outgoing[0].0, bob);
+        assert_eq!(outgoing[0].1, 2.0);
+
+        let incoming = graph.get_incoming_count(&bob);
+        assert_eq!(incoming, 1);
     }
 }
