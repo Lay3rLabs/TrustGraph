@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { db } from "ponder:api";
 import { easAttestation } from "ponder:schema";
 import { offchainDb } from "./db";
+import { and, inArray } from "drizzle-orm";
 
 const app = new Hono();
 
@@ -25,8 +26,6 @@ app.get("/graph", async (c) => {
       orderBy: (t, { asc }) => asc(t.account),
     });
 
-    const attestations = await db.select().from(easAttestation);
-
     const accountsMap: Map<
       string,
       { value: bigint; sent: number; received: number }
@@ -39,16 +38,20 @@ app.get("/graph", async (c) => {
       });
     }
 
-    for (const attestation of attestations) {
-      // Only count attestations between accounts that are in the merkle tree,
-      // since only these have a value > 0.
-      if (
-        !accountsMap.has(attestation.attester) ||
-        !accountsMap.has(attestation.recipient)
-      ) {
-        continue;
-      }
+    const relevantAccounts = Array.from(accountsMap.keys()) as `0x${string}`[];
+    const attestations = await db
+      .select()
+      .from(easAttestation)
+      .where(
+        // Only count attestations between accounts that are in the merkle tree,
+        // since only these have a value > 0.
+        and(
+          inArray(easAttestation.attester, relevantAccounts),
+          inArray(easAttestation.recipient, relevantAccounts)
+        )
+      );
 
+    for (const attestation of attestations) {
       accountsMap.get(attestation.attester)!.sent++;
       accountsMap.get(attestation.recipient)!.received++;
     }
