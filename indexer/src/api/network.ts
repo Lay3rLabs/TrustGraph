@@ -40,20 +40,15 @@ app.get("/graph", async (c) => {
     }
 
     for (const attestation of attestations) {
-      if (!accountsMap.has(attestation.attester)) {
-        accountsMap.set(attestation.attester, {
-          value: 0n,
-          sent: 0,
-          received: 0,
-        });
+      // Only count attestations between accounts that are in the merkle tree,
+      // since only these have a value > 0.
+      if (
+        !accountsMap.has(attestation.attester) ||
+        !accountsMap.has(attestation.recipient)
+      ) {
+        continue;
       }
-      if (!accountsMap.has(attestation.recipient)) {
-        accountsMap.set(attestation.recipient, {
-          value: 0n,
-          sent: 0,
-          received: 0,
-        });
-      }
+
       accountsMap.get(attestation.attester)!.sent++;
       accountsMap.get(attestation.recipient)!.received++;
     }
