@@ -1,5 +1,7 @@
 'use client'
 
+import { useQueries } from '@tanstack/react-query'
+import { FileText } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import type React from 'react'
 import { useEffect, useMemo } from 'react'
@@ -8,16 +10,18 @@ import { useAccount } from 'wagmi'
 
 import { Address, TableAddress } from '@/components/Address'
 import { BreadcrumbRenderer } from '@/components/BreadcrumbRenderer'
-import { Button } from '@/components/Button'
+import { Button, ButtonLink } from '@/components/Button'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
 import { RankRenderer } from '@/components/RankRenderer'
 import { StatisticCard } from '@/components/StatisticCard'
 import { Column, Table } from '@/components/Table'
+import { Tooltip } from '@/components/Tooltip'
 import { useAccountProfile } from '@/hooks/useAccountProfile'
 import { usePushBreadcrumb } from '@/hooks/usePushBreadcrumb'
 import { AttestationData } from '@/lib/attestation'
 import { LOCALISM_FUND, NETWORKS, Network, isTrustedSeed } from '@/lib/network'
 import { formatBigNumber } from '@/lib/utils'
+import { ponderQueries } from '@/queries/ponder'
 
 interface NetworkParticipant {
   network: Network
@@ -65,6 +69,16 @@ export const AccountProfilePage = ({
       router.prefetch(`/attestation/${attestation.uid}`)
     })
   }, [router, attestationsGiven, attestationsReceived])
+
+  // Query for Localism Fund application URL via address and ENS name (if available), since the user may have used either one on the application.
+  const localismFundApplicationUrl = useQueries({
+    queries: [
+      ponderQueries.localismFundApplicationUrl(address),
+      ...(ensName ? [ponderQueries.localismFundApplicationUrl(ensName)] : []),
+    ],
+    // Get first valid URL.
+    combine: (results) => results.find((r) => !!r.data)?.data || undefined,
+  })
 
   const {
     networksData,
@@ -259,14 +273,31 @@ export const AccountProfilePage = ({
           noHighlight
         />
 
-        <CreateAttestationModal
-          network={LOCALISM_FUND}
-          defaultRecipient={
-            connectedAddress?.toLowerCase() === address.toLowerCase()
-              ? undefined
-              : address
-          }
-        />
+        <div className="flex flex-row gap-2">
+          {!!localismFundApplicationUrl && (
+            <Tooltip title="Open Application in Notion">
+              <ButtonLink
+                href={localismFundApplicationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                size="icon"
+                variant="brand"
+              >
+                <FileText className="!w-4.5 !h-4.5" />
+              </ButtonLink>
+            </Tooltip>
+          )}
+
+          <CreateAttestationModal
+            network={LOCALISM_FUND}
+            defaultRecipient={
+              connectedAddress?.toLowerCase() === address.toLowerCase()
+                ? undefined
+                : address
+            }
+            // variant={localismFundApplicationUrl ? 'outline' : 'default'}
+          />
+        </div>
       </div>
 
       {/* Loading State */}
