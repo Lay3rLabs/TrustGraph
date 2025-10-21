@@ -20,24 +20,39 @@ app.get("/graph", async (c) => {
         account: true,
         value: true,
       },
-      where: (t, { eq }) => eq(t.root, latestMerkleTree.root),
+      where: (t, { eq, gt, and }) =>
+        and(eq(t.root, latestMerkleTree.root), gt(t.value, 0n)),
       orderBy: (t, { asc }) => asc(t.account),
     });
 
     const attestations = await db.select().from(easAttestation);
 
-    const accountsMap: Map<string, { value: bigint; sent: number; received: number }> =
-      new Map();
+    const accountsMap: Map<
+      string,
+      { value: bigint; sent: number; received: number }
+    > = new Map();
     for (const account of allAccounts) {
-      accountsMap.set(account.account, { value: account.value, sent: 0, received: 0 });
+      accountsMap.set(account.account, {
+        value: account.value,
+        sent: 0,
+        received: 0,
+      });
     }
 
     for (const attestation of attestations) {
       if (!accountsMap.has(attestation.attester)) {
-        accountsMap.set(attestation.attester, { value: 0n, sent: 0, received: 0 });
+        accountsMap.set(attestation.attester, {
+          value: 0n,
+          sent: 0,
+          received: 0,
+        });
       }
       if (!accountsMap.has(attestation.recipient)) {
-        accountsMap.set(attestation.recipient, { value: 0n, sent: 0, received: 0 });
+        accountsMap.set(attestation.recipient, {
+          value: 0n,
+          sent: 0,
+          received: 0,
+        });
       }
       accountsMap.get(attestation.attester)!.sent++;
       accountsMap.get(attestation.recipient)!.received++;
