@@ -9,7 +9,7 @@ import { TableAddress } from '@/components/Address'
 import { BreadcrumbRenderer } from '@/components/BreadcrumbRenderer'
 import { Button, ButtonLink } from '@/components/Button'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
-import { ExportButtons } from '@/components/ExportButtons'
+import { ExportButton } from '@/components/ExportButton'
 import { Markdown } from '@/components/Markdown'
 import { RankRenderer } from '@/components/RankRenderer'
 import { StatisticCard } from '@/components/StatisticCard'
@@ -195,20 +195,29 @@ export const NetworkPage = ({ network }: { network: Network }) => {
       </div>
 
       <div className="space-y-6">
-        <div className="flex flex-row justify-between items-center">
+        <div className="flex flex-row justify-between items-center gap-x-8 gap-y-4 flex-wrap">
           <h2 className="font-bold">NETWORK MEMBERS</h2>
 
           {/* Refresh Button */}
           {!isLoading && (
-            <Button
-              onClick={refresh}
-              variant="secondary"
-              size="sm"
-              className="text-xs"
-              disabled={isLoading}
-            >
-              REFRESH
-            </Button>
+            <div className="flex flex-row items-stretch gap-2 flex-wrap">
+              <Button
+                onClick={refresh}
+                variant="secondary"
+                size="sm"
+                className="text-xs"
+                disabled={isLoading}
+              >
+                REFRESH
+              </Button>
+
+              <ExportButton
+                size="sm"
+                className="text-xs"
+                data={merkleData}
+                filename={`TrustGraph_${name}_${new Date().toISOString()}`}
+              />
+            </div>
           )}
         </div>
 
@@ -236,29 +245,20 @@ export const NetworkPage = ({ network }: { network: Network }) => {
 
         {/* Merkle Table */}
         {!isLoading && merkleData.length > 0 && (
-          <>
-            <Table
-              columns={columns}
-              data={merkleData}
-              defaultSortDirection="asc"
-              defaultSortColumn="rank"
-              onRowClick={
-                // Will be prefetched in the TableAddress component
-                (row) => {
-                  pushBreadcrumb()
-                  router.push(`/account/${row.ensName || row.account}`)
-                }
+          <Table
+            columns={columns}
+            data={merkleData}
+            defaultSortDirection="asc"
+            defaultSortColumn="rank"
+            onRowClick={
+              // Will be prefetched in the TableAddress component
+              (row) => {
+                pushBreadcrumb()
+                router.push(`/account/${row.ensName || row.account}`)
               }
-              getRowKey={(row) => row.account}
-            />
-
-            <div className="flex flex-row justify-center items-center gap-4 flex-wrap">
-              <ExportButtons
-                data={merkleData}
-                filename={`TrustGraph_${name}_${new Date().toISOString()}`}
-              />
-            </div>
-          </>
+            }
+            getRowKey={(row) => row.account}
+          />
         )}
 
         {/* No Data Message */}

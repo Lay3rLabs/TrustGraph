@@ -1,6 +1,5 @@
 'use client'
 
-import clsx from 'clsx'
 import { usePathname } from 'next/navigation'
 import {
   ComponentType,
@@ -15,6 +14,7 @@ import {
 import { createPortal } from 'react-dom'
 
 import { useTrackDropdown } from '@/hooks/useTrackDropdown'
+import { cn } from '@/lib/utils'
 
 import { Card } from './Card'
 
@@ -221,7 +221,7 @@ export const Popup = ({
   return (
     <>
       <div
-        className={clsx('inline-block', wrapperClassName)}
+        className={cn('inline-block', wrapperClassName)}
         ref={(ref) => {
           wrapperRef.current = ref
           onTrackRef(ref)
@@ -239,8 +239,8 @@ export const Popup = ({
           <Card
             type="popover"
             size="md"
-            className={clsx(
-              'fixed z-50 flex flex-col transition-all',
+            className={cn(
+              'fixed z-50 flex flex-col transition-all !overflow-hidden',
               // Prevent initial flash on page load by hiding until first open.
               !openedOnce.current && 'hidden',
               // Open.

@@ -1,8 +1,9 @@
 'use client'
 
-import type React from 'react'
+import { Braces, ChevronDown, Table } from 'lucide-react'
 
-import { Button } from './Button'
+import { Button, ButtonProps } from './Button'
+import { Popup } from './Popup'
 
 interface MerkleEntry {
   account: string
@@ -12,15 +13,19 @@ interface MerkleEntry {
   proof?: string[]
 }
 
-interface ExportButtonsProps {
+interface ExportButtonProps {
   data: MerkleEntry[]
   filename?: string
+  className?: string
+  size?: ButtonProps['size']
 }
 
-export function ExportButtons({
+export const ExportButton = ({
   data,
   filename = 'trust-graph-network',
-}: ExportButtonsProps) {
+  className,
+  size = 'default',
+}: ExportButtonProps) => {
   const downloadFile = (
     content: string,
     fileName: string,
@@ -96,14 +101,43 @@ export function ExportButtons({
   }
 
   return (
-    <>
-      <Button variant="outline" onClick={exportAsCSV}>
-        Export CSV
+    <Popup
+      position="same"
+      popupClassName="!p-0"
+      popupPadding={0}
+      trigger={{
+        type: 'custom',
+        Renderer: ({ onClick, open }) => (
+          <Button
+            variant={open ? 'outline' : 'secondary'}
+            onClick={onClick}
+            size={size}
+            className={className}
+          >
+            <span>EXPORT</span>
+            <ChevronDown className="w-4 h-4" />
+          </Button>
+        ),
+      }}
+    >
+      <Button
+        variant="ghost"
+        className="!rounded-none !px-3 !pt-2.5 !pb-2 justify-start"
+        size={null}
+        onClick={exportAsCSV}
+      >
+        <Table className="!w-4 !h-4" />
+        CSV
       </Button>
-
-      <Button variant="outline" onClick={exportAsJSON}>
-        Export JSON
+      <Button
+        variant="ghost"
+        className="!rounded-none !px-3 !pt-2 !pb-2.5 justify-start"
+        size={null}
+        onClick={exportAsJSON}
+      >
+        <Braces className="!w-4 !h-4" />
+        JSON
       </Button>
-    </>
+    </Popup>
   )
 }
