@@ -44,6 +44,11 @@ export function useNetwork() {
     refetchInterval: 10_000,
   })
 
+  // Fetch attestations graph
+  const { refetch: refetchAttestationsGraph } = useQuery(
+    ponderQueries.attestationsGraph
+  )
+
   // Load ENS data
   const { data: ensData } = useBatchEnsQuery(
     merkleTreeData?.entries.map((entry) => entry.account as Hex) || []
@@ -109,8 +114,12 @@ export function useNetwork() {
 
   // Refresh function
   const refresh = useCallback(async () => {
-    await Promise.all([refetchMerkle(), refetchAttestations()])
-  }, [refetchMerkle, refetchAttestations])
+    await Promise.all([
+      refetchMerkle(),
+      refetchAttestations(),
+      refetchAttestationsGraph(),
+    ])
+  }, [refetchMerkle, refetchAttestations, refetchAttestationsGraph])
 
   return {
     // Loading states
