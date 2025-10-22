@@ -196,7 +196,8 @@ export function CreateAttestationModal({
                 networkProfile.trustScore !== '0' && (
                   <Card type="accent" size="sm">
                     <p className="text-sm">
-                      You are currently attesting with{' '}
+                      <span className="font-bold">Note:</span> You are currently
+                      attesting with{' '}
                       {formatPercentage(
                         (Number(networkProfile.trustScore) / totalValue) * 100
                       )}{' '}
