@@ -36,7 +36,7 @@ export const Nav = () => {
 
       <div className="flex flex-row gap-2 sm:gap-3 items-stretch">
         <ButtonLink
-          href="https://t.me/+vzEeMpBDzWUwMThh"
+          href="/support"
           target="_blank"
           variant="outline"
           rel="noopener noreferrer"

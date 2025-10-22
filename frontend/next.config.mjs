@@ -18,6 +18,18 @@ const nextConfig = {
     config.module.exprContextCritical = false
     return config
   },
+  redirects: () => [
+    {
+      source: '/support',
+      destination: 'https://t.me/%2BvzEeMpBDzWUwMThh',
+      permanent: false,
+    },
+    {
+      source: '/interest',
+      destination: 'https://opencivics.notion.site/28d06d2570f2804cbf62cca8d3c0034e',
+      permanent: false,
+    }
+  ]
 }
 
 export default withPlausibleProxy()(nextConfig)

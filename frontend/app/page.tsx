@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import { Suspense, useState } from 'react'
 
 import { Button, ButtonLink } from '@/components/Button'
+import { Card } from '@/components/Card'
 import { Markdown } from '@/components/Markdown'
 import { LOCALISM_FUND } from '@/lib/network'
 import { cn } from '@/lib/utils'
@@ -34,9 +35,31 @@ export default function HomePage() {
           rather than tokens.
         </p>
 
-        <ButtonLink href={`/network/${LOCALISM_FUND.id}`} size="lg">
+        <ButtonLink
+          variant="brand"
+          href={`/network/${LOCALISM_FUND.id}`}
+          size="lg"
+        >
           View Network: Localism Fund
         </ButtonLink>
+
+        <Card type="accent" size="md" className="mt-2 space-y-4">
+          <p className="text-sm">
+            TrustGraph is in pilot mode. If you're curious about how it works,
+            want to help test early prototypes, or just want to stay in the
+            loop, fill out this short form.
+          </p>
+
+          <ButtonLink
+            href="/interest"
+            target="_blank"
+            rel="noopener noreferrer"
+            size="sm"
+            variant="outline"
+          >
+            Open Interest Form
+          </ButtonLink>
+        </Card>
 
         <h2 className="mt-6 -mb-3">FREQUENTLY ASKED QUESTIONS</h2>
         <div className="flex flex-col items-stretch gap-3 self-stretch">
