@@ -2,12 +2,12 @@ import { Hono } from "hono";
 import { db } from "ponder:api";
 import { easAttestation } from "ponder:schema";
 import { offchainDb } from "./db";
-import { and, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, or } from "drizzle-orm";
 
 const app = new Hono();
 
-// Get the graph of attestations, where nodes are accounts and edges are attestations between them.
-app.get("/graph", async (c) => {
+// Get the accounts and attestations that are part of the network.
+app.get("/", async (c) => {
   try {
     const latestMerkleTree = await offchainDb.query.merkleMetadata.findFirst({
       orderBy: (t, { desc }) => desc(t.timestamp),
@@ -26,9 +26,14 @@ app.get("/graph", async (c) => {
       orderBy: (t, { asc }) => asc(t.account),
     });
 
+    // Map of in-network accounts to their metadata.
     const accountsMap: Map<
       string,
-      { value: bigint; sent: number; received: number }
+      {
+        value: bigint;
+        sent: number;
+        received: number;
+      }
     > = new Map();
     for (const account of allAccounts) {
       accountsMap.set(account.account, {
@@ -40,15 +45,23 @@ app.get("/graph", async (c) => {
 
     const relevantAccounts = Array.from(accountsMap.keys()) as `0x${string}`[];
     const attestations = await db
-      .select()
+      .selectDistinctOn([easAttestation.attester, easAttestation.recipient])
       .from(easAttestation)
       .where(
-        // Only count attestations between accounts that are in the merkle tree,
-        // since only these have a value > 0.
         and(
+          // Only include non-revoked attestations.
+          eq(easAttestation.revocationTime, 0n),
+          // Only include attestations between in-network accounts.
           inArray(easAttestation.attester, relevantAccounts),
           inArray(easAttestation.recipient, relevantAccounts)
         )
+      )
+      .orderBy(
+        // Same order as distinct columns.
+        asc(easAttestation.attester),
+        asc(easAttestation.recipient),
+        // Newest attestations override older ones, so pick newer first.
+        desc(easAttestation.timestamp)
       );
 
     for (const attestation of attestations) {
@@ -70,8 +83,8 @@ app.get("/graph", async (c) => {
       attestations,
     });
   } catch (error) {
-    console.error("Error fetching attestations graph:", error);
-    return c.json({ error: "Failed to fetch attestations graph" }, 500);
+    console.error("Error fetching network:", error);
+    return c.json({ error: "Failed to fetch network" }, 500);
   }
 });
 

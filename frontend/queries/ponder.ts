@@ -29,7 +29,7 @@ export const ponderKeys = {
     attester?: string
     recipient?: string
   }) => [...ponderKeys.all, 'attestationCount', options] as const,
-  attestationsGraph: () => [...ponderKeys.all, 'attestationsGraph'] as const,
+  network: () => [...ponderKeys.all, 'network'] as const,
   localismFundApplicationUrl: (address: string) =>
     [...ponderKeys.all, 'localismFundApplicationUrl', address] as const,
 }
@@ -173,10 +173,10 @@ export const ponderQueries = {
     },
     enabled: !!APIS.ponder,
   }),
-  attestationsGraph: queryOptions({
-    queryKey: ponderKeys.attestationsGraph(),
+  network: queryOptions({
+    queryKey: ponderKeys.network(),
     queryFn: async (): Promise<AttestationGraph> => {
-      const response = await fetch(`${APIS.ponder}/network/graph`)
+      const response = await fetch(`${APIS.ponder}/network`)
 
       if (response.ok) {
         const data = await response.json()
@@ -189,7 +189,7 @@ export const ponderQueries = {
         }
       } else {
         throw new Error(
-          `Failed to fetch attestations graph: ${response.status} ${
+          `Failed to fetch network: ${response.status} ${
             response.statusText
           } (${await response.text()})`
         )

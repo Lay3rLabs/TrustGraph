@@ -133,7 +133,7 @@ export function NetworkGraph({
   const router = useRouter()
 
   const { isLoading, error, data } = useQuery({
-    ...ponderQueries.attestationsGraph,
+    ...ponderQueries.network,
     refetchInterval: 10_000,
   })
 

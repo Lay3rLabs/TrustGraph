@@ -45,9 +45,7 @@ export function useNetwork() {
   })
 
   // Fetch attestations graph
-  const { refetch: refetchAttestationsGraph } = useQuery(
-    ponderQueries.attestationsGraph
-  )
+  const { refetch: refetchAttestationsGraph } = useQuery(ponderQueries.network)
 
   // Load ENS data
   const { data: ensData } = useBatchEnsQuery(
