@@ -5,16 +5,22 @@ import { useCallback } from 'react'
 import { Hex } from 'viem'
 
 import { useNetwork } from '@/hooks/useNetwork'
+import { areAddressesEqual } from '@/lib/utils'
 import { ponderQueryFns } from '@/queries/ponder'
 
 import { useIntoAttestationsData } from './useAttestation'
 
-interface AccountProfileData {
-  account: string
+interface AccountNetworkProfile {
+  account: Hex
+  /** The trust score of this account in the network. */
   trustScore: string
+  /** The rank of this account in the network. */
   rank: number
+  /** Just the attestations received by this account from in-network participants. */
   attestationsReceived: number
+  /** All attestations given by this account (if they are in-network), or 0. */
   attestationsGiven: number
+  /** Whether this account is a participant in the network. */
   networkParticipant: boolean
 }
 
@@ -40,16 +46,17 @@ export const accountProfileKeys = {
     ] as const,
 }
 
-export function useAccountProfile(address: Hex) {
+export function useAccountNetworkProfile(address: Hex) {
   const {
-    merkleData,
+    accountData: networkData,
+    attestationsData: networkAttestationsData,
     isLoading: networkLoading,
     error: networkError,
     refresh: refreshNetwork,
   } = useNetwork()
 
   // Find the account in the network data
-  const accountNetworkData = merkleData?.find(
+  const accountNetworkData = networkData?.find(
     (entry) => entry.account.toLowerCase() === address.toLowerCase()
   )
 
@@ -68,7 +75,7 @@ export function useAccountProfile(address: Hex) {
   })
 
   // Transform data into profile format
-  const profileData: AccountProfileData | null = accountNetworkData
+  const networkProfile: AccountNetworkProfile | null = accountNetworkData
     ? {
         account: accountNetworkData.account,
         trustScore: accountNetworkData.value,
@@ -82,11 +89,20 @@ export function useAccountProfile(address: Hex) {
         account: address,
         trustScore: '0',
         rank: 0,
-        attestationsReceived: attestationsReceivedQuery.data?.length || 0,
-        attestationsGiven: attestationsGivenQuery.data?.length || 0,
+        attestationsReceived: 0,
+        attestationsGiven: 0,
         networkParticipant: false,
       }
     : null
+
+  const networkAttestationsGiven =
+    networkAttestationsData?.filter((attestation) =>
+      areAddressesEqual(attestation.attester, address)
+    ) || []
+  const networkAttestationsReceived =
+    networkAttestationsData?.filter((attestation) =>
+      areAddressesEqual(attestation.recipient, address)
+    ) || []
 
   // Combined loading state
   const isLoading =
@@ -119,12 +135,14 @@ export function useAccountProfile(address: Hex) {
     isLoading,
     error,
 
-    // Profile data
-    profileData,
+    // Network data
+    networkProfile,
+    networkAttestationsGiven,
+    networkAttestationsReceived,
 
-    // Attestation lists
-    attestationsGiven: attestationsGivenQuery.data || [],
-    attestationsReceived: attestationsReceivedQuery.data || [],
+    // Attestation lists (not filtered by in-network status, nor de-duplicated)
+    allAttestationsGiven: attestationsGivenQuery.data || [],
+    allAttestationsReceived: attestationsReceivedQuery.data || [],
 
     // Individual loading states for more granular control
     isLoadingProfile: networkLoading,

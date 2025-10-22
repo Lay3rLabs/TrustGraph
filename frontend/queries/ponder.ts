@@ -13,7 +13,6 @@ export const ponderKeys = {
   latestMerkleTree: () => [...ponderKeys.all, 'latestMerkleTree'] as const,
   merkleTree: (root?: string) =>
     [...ponderKeys.all, 'merkleTree', root] as const,
-  attestationCounts: () => [...ponderKeys.all, 'attestationCounts'] as const,
   attestation: (uid: string) =>
     [...ponderKeys.all, 'attestation', uid] as const,
   attestations: (options: {
@@ -78,7 +77,7 @@ export type AttestationUID = {
   timestamp: number
 }
 
-export type AttestationGraph = {
+export type NetworkData = {
   accounts: {
     account: Hex
     value: string
@@ -152,30 +151,9 @@ export const ponderQueries = {
       },
       enabled: !!root && !!APIS.ponder,
     }),
-  attestationCounts: queryOptions({
-    queryKey: ponderKeys.attestationCounts(),
-    queryFn: async () => {
-      const response = await fetch(`${APIS.ponder}/attestations/counts`)
-
-      if (response.ok) {
-        const data = (await response.json()) as {
-          attestationCounts: AttestationCount[]
-        }
-
-        return data.attestationCounts
-      } else {
-        throw new Error(
-          `Failed to fetch attestation counts: ${response.status} ${
-            response.statusText
-          } (${await response.text()})`
-        )
-      }
-    },
-    enabled: !!APIS.ponder,
-  }),
   network: queryOptions({
     queryKey: ponderKeys.network(),
-    queryFn: async (): Promise<AttestationGraph> => {
+    queryFn: async (): Promise<NetworkData> => {
       const response = await fetch(`${APIS.ponder}/network`)
 
       if (response.ok) {

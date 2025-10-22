@@ -1,11 +1,12 @@
 'use client'
 
 import { useQueries } from '@tanstack/react-query'
-import { FileText } from 'lucide-react'
+import { SetStateAction } from 'jotai'
+import { FileText, ListFilter } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import type React from 'react'
-import { Suspense, useEffect, useMemo } from 'react'
+import { Dispatch, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { Hex } from 'viem'
 import { useAccount } from 'wagmi'
 
@@ -13,11 +14,13 @@ import { Address, TableAddress } from '@/components/Address'
 import { BreadcrumbRenderer } from '@/components/BreadcrumbRenderer'
 import { Button, ButtonLink } from '@/components/Button'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
+import { InfoTooltip } from '@/components/InfoTooltip'
+import { Popup } from '@/components/Popup'
 import { RankRenderer } from '@/components/RankRenderer'
 import { StatisticCard } from '@/components/StatisticCard'
 import { Column, Table } from '@/components/Table'
 import { Tooltip } from '@/components/Tooltip'
-import { useAccountProfile } from '@/hooks/useAccountProfile'
+import { useAccountNetworkProfile } from '@/hooks/useAccountProfile'
 import { usePushBreadcrumb } from '@/hooks/usePushBreadcrumb'
 import { AttestationData } from '@/lib/attestation'
 import { LOCALISM_FUND, NETWORKS, Network, isTrustedSeed } from '@/lib/network'
@@ -59,25 +62,25 @@ export const AccountProfilePage = ({
   const {
     isLoading,
     error,
-    profileData,
-    attestationsGiven,
-    attestationsReceived,
-    isLoadingAttestationsGiven,
-    isLoadingAttestationsReceived,
+    networkProfile: profileData,
+    networkAttestationsGiven,
+    networkAttestationsReceived,
+    allAttestationsGiven,
+    allAttestationsReceived,
     refresh,
-  } = useAccountProfile(address)
+  } = useAccountNetworkProfile(address)
 
   useEffect(() => {
     NETWORKS.forEach((network) => {
       router.prefetch(`/network/${network.id}`)
     })
-    attestationsGiven.forEach((attestation) => {
+    allAttestationsGiven.forEach((attestation) => {
       router.prefetch(`/attestation/${attestation.uid}`)
     })
-    attestationsReceived.forEach((attestation) => {
+    allAttestationsReceived.forEach((attestation) => {
       router.prefetch(`/attestation/${attestation.uid}`)
     })
-  }, [router, attestationsGiven, attestationsReceived])
+  }, [router, allAttestationsGiven, allAttestationsReceived])
 
   // Query for Localism Fund application URL via address and ENS name (if available), since the user may have used either one on the application.
   const localismFundApplicationUrl = useQueries({
@@ -89,14 +92,7 @@ export const AccountProfilePage = ({
     combine: (results) => results.find((r) => !!r.data)?.data || undefined,
   })
 
-  const {
-    networksData,
-    maxScore,
-    averageScore,
-    medianScore,
-    totalAttestationsReceived,
-    totalAttestationsGiven,
-  } = useMemo(() => {
+  const { networksData, maxScore, averageScore, medianScore } = useMemo(() => {
     const networksData = NETWORKS.map(
       (network): NetworkParticipant => ({
         network,
@@ -126,22 +122,11 @@ export const AccountProfilePage = ({
         ? Number(networksData[Math.ceil(networksData.length / 2)].score)
         : Number(networksData[0]?.score || '0')
 
-    const totalAttestationsReceived = networksData.reduce(
-      (sum, network) => sum + network.attestationsReceived,
-      0
-    )
-    const totalAttestationsGiven = networksData.reduce(
-      (sum, network) => sum + network.attestationsGiven,
-      0
-    )
-
     return {
       networksData,
       maxScore,
       averageScore,
       medianScore,
-      totalAttestationsReceived,
-      totalAttestationsGiven,
     }
   }, [profileData])
 
@@ -275,8 +260,27 @@ export const AccountProfilePage = ({
     },
   ]
 
-  const hasAttestations =
-    totalAttestationsReceived > 0 || totalAttestationsGiven > 0
+  const setFilterOpenRef = useRef<Dispatch<SetStateAction<boolean>> | null>(
+    null
+  )
+  const [_onlyNetworkAttestations, setOnlyNetworkAttestations] = useState(true)
+
+  // If not a network participant, always show all attestations.
+  const onlyNetworkAttestations = !profileData?.networkParticipant
+    ? false
+    : _onlyNetworkAttestations
+
+  // If in-network and has attestations, show the network graph.
+  const showNetworkGraph =
+    !!profileData?.networkParticipant &&
+    (!!profileData?.attestationsReceived || !!profileData?.attestationsGiven)
+
+  const attestationsReceived = onlyNetworkAttestations
+    ? networkAttestationsReceived
+    : allAttestationsReceived
+  const attestationsGiven = onlyNetworkAttestations
+    ? networkAttestationsGiven
+    : allAttestationsGiven
 
   return (
     <div className="space-y-6">
@@ -373,7 +377,7 @@ export const AccountProfilePage = ({
           <div
             className={cn(
               'grid grid-cols-1 justify-start items-stretch gap-6 border-y border-border py-12',
-              hasAttestations && 'lg:grid-cols-2 lg:items-start'
+              showNetworkGraph && 'lg:grid-cols-2 lg:items-start'
             )}
           >
             <div className="space-y-6">
@@ -406,18 +410,26 @@ export const AccountProfilePage = ({
                 )}
                 <StatisticCard
                   title="ATTESTATIONS RECEIVED"
-                  tooltip="Total number of attestations this account has received from others."
+                  tooltip={
+                    onlyNetworkAttestations
+                      ? 'Total number of attestations this account has received from other network members.'
+                      : 'Total number of attestations this account has received from others.'
+                  }
                   value={formatBigNumber(
-                    totalAttestationsReceived,
+                    attestationsReceived.length,
                     undefined,
                     true
                   )}
                 />
                 <StatisticCard
                   title="ATTESTATIONS MADE"
-                  tooltip="Total number of attestations this account has made to others."
+                  tooltip={
+                    onlyNetworkAttestations
+                      ? 'Total number of attestations this account has made to other network members.'
+                      : 'Total number of attestations this account has made to others.'
+                  }
                   value={formatBigNumber(
-                    totalAttestationsGiven,
+                    attestationsGiven.length,
                     undefined,
                     true
                   )}
@@ -425,7 +437,7 @@ export const AccountProfilePage = ({
               </div>
             </div>
 
-            {hasAttestations && (
+            {showNetworkGraph && (
               <div className="h-[66vh] lg:h-full">
                 <Suspense fallback={null}>
                   <NetworkGraph network={LOCALISM_FUND} onlyAddress={address} />
@@ -436,14 +448,63 @@ export const AccountProfilePage = ({
 
           {/* Attestations Received Section */}
           <div className="border-b border-border pt-6 pb-12 space-y-6">
-            <h2 className="font-bold">
-              {!isLoadingAttestationsReceived &&
-              attestationsReceived.length === 0
-                ? 'NO ATTESTATIONS RECEIVED'
-                : 'ATTESTATIONS RECEIVED'}
-            </h2>
+            <div className="flex flex-row justify-between items-center gap-4 flex-wrap">
+              <h2 className="font-bold">
+                {!isLoading && attestationsReceived.length === 0
+                  ? 'NO ATTESTATIONS RECEIVED'
+                  : 'ATTESTATIONS RECEIVED'}
+              </h2>
 
-            {isLoadingAttestationsReceived && (
+              <Popup
+                position="same"
+                popupClassName="!p-0"
+                popupPadding={0}
+                setOpenRef={setFilterOpenRef}
+                trigger={{
+                  type: 'custom',
+                  Renderer: ({ onClick, open }) => (
+                    <Button
+                      variant={open ? 'outline' : 'secondary'}
+                      onClick={onClick}
+                    >
+                      <ListFilter className="!w-5 !h-5 mr-1" />
+                      <span>
+                        {onlyNetworkAttestations
+                          ? 'Network Only'
+                          : 'All Attestations'}
+                      </span>
+                    </Button>
+                  ),
+                }}
+              >
+                {profileData?.networkParticipant && (
+                  <Button
+                    variant="ghost"
+                    className="!rounded-none !px-3 !pt-2.5 !pb-2 justify-start"
+                    size={null}
+                    onClick={() => {
+                      setOnlyNetworkAttestations(true)
+                      setFilterOpenRef.current?.(false)
+                    }}
+                  >
+                    Network Only
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  className="!rounded-none !px-3 !pt-2 !pb-2.5 justify-start"
+                  size={null}
+                  onClick={() => {
+                    setOnlyNetworkAttestations(false)
+                    setFilterOpenRef.current?.(false)
+                  }}
+                >
+                  All Attestations
+                </Button>
+              </Popup>
+            </div>
+
+            {isLoading && (
               <div className="text-center py-8">
                 <div className="text-sm text-gray-900">
                   LOADING ATTESTATIONS
@@ -451,32 +512,53 @@ export const AccountProfilePage = ({
               </div>
             )}
 
-            {!isLoadingAttestationsReceived &&
-              attestationsReceived.length > 0 && (
-                <Table
-                  columns={attestationsReceivedColumns}
-                  data={attestationsReceived}
-                  cellClassName="text-sm"
-                  defaultSortColumn="time"
-                  defaultSortDirection="desc"
-                  onRowClick={(row) => {
-                    pushBreadcrumb()
-                    router.push(`/attestation/${row.uid}`)
-                  }}
-                  getRowKey={(row) => row.uid}
-                />
+            {!isLoading && attestationsReceived.length > 0 && (
+              <Table
+                columns={attestationsReceivedColumns}
+                data={attestationsReceived}
+                cellClassName="text-sm"
+                defaultSortColumn="time"
+                defaultSortDirection="desc"
+                onRowClick={(row) => {
+                  pushBreadcrumb()
+                  router.push(`/attestation/${row.uid}`)
+                }}
+                getRowKey={(row) => row.uid}
+              />
+            )}
+
+            {!isLoading &&
+              onlyNetworkAttestations &&
+              allAttestationsReceived.length >
+                networkAttestationsReceived.length && (
+                <div className="flex flex-row gap-1 items-center">
+                  <InfoTooltip
+                    title={
+                      'Attestations from accounts outside of the Trust Network are currently hidden, as they do not impact this account\'s score. To view these attestations, change the filter from "Network Only" to "All Attestations".'
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground italic">
+                    {formatBigNumber(
+                      allAttestationsReceived.length -
+                        networkAttestationsReceived.length,
+                      undefined,
+                      true
+                    )}{' '}
+                    out-of-network attestations are hidden from view.
+                  </p>
+                </div>
               )}
           </div>
 
           {/* Attestations Given Section */}
           <div className="border-b border-border pt-6 pb-12 space-y-6">
             <h2 className="font-bold">
-              {!isLoadingAttestationsGiven && attestationsGiven.length === 0
+              {!isLoading && attestationsGiven.length === 0
                 ? 'NO ATTESTATIONS MADE'
                 : 'ATTESTATIONS MADE'}
             </h2>
 
-            {isLoadingAttestationsGiven && (
+            {isLoading && (
               <div className="text-center py-8">
                 <div className="text-sm text-gray-900">
                   LOADING ATTESTATIONS
@@ -484,7 +566,7 @@ export const AccountProfilePage = ({
               </div>
             )}
 
-            {!isLoadingAttestationsGiven && attestationsGiven.length > 0 && (
+            {!isLoading && attestationsGiven.length > 0 && (
               <Table
                 columns={attestationsGivenColumns}
                 defaultSortColumn="time"
@@ -498,6 +580,27 @@ export const AccountProfilePage = ({
                 getRowKey={(row) => row.uid}
               />
             )}
+
+            {!isLoading &&
+              onlyNetworkAttestations &&
+              allAttestationsGiven.length > networkAttestationsGiven.length && (
+                <div className="flex flex-row gap-1 items-center">
+                  <InfoTooltip
+                    title={
+                      'Attestations to accounts outside of the Trust Network are currently hidden, as they do not impact this account\'s score. To view these attestations, change the filter from "Network Only" to "All Attestations".'
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground italic">
+                    {formatBigNumber(
+                      allAttestationsGiven.length -
+                        networkAttestationsGiven.length,
+                      undefined,
+                      true
+                    )}{' '}
+                    out-of-network attestations are hidden from view.
+                  </p>
+                </div>
+              )}
           </div>
         </>
       )}

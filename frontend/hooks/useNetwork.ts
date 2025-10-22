@@ -5,15 +5,11 @@ import { useCallback, useMemo } from 'react'
 import { Hex } from 'viem'
 
 import { ponderQueries } from '@/queries/ponder'
-import type {
-  AttestationCount,
-  MerkleEntry as PonderMerkleEntry,
-} from '@/queries/ponder'
 
 import { useBatchEnsQuery } from './useEns'
 
 export interface NetworkEntry {
-  account: string
+  account: Hex
   ensName?: string
   value: string
   rank: number
@@ -33,64 +29,40 @@ export function useNetwork() {
     refetchInterval: 10_000,
   })
 
-  // Fetch attestation counts
+  // Fetch network
   const {
-    data: attestationCounts,
-    isLoading: attestationLoading,
-    error: attestationError,
-    refetch: refetchAttestations,
+    data: networkData,
+    isLoading: networkLoading,
+    error: networkError,
+    refetch: refetchNetwork,
   } = useQuery({
-    ...ponderQueries.attestationCounts,
+    ...ponderQueries.network,
     refetchInterval: 10_000,
   })
 
-  // Fetch attestations graph
-  const { refetch: refetchAttestationsGraph } = useQuery(ponderQueries.network)
-
   // Load ENS data
   const { data: ensData } = useBatchEnsQuery(
-    merkleTreeData?.entries.map((entry) => entry.account as Hex) || []
+    networkData?.accounts.map(({ account }) => account) || []
   )
 
-  // Create a map of attestation counts by account
-  const merkleData = useMemo((): NetworkEntry[] => {
-    if (!merkleTreeData?.entries?.length) {
+  // Transform network data to match the expected format
+  const accountData = useMemo((): NetworkEntry[] => {
+    if (!networkData?.accounts?.length) {
       return []
     }
 
-    const attestationMap = new Map<string, { sent: number; received: number }>()
-    if (attestationCounts && Array.isArray(attestationCounts)) {
-      attestationCounts.forEach((count: AttestationCount) => {
-        attestationMap.set(count.account.toLowerCase(), {
-          sent: count.sent,
-          received: count.received,
-        })
-      })
-    }
-
-    // Transform ponder merkle entries to match the expected format with attestation data
-    return merkleTreeData.entries
+    return networkData.accounts
       .sort((a, b) => Number(BigInt(b.value) - BigInt(a.value)))
-      .map((entry: PonderMerkleEntry, index: number) => {
-        const attestationData = attestationMap.get(
-          entry.account.toLowerCase()
-        ) || {
-          sent: 0,
-          received: 0,
-        }
-
-        const ensName = ensData?.[entry.account]?.name || undefined
+      .map((account, index: number) => {
+        const ensName = ensData?.[account.account]?.name || undefined
 
         return {
-          account: entry.account,
+          ...account,
           ...(ensName ? { ensName } : {}),
-          value: entry.value,
           rank: index + 1,
-          sent: attestationData.sent,
-          received: attestationData.received,
         }
       })
-  }, [merkleTreeData, attestationCounts, ensData])
+  }, [networkData, ensData])
 
   // Calculate derived values
   const totalValue = Number(merkleTreeData?.tree?.totalValue || '0')
@@ -100,32 +72,29 @@ export function useNetwork() {
       ? Number(totalValue) / Number(totalParticipants)
       : 0
   const medianValue =
-    merkleData.length > 1
-      ? Number(merkleData[Math.ceil(merkleData.length / 2)].value)
-      : Number(merkleData[0]?.value || 0)
+    accountData.length > 1
+      ? Number(accountData[Math.ceil(accountData.length / 2)].value)
+      : Number(accountData[0]?.value || 0)
 
   // Combined loading state
-  const isLoading = merkleLoading || attestationLoading
+  const isLoading = merkleLoading || networkLoading
 
   // Combined error state
-  const error = merkleError?.message || attestationError?.message || null
+  const error = merkleError?.message || networkError?.message || null
 
   // Refresh function
   const refresh = useCallback(async () => {
-    await Promise.all([
-      refetchMerkle(),
-      refetchAttestations(),
-      refetchAttestationsGraph(),
-    ])
-  }, [refetchMerkle, refetchAttestations, refetchAttestationsGraph])
+    await Promise.all([refetchMerkle(), refetchNetwork()])
+  }, [refetchMerkle, refetchNetwork])
 
   return {
     // Loading states
     isLoading,
     error,
 
-    // Data (using same names as useMerkle for compatibility)
-    merkleData,
+    // Data
+    accountData,
+    attestationsData: networkData?.attestations,
     totalValue,
     totalParticipants,
     averageValue,

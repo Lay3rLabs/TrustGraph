@@ -34,7 +34,7 @@ export const NetworkPage = ({ network }: { network: Network }) => {
   const {
     isLoading,
     error,
-    merkleData,
+    accountData: networkData,
     totalValue,
     totalParticipants,
     averageValue,
@@ -206,7 +206,7 @@ export const NetworkPage = ({ network }: { network: Network }) => {
               <ExportButton
                 size="sm"
                 className="text-xs"
-                data={merkleData}
+                data={networkData}
                 filename={`TrustGraph_${name}_${new Date().toISOString()}`}
               />
             </div>
@@ -236,10 +236,10 @@ export const NetworkPage = ({ network }: { network: Network }) => {
         )}
 
         {/* Merkle Table */}
-        {!isLoading && merkleData.length > 0 && (
+        {!isLoading && networkData.length > 0 && (
           <Table
             columns={columns}
-            data={merkleData}
+            data={networkData}
             defaultSortDirection="asc"
             rowClassName="text-sm"
             defaultSortColumn="rank"
@@ -255,7 +255,7 @@ export const NetworkPage = ({ network }: { network: Network }) => {
         )}
 
         {/* No Data Message */}
-        {!isLoading && (!merkleData || merkleData.length === 0) && !error && (
+        {!isLoading && (!networkData || networkData.length === 0) && !error && (
           <div className="text-center py-8 border border-gray-300 bg-white rounded-sm shadow-sm">
             <div className="text-sm text-gray-600">
               NO NETWORK DATA AVAILABLE

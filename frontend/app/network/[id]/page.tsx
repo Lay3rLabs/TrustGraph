@@ -32,7 +32,7 @@ export default async function NetworkPageServer({
   await Promise.all([
     // Network
     queryClient.prefetchQuery(ponderQueries.latestMerkleTree),
-    queryClient.prefetchQuery(ponderQueries.attestationCounts),
+    queryClient.prefetchQuery(ponderQueries.network),
   ])
 
   const dehydratedState = dehydrate(queryClient)
