@@ -1,10 +1,11 @@
 'use client'
 
-import clsx from 'clsx'
 import { HTMLMotionProps, motion } from 'motion/react'
 import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import rehypeRaw from 'rehype-raw'
+
+import { cn } from '@/lib/utils'
 
 export type MarkdownProps = {
   children: string
@@ -20,9 +21,7 @@ export const Markdown = ({
   rawHtml,
 }: MarkdownProps) => {
   return (
-    <div
-      className={clsx(className, 'flex flex-col gap-4 break-words text-left')}
-    >
+    <div className={cn('flex flex-col gap-4 break-words text-left', className)}>
       <ReactMarkdown
         components={{
           ...(textFade ? { p: SlideFadeInParagraph as any } : {}),
@@ -45,7 +44,7 @@ const SlideFadeInParagraph = ({
     initial={{ opacity: 0, y: 5 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.4, ease: 'easeOut' }}
-    className={clsx(className, 'whitespace-pre-wrap break-words')}
+    className={cn('whitespace-pre-wrap break-words', className)}
     {...props}
   >
     {children}

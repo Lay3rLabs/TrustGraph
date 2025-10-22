@@ -41,6 +41,7 @@ import { formatBigNumber, formatPercentage, mightBeEnsName } from '@/lib/utils'
 import { Card } from './Card'
 import { CopyableText } from './CopyableText'
 import { EnsIcon } from './icons/EnsIcon'
+import { Markdown } from './Markdown'
 import { Tooltip } from './Tooltip'
 
 interface CreateAttestationModalProps {
@@ -110,6 +111,30 @@ export function CreateAttestationModal({
     error,
     hash,
   } = useAttestation()
+
+  const noteText =
+    totalValue > 0 && networkProfile && networkProfile.trustScore !== '0'
+      ? '**Note:**\n' +
+        [
+          (networkProfile.attestationsGiven > 0 ? '- ' : '') +
+            `Your **TrustScore** determines how much influence your attestations carry — currently **${formatPercentage(
+              (Number(networkProfile.trustScore) / totalValue) * 100
+            )} of total network trust**.`,
+          ...(networkProfile.attestationsGiven > 0
+            ? [
+                `- You've made **${formatBigNumber(
+                  networkProfile.attestationsGiven,
+                  undefined,
+                  true
+                )} attestations** — adding another will reduce each attestation's weight by **${formatPercentage(
+                  (1 / networkProfile.attestationsGiven -
+                    1 / (networkProfile.attestationsGiven + 1)) *
+                    100
+                )}**.`,
+              ]
+            : []),
+        ].join('\n')
+      : null
 
   // Monitor transaction state
   useEffect(() => {
@@ -191,33 +216,11 @@ export function CreateAttestationModal({
           {/* Attestation Form */}
           <Form {...form}>
             <div className="flex flex-col gap-4">
-              {totalValue > 0 &&
-                networkProfile &&
-                networkProfile.trustScore !== '0' && (
-                  <Card type="accent" size="sm">
-                    <p className="text-sm">
-                      <span className="font-bold">Note:</span> You are currently
-                      attesting with{' '}
-                      {formatPercentage(
-                        (Number(networkProfile.trustScore) / totalValue) * 100
-                      )}{' '}
-                      of network share. Because you've already made{' '}
-                      {formatBigNumber(
-                        networkProfile.attestationsGiven,
-                        undefined,
-                        true
-                      )}{' '}
-                      attestations, making another will decrease each
-                      attestation's impact by{' '}
-                      {formatPercentage(
-                        (1 / networkProfile.attestationsGiven -
-                          1 / (networkProfile.attestationsGiven + 1)) *
-                          100
-                      )}
-                      .
-                    </p>
-                  </Card>
-                )}
+              {noteText && (
+                <Card type="accent" size="sm">
+                  <Markdown className="text-sm gap-1">{noteText}</Markdown>
+                </Card>
+              )}
 
               <div
                 className={clsx(
