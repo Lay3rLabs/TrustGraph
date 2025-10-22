@@ -7,23 +7,21 @@
   "wavsServiceId": "1c1018875bf736a711f47e9f43ec4d3c82269acae2d132fef8971c0a13887865",
   "contracts": {
     "IWavsServiceManager": "0x197484faccbdb900788f50f553907bbaea20701c",
-    "WavsIndexer": "0x1a4C2B7157C5b32035C4c6f4cdfb052c09ecba92",
-    "EASAttestTrigger": "0xc4cD7e58887834281091b2F2c63cce3481637E28",
-    "WavsAttester": "0xD95F4960c2620c1cE306022a8E0099476CEd84D0",
+    "WavsIndexer": "0xF56904778BcCF9B89c4B2f214eB07Fb2B9872b5E",
+    "EASAttestTrigger": "0xA91F15f5632A98278daBED81C4A6Fe87f9cF4161",
+    "WavsAttester": "0xbaF18D8045521a6d91243BBB2CaaFb37a35d70F4",
     "EAS": "0x4200000000000000000000000000000000000021",
-    "EASIndexerResolver": "0xac03773647D933935d07a821e395915773D52297",
-    "SchemaRegistrar": "0xdc959ec48d50Cc02f9481419f9fAe1406bfE9EFd",
+    "EASIndexerResolver": "0xF0278E089aA3361796e9B9d30C30Ee427747225E",
+    "SchemaRegistrar": "0x33b9885aC3cB1891b0bC43F55D71963BD1Fee5F2",
     "SchemaRegistry": "0x4200000000000000000000000000000000000020",
-    "MerkleSnapshot": "0xCA481607a85cFe734340d3E83Dac78a508c6d363",
-    "RewardDistributor": "0x4076bE26914a72ff2ea103D811f188188034fb79",
-    "ERC20": "0x2F79E77Fd9c707404753c7B118C1bac71F6D46aB"
+    "MerkleSnapshot": "0x6d5339Fd17235803AE68e04d0b820bdd987427AC"
   },
   "schemas": {
     "vouching": {
-      "uid": "0xc12c9f27c0f29891a577aaab46a0603c3ebba46ef2750b4b8292003573fa1209",
+      "uid": "0xe980be2010432b0e887d12c0d50a6ab61d6ad3a9a64448ff2829b8f117a134ac",
       "name": "Vouching",
       "description": "Weighted endorsement",
-      "resolver": "0xac03773647D933935d07a821e395915773D52297",
+      "resolver": "0xF0278E089aA3361796e9B9d30C30Ee427747225E",
       "revocable": true,
       "schema": "string comment,uint256 confidence",
       "fields": [
