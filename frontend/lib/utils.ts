@@ -6,6 +6,14 @@ export const cn = (...inputs: ClassValue[]) => {
   return twMerge(clsx(inputs))
 }
 
+export const formatPercentage = (num: number) => {
+  return (
+    num.toLocaleString(undefined, {
+      maximumSignificantDigits: 4,
+    }) + '%'
+  )
+}
+
 export const formatBigNumber = (
   num: bigint | number | string,
   /**

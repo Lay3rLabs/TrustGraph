@@ -30,12 +30,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/Select'
+import { useAccountNetworkProfile } from '@/hooks/useAccountProfile'
 import { useAttestation } from '@/hooks/useAttestation'
 import { useResolveEnsName } from '@/hooks/useEns'
+import { useNetwork } from '@/hooks/useNetwork'
 import { Network } from '@/lib/network'
 import { SCHEMAS, SchemaManager } from '@/lib/schemas'
-import { mightBeEnsName } from '@/lib/utils'
+import { formatBigNumber, formatPercentage, mightBeEnsName } from '@/lib/utils'
 
+import { Card } from './Card'
 import { CopyableText } from './CopyableText'
 import { EnsIcon } from './icons/EnsIcon'
 import { Tooltip } from './Tooltip'
@@ -96,7 +99,9 @@ export function CreateAttestationModal({
     !resolvedEnsName.isLoading &&
     !resolvedEnsName.address
 
-  const { isConnected } = useAccount()
+  const { address: connectedAddress = '0x', isConnected } = useAccount()
+  const { totalValue } = useNetwork()
+  const { networkProfile } = useAccountNetworkProfile(connectedAddress)
   const {
     createAttestation,
     clearTransactionState,
@@ -186,6 +191,33 @@ export function CreateAttestationModal({
           {/* Attestation Form */}
           <Form {...form}>
             <div className="flex flex-col gap-4">
+              {totalValue > 0 &&
+                networkProfile &&
+                networkProfile.trustScore !== '0' && (
+                  <Card type="accent" size="sm">
+                    <p className="text-sm">
+                      You are currently attesting with{' '}
+                      {formatPercentage(
+                        (Number(networkProfile.trustScore) / totalValue) * 100
+                      )}{' '}
+                      of network share. Because you've already made{' '}
+                      {formatBigNumber(
+                        networkProfile.attestationsGiven,
+                        undefined,
+                        true
+                      )}{' '}
+                      attestations, making another will decrease each
+                      attestation's impact by{' '}
+                      {formatPercentage(
+                        (1 / networkProfile.attestationsGiven -
+                          1 / (networkProfile.attestationsGiven + 1)) *
+                          100
+                      )}
+                      .
+                    </p>
+                  </Card>
+                )}
+
               <div
                 className={clsx(
                   'grid grid-cols-1 gap-4',

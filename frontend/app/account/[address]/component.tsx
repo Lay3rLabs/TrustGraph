@@ -294,6 +294,7 @@ export const AccountProfilePage = ({
           displayMode="full"
           showCopyIcon={true}
           noHighlight
+          link={false}
         />
 
         <div className="flex flex-row gap-2">
