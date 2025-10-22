@@ -8,6 +8,7 @@ import { useAccount } from 'wagmi'
 
 import { useAttestation, useIntoAttestationData } from '@/hooks/useAttestation'
 import { AttestationData } from '@/lib/attestation'
+import { parseErrorMessage } from '@/lib/error'
 import { SchemaManager } from '@/lib/schemas'
 import { formatTimeAgo } from '@/lib/utils'
 import { ponderQueryFns } from '@/queries/ponder'
@@ -43,12 +44,9 @@ export function AttestationCard({ uid, onClick }: AttestationCardProps) {
     setIsRevokingThis(true)
     try {
       await revokeAttestation(uid, attestation.schema as `0x${string}`)
-      toast.success('Attestation revoked successfully!')
     } catch (err) {
       console.error('Failed to revoke attestation:', err)
-      toast.error(
-        err instanceof Error ? err.message : 'Failed to revoke attestation'
-      )
+      toast.error(parseErrorMessage(err))
     } finally {
       setIsRevokingThis(false)
     }

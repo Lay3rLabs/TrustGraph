@@ -545,7 +545,13 @@ export const AccountProfilePage = ({
                       undefined,
                       true
                     )}{' '}
-                    out-of-network attestations are hidden from view.
+                    out-of-network attestation
+                    {allAttestationsReceived.length -
+                      networkAttestationsReceived.length >
+                    1
+                      ? 's'
+                      : ''}{' '}
+                    are hidden from view.
                   </p>
                 </div>
               )}

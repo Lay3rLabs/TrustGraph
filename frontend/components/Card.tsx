@@ -1,8 +1,9 @@
-import clsx from 'clsx'
 import { ComponentProps, forwardRef } from 'react'
 
+import { cn } from '@/lib/utils'
+
 export type CardProps = ComponentProps<'div'> & {
-  type: 'primary' | 'accent' | 'detail' | 'popover'
+  type: 'primary' | 'accent' | 'detail' | 'popover' | 'outline'
   size: 'sm' | 'md' | 'lg'
 }
 
@@ -12,6 +13,7 @@ const typeClassesMap = {
   accent: 'bg-accent',
   detail: 'bg-muted',
   popover: 'bg-popover',
+  outline: 'border border-border bg-transparent',
 }
 const sizeClassesMap = {
   sm: 'px-4 py-3',
@@ -29,7 +31,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
   return (
     <div
       {...props}
-      className={clsx(baseClasses, typeClasses, sizeClasses, className)}
+      className={cn(baseClasses, typeClasses, sizeClasses, className)}
       ref={ref}
     />
   )

@@ -30,8 +30,10 @@ export function useAttestation() {
   const publicClient = usePublicClient()
   const queryClient = useQueryClient()
 
-  const [isLoading, setIsLoading] = useState(false)
-  const [isSuccess, setIsSuccess] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const [isRevoking, setIsRevoking] = useState(false)
+  const [isCreated, setIsCreated] = useState(false)
+  const [isRevoked, setIsRevoked] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hash, setHash] = useState<`0x${string}` | null>(null)
 
@@ -67,8 +69,8 @@ export function useAttestation() {
       ? (attestationData.schema as Hex)
       : SchemaManager.schemaForKey(attestationData.schema).uid
 
-    setIsLoading(true)
-    setIsSuccess(false)
+    setIsCreating(true)
+    setIsCreated(false)
     setError(null)
     setHash(null)
 
@@ -144,7 +146,7 @@ export function useAttestation() {
 
         console.log(`✅ Transaction confirmed: ${receipt.transactionHash}`)
 
-        setIsSuccess(true)
+        setIsCreated(true)
       }
 
       // Execute transaction with retry logic
@@ -164,12 +166,13 @@ export function useAttestation() {
       setError(parseErrorMessage(err))
       throw err
     } finally {
-      setIsLoading(false)
+      setIsCreating(false)
     }
   }
 
   const clearTransactionState = useCallback(() => {
-    setIsSuccess(false)
+    setIsCreated(false)
+    setIsRevoked(false)
     setError(null)
     setHash(null)
   }, [])
@@ -179,8 +182,8 @@ export function useAttestation() {
       throw new Error('Please connect your wallet')
     }
 
-    setIsLoading(true)
-    setIsSuccess(false)
+    setIsRevoking(true)
+    setIsRevoked(false)
     setError(null)
     setHash(null)
 
@@ -244,7 +247,7 @@ export function useAttestation() {
 
         console.log(`✅ Transaction confirmed: ${receipt.transactionHash}`)
 
-        setIsSuccess(true)
+        setIsRevoked(true)
 
         // Invalidate queries to refresh the attestation data
         queryClient.invalidateQueries({ queryKey: attestationKeys.all })
@@ -267,7 +270,7 @@ export function useAttestation() {
       setError(parseErrorMessage(err))
       throw err
     } finally {
-      setIsLoading(false)
+      setIsRevoking(false)
     }
   }
 
@@ -275,8 +278,12 @@ export function useAttestation() {
     createAttestation,
     revokeAttestation,
     clearTransactionState,
-    isLoading,
-    isSuccess,
+    isCreating,
+    isRevoking,
+    isLoading: isCreating || isRevoking,
+    isCreated,
+    isRevoked,
+    isSuccess: isCreated || isRevoked,
     error,
     hash,
     isConnected,

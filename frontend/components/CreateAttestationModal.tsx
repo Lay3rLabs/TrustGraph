@@ -5,6 +5,8 @@ import { Check, LoaderCircle, X } from 'lucide-react'
 import type React from 'react'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import toast from 'react-hot-toast'
+import { Hex } from 'viem'
 import { useAccount } from 'wagmi'
 
 import { Button, ButtonProps } from '@/components/Button'
@@ -34,14 +36,22 @@ import { useAccountNetworkProfile } from '@/hooks/useAccountProfile'
 import { useAttestation } from '@/hooks/useAttestation'
 import { useResolveEnsName } from '@/hooks/useEns'
 import { useNetwork } from '@/hooks/useNetwork'
+import { AttestationData } from '@/lib/attestation'
+import { parseErrorMessage } from '@/lib/error'
 import { Network } from '@/lib/network'
 import { SCHEMAS, SchemaManager } from '@/lib/schemas'
-import { formatBigNumber, formatPercentage, mightBeEnsName } from '@/lib/utils'
+import {
+  areAddressesEqual,
+  formatBigNumber,
+  formatPercentage,
+  mightBeEnsName,
+} from '@/lib/utils'
 
 import { Card } from './Card'
 import { CopyableText } from './CopyableText'
 import { EnsIcon } from './icons/EnsIcon'
 import { Markdown } from './Markdown'
+import { Column, Table } from './Table'
 import { Tooltip } from './Tooltip'
 
 interface CreateAttestationModalProps {
@@ -102,12 +112,15 @@ export function CreateAttestationModal({
 
   const { address: connectedAddress = '0x', isConnected } = useAccount()
   const { totalValue } = useNetwork()
-  const { networkProfile } = useAccountNetworkProfile(connectedAddress)
+  const { networkProfile, allAttestationsGiven } =
+    useAccountNetworkProfile(connectedAddress)
   const {
     createAttestation,
+    revokeAttestation,
     clearTransactionState,
-    isLoading,
-    isSuccess,
+    isCreating,
+    isCreated,
+    isRevoking,
     error,
     hash,
   } = useAttestation()
@@ -136,15 +149,35 @@ export function CreateAttestationModal({
         ].join('\n')
       : null
 
+  const [isRevokingUid, setIsRevokingUid] = useState<Hex | null>(null)
+  const [revoked, setRevoked] = useState<Record<Hex, boolean>>({})
+  const handleRevoke = async (
+    e: React.MouseEvent,
+    attestation: AttestationData
+  ) => {
+    e.stopPropagation() // Prevent card click when revoking
+
+    setIsRevokingUid(attestation.uid)
+    try {
+      await revokeAttestation(attestation.uid, attestation.schema)
+      setRevoked((r) => ({ ...r, [attestation.uid]: true }))
+    } catch (err) {
+      console.error('Failed to revoke attestation:', err)
+      toast.error(parseErrorMessage(err))
+    } finally {
+      setIsRevokingUid(null)
+    }
+  }
+
   // Monitor transaction state
   useEffect(() => {
-    if (hash && isSuccess) {
+    if (hash && isCreated) {
       console.log(`✅ Transaction successful: ${hash}`)
       onSuccess?.()
       setIsOpen(false)
       form.reset()
     }
-  }, [hash, isSuccess, onSuccess, form])
+  }, [hash, isCreated, onSuccess, form])
 
   // Clear transaction state when modal reopens
   useEffect(() => {
@@ -195,6 +228,60 @@ export function CreateAttestationModal({
       </Button>
     </Tooltip>
   )
+
+  const attestationsGivenToRecipient =
+    recipient.startsWith('0x') && selectedSchemaInfo
+      ? allAttestationsGiven.filter(
+          (attestation) =>
+            areAddressesEqual(attestation.recipient, recipient as Hex) &&
+            areAddressesEqual(attestation.schema, selectedSchemaInfo.uid) &&
+            // At least 10 seconds old, so we don't show the one we just made.
+            attestation.time < BigInt(Math.floor(Date.now() / 1000) - 10)
+        )
+      : []
+
+  const attestationsGivenColumns: Column<AttestationData>[] = [
+    {
+      key: 'confidence',
+      header: 'CONFIDENCE',
+      tooltip: 'The strength of the attestation as specified by the attester.',
+      sortable: true,
+      accessor: (row) => Number(row.decodedData?.confidence || '0'),
+      render: (row) =>
+        formatBigNumber(row.decodedData?.confidence || '0', undefined, true),
+    },
+    {
+      key: 'time',
+      header: 'TIME',
+      tooltip: 'The time the attestation was made.',
+      sortable: true,
+      accessor: (row) => Number(row.time),
+      render: (row) => (
+        <div className="text-gray-800">
+          <div>{row.formattedTime}</div>
+          <div className="text-xs text-gray-600">{row.formattedTimeAgo}</div>
+        </div>
+      ),
+    },
+    {
+      key: 'revoke',
+      header: 'REVOKE',
+      tooltip: 'Revoke the attestation.',
+      render: (row) => (
+        <button
+          onClick={(e) => handleRevoke(e, row)}
+          disabled={isRevoking || isRevokingUid === row.uid || revoked[row.uid]}
+          className="px-3 py-1 bg-destructive/80 text-destructive-foreground rounded-md text-xs font-medium hover:bg-destructive/60 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {isRevokingUid === row.uid
+            ? 'Revoking...'
+            : revoked[row.uid]
+            ? 'Revoked'
+            : 'Revoke'}
+        </button>
+      ),
+    },
+  ]
 
   return (
     <>
@@ -350,6 +437,29 @@ export function CreateAttestationModal({
                 </div>
               )}
 
+              {attestationsGivenToRecipient.length > 0 && (
+                <Card type="outline" size="sm" className="border-yellow-700">
+                  <p className="text-sm text-yellow-700">
+                    <span className="font-bold">Note:</span> You may want to
+                    revoke your other attestation
+                    {attestationsGivenToRecipient.length > 1 ? 's' : ''} for
+                    this recipient before making a new one.
+                  </p>
+
+                  <Table
+                    columns={attestationsGivenColumns}
+                    data={attestationsGivenToRecipient}
+                    cellClassName="text-sm !py-2"
+                    defaultSortColumn="time"
+                    defaultSortDirection="desc"
+                    onRowClick={(row) =>
+                      window.open(`/attestation/${row.uid}`, '_blank')
+                    }
+                    getRowKey={(row) => row.uid}
+                  />
+                </Card>
+              )}
+
               {selectedSchemaInfo ? (
                 (() => {
                   // Check if there's a custom component for this schema
@@ -364,9 +474,9 @@ export function CreateAttestationModal({
                         form={form}
                         schemaInfo={selectedSchemaInfo}
                         onSubmit={onSubmit}
-                        isLoading={isLoading}
+                        isLoading={isCreating}
                         error={error}
-                        isSuccess={isSuccess}
+                        isSuccess={isCreated}
                         hash={hash}
                         network={network}
                       />
@@ -378,9 +488,9 @@ export function CreateAttestationModal({
                         form={form}
                         schemaInfo={selectedSchemaInfo}
                         onSubmit={onSubmit}
-                        isLoading={isLoading}
+                        isLoading={isCreating}
                         error={error}
-                        isSuccess={isSuccess}
+                        isSuccess={isCreated}
                         network={network}
                         hash={hash}
                       />
@@ -398,7 +508,7 @@ export function CreateAttestationModal({
                   type="button"
                   variant="outline"
                   onClick={() => setIsOpen(false)}
-                  disabled={isLoading}
+                  disabled={isCreating || isRevoking}
                   className="px-6 py-2 w-full"
                 >
                   Cancel
