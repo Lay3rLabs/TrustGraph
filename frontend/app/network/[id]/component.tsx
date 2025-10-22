@@ -122,7 +122,7 @@ export const NetworkPage = ({ network }: { network: Network }) => {
             </p>
           )}
 
-          <h2 className="mt-2 -mb-3 font-bold text-lg">ABOUT NETWORK</h2>
+          <h2 className="mt-2 -mb-3 font-bold">ABOUT NETWORK</h2>
           <Markdown>{about}</Markdown>
 
           {callToAction && (
@@ -137,7 +137,7 @@ export const NetworkPage = ({ network }: { network: Network }) => {
             </ButtonLink>
           )}
 
-          <h2 className="mt-2 -mb-3 font-bold text-lg">CRITERIA</h2>
+          <h2 className="mt-2 -mb-3 font-bold">CRITERIA</h2>
           <Markdown>{criteria}</Markdown>
 
           <CreateAttestationModal network={network} className="mt-3" />
@@ -151,7 +151,7 @@ export const NetworkPage = ({ network }: { network: Network }) => {
       </div>
 
       <div className="border-y border-border py-12 space-y-6">
-        <h2 className="font-bold text-lg">NETWORK STATISTICS</h2>
+        <h2 className="font-bold">NETWORK STATISTICS</h2>
         <div className="flex flex-row gap-4 flex-wrap">
           <StatisticCard
             title="TOTAL MEMBERS"
@@ -188,7 +188,7 @@ export const NetworkPage = ({ network }: { network: Network }) => {
 
       <div className="space-y-6">
         <div className="flex flex-row justify-between items-center gap-x-8 gap-y-4 flex-wrap">
-          <h2 className="font-bold text-lg">NETWORK MEMBERS</h2>
+          <h2 className="font-bold">NETWORK MEMBERS</h2>
 
           {/* Refresh Button */}
           {!isLoading && (

@@ -6,7 +6,7 @@ export type CardProps = ComponentProps<'div'> & {
   size: 'sm' | 'md' | 'lg'
 }
 
-const baseClasses = 'rounded-md border border-border'
+const baseClasses = 'rounded-md'
 const typeClassesMap = {
   primary: 'bg-card transition-shadow',
   accent: 'bg-accent',

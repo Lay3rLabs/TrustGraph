@@ -1,3 +1,4 @@
+import { Card } from './Card'
 import { InfoTooltip } from './InfoTooltip'
 
 export const StatisticCard = ({
@@ -10,12 +11,12 @@ export const StatisticCard = ({
   value: string
 }) => {
   return (
-    <div className="flex flex-col gap-2 px-6 py-4 bg-accent rounded-md">
+    <Card type="accent" size="md" className="flex flex-col gap-2">
       <div className="flex flex-row items-center gap-2">
         <p className="text-sm">{title}</p>
         <InfoTooltip title={tooltip} />
       </div>
       <p className="text-3xl font-bold">{value}</p>
-    </div>
+    </Card>
   )
 }

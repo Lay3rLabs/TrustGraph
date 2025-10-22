@@ -20,7 +20,7 @@ const NetworkGraph = dynamic(
 
 export default function HomePage() {
   return (
-    <div className="grid grid-cols-1 justify-start items-stretch lg:grid-cols-2 lg:items-start gap-12">
+    <div className="grid grid-cols-1 justify-start items-stretch lg:grid-cols-2 lg:items-stretch gap-12">
       <div className="flex flex-col items-start gap-6">
         <h1 className="text-3xl sm:text-5xl font-bold">
           Networks that grow at the speed of trust
@@ -43,24 +43,6 @@ export default function HomePage() {
           View Network: Localism Fund
         </ButtonLink>
 
-        <Card type="accent" size="md" className="mt-2 space-y-4">
-          <p className="text-sm">
-            TrustGraph is in pilot mode. If you're curious about how it works,
-            want to help test early prototypes, or just want to stay in the
-            loop, fill out this short form.
-          </p>
-
-          <ButtonLink
-            href="/interest"
-            target="_blank"
-            rel="noopener noreferrer"
-            size="sm"
-            variant="outline"
-          >
-            Open Interest Form
-          </ButtonLink>
-        </Card>
-
         <h2 className="mt-6 -mb-3">FREQUENTLY ASKED QUESTIONS</h2>
         <div className="flex flex-col items-stretch gap-3 self-stretch">
           <FrequentlyAskedQuestion
@@ -82,10 +64,30 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="h-[66vh] lg:h-4/5">
-        <Suspense fallback={null}>
-          <NetworkGraph network={LOCALISM_FUND} />
-        </Suspense>
+      <div className="space-y-10">
+        <div className="h-[66vh] lg:h-4/5">
+          <Suspense fallback={null}>
+            <NetworkGraph network={LOCALISM_FUND} />
+          </Suspense>
+        </div>
+
+        <Card type="accent" size="md" className="space-y-4">
+          <p className="text-sm">
+            TrustGraph is in pilot mode. If you're curious about how it works,
+            want to help test early prototypes, or just want to stay in the
+            loop, fill out this short form.
+          </p>
+
+          <ButtonLink
+            href="/interest"
+            target="_blank"
+            rel="noopener noreferrer"
+            size="sm"
+            variant="outline"
+          >
+            Open Interest Form
+          </ButtonLink>
+        </Card>
       </div>
     </div>
   )
