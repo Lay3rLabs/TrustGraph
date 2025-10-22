@@ -73,9 +73,10 @@ export default function HomePage() {
 
         <Card type="accent" size="md" className="space-y-4">
           <p className="text-sm">
-            TrustGraph is in pilot mode. If you're curious about how it works,
-            want to help test early prototypes, or just want to stay in the
-            loop, fill out this short form.
+            TrustGraph is currently being piloted. If you're curious about how
+            it works, want to help test early prototypes, interested to use it
+            in your network, or just want to stay in the loop, fill out this
+            short form.
           </p>
 
           <ButtonLink
