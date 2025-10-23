@@ -60,7 +60,7 @@ impl AttestationTransformer {
         let indexed_event = IndexedEvent {
             eventId: FixedBytes::ZERO,
             chainId: chain.chain_id,
-            relevantContract: attested.eas,
+            relevantContract: event_data.contract_address,
             blockNumber: U256::from(event_data.block_number),
             timestamp: attestation.time as u128,
             eventType: "attestation".to_string(),
