@@ -132,6 +132,7 @@
   --color-brand: var(--brand);
   
   --breakpoint-xs: 410px;
+  --text-5xl: 2.8rem;
 }
 
 @layer base {
