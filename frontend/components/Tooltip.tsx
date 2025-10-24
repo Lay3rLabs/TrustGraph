@@ -1,4 +1,4 @@
-import { Tooltip as T } from '@base-ui-components/react/tooltip'
+import { Popover } from '@base-ui-components/react/popover'
 import clsx from 'clsx'
 import { ComponentProps, ReactNode } from 'react'
 
@@ -17,33 +17,32 @@ export const Tooltip = ({ title, children, className }: TooltipProps) => {
   }
 
   return (
-    <T.Provider>
-      <T.Root delay={0}>
-        <T.Trigger
-          aria-label={typeof title === 'string' ? title : undefined}
-          className={className}
-        >
-          {children}
-        </T.Trigger>
-        <T.Portal>
-          <T.Positioner sideOffset={10} side="bottom">
-            <T.Popup
-              className={clsx(
-                styles.Popup,
-                'text-xs text-primary-foreground/80 bg-popover-foreground shadow-2xl max-w-sm rounded-sm px-2 py-1 transition-[transform,opacity] duration-150 flex flex-col box-border'
-              )}
+    <Popover.Root openOnHover delay={0}>
+      <Popover.Trigger
+        aria-label={typeof title === 'string' ? title : undefined}
+        className={className}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {children}
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Positioner sideOffset={10} side="bottom">
+          <Popover.Popup
+            className={clsx(
+              styles.Popup,
+              'text-xs text-primary-foreground/80 bg-popover-foreground shadow-2xl max-w-sm rounded-sm px-2 py-1.5 transition-[transform,opacity] duration-150 flex flex-col box-border'
+            )}
+          >
+            <Popover.Arrow
+              className={clsx(styles.Arrow, 'flex text-popover-foreground')}
             >
-              <T.Arrow
-                className={clsx(styles.Arrow, 'flex text-popover-foreground')}
-              >
-                <ArrowSvg />
-              </T.Arrow>
-              {typeof title === 'string' ? <Markdown>{title}</Markdown> : title}
-            </T.Popup>
-          </T.Positioner>
-        </T.Portal>
-      </T.Root>
-    </T.Provider>
+              <ArrowSvg />
+            </Popover.Arrow>
+            {typeof title === 'string' ? <Markdown>{title}</Markdown> : title}
+          </Popover.Popup>
+        </Popover.Positioner>
+      </Popover.Portal>
+    </Popover.Root>
   )
 }
 
