@@ -1,7 +1,6 @@
 'use client'
 
 import { Check, Copy, LoaderCircle, LogOut, User, Wallet } from 'lucide-react'
-import Link from 'next/link'
 import { usePlausible } from 'next-plausible'
 import type React from 'react'
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react'
@@ -10,9 +9,9 @@ import { useAccount, useBalance, useConnect, useDisconnect } from 'wagmi'
 
 import { useEns } from '@/hooks/useEns'
 import { parseErrorMessage } from '@/lib/error'
-import { formatBigNumber } from '@/lib/utils'
+import { cn, formatBigNumber } from '@/lib/utils'
 
-import { Button } from './Button'
+import { Button, ButtonLink } from './Button'
 import { EthIcon } from './icons/EthIcon'
 import { Popup } from './Popup'
 import { useWalletConnectionContext } from './WalletConnectionProvider'
@@ -69,7 +68,10 @@ export const WalletConnectionButton = ({
         position="left"
         setOpenRef={setOpenRef}
         popupPadding={24}
-        popupClassName={isConnected ? '!p-3' : '!p-2'}
+        popupClassName={cn(
+          'border border-border',
+          isConnected ? '!p-3' : '!p-2'
+        )}
         sideOffset={4}
         wrapperClassName={className}
         trigger={{
@@ -101,7 +103,7 @@ export const WalletConnectionButton = ({
       >
         {isConnected && address ? (
           <div className="flex flex-col gap-3 text-sm">
-            <div className="flex flex-col gap-2 bg-secondary p-3 rounded-md border border-border -m-1">
+            <div className="flex flex-col gap-2 bg-secondary p-3 rounded-md -m-1">
               <p className="text-xs text-muted-foreground font-medium mb-1">
                 Optimism Balances
               </p>
@@ -122,8 +124,10 @@ export const WalletConnectionButton = ({
             </div>
 
             <div className="flex flex-col gap-1">
-              <button
-                className="flex flex-row items-center gap-3 p-2 rounded-md bg-transparent text-foreground transition-all hover:bg-secondary active:bg-muted"
+              <Button
+                className="justify-start gap-3"
+                variant="ghost"
+                size="sm"
                 onClick={(e) => {
                   navigator.clipboard.writeText(address)
                   setCopied(true)
@@ -133,30 +137,34 @@ export const WalletConnectionButton = ({
               >
                 <CopyIcon className="w-4 h-4 text-muted-foreground" />
                 <p className="text-sm">Copy address</p>
-              </button>
+              </Button>
 
-              <Link
+              <ButtonLink
                 href={accountHref}
-                className="flex flex-row items-center gap-3 p-2 rounded-md bg-transparent text-foreground transition-all hover:bg-secondary active:bg-muted"
+                className="justify-start gap-3"
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setOpenRef.current?.(false)
                 }}
               >
                 <User className="w-4 h-4 text-muted-foreground" />
                 <p className="text-sm">View profile</p>
-              </Link>
+              </ButtonLink>
 
-              <button
-                className="flex flex-row items-center gap-3 p-2 rounded-md bg-transparent transition-all hover:bg-destructive/10 active:bg-destructive/15"
+              <Button
+                variant="ghostDestructive"
+                className="justify-start gap-3"
+                size="sm"
                 onClick={() => {
                   setOpenRef.current?.(false)
                   // Wait for the popup to close before disconnecting to avoid flickering as the popup classes change.
                   setTimeout(() => disconnect(), 200)
                 }}
               >
-                <LogOut className="w-4 h-4 text-destructive" />
-                <p className="text-sm text-destructive">Disconnect</p>
-              </button>
+                <LogOut className="!w-4 !h-4" />
+                <p className="text-sm">Disconnect</p>
+              </Button>
             </div>
           </div>
         ) : (
@@ -164,9 +172,11 @@ export const WalletConnectionButton = ({
             {connectors && connectors.length > 0 ? (
               <div className="flex flex-col gap-1 text-sm">
                 {connectors.map((connector) => (
-                  <button
+                  <Button
                     key={connector.id}
-                    className="flex flex-row gap-2 p-2 rounded-md bg-transparent text-foreground transition-all hover:bg-secondary active:bg-muted"
+                    className="justify-start"
+                    variant="ghost"
+                    size="sm"
                     onClick={() => {
                       // Close the popup as connection begins.
                       setOpenRef.current?.(false)
@@ -197,7 +207,7 @@ export const WalletConnectionButton = ({
                       <Wallet className="w-5 h-5" />
                     )}
                     <p>{connector.name}</p>
-                  </button>
+                  </Button>
                 ))}
               </div>
             ) : (

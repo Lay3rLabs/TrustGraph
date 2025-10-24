@@ -1,5 +1,6 @@
 'use client'
 
+import { X } from 'lucide-react'
 import { ReactNode, useEffect, useRef } from 'react'
 
 import { useUpdatingRef } from '@/hooks/useUpdatingRef'
@@ -103,9 +104,9 @@ export function Modal({
             e.stopPropagation()
             onClose()
           }}
-          className="absolute top-6 right-6 text-muted-foreground hover:text-muted-foreground/80 transition-colors text-2xl leading-none z-10"
+          className="absolute top-6 right-6 text-muted-foreground hover:text-muted-foreground/80 transition-colors leading-none z-10"
         >
-          ×
+          <X size={20} />
         </button>
       )}
 

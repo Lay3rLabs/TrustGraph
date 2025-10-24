@@ -268,17 +268,18 @@ export function CreateAttestationModal({
       header: 'REVOKE',
       tooltip: 'Revoke the attestation.',
       render: (row) => (
-        <button
+        <Button
+          variant="destructive"
           onClick={(e) => handleRevoke(e, row)}
+          size="xs"
           disabled={isRevoking || isRevokingUid === row.uid || revoked[row.uid]}
-          className="px-3 py-1 bg-destructive/80 text-destructive-foreground rounded-md text-xs font-medium hover:bg-destructive/60 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isRevokingUid === row.uid
             ? 'Revoking...'
             : revoked[row.uid]
             ? 'Revoked'
             : 'Revoke'}
-        </button>
+        </Button>
       ),
     },
   ]

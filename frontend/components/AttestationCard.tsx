@@ -171,13 +171,14 @@ export function AttestationCard({ uid, onClick }: AttestationCardProps) {
               </div>
             )}
             {canRevoke && (
-              <button
+              <Button
+                size="xs"
+                variant="destructive"
                 onClick={handleRevoke}
                 disabled={isRevokingThis}
-                className="px-3 py-1 border border-destructive/80 bg-destructive/80 text-destructive-foreground rounded-md text-xs font-medium hover:bg-destructive/60 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isRevokingThis ? 'Revoking...' : 'Revoke'}
-              </button>
+              </Button>
             )}
           </div>
         </div> */}
