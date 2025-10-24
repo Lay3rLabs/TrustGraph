@@ -2,7 +2,12 @@
 
 import { useQueries } from '@tanstack/react-query'
 import { SetStateAction } from 'jotai'
-import { FileText, ListFilter } from 'lucide-react'
+import {
+  FileText,
+  ListFilter,
+  MessageSquare,
+  MessageSquareOff,
+} from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import type React from 'react'
@@ -182,81 +187,6 @@ export const AccountProfilePage = ({
       sortable: true,
       accessor: (row) => row.score,
       render: (row) => formatBigNumber(row.score, undefined, true),
-    },
-  ]
-
-  // Define columns for attestations received
-  const attestationsReceivedColumns: Column<AttestationData>[] = [
-    {
-      key: 'attester',
-      header: 'ATTESTER',
-      tooltip: 'The account that made the attestation.',
-      cellClassName: 'w-1/2 lg:w-2/5',
-      sortable: false,
-      render: (row) => <TableAddress address={row.attester} showNavIcon />,
-    },
-    {
-      key: 'confidence',
-      header: 'CONFIDENCE',
-      tooltip: 'The strength of the attestation as specified by the attester.',
-      cellClassName: 'w-1/5 lg:w-3/10',
-      sortable: true,
-      accessor: (row) => Number(row.decodedData?.confidence || '0'),
-      render: (row) => (
-        <div className="text-sm text-gray-900">
-          {formatBigNumber(row.decodedData?.confidence || '0', undefined, true)}
-        </div>
-      ),
-    },
-    {
-      key: 'time',
-      header: 'TIME',
-      tooltip: 'The time the attestation was made.',
-      cellClassName: 'w-3/10',
-      sortable: true,
-      accessor: (row) => Number(row.time),
-      render: (row) => (
-        <div className="text-sm text-gray-800">
-          <div>{row.formattedTime}</div>
-          <div className="text-xs text-gray-600">{row.formattedTimeAgo}</div>
-        </div>
-      ),
-    },
-  ]
-
-  // Define columns for attestations given
-  const attestationsGivenColumns: Column<AttestationData>[] = [
-    {
-      key: 'recipient',
-      header: 'RECIPIENT',
-      tooltip: 'The account that received the attestation.',
-      sortable: false,
-      cellClassName: 'w-1/2 lg:w-2/5',
-      render: (row) => <TableAddress showNavIcon address={row.recipient} />,
-    },
-    {
-      key: 'confidence',
-      header: 'CONFIDENCE',
-      tooltip: 'The strength of the attestation as specified by the attester.',
-      cellClassName: 'w-1/5 lg:w-3/10',
-      sortable: true,
-      accessor: (row) => Number(row.decodedData?.confidence || '0'),
-      render: (row) =>
-        formatBigNumber(row.decodedData?.confidence || '0', undefined, true),
-    },
-    {
-      key: 'time',
-      header: 'TIME',
-      tooltip: 'The time the attestation was made.',
-      cellClassName: 'w-3/10',
-      sortable: true,
-      accessor: (row) => Number(row.time),
-      render: (row) => (
-        <div className="text-gray-800">
-          <div>{row.formattedTime}</div>
-          <div className="text-xs text-gray-600">{row.formattedTimeAgo}</div>
-        </div>
-      ),
     },
   ]
 
@@ -624,3 +554,69 @@ export const AccountProfilePage = ({
     </div>
   )
 }
+
+const commonAttestationColumns: Column<AttestationData>[] = [
+  {
+    key: 'confidence',
+    header: 'CONFIDENCE',
+    tooltip: 'The strength of the attestation as specified by the attester.',
+    sortable: true,
+    accessor: (row) => Number(row.decodedData?.confidence || '0'),
+    render: (row) => (
+      <div className="text-sm text-gray-900">
+        {formatBigNumber(row.decodedData?.confidence || '0', undefined, true)}
+      </div>
+    ),
+  },
+  {
+    key: 'comment',
+    header: 'COMMENT',
+    tooltip:
+      'An optional comment from the attester. Hover or tap on the icon to view.',
+    render: (row) =>
+      row.decodedData?.comment ? (
+        <Tooltip title={row.decodedData.comment}>
+          <MessageSquare className="!w-4.5 !h-4.5" />
+        </Tooltip>
+      ) : (
+        <Tooltip title="No comment provided">
+          <MessageSquareOff className="!w-4.5 !h-4.5 opacity-40" />
+        </Tooltip>
+      ),
+  },
+  {
+    key: 'time',
+    header: 'TIME',
+    tooltip: 'The time the attestation was made.',
+    sortable: true,
+    accessor: (row) => Number(row.time),
+    render: (row) => (
+      <div className="text-sm text-gray-800">
+        <div>{row.formattedTime}</div>
+        <div className="text-xs text-gray-600">{row.formattedTimeAgo}</div>
+      </div>
+    ),
+  },
+]
+
+const attestationsReceivedColumns: Column<AttestationData>[] = [
+  {
+    key: 'attester',
+    header: 'ATTESTER',
+    tooltip: 'The account that made the attestation.',
+    sortable: false,
+    render: (row) => <TableAddress address={row.attester} showNavIcon />,
+  },
+  ...commonAttestationColumns,
+]
+
+const attestationsGivenColumns: Column<AttestationData>[] = [
+  {
+    key: 'recipient',
+    header: 'RECIPIENT',
+    tooltip: 'The account that received the attestation.',
+    sortable: false,
+    render: (row) => <TableAddress showNavIcon address={row.recipient} />,
+  },
+  ...commonAttestationColumns,
+]
