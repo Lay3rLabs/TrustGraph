@@ -80,10 +80,10 @@ export const AccountProfilePage = ({
       router.prefetch(`/network/${network.id}`)
     })
     allAttestationsGiven.forEach((attestation) => {
-      router.prefetch(`/attestation/${attestation.uid}`)
+      router.prefetch(`/attestations/${attestation.uid}`)
     })
     allAttestationsReceived.forEach((attestation) => {
-      router.prefetch(`/attestation/${attestation.uid}`)
+      router.prefetch(`/attestations/${attestation.uid}`)
     })
   }, [router, allAttestationsGiven, allAttestationsReceived])
 
@@ -452,7 +452,7 @@ export const AccountProfilePage = ({
                 defaultSortDirection="desc"
                 onRowClick={(row) => {
                   pushBreadcrumb()
-                  router.push(`/attestation/${row.uid}`)
+                  router.push(`/attestations/${row.uid}`)
                 }}
                 getRowKey={(row) => row.uid}
               />
@@ -512,7 +512,7 @@ export const AccountProfilePage = ({
                 data={attestationsGiven}
                 onRowClick={(row) => {
                   pushBreadcrumb()
-                  router.push(`/attestation/${row.uid}`)
+                  router.push(`/attestations/${row.uid}`)
                 }}
                 getRowKey={(row) => row.uid}
               />

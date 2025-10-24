@@ -38,7 +38,7 @@ This document describes the functional attestation UI implementation for the WAV
 - `lib/wagmi.ts`: Wagmi configuration with local chain support
 - `lib/contracts.ts`: Contract addresses, ABIs, and schema UIDs
 - `hooks/useAttestation.ts`: Custom hook for attestation creation
-- `app/backroom/attestation/page.tsx`: Main attestation page component
+- `app/backroom/attestations/page.tsx`: Main attestation page component
 - `components/ui/*`: UI component library
 
 ### Contract Integration Details

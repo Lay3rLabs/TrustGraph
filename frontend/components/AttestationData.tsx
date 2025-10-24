@@ -2,6 +2,7 @@
 
 import { AttestationData } from '@/lib/attestation'
 import { SchemaManager } from '@/lib/schemas'
+import { cn } from '@/lib/utils'
 
 interface AttestationDataDisplayProps {
   attestation: AttestationData
@@ -15,7 +16,7 @@ export function AttestationDataDisplay({
   if (!schema) {
     return (
       <div className="space-y-2">
-        <div className="text-muted-foreground text-xs font-medium">Data</div>
+        <div className="text-muted-foreground text-sm font-medium">Data</div>
         <div className="text-foreground text-xs font-mono bg-muted/50 p-3 rounded-md">
           {JSON.stringify(attestation.decodedData, null, 2)}
         </div>
@@ -24,37 +25,66 @@ export function AttestationDataDisplay({
   }
 
   return (
-    <div className="space-y-3">
-      <div className="text-muted-foreground text-xs font-medium">
-        Attestation Data
-      </div>
-      <div className="space-y-2">
-        {schema.fields.map((field) => {
-          const value = attestation.decodedData[field.name]
-          return (
-            <div
-              key={field.name}
-              className="flex items-start gap-3 text-sm bg-muted/30 p-3 rounded-md"
-            >
-              <div className="flex-shrink-0 w-24">
-                <div className="text-muted-foreground text-xs font-medium">
-                  {field.name}
-                </div>
-                {/* <div className="text-muted-foreground text-xs opacity-60">
-                  {field.type}
-                </div> */}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-foreground text-xs font-mono break-all">
-                  {formatFieldValue(value, field.type)}
-                </div>
-              </div>
+    <>
+      {schema.fields.map((field) => {
+        const value = attestation.decodedData[field.name]
+        return (
+          <div key={field.name}>
+            <div className="text-muted-foreground text-sm font-medium mb-1">
+              {formatFieldName(field.name)}
             </div>
-          )
-        })}
-      </div>
-    </div>
+            <div
+              className={cn(
+                'text-foreground text-xs font-mono break-all',
+                (value === undefined || value === null || value === '') &&
+                  'opacity-40'
+              )}
+            >
+              {formatFieldValue(value, field.type)}
+            </div>
+          </div>
+        )
+      })}
+    </>
   )
+
+  // return (
+  //   <div className="space-y-3">
+  //     <div className="text-muted-foreground text-xs font-medium">
+  //       Attestation Data
+  //     </div>
+  //     <div className="space-y-2">
+  //       {schema.fields.map((field) => {
+  //         const value = attestation.decodedData[field.name]
+  //         return (
+  //           <div
+  //             key={field.name}
+  //             className="flex items-start gap-3 text-sm bg-muted/30 p-3 rounded-md"
+  //           >
+  //             <div className="flex-shrink-0 w-24">
+  //               <div className="text-muted-foreground text-xs font-medium">
+  //                 {field.name}
+  //               </div>
+  //               {/* <div className="text-muted-foreground text-xs opacity-60">
+  //                 {field.type}
+  //               </div> */}
+  //             </div>
+  //             <div className="flex-1 min-w-0">
+  //               <div className="text-foreground text-xs font-mono break-all">
+  //                 {formatFieldValue(value, field.type)}
+  //               </div>
+  //             </div>
+  //           </div>
+  //         )
+  //       })}
+  //     </div>
+  //   </div>
+  // )
+}
+
+// Convert snake_case to Title Case
+const formatFieldName = (name: string): string => {
+  return name.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
 }
 
 function formatFieldValue(
@@ -97,5 +127,5 @@ function formatFieldValue(
     return value
   }
 
-  return String(value)
+  return String(value) || '(empty)'
 }

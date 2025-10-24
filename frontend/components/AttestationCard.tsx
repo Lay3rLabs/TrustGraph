@@ -1,17 +1,9 @@
 'use client'
 
-import { usePonderQuery } from '@ponder/react'
-import { useState } from 'react'
-import toast from 'react-hot-toast'
 import { Hex } from 'viem'
-import { useAccount } from 'wagmi'
 
-import { useAttestation, useIntoAttestationData } from '@/hooks/useAttestation'
-import { AttestationData } from '@/lib/attestation'
-import { parseErrorMessage } from '@/lib/error'
-import { SchemaManager } from '@/lib/schemas'
+import { useAttestation } from '@/hooks/useAttestation'
 import { formatTimeAgo } from '@/lib/utils'
-import { ponderQueryFns } from '@/queries/ponder'
 
 import { Address } from './Address'
 import { AttestationDataDisplay } from './AttestationData'
@@ -24,33 +16,9 @@ interface AttestationCardProps {
 }
 
 export function AttestationCard({ uid, onClick }: AttestationCardProps) {
-  const { address } = useAccount()
-  const { revokeAttestation } = useAttestation()
-  const [isRevokingThis, setIsRevokingThis] = useState(false)
-
   const {
-    data: attestation,
-    isLoading,
-    error,
-  } = usePonderQuery({
-    queryFn: ponderQueryFns.getAttestation(uid),
-    select: useIntoAttestationData(),
-  })
-
-  const handleRevoke = async (e: React.MouseEvent) => {
-    e.stopPropagation() // Prevent card click when revoking
-    if (!attestation) return
-
-    setIsRevokingThis(true)
-    try {
-      await revokeAttestation(uid, attestation.schema as `0x${string}`)
-    } catch (err) {
-      console.error('Failed to revoke attestation:', err)
-      toast.error(parseErrorMessage(err))
-    } finally {
-      setIsRevokingThis(false)
-    }
-  }
+    query: { data: attestation, isLoading, error },
+  } = useAttestation(uid)
 
   const formatTimestamp = (timestamp: number) => {
     // Validate timestamp is a valid number
@@ -68,27 +36,27 @@ export function AttestationCard({ uid, onClick }: AttestationCardProps) {
     return date.toISOString().replace('T', ' ').split('.')[0]
   }
 
-  const getAttestationStatus = (attestation: AttestationData) => {
-    if (Number(attestation.revocationTime) > 0) {
-      return {
-        status: 'revoked',
-        color: 'text-red-600 bg-red-50 border-red-200',
-      }
-    }
-    if (
-      Number(attestation.expirationTime) > 0 &&
-      Number(attestation.expirationTime) < Math.floor(Date.now() / 1000)
-    ) {
-      return {
-        status: 'expired',
-        color: 'text-yellow-700 bg-yellow-50 border-yellow-200',
-      }
-    }
-    return {
-      status: 'verified',
-      color: 'text-green-700 bg-green-50 border-green-200',
-    }
-  }
+  // const getAttestationStatus = (attestation: AttestationData) => {
+  //   if (Number(attestation.revocationTime) > 0) {
+  //     return {
+  //       status: 'revoked',
+  //       color: 'text-red-600 bg-red-50 border-red-200',
+  //     }
+  //   }
+  //   if (
+  //     Number(attestation.expirationTime) > 0 &&
+  //     Number(attestation.expirationTime) < Math.floor(Date.now() / 1000)
+  //   ) {
+  //     return {
+  //       status: 'expired',
+  //       color: 'text-yellow-700 bg-yellow-50 border-yellow-200',
+  //     }
+  //   }
+  //   return {
+  //     status: 'verified',
+  //     color: 'text-green-700 bg-green-50 border-green-200',
+  //   }
+  // }
 
   if (isLoading) {
     return (
@@ -172,15 +140,9 @@ export function AttestationCard({ uid, onClick }: AttestationCardProps) {
     )
   }
 
-  const statusInfo = getAttestationStatus(attestation)
-  const schemaName =
-    SchemaManager.maybeSchemaForUid(attestation.schema)?.name || 'Unknown'
-
-  // Check if current user is the attester and attestation is not already revoked
-  const canRevoke =
-    address &&
-    address.toLowerCase() === attestation.attester.toLowerCase() &&
-    Number(attestation.revocationTime) === 0
+  // const statusInfo = getAttestationStatus(attestation)
+  // const schemaName =
+  //   SchemaManager.maybeSchemaForUid(attestation.schema)?.name || 'Unknown'
 
   return (
     <Card
@@ -193,19 +155,21 @@ export function AttestationCard({ uid, onClick }: AttestationCardProps) {
       }
       onClick={onClick}
     >
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         {/* Header */}
-        <div className="flex items-start justify-between">
+        {/* <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
             <h3 className="font-semibold text-base">{schemaName}</h3>
           </div>
           <div className="flex items-center gap-2">
-            <div
-              className={`px-3 py-1 border rounded-md text-xs font-medium ${statusInfo.color}`}
-            >
-              {statusInfo.status.charAt(0).toUpperCase() +
-                statusInfo.status.slice(1)}
-            </div>
+            {statusInfo.status !== 'verified' && (
+              <div
+                className={`px-3 py-1 border rounded-md text-xs font-medium ${statusInfo.color}`}
+              >
+                {statusInfo.status.charAt(0).toUpperCase() +
+                  statusInfo.status.slice(1)}
+              </div>
+            )}
             {canRevoke && (
               <button
                 onClick={handleRevoke}
@@ -216,18 +180,18 @@ export function AttestationCard({ uid, onClick }: AttestationCardProps) {
               </button>
             )}
           </div>
-        </div>
+        </div> */}
 
         {/* Attestation Details Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
-            <div className="text-muted-foreground text-xs font-medium mb-1">
-              Attestation UID
+            <div className="text-muted-foreground text-sm font-medium mb-1">
+              UID
             </div>
             <CopyableText text={uid} className="text-foreground" />
           </div>
           <div>
-            <div className="text-muted-foreground text-xs font-medium mb-1">
+            <div className="text-muted-foreground text-sm font-medium mb-1">
               Timestamp
             </div>
             <div className="text-foreground text-xs">
@@ -236,7 +200,7 @@ export function AttestationCard({ uid, onClick }: AttestationCardProps) {
             </div>
           </div>
           <div>
-            <div className="text-muted-foreground text-xs font-medium mb-1">
+            <div className="text-muted-foreground text-sm font-medium mb-1">
               Attester
             </div>
             <Address
@@ -249,7 +213,7 @@ export function AttestationCard({ uid, onClick }: AttestationCardProps) {
             />
           </div>
           <div>
-            <div className="text-muted-foreground text-xs font-medium mb-1">
+            <div className="text-muted-foreground text-sm font-medium mb-1">
               Recipient
             </div>
             <Address
@@ -261,20 +225,20 @@ export function AttestationCard({ uid, onClick }: AttestationCardProps) {
               monospace
             />
           </div>
-          <div>
-            <div className="text-muted-foreground text-xs font-medium mb-1">
+          {/* <div>
+            <div className="text-muted-foreground text-sm font-medium mb-1">
               Schema UID
             </div>
             <CopyableText
               text={attestation.schema}
               className="text-foreground text-xs"
             />
-          </div>
+          </div> */}
           {attestation.ref &&
             attestation.ref !==
               '0x0000000000000000000000000000000000000000000000000000000000000000' && (
               <div>
-                <div className="text-muted-foreground text-xs font-medium mb-1">
+                <div className="text-muted-foreground text-sm font-medium mb-1">
                   Reference UID
                 </div>
                 <CopyableText
@@ -285,7 +249,7 @@ export function AttestationCard({ uid, onClick }: AttestationCardProps) {
             )}
           {Number(attestation.expirationTime) > 0 && (
             <div>
-              <div className="text-muted-foreground text-xs font-medium mb-1">
+              <div className="text-muted-foreground text-sm font-medium mb-1">
                 Expiration
               </div>
               <div className="text-foreground text-xs">
@@ -293,10 +257,10 @@ export function AttestationCard({ uid, onClick }: AttestationCardProps) {
               </div>
             </div>
           )}
-        </div>
 
-        {/* Attestation Data Display */}
-        <AttestationDataDisplay attestation={attestation} />
+          {/* Attestation Data Display */}
+          <AttestationDataDisplay attestation={attestation} />
+        </div>
 
         {/* Additional Status Messages */}
         {Number(attestation.revocationTime) > 0 && (

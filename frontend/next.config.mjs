@@ -28,7 +28,17 @@ const nextConfig = {
       source: '/interest',
       destination: 'https://opencivics.notion.site/28d06d2570f2804cbf62cca8d3c0034e',
       permanent: false,
-    }
+    },
+    {
+      source: '/attestation',
+      destination: '/attestations',
+      permanent: false,
+    },
+    {
+      source: '/attestation/:uid',
+      destination: '/attestations/:uid',
+      permanent: false,
+    },
   ]
 }
 

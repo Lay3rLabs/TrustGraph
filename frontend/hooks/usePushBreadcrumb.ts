@@ -45,7 +45,7 @@ export const usePushBreadcrumb = (defaultBreadcrumb?: Partial<Breadcrumb>) => {
         } else if (
           // Trailing slash ensures this is a specific resource page, not the list page
           pathname.startsWith('/account/') ||
-          pathname.startsWith('/attestation/') ||
+          pathname.startsWith('/attestations/') ||
           // Should never happen...
           pathname.startsWith('/network/')
         ) {

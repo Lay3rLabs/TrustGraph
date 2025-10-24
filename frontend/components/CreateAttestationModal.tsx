@@ -453,7 +453,7 @@ export function CreateAttestationModal({
                     defaultSortColumn="time"
                     defaultSortDirection="desc"
                     onRowClick={(row) =>
-                      window.open(`/attestation/${row.uid}`, '_blank')
+                      window.open(`/attestations/${row.uid}`, '_blank')
                     }
                     getRowKey={(row) => row.uid}
                   />

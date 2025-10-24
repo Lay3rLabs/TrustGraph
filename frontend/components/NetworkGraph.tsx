@@ -244,7 +244,7 @@ export function NetworkGraph({
         attestation.attester.toLowerCase(),
         attestation.recipient.toLowerCase(),
         {
-          href: `/attestation/${attestation.uid}`,
+          href: `/attestations/${attestation.uid}`,
           label: attestation.decodedData?.confidence?.toString() || 'unknown',
           size,
         }

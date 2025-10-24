@@ -1,6 +1,6 @@
 'use client'
 
-import { count, eq } from '@ponder/client'
+import { count } from '@ponder/client'
 import { usePonderQuery } from '@ponder/react'
 import { useRouter } from 'next/navigation'
 import type React from 'react'
@@ -8,7 +8,6 @@ import { useState } from 'react'
 import { Hex } from 'viem'
 
 import { AttestationCard } from '@/components/AttestationCard'
-import { Card } from '@/components/Card'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
 import { useIntoAttestationsData } from '@/hooks/useAttestation'
 import { usePushBreadcrumb } from '@/hooks/usePushBreadcrumb'
@@ -31,20 +30,6 @@ export default function AttestationsPage() {
     queryFn: (db) =>
       db.select({ count: count(easAttestation.uid) }).from(easAttestation),
   })
-  const {
-    data: [{ count: currentTotal }] = [{ count: 0 }],
-    isLoading: isLoadingCurrentTotal,
-  } = usePonderQuery({
-    queryFn: (db) =>
-      db
-        .select({ count: count(easAttestation.uid) })
-        .from(easAttestation)
-        .where(
-          selectedSchema === 'all' || !selectedSchema.startsWith('0x')
-            ? undefined
-            : eq(easAttestation.schema, selectedSchema as Hex)
-        ),
-  })
 
   const { data: attestations = [], isLoading: isLoadingAttestations } =
     usePonderQuery({
@@ -61,6 +46,10 @@ export default function AttestationsPage() {
       select: useIntoAttestationsData(),
     })
 
+  const filteredAttestations = attestations.filter(
+    (item) => selectedStatus === 'all' || item.status === selectedStatus
+  )
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -76,7 +65,7 @@ export default function AttestationsPage() {
           <select
             value={selectedSchema}
             onChange={(e) => setSelectedSchema(e.target.value)}
-            className="w-full text-sm p-2 rounded-sm bg-card-foreground/30 shadow-md cursor-pointer"
+            className="w-full text-sm p-2 rounded-sm bg-background border border-border cursor-pointer"
           >
             <option value="all">ALL SCHEMAS</option>
             {SCHEMAS.map((schema) => (
@@ -92,9 +81,9 @@ export default function AttestationsPage() {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="w-full text-sm p-2 rounded-sm bg-card-foreground/30 shadow-md cursor-pointer"
+            className="w-full text-sm p-2 rounded-sm bg-background border border-border cursor-pointer"
           >
-            <option value="all">ALL STATUS</option>
+            <option value="all">ALL STATUSES</option>
             <option value="verified">VERIFIED</option>
             <option value="expired">EXPIRED</option>
             <option value="revoked">REVOKED</option>
@@ -108,7 +97,7 @@ export default function AttestationsPage() {
             onChange={(e) =>
               setSortOrder(e.target.value as 'newest' | 'oldest')
             }
-            className="w-full text-sm p-2 rounded-sm bg-card-foreground/30 shadow-md cursor-pointer"
+            className="w-full text-sm p-2 rounded-sm bg-background border border-border cursor-pointer"
           >
             <option value="newest">NEWEST FIRST</option>
             <option value="oldest">OLDEST FIRST</option>
@@ -116,59 +105,21 @@ export default function AttestationsPage() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <Card type="detail" size="sm">
-          <div className="text-lg">{currentTotal}</div>
-          <div className="text-xs">FETCHED</div>
-        </Card>
-        <Card type="detail" size="sm">
-          <div className="text-lg">{totalAttestations}</div>
-          <div className="text-xs">TOTAL ATTESTATIONS</div>
-        </Card>
-        <Card type="detail" size="sm">
-          <div className="text-lg">{SCHEMAS.length}</div>
-          <div className="text-xs">SCHEMAS</div>
-        </Card>
-      </div>
-
       {/* Loading State */}
-      {(isLoadingAttestations ||
-        isLoadingCurrentTotal ||
-        isLoadingTotalAttestations) && (
+      {(isLoadingAttestations || isLoadingTotalAttestations) && (
         <div className="text-center py-8">
-          <div className="text-lg">◉ LOADING ATTESTATIONS ◉</div>
+          <div className="text-lg">LOADING ATTESTATIONS</div>
           <div className="text-sm mt-2">Fetching data...</div>
         </div>
       )}
 
-      {/* Attestations List */}
-      <div className="space-y-4">
-        {!isLoadingAttestations &&
-          attestations
-            .filter(
-              (item) =>
-                selectedStatus === 'all' || item.status === selectedStatus
-            )
-            .map((item) => (
-              <AttestationCard
-                key={item.uid}
-                uid={item.uid}
-                onClick={() => {
-                  pushBreadcrumb()
-                  router.push(`/attestation/${item.uid}`)
-                }}
-              />
-            ))}
-      </div>
-
       {!isLoadingTotalAttestations &&
-        currentTotal === 0 &&
+        filteredAttestations.length === 0 &&
         totalAttestations > 0 && (
           <div className="text-center py-12">
             <div className="text-sm">NO ATTESTATIONS MATCH CURRENT FILTERS</div>
             <div className="text-xs mt-2">
-              ◆ TRY ADJUSTING YOUR FILTER SETTINGS ◆
+              TRY ADJUSTING YOUR FILTER SETTINGS
             </div>
           </div>
         )}
@@ -178,9 +129,29 @@ export default function AttestationsPage() {
           <div className="text-sm">NO ATTESTATIONS FOUND</div>
           <div className="text-xs mt-2">
             {selectedSchema !== 'all'
-              ? '◆ NO ATTESTATIONS FOR SELECTED SCHEMA ◆'
-              : '◆ NO ATTESTATIONS AVAILABLE ◆'}
+              ? 'NO ATTESTATIONS FOR SELECTED SCHEMA'
+              : 'NO ATTESTATIONS AVAILABLE'}
           </div>
+        </div>
+      )}
+
+      {/* Attestations List */}
+      {!isLoadingAttestations && filteredAttestations.length > 0 && (
+        <div className="space-y-4">
+          <p className="text-xs text-muted-foreground italic">
+            {filteredAttestations.length} matching attestations
+          </p>
+
+          {filteredAttestations.map((item) => (
+            <AttestationCard
+              key={item.uid}
+              uid={item.uid}
+              onClick={() => {
+                pushBreadcrumb()
+                router.push(`/attestations/${item.uid}`)
+              }}
+            />
+          ))}
         </div>
       )}
     </div>

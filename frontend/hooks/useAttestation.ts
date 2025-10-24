@@ -1,5 +1,6 @@
 'use client'
 
+import { usePonderQuery } from '@ponder/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
 import { Hex, WatchContractEventOnLogsFn, keccak256, stringToBytes } from 'viem'
@@ -15,7 +16,9 @@ import {
 import { parseErrorMessage, shouldRetryTxError } from '@/lib/error'
 import { SchemaKey, SchemaManager } from '@/lib/schemas'
 import { txToast } from '@/lib/tx'
+import { areAddressesEqual } from '@/lib/utils'
 import { attestationKeys } from '@/queries/attestation'
+import { ponderQueryFns } from '@/queries/ponder'
 
 interface NewAttestationData {
   schema: SchemaKey | Hex
@@ -25,8 +28,11 @@ interface NewAttestationData {
 
 const ATTESTATION_HASH = keccak256(stringToBytes('attestation'))
 
-export function useAttestation() {
-  const { address, isConnected } = useAccount()
+/**
+ * Hook to manage attestation creation and revocation. If a UID is provided, the hook will also fetch attestation data for that UID.
+ */
+export function useAttestation(uid?: Hex) {
+  const { address: connectedAddress, isConnected } = useAccount()
   const publicClient = usePublicClient()
   const queryClient = useQueryClient()
 
@@ -61,7 +67,7 @@ export function useAttestation() {
   })
 
   const createAttestation = async (attestationData: NewAttestationData) => {
-    if (!isConnected) {
+    if (!isConnected || !connectedAddress) {
       throw new Error('Please connect your wallet')
     }
 
@@ -93,7 +99,7 @@ export function useAttestation() {
       // Helper function to execute transaction with fresh nonce
       const executeTransaction = async (retryCount = 0): Promise<void> => {
         const nonce = await publicClient!.getTransactionCount({
-          address: address!,
+          address: connectedAddress,
           blockTag: retryCount === 0 ? 'pending' : 'latest',
         })
 
@@ -116,7 +122,7 @@ export function useAttestation() {
           abi: easAbi,
           functionName: 'attest',
           args: [attestationRequest],
-          account: address!,
+          account: connectedAddress,
         })
 
         await publicClient!.simulateContract({
@@ -124,7 +130,7 @@ export function useAttestation() {
           abi: easAbi,
           functionName: 'attest',
           args: [attestationRequest],
-          account: address!,
+          account: connectedAddress,
         })
 
         const gasPrice = await publicClient!.getGasPrice()
@@ -199,7 +205,7 @@ export function useAttestation() {
       // Helper function to execute transaction with fresh nonce
       const executeTransaction = async (retryCount = 0): Promise<void> => {
         const nonce = await publicClient!.getTransactionCount({
-          address: address!,
+          address: connectedAddress!,
           blockTag: retryCount === 0 ? 'pending' : 'latest',
         })
 
@@ -217,7 +223,7 @@ export function useAttestation() {
           abi: easAbi,
           functionName: 'revoke',
           args: [revocationRequest],
-          account: address!,
+          account: connectedAddress,
         })
 
         await publicClient!.simulateContract({
@@ -225,7 +231,7 @@ export function useAttestation() {
           abi: easAbi,
           functionName: 'revoke',
           args: [revocationRequest],
-          account: address!,
+          account: connectedAddress,
         })
 
         const gasPrice = await publicClient!.getGasPrice()
@@ -274,6 +280,19 @@ export function useAttestation() {
     }
   }
 
+  const query = usePonderQuery({
+    queryFn: ponderQueryFns.getAttestation(uid || '0x'),
+    select: useIntoAttestationData(),
+    enabled: !!uid,
+  })
+
+  // Check if current user is the attester and attestation is not already revoked
+  const canRevoke =
+    !!connectedAddress &&
+    !!query.data &&
+    areAddressesEqual(connectedAddress, query.data?.attester) &&
+    query.data.revocationTime === 0n
+
   return {
     createAttestation,
     revokeAttestation,
@@ -287,7 +306,9 @@ export function useAttestation() {
     error,
     hash,
     isConnected,
-    userAddress: address,
+    userAddress: connectedAddress,
+    query,
+    canRevoke,
   }
 }
 
