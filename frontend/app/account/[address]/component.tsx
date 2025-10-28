@@ -7,7 +7,6 @@ import {
   ListFilter,
   MessageSquare,
   MessageSquareOff,
-  X,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
@@ -22,7 +21,6 @@ import { Button, ButtonLink } from '@/components/Button'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
 import { Dropdown } from '@/components/Dropdown'
 import { InfoTooltip } from '@/components/InfoTooltip'
-import { RankRenderer } from '@/components/RankRenderer'
 import { StatisticCard } from '@/components/StatisticCard'
 import { Column, Table } from '@/components/Table'
 import { Tooltip } from '@/components/Tooltip'
@@ -160,12 +158,7 @@ export const AccountProfilePage = ({
       tooltip:
         'Indicates if this member has attained a significant TrustScore in the network.',
       sortable: false,
-      render: (row) =>
-        row.validated ? (
-          <Check className="w-4 h-4" />
-        ) : (
-          <X className="w-4 h-4" />
-        ),
+      render: (row) => (row.validated ? <Check className="w-4 h-4" /> : ''),
     },
     {
       key: 'rank',
@@ -174,7 +167,7 @@ export const AccountProfilePage = ({
         "Member's position in this network ranked by Trust Score. Rank is recalculated as new attestations are made.",
       sortable: true,
       accessor: (row) => row.rank,
-      render: (row) => <RankRenderer rank={row.rank} />,
+      render: (row) => `#${row.rank}`,
     },
     {
       key: 'attestationsReceived',

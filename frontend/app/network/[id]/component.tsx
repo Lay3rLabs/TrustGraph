@@ -1,6 +1,6 @@
 'use client'
 
-import { Check, Link, ListFilter, X } from 'lucide-react'
+import { Check, Link, ListFilter } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { Suspense, useState } from 'react'
@@ -12,7 +12,6 @@ import { CreateAttestationModal } from '@/components/CreateAttestationModal'
 import { Dropdown } from '@/components/Dropdown'
 import { ExportButton } from '@/components/ExportButton'
 import { Markdown } from '@/components/Markdown'
-import { RankRenderer } from '@/components/RankRenderer'
 import { StatisticCard } from '@/components/StatisticCard'
 import { Column, Table } from '@/components/Table'
 import { NetworkEntry, useNetwork } from '@/hooks/useNetwork'
@@ -55,7 +54,7 @@ export const NetworkPage = ({ network }: { network: Network }) => {
         "Member's position in this network ranked by Trust Score. Rank is recalculated as new attestations are made.",
       sortable: true,
       accessor: (row) => row.rank,
-      render: (row) => <RankRenderer rank={row.rank} />,
+      render: (row) => `#${row.rank}`,
     },
     {
       key: 'account',
@@ -79,11 +78,7 @@ export const NetworkPage = ({ network }: { network: Network }) => {
         'Indicates if this member has attained a significant TrustScore in the network.',
       sortable: false,
       render: (row) =>
-        isValueValidated(row.value) ? (
-          <Check className="w-4 h-4" />
-        ) : (
-          <X className="w-4 h-4" />
-        ),
+        isValueValidated(row.value) ? <Check className="w-4 h-4" /> : '',
     },
     {
       key: 'received',
@@ -278,6 +273,9 @@ export const NetworkPage = ({ network }: { network: Network }) => {
               data={filteredNetworkData}
               defaultSortDirection="asc"
               rowClassName="text-sm"
+              rowCellClassName={(row) =>
+                !isValueValidated(row.value) ? 'bg-accent/40' : ''
+              }
               defaultSortColumn="rank"
               onRowClick={
                 // Will be prefetched in the TableAddress component

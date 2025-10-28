@@ -44,6 +44,8 @@ export interface TableProps<T> {
   rowClickTitle?: string
   /** Optional custom className for all cells */
   cellClassName?: string
+  /** Optional custom className for all cells in a row */
+  rowCellClassName?: (row: T) => string
   /** Default sort column */
   defaultSortColumn?: string
   /** Default sort direction */
@@ -59,6 +61,7 @@ export function Table<T>({
   className,
   rowClickTitle,
   cellClassName,
+  rowCellClassName,
   defaultSortColumn,
   defaultSortDirection = 'desc',
 }: TableProps<T>) {
@@ -211,6 +214,7 @@ export function Table<T>({
                     isFirst && 'rounded-l-md',
                     isLast && 'rounded-r-md',
                     baseCellClasses,
+                    rowCellClassName?.(row),
                     getCellClassName(column, row)
                   )
 
