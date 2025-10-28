@@ -87,6 +87,11 @@ export function useNetwork() {
     await Promise.all([refetchMerkle(), refetchNetwork()])
   }, [refetchMerkle, refetchNetwork])
 
+  // Determine whether or not a given value is sufficient to be validated
+  const isValueValidated = useCallback((value: string | number | bigint) => {
+    return Number(value) >= 100
+  }, [])
+
   return {
     // Loading states
     isLoading,
@@ -109,5 +114,8 @@ export function useNetwork() {
 
     // Actions
     refresh,
+
+    // Utility functions
+    isValueValidated,
   }
 }

@@ -1,9 +1,9 @@
 'use client'
 
-import { Link } from 'lucide-react'
+import { Check, Link, ListFilter, X } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import { Suspense } from 'react'
+import { Dispatch, SetStateAction, Suspense, useRef, useState } from 'react'
 
 import { TableAddress } from '@/components/Address'
 import { BreadcrumbRenderer } from '@/components/BreadcrumbRenderer'
@@ -11,6 +11,7 @@ import { Button, ButtonLink } from '@/components/Button'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
 import { ExportButton } from '@/components/ExportButton'
 import { Markdown } from '@/components/Markdown'
+import { Popup } from '@/components/Popup'
 import { RankRenderer } from '@/components/RankRenderer'
 import { StatisticCard } from '@/components/StatisticCard'
 import { Column, Table } from '@/components/Table'
@@ -40,6 +41,7 @@ export const NetworkPage = ({ network }: { network: Network }) => {
     averageValue,
     medianValue,
     refresh,
+    isValueValidated,
   } = useNetwork()
 
   const { name, link, about, callToAction, criteria } = network
@@ -71,6 +73,19 @@ export const NetworkPage = ({ network }: { network: Network }) => {
       render: (row) => (isTrustedSeed(network, row.account) ? '🌱' : ''),
     },
     {
+      key: 'validated',
+      header: 'VALIDATED',
+      tooltip:
+        'Indicates if this member has attained a significant TrustScore in the network.',
+      sortable: false,
+      render: (row) =>
+        isValueValidated(row.value) ? (
+          <Check className="w-4 h-4" />
+        ) : (
+          <X className="w-4 h-4" />
+        ),
+    },
+    {
       key: 'received',
       header: 'RECEIVED',
       tooltip:
@@ -98,6 +113,15 @@ export const NetworkPage = ({ network }: { network: Network }) => {
       render: (row) => formatBigNumber(row.value, undefined, true),
     },
   ]
+
+  const setFilterOpenRef = useRef<Dispatch<SetStateAction<boolean>> | null>(
+    null
+  )
+  const [onlyValidated, setOnlyValidated] = useState(false)
+
+  const filteredNetworkData = onlyValidated
+    ? networkData.filter((row) => isValueValidated(row.value))
+    : networkData
 
   return (
     <div className="space-y-12">
@@ -190,7 +214,6 @@ export const NetworkPage = ({ network }: { network: Network }) => {
         <div className="flex flex-row justify-between items-center gap-x-8 gap-y-4 flex-wrap">
           <h2 className="font-bold">NETWORK MEMBERS</h2>
 
-          {/* Refresh Button */}
           {!isLoading && (
             <div className="flex flex-row items-stretch gap-2 flex-wrap">
               <Button
@@ -209,6 +232,50 @@ export const NetworkPage = ({ network }: { network: Network }) => {
                 data={networkData}
                 filename={`TrustGraph_${name}_${new Date().toISOString()}`}
               />
+
+              <Popup
+                position="same"
+                popupClassName="!p-0"
+                popupPadding={0}
+                setOpenRef={setFilterOpenRef}
+                trigger={{
+                  type: 'custom',
+                  Renderer: ({ onClick, open }) => (
+                    <Button
+                      variant={open ? 'outline' : 'secondary'}
+                      onClick={onClick}
+                      size="sm"
+                      className="text-xs"
+                    >
+                      <ListFilter className="!w-4 !h-4 mr-1" />
+                      <span>{onlyValidated ? 'VALIDATED' : 'ALL MEMBERS'}</span>
+                    </Button>
+                  ),
+                }}
+              >
+                <Button
+                  variant="ghost"
+                  className="!rounded-none !px-3 !pt-2.5 !pb-2 justify-start text-xs"
+                  size={null}
+                  onClick={() => {
+                    setOnlyValidated(true)
+                    setFilterOpenRef.current?.(false)
+                  }}
+                >
+                  VALIDATED
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="!rounded-none !px-3 !pt-2 !pb-2.5 justify-start text-xs"
+                  size={null}
+                  onClick={() => {
+                    setOnlyValidated(false)
+                    setFilterOpenRef.current?.(false)
+                  }}
+                >
+                  ALL MEMBERS
+                </Button>
+              </Popup>
             </div>
           )}
         </div>
@@ -235,24 +302,33 @@ export const NetworkPage = ({ network }: { network: Network }) => {
           </div>
         )}
 
-        {/* Merkle Table */}
-        {!isLoading && networkData.length > 0 && (
-          <Table
-            columns={columns}
-            data={networkData}
-            defaultSortDirection="asc"
-            rowClassName="text-sm"
-            defaultSortColumn="rank"
-            onRowClick={
-              // Will be prefetched in the TableAddress component
-              (row) => {
-                pushBreadcrumb()
-                router.push(`/account/${row.ensName || row.account}`)
+        {/* Members Table */}
+        {!isLoading &&
+          networkData.length > 0 &&
+          (filteredNetworkData.length > 0 ? (
+            <Table
+              columns={columns}
+              data={filteredNetworkData}
+              defaultSortDirection="asc"
+              rowClassName="text-sm"
+              defaultSortColumn="rank"
+              onRowClick={
+                // Will be prefetched in the TableAddress component
+                (row) => {
+                  pushBreadcrumb()
+                  router.push(`/account/${row.ensName || row.account}`)
+                }
               }
-            }
-            getRowKey={(row) => row.account}
-          />
-        )}
+              getRowKey={(row) => row.account}
+            />
+          ) : (
+            <div className="text-center py-8 border border-gray-300 bg-white rounded-sm shadow-sm">
+              <div className="text-sm text-gray-600">NO MEMBERS FOUND</div>
+              <div className="text-xs mt-2 text-gray-700">
+                TRY ADJUSTING YOUR FILTER SETTINGS
+              </div>
+            </div>
+          ))}
 
         {/* No Data Message */}
         {!isLoading && (!networkData || networkData.length === 0) && !error && (

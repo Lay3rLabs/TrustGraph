@@ -14,6 +14,8 @@ interface AccountNetworkProfile {
   account: Hex
   /** The trust score of this account in the network. */
   trustScore: string
+  /** Whether this account has received sufficient trust from other participants in the network. */
+  validated: boolean
   /** The rank of this account in the network. */
   rank: number
   /** Just the attestations received by this account from in-network participants. */
@@ -53,6 +55,7 @@ export function useAccountNetworkProfile(address: Hex) {
     isLoading: networkLoading,
     error: networkError,
     refresh: refreshNetwork,
+    isValueValidated,
   } = useNetwork()
 
   // Find the account in the network data
@@ -79,6 +82,7 @@ export function useAccountNetworkProfile(address: Hex) {
     ? {
         account: accountNetworkData.account,
         trustScore: accountNetworkData.value,
+        validated: isValueValidated(accountNetworkData.value),
         rank: accountNetworkData.rank,
         attestationsReceived: accountNetworkData.received,
         attestationsGiven: accountNetworkData.sent,
@@ -88,6 +92,7 @@ export function useAccountNetworkProfile(address: Hex) {
     ? {
         account: address,
         trustScore: '0',
+        validated: false,
         rank: 0,
         attestationsReceived: 0,
         attestationsGiven: 0,

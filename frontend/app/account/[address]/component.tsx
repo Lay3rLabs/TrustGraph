@@ -3,10 +3,12 @@
 import { useQueries } from '@tanstack/react-query'
 import { SetStateAction } from 'jotai'
 import {
+  Check,
   FileText,
   ListFilter,
   MessageSquare,
   MessageSquareOff,
+  X,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
@@ -35,6 +37,7 @@ import { ponderQueries } from '@/queries/ponder'
 interface NetworkParticipant {
   network: Network
   rank: number
+  validated: boolean
   score: string
   seed: boolean
   attestationsGiven: number
@@ -102,6 +105,7 @@ export const AccountProfilePage = ({
       (network): NetworkParticipant => ({
         network,
         rank: profileData?.rank || 0,
+        validated: profileData?.validated || false,
         score: profileData?.trustScore || '...',
         seed: isTrustedSeed(network, address),
         attestationsReceived: profileData?.attestationsReceived || 0,
@@ -150,6 +154,19 @@ export const AccountProfilePage = ({
         'Indicates if this account is part of the initial seed group that bootstrapped this network. Seed member influence is designed to diminish as the network grows.',
       sortable: false,
       render: (row) => (row.seed ? '🌱' : ''),
+    },
+    {
+      key: 'validated',
+      header: 'VALIDATED',
+      tooltip:
+        'Indicates if this member has attained a significant TrustScore in the network.',
+      sortable: false,
+      render: (row) =>
+        row.validated ? (
+          <Check className="w-4 h-4" />
+        ) : (
+          <X className="w-4 h-4" />
+        ),
     },
     {
       key: 'rank',
