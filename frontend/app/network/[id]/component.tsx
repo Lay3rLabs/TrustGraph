@@ -3,15 +3,15 @@
 import { Check, Link, ListFilter, X } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import { Dispatch, SetStateAction, Suspense, useRef, useState } from 'react'
+import { Suspense, useState } from 'react'
 
 import { TableAddress } from '@/components/Address'
 import { BreadcrumbRenderer } from '@/components/BreadcrumbRenderer'
 import { Button, ButtonLink } from '@/components/Button'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
+import { Dropdown } from '@/components/Dropdown'
 import { ExportButton } from '@/components/ExportButton'
 import { Markdown } from '@/components/Markdown'
-import { Popup } from '@/components/Popup'
 import { RankRenderer } from '@/components/RankRenderer'
 import { StatisticCard } from '@/components/StatisticCard'
 import { Column, Table } from '@/components/Table'
@@ -114,14 +114,12 @@ export const NetworkPage = ({ network }: { network: Network }) => {
     },
   ]
 
-  const setFilterOpenRef = useRef<Dispatch<SetStateAction<boolean>> | null>(
-    null
-  )
-  const [onlyValidated, setOnlyValidated] = useState(false)
+  const [filterMode, setFilterMode] = useState<'all' | 'validated'>('all')
 
-  const filteredNetworkData = onlyValidated
-    ? networkData.filter((row) => isValueValidated(row.value))
-    : networkData
+  const filteredNetworkData =
+    filterMode === 'validated'
+      ? networkData.filter((row) => isValueValidated(row.value))
+      : networkData
 
   return (
     <div className="space-y-12">
@@ -233,49 +231,18 @@ export const NetworkPage = ({ network }: { network: Network }) => {
                 filename={`TrustGraph_${name}_${new Date().toISOString()}`}
               />
 
-              <Popup
-                position="same"
-                popupClassName="!p-0"
-                popupPadding={0}
-                setOpenRef={setFilterOpenRef}
-                trigger={{
-                  type: 'custom',
-                  Renderer: ({ onClick, open }) => (
-                    <Button
-                      variant={open ? 'outline' : 'secondary'}
-                      onClick={onClick}
-                      size="sm"
-                      className="text-xs"
-                    >
-                      <ListFilter className="!w-4 !h-4 mr-1" />
-                      <span>{onlyValidated ? 'VALIDATED' : 'ALL MEMBERS'}</span>
-                    </Button>
-                  ),
-                }}
-              >
-                <Button
-                  variant="ghost"
-                  className="!rounded-none !px-3 !pt-2.5 !pb-2 justify-start text-xs"
-                  size={null}
-                  onClick={() => {
-                    setOnlyValidated(true)
-                    setFilterOpenRef.current?.(false)
-                  }}
-                >
-                  VALIDATED
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="!rounded-none !px-3 !pt-2 !pb-2.5 justify-start text-xs"
-                  size={null}
-                  onClick={() => {
-                    setOnlyValidated(false)
-                    setFilterOpenRef.current?.(false)
-                  }}
-                >
-                  ALL MEMBERS
-                </Button>
-              </Popup>
+              <Dropdown
+                options={[
+                  { value: 'validated', label: 'VALIDATED' },
+                  { value: 'all', label: 'ALL MEMBERS' },
+                ]}
+                selected={filterMode}
+                onSelect={(value) => setFilterMode(value)}
+                icon={<ListFilter className="!w-4 !h-4" />}
+                triggerSize="sm"
+                triggerClassName="text-xs"
+                optionClassName="text-xs"
+              />
             </div>
           )}
         </div>

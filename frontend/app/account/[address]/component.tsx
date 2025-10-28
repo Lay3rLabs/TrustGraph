@@ -1,7 +1,6 @@
 'use client'
 
 import { useQueries } from '@tanstack/react-query'
-import { SetStateAction } from 'jotai'
 import {
   Check,
   FileText,
@@ -13,7 +12,7 @@ import {
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import type React from 'react'
-import { Dispatch, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { Hex } from 'viem'
 import { useAccount } from 'wagmi'
 
@@ -21,8 +20,8 @@ import { Address, TableAddress } from '@/components/Address'
 import { BreadcrumbRenderer } from '@/components/BreadcrumbRenderer'
 import { Button, ButtonLink } from '@/components/Button'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
+import { Dropdown } from '@/components/Dropdown'
 import { InfoTooltip } from '@/components/InfoTooltip'
-import { Popup } from '@/components/Popup'
 import { RankRenderer } from '@/components/RankRenderer'
 import { StatisticCard } from '@/components/StatisticCard'
 import { Column, Table } from '@/components/Table'
@@ -207,15 +206,12 @@ export const AccountProfilePage = ({
     },
   ]
 
-  const setFilterOpenRef = useRef<Dispatch<SetStateAction<boolean>> | null>(
-    null
-  )
-  const [_onlyNetworkAttestations, setOnlyNetworkAttestations] = useState(true)
+  const [filterMode, setFilterMode] = useState<'network' | 'all'>('network')
 
   // If not a network participant, always show all attestations.
   const onlyNetworkAttestations = !profileData?.networkParticipant
     ? false
-    : _onlyNetworkAttestations
+    : filterMode === 'network'
 
   // If in-network and has attestations, show the network graph.
   const showNetworkGraph =
@@ -403,53 +399,19 @@ export const AccountProfilePage = ({
                   : 'ATTESTATIONS RECEIVED'}
               </h2>
 
-              <Popup
-                position="same"
-                popupClassName="!p-0"
-                popupPadding={0}
-                setOpenRef={setFilterOpenRef}
-                trigger={{
-                  type: 'custom',
-                  Renderer: ({ onClick, open }) => (
-                    <Button
-                      variant={open ? 'outline' : 'secondary'}
-                      onClick={onClick}
-                    >
-                      <ListFilter className="!w-5 !h-5 mr-1" />
-                      <span>
-                        {onlyNetworkAttestations
-                          ? 'Network Only'
-                          : 'All Attestations'}
-                      </span>
-                    </Button>
-                  ),
-                }}
-              >
-                {profileData?.networkParticipant && (
-                  <Button
-                    variant="ghost"
-                    className="!rounded-none !px-3 !pt-2.5 !pb-2 justify-start"
-                    size={null}
-                    onClick={() => {
-                      setOnlyNetworkAttestations(true)
-                      setFilterOpenRef.current?.(false)
-                    }}
-                  >
-                    Network Only
-                  </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  className="!rounded-none !px-3 !pt-2 !pb-2.5 justify-start"
-                  size={null}
-                  onClick={() => {
-                    setOnlyNetworkAttestations(false)
-                    setFilterOpenRef.current?.(false)
-                  }}
-                >
-                  All Attestations
-                </Button>
-              </Popup>
+              <Dropdown
+                options={
+                  profileData?.networkParticipant
+                    ? [
+                        { value: 'network', label: 'Network Only' },
+                        { value: 'all', label: 'All Attestations' },
+                      ]
+                    : [{ value: 'all', label: 'All Attestations' }]
+                }
+                selected={filterMode}
+                onSelect={(value) => setFilterMode(value)}
+                icon={<ListFilter className="!w-5 !h-5" />}
+              />
             </div>
 
             {isLoading && (
