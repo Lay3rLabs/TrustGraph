@@ -453,12 +453,12 @@ const SigmaControls = ({
   const nodeTooltipPaddingX = 10
   const nodeTooltipPaddingY = 16
 
-  const { width: viewWidth } = sigma.getDimensions()
   const getNodeTooltipPosition = useCallback(
     (node: string, attributes?: NetworkGraphNode) => {
       const { x, y, size } =
         attributes ?? sigma.getGraph().getNodeAttributes(node)
       const { x: viewportX, y: viewportY } = sigma.graphToViewport({ x, y })
+      const { width: viewWidth } = sigma.getDimensions()
       const isOnRight = viewportX > viewWidth / 2
       return {
         // Use left for positioning if on the left side of the screen, and right if on the right side, so that the tooltip overflows the screen on the side it's on with its node. Just using the left position causes the tooltip to scrunch up against the right side of the screen in an unintuitive way.
@@ -492,6 +492,8 @@ const SigmaControls = ({
       const x = (sourceX + targetX) / 2
       const y = (sourceY + targetY) / 2
       const { x: viewportX, y: viewportY } = sigma.graphToViewport({ x, y })
+      // Get dimensions dynamically to handle fullscreen mode
+      const { width: viewWidth } = sigma.getDimensions()
       const isOnRight = viewportX > viewWidth / 2
       return {
         // Use left for positioning if on the left side of the screen, and right if on the right side, so that the tooltip overflows the screen on the side it's on with its node. Just using the left position causes the tooltip to scrunch up against the right side of the screen in an unintuitive way.
@@ -525,7 +527,33 @@ const SigmaControls = ({
           typeof value === 'number' ? value + 'px' : value
       })
     })
-  }, [getNodeTooltipPosition])
+  }, [getNodeTooltipPosition, getEdgeTooltipPosition])
+
+  // Update tooltip positions when container dimensions change (resize, fullscreen)
+  useEffect(() => {
+    const handleResize = () => {
+      // Use requestAnimationFrame to ensure Sigma.js has updated its dimensions
+      requestAnimationFrame(() => {
+        updateTooltipPositions()
+      })
+    }
+
+    // Listen for resize events
+    window.addEventListener('resize', handleResize)
+    // Listen for fullscreen changes
+    document.addEventListener('fullscreenchange', handleResize)
+    document.addEventListener('webkitfullscreenchange', handleResize)
+    document.addEventListener('mozfullscreenchange', handleResize)
+    document.addEventListener('MSFullscreenChange', handleResize)
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      document.removeEventListener('fullscreenchange', handleResize)
+      document.removeEventListener('webkitfullscreenchange', handleResize)
+      document.removeEventListener('mozfullscreenchange', handleResize)
+      document.removeEventListener('MSFullscreenChange', handleResize)
+    }
+  }, [updateTooltipPositions])
 
   const [hoverState, setHoverState] = useState<NetworkGraphHoverState>(null)
   useEffect(() => {
