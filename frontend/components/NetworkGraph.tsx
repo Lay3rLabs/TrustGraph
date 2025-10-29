@@ -178,10 +178,11 @@ export function NetworkGraph({
     const minNodeSize = 8
     const maxNodeSize = 16
 
-    const minConfidence = 0
-    const maxConfidence = 100
-    const minEdgeSize = 2
-    const maxEdgeSize = 8
+    // const minConfidence = 0
+    // const maxConfidence = 100
+    // const minEdgeSize = 2
+    // const maxEdgeSize = 8
+    const edgeSize = 1
 
     // Skip attestations that are not connected to the onlyAddress, if set.
     const attestations = data.attestations.filter(
@@ -234,11 +235,11 @@ export function NetworkGraph({
     }
 
     for (const attestation of attestations) {
-      const confidence = Number(attestation.decodedData?.confidence || 50)
-      const size =
-        minEdgeSize +
-        ((confidence - minConfidence) / (maxConfidence - minConfidence)) *
-          (maxEdgeSize - minEdgeSize)
+      // const confidence = Number(attestation.decodedData?.confidence || 50)
+      // const size =
+      //   minEdgeSize +
+      //   ((confidence - minConfidence) / (maxConfidence - minConfidence)) *
+      //     (maxEdgeSize - minEdgeSize)
       graph.addEdgeWithKey(
         attestation.uid,
         attestation.attester.toLowerCase(),
@@ -246,7 +247,7 @@ export function NetworkGraph({
         {
           href: `/attestations/${attestation.uid}`,
           label: attestation.decodedData?.confidence?.toString() || 'unknown',
-          size,
+          size: edgeSize,
         }
       )
     }
