@@ -83,7 +83,7 @@ export const _makeWagmiConfig = () =>
       ...(typeof window !== 'undefined'
         ? [
             walletConnect({
-              projectId: 'c6abc47a50f2aebfc9cbd1cac562759c',
+              projectId: '842e3d38e32065c8b0ce2622ff296651',
             }),
           ]
         : []),
