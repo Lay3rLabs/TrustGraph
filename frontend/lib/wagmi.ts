@@ -39,7 +39,12 @@ export const getCurrentChainConfig = (): Chain => {
       ...optimism,
       rpcUrls: {
         default: {
-          http: ['/api/rpc/10?id=0', '/api/rpc/10?id=1'],
+          http: [
+            (typeof window !== 'undefined' ? window.location.origin : '') +
+              '/api/rpc/10?id=0',
+            (typeof window !== 'undefined' ? window.location.origin : '') +
+              '/api/rpc/10?id=1',
+          ],
           ...(webSocketUrl && { webSocket: [webSocketUrl] }),
         },
         provided: optimism.rpcUrls.default,
