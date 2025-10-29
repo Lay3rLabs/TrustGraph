@@ -443,9 +443,15 @@ const SigmaControls = ({
     stopAnimationRef.current = stop
   }, [startForceAtlas2, stopForceAtlas2, recenter])
 
-  const tooltipRefs = useRef<Record<string, HTMLDivElement>>({})
-  const tooltipPaddingX = 10
-  const tooltipPaddingY = 16
+  const tooltipRefs = useRef<{
+    nodes: Record<string, HTMLDivElement>
+    edges: Record<string, HTMLDivElement>
+  }>({
+    nodes: {},
+    edges: {},
+  })
+  const nodeTooltipPaddingX = 10
+  const nodeTooltipPaddingY = 16
 
   const { width: viewWidth } = sigma.getDimensions()
   const getNodeTooltipPosition = useCallback(
@@ -460,23 +466,61 @@ const SigmaControls = ({
           ? {
               left: 'unset',
               // Set the right position where the left edge should be, and then translate it to the right by the width of the tooltip (since it's dynamically sized, we can't subtract it from the right position).
-              right: viewWidth - (viewportX + size / 2 + tooltipPaddingX),
+              right: viewWidth - (viewportX + size / 2 + nodeTooltipPaddingX),
               transform: 'translateX(100%)',
             }
           : {
-              left: viewportX + size / 2 + tooltipPaddingX,
+              left: viewportX + size / 2 + nodeTooltipPaddingX,
               right: 'unset',
               transform: 'translateX(0)',
             }),
-        top: viewportY + size / 2 + tooltipPaddingY,
+        top: viewportY + size / 2 + nodeTooltipPaddingY,
+      }
+    },
+    [sigma]
+  )
+  const getEdgeTooltipPosition = useCallback(
+    (
+      edge: string,
+      sourceAttributes?: NetworkGraphNode,
+      targetAttributes?: NetworkGraphNode
+    ) => {
+      const { x: sourceX, y: sourceY } =
+        sourceAttributes ?? sigma.getGraph().getSourceAttributes(edge)
+      const { x: targetX, y: targetY } =
+        targetAttributes ?? sigma.getGraph().getTargetAttributes(edge)
+      const x = (sourceX + targetX) / 2
+      const y = (sourceY + targetY) / 2
+      const { x: viewportX, y: viewportY } = sigma.graphToViewport({ x, y })
+      const isOnRight = viewportX > viewWidth / 2
+      return {
+        // Use left for positioning if on the left side of the screen, and right if on the right side, so that the tooltip overflows the screen on the side it's on with its node. Just using the left position causes the tooltip to scrunch up against the right side of the screen in an unintuitive way.
+        ...(isOnRight
+          ? {
+              left: 'unset',
+              // Set the right position where the left edge should be, and then translate it to the right by the width of the tooltip (since it's dynamically sized, we can't subtract it from the right position).
+              right: viewWidth - viewportX,
+            }
+          : {
+              left: viewportX,
+              right: 'unset',
+            }),
+        top: viewportY,
+        transform: 'translateX(-50%) translateY(-50%)',
       }
     },
     [sigma]
   )
 
   const updateTooltipPositions = useCallback(() => {
-    Object.entries(tooltipRefs.current).forEach(([node, el]) => {
+    Object.entries(tooltipRefs.current.nodes).forEach(([node, el]) => {
       Object.entries(getNodeTooltipPosition(node)).forEach(([key, value]) => {
+        el.style[key as 'left' | 'top' | 'right' | 'transform'] =
+          typeof value === 'number' ? value + 'px' : value
+      })
+    })
+    Object.entries(tooltipRefs.current.edges).forEach(([edge, el]) => {
+      Object.entries(getEdgeTooltipPosition(edge)).forEach(([key, value]) => {
         el.style[key as 'left' | 'top' | 'right' | 'transform'] =
           typeof value === 'number' ? value + 'px' : value
       })
@@ -568,14 +612,14 @@ const SigmaControls = ({
           <div
             ref={(el) => {
               if (el) {
-                tooltipRefs.current[node] = el
+                tooltipRefs.current.nodes[node] = el
               } else {
-                delete tooltipRefs.current[node]
+                delete tooltipRefs.current.nodes[node]
               }
             }}
             key={node}
             className={cn(
-              'absolute flex flex-col items-center justify-center rounded-sm px-3 py-2 bg-primary/10 text-primary backdrop-blur-xs pointer-events-none transition-opacity duration-150',
+              'absolute flex flex-col items-center justify-center rounded-sm px-2 py-1 bg-primary/10 text-primary backdrop-blur-xs pointer-events-none transition-opacity duration-150',
               visible ? 'opacity-100' : 'opacity-0'
             )}
             style={style}
@@ -586,6 +630,37 @@ const SigmaControls = ({
           </div>
         )
       })}
+
+      {Array.from(graph.edgeEntries()).map(
+        ({ edge, attributes, sourceAttributes, targetAttributes }) => {
+          const visible = !!hoverState && hoverState.edges.includes(edge)
+          const style = getEdgeTooltipPosition(
+            edge,
+            sourceAttributes,
+            targetAttributes
+          )
+
+          return (
+            <div
+              ref={(el) => {
+                if (el) {
+                  tooltipRefs.current.edges[edge] = el
+                } else {
+                  delete tooltipRefs.current.edges[edge]
+                }
+              }}
+              key={edge}
+              className={cn(
+                'absolute flex flex-col items-center justify-center rounded-sm px-2 py-1 bg-primary/10 text-primary backdrop-blur-xs pointer-events-none transition-opacity duration-150',
+                visible ? 'opacity-100' : 'opacity-0'
+              )}
+              style={style}
+            >
+              <p className="text-xs">{attributes.label}%</p>
+            </div>
+          )
+        }
+      )}
     </>
   )
 }

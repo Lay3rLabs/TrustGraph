@@ -54,10 +54,10 @@ export const isTrustedSeed = ({ trustedSeeds }: Network, address: string) =>
 export interface NetworkGraphNode {
   href: string
   label: string
+  value: bigint
   x: number
   y: number
   size: number
-  value: bigint
   sent: number
   received: number
   color?: string
