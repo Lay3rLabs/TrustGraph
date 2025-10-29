@@ -84,6 +84,12 @@ export const _makeWagmiConfig = () =>
         ? [
             walletConnect({
               projectId: '842e3d38e32065c8b0ce2622ff296651',
+              metadata: {
+                name: 'TrustGraph',
+                description: 'Mapping trust networks through attestations.',
+                url: 'https://trustgraph.network',
+                icons: ['https://trustgraph.network/images/icon-512.png'],
+              },
             }),
           ]
         : []),
