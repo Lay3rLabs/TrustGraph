@@ -298,7 +298,7 @@ export function CreateAttestationModal({
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
         title={title}
-        className="!max-w-2xl max-h-[90vh] overflow-y-auto"
+        className="!max-w-2xl max-h-[90vh]"
       >
         <div className="space-y-6">
           {/* Attestation Form */}

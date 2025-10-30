@@ -29,8 +29,13 @@ export function Modal({
   footer,
   backgroundContent,
 }: ModalProps) {
+  const contentRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
     if (isOpen) {
+      // Scroll to top of content on open.
+      contentRef.current?.scrollTo({ top: 0, behavior: 'instant' })
+
       const scrollX = window.scrollX
       const scrollY = window.scrollY
       const width = document.documentElement.clientWidth
@@ -130,6 +135,7 @@ export function Modal({
         {/* Content */}
         <div
           className={cn('p-4 overflow-y-auto grow min-h-0', contentClassName)}
+          ref={contentRef}
         >
           {children}
         </div>
