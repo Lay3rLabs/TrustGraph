@@ -36,11 +36,16 @@ export const LOCALISM_FUND: Network = {
   criteria: `
 Localism Fund Experts should meet the following criteria:
 
-- **Expertise** — Demonstrates relevant experience or insight in at least one of the following areas: Grant-making, Web3 / Ethereum Tooling, Localism.
-- **Ethical Alignment** — Commits to upholding the **[OpenCivics Ethical Standards](https://wiki.opencivics.co/OpenCivics+Network/Membership/Ethical+Standards).**
-- **Contribution** — Intends to contribute constructively to the broader Localism Fund ecosystem.
+- **Application** — Has completed the application form and appears in the [**Expert Network Database**](https://www.localism.fund/expert-network-db).
+- **Expertise** — Demonstrates relevant experience in at least one of the following areas: Grant-making, Web3 / Ethereum Tooling, Localism.
+- **Professional Alignment** — Commits to upholding the [**OpenCivics Ethical Standards**](https://wiki.opencivics.co/OpenCivics+Network/Membership/Ethical+Standards).
 
-By attesting, you are making **two signals of trust**. You're **vouching for inclusion**, meaning you believe this person meets the above criteria, has completed the onboarding form (appearing in the [**Expert Network Database**](https://www.localism.fund/expert-network-db)), and you believe they should be welcomed as a peer within the Localism Fund Expert Network. You're also **vouching for accuracy**, using the slider to express how confident you are in the **self-assessments** the applicant provided.
+By attesting, you're **vouching** that this person meets the above criteria, and using the slider to signal your **confidence in**:
+
+- **Accuracy & Evidence**: Their _self-assessment is accurate, evidenced, and credible_ — with experience, expertise, and intentions that are verifiable through your direct experience with them or the evidence they've provided.
+- **Fit & Alignment**: Their _experience, expertise, unique insight, and credibility_ in one or more relevant domains, as well as _professional alignment_ — including good-faith collaboration, honesty, feedback & accountability, efficacy over ego, and inclusion & listening.
+
+Everyone helps **decentralize trust** by making honest, careful attestations.
 `.trim(),
   trustedSeeds: TRUSTED_SEEDS,
   merkleSnapshotContract: merkleSnapshotAddress,
