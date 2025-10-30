@@ -633,7 +633,12 @@ const SigmaControls = ({
       </ControlsContainer>
 
       {Array.from(graph.nodeEntries()).map(({ node, attributes }) => {
-        const visible = !!hoverState && hoverState.nodes.includes(node)
+        const visible =
+          !!hoverState &&
+          // Only show node tooltips if hovering an edge (when hovering over a
+          // node, there are too many, and it gets very cluttered).
+          hoverState.type === 'edge' &&
+          hoverState.nodes.includes(node)
         const style = getNodeTooltipPosition(node, attributes)
 
         return (
