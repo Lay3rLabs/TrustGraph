@@ -89,7 +89,7 @@ export function useNetwork() {
 
   // Determine whether or not a given value is sufficient to be validated
   const isValueValidated = useCallback((value: string | number | bigint) => {
-    return Number(value) >= 70
+    return Number(value) >= 75
   }, [])
 
   return {
