@@ -1,6 +1,5 @@
 #[rustfmt::skip]
 pub mod bindings;
-mod attestation_graph;
 mod config;
 mod eas_pagerank;
 mod trigger;

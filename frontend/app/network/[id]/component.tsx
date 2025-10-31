@@ -3,7 +3,7 @@
 import { Check, Link, ListFilter } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 
 import { TableAddress } from '@/components/Address'
 import { BreadcrumbRenderer } from '@/components/BreadcrumbRenderer'
@@ -15,6 +15,7 @@ import { Markdown } from '@/components/Markdown'
 import { StatisticCard } from '@/components/StatisticCard'
 import { Column, Table } from '@/components/Table'
 import { NetworkEntry, useNetwork } from '@/hooks/useNetwork'
+import { usePageRankComputerModule } from '@/hooks/usePageRankComputer'
 import { usePushBreadcrumb } from '@/hooks/usePushBreadcrumb'
 import { Network, isTrustedSeed } from '@/lib/network'
 import { formatBigNumber } from '@/lib/utils'
@@ -30,10 +31,12 @@ const NetworkGraph = dynamic(
 export const NetworkPage = ({ network }: { network: Network }) => {
   const router = useRouter()
   const pushBreadcrumb = usePushBreadcrumb()
+  const pagerankModule = usePageRankComputerModule()
 
   const {
     isLoading,
     error,
+    attestationsData,
     accountData: networkData,
     totalValue,
     totalParticipants,
@@ -42,6 +45,41 @@ export const NetworkPage = ({ network }: { network: Network }) => {
     refresh,
     isValueValidated,
   } = useNetwork()
+
+  useEffect(() => {
+    if (pagerankModule && attestationsData) {
+      console.log('running pagerank computation...')
+      try {
+        const computer = new pagerankModule.PageRankGraphComputer(false)
+        attestationsData.forEach((attestation) => {
+          computer.addEdge(
+            attestation.attester,
+            attestation.recipient,
+            Number(attestation.decodedData?.confidence || 0)
+          )
+        })
+        const scores = computer.calculatePagerank(
+          new pagerankModule.PageRankConfig(
+            0.85,
+            100,
+            1e-6,
+            0,
+            100,
+            new pagerankModule.TrustConfig(network.trustedSeeds, 3, 1, 0.8)
+          )
+        )
+        const points = computer.distributePoints(scores, 10_000n)
+        console.log('local points:', points)
+        // Array.from(points.entries())
+        //   .sort((a, b) => Number(b[1] - a[1]))
+        //   .forEach(([address, points], index) => {
+        //     console.log(`#${index + 1} ${address}: ${points}`)
+        //   })
+      } catch (error) {
+        console.error('error running pagerank computation', error)
+      }
+    }
+  }, [pagerankModule, attestationsData])
 
   const { name, link, about, callToAction, criteria } = network
 

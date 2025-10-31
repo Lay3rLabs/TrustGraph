@@ -1,11 +1,13 @@
-use std::collections::HashMap;
-use wavs_wasi_utils::evm::alloy_primitives::Address;
+use alloy_primitives::{Address, U256};
+use std::{collections::HashMap, str::FromStr};
+use wasm_bindgen::prelude::wasm_bindgen;
 
 use crate::config::{PageRankConfig, TrustConfig};
 
-/// A directed graph for Trust Aware PageRank calculation
+/// A directed graph for Trust Aware PageRank computation
+#[wasm_bindgen]
 #[derive(Debug, Clone)]
-pub struct AttestationGraph {
+pub struct PageRankGraphComputer {
     /// Adjacency list: node -> list of outgoing edges with weights
     outgoing: HashMap<Address, Vec<(Address, f64)>>,
     /// Incoming edges count for each node
@@ -16,7 +18,67 @@ pub struct AttestationGraph {
     allow_duplicates: bool,
 }
 
-impl AttestationGraph {
+#[wasm_bindgen]
+impl PageRankGraphComputer {
+    /// Create a new PageRankGraphComputer for WASM
+    #[wasm_bindgen(constructor)]
+    pub fn new_wasm(allow_duplicates: bool) -> Self {
+        Self::new().with_allow_duplicates(allow_duplicates)
+    }
+
+    /// Add an edge from attester to recipient with base weight
+    #[wasm_bindgen(js_name = addEdge)]
+    pub fn add_edge_wasm(&mut self, from: String, to: String, base_weight: f64) {
+        let from = Address::from_str(&from).unwrap();
+        let to = Address::from_str(&to).unwrap();
+        self.add_edge(from, to, base_weight);
+    }
+
+    /// Get all nodes in the graph
+    #[wasm_bindgen(js_name = nodes)]
+    pub fn nodes_wasm(&self) -> Vec<String> {
+        self.nodes.iter().map(|addr| format!("{:?}", addr)).collect()
+    }
+
+    /// Calculate Trust Aware PageRank scores for all nodes
+    #[wasm_bindgen(js_name = calculatePagerank)]
+    pub fn calculate_pagerank_wasm(&self, config: PageRankConfig) -> js_sys::Map {
+        let pagerank = self.calculate_pagerank(&config);
+        let map = js_sys::Map::new();
+        for (addr, score) in pagerank {
+            map.set(&addr.to_string().into(), &score.into());
+        }
+        map
+    }
+
+    /// Distribute points to nodes based on PageRank scores
+    #[wasm_bindgen(js_name = distributePoints)]
+    pub fn distribute_points_wasm(
+        &self,
+        scores: js_sys::Map,
+        total_pool: js_sys::BigInt,
+    ) -> js_sys::Map {
+        let mut scores_map = HashMap::new();
+        scores.for_each(&mut |value, key| {
+            let addr = Address::from_str(&key.as_string().unwrap()).unwrap();
+            let score = value.as_f64().unwrap();
+            scores_map.insert(addr, score);
+        });
+        let total_pool =
+            U256::from_str(&total_pool.to_string(10).unwrap().as_string().unwrap()).unwrap();
+        let (points, _) = self.distribute_points(&scores_map, total_pool);
+        let points_map = js_sys::Map::new();
+        for (addr, points) in points {
+            points_map.set(
+                &addr.to_string().into(),
+                &js_sys::BigInt::from_str(&points.to_string()).unwrap(),
+            );
+        }
+        points_map
+    }
+}
+
+impl PageRankGraphComputer {
     pub fn new() -> Self {
         Self {
             outgoing: HashMap::new(),
@@ -247,6 +309,80 @@ impl AttestationGraph {
         current_scores
     }
 
+    /// Distribute points to nodes based on PageRank scores
+    pub fn distribute_points(
+        &self,
+        scores: &HashMap<Address, f64>,
+        total_pool: U256,
+    ) -> (HashMap<Address, U256>, U256) {
+        if scores.is_empty() {
+            return (HashMap::new(), U256::ZERO);
+        }
+
+        let mut points_map = HashMap::new();
+
+        // Use high precision scale factor to convert f64 scores to U256
+        let precision_scale = 1_000_000_u64; // Scale factor for f64 -> u64 conversion
+
+        // Convert f64 scores to scaled u64 integers, then to U256
+        let scaled_scores: Vec<(Address, U256)> = scores
+            .iter()
+            .map(|(addr, score)| {
+                // Convert f64 to scaled u64, avoiding floating-point in U256 operations
+                let scaled_score_u64 = (*score * precision_scale as f64) as u64;
+                let scaled_score = U256::from(scaled_score_u64);
+                (*addr, scaled_score)
+            })
+            .collect();
+
+        let total_scaled_score: U256 = scaled_scores.iter().map(|(_, score)| *score).sum();
+
+        // Avoid division by zero, terminate early if no scaled score
+        if total_scaled_score.is_zero() {
+            return (points_map, U256::ZERO);
+        }
+
+        // Sort addresses by score (descending) for deterministic processing
+        let mut sorted_scores = scaled_scores;
+        sorted_scores.sort_by(|a, b| b.1.cmp(&a.1));
+
+        let mut total_distributed = U256::ZERO;
+        let mut remaining_pool = total_pool;
+
+        // Calculate points using pure U256 integer arithmetic with strict pool enforcement
+        for (i, (address, scaled_score)) in sorted_scores.iter().enumerate() {
+            let points = if i == sorted_scores.len() - 1 {
+                // For the last address, give all remaining pool (ensures no over-distribution)
+                remaining_pool
+            } else {
+                // Calculate proportional points: (scaled_score * total_pool) / total_scaled_score
+                let proportional_points = (*scaled_score * total_pool) / total_scaled_score;
+                // Ensure we don't exceed remaining pool
+                if proportional_points > remaining_pool {
+                    remaining_pool
+                } else {
+                    proportional_points
+                }
+            };
+
+            // Double-check we don't distribute more than available
+            let actual_points = if points > remaining_pool { remaining_pool } else { points };
+
+            if !actual_points.is_zero() {
+                total_distributed += actual_points;
+                remaining_pool -= actual_points;
+                points_map.insert(*address, actual_points);
+            }
+
+            // Break early if pool is exhausted
+            if remaining_pool.is_zero() {
+                break;
+            }
+        }
+
+        (points_map, total_distributed)
+    }
+
     /// Initialize PageRank scores with trust-aware distribution
     fn initialize_scores(&self, config: &PageRankConfig) -> HashMap<Address, f64> {
         let n = self.nodes.len();
@@ -415,7 +551,7 @@ mod tests {
 
     #[test]
     fn test_standard_pagerank_no_trust() {
-        let mut graph = AttestationGraph::new();
+        let mut graph = PageRankGraphComputer::new();
 
         // Create addresses for testing
         let alice = Address::from_str("0x1111111111111111111111111111111111111111").unwrap();
@@ -442,7 +578,7 @@ mod tests {
 
     #[test]
     fn test_trust_aware_pagerank_basic() {
-        let mut graph = AttestationGraph::new();
+        let mut graph = PageRankGraphComputer::new();
 
         // Create addresses
         let trusted_alice =
@@ -477,7 +613,7 @@ mod tests {
 
     #[test]
     fn test_trust_multiplier_effect() {
-        let mut graph = AttestationGraph::new();
+        let mut graph = PageRankGraphComputer::new();
 
         // Create addresses
         let trusted_alice =
@@ -540,7 +676,7 @@ mod tests {
 
     #[test]
     fn test_trust_share_effect() {
-        let mut graph = AttestationGraph::new();
+        let mut graph = PageRankGraphComputer::new();
 
         let trusted_alice =
             Address::from_str("0x1111111111111111111111111111111111111111").unwrap();
@@ -575,7 +711,7 @@ mod tests {
 
     #[test]
     fn test_multiple_trusted_seeds() {
-        let mut graph = AttestationGraph::new();
+        let mut graph = PageRankGraphComputer::new();
 
         let trusted_alice =
             Address::from_str("0x1111111111111111111111111111111111111111").unwrap();
@@ -633,7 +769,7 @@ mod tests {
 
     #[test]
     fn test_empty_graph() {
-        let graph = AttestationGraph::new();
+        let graph = PageRankGraphComputer::new();
         let config = PageRankConfig::default();
         let scores = graph.calculate_pagerank(&config);
 
@@ -642,7 +778,7 @@ mod tests {
 
     #[test]
     fn test_single_node_graph() {
-        let mut graph = AttestationGraph::new();
+        let mut graph = PageRankGraphComputer::new();
         let alice = Address::from_str("0x1111111111111111111111111111111111111111").unwrap();
 
         // Add a self-loop
@@ -660,7 +796,7 @@ mod tests {
 
     #[test]
     fn test_backwards_compatibility() {
-        let mut graph = AttestationGraph::new();
+        let mut graph = PageRankGraphComputer::new();
 
         let alice = Address::from_str("0x1111111111111111111111111111111111111111").unwrap();
         let bob = Address::from_str("0x2222222222222222222222222222222222222222").unwrap();
@@ -692,7 +828,7 @@ mod tests {
 
     #[test]
     fn test_spam_resistance_self_vouching() {
-        let mut graph = AttestationGraph::new();
+        let mut graph = PageRankGraphComputer::new();
 
         // Create addresses - similar to the actual test scenario
         let alice = Address::from_str("0x70997970C51812dc3A010C7d01b50e0d17dc79C8").unwrap(); // Trusted authority
@@ -824,7 +960,7 @@ mod tests {
     #[test]
     fn test_deterministic_pagerank_results() {
         // Create a moderately complex graph to test determinism
-        let mut graph = AttestationGraph::new();
+        let mut graph = PageRankGraphComputer::new();
 
         // Add some test addresses (using different values to ensure varied iteration order)
         let addr1 = Address::from([0x01; 20]);
@@ -875,7 +1011,7 @@ mod tests {
 
     #[test]
     fn test_override_existing_edge() {
-        let mut graph = AttestationGraph::new().with_allow_duplicates(false);
+        let mut graph = PageRankGraphComputer::new().with_allow_duplicates(false);
 
         let alice = Address::from_str("0x1111111111111111111111111111111111111111").unwrap();
         let bob = Address::from_str("0x2222222222222222222222222222222222222222").unwrap();

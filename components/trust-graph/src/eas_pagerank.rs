@@ -1,16 +1,17 @@
 use alloy_sol_types::sol;
 use anyhow::Result;
 use async_trait::async_trait;
+use futures::lock::Mutex;
+use pagerank::PageRankGraphComputer;
 use std::collections::HashMap;
 use wavs_indexer_api::solidity::IndexedEvent;
 use wavs_indexer_api::IndexedAttestation;
 use wavs_merkle_sources::sources::{Source, SourceEvent};
 use wavs_wasi_utils::evm::alloy_primitives::{hex, Address, FixedBytes, U256};
 
-use futures::lock::Mutex;
-pub use wavs_merkle_sources::sources;
+use crate::config::PageRankSourceConfig;
 
-use crate::{attestation_graph::AttestationGraph, config::PageRankSourceConfig};
+pub use wavs_merkle_sources::sources;
 
 /// EAS PageRank points source that calculates points based on PageRank algorithm
 pub struct EasPageRankSource {
@@ -103,22 +104,22 @@ impl EasPageRankSource {
     //     Ok((decoded.attester, decoded.recipient, decoded.data.to_vec()))
     // }
 
-    /// Build attestation graph from EAS data
-    async fn build_attestation_graph(
+    /// Build PageRank graph computer from EAS data
+    async fn build_pagerank_graph_computer(
         &self,
         ctx: &sources::SourceContext,
-    ) -> Result<AttestationGraph> {
-        let schema_uid = &self.config.schema_uid;
+    ) -> Result<PageRankGraphComputer> {
+        let schema_uid: &String = &self.config.schema_uid;
         println!("🏗️  Building attestation graph for schema: {}", schema_uid);
 
         let total_attestations = self.get_total_schema_attestations(ctx, schema_uid).await?;
         println!("📊 Processing {} total attestations", total_attestations);
 
         if total_attestations == 0 {
-            return Ok(AttestationGraph::new());
+            return Ok(PageRankGraphComputer::new());
         }
 
-        let mut graph = AttestationGraph::new().with_allow_duplicates(false);
+        let mut graph = PageRankGraphComputer::new().with_allow_duplicates(false);
         let mut edge_count = 0;
         let mut unique_attesters = std::collections::HashSet::new();
         let mut unique_recipients = std::collections::HashSet::new();
@@ -251,8 +252,8 @@ impl EasPageRankSource {
             return Ok(cached.clone());
         }
 
-        let graph = self.build_attestation_graph(ctx).await?;
-        let scores: HashMap<Address, f64> = graph
+        let pagerank = self.build_pagerank_graph_computer(ctx).await?;
+        let scores: HashMap<Address, f64> = pagerank
             .calculate_pagerank(&self.config.pagerank_config)
             .into_iter()
             // Filter out scores with zero points
@@ -266,74 +267,15 @@ impl EasPageRankSource {
             println!("   {}. {}: {:.6}", i + 1, addr, score);
         }
 
-        let mut points_map = HashMap::new();
         let total_pool = self.config.total_pool;
 
         println!("\n🎯 Distributing {} total points based on PageRank scores", total_pool);
 
-        if scores.is_empty() {
-            println!("⚠️  No accounts to distribute points to");
+        let (points_map, total_distributed) = pagerank.distribute_points(&scores, total_pool);
+
+        if total_distributed.is_zero() {
+            println!("⚠️  No points distributed");
             return Ok(points_map);
-        }
-
-        // Use high precision scale factor to convert f64 scores to U256
-        let precision_scale = 1_000_000_u64; // Scale factor for f64 -> u64 conversion
-
-        // Convert f64 scores to scaled u64 integers, then to U256
-        let scaled_scores: Vec<(Address, U256)> = scores
-            .iter()
-            .map(|(addr, score)| {
-                // Convert f64 to scaled u64, avoiding floating-point in U256 operations
-                let scaled_score_u64 = (*score * precision_scale as f64) as u64;
-                let scaled_score = U256::from(scaled_score_u64);
-                (*addr, scaled_score)
-            })
-            .collect();
-
-        let total_scaled_score: U256 = scaled_scores.iter().map(|(_, score)| *score).sum();
-
-        // Avoid division by zero
-        if total_scaled_score.is_zero() {
-            println!("⚠️  Total scaled score is zero, no points to assign");
-            return Ok(points_map);
-        }
-
-        // Sort addresses by score (descending) for deterministic processing
-        let mut sorted_scores = scaled_scores;
-        sorted_scores.sort_by(|a, b| b.1.cmp(&a.1));
-
-        let mut total_distributed = U256::ZERO;
-        let mut remaining_pool = total_pool;
-
-        // Calculate points using pure U256 integer arithmetic with strict pool enforcement
-        for (i, (address, scaled_score)) in sorted_scores.iter().enumerate() {
-            let points = if i == sorted_scores.len() - 1 {
-                // For the last address, give all remaining pool (ensures no over-distribution)
-                remaining_pool
-            } else {
-                // Calculate proportional points: (scaled_score * total_pool) / total_scaled_score
-                let proportional_points = (*scaled_score * total_pool) / total_scaled_score;
-                // Ensure we don't exceed remaining pool
-                if proportional_points > remaining_pool {
-                    remaining_pool
-                } else {
-                    proportional_points
-                }
-            };
-
-            // Double-check we don't distribute more than available
-            let actual_points = if points > remaining_pool { remaining_pool } else { points };
-
-            if !actual_points.is_zero() {
-                total_distributed += actual_points;
-                remaining_pool -= actual_points;
-                points_map.insert(*address, actual_points);
-            }
-
-            // Break early if pool is exhausted
-            if remaining_pool.is_zero() {
-                break;
-            }
         }
 
         println!("\n💰 Calculated points for {} addresses", points_map.len());
