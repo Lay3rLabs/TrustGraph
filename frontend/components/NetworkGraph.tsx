@@ -45,7 +45,7 @@ import {
   NetworkGraphManager,
 } from '@/lib/NetworkGraphManager'
 import { areAddressesEqual, cn, formatBigNumber } from '@/lib/utils'
-import { ponderQueries } from '@/queries/ponder'
+import { NetworkData, ponderQueries } from '@/queries/ponder'
 
 const forceAtlas2SettingsOverrides: ForceAtlas2Settings = {
   // Bind nodes more tightly together.
@@ -117,6 +117,7 @@ const getColorFromValue = (value: number): string => {
 
 export interface NetworkGraphProps {
   network: Network
+  overrideNetworkData?: NetworkData
   /** Only show attestations connected to this address. */
   onlyAddress?: Hex
   className?: string
@@ -126,16 +127,24 @@ export interface NetworkGraphProps {
 
 export function NetworkGraph({
   network,
+  overrideNetworkData,
   onlyAddress,
   className,
   initialZoom = 1.25,
 }: NetworkGraphProps) {
   const router = useRouter()
 
-  const { isLoading, error, data } = useQuery({
+  const {
+    isLoading,
+    error,
+    data: _data,
+  } = useQuery({
     ...ponderQueries.network,
     refetchInterval: 10_000,
+    enabled: !overrideNetworkData,
   })
+
+  const data = overrideNetworkData || _data
 
   // Load ENS data
   const { data: ensData } = useBatchEnsQuery(

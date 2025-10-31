@@ -19,6 +19,7 @@ import { usePageRankComputerModule } from '@/hooks/usePageRankComputer'
 import { usePushBreadcrumb } from '@/hooks/usePushBreadcrumb'
 import { Network, isTrustedSeed } from '@/lib/network'
 import { formatBigNumber } from '@/lib/utils'
+import { PageRankGraphComputer } from '@/lib/wasm/pagerank/pagerank'
 
 // Uses web2gl, which is not supported on the server
 const NetworkGraph = dynamic(
@@ -46,40 +47,69 @@ export const NetworkPage = ({ network }: { network: Network }) => {
     isValueValidated,
   } = useNetwork()
 
+  const [dampingFactor, setDampingFactor] = useState(0.85)
+  const [trustMultiplier, setTrustMultiplier] = useState(3)
+  const [trustShare, setTrustShare] = useState(1)
+  const [trustDecay, setTrustDecay] = useState(0.8)
+
+  const [computer, setComputer] = useState<PageRankGraphComputer | null>(null)
   useEffect(() => {
-    if (pagerankModule && attestationsData) {
-      console.log('running pagerank computation...')
-      try {
-        const computer = new pagerankModule.PageRankGraphComputer(false)
-        attestationsData.forEach((attestation) => {
-          computer.addEdge(
-            attestation.attester,
-            attestation.recipient,
-            Number(attestation.decodedData?.confidence || 0)
-          )
-        })
-        const scores = computer.calculatePagerank(
-          new pagerankModule.PageRankConfig(
-            0.85,
-            100,
-            1e-6,
-            0,
-            100,
-            new pagerankModule.TrustConfig(network.trustedSeeds, 3, 1, 0.8)
+    if (!pagerankModule || !attestationsData) {
+      return
+    }
+
+    const computer = new pagerankModule.PageRankGraphComputer(false)
+    attestationsData.forEach((attestation) => {
+      computer.addEdge(
+        attestation.attester,
+        attestation.recipient,
+        Number(attestation.decodedData?.confidence || 0)
+      )
+    })
+    setComputer(computer)
+
+    return () => computer.free()
+  }, [pagerankModule, attestationsData])
+
+  useEffect(() => {
+    if (!pagerankModule || !computer) {
+      return
+    }
+
+    try {
+      const scores = computer.calculatePagerank(
+        new pagerankModule.PageRankConfig(
+          dampingFactor,
+          100,
+          1e-6,
+          0,
+          100,
+          new pagerankModule.TrustConfig(
+            network.trustedSeeds,
+            trustMultiplier,
+            trustShare,
+            trustDecay
           )
         )
-        const points = computer.distributePoints(scores, 10_000n)
-        console.log('local points:', points)
-        // Array.from(points.entries())
-        //   .sort((a, b) => Number(b[1] - a[1]))
-        //   .forEach(([address, points], index) => {
-        //     console.log(`#${index + 1} ${address}: ${points}`)
-        //   })
-      } catch (error) {
-        console.error('error running pagerank computation', error)
-      }
+      )
+      const points = computer.distributePoints(scores, 10_000n)
+      console.log('local points:', points)
+      // Array.from(points.entries())
+      //   .sort((a, b) => Number(b[1] - a[1]))
+      //   .forEach(([address, points], index) => {
+      //     console.log(`#${index + 1} ${address}: ${points}`)
+      //   })
+    } catch (error) {
+      console.error('error running pagerank computation', error)
     }
-  }, [pagerankModule, attestationsData])
+  }, [
+    pagerankModule,
+    attestationsData,
+    dampingFactor,
+    trustMultiplier,
+    trustShare,
+    trustDecay,
+  ])
 
   const { name, link, about, callToAction, criteria } = network
 
