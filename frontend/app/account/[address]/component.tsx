@@ -27,7 +27,7 @@ import { Tooltip } from '@/components/Tooltip'
 import { useAccountNetworkProfile } from '@/hooks/useAccountProfile'
 import { usePushBreadcrumb } from '@/hooks/usePushBreadcrumb'
 import { AttestationData } from '@/lib/attestation'
-import { LOCALISM_FUND, NETWORKS, Network, isTrustedSeed } from '@/lib/network'
+import { NETWORKS, Network, isTrustedSeed } from '@/lib/network'
 import { cn, formatBigNumber } from '@/lib/utils'
 import { ponderQueries } from '@/queries/ponder'
 
@@ -376,7 +376,7 @@ export const AccountProfilePage = ({
             {showNetworkGraph && (
               <div className="h-[66vh] lg:h-full">
                 <Suspense fallback={null}>
-                  <NetworkGraph network={LOCALISM_FUND} onlyAddress={address} />
+                  <NetworkGraph onlyAddress={address} />
                 </Suspense>
               </div>
             )}

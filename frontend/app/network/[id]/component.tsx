@@ -3,7 +3,7 @@
 import { Check, Link, ListFilter } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useState } from 'react'
 
 import { TableAddress } from '@/components/Address'
 import { BreadcrumbRenderer } from '@/components/BreadcrumbRenderer'
@@ -12,14 +12,13 @@ import { CreateAttestationModal } from '@/components/CreateAttestationModal'
 import { Dropdown } from '@/components/Dropdown'
 import { ExportButton } from '@/components/ExportButton'
 import { Markdown } from '@/components/Markdown'
+import { NetworkSimulationConfigDropdown } from '@/components/NetworkSimulationConfigDropdown'
 import { StatisticCard } from '@/components/StatisticCard'
 import { Column, Table } from '@/components/Table'
 import { useNetwork } from '@/contexts/NetworkContext'
-import { usePageRankComputerModule } from '@/hooks/usePageRankComputer'
 import { usePushBreadcrumb } from '@/hooks/usePushBreadcrumb'
 import { NetworkEntry, isTrustedSeed } from '@/lib/network'
 import { formatBigNumber } from '@/lib/utils'
-import { PageRankGraphComputer } from '@/lib/wasm/pagerank/pagerank'
 
 // Uses web2gl, which is not supported on the server
 const NetworkGraph = dynamic(
@@ -32,13 +31,11 @@ const NetworkGraph = dynamic(
 export const NetworkPage = () => {
   const router = useRouter()
   const pushBreadcrumb = usePushBreadcrumb()
-  const pagerankModule = usePageRankComputerModule()
 
   const {
     network,
     isLoading,
     error,
-    attestationsData,
     accountData: networkData,
     totalValue,
     totalParticipants,
@@ -46,60 +43,7 @@ export const NetworkPage = () => {
     medianValue,
     refresh,
     isValueValidated,
-    simulationConfig,
   } = useNetwork()
-
-  const [computer, setComputer] = useState<PageRankGraphComputer | null>(null)
-  useEffect(() => {
-    if (!pagerankModule || !attestationsData || !simulationConfig.enabled) {
-      return
-    }
-
-    const computer = new pagerankModule.PageRankGraphComputer(false)
-    attestationsData.forEach((attestation) => {
-      computer.addEdge(
-        attestation.attester,
-        attestation.recipient,
-        Number(attestation.decodedData?.confidence || 0)
-      )
-    })
-    setComputer(computer)
-
-    return () => computer.free()
-  }, [pagerankModule, attestationsData, simulationConfig.enabled])
-
-  useEffect(() => {
-    if (!pagerankModule || !computer || !simulationConfig.enabled) {
-      return
-    }
-
-    try {
-      const scores = computer.calculatePagerank(
-        new pagerankModule.PageRankConfig(
-          simulationConfig.dampingFactor,
-          100,
-          1e-6,
-          0,
-          100,
-          new pagerankModule.TrustConfig(
-            network.trustedSeeds,
-            simulationConfig.trustMultiplier,
-            simulationConfig.trustShare,
-            simulationConfig.trustDecay
-          )
-        )
-      )
-      const points = computer.distributePoints(scores, 10_000n)
-      console.log('local points:', points)
-      // Array.from(points.entries())
-      //   .sort((a, b) => Number(b[1] - a[1]))
-      //   .forEach(([address, points], index) => {
-      //     console.log(`#${index + 1} ${address}: ${points}`)
-      //   })
-    } catch (error) {
-      console.error('error running pagerank computation', error)
-    }
-  }, [pagerankModule, computer, attestationsData, simulationConfig])
 
   const { name, link, about, callToAction, criteria } = network
 
@@ -220,7 +164,7 @@ export const NetworkPage = () => {
 
         <div className="h-[66vh] lg:h-4/5">
           <Suspense fallback={null}>
-            <NetworkGraph network={network} />
+            <NetworkGraph />
           </Suspense>
         </div>
       </div>
@@ -276,6 +220,8 @@ export const NetworkPage = () => {
               >
                 REFRESH
               </Button>
+
+              <NetworkSimulationConfigDropdown size="sm" className="text-xs" />
 
               <ExportButton
                 size="sm"

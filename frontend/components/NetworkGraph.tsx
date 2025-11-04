@@ -20,7 +20,6 @@ import {
   EdgeCurvedArrowProgram,
   indexParallelEdgesIndex,
 } from '@sigma/edge-curve'
-import { useQuery } from '@tanstack/react-query'
 import { MultiDirectedGraph } from 'graphology'
 import { circular } from 'graphology-layout'
 import forceAtlas2, { ForceAtlas2Settings } from 'graphology-layout-forceatlas2'
@@ -33,19 +32,14 @@ import { NodeDisplayData } from 'sigma/types'
 import { animateNodes } from 'sigma/utils'
 import { Hex } from 'viem'
 
+import { useNetwork } from '@/contexts/NetworkContext'
 import { useBatchEnsQuery } from '@/hooks/useEns'
-import {
-  Network,
-  NetworkGraphEdge,
-  NetworkGraphNode,
-  isTrustedSeed,
-} from '@/lib/network'
+import { NetworkGraphEdge, NetworkGraphNode } from '@/lib/network'
 import {
   NetworkGraphHoverState,
   NetworkGraphManager,
 } from '@/lib/NetworkGraphManager'
 import { areAddressesEqual, cn, formatBigNumber } from '@/lib/utils'
-import { NetworkData, ponderQueries } from '@/queries/ponder'
 
 const forceAtlas2SettingsOverrides: ForceAtlas2Settings = {
   // Bind nodes more tightly together.
@@ -116,8 +110,6 @@ const getColorFromValue = (value: number): string => {
 }
 
 export interface NetworkGraphProps {
-  network: Network
-  overrideNetworkData?: NetworkData
   /** Only show attestations connected to this address. */
   onlyAddress?: Hex
   className?: string
@@ -126,29 +118,18 @@ export interface NetworkGraphProps {
 }
 
 export function NetworkGraph({
-  network,
-  overrideNetworkData,
   onlyAddress,
   className,
   initialZoom = 1.25,
 }: NetworkGraphProps) {
   const router = useRouter()
 
-  const {
-    isLoading,
-    error,
-    data: _data,
-  } = useQuery({
-    ...ponderQueries.network,
-    refetchInterval: 10_000,
-    enabled: !overrideNetworkData,
-  })
-
-  const data = overrideNetworkData || _data
+  const { isLoading, error, accountData, attestationsData, isTrustedSeed } =
+    useNetwork()
 
   // Load ENS data
   const { data: ensData } = useBatchEnsQuery(
-    data?.accounts.map((account) => account.account) || []
+    accountData.map((account) => account.account) || []
   )
 
   const [showCursor, setShowCursor] = useState(false)
@@ -161,7 +142,7 @@ export function NetworkGraph({
 
   // Load graph from data.
   useEffect(() => {
-    if (!data) {
+    if (!accountData || !attestationsData) {
       setGraph(null)
       return
     }
@@ -172,13 +153,13 @@ export function NetworkGraph({
     const graph = new MultiDirectedGraph<NetworkGraphNode, NetworkGraphEdge>()
 
     const maxValue = Number(
-      data.accounts.reduce(
+      accountData.reduce(
         (max, { value }) => (BigInt(value) > max ? BigInt(value) : max),
         0n
       )
     )
     const minValue = Number(
-      data.accounts.reduce(
+      accountData.reduce(
         (min, { value }) => (BigInt(value) < min ? BigInt(value) : min),
         BigInt(maxValue)
       )
@@ -194,14 +175,14 @@ export function NetworkGraph({
     const edgeSize = 1
 
     // Skip attestations that are not connected to the onlyAddress, if set.
-    const attestations = data.attestations.filter(
+    const attestations = attestationsData.filter(
       (attestation) =>
         !onlyAddress ||
         areAddressesEqual(attestation.attester, onlyAddress) ||
         areAddressesEqual(attestation.recipient, onlyAddress)
     )
 
-    for (const { account, value, sent, received } of data.accounts) {
+    for (const { account, value, sent, received } of accountData) {
       // Skip accounts not included in the graph.
       if (
         !attestations.some(
@@ -227,7 +208,7 @@ export function NetworkGraph({
         href,
         label:
           (ensName || `${account.slice(0, 6)}...${account.slice(-4)}`) +
-          (isTrustedSeed(network, account) ? ' 🌱' : ''),
+          (isTrustedSeed(account) ? ' 🌱' : ''),
         x: 0,
         y: 0,
         value: BigInt(value),
@@ -332,7 +313,7 @@ export function NetworkGraph({
 
       resolve()
     })
-  }, [data, ensData])
+  }, [accountData, attestationsData, isTrustedSeed, ensData])
 
   return (
     <div
@@ -345,10 +326,10 @@ export function NetworkGraph({
         <div className="w-full h-full flex justify-center items-center border border-border rounded-md p-4">
           <LoaderCircle size={24} className="animate-spin" />
         </div>
-      ) : error || !data ? (
+      ) : error || !accountData || !attestationsData ? (
         <div className="w-full h-full flex justify-center items-center border border-destructive rounded-md p-4">
           <p className="text-sm text-destructive">
-            Error: {error?.message || 'No data'}
+            Error: {error || 'No data'}
           </p>
         </div>
       ) : (

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 import * as pagerank from '@/lib/wasm/pagerank/pagerank'
 
-export const usePageRankComputerModule = () => {
+export const usePageRankComputerModule = (): typeof pagerank | null => {
   const [pagerankModule, setPagerankModule] = useState<typeof pagerank | null>(
     null
   )

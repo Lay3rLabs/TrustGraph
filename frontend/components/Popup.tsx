@@ -240,7 +240,7 @@ export const Popup = ({
             type="popover"
             size="md"
             className={cn(
-              'fixed z-50 flex flex-col transition-all !overflow-hidden',
+              'fixed z-50 flex flex-col transition-all !overflow-hidden shadow-md',
               // Prevent initial flash on page load by hiding until first open.
               !openedOnce.current && 'hidden',
               // Open.

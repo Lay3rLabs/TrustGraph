@@ -2,17 +2,22 @@
 
 import { useQuery } from '@tanstack/react-query'
 import {
+  Dispatch,
   ReactNode,
+  SetStateAction,
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from 'react'
 
 import { useBatchEnsQuery } from '@/hooks/useEns'
+import { usePageRankComputerModule } from '@/hooks/usePageRankComputer'
 import { AttestationData } from '@/lib/attestation'
-import { Network, NetworkEntry } from '@/lib/network'
+import { Network, NetworkEntry, isTrustedSeed } from '@/lib/network'
+import { PageRankGraphComputer } from '@/lib/wasm/pagerank/pagerank'
 import { ponderQueries } from '@/queries/ponder'
 
 export type NetworkSimulationConfig = {
@@ -57,10 +62,13 @@ export type NetworkContextType = {
   /** Determine whether or not a given value is sufficient to be validated. */
   isValueValidated: (value: string | number | bigint) => boolean
 
+  /** Determine whether or not a given address is a trusted seed for the network. */
+  isTrustedSeed: (address: string) => boolean
+
   /** The simulation config for the network. */
   simulationConfig: NetworkSimulationConfig
   /** Set the simulation config for the network. */
-  setSimulationConfig: (config: NetworkSimulationConfig) => void
+  setSimulationConfig: Dispatch<SetStateAction<NetworkSimulationConfig>>
 }
 
 export const NetworkContext = createContext<NetworkContextType | null>(null)
@@ -74,7 +82,7 @@ export const NetworkProvider = ({
 }) => {
   // Fetch latest merkle tree with entries
   const {
-    data: merkleTreeData,
+    data: _merkleTreeData,
     isLoading: merkleLoading,
     error: merkleError,
     refetch: refetchMerkle,
@@ -85,7 +93,7 @@ export const NetworkProvider = ({
 
   // Fetch network
   const {
-    data: networkData,
+    data: _networkData,
     isLoading: networkLoading,
     error: networkError,
     refetch: refetchNetwork,
@@ -94,20 +102,147 @@ export const NetworkProvider = ({
     refetchInterval: 10_000,
   })
 
+  // Simulation config
+  const [simulationConfig, setSimulationConfig] =
+    useState<NetworkSimulationConfig>({
+      enabled: false,
+      dampingFactor: 0.85,
+      trustMultiplier: 3,
+      trustShare: 1,
+      trustDecay: 0.8,
+    })
+
+  const pagerankModule = usePageRankComputerModule()
+  const [computer, setComputer] = useState<PageRankGraphComputer | null>(null)
+  const [simulatedResults, setSimulatedResults] = useState<Record<
+    string,
+    bigint
+  > | null>(null)
+  useEffect(() => {
+    if (!pagerankModule || !_networkData || !simulationConfig.enabled) {
+      return
+    }
+
+    const computer = new pagerankModule.PageRankGraphComputer(false)
+    _networkData.attestations.forEach((attestation) => {
+      computer.addEdge(
+        attestation.attester,
+        attestation.recipient,
+        Number(attestation.decodedData?.confidence || 0)
+      )
+    })
+    setComputer(computer)
+
+    return () => computer.free()
+  }, [pagerankModule, _networkData, simulationConfig.enabled])
+
+  useEffect(() => {
+    if (!pagerankModule || !computer || !simulationConfig.enabled) {
+      return
+    }
+
+    try {
+      const scores = computer.calculatePagerank(
+        new pagerankModule.PageRankConfig(
+          simulationConfig.dampingFactor,
+          100,
+          1e-6,
+          0,
+          100,
+          new pagerankModule.TrustConfig(
+            network.trustedSeeds,
+            simulationConfig.trustMultiplier,
+            simulationConfig.trustShare,
+            simulationConfig.trustDecay
+          )
+        )
+      )
+      const points = computer.distributePoints(scores, 10_000n)
+      setSimulatedResults(
+        Object.fromEntries(
+          points
+            .entries()
+            .map(([address, points]) => [address.toLowerCase(), points])
+        )
+      )
+      // Array.from(points.entries())
+      //   .sort((a, b) => Number(b[1] - a[1]))
+      //   .forEach(([address, points], index) => {
+      //     console.log(`#${index + 1} ${address}: ${points}`)
+      //   })
+    } catch (error) {
+      console.error('error running pagerank computation', error)
+    }
+  }, [pagerankModule, computer, simulationConfig])
+
+  // Use simulated or real data based on the simulation config
+  const { networkData, merkleTreeData } = useMemo((): {
+    networkData: typeof _networkData
+    merkleTreeData: typeof _merkleTreeData
+  } => {
+    if (!simulationConfig.enabled || !simulatedResults) {
+      return {
+        networkData: _networkData,
+        merkleTreeData: _merkleTreeData,
+      }
+    }
+
+    console.log('simulatedResults:', simulatedResults)
+
+    const networkData: typeof _networkData = _networkData && {
+      accounts: _networkData.accounts.map((account) => ({
+        ...account,
+        value:
+          simulatedResults[account.account.toLowerCase()]?.toString() || '0',
+      })),
+      attestations: _networkData.attestations,
+    }
+
+    const merkleTreeData: typeof _merkleTreeData = _merkleTreeData && {
+      tree: {
+        ..._merkleTreeData.tree,
+        root: '<simulated>',
+        ipfsHash: '<simulated>',
+        ipfsHashCid: '<simulated>',
+        totalValue:
+          networkData?.accounts
+            .reduce((acc, account) => acc + BigInt(account.value), 0n)
+            .toString() || '0',
+        blockNumber: '0',
+        timestamp: '0',
+      },
+      entries: _merkleTreeData.entries.map((entry) => ({
+        ...entry,
+        proof: [],
+        value: simulatedResults[entry.account.toLowerCase()]?.toString() || '0',
+      })),
+    }
+
+    return {
+      networkData,
+      merkleTreeData,
+    }
+  }, [
+    simulationConfig.enabled,
+    simulatedResults,
+    _merkleTreeData,
+    _networkData,
+  ])
+
   // Load ENS data
   const { data: ensData } = useBatchEnsQuery(
     networkData?.accounts.map(({ account }) => account) || []
   )
 
   // Transform network data to match the expected format
-  const accountData = useMemo((): NetworkEntry[] => {
+  const accountData = useMemo(() => {
     if (!networkData?.accounts?.length) {
       return []
     }
 
-    return networkData.accounts
+    const accountData = networkData.accounts
       .sort((a, b) => Number(BigInt(b.value) - BigInt(a.value)))
-      .map((account, index: number) => {
+      .map((account, index: number): NetworkEntry => {
         const ensName = ensData?.[account.account]?.name || undefined
 
         return {
@@ -116,10 +251,12 @@ export const NetworkProvider = ({
           rank: index + 1,
         }
       })
+
+    return accountData
   }, [networkData, ensData])
 
   // Calculate derived values
-  const totalValue = Number(merkleTreeData?.tree?.totalValue || '0')
+  const totalValue = Number(merkleTreeData?.tree?.totalValue || 0)
   const totalParticipants = merkleTreeData?.tree?.numAccounts || 0
   const averageValue =
     totalValue && totalParticipants
@@ -146,15 +283,11 @@ export const NetworkProvider = ({
     return Number(value) >= 75
   }, [])
 
-  // Simulation config
-  const [simulationConfig, setSimulationConfig] =
-    useState<NetworkSimulationConfig>({
-      enabled: false,
-      dampingFactor: 0.85,
-      trustMultiplier: 3,
-      trustShare: 1,
-      trustDecay: 0.8,
-    })
+  // Determine whether or not a given address is a trusted seed for the network
+  const isTrustedNetworkSeed = useCallback(
+    (address: string) => isTrustedSeed(network, address),
+    [network.trustedSeeds]
+  )
 
   const value = {
     // Network
@@ -184,6 +317,7 @@ export const NetworkProvider = ({
 
     // Utilities
     isValueValidated,
+    isTrustedSeed: isTrustedNetworkSeed,
 
     // Simulation
     simulationConfig,

@@ -7,6 +7,7 @@ import { Suspense, useState } from 'react'
 import { Button, ButtonLink } from '@/components/Button'
 import { Card } from '@/components/Card'
 import { Markdown } from '@/components/Markdown'
+import { NetworkProvider } from '@/contexts/NetworkContext'
 import { LOCALISM_FUND } from '@/lib/network'
 import { cn } from '@/lib/utils'
 
@@ -67,7 +68,9 @@ export default function HomePage() {
       <div className="space-y-10">
         <div className="h-[66vh] lg:h-4/5">
           <Suspense fallback={null}>
-            <NetworkGraph network={LOCALISM_FUND} />
+            <NetworkProvider network={LOCALISM_FUND}>
+              <NetworkGraph />
+            </NetworkProvider>
           </Suspense>
         </div>
 
