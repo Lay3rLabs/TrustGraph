@@ -3,6 +3,8 @@ import { HydrationBoundary, dehydrate } from '@tanstack/react-query'
 import { Hex } from 'viem'
 import { getEnsAddressQueryOptions, getEnsNameQueryOptions } from 'wagmi/query'
 
+import { NetworkProvider } from '@/contexts/NetworkContext'
+import { LOCALISM_FUND } from '@/lib/network'
 import { ponderClient } from '@/lib/ponder'
 import { makeQueryClient } from '@/lib/query'
 import { mightBeEnsName } from '@/lib/utils'
@@ -92,7 +94,9 @@ export default async function AccountProfilePageServer({
 
   return (
     <HydrationBoundary state={dehydratedState}>
-      <AccountProfilePage address={address} ensName={ensName} />
+      <NetworkProvider network={LOCALISM_FUND}>
+        <AccountProfilePage address={address} ensName={ensName} />
+      </NetworkProvider>
     </HydrationBoundary>
   )
 }

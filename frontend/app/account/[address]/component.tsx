@@ -249,7 +249,6 @@ export const AccountProfilePage = ({
           )}
 
           <CreateAttestationModal
-            network={LOCALISM_FUND}
             defaultRecipient={
               connectedAddress?.toLowerCase() === address.toLowerCase()
                 ? undefined

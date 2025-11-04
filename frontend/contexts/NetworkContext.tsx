@@ -1,23 +1,77 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { useCallback, useMemo } from 'react'
-import { Hex } from 'viem'
+import {
+  ReactNode,
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from 'react'
 
+import { useBatchEnsQuery } from '@/hooks/useEns'
+import { AttestationData } from '@/lib/attestation'
+import { Network, NetworkEntry } from '@/lib/network'
 import { ponderQueries } from '@/queries/ponder'
 
-import { useBatchEnsQuery } from './useEns'
-
-export interface NetworkEntry {
-  account: Hex
-  ensName?: string
-  value: string
-  rank: number
-  sent: number
-  received: number
+export type NetworkSimulationConfig = {
+  enabled: boolean
+  dampingFactor: number
+  trustMultiplier: number
+  trustShare: number
+  trustDecay: number
 }
 
-export function useNetwork() {
+export type NetworkContextType = {
+  // Network
+  network: Network
+
+  // Loading states
+  isLoading: boolean
+  error: string | null
+
+  // Data
+  accountData: NetworkEntry[]
+  attestationsData: AttestationData[] | undefined
+  totalValue: number
+  totalParticipants: number
+  averageValue: number
+  medianValue: number
+
+  // Additional metadata from ponder
+  merkleRoot: string | undefined
+  ipfsHashCid: string | undefined
+  blockNumber: string | undefined
+  timestamp: string | undefined
+  sources:
+    | {
+        name: string
+        metadata: any
+      }[]
+    | undefined
+
+  /** Refresh the network data. */
+  refresh: () => Promise<void>
+
+  /** Determine whether or not a given value is sufficient to be validated. */
+  isValueValidated: (value: string | number | bigint) => boolean
+
+  /** The simulation config for the network. */
+  simulationConfig: NetworkSimulationConfig
+  /** Set the simulation config for the network. */
+  setSimulationConfig: (config: NetworkSimulationConfig) => void
+}
+
+export const NetworkContext = createContext<NetworkContextType | null>(null)
+
+export const NetworkProvider = ({
+  network,
+  children,
+}: {
+  network: Network
+  children: ReactNode
+}) => {
   // Fetch latest merkle tree with entries
   const {
     data: merkleTreeData,
@@ -92,7 +146,20 @@ export function useNetwork() {
     return Number(value) >= 75
   }, [])
 
-  return {
+  // Simulation config
+  const [simulationConfig, setSimulationConfig] =
+    useState<NetworkSimulationConfig>({
+      enabled: false,
+      dampingFactor: 0.85,
+      trustMultiplier: 3,
+      trustShare: 1,
+      trustDecay: 0.8,
+    })
+
+  const value = {
+    // Network
+    network,
+
     // Loading states
     isLoading,
     error,
@@ -115,7 +182,24 @@ export function useNetwork() {
     // Actions
     refresh,
 
-    // Utility functions
+    // Utilities
     isValueValidated,
+
+    // Simulation
+    simulationConfig,
+    setSimulationConfig,
   }
+
+  return (
+    <NetworkContext.Provider value={value}>{children}</NetworkContext.Provider>
+  )
+}
+
+export const useNetworkIfAvailable = () => useContext(NetworkContext)
+export const useNetwork = () => {
+  const context = useNetworkIfAvailable()
+  if (!context) {
+    throw new Error('useNetwork must be used within a NetworkProvider')
+  }
+  return context
 }

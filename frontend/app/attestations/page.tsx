@@ -9,6 +9,7 @@ import { Hex } from 'viem'
 
 import { AttestationCard } from '@/components/AttestationCard'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
+import { NetworkProvider } from '@/contexts/NetworkContext'
 import { useIntoAttestationsData } from '@/hooks/useAttestation'
 import { usePushBreadcrumb } from '@/hooks/usePushBreadcrumb'
 import { LOCALISM_FUND } from '@/lib/network'
@@ -55,7 +56,9 @@ export default function AttestationsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="text-lg">ATTESTATIONS</div>
-        <CreateAttestationModal network={LOCALISM_FUND} />
+        <NetworkProvider network={LOCALISM_FUND}>
+          <CreateAttestationModal />
+        </NetworkProvider>
       </div>
 
       {/* Filters */}

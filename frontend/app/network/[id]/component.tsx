@@ -14,10 +14,10 @@ import { ExportButton } from '@/components/ExportButton'
 import { Markdown } from '@/components/Markdown'
 import { StatisticCard } from '@/components/StatisticCard'
 import { Column, Table } from '@/components/Table'
-import { NetworkEntry, useNetwork } from '@/hooks/useNetwork'
+import { useNetwork } from '@/contexts/NetworkContext'
 import { usePageRankComputerModule } from '@/hooks/usePageRankComputer'
 import { usePushBreadcrumb } from '@/hooks/usePushBreadcrumb'
-import { Network, isTrustedSeed } from '@/lib/network'
+import { NetworkEntry, isTrustedSeed } from '@/lib/network'
 import { formatBigNumber } from '@/lib/utils'
 import { PageRankGraphComputer } from '@/lib/wasm/pagerank/pagerank'
 
@@ -29,12 +29,13 @@ const NetworkGraph = dynamic(
   }
 )
 
-export const NetworkPage = ({ network }: { network: Network }) => {
+export const NetworkPage = () => {
   const router = useRouter()
   const pushBreadcrumb = usePushBreadcrumb()
   const pagerankModule = usePageRankComputerModule()
 
   const {
+    network,
     isLoading,
     error,
     attestationsData,
@@ -45,16 +46,12 @@ export const NetworkPage = ({ network }: { network: Network }) => {
     medianValue,
     refresh,
     isValueValidated,
+    simulationConfig,
   } = useNetwork()
-
-  const [dampingFactor, setDampingFactor] = useState(0.85)
-  const [trustMultiplier, setTrustMultiplier] = useState(3)
-  const [trustShare, setTrustShare] = useState(1)
-  const [trustDecay, setTrustDecay] = useState(0.8)
 
   const [computer, setComputer] = useState<PageRankGraphComputer | null>(null)
   useEffect(() => {
-    if (!pagerankModule || !attestationsData) {
+    if (!pagerankModule || !attestationsData || !simulationConfig.enabled) {
       return
     }
 
@@ -69,26 +66,26 @@ export const NetworkPage = ({ network }: { network: Network }) => {
     setComputer(computer)
 
     return () => computer.free()
-  }, [pagerankModule, attestationsData])
+  }, [pagerankModule, attestationsData, simulationConfig.enabled])
 
   useEffect(() => {
-    if (!pagerankModule || !computer) {
+    if (!pagerankModule || !computer || !simulationConfig.enabled) {
       return
     }
 
     try {
       const scores = computer.calculatePagerank(
         new pagerankModule.PageRankConfig(
-          dampingFactor,
+          simulationConfig.dampingFactor,
           100,
           1e-6,
           0,
           100,
           new pagerankModule.TrustConfig(
             network.trustedSeeds,
-            trustMultiplier,
-            trustShare,
-            trustDecay
+            simulationConfig.trustMultiplier,
+            simulationConfig.trustShare,
+            simulationConfig.trustDecay
           )
         )
       )
@@ -102,14 +99,7 @@ export const NetworkPage = ({ network }: { network: Network }) => {
     } catch (error) {
       console.error('error running pagerank computation', error)
     }
-  }, [
-    pagerankModule,
-    attestationsData,
-    dampingFactor,
-    trustMultiplier,
-    trustShare,
-    trustDecay,
-  ])
+  }, [pagerankModule, computer, attestationsData, simulationConfig])
 
   const { name, link, about, callToAction, criteria } = network
 
@@ -225,7 +215,7 @@ export const NetworkPage = ({ network }: { network: Network }) => {
           <h2 className="mt-2 -mb-3 font-bold">CRITERIA</h2>
           <Markdown>{criteria}</Markdown>
 
-          <CreateAttestationModal network={network} className="mt-3" />
+          <CreateAttestationModal className="mt-3" />
         </div>
 
         <div className="h-[66vh] lg:h-4/5">

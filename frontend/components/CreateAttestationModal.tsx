@@ -32,13 +32,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/Select'
+import { useNetwork } from '@/contexts/NetworkContext'
 import { useAccountNetworkProfile } from '@/hooks/useAccountProfile'
 import { useAttestation } from '@/hooks/useAttestation'
 import { useResolveEnsName } from '@/hooks/useEns'
-import { useNetwork } from '@/hooks/useNetwork'
 import { AttestationData } from '@/lib/attestation'
 import { parseErrorMessage } from '@/lib/error'
-import { Network } from '@/lib/network'
 import { SCHEMAS, SchemaManager } from '@/lib/schemas'
 import {
   areAddressesEqual,
@@ -54,29 +53,28 @@ import { Markdown } from './Markdown'
 import { Column, Table } from './Table'
 import { Tooltip } from './Tooltip'
 
-interface CreateAttestationModalProps {
+export type CreateAttestationModalProps = {
   trigger?: React.ReactNode
   title?: string
   onSuccess?: () => void
   isOpen?: boolean
   setIsOpen?: (value: boolean) => void
-  network?: Network
   defaultRecipient?: string
   variant?: ButtonProps['variant']
   className?: string
 }
 
-export function CreateAttestationModal({
+export const CreateAttestationModal = ({
   trigger,
   title = 'Make Attestation',
   onSuccess,
   isOpen: externalIsOpen,
   setIsOpen: externalSetIsOpen,
-  network,
   defaultRecipient = '',
   variant = 'default',
   className,
-}: CreateAttestationModalProps) {
+}: CreateAttestationModalProps) => {
+  const { network, totalValue } = useNetwork()
   const [internalIsOpen, setInternalIsOpen] = useState(false)
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen
   const setIsOpen = (value: boolean) => {
@@ -111,7 +109,6 @@ export function CreateAttestationModal({
     !resolvedEnsName.address
 
   const { address: connectedAddress = '0x', isConnected } = useAccount()
-  const { totalValue } = useNetwork()
   const { networkProfile, allAttestationsGiven } =
     useAccountNetworkProfile(connectedAddress)
   const {

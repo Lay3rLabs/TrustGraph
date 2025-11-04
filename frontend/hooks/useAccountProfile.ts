@@ -4,7 +4,7 @@ import { usePonderQuery } from '@ponder/react'
 import { useCallback } from 'react'
 import { Hex } from 'viem'
 
-import { useNetwork } from '@/hooks/useNetwork'
+import { useNetwork } from '@/contexts/NetworkContext'
 import { areAddressesEqual } from '@/lib/utils'
 import { ponderQueryFns } from '@/queries/ponder'
 

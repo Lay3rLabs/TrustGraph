@@ -1,3 +1,5 @@
+import { Hex } from 'viem'
+
 import { TRUSTED_SEEDS } from './config'
 import { merkleSnapshotAddress } from './contracts'
 
@@ -86,3 +88,12 @@ export type NetworkGraphEdge = {
       parallelMaxIndex?: null
     }
 )
+
+export type NetworkEntry = {
+  account: Hex
+  ensName?: string
+  value: string
+  rank: number
+  sent: number
+  received: number
+}
