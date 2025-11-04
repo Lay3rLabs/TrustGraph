@@ -1,5 +1,7 @@
 import { EventHandlers } from '@react-sigma/core'
 import { MultiDirectedGraph } from 'graphology'
+import { Sigma } from 'sigma'
+import { MouseCoords, TouchCoords } from 'sigma/types'
 
 import { NetworkGraphEdge, NetworkGraphNode } from '@/lib/network'
 
@@ -13,12 +15,17 @@ export type NetworkGraphHoverState = {
   edges: string[]
 } | null
 
-export type NetworkGraphDragState = 'IDLE' | 'DRAG_START' | 'DRAGGING'
+export type NetworkGraphDragState =
+  | 'IDLE'
+  | 'DRAG_START'
+  | 'DRAGGING'
+  | 'PREPARING_UNDRAG'
 
 export type NetworkGraphHoverConfig = {
   alwaysHoverNode?: string
   hoverDelay: number
   unhoverDelay: number
+  undragDelay: number
 }
 
 export type NetworkGraphInternalState =
@@ -28,6 +35,7 @@ export type NetworkGraphInternalState =
   | 'PREPARING_UNHOVER'
 
 export class NetworkGraphManager {
+  private sigma: Sigma
   private graph: MultiDirectedGraph<NetworkGraphNode, NetworkGraphEdge>
   private config: NetworkGraphHoverConfig
   private onStateChange: (
@@ -38,20 +46,27 @@ export class NetworkGraphManager {
 
   private state: NetworkGraphInternalState = 'IDLE'
   private hoverState: NetworkGraphHoverState | null = null
-  private timeout: NodeJS.Timeout | null = null
+  private hoverTimeout: NodeJS.Timeout | null = null
 
   private dragState: NetworkGraphDragState = 'IDLE'
+  private dragTimeout: NodeJS.Timeout | null = null
+  private draggedNode: string | null = null
+  private dragOffset: { x: number; y: number } | null = null
+  private customPositions: Map<string, { x: number; y: number }> = new Map()
 
   constructor({
+    sigma,
     graph,
     onStateChange,
     onLayoutUpdate,
     ...config
   }: {
+    sigma: Sigma
     graph: MultiDirectedGraph<NetworkGraphNode, NetworkGraphEdge>
     onStateChange: (state: NetworkGraphHoverState, showCursor: boolean) => void
     onLayoutUpdate: () => void
   } & NetworkGraphHoverConfig) {
+    this.sigma = sigma
     this.graph = graph
     this.config = config
     this.onStateChange = onStateChange
@@ -75,19 +90,20 @@ export class NetworkGraphManager {
 
       clickNode: ({ node }) => this.click('node', node),
       clickEdge: ({ edge }) => this.click('edge', edge),
-      mousedown: () => this.dragStart(),
-      touchdown: () => this.dragStart(),
-      mouseup: () => this.dragEnd(),
+      downNode: (event) => this.downNode(event.node, event.event),
+      mousedown: () => this.contactStart(),
+      touchdown: () => this.contactStart(),
+      mouseup: () => this.contactEnd(),
       touchup: () => {
         // Mark first touch interaction if not already marked for the current hover state (this is called right before clickNode/clickEdge).
         if (this.hoverState && !this.hoverState.touch) {
           this.hoverState.touch = 'first'
         }
 
-        this.dragEnd()
+        this.contactEnd()
       },
-      mousemovebody: () => this.maybeDragMove(),
-      touchmovebody: () => this.maybeDragMove(),
+      mousemovebody: (event) => this.maybeDragMove(event, event),
+      touchmovebody: (event) => this.maybeDragMove(event, event.touches[0]),
       afterRender: () => this.onLayoutUpdate(),
     })
 
@@ -117,18 +133,17 @@ export class NetworkGraphManager {
       // hoverState is null during PREPARING_HOVER, but we should still allow unhovering
       (!this.hoverState || this.isCurrentTarget(type, target))
     ) {
-      this.clearPendingTransition()
-
-      // Schedule transition to IDLE with unhover delay
-      this.state = 'PREPARING_UNHOVER'
-      this.timeout = setTimeout(() => {
-        this.state = 'IDLE'
-        this.notifyChange(null)
-      }, this.config.unhoverDelay)
+      this.setUnhover()
     }
   }
 
   click(type: NetworkGraphTargetType, target: string): void {
+    // Don't click if we're dragging or were just dragging (click fires right
+    // after contactEnd which schedules a drag transition to IDLE).
+    if (this.isOrWasJustDragging()) {
+      return
+    }
+
     // Check if clicked target is already visible in the hover state
     if (
       this.hoverState &&
@@ -157,24 +172,110 @@ export class NetworkGraphManager {
     }
   }
 
-  dragStart(): void {
+  downNode(node: string, event: { x: number; y: number }): void {
+    this.draggedNode = node
+
+    // Calculate drag offset: difference between mouse position and node position
+    const nodeAttributes = this.graph.getNodeAttributes(node)
+    const { x: mouseX, y: mouseY } = this.sigma.viewportToGraph(event)
+
+    this.dragOffset = {
+      x: nodeAttributes.x - mouseX,
+      y: nodeAttributes.y - mouseY,
+    }
+
+    // Disable camera drag
+    this.sigma.getCamera().disable()
+  }
+
+  contactStart(): void {
+    this.clearPendingDragTransition()
     this.dragState = 'DRAG_START'
   }
 
-  dragEnd(): void {
-    this.dragState = 'IDLE'
+  contactEnd(): void {
+    this.clearPendingDragTransition()
+
+    // If was dragging a node, re-hover.
+    // if (this.draggedNode && this.isDragging()) {
+    //   this.setHover('node', this.draggedNode, true)
+    // }
+
+    // Re-enable camera drag
+    this.sigma.getCamera().enable()
+
+    this.draggedNode = null
+    this.dragOffset = null
+    if (this.isDragging()) {
+      // Schedule clearing drag state with delay if just stopped dragging.
+      this.dragState = 'PREPARING_UNDRAG'
+      this.dragTimeout = setTimeout(() => {
+        this.dragState = 'IDLE'
+      }, this.config.undragDelay)
+    } else {
+      // If not dragging, clear drag state immediately.
+      this.dragState = 'IDLE'
+    }
   }
 
-  maybeDragMove(): void {
-    if (this.dragState === 'IDLE') {
+  maybeDragMove(
+    event: MouseCoords | TouchCoords,
+    { x, y }: { x: number; y: number }
+  ): void {
+    if (this.dragState === 'IDLE' || this.dragState === 'PREPARING_UNDRAG') {
       return
     }
+
     this.dragState = 'DRAGGING'
+
+    // If we're dragging a node, prevent default sigma behavior (camera drag)
+    // and unhover if hovering.
+    if (this.draggedNode) {
+      event.preventSigmaDefault()
+      event.original.preventDefault()
+      event.original.stopPropagation()
+
+      if (this.isHoveringOrPreparingTo()) {
+        this.setUnhover(true)
+      }
+    }
+
+    // If we're dragging a node, update its position
+    if (this.draggedNode && this.dragOffset) {
+      const { x: mouseX, y: mouseY } = this.sigma.viewportToGraph({ x, y })
+
+      const newX = mouseX + this.dragOffset.x
+      const newY = mouseY + this.dragOffset.y
+
+      this.graph.setNodeAttribute(this.draggedNode, 'x', newX)
+      this.graph.setNodeAttribute(this.draggedNode, 'y', newY)
+
+      // Store the custom position
+      this.customPositions.set(this.draggedNode, { x: newX, y: newY })
+
+      this.sigma.refresh()
+    }
+
     this.onLayoutUpdate()
   }
 
   cleanup(): void {
-    this.clearPendingTransition()
+    this.clearPendingHoverTransition()
+  }
+
+  getCustomPositions(): Map<string, { x: number; y: number }> {
+    return this.customPositions
+  }
+
+  applyCustomPositions(positions: Map<string, { x: number; y: number }>): void {
+    this.customPositions = positions
+    positions.forEach((pos, node) => {
+      if (this.graph.hasNode(node)) {
+        this.graph.setNodeAttribute(node, 'x', pos.x)
+        this.graph.setNodeAttribute(node, 'y', pos.y)
+      }
+    })
+    this.sigma.refresh()
   }
 
   // Internal methods
@@ -184,7 +285,7 @@ export class NetworkGraphManager {
     target: string,
     forceImmediate?: boolean
   ): void {
-    this.clearPendingTransition()
+    this.clearPendingHoverTransition()
 
     const newState: NetworkGraphHoverState = {
       type,
@@ -206,17 +307,46 @@ export class NetworkGraphManager {
       this.notifyChange(null)
 
       // Schedule hover
-      this.timeout = setTimeout(() => {
+      this.hoverTimeout = setTimeout(() => {
         this.state = 'HOVERING'
         this.notifyChange(newState)
       }, this.config.hoverDelay)
     }
   }
 
-  private clearPendingTransition(): void {
-    if (this.timeout) {
-      clearTimeout(this.timeout)
-      this.timeout = null
+  private setUnhover(immediate?: boolean): void {
+    this.clearPendingHoverTransition()
+
+    if (immediate) {
+      this.state = 'IDLE'
+      this.notifyChange(null)
+    } else {
+      // Schedule transition to IDLE with unhover delay
+      this.state = 'PREPARING_UNHOVER'
+      this.hoverTimeout = setTimeout(() => {
+        this.state = 'IDLE'
+        this.notifyChange(null)
+      }, this.config.unhoverDelay)
+    }
+  }
+
+  private clearDragState(): void {
+    this.dragState = 'IDLE'
+    this.draggedNode = null
+    this.dragOffset = null
+  }
+
+  private clearPendingHoverTransition(): void {
+    if (this.hoverTimeout) {
+      clearTimeout(this.hoverTimeout)
+      this.hoverTimeout = null
+    }
+  }
+
+  private clearPendingDragTransition(): void {
+    if (this.dragTimeout) {
+      clearTimeout(this.dragTimeout)
+      this.dragTimeout = null
     }
   }
 
@@ -241,6 +371,12 @@ export class NetworkGraphManager {
 
   private isDragging(): boolean {
     return this.dragState === 'DRAGGING'
+  }
+
+  private isOrWasJustDragging(): boolean {
+    return (
+      this.dragState === 'DRAGGING' || this.dragState === 'PREPARING_UNDRAG'
+    )
   }
 
   private notifyChange(state: NetworkGraphHoverState): void {

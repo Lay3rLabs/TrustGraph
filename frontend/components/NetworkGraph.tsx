@@ -23,7 +23,6 @@ import {
 import { MultiDirectedGraph } from 'graphology'
 import { circular } from 'graphology-layout'
 import forceAtlas2, { ForceAtlas2Settings } from 'graphology-layout-forceatlas2'
-import ForceAtlas2LayoutWorker from 'graphology-layout-forceatlas2/worker'
 import { CircleDashed, LoaderCircle, Waypoints } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -34,6 +33,7 @@ import { Hex } from 'viem'
 
 import { useNetwork } from '@/contexts/NetworkContext'
 import { useBatchEnsQuery } from '@/hooks/useEns'
+import { useUpdatingRef } from '@/hooks/useUpdatingRef'
 import { NetworkGraphEdge, NetworkGraphNode } from '@/lib/network'
 import {
   NetworkGraphHoverState,
@@ -43,7 +43,7 @@ import { areAddressesEqual, cn, formatBigNumber } from '@/lib/utils'
 
 const forceAtlas2SettingsOverrides: ForceAtlas2Settings = {
   // Bind nodes more tightly together.
-  gravity: 1,
+  gravity: 0.5,
 
   // Push hubs outwards to highlight them (disrupts spatial balance)
   // outboundAttractionDistribution: true,
@@ -134,23 +134,16 @@ export function NetworkGraph({
 
   const [showCursor, setShowCursor] = useState(false)
 
-  const [isLoadingGraph, setIsLoadingGraph] = useState(false)
-  const [graph, setGraph] = useState<MultiDirectedGraph<
-    NetworkGraphNode,
-    NetworkGraphEdge
-  > | null>(null)
+  const [isGraphFirstLoad, setIsGraphFirstLoad] = useState(true)
+  const [graph] = useState(
+    () => new MultiDirectedGraph<NetworkGraphNode, NetworkGraphEdge>()
+  )
 
-  // Load graph from data.
+  // Update graph from data.
   useEffect(() => {
     if (!accountData || !attestationsData) {
-      setGraph(null)
       return
     }
-
-    setIsLoadingGraph(true)
-
-    // Create the graph
-    const graph = new MultiDirectedGraph<NetworkGraphNode, NetworkGraphEdge>()
 
     const maxValue = Number(
       accountData.reduce(
@@ -204,13 +197,12 @@ export function NetworkGraph({
       const href = `/account/${ensName || account}`
       router.prefetch(href)
 
-      graph.addNode(account.toLowerCase(), {
+      const nodeKey = account.toLowerCase()
+      const node: Omit<NetworkGraphNode, 'x' | 'y'> = {
         href,
         label:
           (ensName || `${account.slice(0, 6)}...${account.slice(-4)}`) +
           (isTrustedSeed(account) ? ' 🌱' : ''),
-        x: 0,
-        y: 0,
         value: BigInt(value),
         sent,
         received,
@@ -221,7 +213,17 @@ export function NetworkGraph({
             (maxNodeSize - minNodeSize),
         // Set node color gradient from red to yellow to green based on value
         color: getColorFromValue(normalizedValue),
-      })
+      }
+
+      if (!graph.hasNode(nodeKey)) {
+        graph.addNode(nodeKey, {
+          ...node,
+          x: 0,
+          y: 0,
+        })
+      } else {
+        graph.mergeNodeAttributes(nodeKey, node)
+      }
     }
 
     for (const attestation of attestations) {
@@ -230,16 +232,22 @@ export function NetworkGraph({
       //   minEdgeSize +
       //   ((confidence - minConfidence) / (maxConfidence - minConfidence)) *
       //     (maxEdgeSize - minEdgeSize)
-      graph.addEdgeWithKey(
-        attestation.uid,
-        attestation.attester.toLowerCase(),
-        attestation.recipient.toLowerCase(),
-        {
-          href: `/attestations/${attestation.uid}`,
-          label: attestation.decodedData?.confidence?.toString() || 'unknown',
-          size: edgeSize,
-        }
-      )
+      const edgeKey = attestation.uid
+      const edge: NetworkGraphEdge = {
+        href: `/attestations/${attestation.uid}`,
+        label: attestation.decodedData?.confidence?.toString() || 'unknown',
+        size: edgeSize,
+      }
+      if (!graph.hasEdge(edgeKey)) {
+        graph.addEdgeWithKey(
+          edgeKey,
+          attestation.attester.toLowerCase(),
+          attestation.recipient.toLowerCase(),
+          edge
+        )
+      } else {
+        graph.mergeEdgeAttributes(edgeKey, edge)
+      }
     }
 
     // Curve parallel edges so they're all visible / not overlapping
@@ -288,31 +296,35 @@ export function NetworkGraph({
       }
     )
 
-    circular.assign(graph, {
-      scale: 100,
-    })
-
-    // Initialize force atlas 2 layout.
-    new Promise<void>(async (resolve) => {
-      const layout = new ForceAtlas2LayoutWorker(graph, {
-        settings: {
-          ...forceAtlas2.inferSettings(graph),
-          ...forceAtlas2SettingsOverrides,
-        },
+    // Only run layout on first load.
+    if (isGraphFirstLoad) {
+      circular.assign(graph, {
+        scale: 100,
       })
 
-      layout.start()
-      await new Promise<void>((resolve) =>
-        setTimeout(resolve, forceAtlas2Duration)
-      )
-      layout.stop()
-      layout.kill()
+      setIsGraphFirstLoad(false)
 
-      setGraph(graph)
-      setIsLoadingGraph(false)
+      // // Initialize force atlas 2 layout.
+      // new Promise<void>(async (resolve) => {
+      //   const layout = new ForceAtlas2LayoutWorker(graph, {
+      //     settings: {
+      //       ...forceAtlas2.inferSettings(graph),
+      //       ...forceAtlas2SettingsOverrides,
+      //     },
+      //   })
 
-      resolve()
-    })
+      //   layout.start()
+      //   await new Promise<void>((resolve) =>
+      //     setTimeout(resolve, forceAtlas2Duration)
+      //   )
+      //   layout.stop()
+      //   layout.kill()
+
+      //   setIsGraphFirstLoad(false)
+
+      //   resolve()
+      // })
+    }
   }, [accountData, attestationsData, isTrustedSeed, ensData])
 
   return (
@@ -322,7 +334,7 @@ export function NetworkGraph({
         className
       )}
     >
-      {isLoading || (isLoadingGraph && !graph) ? (
+      {isLoading || isGraphFirstLoad ? (
         <div className="w-full h-full flex justify-center items-center border border-border rounded-md p-4">
           <LoaderCircle size={24} className="animate-spin" />
         </div>
@@ -390,11 +402,26 @@ const SigmaControls = ({
   }, [sigma, initialZoom])
 
   const { positions: circularPositions } = useLayoutCircular({ scale: 100 })
+
+  const customPositionsRef = useRef<Map<string, { x: number; y: number }>>(
+    new Map()
+  )
   const { start: startForceAtlas2, stop: stopForceAtlas2 } =
     useWorkerLayoutForceAtlas2({
       settings: {
         ...forceAtlas2.inferSettings(graph),
         ...forceAtlas2SettingsOverrides,
+      },
+      outputReducer: (node, attributes) => {
+        if (customPositionsRef.current.has(node)) {
+          return {
+            ...attributes,
+            x: customPositionsRef.current.get(node)?.x,
+            y: customPositionsRef.current.get(node)?.y,
+          }
+        }
+
+        return attributes
       },
     })
 
@@ -406,9 +433,18 @@ const SigmaControls = ({
     stopAnimationRef.current()
     setLayout('circular')
     recenter()
+
+    const positions = circularPositions()
+    // Override with custom positions
+    // customPositionsRef.current.forEach((pos, node) => {
+    //   if (positions[node]) {
+    //     positions[node] = pos
+    //   }
+    // })
+
     stopAnimationRef.current = animateNodes(
       sigma.getGraph(),
-      circularPositions(),
+      positions,
       {
         duration: forceAtlas2Duration,
         easing: 'linear',
@@ -423,15 +459,16 @@ const SigmaControls = ({
     recenter()
     startForceAtlas2()
 
-    const stop = () => {
-      stopForceAtlas2()
-      recenter()
-      clearTimeout(timeout)
-      stopAnimationRef.current = () => {}
-    }
-    const timeout = setTimeout(stop, forceAtlas2Duration)
-    stopAnimationRef.current = stop
-  }, [startForceAtlas2, stopForceAtlas2, recenter])
+    // const stop = () => {
+    //   stopForceAtlas2()
+
+    //   recenter()
+    //   clearTimeout(timeout)
+    //   stopAnimationRef.current = () => {}
+    // }
+    // const timeout = setTimeout(stop, forceAtlas2Duration)
+    // stopAnimationRef.current = stop
+  }, [startForceAtlas2, stopForceAtlas2, recenter, sigma])
 
   const tooltipRefs = useRef<{
     nodes: Record<string, HTMLDivElement>
@@ -545,14 +582,17 @@ const SigmaControls = ({
     }
   }, [updateTooltipPositions])
 
+  const startForceAtlas2Ref = useUpdatingRef(startForceAtlas2)
   const [hoverState, setHoverState] = useState<NetworkGraphHoverState>(null)
   useEffect(() => {
     loadGraph(graph)
 
     const manager = new NetworkGraphManager({
+      sigma,
       graph,
       hoverDelay: 50,
       unhoverDelay: 75,
+      undragDelay: 50,
       onStateChange: (state, shouldShowCursor) => {
         setHoverState(state)
         setShowCursor(shouldShowCursor)
@@ -560,11 +600,25 @@ const SigmaControls = ({
       onLayoutUpdate: updateTooltipPositions,
     })
 
+    // Restore custom positions if they exist
+    if (customPositionsRef.current.size > 0) {
+      manager.applyCustomPositions(customPositionsRef.current)
+      console.log('applied custom positions', customPositionsRef.current)
+    }
+
+    customPositionsRef.current = manager.getCustomPositions()
+
     // Register event handlers
     manager.register(registerEvents)
 
+    // Start force atlas 2 layout.
+    setTimeout(() => {
+      startForceAtlas2Ref.current()
+    }, 250)
+
     return () => manager.cleanup()
   }, [
+    sigma,
     graph,
     loadGraph,
     registerEvents,
