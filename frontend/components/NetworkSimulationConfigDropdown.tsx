@@ -72,7 +72,7 @@ export const NetworkSimulationConfigDropdown = ({
       </Button>
 
       <div className="flex flex-row justify-between items-center gap-4 px-3 pt-2.5 pb-2 text-sm">
-        <span>Damping</span>
+        <span>Damping Factor</span>
         <Input
           value={simulationConfig.dampingFactor}
           onChange={(e) =>
