@@ -26,7 +26,7 @@ export const Tooltip = ({ title, children, className }: TooltipProps) => {
         {children}
       </Popover.Trigger>
       <Popover.Portal>
-        <Popover.Positioner sideOffset={10} side="bottom">
+        <Popover.Positioner className="z-100" sideOffset={10} side="bottom">
           <Popover.Popup
             className={clsx(
               styles.Popup,

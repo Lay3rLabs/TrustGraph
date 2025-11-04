@@ -26,6 +26,7 @@ export type NetworkSimulationConfig = {
   trustMultiplier: number
   trustShare: number
   trustDecay: number
+  maxIterations: number
 }
 
 export type NetworkContextType = {
@@ -110,6 +111,7 @@ export const NetworkProvider = ({
       trustMultiplier: 3,
       trustShare: 1,
       trustDecay: 0.8,
+      maxIterations: 100,
     })
 
   const pagerankModule = usePageRankComputerModule()
@@ -145,7 +147,7 @@ export const NetworkProvider = ({
       const scores = computer.calculatePagerank(
         new pagerankModule.PageRankConfig(
           simulationConfig.dampingFactor,
-          100,
+          simulationConfig.maxIterations,
           1e-6,
           0,
           100,
