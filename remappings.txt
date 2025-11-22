@@ -10,3 +10,6 @@ forge-std=node_modules/forge-std/src
 @morpho-org/universal-rewards-distributor=node_modules/@morpho-org/universal-rewards-distributor/src
 @gnosis-guild/zodiac-core/=node_modules/@gnosis-guild/zodiac-core/contracts/
 @gnosis.pm/safe-contracts/=node_modules/@gnosis.pm/safe-contracts/contracts/
+@hats-module/=lib/hats-module/
+hats-protocol/=lib/hats-protocol/src/
+solady/=lib/solady/src/

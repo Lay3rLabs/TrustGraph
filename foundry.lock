@@ -1,0 +1,17 @@
+{
+  "lib/hats-module": {
+    "tag": {
+      "name": "v0.7.0",
+      "rev": "e83bd72cb3eebdbeadabcb63e3c6f69ab61a5562"
+    }
+  },
+  "lib/hats-protocol": {
+    "rev": "cccb71a061cdb9095af7d11dfdb47026993d8c4e"
+  },
+  "lib/solady": {
+    "tag": {
+      "name": "v0.0.123",
+      "rev": "77809c18e010b914dde9518956a4ae7cb507d383"
+    }
+  }
+}
