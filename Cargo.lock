@@ -5853,6 +5853,62 @@ dependencies = [
 ]
 
 [[package]]
+name = "wavs-hats-creator"
+version = "0.9.1"
+dependencies = [
+ "alloy-sol-macro",
+ "alloy-sol-types",
+ "anyhow",
+ "serde",
+ "serde_json",
+ "wavs-wasi-utils",
+ "wit-bindgen-rt 0.44.0",
+ "wstd",
+]
+
+[[package]]
+name = "wavs-hats-eligibility"
+version = "0.9.1"
+dependencies = [
+ "alloy-sol-macro",
+ "alloy-sol-types",
+ "anyhow",
+ "serde",
+ "serde_json",
+ "wavs-wasi-utils",
+ "wit-bindgen-rt 0.44.0",
+ "wstd",
+]
+
+[[package]]
+name = "wavs-hats-minter"
+version = "0.9.1"
+dependencies = [
+ "alloy-sol-macro",
+ "alloy-sol-types",
+ "anyhow",
+ "serde",
+ "serde_json",
+ "wavs-wasi-utils",
+ "wit-bindgen-rt 0.44.0",
+ "wstd",
+]
+
+[[package]]
+name = "wavs-hats-toggle"
+version = "0.9.1"
+dependencies = [
+ "alloy-sol-macro",
+ "alloy-sol-types",
+ "anyhow",
+ "serde",
+ "serde_json",
+ "wavs-wasi-utils",
+ "wit-bindgen-rt 0.44.0",
+ "wstd",
+]
+
+[[package]]
 name = "wavs-indexer"
 version = "0.9.1"
 dependencies = [

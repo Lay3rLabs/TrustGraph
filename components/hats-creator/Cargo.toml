@@ -8,7 +8,7 @@ repository.workspace = true
 
 [dependencies]
 wit-bindgen-rt = {workspace = true}
-wavs-wasi-chain = { workspace = true }
+wavs-wasi-utils = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 alloy-sol-macro = { workspace = true }
