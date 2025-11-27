@@ -6,7 +6,7 @@ use bindings::{
     wavs::worker::layer_types::{TriggerData, TriggerDataEthContractEvent},
     Guest, TriggerAction,
 };
-use wavs_wasi_chain::decode_event_log_data;
+use wavs_wasi_utils::decode_event_log_data;
 
 sol!("../../src/interfaces/IHatsAvsTypes.sol");
 

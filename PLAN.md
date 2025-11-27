@@ -1,5 +1,15 @@
 # The Plan
 
+
+
+# Hats
+
+- Mint a hat if over a certain score.
+
+=====
+
+
+
 Figma: https://www.figma.com/proto/uGHgh87RIFS0GUlLR68hCs/TrustGraph-Wireframes?node-id=20-134
 Copy: https://www.notion.so/opencivics/TrustGraph-Copy-28606d2570f2805a8f08dfa3e64c559e?source=copy_link
 
