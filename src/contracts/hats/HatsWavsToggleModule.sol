@@ -9,10 +9,10 @@ import {IHatsAvsTypes} from "../../interfaces/IHatsAvsTypes.sol";
 import {HatsModule} from "@hats-module/src/HatsModule.sol";
 
 /**
- * @title HatsAvsToggleModule
+ * @title HatsWavsToggleModule
  * @notice A WAVS service handler that implements a Hats toggle module
  */
-contract HatsAvsToggleModule is HatsToggleModule, IWavsServiceHandler, IHatsAvsTypes {
+contract HatsWavsToggleModule is HatsToggleModule, IWavsServiceHandler, IHatsAvsTypes {
     error EnvelopeAlreadySeen();
     /// @notice The next trigger ID to be assigned
     uint64 public nextTriggerId;
@@ -36,7 +36,7 @@ contract HatsAvsToggleModule is HatsToggleModule, IWavsServiceHandler, IHatsAvsT
      * @param _version The version of the module
      */
     constructor(IHats _hats, IWavsServiceManager serviceManager, string memory _version) HatsModule(_version) {
-        require(address(serviceManager) != address(0), "HatsAvsToggleModule: invalid service manager");
+        require(address(serviceManager) != address(0), "HatsWavsToggleModule: invalid service manager");
         _serviceManager = serviceManager;
     }
 

@@ -108,6 +108,46 @@
         "chain_name": "${CHAIN_NAME}"
       },
       "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
+    },
+    {
+      "filename": "wavs_hats_eligibility.wasm",
+      "package_name": "wavs-hats-eligibility",
+      "package_version": "0.9.1",
+      "trigger_event": "EligibilityCheckTrigger(uint64,address,address,uint256)",
+      "trigger_json_path": "hats.eligibility_module",
+      "submit_json_path": "hats.eligibility_module",
+      "config_values": {},
+      "env_variables": []
+    },
+    {
+      "filename": "wavs_hats_toggle.wasm",
+      "package_name": "wavs-hats-toggle",
+      "package_version": "0.9.1",
+      "trigger_event": "StatusCheckTrigger(uint64,address,uint256)",
+      "trigger_json_path": "hats.toggle_module",
+      "submit_json_path": "hats.toggle_module",
+      "config_values": {},
+      "env_variables": []
+    },
+    {
+      "filename": "wavs_hats_creator.wasm",
+      "package_name": "wavs-hats-creator",
+      "package_version": "0.9.1",
+      "trigger_event": "HatCreationTrigger(uint64,address,uint256,string,uint32,address,address,bool,string)",
+      "trigger_json_path": "hats.hatter",
+      "submit_json_path": "hats.hatter",
+      "config_values": {},
+      "env_variables": []
+    },
+    {
+      "filename": "wavs_hats_minter.wasm",
+      "package_name": "wavs-hats-minter",
+      "package_version": "0.9.1",
+      "trigger_event": "MintingTrigger(uint64,address,uint256,address)",
+      "trigger_json_path": "hats.minter",
+      "submit_json_path": "hats.minter",
+      "config_values": {},
+      "env_variables": []
     }
   ],
   "aggregator_components": [

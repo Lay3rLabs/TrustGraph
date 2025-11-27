@@ -105,3 +105,17 @@ vars:
   # Schema UIDs (loaded from deployment summary)
   VOUCHING_SCHEMA_ID:
     sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.vouching.uid' .docker/deployment_summary.json || echo ""
+
+  # Hats Protocol addresses (loaded from deployment summary)
+  HATS_PROTOCOL:
+    sh: test -f .docker/deployment_summary.json && jq -r '.hats.hats_protocol' .docker/deployment_summary.json || echo ""
+  HATS_MODULE_FACTORY:
+    sh: test -f .docker/deployment_summary.json && jq -r '.hats.module_factory' .docker/deployment_summary.json || echo ""
+  HATS_ELIGIBILITY_MODULE:
+    sh: test -f .docker/deployment_summary.json && jq -r '.hats.eligibility_module' .docker/deployment_summary.json || echo ""
+  HATS_TOGGLE_MODULE:
+    sh: test -f .docker/deployment_summary.json && jq -r '.hats.toggle_module' .docker/deployment_summary.json || echo ""
+  HATS_HATTER:
+    sh: test -f .docker/deployment_summary.json && jq -r '.hats.hatter' .docker/deployment_summary.json || echo ""
+  HATS_MINTER:
+    sh: test -f .docker/deployment_summary.json && jq -r '.hats.minter' .docker/deployment_summary.json || echo ""

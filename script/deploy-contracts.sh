@@ -65,6 +65,15 @@ forge script script/DeployWavsIndexer.s.sol:DeployWavsIndexer \
     --private-key "${FUNDED_KEY}" \
     --broadcast
 
+echo "🎩 Deploying Hats Protocol WAVS contracts..."
+
+# Deploy Hats contracts using Foundry script
+forge script script/DeployHats.s.sol:DeployHats \
+    --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
+    --rpc-url "${RPC_URL}" \
+    --private-key "${FUNDED_KEY}" \
+    --broadcast
+
 # Combine all deployment JSON files into a single deployment summary.
 
 jq -n \
@@ -75,6 +84,7 @@ jq -n \
   --slurpfile eas_deploy .docker/eas_deploy.json \
   --slurpfile merkler_deploy .docker/merkler_deploy.json \
   --slurpfile zodiac_safes_deploy .docker/zodiac_safes_deploy.json \
+  --slurpfile hats_deploy .docker/hats_deploy.json \
   '{
     service_id: $service_id,
     rpc_url: $rpc_url,
@@ -83,6 +93,7 @@ jq -n \
     eas: $eas_deploy[0],
     merkler: $merkler_deploy[0],
     zodiac_safes: $zodiac_safes_deploy[0],
+    hats: $hats_deploy[0],
   }' \
   > .docker/deployment_summary.json
 
@@ -94,7 +105,7 @@ echo "   WAVS_SERVICE_MANAGER_ADDRESS: ${WAVS_SERVICE_MANAGER_ADDRESS}"
 echo ""
 echo "📄 Deployment details saved to .docker/deployment_summary.json"
 echo "📄 EAS deployment details saved to .docker/eas_deploy.json"
-echo "📄 Governance deployment details saved to .docker/governance_deploy.json"
 echo "📄 Merkler deployment details saved to .docker/merkler_deploy.json"
 echo "📄 Zodiac Safes deployment details saved to .docker/zodiac_safes_deploy.json"
 echo "📄 WavsIndexer deployment details saved to .docker/wavs_indexer_deploy.json"
+echo "📄 Hats deployment details saved to .docker/hats_deploy.json"

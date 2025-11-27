@@ -8,10 +8,10 @@ import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsSe
 import {IHatsAvsTypes} from "../../interfaces/IHatsAvsTypes.sol";
 
 /**
- * @title HatsAvsHatter
+ * @title HatsWavsHatter
  * @notice A WAVS service handler that can create hats based on signed data
  */
-contract HatsAvsHatter is HatsModule, IWavsServiceHandler, IHatsAvsTypes {
+contract HatsWavsHatter is HatsModule, IWavsServiceHandler, IHatsAvsTypes {
     error EnvelopeAlreadySeen();
     /// @notice The next trigger ID to be assigned
     uint64 public nextTriggerId;
@@ -29,7 +29,7 @@ contract HatsAvsHatter is HatsModule, IWavsServiceHandler, IHatsAvsTypes {
      * @param _version The version of the module
      */
     constructor(IHats _hats, IWavsServiceManager serviceManager, string memory _version) HatsModule(_version) {
-        require(address(serviceManager) != address(0), "HatsAvsHatter: invalid service manager");
+        require(address(serviceManager) != address(0), "HatsWavsHatter: invalid service manager");
         _serviceManager = serviceManager;
     }
 

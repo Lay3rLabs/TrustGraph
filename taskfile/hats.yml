@@ -1,0 +1,189 @@
+version: "3"
+
+tasks:
+  # === Eligibility Module ===
+  request-eligibility-check:
+    desc: "Request an eligibility check for a wearer and hat ID"
+    vars:
+      HATS_ELIGIBILITY_MODULE: "{{.HATS_ELIGIBILITY_MODULE}}"
+      WEARER: "{{.WEARER}}"
+      HAT_ID: "{{.HAT_ID}}"
+      RPC_URL:
+        sh: task get-rpc
+    preconditions:
+      - test -n "{{.HATS_ELIGIBILITY_MODULE}}"
+      - test -n "{{.WEARER}}"
+      - test -n "{{.HAT_ID}}"
+    cmds:
+      - |
+        cast send {{.HATS_ELIGIBILITY_MODULE}} \
+          "requestEligibilityCheck(address,uint256)" \
+          {{.WEARER}} {{.HAT_ID}} \
+          --private-key $FUNDED_KEY \
+          --rpc-url {{.RPC_URL}}
+
+  get-eligibility-result:
+    desc: "Get the latest eligibility result for a wearer and hat ID"
+    vars:
+      HATS_ELIGIBILITY_MODULE: "{{.HATS_ELIGIBILITY_MODULE}}"
+      WEARER: "{{.WEARER}}"
+      HAT_ID: "{{.HAT_ID}}"
+      RPC_URL:
+        sh: task get-rpc
+    preconditions:
+      - test -n "{{.HATS_ELIGIBILITY_MODULE}}"
+      - test -n "{{.WEARER}}"
+      - test -n "{{.HAT_ID}}"
+    cmds:
+      - |
+        cast call {{.HATS_ELIGIBILITY_MODULE}} \
+          "getLatestEligibilityResult(address,uint256)(bool,bool,uint256)" \
+          {{.WEARER}} {{.HAT_ID}} \
+          --rpc-url {{.RPC_URL}}
+
+  get-wearer-status:
+    desc: "Get the wearer status (eligible, standing) for a hat"
+    vars:
+      HATS_ELIGIBILITY_MODULE: "{{.HATS_ELIGIBILITY_MODULE}}"
+      WEARER: "{{.WEARER}}"
+      HAT_ID: "{{.HAT_ID}}"
+      RPC_URL:
+        sh: task get-rpc
+    preconditions:
+      - test -n "{{.HATS_ELIGIBILITY_MODULE}}"
+      - test -n "{{.WEARER}}"
+      - test -n "{{.HAT_ID}}"
+    cmds:
+      - |
+        cast call {{.HATS_ELIGIBILITY_MODULE}} \
+          "getWearerStatus(address,uint256)(bool,bool)" \
+          {{.WEARER}} {{.HAT_ID}} \
+          --rpc-url {{.RPC_URL}}
+
+  # === Toggle Module ===
+  request-status-check:
+    desc: "Request a status check for a hat ID"
+    vars:
+      HATS_TOGGLE_MODULE: "{{.HATS_TOGGLE_MODULE}}"
+      HAT_ID: "{{.HAT_ID}}"
+      RPC_URL:
+        sh: task get-rpc
+    preconditions:
+      - test -n "{{.HATS_TOGGLE_MODULE}}"
+      - test -n "{{.HAT_ID}}"
+    cmds:
+      - |
+        cast send {{.HATS_TOGGLE_MODULE}} \
+          "requestStatusCheck(uint256)" \
+          {{.HAT_ID}} \
+          --private-key $FUNDED_KEY \
+          --rpc-url {{.RPC_URL}}
+
+  get-status-result:
+    desc: "Get the latest status result for a hat ID"
+    vars:
+      HATS_TOGGLE_MODULE: "{{.HATS_TOGGLE_MODULE}}"
+      HAT_ID: "{{.HAT_ID}}"
+      RPC_URL:
+        sh: task get-rpc
+    preconditions:
+      - test -n "{{.HATS_TOGGLE_MODULE}}"
+      - test -n "{{.HAT_ID}}"
+    cmds:
+      - |
+        cast call {{.HATS_TOGGLE_MODULE}} \
+          "getLatestStatusResult(uint256)(bool,uint256)" \
+          {{.HAT_ID}} \
+          --rpc-url {{.RPC_URL}}
+
+  get-hat-status:
+    desc: "Get the hat status (active/inactive)"
+    vars:
+      HATS_TOGGLE_MODULE: "{{.HATS_TOGGLE_MODULE}}"
+      HAT_ID: "{{.HAT_ID}}"
+      RPC_URL:
+        sh: task get-rpc
+    preconditions:
+      - test -n "{{.HATS_TOGGLE_MODULE}}"
+      - test -n "{{.HAT_ID}}"
+    cmds:
+      - |
+        cast call {{.HATS_TOGGLE_MODULE}} \
+          "getHatStatus(uint256)(bool)" \
+          {{.HAT_ID}} \
+          --rpc-url {{.RPC_URL}}
+
+  # === Hatter (Hat Creation) ===
+  request-hat-creation:
+    desc: "Request creation of a new hat"
+    vars:
+      HATS_HATTER: "{{.HATS_HATTER}}"
+      ADMIN_HAT_ID: "{{.ADMIN_HAT_ID}}"
+      DETAILS: '{{.DETAILS | default "New Hat"}}'
+      MAX_SUPPLY: '{{.MAX_SUPPLY | default "100"}}'
+      ELIGIBILITY: '{{.ELIGIBILITY | default "0x0000000000000000000000000000000000000000"}}'
+      TOGGLE: '{{.TOGGLE | default "0x0000000000000000000000000000000000000000"}}'
+      MUTABLE: '{{.MUTABLE | default "true"}}'
+      IMAGE_URI: '{{.IMAGE_URI | default ""}}'
+      RPC_URL:
+        sh: task get-rpc
+    preconditions:
+      - test -n "{{.HATS_HATTER}}"
+      - test -n "{{.ADMIN_HAT_ID}}"
+    cmds:
+      - |
+        cast send {{.HATS_HATTER}} \
+          "requestHatCreation(uint256,string,uint32,address,address,bool,string)" \
+          {{.ADMIN_HAT_ID}} "{{.DETAILS}}" {{.MAX_SUPPLY}} {{.ELIGIBILITY}} {{.TOGGLE}} {{.MUTABLE}} "{{.IMAGE_URI}}" \
+          --private-key $FUNDED_KEY \
+          --rpc-url {{.RPC_URL}}
+
+  # === Minter (Hat Minting) ===
+  request-hat-minting:
+    desc: "Request minting a hat to an address"
+    vars:
+      HATS_MINTER: "{{.HATS_MINTER}}"
+      HAT_ID: "{{.HAT_ID}}"
+      WEARER: "{{.WEARER}}"
+      RPC_URL:
+        sh: task get-rpc
+    preconditions:
+      - test -n "{{.HATS_MINTER}}"
+      - test -n "{{.HAT_ID}}"
+      - test -n "{{.WEARER}}"
+    cmds:
+      - |
+        cast send {{.HATS_MINTER}} \
+          "requestHatMinting(uint256,address)" \
+          {{.HAT_ID}} {{.WEARER}} \
+          --private-key $FUNDED_KEY \
+          --rpc-url {{.RPC_URL}}
+
+  # === Utility Commands ===
+  get-next-trigger-id:
+    desc: "Get the next trigger ID for a Hats contract"
+    vars:
+      CONTRACT: "{{.CONTRACT}}"
+      RPC_URL:
+        sh: task get-rpc
+    preconditions:
+      - test -n "{{.CONTRACT}}"
+    cmds:
+      - |
+        cast call {{.CONTRACT}} \
+          "nextTriggerId()(uint64)" \
+          --rpc-url {{.RPC_URL}}
+
+  get-service-manager:
+    desc: "Get the service manager address for a Hats contract"
+    vars:
+      CONTRACT: "{{.CONTRACT}}"
+      RPC_URL:
+        sh: task get-rpc
+    preconditions:
+      - test -n "{{.CONTRACT}}"
+    cmds:
+      - |
+        cast call {{.CONTRACT}} \
+          "getServiceManager()(address)" \
+          --rpc-url {{.RPC_URL}}

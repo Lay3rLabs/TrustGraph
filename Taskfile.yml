@@ -23,6 +23,7 @@ includes:
   forge: ./taskfile/eas-forge.yml
   rewards: ./taskfile/rewards.yml
   trustgraph: ./taskfile/trustgraph.yml
+  hats: ./taskfile/hats.yml
   env:
     taskfile: ./taskfile/env.yml
     flatten: true
@@ -75,4 +76,3 @@ tasks:
       - |
         export AGGREGATOR_URL={{.AGGREGATOR_URL}}
         bash ./script/deploy-script.sh
-
