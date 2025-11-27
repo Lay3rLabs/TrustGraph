@@ -3,8 +3,8 @@ mod bindings;
 use alloy_sol_types::{sol, SolValue};
 use bindings::{
     export,
-    wavs::worker::layer_types::{TriggerData, TriggerDataEthContractEvent},
-    Guest, TriggerAction,
+    wavs::{operator::input::TriggerData, types::events::TriggerDataEvmContractEvent},
+    Guest, TriggerAction, WasmResponse,
 };
 use wavs_wasi_utils::{decode_event_log_data, evm::alloy_primitives::Uint};
 
@@ -13,9 +13,9 @@ sol!("../../src/interfaces/IHatsAvsTypes.sol");
 struct Component;
 
 impl Guest for Component {
-    fn run(trigger_action: TriggerAction) -> std::result::Result<Option<Vec<u8>>, String> {
+    fn run(trigger_action: TriggerAction) -> std::result::Result<Option<WasmResponse>, String> {
         match trigger_action.data {
-            TriggerData::EthContractEvent(TriggerDataEthContractEvent { log, .. }) => {
+            TriggerData::EvmContractEvent(TriggerDataEvmContractEvent { log, .. }) => {
                 // Decode the HatCreationTrigger event
                 let IHatsAvsTypes::HatCreationTrigger {
                     triggerId,
@@ -27,7 +27,7 @@ impl Guest for Component {
                     toggle,
                     mutable_,
                     imageURI,
-                } = decode_event_log_data!(log)
+                } = decode_event_log_data!(log.data)
                     .map_err(|e| format!("Failed to decode event log data: {}", e))?;
 
                 eprintln!("Successfully decoded hat creation trigger");
@@ -54,8 +54,8 @@ impl Guest for Component {
                 // Log success message
                 eprintln!("Hat creation component successfully processed the trigger");
 
-                // Return the ABI-encoded result
-                Ok(Some(result.abi_encode()))
+                // Return the ABI-encoded result wrapped in WasmResponse
+                Ok(Some(WasmResponse { payload: result.abi_encode().into(), ordering: None }))
             }
             _ => Err("Unsupported trigger data".to_string()),
         }

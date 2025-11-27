@@ -28,4 +28,4 @@ lto = true
 
 [package.metadata.component]
 package = "component:wavs-hats-minter"
-target = "wavs:worker/layer-trigger-world@0.3.0"
+target = "wavs:operator@=1.3.0"
