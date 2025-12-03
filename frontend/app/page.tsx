@@ -60,7 +60,7 @@ export default function HomePage() {
           />
           <FrequentlyAskedQuestion
             question="Where can I learn more?"
-            answer="Explore the [open-source repository](https://github.com/Lay3rLabs/TrustGraph), read the [GG24 case study](https://youtu.be/dQw4w9WgXcQ), or [join the upcoming pilots](https://youtu.be/dQw4w9WgXcQ) to co-create the next generation of trust-based governance."
+            answer="Explore the [open-source repository](https://github.com/Lay3rLabs/TrustGraph) or [localism fund pilot documentation](https://www.localism.fund/expert-network). Join the [Telegram community](https://trustgraph.network/support) or fill out the [Open Interest Form](https://trustgraph.network/interest)."
           />
         </div>
       </div>
