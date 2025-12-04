@@ -7,7 +7,9 @@ import {console} from "forge-std/console.sol";
 import {Common} from "script/Common.s.sol";
 
 import {MerkleSnapshot} from "contracts/merkle/MerkleSnapshot.sol";
-import {RewardDistributor} from "contracts/rewards/RewardDistributor.sol";
+import {
+    MerkleFundDistributor
+} from "contracts/merkle/MerkleFundDistributor.sol";
 import {TEST} from "contracts/tokens/TEST.sol";
 
 /// @dev Combined script to update merkle tree and claim rewards
@@ -18,149 +20,176 @@ contract Merkler is Common {
     /// @param merkleSnapshotAddr Address of the MerkleSnapshot contract
     function updateMerkle(string calldata merkleSnapshotAddr) public {
         vm.startBroadcast(_privateKey);
-        MerkleSnapshot merkleSnapshot = MerkleSnapshot(payable(vm.parseAddress(merkleSnapshotAddr)));
+        MerkleSnapshot merkleSnapshot = MerkleSnapshot(
+            payable(vm.parseAddress(merkleSnapshotAddr))
+        );
 
         uint64 triggerId = merkleSnapshot.trigger();
         console.log("TriggerId", triggerId);
         vm.stopBroadcast();
     }
 
-    /// @dev Claim rewards using merkle proof
-    /// @param rewardDistributorAddr Address of the RewardDistributor contract
-    /// @param rewardTokenAddr Address of the reward token (TEST) contract
-    function claimRewards(string calldata rewardDistributorAddr, string calldata rewardTokenAddr) public {
-        address rewardTokenAddress = vm.parseAddress(rewardTokenAddr);
+    // /// @dev Claim rewards using merkle proof
+    // /// @param merkleFundDistributorAddr Address of the MerkleFundDistributor contract
+    // /// @param rewardTokenAddr Address of the reward token (TEST) contract
+    // function claimRewards(
+    //     string calldata merkleFundDistributorAddr,
+    //     string calldata rewardTokenAddr
+    // ) public {
+    //     address rewardTokenAddress = vm.parseAddress(rewardTokenAddr);
 
-        vm.startBroadcast(_privateKey);
-        RewardDistributor rewardDistributor = RewardDistributor(payable(vm.parseAddress(rewardDistributorAddr)));
+    //     vm.startBroadcast(_privateKey);
+    //     MerkleFundDistributor merkleFundDistributor = MerkleFundDistributor(
+    //         payable(vm.parseAddress(merkleFundDistributorAddr))
+    //     );
 
-        string memory ipfsHashCid = rewardDistributor.ipfsHashCid();
+    //     string memory ipfsHashCid = merkleFundDistributor.ipfsHashCid();
 
-        // access IPFS_GATEWAY_URL from env
-        string memory ipfsGatewayUrl = vm.envString("IPFS_GATEWAY_URL");
-        string memory url = string.concat(ipfsGatewayUrl, ipfsHashCid);
+    //     // access IPFS_GATEWAY_URL from env
+    //     string memory ipfsGatewayUrl = vm.envString("IPFS_GATEWAY_URL");
+    //     string memory url = string.concat(ipfsGatewayUrl, ipfsHashCid);
 
-        // Get the claimer address first
-        address claimer = vm.addr(_privateKey);
+    //     // Get the claimer address first
+    //     address claimer = vm.addr(_privateKey);
 
-        console.log("Merkle data URL: ", url);
-        console.log("Claiming rewards...");
-        // console.log(string.concat("curl -s -X GET ", url, " | jq -c .tree[0]"));
+    //     console.log("Merkle data URL: ", url);
+    //     console.log("Claiming rewards...");
+    //     // console.log(string.concat("curl -s -X GET ", url, " | jq -c .tree[0]"));
 
-        // Query for the merkle entry for this specific claimer
-        string memory claimerStr = vm.toString(claimer);
-        // Use case-insensitive comparison by lowercasing both addresses
-        string memory entry = runCmd(
-            string.concat(
-                "claimerLower=$(echo '",
-                claimerStr,
-                "' | tr '[:upper:]' '[:lower:]'); curl -s -X GET ",
-                url,
-                " | jq -c \".tree[] | select(.account == \\\"$claimerLower\\\")\""
-            )
-        );
+    //     // Query for the merkle entry for this specific claimer
+    //     string memory claimerStr = vm.toString(claimer);
+    //     // Use case-insensitive comparison by lowercasing both addresses
+    //     string memory entry = runCmd(
+    //         string.concat(
+    //             "claimerLower=$(echo '",
+    //             claimerStr,
+    //             "' | tr '[:upper:]' '[:lower:]'); curl -s -X GET ",
+    //             url,
+    //             ' | jq -c ".tree[] | select(.account == \\"$claimerLower\\")"'
+    //         )
+    //     );
 
-        // Check if entry was found
-        if (bytes(entry).length == 0) {
-            console.log("No rewards found for address:", claimer);
-            vm.stopBroadcast();
-            return;
-        }
+    //     // Check if entry was found
+    //     if (bytes(entry).length == 0) {
+    //         console.log("No rewards found for address:", claimer);
+    //         vm.stopBroadcast();
+    //         return;
+    //     }
 
-        // Extract the claimable amount and proof
-        uint256 claimable = vm.parseJsonUint(entry, ".value");
-        bytes32[] memory proof = vm.parseJsonBytes32Array(entry, ".proof");
+    //     // Extract the claimable amount and proof
+    //     uint256 claimable = vm.parseJsonUint(entry, ".value");
+    //     bytes32[] memory proof = vm.parseJsonBytes32Array(entry, ".proof");
 
-        console.log("Claimer:", claimer);
-        console.log("Claimable:", claimable);
+    //     console.log("Claimer:", claimer);
+    //     console.log("Claimable:", claimable);
 
-        // Claim rewards with proof
-        TEST rewardToken = TEST(rewardTokenAddress);
-        uint256 balanceBefore = rewardToken.balanceOf(claimer);
-        uint256 claimed = rewardDistributor.claim(claimer, claimable, proof);
-        uint256 balanceAfter = rewardToken.balanceOf(claimer);
+    //     // Claim rewards with proof
+    //     TEST rewardToken = TEST(rewardTokenAddress);
+    //     uint256 balanceBefore = rewardToken.balanceOf(claimer);
+    //     uint256 claimed = merkleFundDistributor.claim(
+    //         claimer,
+    //         claimable,
+    //         proof
+    //     );
+    //     uint256 balanceAfter = rewardToken.balanceOf(claimer);
 
-        console.log("Balance before:", balanceBefore);
-        console.log("Balance after:", balanceAfter);
-        console.log("Claimed:", claimed);
+    //     console.log("Balance before:", balanceBefore);
+    //     console.log("Balance after:", balanceAfter);
+    //     console.log("Claimed:", claimed);
 
-        vm.stopBroadcast();
-    }
+    //     vm.stopBroadcast();
+    // }
 
-    /// @dev Combined function to update rewards and then claim them
-    /// @param merkleSnapshotAddr Address of the MerkleSnapshot contract
-    /// @param rewardDistributorAddr Address of the RewardDistributor contract
-    /// @param rewardTokenAddr Address of the reward token (TEST) contract
-    function updateAndClaimRewards(
-        string calldata merkleSnapshotAddr,
-        string calldata rewardDistributorAddr,
-        string calldata rewardTokenAddr
-    ) public {
-        updateMerkle(merkleSnapshotAddr);
-        claimRewards(rewardDistributorAddr, rewardTokenAddr);
-    }
+    // /// @dev Combined function to update rewards and then claim them
+    // /// @param merkleSnapshotAddr Address of the MerkleSnapshot contract
+    // /// @param merkleFundDistributorAddr Address of the MerkleFundDistributor contract
+    // /// @param rewardTokenAddr Address of the reward token (TEST) contract
+    // function updateAndClaimRewards(
+    //     string calldata merkleSnapshotAddr,
+    //     string calldata merkleFundDistributorAddr,
+    //     string calldata rewardTokenAddr
+    // ) public {
+    //     updateMerkle(merkleSnapshotAddr);
+    //     claimRewards(merkleFundDistributorAddr, rewardTokenAddr);
+    // }
 
-    /// @dev Query current contract state information
-    /// @param rewardDistributorAddr Address of the RewardDistributor contract
-    function queryContractState(string calldata rewardDistributorAddr) public view {
-        RewardDistributor rewardDistributor = RewardDistributor(payable(vm.parseAddress(rewardDistributorAddr)));
+    // /// @dev Query current contract state information
+    // /// @param merkleFundDistributorAddr Address of the MerkleFundDistributor contract
+    // function queryContractState(
+    //     string calldata merkleFundDistributorAddr
+    // ) public view {
+    //     MerkleFundDistributor merkleFundDistributor = MerkleFundDistributor(
+    //         payable(vm.parseAddress(merkleFundDistributorAddr))
+    //     );
 
-        bytes32 root = rewardDistributor.root();
-        bytes32 ipfsHash = rewardDistributor.ipfsHash();
-        string memory ipfsHashCid = rewardDistributor.ipfsHashCid();
+    //     bytes32 root = merkleFundDistributor.root();
+    //     bytes32 ipfsHash = merkleFundDistributor.ipfsHash();
+    //     string memory ipfsHashCid = merkleFundDistributor.ipfsHashCid();
 
-        console.log("=== Contract State ===");
-        console.log("Current Root:");
-        console.logBytes32(root);
-        console.log("");
-        console.log("Current IPFS Hash:");
-        console.logBytes32(ipfsHash);
-        console.log("");
-        console.log("Current IPFS Hash CID:");
-        console.log(ipfsHashCid);
-        console.log("=====================");
-    }
+    //     console.log("=== Contract State ===");
+    //     console.log("Current Root:");
+    //     console.logBytes32(root);
+    //     console.log("");
+    //     console.log("Current IPFS Hash:");
+    //     console.logBytes32(ipfsHash);
+    //     console.log("");
+    //     console.log("Current IPFS Hash CID:");
+    //     console.log(ipfsHashCid);
+    //     console.log("=====================");
+    // }
 
-    /// @dev Get the IPFS URI for the current merkle tree
-    /// @param rewardDistributorAddr Address of the RewardDistributor contract
-    function getIpfsUri(string calldata rewardDistributorAddr) public view returns (string memory) {
-        RewardDistributor rewardDistributor = RewardDistributor(payable(vm.parseAddress(rewardDistributorAddr)));
+    // /// @dev Get the IPFS URI for the current merkle tree
+    // /// @param merkleFundDistributorAddr Address of the MerkleFundDistributor contract
+    // function getIpfsUri(
+    //     string calldata merkleFundDistributorAddr
+    // ) public view returns (string memory) {
+    //     MerkleFundDistributor merkleFundDistributor = MerkleFundDistributor(
+    //         payable(vm.parseAddress(merkleFundDistributorAddr))
+    //     );
 
-        string memory ipfsHashCid = rewardDistributor.ipfsHashCid();
-        string memory ipfsGatewayUrl = vm.envString("IPFS_GATEWAY_URL");
-        string memory uri = string.concat(ipfsGatewayUrl, ipfsHashCid);
+    //     string memory ipfsHashCid = merkleFundDistributor.ipfsHashCid();
+    //     string memory ipfsGatewayUrl = vm.envString("IPFS_GATEWAY_URL");
+    //     string memory uri = string.concat(ipfsGatewayUrl, ipfsHashCid);
 
-        console.log("IPFS URI:", uri);
-        return uri;
-    }
+    //     console.log("IPFS URI:", uri);
+    //     return uri;
+    // }
 
-    /// @dev Query claim status for an address
-    /// @param rewardDistributorAddr Address of the RewardDistributor contract
-    /// @param rewardTokenAddr Address of the reward token
-    /// @param account Address to check claim status for
-    function queryClaimStatus(
-        string calldata rewardDistributorAddr,
-        string calldata rewardTokenAddr,
-        string calldata account
-    ) public view {
-        RewardDistributor rewardDistributor = RewardDistributor(payable(vm.parseAddress(rewardDistributorAddr)));
+    // /// @dev Query claim status for an address
+    // /// @param merkleFundDistributorAddr Address of the MerkleFundDistributor contract
+    // /// @param rewardTokenAddr Address of the reward token
+    // /// @param account Address to check claim status for
+    // function queryClaimStatus(
+    //     string calldata merkleFundDistributorAddr,
+    //     string calldata rewardTokenAddr,
+    //     string calldata account
+    // ) public view {
+    //     MerkleFundDistributor merkleFundDistributor = MerkleFundDistributor(
+    //         payable(vm.parseAddress(merkleFundDistributorAddr))
+    //     );
 
-        address accountAddr = vm.parseAddress(account);
-        address rewardTokenAddress = vm.parseAddress(rewardTokenAddr);
+    //     address accountAddr = vm.parseAddress(account);
+    //     address rewardTokenAddress = vm.parseAddress(rewardTokenAddr);
 
-        uint256 claimedAmount = rewardDistributor.claimed(accountAddr, rewardTokenAddress);
+    //     uint256 claimedAmount = merkleFundDistributor.claimed(
+    //         accountAddr,
+    //         rewardTokenAddress
+    //     );
 
-        console.log("=== Claim Status ===");
-        console.log("Account:", accountAddr);
-        console.log("Reward Token:", rewardTokenAddress);
-        console.log("Already Claimed:", claimedAmount);
-        console.log("===================");
-    }
+    //     console.log("=== Claim Status ===");
+    //     console.log("Account:", accountAddr);
+    //     console.log("Reward Token:", rewardTokenAddress);
+    //     console.log("Already Claimed:", claimedAmount);
+    //     console.log("===================");
+    // }
 
     /// @dev Get current balance of reward tokens for an address
     /// @param rewardTokenAddr Address of the reward token
     /// @param account Address to check balance for
-    function queryBalance(string calldata rewardTokenAddr, string calldata account) public view {
+    function queryBalance(
+        string calldata rewardTokenAddr,
+        string calldata account
+    ) public view {
         address accountAddr = vm.parseAddress(account);
         address rewardTokenAddress = vm.parseAddress(rewardTokenAddr);
 
@@ -175,26 +204,27 @@ contract Merkler is Common {
     }
 
     /// @dev Comprehensive query of all relevant information
-    /// @param rewardDistributorAddr Address of the RewardDistributor contract
+    /// @param merkleFundDistributorAddr Address of the MerkleFundDistributor contract
     /// @param rewardTokenAddr Address of the reward token
     /// @param account Address to check information for
-    function queryAll(string calldata rewardDistributorAddr, string calldata rewardTokenAddr, string calldata account)
-        public
-        view
-    {
+    function queryAll(
+        string calldata merkleFundDistributorAddr,
+        string calldata rewardTokenAddr,
+        string calldata account
+    ) public view {
         console.log("=== COMPREHENSIVE QUERY ===");
         console.log("");
 
-        queryContractState(rewardDistributorAddr);
+        // queryContractState(merkleFundDistributorAddr);
         console.log("");
 
-        getIpfsUri(rewardDistributorAddr);
+        // getIpfsUri(merkleFundDistributorAddr);
         console.log("");
 
         queryBalance(rewardTokenAddr, account);
         console.log("");
 
-        queryClaimStatus(rewardDistributorAddr, rewardTokenAddr, account);
+        // queryClaimStatus(merkleFundDistributorAddr, rewardTokenAddr, account);
         console.log("");
 
         console.log("=== END COMPREHENSIVE QUERY ===");

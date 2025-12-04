@@ -283,7 +283,7 @@ add_component_interactive() {
     echo "  eas.contracts.indexer_resolver"
     echo "  governance.voting_power"
     echo "  merkler.merkle_snapshot"
-    echo "  merkler.reward_distributor"
+    echo "  merkler.fund_distributor"
     echo "  prediction_market.controller"
     read -p "Trigger address JSON path: " trigger_path
 
@@ -292,14 +292,14 @@ add_component_interactive() {
     echo "  eas.contracts.attester"
     echo "  governance.voting_power"
     echo "  merkler.merkle_snapshot"
-    echo "  merkler.reward_distributor"
+    echo "  merkler.fund_distributor"
     echo "  prediction_market.controller"
     read -p "Submit address JSON path: " submit_path
 
     echo ""
     echo "Configuration values (optional):"
     echo "These values can use \${VAR_NAME} syntax for runtime substitution"
-    echo "Common config keys: eas_address, indexer_address, chain_name, reward_token, market_maker"
+    echo "Common config keys: eas_address, indexer_address, chain_name, token, market_maker"
     echo "Format: key1=value1,key2=value2 (or press Enter to skip)"
     read -p "Config values: " config_values_str
 

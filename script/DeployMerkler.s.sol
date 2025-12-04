@@ -4,27 +4,35 @@ pragma solidity ^0.8.22;
 import {stdJson} from "forge-std/StdJson.sol";
 
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
+import {
+    IWavsServiceManager
+} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
 
 import {Common} from "script/Common.s.sol";
 
 import {MerkleSnapshot} from "contracts/merkle/MerkleSnapshot.sol";
-import {RewardDistributor} from "contracts/rewards/RewardDistributor.sol";
+import {
+    MerkleFundDistributor
+} from "contracts/merkle/MerkleFundDistributor.sol";
 import {TEST} from "contracts/tokens/TEST.sol";
 
-/// @dev Deployment script for MerklerSnapshot and RewardDistributor contracts
+/// @dev Deployment script for MerklerSnapshot and MerkleFundDistributor contracts
 contract DeployScript is Common {
     using stdJson for string;
 
     string public root = vm.projectRoot();
-    string public script_output_path = string.concat(root, "/.docker/merkler_deploy.json");
+    string public script_output_path =
+        string.concat(root, "/.docker/merkler_deploy.json");
 
     /**
-     * @dev Deploys the MerkleSnapshot contract (and potentially the RewardDistributor contract) and writes the results to a JSON file
+     * @dev Deploys the MerkleSnapshot contract (and potentially the MerkleFundDistributor contract) and writes the results to a JSON file
      * @param serviceManagerAddr The address of the service manager
-     * @param deployRewardDistributor Whether to deploy the RewardDistributor contract
+     * @param deployMerkleFundDistributor Whether to deploy the MerkleFundDistributor contract
      */
-    function run(string calldata serviceManagerAddr, bool deployRewardDistributor) public {
+    function run(
+        string calldata serviceManagerAddr,
+        bool deployMerkleFundDistributor
+    ) public {
         string memory _json = "json";
 
         address serviceManager = vm.parseAddress(serviceManagerAddr);
@@ -32,12 +40,14 @@ contract DeployScript is Common {
         vm.startBroadcast(_privateKey);
 
         // Create the merkle snapshot contract
-        MerkleSnapshot merkleSnapshot = new MerkleSnapshot(IWavsServiceManager(serviceManager));
+        MerkleSnapshot merkleSnapshot = new MerkleSnapshot(
+            IWavsServiceManager(serviceManager)
+        );
 
-        if (deployRewardDistributor) {
+        if (deployMerkleFundDistributor) {
             // Deploy TEST token.
             address deployer = vm.addr(_privateKey);
-            TEST rewardToken = new TEST(
+            TEST testToken = new TEST(
                 deployer, // defaultAdmin
                 deployer, // tokenBridge
                 deployer, // pauser
@@ -45,18 +55,31 @@ contract DeployScript is Common {
             );
 
             // Create the distributor and add it as a hook to the merkle snapshot.
-            RewardDistributor rewardDistributor = new RewardDistributor(address(rewardToken), address(merkleSnapshot));
-            merkleSnapshot.addHook(rewardDistributor);
+            MerkleFundDistributor merkleFundDistributor = new MerkleFundDistributor(
+                    deployer, // owner
+                    address(merkleSnapshot), // merkle snapshot
+                    deployer, // fee recipient
+                    3e16, // 3% fee
+                    false // disable allowlist
+                );
 
             // Mint tokens for the distributor to distribute.
-            rewardToken.mint(address(rewardDistributor), 1000 ether);
+            testToken.mint(address(merkleFundDistributor), 1000 ether);
 
-            _json.serialize("reward_distributor", Strings.toChecksumHexString(address(rewardDistributor)));
-            _json.serialize("reward_token", Strings.toChecksumHexString(address(rewardToken)));
+            _json.serialize(
+                "fund_distributor",
+                Strings.toChecksumHexString(address(merkleFundDistributor))
+            );
+            _json.serialize(
+                "token",
+                Strings.toChecksumHexString(address(testToken))
+            );
         }
 
-        string memory finalJson =
-            _json.serialize("merkle_snapshot", Strings.toChecksumHexString(address(merkleSnapshot)));
+        string memory finalJson = _json.serialize(
+            "merkle_snapshot",
+            Strings.toChecksumHexString(address(merkleSnapshot))
+        );
 
         vm.stopBroadcast();
 

@@ -20,35 +20,35 @@ tasks:
   query:
     desc: "Query rewards contract state"
     vars:
-      REWARD_DISTRIBUTOR_ADDRESS: "{{.REWARD_DISTRIBUTOR_ADDRESS}}"
+      MERKLE_FUND_DISTRIBUTOR_ADDRESS: "{{.MERKLE_FUND_DISTRIBUTOR_ADDRESS}}"
       RPC_URL:
         sh: task get-rpc
     preconditions:
-      - test -n "{{.REWARD_DISTRIBUTOR_ADDRESS}}"
+      - test -n "{{.MERKLE_FUND_DISTRIBUTOR_ADDRESS}}"
     cmds:
       - |
         forge script script/Merkler.s.sol:Merkler \
           --sig "queryContractState(string)" \
-          "{{.REWARD_DISTRIBUTOR_ADDRESS}}" \
+          "{{.MERKLE_FUND_DISTRIBUTOR_ADDRESS}}" \
           --rpc-url {{.RPC_URL}}
 
   claim:
     desc: "Claim rewards"
     vars:
-      REWARD_DISTRIBUTOR_ADDRESS: "{{.REWARD_DISTRIBUTOR_ADDRESS}}"
+      MERKLE_FUND_DISTRIBUTOR_ADDRESS: "{{.MERKLE_FUND_DISTRIBUTOR_ADDRESS}}"
       REWARD_TOKEN_ADDRESS: "{{.REWARD_TOKEN_ADDRESS}}"
       IPFS_GATEWAY_URL: '{{.IPFS_GATEWAY_URL | default "http://127.0.0.1:8080/ipfs/"}}'
       RPC_URL:
         sh: task get-rpc
     preconditions:
-      - test -n "{{.REWARD_DISTRIBUTOR_ADDRESS}}"
+      - test -n "{{.MERKLE_FUND_DISTRIBUTOR_ADDRESS}}"
       - test -n "{{.REWARD_TOKEN_ADDRESS}}"
     cmds:
       - |
         export IPFS_GATEWAY_URL="{{.IPFS_GATEWAY_URL}}"
         forge script script/Merkler.s.sol:Merkler \
           --sig "claimRewards(string,string)" \
-          "{{.REWARD_DISTRIBUTOR_ADDRESS}}" \
+          "{{.MERKLE_FUND_DISTRIBUTOR_ADDRESS}}" \
           "{{.REWARD_TOKEN_ADDRESS}}" \
           --rpc-url {{.RPC_URL}} \
           --broadcast --ffi

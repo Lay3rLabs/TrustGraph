@@ -15,14 +15,14 @@ import {
   merkleSnapshotAbi,
   merkleSnapshotAddress,
   merkleSnapshotConfig,
-  // rewardDistributorAbi,
-  // rewardDistributorAddress,
+  // merkleFundDistributorAbi,
+  // merkleFundDistributorAddress,
 } from '@/lib/contracts'
 import { parseErrorMessage } from '@/lib/error'
 import { txToast } from '@/lib/tx'
 
-const rewardDistributorAddress = '0x0000000000000000000000000000000000000000'
-const rewardDistributorAbi = [] as any
+const merkleFundDistributorAddress = '0x0000000000000000000000000000000000000000'
+const merkleFundDistributorAbi = [] as any
 const enovaAddress = '0x0000000000000000000000000000000000000000'
 
 interface MerkleTreeData {
@@ -75,11 +75,11 @@ export function useRewards() {
     isLoading: isLoadingRoot,
     refetch: refetchMerkleRoot,
   } = useReadContract({
-    address: rewardDistributorAddress,
-    abi: rewardDistributorAbi,
+    address: merkleFundDistributorAddress,
+    abi: merkleFundDistributorAbi,
     functionName: 'root',
     query: {
-      enabled: !!rewardDistributorAddress,
+      enabled: !!merkleFundDistributorAddress,
     },
   })
 
@@ -89,18 +89,18 @@ export function useRewards() {
     isLoading: isLoadingHash,
     refetch: refetchIpfsHash,
   } = useReadContract({
-    address: rewardDistributorAddress,
-    abi: rewardDistributorAbi,
+    address: merkleFundDistributorAddress,
+    abi: merkleFundDistributorAbi,
     functionName: 'ipfsHashCid',
     query: {
-      enabled: !!rewardDistributorAddress,
+      enabled: !!merkleFundDistributorAddress,
     },
   })
 
   // Read claimed amount for connected user
   const { data: claimedAmount, refetch: refetchClaimed } = useReadContract({
-    address: rewardDistributorAddress,
-    abi: rewardDistributorAbi,
+    address: merkleFundDistributorAddress,
+    abi: merkleFundDistributorAbi,
     functionName: 'claimed',
     args: address ? [address, enovaAddress] : undefined,
     query: {
@@ -220,8 +220,8 @@ export function useRewards() {
 
       const [{ transactionHash }] = await txToast({
         tx: {
-          address: rewardDistributorAddress,
-          abi: rewardDistributorAbi,
+          address: merkleFundDistributorAddress,
+          abi: merkleFundDistributorAbi,
           functionName: 'claim',
           args: [
             address,
@@ -256,7 +256,7 @@ export function useRewards() {
     address,
     pendingReward,
     isConnected,
-    rewardDistributorAddress,
+    merkleFundDistributorAddress,
     writeContract,
     refetchClaimed,
   ])
@@ -291,6 +291,6 @@ export function useRewards() {
     refresh,
 
     // Contract info
-    contractAddress: rewardDistributorAddress,
+    contractAddress: merkleFundDistributorAddress,
   }
 }
