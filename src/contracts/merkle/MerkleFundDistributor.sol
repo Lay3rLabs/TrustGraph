@@ -14,128 +14,11 @@ import {
 } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {
+    EnumerableSet
+} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-interface IMerkleFundDistributor {
-    /// @notice A distribution state.
-    struct DistributionState {
-        /// @notice The block number of the distribution creation.
-        uint256 blockNumber;
-        /// @notice The timestamp of the distribution creation.
-        uint256 timestamp;
-        /// @notice The merkle root of this distribution.
-        bytes32 root;
-        /// @notice The ipfs hash containing metadata about the root (e.g. the merkle tree itself).
-        bytes32 ipfsHash;
-        /// @notice The ipfs hash CID containing metadata about the root (e.g. the merkle tree itself).
-        string ipfsHashCid;
-        /// @notice The total value of the merkle tree.
-        uint256 totalMerkleValue;
-        /// @notice The distributor address.
-        address distributor;
-        /// @notice The token to distribute (0 for native token, otherwise an ERC20 token address).
-        address token;
-        /// @notice The total amount of the token funded.
-        uint256 amountFunded;
-        /// @notice The amount of the token distributed so far (excluding fee).
-        uint256 amountDistributed;
-        /// @notice The fee recipient address.
-        address feeRecipient;
-        /// @notice The amount of the token retained as a fee.
-        uint256 feeAmount;
-    }
-
-    /// @notice Emitted when owner starts 2-step ownership transfer to `pendingOwner`.
-    /// @param pendingOwner The pending owner of the contract.
-    event OwnershipTransferStarted(address indexed pendingOwner);
-
-    /// @notice Emitted when the owner of the contract is set.
-    /// @param previousOwner The previous owner of the contract.
-    /// @param newOwner The new owner of the contract.
-    event OwnershipTransferred(
-        address indexed previousOwner,
-        address indexed newOwner
-    );
-
-    /// @notice Emitted when the fee recipient is set.
-    /// @param previousFeeRecipient The previous fee recipient address.
-    /// @param newFeeRecipient The new fee recipient address.
-    event FeeRecipientSet(
-        address indexed previousFeeRecipient,
-        address indexed newFeeRecipient
-    );
-
-    /// @notice Emitted when the fee percentage is set.
-    /// @param previousFeePercentage The previous fee percentage.
-    /// @param newFeePercentage The new fee percentage.
-    event FeePercentageSet(
-        uint256 indexed previousFeePercentage,
-        uint256 indexed newFeePercentage
-    );
-
-    /// @notice Emitted when the merkle snapshot contract is updated.
-    /// @param previousContract The previous merkle snapshot contract address.
-    /// @param newContract The new merkle snapshot contract address.
-    event MerkleSnapshotUpdated(
-        address indexed previousContract,
-        address indexed newContract
-    );
-
-    /// @notice Emitted when a distributor's ability to distribute funds is updated.
-    /// @param distributor The distributor address.
-    /// @param canDistribute The distributor's ability to distribute funds.
-    event DistributorAllowanceUpdated(
-        address indexed distributor,
-        bool indexed canDistribute
-    );
-
-    /// @notice Emitted when the distributor allowlist is enabled/disabled.
-    /// @param enabled The distributor's allowlist status.
-    event DistributorAllowlistUpdated(bool indexed enabled);
-
-    /// @notice Emitted when funds are distributed.
-    /// @param distributionIndex The index of the distribution.
-    /// @param distributor The distributor address.
-    /// @param token The token distributed.
-    /// @param amountFunded The amount of token funded.
-    /// @param feeAmount The amount of token retained as a fee.
-    event Distributed(
-        uint256 indexed distributionIndex,
-        address indexed distributor,
-        address indexed token,
-        uint256 amountFunded,
-        uint256 feeAmount
-    );
-
-    /// @notice Emitted when tokens are claimed.
-    /// @param distributionIndex The index of the distribution.
-    /// @param account The address that claimed the tokens.
-    /// @param token The token claimed.
-    /// @param amount The amount of token claimed.
-    /// @param value The merkle tree value.
-    event Claimed(
-        uint256 indexed distributionIndex,
-        address indexed account,
-        address indexed token,
-        uint256 amount,
-        uint256 value
-    );
-
-    error NotOwner();
-    error NotPendingOwner();
-    error InvalidAddress();
-    error CannotDistribute();
-    error InvalidNativeTokenTransfer();
-    error InvalidNativeTokenTransferAmount();
-    error AlreadyClaimed();
-    error FailedToTransferFee(bytes data);
-    error FailedToTransferTokens(bytes data);
-    error InvalidMerkleState();
-    error DistributionNotFound();
-    error InvalidMerkleProof();
-    error NoFundsToClaim();
-    error FeePercentageTooHigh();
-    error UnexpectedMerkleRoot(bytes32 expected, bytes32 actual);
-}
+import {IMerkleFundDistributor} from "interfaces/IMerkleFundDistributor.sol";
 
 /// @title MerkleFundDistributor
 /// @notice A contract for distributing funds from a merkle tree.
@@ -147,6 +30,7 @@ contract MerkleFundDistributor is
     Pausable
 {
     using SafeERC20 for IERC20;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     /* CONSTANTS */
 
@@ -159,6 +43,9 @@ contract MerkleFundDistributor is
 
     /* STORAGE */
 
+    /// @notice Address of the MerkleSnapshot contract to query for merkle state
+    address public merkleSnapshot;
+
     /// @notice The address that can update the distribution parameters.
     address public owner;
 
@@ -168,17 +55,14 @@ contract MerkleFundDistributor is
     /// @notice The fee recipient address.
     address public feeRecipient;
 
-    /// @notice Address of the MerkleSnapshot contract to query for merkle state
-    address public merkleSnapshot;
-
     /// @notice The fee percentage taken from the distributed amount.
     uint256 public feePercentage;
 
     /// @notice Whether the distributor allowlist is enabled.
-    bool public distributorAllowlistEnabled;
+    bool public allowlistEnabled;
 
     /// @notice The addresses allowed to distribute funds (if allowlist is enabled).
-    mapping(address distributor => bool canDistribute) public canDistribute;
+    EnumerableSet.AddressSet private _allowlist;
 
     /// @notice The distributions.
     DistributionState[] public distributions;
@@ -199,7 +83,7 @@ contract MerkleFundDistributor is
 
     /// @notice Reverts if the caller cannot distribute funds.
     modifier onlyDistributor() {
-        if (distributorAllowlistEnabled && !canDistribute[msg.sender]) {
+        if (allowlistEnabled && !_allowlist.contains(msg.sender)) {
             revert CannotDistribute();
         }
         _;
@@ -213,14 +97,14 @@ contract MerkleFundDistributor is
      * @param merkleSnapshot_ The MerkleSnapshot contract address
      * @param feeRecipient_ The fee recipient address
      * @param feePercentage_ The fee percentage taken from the distributed amount
-     * @param distributorAllowlistEnabled_ Whether the distributor allowlist is enabled.
+     * @param allowlistEnabled_ Whether the distributor allowlist is enabled.
      */
     constructor(
         address owner_,
         address merkleSnapshot_,
         address feeRecipient_,
         uint256 feePercentage_,
-        bool distributorAllowlistEnabled_
+        bool allowlistEnabled_
     ) {
         // Initialize owner to the deployer.
         owner = msg.sender;
@@ -232,7 +116,7 @@ contract MerkleFundDistributor is
         _setMerkleSnapshot(merkleSnapshot_);
         _setFeeRecipient(feeRecipient_);
         _setFeePercentage(feePercentage_);
-        _setDistributorAllowlistEnabled(distributorAllowlistEnabled_);
+        _setAllowlistEnabled(allowlistEnabled_);
     }
 
     /* VIEW */
@@ -282,6 +166,61 @@ contract MerkleFundDistributor is
         return distributions.length;
     }
 
+    /// @notice Checks if an address is in the allowlist.
+    /// @param distributor The address to check.
+    /// @return True if the address is in the allowlist.
+    function isAllowlisted(address distributor) external view returns (bool) {
+        return _allowlist.contains(distributor);
+    }
+
+    /// @notice Returns the number of addresses in the allowlist.
+    /// @return The allowlist length.
+    function getAllowlistLength() external view returns (uint256) {
+        return _allowlist.length();
+    }
+
+    /// @notice Returns the address at a given index in the allowlist.
+    /// @param index The index to query.
+    /// @return The address at the index.
+    function getAllowlistAt(uint256 index) external view returns (address) {
+        return _allowlist.at(index);
+    }
+
+    /// @notice Returns all addresses in the allowlist.
+    /// @return All allowlisted addresses.
+    function getAllowlist() external view returns (address[] memory) {
+        return _allowlist.values();
+    }
+
+    /// @notice Returns paginated addresses in the allowlist.
+    /// @param offset The offset to start from.
+    /// @param limit The number of addresses to return.
+    /// @return result The allowlisted addresses.
+    function getAllowlistPaginated(
+        uint256 offset,
+        uint256 limit
+    ) external view returns (address[] memory) {
+        uint256 length = _allowlist.length();
+        if (offset >= length) {
+            return new address[](0);
+        }
+
+        uint256 end = offset + limit;
+        if (end > length) {
+            end = length;
+        }
+
+        address[] memory result = new address[](end - offset);
+        for (uint256 i = offset; i < end; ) {
+            result[i - offset] = _allowlist.at(i);
+            unchecked {
+                ++i;
+            }
+        }
+
+        return result;
+    }
+
     /* EXTERNAL */
 
     /// @notice Starts 2-step ownership transfer to `newOwner`.
@@ -320,12 +259,10 @@ contract MerkleFundDistributor is
         _setMerkleSnapshot(newMerkleSnapshot);
     }
 
-    /// @notice Sets the `distributorAllowlistEnabled` of the contract to `distributorAllowlistEnabled_`.
-    /// @param distributorAllowlistEnabled_ Whether the distributor allowlist is enabled.
-    function setDistributorAllowlistEnabled(
-        bool distributorAllowlistEnabled_
-    ) external onlyOwner {
-        _setDistributorAllowlistEnabled(distributorAllowlistEnabled_);
+    /// @notice Sets the `allowlistEnabled` of the contract to `allowlistEnabled_`.
+    /// @param allowlistEnabled_ Whether the distributor allowlist is enabled.
+    function setAllowlistEnabled(bool allowlistEnabled_) external onlyOwner {
+        _setAllowlistEnabled(allowlistEnabled_);
     }
 
     /// @notice Updates a distributor's ability to distribute funds.
@@ -519,7 +456,8 @@ contract MerkleFundDistributor is
             account,
             distribution.token,
             claimedAmount,
-            value
+            value,
+            distribution.amountDistributed
         );
     }
 
@@ -568,21 +506,23 @@ contract MerkleFundDistributor is
         emit MerkleSnapshotUpdated(previousMerkleSnapshot, newMerkleSnapshot);
     }
 
-    /// @dev Sets the `distributorAllowlistEnabled` of the contract to `distributorAllowlistEnabled_`.
-    function _setDistributorAllowlistEnabled(
-        bool distributorAllowlistEnabled_
-    ) internal {
-        distributorAllowlistEnabled = distributorAllowlistEnabled_;
-        emit DistributorAllowlistUpdated(distributorAllowlistEnabled_);
+    /// @dev Sets the `allowlistEnabled` of the contract to `allowlistEnabled_`.
+    function _setAllowlistEnabled(bool allowlistEnabled_) internal {
+        allowlistEnabled = allowlistEnabled_;
+        emit DistributorAllowlistUpdated(allowlistEnabled_);
     }
 
-    /// @dev Sets the `canDistribute` flag for the distributor to `newCanDistribute`.
+    /// @dev Sets whether or not the distributor is allowed to distribute funds.
     function _setCanDistribute(
         address distributor,
-        bool newCanDistribute
+        bool canDistribute
     ) internal {
-        canDistribute[distributor] = newCanDistribute;
-        emit DistributorAllowanceUpdated(distributor, newCanDistribute);
+        if (canDistribute) {
+            _allowlist.add(distributor);
+        } else {
+            _allowlist.remove(distributor);
+        }
+        emit DistributorAllowanceUpdated(distributor, canDistribute);
     }
 
     /// @dev Whether or not the token is a native token.

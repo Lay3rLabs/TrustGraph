@@ -65,7 +65,6 @@ try {
     // Merkler
     MerkleSnapshot: deployment.merkler.merkle_snapshot,
     MerkleFundDistributor: deployment.merkler.fund_distributor,
-    ERC20: deployment.merkler.token,
   }
 
   // Make sure ABIs exist for all contracts, and copy them to the frontend.

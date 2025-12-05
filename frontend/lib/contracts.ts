@@ -589,7 +589,7 @@ export const easAbi = [
   { type: 'error', inputs: [], name: 'WrongSchema' },
 ] as const
 
-export const easAddress = '0x4200000000000000000000000000000000000021' as const
+export const easAddress = '0xd64Be2a06489758A5B57aa4279975c8aF779FFeA' as const
 
 export const easConfig = { address: easAddress, abi: easAbi } as const
 
@@ -690,7 +690,7 @@ export const easAttestTriggerAbi = [
 ] as const
 
 export const easAttestTriggerAddress =
-  '0xA91F15f5632A98278daBED81C4A6Fe87f9cF4161' as const
+  '0x44118712f83743CBa7e3Df18c6C3bEdF7c8c0772' as const
 
 export const easAttestTriggerConfig = {
   address: easAttestTriggerAddress,
@@ -876,7 +876,7 @@ export const easIndexerResolverAbi = [
 ] as const
 
 export const easIndexerResolverAddress =
-  '0xF0278E089aA3361796e9B9d30C30Ee427747225E' as const
+  '0x6c8d76f10Ab2301151f745Bc797020F380f49aF1' as const
 
 export const easIndexerResolverConfig = {
   address: easIndexerResolverAddress,
@@ -1017,11 +1017,602 @@ export const iWavsServiceManagerAbi = [
 ] as const
 
 export const iWavsServiceManagerAddress =
-  '0x197484FACcBdb900788f50F553907bbaea20701C' as const
+  '0xDe1C361aE59A008B96923409c4373E011ed96f88' as const
 
 export const iWavsServiceManagerConfig = {
   address: iWavsServiceManagerAddress,
   abi: iWavsServiceManagerAbi,
+} as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// MerkleFundDistributor
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const merkleFundDistributorAbi = [
+  {
+    type: 'constructor',
+    inputs: [
+      { name: 'owner_', internalType: 'address', type: 'address' },
+      { name: 'merkleSnapshot_', internalType: 'address', type: 'address' },
+      { name: 'feeRecipient_', internalType: 'address', type: 'address' },
+      { name: 'feePercentage_', internalType: 'uint256', type: 'uint256' },
+      { name: 'allowlistEnabled_', internalType: 'bool', type: 'bool' },
+    ],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'FEE_RANGE',
+    outputs: [{ name: '', internalType: 'uint64', type: 'uint64' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'acceptOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'allowlistEnabled',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'distributionIndex', internalType: 'uint256', type: 'uint256' },
+      { name: 'account', internalType: 'address', type: 'address' },
+      { name: 'value', internalType: 'uint256', type: 'uint256' },
+      { name: 'proof', internalType: 'bytes32[]', type: 'bytes32[]' },
+    ],
+    name: 'claim',
+    outputs: [
+      { name: 'claimedAmount', internalType: 'uint256', type: 'uint256' },
+    ],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'distributionIndex', internalType: 'uint256', type: 'uint256' },
+      { name: 'account', internalType: 'address', type: 'address' },
+    ],
+    name: 'claimed',
+    outputs: [{ name: 'amount', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'token', internalType: 'address', type: 'address' },
+      { name: 'amount', internalType: 'uint256', type: 'uint256' },
+      { name: 'expectedRoot', internalType: 'bytes32', type: 'bytes32' },
+    ],
+    name: 'distribute',
+    outputs: [
+      { name: 'distributionIndex', internalType: 'uint256', type: 'uint256' },
+    ],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    name: 'distributions',
+    outputs: [
+      { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
+      { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+      { name: 'root', internalType: 'bytes32', type: 'bytes32' },
+      { name: 'ipfsHash', internalType: 'bytes32', type: 'bytes32' },
+      { name: 'ipfsHashCid', internalType: 'string', type: 'string' },
+      { name: 'totalMerkleValue', internalType: 'uint256', type: 'uint256' },
+      { name: 'distributor', internalType: 'address', type: 'address' },
+      { name: 'token', internalType: 'address', type: 'address' },
+      { name: 'amountFunded', internalType: 'uint256', type: 'uint256' },
+      { name: 'amountDistributed', internalType: 'uint256', type: 'uint256' },
+      { name: 'feeRecipient', internalType: 'address', type: 'address' },
+      { name: 'feeAmount', internalType: 'uint256', type: 'uint256' },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'feePercentage',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'feeRecipient',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getAllowlist',
+    outputs: [{ name: '', internalType: 'address[]', type: 'address[]' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'index', internalType: 'uint256', type: 'uint256' }],
+    name: 'getAllowlistAt',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getAllowlistLength',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'offset', internalType: 'uint256', type: 'uint256' },
+      { name: 'limit', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'getAllowlistPaginated',
+    outputs: [{ name: '', internalType: 'address[]', type: 'address[]' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'distributionIndex', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'getDistribution',
+    outputs: [
+      {
+        name: '',
+        internalType: 'struct IMerkleFundDistributor.DistributionState',
+        type: 'tuple',
+        components: [
+          { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
+          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+          { name: 'root', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'ipfsHash', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'ipfsHashCid', internalType: 'string', type: 'string' },
+          {
+            name: 'totalMerkleValue',
+            internalType: 'uint256',
+            type: 'uint256',
+          },
+          { name: 'distributor', internalType: 'address', type: 'address' },
+          { name: 'token', internalType: 'address', type: 'address' },
+          { name: 'amountFunded', internalType: 'uint256', type: 'uint256' },
+          {
+            name: 'amountDistributed',
+            internalType: 'uint256',
+            type: 'uint256',
+          },
+          { name: 'feeRecipient', internalType: 'address', type: 'address' },
+          { name: 'feeAmount', internalType: 'uint256', type: 'uint256' },
+        ],
+      },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getDistributionCount',
+    outputs: [{ name: 'total', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'offset', internalType: 'uint256', type: 'uint256' },
+      { name: 'limit', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'getDistributions',
+    outputs: [
+      {
+        name: '',
+        internalType: 'struct IMerkleFundDistributor.DistributionState[]',
+        type: 'tuple[]',
+        components: [
+          { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
+          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+          { name: 'root', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'ipfsHash', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'ipfsHashCid', internalType: 'string', type: 'string' },
+          {
+            name: 'totalMerkleValue',
+            internalType: 'uint256',
+            type: 'uint256',
+          },
+          { name: 'distributor', internalType: 'address', type: 'address' },
+          { name: 'token', internalType: 'address', type: 'address' },
+          { name: 'amountFunded', internalType: 'uint256', type: 'uint256' },
+          {
+            name: 'amountDistributed',
+            internalType: 'uint256',
+            type: 'uint256',
+          },
+          { name: 'feeRecipient', internalType: 'address', type: 'address' },
+          { name: 'feeAmount', internalType: 'uint256', type: 'uint256' },
+        ],
+      },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'distributor', internalType: 'address', type: 'address' }],
+    name: 'isAllowlisted',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'merkleSnapshot',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'owner',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'pause',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'paused',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'pendingOwner',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'allowlistEnabled_', internalType: 'bool', type: 'bool' }],
+    name: 'setAllowlistEnabled',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'newFeePercentage', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'setFeePercentage',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'newFeeRecipient', internalType: 'address', type: 'address' },
+    ],
+    name: 'setFeeRecipient',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'newMerkleSnapshot', internalType: 'address', type: 'address' },
+    ],
+    name: 'setMerkleSnapshot',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
+    name: 'transferOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'unpause',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'distributor', internalType: 'address', type: 'address' },
+      { name: 'canDistribute_', internalType: 'bool', type: 'bool' },
+    ],
+    name: 'updateDistributorAllowance',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'distributionIndex',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: true,
+      },
+      {
+        name: 'account',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'token',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'amount',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+      {
+        name: 'value',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+      {
+        name: 'newAmountDistributed',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'Claimed',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'distributionIndex',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: true,
+      },
+      {
+        name: 'distributor',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'token',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'amountFunded',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+      {
+        name: 'feeAmount',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'Distributed',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'distributor',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'canDistribute',
+        internalType: 'bool',
+        type: 'bool',
+        indexed: true,
+      },
+    ],
+    name: 'DistributorAllowanceUpdated',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      { name: 'enabled', internalType: 'bool', type: 'bool', indexed: true },
+    ],
+    name: 'DistributorAllowlistUpdated',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'previousFeePercentage',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: true,
+      },
+      {
+        name: 'newFeePercentage',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: true,
+      },
+    ],
+    name: 'FeePercentageSet',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'previousFeeRecipient',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newFeeRecipient',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'FeeRecipientSet',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'previousContract',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newContract',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'MerkleSnapshotUpdated',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'pendingOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipTransferStarted',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'previousOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipTransferred',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'account',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+    ],
+    name: 'Paused',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'account',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+    ],
+    name: 'Unpaused',
+  },
+  { type: 'error', inputs: [], name: 'AlreadyClaimed' },
+  { type: 'error', inputs: [], name: 'CannotDistribute' },
+  { type: 'error', inputs: [], name: 'DistributionNotFound' },
+  { type: 'error', inputs: [], name: 'EnforcedPause' },
+  { type: 'error', inputs: [], name: 'ExpectedPause' },
+  {
+    type: 'error',
+    inputs: [{ name: 'data', internalType: 'bytes', type: 'bytes' }],
+    name: 'FailedToTransferFee',
+  },
+  {
+    type: 'error',
+    inputs: [{ name: 'data', internalType: 'bytes', type: 'bytes' }],
+    name: 'FailedToTransferTokens',
+  },
+  { type: 'error', inputs: [], name: 'FeePercentageTooHigh' },
+  { type: 'error', inputs: [], name: 'InvalidAddress' },
+  { type: 'error', inputs: [], name: 'InvalidMerkleProof' },
+  { type: 'error', inputs: [], name: 'InvalidMerkleState' },
+  { type: 'error', inputs: [], name: 'InvalidNativeTokenTransfer' },
+  { type: 'error', inputs: [], name: 'InvalidNativeTokenTransferAmount' },
+  { type: 'error', inputs: [], name: 'NoFundsToClaim' },
+  { type: 'error', inputs: [], name: 'NotOwner' },
+  { type: 'error', inputs: [], name: 'NotPendingOwner' },
+  { type: 'error', inputs: [], name: 'ReentrancyGuardReentrantCall' },
+  {
+    type: 'error',
+    inputs: [{ name: 'token', internalType: 'address', type: 'address' }],
+    name: 'SafeERC20FailedOperation',
+  },
+  {
+    type: 'error',
+    inputs: [
+      { name: 'expected', internalType: 'bytes32', type: 'bytes32' },
+      { name: 'actual', internalType: 'bytes32', type: 'bytes32' },
+    ],
+    name: 'UnexpectedMerkleRoot',
+  },
+] as const
+
+export const merkleFundDistributorAddress =
+  '0x047084F6cdEB6acAA05a71b310A3Db0b4A0a4719' as const
+
+export const merkleFundDistributorConfig = {
+  address: merkleFundDistributorAddress,
+  abi: merkleFundDistributorAbi,
 } as const
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1507,7 +2098,7 @@ export const merkleSnapshotAbi = [
 ] as const
 
 export const merkleSnapshotAddress =
-  '0x6d5339Fd17235803AE68e04d0b820bdd987427AC' as const
+  '0x1D2aa5A4De360D219E60db424c442e30A42D6085' as const
 
 export const merkleSnapshotConfig = {
   address: merkleSnapshotAddress,
@@ -1551,7 +2142,7 @@ export const schemaRegistrarAbi = [
 ] as const
 
 export const schemaRegistrarAddress =
-  '0x33b9885aC3cB1891b0bC43F55D71963BD1Fee5F2' as const
+  '0x32b63b694b58881Da6317D605d6F1fFCc08048DD' as const
 
 export const schemaRegistrarConfig = {
   address: schemaRegistrarAddress,
@@ -1643,7 +2234,7 @@ export const schemaRegistryAbi = [
 ] as const
 
 export const schemaRegistryAddress =
-  '0x4200000000000000000000000000000000000020' as const
+  '0xCd948ba3a35eC847872ab9f6f645491AAD9533cC' as const
 
 export const schemaRegistryConfig = {
   address: schemaRegistryAddress,
@@ -1831,7 +2422,7 @@ export const wavsAttesterAbi = [
 ] as const
 
 export const wavsAttesterAddress =
-  '0xbaF18D8045521a6d91243BBB2CaaFb37a35d70F4' as const
+  '0x0d4921B959AF717EA13673c903552e8481b49334' as const
 
 export const wavsAttesterConfig = {
   address: wavsAttesterAddress,
@@ -2863,7 +3454,7 @@ export const wavsIndexerAbi = [
 ] as const
 
 export const wavsIndexerAddress =
-  '0xF56904778BcCF9B89c4B2f214eB07Fb2B9872b5E' as const
+  '0xa2FB024988e2BAB78B724394333Db4A98ddFF8aF' as const
 
 export const wavsIndexerConfig = {
   address: wavsIndexerAddress,

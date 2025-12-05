@@ -2,6 +2,7 @@ import { createConfig } from "ponder";
 
 import {
   easIndexerResolverAbi,
+  merkleFundDistributorAbi,
   merkleSnapshotAbi,
   wavsIndexerAbi,
 } from "../frontend/lib/contracts";
@@ -52,6 +53,14 @@ export default createConfig({
       // startBlock: 35855002,
       chain: {
         [CHAIN]: { address: deploymentSummary.merkler.merkle_snapshot as Hex },
+      },
+    },
+    merkleFundDistributor: {
+      abi: merkleFundDistributorAbi,
+      startBlock: 1,
+      // startBlock: 35855002,
+      chain: {
+        [CHAIN]: { address: deploymentSummary.merkler.fund_distributor as Hex },
       },
     },
   },

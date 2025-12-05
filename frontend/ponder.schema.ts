@@ -1,7 +1,7 @@
-import { index, onchainTable } from 'ponder'
+import { index, onchainTable } from "ponder";
 
 export const wavsIndexerEvent = onchainTable(
-  'wavs_indexer_event',
+  "wavs_indexer_event",
   (t) => ({
     id: t.hex().primaryKey(),
     chainId: t.text().notNull(),
@@ -22,10 +22,10 @@ export const wavsIndexerEvent = onchainTable(
     blockNumberIdx: index().on(t.blockNumber),
     timestampIdx: index().on(t.timestamp),
   })
-)
+);
 
 export const easAttestation = onchainTable(
-  'eas_attestation',
+  "eas_attestation",
   (t) => ({
     uid: t.hex().primaryKey(),
     schema: t.hex().notNull(),
@@ -47,10 +47,10 @@ export const easAttestation = onchainTable(
     blockNumberIdx: index().on(t.blockNumber),
     timestampIdx: index().on(t.timestamp),
   })
-)
+);
 
 export const merkleSnapshot = onchainTable(
-  'merkle_snapshot',
+  "merkle_snapshot",
   (t) => ({
     id: t.text().primaryKey(),
     root: t.hex().notNull(),
@@ -66,4 +66,79 @@ export const merkleSnapshot = onchainTable(
     blockNumberIdx: index().on(t.blockNumber),
     timestampIdx: index().on(t.timestamp),
   })
-)
+);
+
+export const merkleFundDistributor = onchainTable(
+  "merkle_fund_distributor",
+  (t) => ({
+    address: t.hex().primaryKey(),
+    chainId: t.text().notNull(),
+    paused: t.boolean().notNull(),
+    merkleSnapshot: t.hex().notNull(),
+    owner: t.hex().notNull(),
+    pendingOwner: t.hex().notNull(),
+    feeRecipient: t.hex().notNull(),
+    feePercentage: t.numeric().notNull(),
+    allowlistEnabled: t.boolean().notNull(),
+    allowlist: t.hex().array().notNull(),
+  }),
+  (t) => ({
+    chainIdIdx: index().on(t.chainId),
+    merkleSnapshotIdx: index().on(t.merkleSnapshot),
+    ownerIdx: index().on(t.owner),
+    pendingOwnerIdx: index().on(t.pendingOwner),
+    feeRecipientIdx: index().on(t.feeRecipient),
+  })
+);
+
+export const merkleFundDistribution = onchainTable(
+  "merkle_fund_distribution",
+  (t) => ({
+    id: t.bigint().primaryKey(),
+    merkleFundDistributor: t.hex().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.bigint().notNull(),
+    root: t.hex().notNull(),
+    ipfsHash: t.hex().notNull(),
+    ipfsHashCid: t.text().notNull(),
+    totalMerkleValue: t.bigint().notNull(),
+    distributor: t.hex().notNull(),
+    token: t.hex().notNull(),
+    amountFunded: t.bigint().notNull(),
+    amountDistributed: t.bigint().notNull(),
+    feeRecipient: t.hex().notNull(),
+    feeAmount: t.bigint().notNull(),
+  }),
+  (t) => ({
+    merkleFundDistributorIdx: index().on(t.merkleFundDistributor),
+    rootIdx: index().on(t.root),
+    blockNumberIdx: index().on(t.blockNumber),
+    timestampIdx: index().on(t.timestamp),
+    distributorIdx: index().on(t.distributor),
+    tokenIdx: index().on(t.token),
+    feeRecipientIdx: index().on(t.feeRecipient),
+  })
+);
+
+export const merkleFundDistributionClaim = onchainTable(
+  "merkle_fund_distribution_claim",
+  (t) => ({
+    id: t.text().primaryKey(), // distributor-distributionIndex-account
+    merkleFundDistributor: t.hex().notNull(),
+    distributionIndex: t.bigint().notNull(),
+    account: t.hex().notNull(),
+    token: t.hex().notNull(),
+    amount: t.bigint().notNull(),
+    merkleValue: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.bigint().notNull(),
+  }),
+  (t) => ({
+    merkleFundDistributorIdx: index().on(t.merkleFundDistributor),
+    distributionIndexIdx: index().on(t.distributionIndex),
+    accountIdx: index().on(t.account),
+    tokenIdx: index().on(t.token),
+    blockNumberIdx: index().on(t.blockNumber),
+    timestampIdx: index().on(t.timestamp),
+  })
+);
