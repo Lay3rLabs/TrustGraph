@@ -237,6 +237,15 @@ contract MerkleFundDistributor is
 
     /* VIEW */
 
+    /// @notice Gets a distribution by index.
+    /// @param distributionIndex The index of the distribution.
+    /// @return distribution The distribution.
+    function getDistribution(
+        uint256 distributionIndex
+    ) external view returns (DistributionState memory) {
+        return distributions[distributionIndex];
+    }
+
     /// @notice Gets paginated distributions.
     /// @param offset The offset to start from.
     /// @param limit The number of distributions to return.

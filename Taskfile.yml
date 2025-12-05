@@ -21,7 +21,7 @@ includes:
   # Project-specific taskfiles (with customizations)
   eas: ./taskfile/eas.yml
   forge: ./taskfile/eas-forge.yml
-  rewards: ./taskfile/rewards.yml
+  merkle: ./taskfile/merkle.yml
   trustgraph: ./taskfile/trustgraph.yml
   env:
     taskfile: ./taskfile/env.yml
@@ -75,4 +75,3 @@ tasks:
       - |
         export AGGREGATOR_URL={{.AGGREGATOR_URL}}
         bash ./script/deploy-script.sh
-
