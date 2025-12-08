@@ -1,6 +1,42 @@
 {
   "components": [
     {
+      "disabled": true,
+      "filename": "dao_agent.wasm",
+      "package_name": "dao-agent",
+      "package_version": "0.9.1",
+      "trigger_event": "NewTrigger(bytes)",
+      "trigger_json_path": "eas.contracts.payable_indexer_resolver",
+      "submit_json_path": "zodiac_safes.safe2.wavs_module",
+      "config_values": {},
+      "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
+    },
+    {
+      "filename": "llm_attester.wasm",
+      "package_name": "llm-attester",
+      "package_version": "0.9.1",
+      "trigger_event": "AttestationAttested(address,bytes32)",
+      "trigger_json_path": "eas.contracts.payable_indexer_resolver",
+      "submit_json_path": "eas.contracts.attester",
+      "config_values": {
+        "eas_address": "${EAS_ADDRESS}",
+        "chain_name": "${CHAIN_NAME}",
+        "llm_model": "llama3.2",
+        "llm_temperature": "0.0",
+        "llm_top_p": "1.0",
+        "llm_seed": "42",
+        "llm_max_tokens": "100",
+        "llm_context_window": "250",
+        "llm_system_message": "You are a blockchain god evaluating attestation statements to determine if you like them",
+        "attestation_schema_uid": "${STATEMENT_SCHEMA_ID}",
+        "submit_schema_uid": "${LIKE_SCHEMA_ID}",
+        "attestation_revocable": "true",
+        "attestation_expiration": "0",
+        "attestation_value": "0"
+      },
+      "env_variables": ["WAVS_ENV_PINATA_API_URL", "WAVS_ENV_PINATA_API_KEY"]
+    },
+    {
       "filename": "trust_graph.wasm",
       "package_name": "trust-graph",
       "package_version": "0.9.1",

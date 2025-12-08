@@ -31,6 +31,30 @@ tasks:
       - 'echo "{{.MERKLE_SNAPSHOT_ADDR}}"'
     silent: true
 
+  eas-attest-trigger-addr:
+    desc: "Get the EAS attest trigger address"
+    cmds:
+      - 'echo "{{.EAS_ATTEST_TRIGGER_ADDR}}"'
+    silent: true
+
+  statement-schema-id:
+    desc: "Get the statement schema UID"
+    cmds:
+      - 'echo "{{.STATEMENT_SCHEMA_ID}}"'
+    silent: true
+
+  like-schema-id:
+    desc: "Get the like schema UID"
+    cmds:
+      - 'echo "{{.LIKE_SCHEMA_ID}}"'
+    silent: true
+
+  eas-addr:
+    desc: "Get the EAS contract address"
+    cmds:
+      - 'echo "{{.EAS_ADDR}}"'
+    silent: true
+
   service-manager-address:
     desc: "Get the WAVS Service Manager address"
     cmds:
@@ -105,3 +129,7 @@ vars:
   # Schema UIDs (loaded from deployment summary)
   VOUCHING_SCHEMA_ID:
     sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.vouching.uid' .docker/deployment_summary.json || echo ""
+  STATEMENT_SCHEMA_ID:
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.statement.uid' .docker/deployment_summary.json || echo ""
+  LIKE_SCHEMA_ID:
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.like.uid' .docker/deployment_summary.json || echo ""
