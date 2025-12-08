@@ -127,3 +127,26 @@ task forge:claim-rewards
 
 task forge:query-rewards-balance
 ```
+
+
+### LLM Attester Demo
+
+Trigger LLM attester:
+```bash
+task eas:trigger \
+  TRIGGER_ADDRESS="$(task config:eas-attest-trigger-addr)" \
+  SCHEMA_UID="$(task config:statement-schema-id)" \
+  RECIPIENT="$(task config:wallet-address)" \
+  MESSAGE="Your statement message here"
+```
+
+Query LLM attester attestations:
+```bash
+task eas:query \
+  INDEXER_ADDRESS="$(task config:indexer-address)" \
+  EAS_ADDRESS="$(task config:eas-addr)" \
+  SCHEMA_UID="$(task config:like-schema-id)" \
+  RECIPIENT="$(task config:wallet-address)"
+```
+
+### Agent Demo

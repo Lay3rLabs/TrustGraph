@@ -5,7 +5,8 @@ import {stdJson} from "forge-std/StdJson.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {console} from "forge-std/console.sol";
 import {
-    ISchemaRegistry, SchemaRegistry
+    ISchemaRegistry,
+    SchemaRegistry
 } from "@ethereum-attestation-service/eas-contracts/contracts/SchemaRegistry.sol";
 import {IEAS, EAS} from "@ethereum-attestation-service/eas-contracts/contracts/EAS.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/contracts/resolver/ISchemaResolver.sol";
@@ -129,6 +130,36 @@ contract DeployEAS is Common {
             "vouching",
             "Weighted endorsement",
             "string comment,uint256 confidence",
+            true
+        );
+
+        // Statement schema for simple text statements
+        // This resolver requires payment
+        createSchema(
+            schemaRegistrar,
+            _schemasJson,
+            address(payableIndexerResolver),
+            "statement",
+            "Signed statement",
+            "string statement",
+            true
+        );
+
+        // Like schema for simple like/dislike attestations
+        // Only the WavsAttester can attest to this schema
+        createSchema(
+            schemaRegistrar, _schemasJson, address(attesterIndexerResolver), "like", "Like a thing", "bool like", true
+        );
+
+        // Schema for proposal
+        // This resolver requires payment
+        createSchema(
+            schemaRegistrar,
+            _schemasJson,
+            address(payableIndexerResolver),
+            "proposal",
+            "Signed proposal",
+            "string proposal",
             true
         );
 
