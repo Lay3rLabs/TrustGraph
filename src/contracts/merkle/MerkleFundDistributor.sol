@@ -272,7 +272,12 @@ contract MerkleFundDistributor is
         address distributor,
         bool canDistribute_
     ) external onlyOwner {
-        _setCanDistribute(distributor, canDistribute_);
+        if (canDistribute_) {
+            _allowlist.add(distributor);
+        } else {
+            _allowlist.remove(distributor);
+        }
+        emit DistributorAllowanceUpdated(distributor, canDistribute_);
     }
 
     /// @notice Pauses the contract.
@@ -510,19 +515,6 @@ contract MerkleFundDistributor is
     function _setAllowlistEnabled(bool allowlistEnabled_) internal {
         allowlistEnabled = allowlistEnabled_;
         emit DistributorAllowlistUpdated(allowlistEnabled_);
-    }
-
-    /// @dev Sets whether or not the distributor is allowed to distribute funds.
-    function _setCanDistribute(
-        address distributor,
-        bool canDistribute
-    ) internal {
-        if (canDistribute) {
-            _allowlist.add(distributor);
-        } else {
-            _allowlist.remove(distributor);
-        }
-        emit DistributorAllowanceUpdated(distributor, canDistribute);
     }
 
     /// @dev Whether or not the token is a native token.
