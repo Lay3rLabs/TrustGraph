@@ -57,7 +57,8 @@ export default createConfig({
     },
     merkleFundDistributor: {
       abi: merkleFundDistributorAbi,
-      startBlock: 1,
+      // startBlock: 1,
+      startBlock: 'latest',
       // startBlock: 35855002,
       chain: {
         [CHAIN]: { address: deploymentSummary.merkler.fund_distributor as Hex },

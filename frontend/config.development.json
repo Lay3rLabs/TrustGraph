@@ -4,25 +4,25 @@
     "ponder": "http://localhost:65421",
     "ipfsGateway": "http://127.0.0.1:8080/ipfs/"
   },
-  "wavsServiceId": "20cc74449182dd08a5559ab464fd43723a5a19a523d79cff4774e2ed596f15c4",
+  "wavsServiceId": "bd7be3e6fd0f298f905b0ebd2bb867d78633cc49949b2cd4d5b0aa5e4a897603",
   "contracts": {
-    "IWavsServiceManager": "0xde1c361ae59a008b96923409c4373e011ed96f88",
-    "WavsIndexer": "0xa2FB024988e2BAB78B724394333Db4A98ddFF8aF",
-    "EASAttestTrigger": "0x44118712f83743CBa7e3Df18c6C3bEdF7c8c0772",
-    "WavsAttester": "0x0d4921B959AF717EA13673c903552e8481b49334",
-    "EAS": "0xd64Be2a06489758A5B57aa4279975c8aF779FFeA",
-    "EASIndexerResolver": "0x6c8d76f10Ab2301151f745Bc797020F380f49aF1",
-    "SchemaRegistrar": "0x32b63b694b58881Da6317D605d6F1fFCc08048DD",
-    "SchemaRegistry": "0xCd948ba3a35eC847872ab9f6f645491AAD9533cC",
-    "MerkleSnapshot": "0x1D2aa5A4De360D219E60db424c442e30A42D6085",
-    "MerkleFundDistributor": "0x047084F6cdEB6acAA05a71b310A3Db0b4A0a4719"
+    "IWavsServiceManager": "0x4e4240fe9d2925697ddfb5231725c6213eda7180",
+    "WavsIndexer": "0x6e6dddaE29C7250E6bbe4Fafe2Df19CF2f889f34",
+    "EASAttestTrigger": "0x6A9E1FC33B3a4beCf60a81DAC44Cb0df7E921df9",
+    "WavsAttester": "0x0cfA866F77FC4FA849192b38a4C4f8f3647fA656",
+    "EAS": "0xD94d8144965c7F4F68A8ea5500210b21Cf22803a",
+    "EASIndexerResolver": "0xb01ff9ab4B63368702E1e35F729f6042d8f8c8b0",
+    "SchemaRegistrar": "0x75934f0260f49a4421378f4DEca43D350aB11563",
+    "SchemaRegistry": "0x6eB1D5098ACAc9B2DC45E70614fF4D0784d7D7be",
+    "MerkleSnapshot": "0x8bAb27040D2E91F80A2550D7f09eB98549752908",
+    "MerkleFundDistributor": "0x6A24Dc8eB7df9eB1Fbd37C87ae34f163Db66Ca56"
   },
   "schemas": {
     "vouching": {
-      "uid": "0xe0590f591464a8ba91d5d403a392b5d6bff97defe297f948759c1b46149225e2",
+      "uid": "0x4a384f1c0018b69a1612802aff615486ca6e36735f597a521ef14434e8860d92",
       "name": "Vouching",
       "description": "Weighted endorsement",
-      "resolver": "0x6c8d76f10Ab2301151f745Bc797020F380f49aF1",
+      "resolver": "0xb01ff9ab4B63368702E1e35F729f6042d8f8c8b0",
       "revocable": true,
       "schema": "string comment,uint256 confidence",
       "fields": [
