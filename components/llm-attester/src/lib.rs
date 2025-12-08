@@ -2,7 +2,8 @@ mod config;
 mod trigger;
 
 use alloy_primitives::hex;
-use alloy_sol_types::SolValue;
+use alloy_sol_types::sol_data::String as SolString;
+use alloy_sol_types::{SolType, SolValue};
 use config::AttesterConfig;
 use serde::{Deserialize, Serialize};
 use trigger::{
@@ -88,7 +89,9 @@ impl Guest for Component {
             attestation.uid, attestation.attester, attestation.recipient
         );
 
-        let user_prompt = String::from_utf8(attestation.data.to_vec()).unwrap();
+        // Decode the ABI-encoded proposal string from the attestation data
+        let user_prompt = <SolString>::abi_decode(&attestation.data)
+            .map_err(|e| format!("Failed to decode proposal string: {}", e))?;
         let msgs = vec![Message::system(&config.system_message), Message::user(&user_prompt)];
 
         println!("System prompt: {}", config.system_message);
@@ -109,6 +112,7 @@ impl Guest for Component {
 
         // Do nothing if not approved
         if !approved {
+            println!("Not approved. Do nothing.");
             return Ok(None);
         }
 
