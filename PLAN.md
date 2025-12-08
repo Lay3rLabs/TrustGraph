@@ -1,8 +1,6 @@
 # The Plan
 
-- Double check encoding / decoding
 - Make frontend for proposals / approval
-- Swap statement for proposal schema id, and like for approval
 - Clean up configs, and make consistent
 - Add Gov Paper
 

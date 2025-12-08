@@ -7,7 +7,7 @@
   "llm_seed": "42",
   "llm_max_tokens": "100",
   "llm_context_window": "250",
-  "llm_system_message": "You are a blockchain god evaluating attestation statements to determine if you like them.",
+  "llm_system_message": "You are a moderator evaluating proposals to determine if they are appropriate. No foul language, violence, or inappropriate content.",
   "attestation_schema_uid": "${PROPOSAL_SCHEMA_UID}",
   "submit_schema_uid": "${APPROVAL_SCHEMA_UID}",
   "attestation_revocable": "true",
