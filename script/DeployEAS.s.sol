@@ -133,22 +133,16 @@ contract DeployEAS is Common {
             true
         );
 
-        // Statement schema for simple text statements
-        // This resolver requires payment
-        createSchema(
-            schemaRegistrar,
-            _schemasJson,
-            address(payableIndexerResolver),
-            "statement",
-            "Signed statement",
-            "string statement",
-            true
-        );
-
         // Like schema for simple like/dislike attestations
         // Only the WavsAttester can attest to this schema
         createSchema(
-            schemaRegistrar, _schemasJson, address(attesterIndexerResolver), "like", "Like a thing", "bool like", true
+            schemaRegistrar,
+            _schemasJson,
+            address(attesterIndexerResolver),
+            "approval",
+            "Approval of a thing",
+            "bool approved",
+            true
         );
 
         // Schema for proposal

@@ -16,13 +16,12 @@ use wstd::runtime::block_on;
 pub mod bindings;
 use crate::bindings::{export, Guest, TriggerAction, WasmResponse};
 
-use wavs_llm::LLMClient;
+use wavs_llm::{LLMClient, Message};
 
-/// Structured response from the LLM for like/dislike evaluation
+/// Structured response from the LLM for approved/dislike evaluation
 #[derive(Debug, Serialize, Deserialize, schemars::JsonSchema)]
-struct LikeResponse {
-    like: bool,
-    reasoning: String,
+struct ApprovalResponse {
+    approved: bool,
 }
 
 struct Component;
@@ -89,24 +88,10 @@ impl Guest for Component {
             attestation.uid, attestation.attester, attestation.recipient
         );
 
-        // Format the attestation data for the LLM
-        let user_prompt = if attestation.data.is_empty() {
-            "No attestation data available".to_string()
-        } else {
-            // Try to decode as UTF-8 string first
-            if let Ok(decoded) = String::from_utf8(attestation.data.to_vec()) {
-                // Check if it looks like JSON
-                if decoded.trim_start().starts_with('{') || decoded.trim_start().starts_with('[') {
-                    format!("JSON attestation data: {}", decoded)
-                } else {
-                    format!("Text attestation data: {}", decoded)
-                }
-            } else {
-                // Otherwise return hex representation
-                format!("Binary attestation data (hex): 0x{}", hex::encode(&attestation.data))
-            }
-        };
+        let user_prompt = String::from_utf8(attestation.data.to_vec()).unwrap();
+        let msgs = vec![Message::system(&config.system_message), Message::user(&user_prompt)];
 
+        println!("System prompt: {}", config.system_message);
         println!("💬 User prompt: {}", user_prompt);
 
         // Create LLM client with options and get structured response
@@ -115,20 +100,19 @@ impl Guest for Component {
 
         // Get structured response from LLM
         let llm_response = llm
-            .chat_structured::<LikeResponse>(user_prompt.as_str())
+            .chat_structured::<ApprovalResponse>(msgs)
             .send()
             .map_err(|e| format!("Failed to get structured LLM completion: {}", e))?;
+        let approved = llm_response.approved;
 
-        println!(
-            "🤖 LLM Response: like={}, reasoning={}",
-            llm_response.like, llm_response.reasoning
-        );
+        println!("👍 Extracted approval value: {}", approved);
 
-        let like_value = llm_response.like;
+        // Do nothing if not approved
+        if !approved {
+            return Ok(None);
+        }
 
-        println!("👍 Extracted like value: {}", like_value);
-
-        // Use the submit_schema_uid for the like attestation
+        // Use the submit_schema_uid for the approved attestation
         let attestation_schema = config
             .submit_schema_uid
             .as_ref()
@@ -136,11 +120,11 @@ impl Guest for Component {
             .parse::<alloy_primitives::FixedBytes<32>>()
             .map_err(|e| format!("Invalid submit_schema_uid format: {}", e))?;
 
-        // Encode the attestation data according to the "bool like" schema
-        let encoded_data = SchemaEncoder::encode_by_pattern("bool like", &like_value.to_string())
+        // Encode the attestation data according to the "bool approved" schema
+        let encoded_data = SchemaEncoder::encode_by_pattern("bool approved", &approved.to_string())
             .map_err(|e| {
-            format!("Failed to encode like value with 'bool like' schema: {}", e)
-        })?;
+                format!("Failed to encode approved value with 'bool approved' schema: {}", e)
+            })?;
 
         // Create the attestation request
         let attestation_request = AttestationRequest {

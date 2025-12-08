@@ -31,16 +31,10 @@ tasks:
       - 'echo "{{.MERKLE_SNAPSHOT_ADDR}}"'
     silent: true
 
-  statement-schema-id:
-    desc: "Get the statement schema UID"
-    cmds:
-      - 'echo "{{.STATEMENT_SCHEMA_ID}}"'
-    silent: true
-
-  like-schema-id:
+  approval-schema-id:
     desc: "Get the like schema UID"
     cmds:
-      - 'echo "{{.LIKE_SCHEMA_ID}}"'
+      - 'echo "{{.APPROVAL_SCHEMA_ID}}"'
     silent: true
 
   proposal-schema-id:
@@ -129,7 +123,7 @@ vars:
   # Schema UIDs (loaded from deployment summary)
   VOUCHING_SCHEMA_ID:
     sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.vouching.uid' .docker/deployment_summary.json || echo ""
-  STATEMENT_SCHEMA_ID:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.statement.uid' .docker/deployment_summary.json || echo ""
-  LIKE_SCHEMA_ID:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.like.uid' .docker/deployment_summary.json || echo ""
+  PROPOSAL_SCHEMA_ID:
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.proposal.uid' .docker/deployment_summary.json || echo ""
+  APPROVAL_SCHEMA_ID:
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.schemas.approval.uid' .docker/deployment_summary.json || echo ""
