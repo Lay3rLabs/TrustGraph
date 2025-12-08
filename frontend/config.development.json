@@ -4,30 +4,68 @@
     "ponder": "http://localhost:65421",
     "ipfsGateway": "http://127.0.0.1:8080/ipfs/"
   },
-  "wavsServiceId": "c33c915f23cd855fbf8025ee228814d7911a820015a2dc728e251a490bbe0252",
+  "wavsServiceId": "2cd6ed7a1b5fe32edc78ea79e89ca04e284fabff370dc1aeaf7eae432904cbb1",
   "contracts": {
-    "IWavsServiceManager": "0x3cb594ae61c55486acee750f5c7bbbe76f360fc3",
-    "WavsIndexer": "0xA8879c906a5E49B2a3246d786a3728c200d36C95",
-    "EASAttestTrigger": "0x84C55c9C4A66BC4739c092B7F103947E8a1de871",
-    "WavsAttester": "0x373E8965a0206564c9A62dcc7AB2c64658205c78",
-    "EAS": "0x5503085349Cc8F767D141A010bA9BB3A62d1275e",
-    "EASIndexerResolver": "0xEa64B78f572eDf10EBB95821067Ef9b29a15561e",
-    "SchemaRegistrar": "0xEA64D01e4DBAffF78CeAeed1906712cfe08E460B",
-    "SchemaRegistry": "0x122eeaB4ABAe1226b3b133218b0B4e3A38099918",
-    "MerkleSnapshot": "0xbB279FF458Bc502905a0b127306ECC49942881F9",
-    "RewardDistributor": "0xAD8141D9c223bC43bcEd64555335D6Efa9634F1E",
-    "TEST": "0xb34c11Edc72E87BC55D391539208fc8442fcE54c",
-    "GnosisSafe": "0x461b0B00277823551a87F823D2b7e2d35f220c8a",
-    "GnosisSafeProxy": "0xc6f7FA02AE5a3BA88DdaE59CbF0E02B0bC5FdA5f",
-    "MerkleGovModule": "0xc91D7Cc6cE5c7cf789e43C7d153835753b67D89b",
-    "SignerManagerModule": "0xCb9CDEc7C24B1dAb93D87C0A7A5A400bDA43031F"
+    "IWavsServiceManager": "0x719f9654d499fda2df9fabdcc5a12417a54c8504",
+    "WavsIndexer": "0x04A7F72E92eDA52DD76Bf843085eb99C747569a6",
+    "EASAttestTrigger": "0xD3aE072e24158ECDAc868Bfe82469Fc73479b3f7",
+    "WavsAttester": "0x14fb7Bd3Dc8eAe64a229C7a2292879835dbECE36",
+    "EAS": "0x68e2eE1F1a95569C699E309256c4dF3D13a02F49",
+    "EASIndexerResolver": "0x85A9Cd28bE97C20C14Ba23E2DdBfC7aF863e3e97",
+    "SchemaRegistrar": "0x20ffE6Ff4bAfd025CCE4fb0d673422808a17f037",
+    "SchemaRegistry": "0x0714A35Cf2B8F91EE5dC4a4472dAB29EA91AC2DD",
+    "MerkleSnapshot": "0x91BeCFd35d231DB225ef3922E843a60778cee1Bb",
+    "RewardDistributor": "0x9C2dd87795c147E7f8487600D528Bc98debA2194",
+    "ERC20": "0x661fA1A0a6D52c441628b28cE975565559D50CaD"
   },
   "schemas": {
+    "like": {
+      "uid": "0xe5bc10dc384ee95986b4cdabb46c4fc15efe843a826d2e1cb89990c425da991c",
+      "name": "Like",
+      "description": "Like a thing",
+      "resolver": "0xF41A2c9426b8589e085bEc928a1512D2dE0a631e",
+      "revocable": true,
+      "schema": "bool like",
+      "fields": [
+        {
+          "name": "like",
+          "type": "bool"
+        }
+      ]
+    },
+    "proposal": {
+      "uid": "0x70e09690a59ce44e43f58ce71db0dbcbb35ea3277715e828f79c20439f3dbe7a",
+      "name": "Proposal",
+      "description": "Signed proposal",
+      "resolver": "0x2705A6082efF9eF1E01DFC0A2F81B592471A9f28",
+      "revocable": true,
+      "schema": "string proposal",
+      "fields": [
+        {
+          "name": "proposal",
+          "type": "string"
+        }
+      ]
+    },
+    "statement": {
+      "uid": "0x92a088d08dc8909bcc7dca3da6a2731faa62bf5fa9827e1d3f987ea5308de801",
+      "name": "Statement",
+      "description": "Signed statement",
+      "resolver": "0x2705A6082efF9eF1E01DFC0A2F81B592471A9f28",
+      "revocable": true,
+      "schema": "string statement",
+      "fields": [
+        {
+          "name": "statement",
+          "type": "string"
+        }
+      ]
+    },
     "vouching": {
-      "uid": "0x156d596d699b175d4a1ee9b69dabf40fa245a1e65292379a5ed8473488bc38ed",
+      "uid": "0x19014be7cf52debd296fd6baf341a2209ad888d1343f9dba943c4fcf478857a4",
       "name": "Vouching",
       "description": "Weighted endorsement",
-      "resolver": "0xEa64B78f572eDf10EBB95821067Ef9b29a15561e",
+      "resolver": "0x85A9Cd28bE97C20C14Ba23E2DdBfC7aF863e3e97",
       "revocable": true,
       "schema": "string comment,uint256 confidence",
       "fields": [
@@ -43,9 +81,8 @@
     }
   },
   "trustedSeeds": [
-    "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-    "0x45CbC00e0618880bfB2dBDdEAed1ef1411dd5eeE",
-    "0x7329Ba91034357BfA6582dF5F2B0e0D2969E5f63",
-    "0xD2C392084761cb6E44c544B6f39dcc001fDe9775"
+    "0x7d03C5c37f77Fd01211334B9115CA108C84E8f3B",
+    "0x733Fe4b4D26168532c668231d725C46C315c14b1",
+    "0x59DDA36bD196Ec849838CE2163E6821f946b37Dc"
   ]
 }

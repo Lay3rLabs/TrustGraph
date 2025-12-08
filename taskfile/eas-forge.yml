@@ -30,7 +30,7 @@ tasks:
         forge script script/EASAttest.s.sol:EASAttest \
           --sig "attestWithMilliEth(string,string,string,string,uint256)" \
           "{{.EAS_ADDR}}" \
-          "{{.STATEMENT_SCHEMA_UID}}" \
+          "{{.PROPOSAL_SCHEMA_UID}}" \
           "{{.WALLET_ADDRESS}}" \
           "{{.INPUT}}" \
           1 \
@@ -67,8 +67,8 @@ tasks:
           10 \
           --rpc-url {{.RPC_URL}}
 
-  query-statement-attestations:
-    desc: "Query attestations for the statement schema and recipient"
+  query-proposal-attestations:
+    desc: "Query attestations for the proposal schema and recipient"
     vars:
       RPC_URL:
         sh: task get-rpc
@@ -78,7 +78,7 @@ tasks:
           --sig "queryAttestations(string,string,string,string,uint256)" \
           "{{.INDEXER_ADDR}}" \
           "{{.EAS_ADDR}}" \
-          "{{.LIKE_SCHEMA_UID}}" \
+          "{{.PROPOSAL_SCHEMA_UID}}" \
           "{{.WALLET_ADDRESS}}" \
           50 \
           --rpc-url {{.RPC_URL}}

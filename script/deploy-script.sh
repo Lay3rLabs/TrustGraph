@@ -93,8 +93,7 @@ export INDEXER_ADDRESS=$(jq -r '.wavs_indexer' .docker/deployment_summary.json)
 echo "Configuring EAS addresses from deployment summary..."
 export EAS_ADDRESS=$(jq -r '.eas.contracts.eas' .docker/deployment_summary.json)
 export VOUCHING_SCHEMA_UID=$(jq -r '.eas.schemas.vouching.uid' .docker/deployment_summary.json)
-export STATEMENT_SCHEMA_UID=$(jq -r '.eas.schemas.statement.uid' .docker/deployment_summary.json)
-export LIKE_SCHEMA_UID=$(jq -r '.eas.schemas.like.uid' .docker/deployment_summary.json)
+export APPROVAL_SCHEMA_UID=$(jq -r '.eas.schemas.approval.uid' .docker/deployment_summary.json)
 export PROPOSAL_SCHEMA_UID=$(jq -r '.eas.schemas.proposal.uid' .docker/deployment_summary.json)
 
 # Determine chain name based on deployment environment

@@ -245,9 +245,9 @@ Submit a proposal (automatically submits payment):
 ```bash
 task eas:trigger \
   EAS_ADDRESS="$(task config:eas-addr)" \
-  SCHEMA_UID="$(task config:statement-schema-id)" \
+  SCHEMA_UID="$(task config:proposal-schema-id)" \
   RECIPIENT="$(task config:wallet-address)" \
-  MESSAGE="To save the rainforest, send 1 ETH to 0xDf3679681B87fAE75CE185e4f01d98b64Ddb64a3"
+  MESSAGE="To save the rainforest, send 1 ETH to latest GitCoin quadratic funding contract for the Bioregionalism grants round. Contract Address: 0xDf3679681B87fAE75CE185e4f01d98b64Ddb64a3"
 ```
 
 Query the balance (should now be 1 ETH):
