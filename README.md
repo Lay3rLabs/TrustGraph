@@ -114,44 +114,145 @@ This creates a realistic attestation network with:
 
 Perfect for testing PageRank-based reward algorithms!
 
-### 9. Explore other functionality
+---
 
-```bash
-task forge:query-attestations
+# Symbient DEMO
 
-task forge:update-rewards
+> "A [§ymbient](https://symbient.life) is a distinct entity emerging from the symbiosis between organic beings and synthetic systems."
 
-task forge:query-rewards
+This demo is comprised of two WAVS components working together with their human communities:
+- **Moderator:** reviews proposals to make sure they abide by DAO policies. Proposals must be approved before being passed to the Actor.
+- **Actor:** executes actions on a smart account, only runs on proposals reviewed by the moderator.
 
-task forge:claim-rewards
+Both components are customizable with extensive config options controlled by a TrustGraph.
 
-task forge:query-rewards-balance
+## The Flow
+
+1. User makes proposal in plain text and submits payment to pay for off-chain execution. The proposal takes the form of an attestation, which emits an event.
+2. The Attestation Event causes the moderator component to run, it evaluates the proposal based on a policy (its config + system prompt), enforcing that proposals must abide by community rules (whatever those might be). It makes an attestation about the proposal which also emits another event trigger.
+3. The Event Trigger causes the actor component to run (assuming the proposal is approved). The actor is given a context (config + system prompt + context + tools) and does inference on the proposal. It may decide to perform a blockchain transaction via it's smart account. 
+
+```
+          ┌──────────────────────────────────┐
+          │      STEP 1: User Submission     │
+          └──────────────────────────────────┘
+                          │
+                          ▼
+              ┌───────────────────────┐
+              │         USER          │
+              │  • Creates proposal   │
+              │  • Submits payment    │
+              └───────────────────────┘
+                          │
+                          ▼
+              ┌───────────────────────┐
+              │  ATTESTATION CREATED  │
+              │      (on-chain)       │
+              └───────────────────────┘
+                          │
+                          │ emits event
+                          ▼
+          ┌──────────────────────────────────┐
+          │      STEP 2: Moderation          │
+          └──────────────────────────────────┘
+                          │
+                          ▼
+              ┌───────────────────────┐
+              │  MODERATOR COMPONENT  │
+              │  • Reads proposal     │
+              │  • Checks policy      │
+              │  • Enforces rules     │
+              └───────────────────────┘
+                          │
+                          ▼
+              ┌───────────────────────┐
+              │ MODERATION RESULT     │
+              └───────────────────────┘
+                          │
+            ┌─────────────┴─────────────┐
+            │                           │
+            ▼                           ▼
+      ┌──────────┐                ┌──────────┐
+      │ APPROVED │                │ REJECTED │
+      └──────────┘                └──────────┘
+            │                           │
+            │                           ▼
+            │                       [ STOP ]
+            │
+            │ emits event
+            ▼
+          ┌──────────────────────────────────┐
+          │      STEP 3: Execution           │
+          └──────────────────────────────────┘
+                          │
+                          ▼
+              ┌───────────────────────┐
+              │   ACTOR COMPONENT     │
+              │  • Receives proposal  │
+              │  • Performs inference │
+              │  • Has tools access   │
+              └───────────────────────┘
+                          │
+                          │ decides
+                          ▼
+              ┌───────────────────────┐
+              │   SMART ACCOUNT TX    │
+              │  (optional action)    │
+              └───────────────────────┘
+                          │
+                          ▼
+                   [ ON-CHAIN ]
+```
+
+## tl;dr how it works
+
+Multiple independent operators deterministically execute the same inference request, sign their results, and reach consensus—ensuring correctness without trusting any single party. You can think of this as an AI oracle.
+
 ```
 
 
-### LLM Attester Demo
+┌──────────────┐     ┌─────────────────────────────────────┐     ┌──────────────┐
+│              │     │         Operator Quorum             │     │              │
+│   Trigger    │────▶│  ┌───┐  ┌───┐  ┌───┐  ┌───┐  ┌───┐  │────▶│  Consensus   │
+│   (on-chain) │     │  │ A │  │ B │  │ C │  │ D │  │ E │  │     │   Result     │
+│              │     │  └─┬─┘  └─┬─┘  └─┬─┘  └─┬─┘  └─┬─┘  │     │  (on-chain)  │
+└──────────────┘     │    │      │      │      │      │    │     └──────────────┘
+                     │    ▼      ▼      ▼      ▼      ▼    │
+                     │  [sig]  [sig]  [sig]  [sig]  [sig]  │
+                     │         Signature Aggregation       │
+                     └─────────────────────────────────────┘
 
-Trigger LLM attester:
+
+```
+
+1. **Trigger**: An on-chain event creates an inference request
+2. **Execute**: All operators in the quorum independently run the inference
+3. **Sign**: Each operator signs their result
+4. **Aggregate**: Signatures are collected and verified
+5. **Submit**: Consensus result is posted on-chain
+
+Operators can be selected via a number of means, and may be required to put up bonds to ensure good behavior.
+
+[Learn more about WAVS.](https://wavs.xyz)
+
+## Running the demo
+Optional, in a separate terminal to view WAVS logs:
+```bash
+docker logs wavs-1 -f | grep -v "INFO"
+```
+
+Submit a proposal (automatically submits payment):
 ```bash
 task eas:trigger \
   EAS_ADDRESS="$(task config:eas-addr)" \
   SCHEMA_UID="$(task config:statement-schema-id)" \
   RECIPIENT="$(task config:wallet-address)" \
-  MESSAGE="I love you"
+  MESSAGE="To save the rainforest, send 1 ETH to 0xDf3679681B87fAE75CE185e4f01d98b64Ddb64a3"
 ```
 
-Query LLM attester for like attestations (should be a new one):
+Query the balance (should now be 1 ETH):
 ```bash
-task eas:query \
-  INDEXER_ADDRESS="$(task config:indexer-address)" \
-  SCHEMA_UID="$(task config:like-schema-id)"
+cast balance 0xDf3679681B87fAE75CE185e4f01d98b64Ddb64a3 --rpc-url http://localhost:8545
 ```
 
-Get attestation id, and get result:
-```bash
-task eas:get-attestation \
-  EAS_ADDRESS="$(task config:eas-addr)" \
-  ATTESTATION_UID="0x..."
-```
-
-### Agent Demo
+Experiment with changing proposal message.

@@ -1,24 +1,12 @@
 # The Plan
 
-- Rename dao-agent -> actor
-
-Flow:
-- Propose -> approval -> execution
-
-
-- Clean up code
-- Config URI var
-- Visualize flow and document demo
-
-# Governance extra credit
-- A DAO needs to be able to update it's own service configuration (related to Gyser?)
-- Experimental notice on governance page
-- create proposal doesn't submit amount as big int (it's in wei)
-- Add threshold to Merkle Gov Module contract
-- Implement and document the fallback mechanism for governance (this should be fairly straightforward with Zodiac hopefully)
-- Conduct AI audit of contracts
+- Make frontend for proposals / approval
+- Swap statement for proposal schema id, and like for approval
+- Clean up configs, and make consistent
 - Add Gov Paper
 
-# Rewards extra credit
+# Future work
+- A DAO needs to be able to update it's own service configuration (needs Gyser)
+- Better governance page UI (and experimental notice)
+- Implement and document the fallback mechanism for governance (this should be fairly straightforward with Zodiac hopefully)
 - Add Rewards so this is a complete DAO governance system
-- Activate rewards page?
