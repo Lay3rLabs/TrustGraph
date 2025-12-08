@@ -1639,6 +1639,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tiny-keccak",
+ "wavs-eas",
  "wavs-llm",
  "wavs-wasi-utils",
  "wit-bindgen-rt 0.44.0",

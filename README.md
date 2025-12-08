@@ -134,19 +134,24 @@ task forge:query-rewards-balance
 Trigger LLM attester:
 ```bash
 task eas:trigger \
-  TRIGGER_ADDRESS="$(task config:eas-attest-trigger-addr)" \
+  EAS_ADDRESS="$(task config:eas-addr)" \
   SCHEMA_UID="$(task config:statement-schema-id)" \
   RECIPIENT="$(task config:wallet-address)" \
-  MESSAGE="Your statement message here"
+  MESSAGE="I love you"
 ```
 
-Query LLM attester attestations:
+Query LLM attester for like attestations (should be a new one):
 ```bash
 task eas:query \
   INDEXER_ADDRESS="$(task config:indexer-address)" \
+  SCHEMA_UID="$(task config:like-schema-id)"
+```
+
+Get attestation id, and get result:
+```bash
+task eas:get-attestation \
   EAS_ADDRESS="$(task config:eas-addr)" \
-  SCHEMA_UID="$(task config:like-schema-id)" \
-  RECIPIENT="$(task config:wallet-address)"
+  ATTESTATION_UID="0x..."
 ```
 
 ### Agent Demo

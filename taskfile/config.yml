@@ -31,12 +31,6 @@ tasks:
       - 'echo "{{.MERKLE_SNAPSHOT_ADDR}}"'
     silent: true
 
-  eas-attest-trigger-addr:
-    desc: "Get the EAS attest trigger address"
-    cmds:
-      - 'echo "{{.EAS_ATTEST_TRIGGER_ADDR}}"'
-    silent: true
-
   statement-schema-id:
     desc: "Get the statement schema UID"
     cmds:
@@ -47,6 +41,12 @@ tasks:
     desc: "Get the like schema UID"
     cmds:
       - 'echo "{{.LIKE_SCHEMA_ID}}"'
+    silent: true
+
+  proposal-schema-id:
+    desc: "Get the proposal schema UID"
+    cmds:
+      - 'echo "{{.PROPOSAL_SCHEMA_ID}}"'
     silent: true
 
   eas-addr:

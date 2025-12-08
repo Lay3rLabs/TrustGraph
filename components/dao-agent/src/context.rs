@@ -5,6 +5,7 @@ use alloy_provider::{Provider, RootProvider};
 use alloy_rpc_types::{eth::TransactionRequest, TransactionInput};
 use alloy_sol_types::{sol, SolCall};
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use std::str::FromStr;
 use std::{collections::HashMap, env};
 use wavs_llm::{client::Message, config::Config, contracts::Contract, types::LlmOptions};
@@ -141,182 +142,199 @@ impl DaoContext {
         self.supported_tokens.iter().map(|t| t.symbol.clone()).collect()
     }
 
-    /// Query the ETH balance for this DAO's account
-    pub async fn query_eth_balance(&self) -> Result<U256, String> {
-        let chain_config = get_evm_chain_config("local").unwrap();
-        let provider: RootProvider<Ethereum> =
-            new_evm_provider::<Ethereum>(chain_config.http_endpoint.unwrap());
+    // /// Query the ETH balance for this DAO's account
+    // pub async fn query_eth_balance(&self) -> Result<U256, String> {
+    //     let chain_config = get_evm_chain_config("anvil").unwrap();
+    //     let provider: RootProvider<Ethereum> =
+    //         new_evm_provider::<Ethereum>(chain_config.http_endpoint.unwrap());
 
-        let address = Address::from_str(&self.account_address)
-            .map_err(|_| format!("Invalid address format: {}", self.account_address))?;
+    //     let address = Address::from_str(&self.account_address)
+    //         .map_err(|_| format!("Invalid address format: {}", self.account_address))?;
 
-        provider
-            .get_balance(address)
-            .await
-            .map_err(|e| format!("Failed to query ETH balance: {}", e))
-    }
+    //     provider
+    //         .get_balance(address)
+    //         .await
+    //         .map_err(|e| format!("Failed to query ETH balance: {}", e))
+    // }
 
-    /// Query an ERC20 token balance
-    pub async fn query_token_balance(&self, token_address: &str) -> Result<TokenBalance, String> {
-        let chain_config = get_evm_chain_config("local").unwrap();
-        let provider: RootProvider<Ethereum> =
-            new_evm_provider::<Ethereum>(chain_config.http_endpoint.unwrap());
-        // Parse addresses
-        let account = Address::from_str(&self.account_address)
-            .map_err(|_| format!("Invalid account address format: {}", self.account_address))?;
+    // /// Query an ERC20 token balance
+    // pub async fn query_token_balance(&self, token_address: &str) -> Result<TokenBalance, String> {
+    //     let chain_config = get_evm_chain_config("anvil").unwrap();
+    //     let provider: RootProvider<Ethereum> =
+    //         new_evm_provider::<Ethereum>(chain_config.http_endpoint.unwrap());
+    //     // Parse addresses
+    //     let account = Address::from_str(&self.account_address)
+    //         .map_err(|_| format!("Invalid account address format: {}", self.account_address))?;
 
-        let token = Address::from_str(token_address)
-            .map_err(|_| format!("Invalid token address format: {}", token_address))?;
+    //     let token = Address::from_str(token_address)
+    //         .map_err(|_| format!("Invalid token address format: {}", token_address))?;
 
-        // Get token balance
-        let balance_call = IERC20::balanceOfCall { owner: account };
-        let balance_tx = TransactionRequest {
-            to: Some(TxKind::Call(token)),
-            input: TransactionInput { input: Some(balance_call.abi_encode().into()), data: None },
-            ..Default::default()
-        };
+    //     // Get token balance
+    //     let balance_call = IERC20::balanceOfCall { owner: account };
+    //     let balance_tx = TransactionRequest {
+    //         to: Some(TxKind::Call(token)),
+    //         input: TransactionInput { input: Some(balance_call.abi_encode().into()), data: None },
+    //         ..Default::default()
+    //     };
 
-        let balance_result = provider
-            .call(balance_tx)
-            .await
-            .map_err(|e| format!("Failed to query token balance: {}", e))?;
-        let balance = U256::from_be_slice(&balance_result);
+    //     let balance_result = provider
+    //         .call(balance_tx)
+    //         .await
+    //         .map_err(|e| format!("Failed to query token balance: {}", e))?;
+    //     let balance = U256::from_be_slice(&balance_result);
 
-        // Get token decimals
-        let decimals_call = IERC20::decimalsCall {};
-        let decimals_tx = TransactionRequest {
-            to: Some(TxKind::Call(token)),
-            input: TransactionInput { input: Some(decimals_call.abi_encode().into()), data: None },
-            ..Default::default()
-        };
+    //     // Get token decimals
+    //     let decimals_call = IERC20::decimalsCall {};
+    //     let decimals_tx = TransactionRequest {
+    //         to: Some(TxKind::Call(token)),
+    //         input: TransactionInput { input: Some(decimals_call.abi_encode().into()), data: None },
+    //         ..Default::default()
+    //     };
 
-        let decimals_result = provider
-            .call(decimals_tx)
-            .await
-            .map_err(|e| format!("Failed to query token decimals: {}", e))?;
+    //     let decimals_result = provider
+    //         .call(decimals_tx)
+    //         .await
+    //         .map_err(|e| format!("Failed to query token decimals: {}", e))?;
 
-        // Properly decode the decimals response (uint8)
-        // The response should be a 32-byte value with the uint8 value in the last byte
-        let decimals = if decimals_result.len() >= 32 {
-            // Extract the last byte which contains the uint8 value
-            decimals_result[31]
-        } else {
-            // Default to 18 if response is not as expected
-            println!("Warning: Unexpected decimals response format, defaulting to 18");
-            18
-        };
+    //     // Properly decode the decimals response (uint8)
+    //     // The response should be a 32-byte value with the uint8 value in the last byte
+    //     let decimals = if decimals_result.len() >= 32 {
+    //         // Extract the last byte which contains the uint8 value
+    //         decimals_result[31]
+    //     } else {
+    //         // Default to 18 if response is not as expected
+    //         println!("Warning: Unexpected decimals response format, defaulting to 18");
+    //         18
+    //     };
 
-        // Get token symbol
-        let symbol_call = IERC20::symbolCall {};
-        let symbol_tx = TransactionRequest {
-            to: Some(TxKind::Call(token)),
-            input: TransactionInput { input: Some(symbol_call.abi_encode().into()), data: None },
-            ..Default::default()
-        };
+    //     // Get token symbol
+    //     let symbol_call = IERC20::symbolCall {};
+    //     let symbol_tx = TransactionRequest {
+    //         to: Some(TxKind::Call(token)),
+    //         input: TransactionInput { input: Some(symbol_call.abi_encode().into()), data: None },
+    //         ..Default::default()
+    //     };
 
-        let symbol_result = provider
-            .call(symbol_tx)
-            .await
-            .map_err(|e| format!("Failed to query token symbol: {}", e))?;
+    //     let symbol_result = provider
+    //         .call(symbol_tx)
+    //         .await
+    //         .map_err(|e| format!("Failed to query token symbol: {}", e))?;
 
-        // Parse the symbol from the result bytes (ABI-encoded string)
-        let symbol = if symbol_result.len() > 64 {
-            // The first 32 bytes are the offset, the next 32 bytes are the length
-            let length = U256::from_be_slice(&symbol_result[32..64]).as_limbs()[0] as usize;
-            if length > 0 && symbol_result.len() >= 64 + length {
-                let symbol_bytes = &symbol_result[64..64 + length];
-                String::from_utf8_lossy(symbol_bytes).to_string()
-            } else {
-                "UNKNOWN".to_string()
-            }
-        } else {
-            "UNKNOWN".to_string()
-        };
+    //     // Parse the symbol from the result bytes (ABI-encoded string)
+    //     let symbol = if symbol_result.len() > 64 {
+    //         // The first 32 bytes are the offset, the next 32 bytes are the length
+    //         let length = U256::from_be_slice(&symbol_result[32..64]).as_limbs()[0] as usize;
+    //         if length > 0 && symbol_result.len() >= 64 + length {
+    //             let symbol_bytes = &symbol_result[64..64 + length];
+    //             String::from_utf8_lossy(symbol_bytes).to_string()
+    //         } else {
+    //             "UNKNOWN".to_string()
+    //         }
+    //     } else {
+    //         "UNKNOWN".to_string()
+    //     };
 
-        // Create a TokenBalance
-        Ok(TokenBalance {
-            token_address: token_address.to_string(),
-            symbol,
-            balance: balance.to_string(),
-            decimals,
-        })
-    }
+    //     // Create a TokenBalance
+    //     Ok(TokenBalance {
+    //         token_address: token_address.to_string(),
+    //         symbol,
+    //         balance: balance.to_string(),
+    //         decimals,
+    //     })
+    // }
 
-    /// Query all supported token balances
-    pub async fn query_all_token_balances(&self) -> Result<Vec<TokenBalance>, String> {
-        let mut balances = Vec::new();
+    //     /// Query all supported token balances
+    //     pub async fn query_all_token_balances(&self) -> Result<Vec<TokenBalance>, String> {
+    //         let mut balances = Vec::new();
 
-        // Query ETH balance
-        let eth_balance = self.query_eth_balance().await?;
-        balances.push(TokenBalance {
-            token_address: "0x0000000000000000000000000000000000000000".to_string(),
-            symbol: "ETH".to_string(),
-            balance: eth_balance.to_string(),
-            decimals: 18,
-        });
+    //         // Query ETH balance
+    //         let eth_balance = self.query_eth_balance().await?;
+    //         balances.push(TokenBalance {
+    //             token_address: "0x0000000000000000000000000000000000000000".to_string(),
+    //             symbol: "ETH".to_string(),
+    //             balance: eth_balance.to_string(),
+    //             decimals: 18,
+    //         });
 
-        // Query each supported token
-        for token in &self.supported_tokens {
-            if token.symbol.to_uppercase() != "ETH" {
-                match self.query_token_balance(&token.address).await {
-                    Ok(balance) => balances.push(balance),
-                    Err(e) => println!("Failed to query balance for {}: {}", token.symbol, e),
-                }
-            }
-        }
+    //         // Query each supported token
+    //         for token in &self.supported_tokens {
+    //             if token.symbol.to_uppercase() != "ETH" {
+    //                 match self.query_token_balance(&token.address).await {
+    //                     Ok(balance) => balances.push(balance),
+    //                     Err(e) => println!("Failed to query balance for {}: {}", token.symbol, e),
+    //                 }
+    //             }
+    //         }
 
-        Ok(balances)
-    }
+    //         Ok(balances)
+    //     }
 
-    /// Format balances for display in the prompt with dynamic balance fetching
-    pub async fn format_balances_dynamic(&self) -> String {
-        match self.query_all_token_balances().await {
-            Ok(balances) => {
-                let mut result = Vec::new();
-                for balance in balances {
-                    result.push(format!(
-                        "{} ({}): {} raw units = {} formatted (decimals: {})",
-                        balance.symbol,
-                        balance.token_address,
-                        balance.balance,
-                        balance.formatted_balance(),
-                        balance.decimals
-                    ));
-                }
-                result.join("\n")
-            }
-            Err(e) => {
-                format!("Error fetching balances: {}", e)
-            }
-        }
-    }
+    //     /// Format balances for display in the prompt with dynamic balance fetching
+    //     pub async fn format_balances_dynamic(&self) -> String {
+    //         match self.query_all_token_balances().await {
+    //             Ok(balances) => {
+    //                 let mut result = Vec::new();
+    //                 for balance in balances {
+    //                     result.push(format!(
+    //                         "{} ({}): {} raw units = {} formatted (decimals: {})",
+    //                         balance.symbol,
+    //                         balance.token_address,
+    //                         balance.balance,
+    //                         balance.formatted_balance(),
+    //                         balance.decimals
+    //                     ));
+    //                 }
+    //                 result.join("\n")
+    //             }
+    //             Err(e) => {
+    //                 format!("Error fetching balances: {}", e)
+    //             }
+    //         }
+    //     }
 
-    /// Get the context with dynamically fetched balances
-    pub fn get_context_with_balances(&self) -> String {
-        let this = self.clone();
-        block_on(async move {
-            let supported_tokens = this.get_supported_token_symbols().join(", ");
-            let balances = this.format_balances_dynamic().await;
+    //     /// Get the context with dynamically fetched balances
+    //     pub fn get_context_with_balances(&self) -> String {
+    //         let this = self.clone();
+    //         block_on(async move {
+    //             let supported_tokens = this.get_supported_token_symbols().join(", ");
+    //             let balances = this.format_balances_dynamic().await;
 
-            format!(
-                r#"
-Current DAO Context:
-- Account Address: {}
-- Current Balances:
-{}
-- Allowlisted Addresses: {}
-- Supported Tokens: {} are supported. All other token requests should be rejected.
-    "#,
-                this.account_address,
-                balances.lines().map(|line| format!("  {}", line)).collect::<Vec<_>>().join("\n"),
-                this.allowlisted_addresses.join(", "),
-                supported_tokens
-            )
-        })
-    }
+    //             format!(
+    //                 r#"
+    // Current DAO Context:
+    // - Account Address: {}
+    // - Current Balances:
+    // {}
+    // - Allowlisted Addresses: {}
+    // - Supported Tokens: {} are supported. All other token requests should be rejected.
+    //     "#,
+    //                 this.account_address,
+    //                 balances.lines().map(|line| format!("  {}", line)).collect::<Vec<_>>().join("\n"),
+    //                 this.allowlisted_addresses.join(", "),
+    //                 supported_tokens
+    //             )
+    //         })
+    //     }
 }
 
 // Default implementation for testing and development
+impl fmt::Display for DaoContext {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "DAO Context:")?;
+        writeln!(f, "  Account Address: {}", self.account_address)?;
+        writeln!(f, "  Allowlisted Addresses ({}):", self.allowlisted_addresses.len())?;
+        for addr in &self.allowlisted_addresses {
+            writeln!(f, "    - {}", addr)?;
+        }
+        writeln!(f, "  Supported Tokens ({}):", self.supported_tokens.len())?;
+        for token in &self.supported_tokens {
+            writeln!(f, "    - {}", token)?;
+        }
+        writeln!(f, "  LLM Context: {:?}", self.llm_context)?;
+        Ok(())
+    }
+}
+
 impl Default for DaoContext {
     fn default() -> Self {
         // Create a default LlmOptions
@@ -417,6 +435,16 @@ pub struct SupportedToken {
     pub symbol: String,
     pub decimals: u8,
     pub description: Option<String>,
+}
+
+impl fmt::Display for SupportedToken {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} ({}) - {} decimals", self.symbol, self.address, self.decimals)?;
+        if let Some(desc) = &self.description {
+            write!(f, " - {}", desc)?;
+        }
+        Ok(())
+    }
 }
 
 impl SupportedToken {

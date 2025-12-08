@@ -73,11 +73,11 @@ impl Guest for Component {
         let ref_uid = attestation.uid;
         let recipient = attestation.recipient;
 
-        // Check if we should process this schema
-        if !config.should_process_schema(&schema_uid.to_string()) {
-            println!("Schema filtering active, skipping schema: {}", schema_uid);
-            return Ok(None);
-        }
+        // // Check if we should process this schema
+        // if !config.should_process_schema(&schema_uid.to_string()) {
+        //     println!("Schema filtering active, skipping schema: {}", schema_uid);
+        //     return Ok(None);
+        // }
 
         println!("📋 Processing attestation:");
         println!("  - Schema UID: {}", schema_uid);
