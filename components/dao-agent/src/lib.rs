@@ -3,6 +3,7 @@ mod bindings;
 pub mod context;
 pub mod sol_interfaces;
 
+use crate::bindings::host::config_var;
 use crate::sol_interfaces::{decode_trigger_event, Destination, TransactionPayload};
 use alloy_primitives::{Address, Bytes, U256};
 use alloy_sol_types::{SolType, SolValue};
@@ -84,9 +85,9 @@ impl Guest for Component {
 
         println!("Processing prompt: {}", prompt);
 
-        // Get the DAO context with all our configuration
+        // Load context from `config_uri` variable, or default if not configured
         let context = DaoContext::load()?;
-        let mut llm_context = context.llm_context.clone();
+        let llm_context = context.llm_context.clone();
 
         // Create LLM client implementation using the standalone constructor
         let llm_client = client::LLMClient::with_config(
