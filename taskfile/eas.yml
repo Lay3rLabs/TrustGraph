@@ -2,50 +2,130 @@ version: "3"
 
 tasks:
   trigger:
-    desc: "Trigger an attestation request"
+    desc: "Create an EAS attestation using cast"
     vars:
-      TRIGGER_ADDRESS: "{{.TRIGGER_ADDRESS}}"
-      SCHEMA_UID: "{{.SCHEMA_UID}}"
-      RECIPIENT: "{{.RECIPIENT}}"
-      MESSAGE: '{{.MESSAGE | default "Attestation via WAVS"}}'
-      RPC_URL:
-        sh: task get-rpc
-    preconditions:
-      - test -n "{{.TRIGGER_ADDRESS}}"
-      - test -n "{{.SCHEMA_UID}}"
-      - test -n "{{.RECIPIENT}}"
-    cmds:
-      - |
-        forge script script/EASAttestTrigger.s.sol:EASAttestTriggerScript \
-          --sig "triggerRawAttestation(string,string,string,string)" \
-          "{{.TRIGGER_ADDRESS}}" \
-          "{{.SCHEMA_UID}}" \
-          "{{.RECIPIENT}}" \
-          "{{.MESSAGE}}" \
-          --rpc-url {{.RPC_URL}} --broadcast
-
-  query:
-    desc: "Query attestations"
-    vars:
-      INDEXER_ADDRESS: "{{.INDEXER_ADDRESS}}"
       EAS_ADDRESS: "{{.EAS_ADDRESS}}"
       SCHEMA_UID: "{{.SCHEMA_UID}}"
       RECIPIENT: "{{.RECIPIENT}}"
+      MESSAGE: '{{.MESSAGE | default "Attestation via WAVS"}}'
+      VALUE_ETHER: '{{.VALUE_ETHER | default "0.001"}}'
+      RPC_URL:
+        sh: task get-rpc
+      FUNDED_KEY: "{{.FUNDED_KEY}}"
+    preconditions:
+      - test -n "{{.EAS_ADDRESS}}"
+      - test -n "{{.SCHEMA_UID}}"
+      - test -n "{{.RECIPIENT}}"
+      - test -n "{{.FUNDED_KEY}}"
+    cmds:
+      - |
+        echo "Creating EAS attestation:"
+        echo "  EAS Address: {{.EAS_ADDRESS}}"
+        echo "  Schema: {{.SCHEMA_UID}}"
+        echo "  Recipient: {{.RECIPIENT}}"
+        echo "  Message: {{.MESSAGE}}"
+        echo "  Value: {{.VALUE_ETHER}} ether"
+        echo ""
+        VALUE_WEI=$(cast to-wei {{.VALUE_ETHER}} ether)
+        ENCODED_DATA=$(cast abi-encode "f(string)" "{{.MESSAGE}}")
+        cast send "{{.EAS_ADDRESS}}" \
+          "attest((bytes32,(address,uint64,bool,bytes32,bytes,uint256)))" \
+          "({{.SCHEMA_UID}},({{.RECIPIENT}},0,true,0x0000000000000000000000000000000000000000000000000000000000000000,${ENCODED_DATA},${VALUE_WEI}))" \
+          --rpc-url "{{.RPC_URL}}" \
+          --private-key "{{.FUNDED_KEY}}" \
+          --value "${VALUE_WEI}wei"
+
+  query:
+    desc: "Query attestation count for a schema"
+    vars:
+      INDEXER_ADDRESS: "{{.INDEXER_ADDRESS}}"
+      SCHEMA_UID: "{{.SCHEMA_UID}}"
+      RPC_URL:
+        sh: task get-rpc
+    preconditions:
+      - test -n "{{.INDEXER_ADDRESS}}"
+      - test -n "{{.SCHEMA_UID}}"
+    cmds:
+      - |
+        echo "Querying attestation count:"
+        echo "  Indexer Address: {{.INDEXER_ADDRESS}}"
+        echo "  Schema: {{.SCHEMA_UID}}"
+        echo ""
+        COUNT=$(cast call "{{.INDEXER_ADDRESS}}" \
+          "getEventCountByTypeAndTag(string,string)(uint256)" \
+          "attestation" \
+          "schema:{{.SCHEMA_UID}}" \
+          --rpc-url "{{.RPC_URL}}")
+        echo "Total attestations for schema: $COUNT"
+
+  query-by-recipient:
+    desc: "Query attestation count for a recipient"
+    vars:
+      INDEXER_ADDRESS: "{{.INDEXER_ADDRESS}}"
+      RECIPIENT: "{{.RECIPIENT}}"
+      RPC_URL:
+        sh: task get-rpc
+    preconditions:
+      - test -n "{{.INDEXER_ADDRESS}}"
+      - test -n "{{.RECIPIENT}}"
+    cmds:
+      - |
+        echo "Querying attestation count by recipient:"
+        echo "  Indexer Address: {{.INDEXER_ADDRESS}}"
+        echo "  Recipient: {{.RECIPIENT}}"
+        echo ""
+        COUNT=$(cast call "{{.INDEXER_ADDRESS}}" \
+          "getEventCountByTypeAndTag(string,string)(uint256)" \
+          "attestation" \
+          "recipient:{{.RECIPIENT}}" \
+          --rpc-url "{{.RPC_URL}}")
+        echo "Total attestations received by recipient: $COUNT"
+
+  get-attestation:
+    desc: "Get attestation details by UID"
+    vars:
+      EAS_ADDRESS: "{{.EAS_ADDRESS}}"
+      ATTESTATION_UID: "{{.ATTESTATION_UID}}"
+      RPC_URL:
+        sh: task get-rpc
+    preconditions:
+      - test -n "{{.EAS_ADDRESS}}"
+      - test -n "{{.ATTESTATION_UID}}"
+    cmds:
+      - |
+        echo "Fetching attestation details:"
+        echo "  EAS Address: {{.EAS_ADDRESS}}"
+        echo "  Attestation UID: {{.ATTESTATION_UID}}"
+        echo ""
+        cast call "{{.EAS_ADDRESS}}" \
+          "getAttestation(bytes32)((bytes32,bytes32,uint64,uint64,uint64,bytes32,address,address,bool,bytes))" \
+          "{{.ATTESTATION_UID}}" \
+          --rpc-url "{{.RPC_URL}}"
+
+  query-events:
+    desc: "Query indexed events for a schema (returns raw event data)"
+    vars:
+      INDEXER_ADDRESS: "{{.INDEXER_ADDRESS}}"
+      SCHEMA_UID: "{{.SCHEMA_UID}}"
+      START: '{{.START | default "0"}}'
       LIMIT: '{{.LIMIT | default "10"}}'
       RPC_URL:
         sh: task get-rpc
     preconditions:
       - test -n "{{.INDEXER_ADDRESS}}"
-      - test -n "{{.EAS_ADDRESS}}"
       - test -n "{{.SCHEMA_UID}}"
-      - test -n "{{.RECIPIENT}}"
     cmds:
       - |
-        forge script script/EASAttestTrigger.s.sol:EASAttestTriggerScript \
-          --sig "queryAttestations(string,string,string,string,uint256)" \
-          "{{.INDEXER_ADDRESS}}" \
-          "{{.EAS_ADDRESS}}" \
-          "{{.SCHEMA_UID}}" \
-          "{{.RECIPIENT}}" \
-          {{.LIMIT}} \
-          --rpc-url {{.RPC_URL}}
+        echo "Querying indexed events:"
+        echo "  Indexer Address: {{.INDEXER_ADDRESS}}"
+        echo "  Schema: {{.SCHEMA_UID}}"
+        echo "  Start: {{.START}}, Limit: {{.LIMIT}}"
+        echo ""
+        cast call "{{.INDEXER_ADDRESS}}" \
+          "getEventsByTypeAndTag(string,string,uint256,uint256,bool)((uint256,address,string,address[],string[],bytes,uint256,bytes32)[])" \
+          "attestation" \
+          "schema:{{.SCHEMA_UID}}" \
+          "{{.START}}" \
+          "{{.LIMIT}}" \
+          "true" \
+          --rpc-url "{{.RPC_URL}}"

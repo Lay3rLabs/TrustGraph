@@ -1,8 +1,14 @@
 # The Plan
 
 - Rename dao-agent -> actor
-- Fix deployment
-- Trigger actor based on cron
+
+Flow:
+- Propose -> approval -> execution
+
+
+- Clean up code
+- Config URI var
+- Visualize flow and document demo
 
 # Governance extra credit
 - A DAO needs to be able to update it's own service configuration (related to Gyser?)
