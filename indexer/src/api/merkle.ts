@@ -110,7 +110,8 @@ merkleApp.get("/:root/:account", async (c) => {
       value: true,
       proof: true,
     },
-    where: (t, { and, eq }) => and(eq(t.root, root), eq(t.account, account)),
+    where: (t, { and, eq }) =>
+      and(eq(t.root, root), eq(t.account, account.toLowerCase())),
   });
   if (!entry) {
     return c.json({ error: "Merkle entry not found" }, 404);

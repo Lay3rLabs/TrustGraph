@@ -53,6 +53,8 @@ export const merkleSnapshot = onchainTable(
   "merkle_snapshot",
   (t) => ({
     id: t.text().primaryKey(),
+    address: t.hex().notNull(),
+    chainId: t.text().notNull(),
     root: t.hex().notNull(),
     ipfsHash: t.hex().notNull(),
     ipfsHashCid: t.text().notNull(),
@@ -61,6 +63,8 @@ export const merkleSnapshot = onchainTable(
     timestamp: t.bigint().notNull(),
   }),
   (t) => ({
+    addressIdx: index().on(t.address),
+    chainIdIdx: index().on(t.chainId),
     rootIdx: index().on(t.root),
     ipfsHashCidIdx: index().on(t.ipfsHashCid),
     blockNumberIdx: index().on(t.blockNumber),

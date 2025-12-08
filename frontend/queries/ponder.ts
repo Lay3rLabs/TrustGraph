@@ -13,6 +13,8 @@ export const ponderKeys = {
   latestMerkleTree: () => [...ponderKeys.all, 'latestMerkleTree'] as const,
   merkleTree: (root?: string) =>
     [...ponderKeys.all, 'merkleTree', root] as const,
+  merkleTreeEntry: (root?: string, account?: string) =>
+    [...ponderKeys.all, 'merkleTreeEntry', root, account] as const,
   attestation: (uid: string) =>
     [...ponderKeys.all, 'attestation', uid] as const,
   attestations: (options: {
@@ -70,6 +72,14 @@ export type MerkleEntry = {
 export type MerkleTreeResponse = {
   tree: MerkleMetadata
   entries: MerkleEntry[]
+}
+
+export type MerkleTreeEntryResponse = {
+  entry: {
+    account: string
+    value: string
+    proof: string[]
+  }
 }
 
 export type AttestationUID = {
@@ -142,6 +152,10 @@ export const ponderQueries = {
             entries: sortedEntries,
           }
         } else {
+          if (response.status === 404) {
+            return null
+          }
+
           throw new Error(
             `Failed to fetch merkle tree: ${response.status} ${
               response.statusText
@@ -150,6 +164,36 @@ export const ponderQueries = {
         }
       },
       enabled: !!root && !!APIS.ponder,
+    }),
+  merkleTreeEntry: (root?: string, account?: string) =>
+    queryOptions({
+      queryKey: ponderKeys.merkleTreeEntry(root, account),
+      queryFn: async () => {
+        if (!root) {
+          throw new Error('Root is required for merkle tree query')
+        }
+        if (!account) {
+          throw new Error('Account is required for merkle tree entry query')
+        }
+
+        const response = await fetch(`${APIS.ponder}/merkle/${root}/${account}`)
+
+        if (response.ok) {
+          const { entry } = (await response.json()) as MerkleTreeEntryResponse
+          return entry
+        } else {
+          if (response.status === 404) {
+            return null
+          }
+
+          throw new Error(
+            `Failed to fetch merkle tree entry: ${response.status} ${
+              response.statusText
+            } (${await response.text()})`
+          )
+        }
+      },
+      enabled: !!root && !!account && !!APIS.ponder,
     }),
   network: queryOptions({
     queryKey: ponderKeys.network(),

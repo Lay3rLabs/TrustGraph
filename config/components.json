@@ -112,7 +112,7 @@
   ],
   "aggregator_components": [
     {
-      "filename": "wavs_gov_aggregator.wasm",
+      "filename": "trust_graph_aggregator.wasm",
       "package_name": "trust-graph-aggregator",
       "package_version": "0.7.0",
       "config_values": {

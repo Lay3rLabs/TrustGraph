@@ -9,10 +9,9 @@ import {
   merkleFundDistributorAbi,
   merkleSnapshotAbi,
 } from "../../frontend/lib/contracts";
-import ponderConfig from "../ponder.config";
 import { drizzle } from "drizzle-orm/node-postgres";
 import * as offchainSchema from "../offchain.schema";
-import { eq, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 type MerkleTreeData = {
   id: string;
@@ -48,16 +47,21 @@ ponder.on("merkleSnapshot:setup", async ({ context }) => {
       retryEmptyResponse: false,
     });
 
+    const chainId = context.chain.id.toString();
+    const snapshotAddress = context.contracts.merkleSnapshot.address!;
+
     for (let i = 0; i < Number(stateCount); i++) {
       const state = await context.client.readContract({
-        address: context.contracts.merkleSnapshot.address,
+        address: snapshotAddress,
         abi: merkleSnapshotAbi,
         functionName: "getStateAtIndex",
         args: [BigInt(i)],
       });
 
       await context.db.insert(merkleSnapshot).values({
-        id: i.toString(),
+        id: `${chainId}-${snapshotAddress}-${state.root}-${i}`,
+        address: snapshotAddress,
+        chainId,
         blockNumber: state.blockNumber,
         timestamp: state.timestamp,
         root: state.root,
@@ -76,6 +80,8 @@ ponder.on("merkleSnapshot:MerkleRootUpdated", async ({ event, context }) => {
 
   await context.db.insert(merkleSnapshot).values({
     id: event.id,
+    address: event.log.address,
+    chainId: context.chain.id.toString(),
     blockNumber: event.block.number,
     timestamp: event.block.timestamp,
     root,
@@ -370,63 +376,61 @@ ponder.on(
   }
 );
 
-ponder.on(
-  "merkleFundDistributor:Paused",
-  async ({ event, context }) => {
-    await context.db
-      .update(merkleFundDistributor, { address: event.log.address })
-      .set({
-        paused: true,
-      });
-  }
-);
-
-ponder.on(
-  "merkleFundDistributor:Unpaused",
-  async ({ event, context }) => {
-    await context.db
-      .update(merkleFundDistributor, { address: event.log.address })
-      .set({
-        paused: false,
-      });
-  }
-);
-
-ponder.on(
-  "merkleFundDistributor:Distributed",
-  async ({ event, context }) => {
-    const { distributionIndex, distributor, token, amountFunded, feeAmount } =
-      event.args;
-
-    // Read the full distribution state from the contract
-    const distribution = await context.client.readContract({
-      address: event.log.address,
-      abi: merkleFundDistributorAbi,
-      functionName: "getDistribution",
-      args: [distributionIndex],
+ponder.on("merkleFundDistributor:Paused", async ({ event, context }) => {
+  await context.db
+    .update(merkleFundDistributor, { address: event.log.address })
+    .set({
+      paused: true,
     });
+});
 
-    await context.db.insert(merkleFundDistribution).values({
-      id: distributionIndex,
-      merkleFundDistributor: event.log.address,
-      blockNumber: event.block.number,
-      timestamp: event.block.timestamp,
-      root: distribution.root,
-      ipfsHash: distribution.ipfsHash,
-      ipfsHashCid: distribution.ipfsHashCid,
-      totalMerkleValue: distribution.totalMerkleValue,
-      distributor,
-      token,
-      amountFunded,
-      amountDistributed: 0n,
-      feeRecipient: distribution.feeRecipient,
-      feeAmount,
+ponder.on("merkleFundDistributor:Unpaused", async ({ event, context }) => {
+  await context.db
+    .update(merkleFundDistributor, { address: event.log.address })
+    .set({
+      paused: false,
     });
-  }
-);
+});
+
+ponder.on("merkleFundDistributor:Distributed", async ({ event, context }) => {
+  const { distributionIndex, distributor, token, amountFunded, feeAmount } =
+    event.args;
+
+  // Read the full distribution state from the contract
+  const distribution = await context.client.readContract({
+    address: event.log.address,
+    abi: merkleFundDistributorAbi,
+    functionName: "getDistribution",
+    args: [distributionIndex],
+  });
+
+  await context.db.insert(merkleFundDistribution).values({
+    id: distributionIndex,
+    merkleFundDistributor: event.log.address,
+    blockNumber: event.block.number,
+    timestamp: event.block.timestamp,
+    root: distribution.root,
+    ipfsHash: distribution.ipfsHash,
+    ipfsHashCid: distribution.ipfsHashCid,
+    totalMerkleValue: distribution.totalMerkleValue,
+    distributor,
+    token,
+    amountFunded,
+    amountDistributed: 0n,
+    feeRecipient: distribution.feeRecipient,
+    feeAmount,
+  });
+});
 
 ponder.on("merkleFundDistributor:Claimed", async ({ event, context }) => {
-  const { distributionIndex, account, token, amount, value, newAmountDistributed } = event.args;
+  const {
+    distributionIndex,
+    account,
+    token,
+    amount,
+    value,
+    newAmountDistributed,
+  } = event.args;
 
   // Update the distribution's amountDistributed
   await context.db
