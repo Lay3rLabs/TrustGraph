@@ -81,12 +81,10 @@ See `agent-config.example.json` for a full example.
 
 ## Environment Variables
 
-The DAO Agent requires the following environment variables:
+The DAO Agent supports the following environment variables:
 
-- `WAVS_ENV_OPENAI_API_KEY`: OpenAI API key for LLM access
-- `WAVS_ENV_OPENAI_API_URL`: OpenAI API endpoint (default: "https://api.openai.com/v1/chat/completions")
 - `WAVS_ENV_IPFS_GATEWAY_URL`: IPFS gateway URL for loading configurations (default: "https://gateway.lighthouse.storage")
-- `WAVS_ENV_OLLAMA_API_URL`: Ollama Server API endpoint (default: "http://localhost:localhost:11434")
+- `WAVS_ENV_OLLAMA_API_URL`: Ollama Server API endpoint (default: "http://localhost:11434")
 
 ## Building and Running
 
@@ -108,7 +106,7 @@ make wasi-build
 You can test the DAO Agent locally with:
 
 ```bash
-COMPONENT_FILENAME="dao_agent.wasm" PROMPT='We should donate 1 ETH to 0xDf3679681B87fAE75CE185e4f01d98b64Ddb64a3.' SERVICE_CONFIG='{"fuel_limit":100000000,"max_gas":5000000,"host_envs":["WAVS_ENV_OPENAI_API_KEY", "WAVS_ENV_OPENAI_API_URL", "WAVS_ENV_IPFS_GATEWAY_URL", "WAVS_ENV_OLLAMA_API_URL"],"kv":[["config_uri", "ipfs://bafkreigflglas3bfv2qe5dik3lwag5lyuotwzbp5p6fw5cd73ibr5qczc4"]],"workflow_id":"default","component_id":"default"}' make wasi-exec
+COMPONENT_FILENAME="dao_agent.wasm" PROMPT='We should donate 1 ETH to 0xDf3679681B87fAE75CE185e4f01d98b64Ddb64a3.' SERVICE_CONFIG='{"fuel_limit":100000000,"max_gas":5000000,"host_envs":["WAVS_ENV_IPFS_GATEWAY_URL", "WAVS_ENV_OLLAMA_API_URL"],"kv":[["config_uri", "ipfs://bafkreigflglas3bfv2qe5dik3lwag5lyuotwzbp5p6fw5cd73ibr5qczc4"]],"workflow_id":"default","component_id":"default"}' make wasi-exec
 ```
 
 ## Security Considerations

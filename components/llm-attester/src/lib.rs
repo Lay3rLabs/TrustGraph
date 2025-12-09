@@ -1,7 +1,6 @@
 mod config;
 mod trigger;
 
-use alloy_primitives::hex;
 use alloy_sol_types::sol_data::String as SolString;
 use alloy_sol_types::{SolType, SolValue};
 use config::AttesterConfig;
@@ -59,7 +58,7 @@ impl Guest for Component {
         let query_config = QueryConfig::from_strings(
             &format!("{}", eas_address),
             "0x0000000000000000000000000000000000000000", // indexer not needed for this query
-            format!("http://127.0.0.1:8545"),             // TODO: get RPC endpoint from config
+            config.rpc_url.clone(),
         )
         .map_err(|e| format!("Failed to create query config: {}", e))?;
 
@@ -72,12 +71,6 @@ impl Guest for Component {
         let schema_uid = attestation.schema;
         let ref_uid = attestation.uid;
         let recipient = attestation.recipient;
-
-        // // Check if we should process this schema
-        // if !config.should_process_schema(&schema_uid.to_string()) {
-        //     println!("Schema filtering active, skipping schema: {}", schema_uid);
-        //     return Ok(None);
-        // }
 
         println!("📋 Processing attestation:");
         println!("  - Schema UID: {}", schema_uid);
