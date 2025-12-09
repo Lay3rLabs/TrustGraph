@@ -19,7 +19,7 @@ wasi = "0.14.2"
 wavs-wasi-utils = "=1.2.0"
 
 # WAVS (https://github.com/Lay3rLabs/wavs-tools/pull/123)
-wavs-llm = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "5cba6bb758a6c64bbae4b58cbf22ab5f91ed2404", package = "wavs-llm"}
+wavs-llm = { path = "packages/llm" }
 wavs-eas = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "5cba6bb758a6c64bbae4b58cbf22ab5f91ed2404", package = "wavs-eas" }
 wavs-indexer-api = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "5cba6bb758a6c64bbae4b58cbf22ab5f91ed2404", package = "wavs-indexer-api" }
 wavs-merkle-sources = { git = "https://github.com/Lay3rLabs/wavs-tools",  rev = "5cba6bb758a6c64bbae4b58cbf22ab5f91ed2404", package = "wavs-merkle-sources" }

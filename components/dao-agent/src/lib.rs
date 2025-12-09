@@ -3,7 +3,6 @@ mod bindings;
 pub mod context;
 pub mod sol_interfaces;
 
-use crate::bindings::host::config_var;
 use crate::sol_interfaces::{decode_trigger_event, Destination, TransactionPayload};
 use alloy_primitives::{Address, Bytes, U256};
 use alloy_sol_types::{SolType, SolValue};
@@ -21,17 +20,20 @@ struct Component;
 
 impl Guest for Component {
     fn run(trigger_action: TriggerAction) -> std::result::Result<Option<WasmResponse>, String> {
+        // Load context from `config_uri` variable, or default if not configured
+        let context = DaoContext::load()?;
+
         // Check if this is a raw trigger for testing
-        let (prompt, _dest) = match &trigger_action.data {
+        let (prompt, _dest) = match trigger_action.data {
             TriggerData::Raw(data) => {
                 // For raw/CLI testing, use the data directly as the prompt
-                let prompt = std::str::from_utf8(data)
+                let prompt = std::str::from_utf8(&data)
                     .map_err(|e| format!("Failed to decode prompt from bytes: {}", e))?;
                 (prompt.to_string(), Destination::CliOutput)
             }
-            _ => {
+            other => {
                 // Decode the AttestationAttested event from PayableEASIndexerResolver
-                let (event, dest) = decode_trigger_event(trigger_action.data)
+                let (event, dest) = decode_trigger_event(other)
                     .map_err(|e| format!("Failed to decode trigger event: {}", e))?;
 
                 // Extract event data - AttestationAttested only has eas address and uid
@@ -46,7 +48,7 @@ impl Guest for Component {
                 let query_config = QueryConfig::from_strings(
                     &format!("{}", eas_address),
                     "0x0000000000000000000000000000000000000000", // indexer not needed
-                    "http://127.0.0.1:8545".to_string(),          // TODO: get from config
+                    context.rpc_url.clone(),
                 )
                 .map_err(|e| format!("Failed to create query config: {}", e))?;
 
@@ -67,16 +69,20 @@ impl Guest for Component {
                 );
 
                 // Extract the prompt from the attestation data
-                // Try to decode as UTF-8 string first
+                // Try ABI decoding first (most attestations use ABI encoding)
                 let prompt = if attestation.data.is_empty() {
                     return Err("Attestation data is empty - no prompt found".to_string());
+                } else if let Ok(decoded) =
+                    alloy_sol_types::sol_data::String::abi_decode(&attestation.data)
+                {
+                    decoded
                 } else if let Ok(decoded) = String::from_utf8(attestation.data.to_vec()) {
+                    // Fall back to raw UTF-8 for plain text attestations
                     decoded
                 } else {
-                    // Try ABI decoding as a string
-                    alloy_sol_types::sol_data::String::abi_decode(&attestation.data).map_err(
-                        |e| format!("Failed to decode attestation data as string: {}", e),
-                    )?
+                    return Err(
+                        "Failed to decode attestation data as ABI string or UTF-8".to_string()
+                    );
                 };
 
                 (prompt, dest)
@@ -85,8 +91,6 @@ impl Guest for Component {
 
         println!("Processing prompt: {}", prompt);
 
-        // Load context from `config_uri` variable, or default if not configured
-        let context = DaoContext::load()?;
         let llm_context = context.llm_context.clone();
 
         // Create LLM client implementation using the standalone constructor

@@ -17,6 +17,7 @@ pub struct AttesterConfig {
     pub revocable: bool,
     pub expiration_time: u64,
     pub attestation_value: U256,
+    pub rpc_url: String,
 
     // LLM configuration
     pub model: String,
@@ -55,6 +56,8 @@ impl AttesterConfig {
             .map(U256::from)
             .unwrap_or(U256::ZERO);
 
+        let rpc_url = config_var("rpc_url").unwrap_or_else(|| "http://127.0.0.1:8545".to_string());
+
         // LLM configuration
         let model = config_var("llm_model").unwrap_or_else(|| defaults::DEFAULT_MODEL.to_string());
 
@@ -91,6 +94,7 @@ impl AttesterConfig {
             revocable,
             expiration_time,
             attestation_value,
+            rpc_url,
             model,
             temperature,
             top_p,
@@ -111,6 +115,7 @@ impl AttesterConfig {
         println!("  - Revocable: {}", self.revocable);
         println!("  - Expiration: {}", self.expiration_time);
         println!("  - Value: {}", self.attestation_value);
+        println!("  - RPC URL: {}", self.rpc_url);
 
         println!("📋 LLM Configuration:");
         println!("  - Model: {}", self.model);
@@ -157,14 +162,6 @@ impl AttesterConfig {
         }
 
         Ok(())
-    }
-
-    /// Check if the component should process a given schema
-    pub fn should_process_schema(&self, schema_uid: &str) -> bool {
-        match &self.schema_uid {
-            Some(configured_schema) => configured_schema == schema_uid,
-            None => true, // Process all schemas if none configured
-        }
     }
 
     /// Get LLM options for the wavs_llm client
@@ -230,20 +227,5 @@ mod tests {
         assert!(config.validate().is_err());
         config.submit_schema_uid = Some("0x".to_string() + &"a".repeat(64));
         assert!(config.validate().is_ok());
-    }
-
-    #[test]
-    fn test_should_process_schema() {
-        let mut config = AttesterConfig::from_env();
-
-        // No configured schema - should process all
-        config.schema_uid = None;
-        assert!(config.should_process_schema("0x123"));
-        assert!(config.should_process_schema("0x456"));
-
-        // Configured schema - should only process matching
-        config.schema_uid = Some("0x123".to_string());
-        assert!(config.should_process_schema("0x123"));
-        assert!(!config.should_process_schema("0x456"));
     }
 }
