@@ -363,18 +363,22 @@ impl<'a> ChatRequest<'a> {
             "stream": false,
         });
 
-        // Add configuration options
+        // Add configuration options inside "options" object (required by Ollama API)
+        let mut options = serde_json::Map::new();
         if let Some(temp) = self.client.config.temperature {
-            body["temperature"] = serde_json::json!(temp);
+            options.insert("temperature".to_string(), serde_json::json!(temp));
         }
         if let Some(max_tokens) = self.client.config.max_tokens {
-            body["max_tokens"] = serde_json::json!(max_tokens);
+            options.insert("num_predict".to_string(), serde_json::json!(max_tokens));
         }
         if let Some(top_p) = self.client.config.top_p {
-            body["top_p"] = serde_json::json!(top_p);
+            options.insert("top_p".to_string(), serde_json::json!(top_p));
         }
         if let Some(seed) = self.client.config.seed {
-            body["seed"] = serde_json::json!(seed);
+            options.insert("seed".to_string(), serde_json::json!(seed));
+        }
+        if !options.is_empty() {
+            body["options"] = serde_json::Value::Object(options);
         }
 
         // Add tools if provided
@@ -551,18 +555,22 @@ where
             "format": schema_value,
         });
 
-        // Add configuration options
+        // Add configuration options inside "options" object (required by Ollama API)
+        let mut options = serde_json::Map::new();
         if let Some(temp) = self.client.config.temperature {
-            body["temperature"] = serde_json::json!(temp);
+            options.insert("temperature".to_string(), serde_json::json!(temp));
         }
         if let Some(max_tokens) = self.client.config.max_tokens {
-            body["max_tokens"] = serde_json::json!(max_tokens);
+            options.insert("num_predict".to_string(), serde_json::json!(max_tokens));
         }
         if let Some(top_p) = self.client.config.top_p {
-            body["top_p"] = serde_json::json!(top_p);
+            options.insert("top_p".to_string(), serde_json::json!(top_p));
         }
         if let Some(seed) = self.client.config.seed {
-            body["seed"] = serde_json::json!(seed);
+            options.insert("seed".to_string(), serde_json::json!(seed));
+        }
+        if !options.is_empty() {
+            body["options"] = serde_json::Value::Object(options);
         }
 
         // Add tools if provided

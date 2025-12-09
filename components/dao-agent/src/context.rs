@@ -221,12 +221,14 @@ impl Default for DaoContext {
                 tool_call_id: None,
                 name: None,
             }],
-            contracts: vec![Contract {
-                name: "USDC".into(),
-                address: "0xb7278a61aa25c888815afc32ad3cc52ff24fe575".into(),
-                abi: r#"[{"type":"function","name":"transfer","inputs":[{"name":"to","type":"address","internalType":"address"},{"name":"value","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"nonpayable"}]"#.into(),
-                description: Some("USDC is a stablecoin pegged to the US Dollar".into()),
-            }],
+            contracts: vec![
+            //     Contract {
+            //     name: "USDC".into(),
+            //     address: "0xb7278a61aa25c888815afc32ad3cc52ff24fe575".into(),
+            //     abi: r#"[{"type":"function","name":"transfer","inputs":[{"name":"to","type":"address","internalType":"address"},{"name":"value","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"nonpayable"}]"#.into(),
+            //     description: Some("USDC is a stablecoin pegged to the US Dollar".into()),
+            // }
+            ],
             config: HashMap::new(),
         };
 
@@ -241,12 +243,12 @@ impl Default for DaoContext {
                     18,
                     "Native Ethereum token",
                 ),
-                SupportedToken::new_with_description(
-                    "0xb7278a61aa25c888815afc32ad3cc52ff24fe575",
-                    "USDC",
-                    6,
-                    "USD Coin - a stablecoin pegged to the US Dollar",
-                ),
+                // SupportedToken::new_with_description(
+                //     "0xb7278a61aa25c888815afc32ad3cc52ff24fe575",
+                //     "USDC",
+                //     6,
+                //     "USD Coin - a stablecoin pegged to the US Dollar",
+                // ),
             ],
             llm_context,
         }

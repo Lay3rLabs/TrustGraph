@@ -247,7 +247,7 @@ task eas:trigger \
   EAS_ADDRESS="$(task config:eas-addr)" \
   SCHEMA_UID="$(task config:proposal-schema-id)" \
   RECIPIENT="$(task config:wallet-address)" \
-  MESSAGE="We need to do truely great things. The latest GitCoin Bioregionalism grants round is helping to plant lots of trees. We propose to send 1 ETH to 0xDf3679681B87fAE75CE185e4f01d98b64Ddb64a3"
+  MESSAGE="We propose to send 1 ETH to 0xDf3679681B87fAE75CE185e4f01d98b64Ddb64a3 to support reforestation."
 ```
 
 Query the balance (should now be 1 ETH):

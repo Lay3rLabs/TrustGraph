@@ -11,8 +11,9 @@ use bindings::{export, wavs::operator::input::TriggerData, Guest, TriggerAction}
 use context::DaoContext;
 use sol_interfaces::{Operation, Transaction};
 use std::str::FromStr;
+use tiny_keccak::{Hasher, Keccak};
 use wavs_eas::query::{query_attestation, QueryConfig};
-use wavs_llm::{client, errors::AgentError, ToolCall};
+use wavs_llm::{client, errors::AgentError, tools::Tools, ToolCall};
 use wavs_llm::{LlmResponse, Message};
 use wstd::runtime::block_on;
 
@@ -24,12 +25,19 @@ impl Guest for Component {
         let context = DaoContext::load()?;
 
         // Check if this is a raw trigger for testing
-        let (prompt, _dest) = match trigger_action.data {
+        // Returns (prompt, destination, nonce) - nonce derived from attestation UID for determinism
+        let (prompt, _dest, nonce) = match trigger_action.data {
             TriggerData::Raw(data) => {
                 // For raw/CLI testing, use the data directly as the prompt
                 let prompt = std::str::from_utf8(&data)
                     .map_err(|e| format!("Failed to decode prompt from bytes: {}", e))?;
-                (prompt.to_string(), Destination::CliOutput)
+                // For CLI testing, use hash of input as nonce
+                let mut hasher = Keccak::v256();
+                let mut hash = [0u8; 32];
+                hasher.update(data.as_slice());
+                hasher.finalize(&mut hash);
+                let nonce = U256::from_be_bytes(hash);
+                (prompt.to_string(), Destination::CliOutput, nonce)
             }
             other => {
                 // Decode the AttestationAttested event from PayableEASIndexerResolver
@@ -40,9 +48,13 @@ impl Guest for Component {
                 let eas_address = event.eas;
                 let attestation_uid = event.uid;
 
+                // Use attestation UID as nonce - it's unique per trigger and deterministic across all nodes
+                let nonce = U256::from_be_bytes(attestation_uid.0);
+
                 println!("📋 AttestationAttested event received:");
                 println!("  - EAS Address: {}", eas_address);
                 println!("  - Attestation UID: {}", attestation_uid);
+                println!("  - Nonce (from UID): {}", nonce);
 
                 // Create query config to fetch the full attestation
                 let query_config = QueryConfig::from_strings(
@@ -85,7 +97,7 @@ impl Guest for Component {
                     );
                 };
 
-                (prompt, dest)
+                (prompt, dest, nonce)
             }
         };
 
@@ -103,7 +115,8 @@ impl Guest for Component {
         let result = {
             let response = llm_client
                 .chat(prompt.clone())
-                .with_config(&llm_context)
+                .with_tools(vec![Tools::send_eth_tool()]) // Add built-in send_eth tool first
+                .with_config(&llm_context) // Then add contract tools (extends, doesn't replace)
                 .send()
                 .map_err(|e| e.to_string())?;
 
@@ -164,10 +177,11 @@ impl Guest for Component {
                 };
 
                 println!("Encoded transaction data: 0x{}", hex::encode(&data));
+                println!("Using nonce: {}", nonce);
 
                 Ok(Some(WasmResponse {
                     payload: TransactionPayload {
-                        nonce: U256::ZERO,
+                        nonce,
                         transactions: vec![Transaction {
                             target: to,
                             data,
