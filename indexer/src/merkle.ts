@@ -3,7 +3,7 @@ import { merkleSnapshot } from "ponder:schema";
 import { merkleSnapshotAbi } from "../../frontend/lib/contracts";
 import { drizzle } from "drizzle-orm/node-postgres";
 import * as offchainSchema from "../offchain.schema";
-import { sql } from "drizzle-orm";
+import { sql, eq, and } from "drizzle-orm";
 
 type MerkleTreeData = {
   id: string;
@@ -74,6 +74,31 @@ ponder.on("merkleSnapshot:MerkleRootUpdated", async ({ event, context }) => {
     ipfsHashCid,
     totalValue,
   });
+
+  // If metadata and at least one entry already exist, skip.
+  const existingMetadata = await offchainDb
+    .select()
+    .from(offchainSchema.merkleMetadata)
+    .where(
+      and(
+        eq(offchainSchema.merkleMetadata.root, root),
+        eq(offchainSchema.merkleMetadata.ipfsHashCid, ipfsHashCid)
+      )
+    )
+    .limit(1);
+  const existingEntries = await offchainDb
+    .select()
+    .from(offchainSchema.merkleEntry)
+    .where(
+      and(
+        eq(offchainSchema.merkleEntry.root, root),
+        eq(offchainSchema.merkleEntry.ipfsHashCid, ipfsHashCid)
+      )
+    )
+    .limit(1);
+  if (existingMetadata.length > 0 && existingEntries.length > 0) {
+    return;
+  }
 
   // Load IPFS data.
   const ipfsGateway = process.env.IPFS_GATEWAY;
