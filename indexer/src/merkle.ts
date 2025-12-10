@@ -1,9 +1,11 @@
+import { and, eq, sql } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/node-postgres";
 import { ponder } from "ponder:registry";
 import { merkleSnapshot } from "ponder:schema";
+
 import { merkleSnapshotAbi } from "../../frontend/lib/contracts";
-import { drizzle } from "drizzle-orm/node-postgres";
 import * as offchainSchema from "../offchain.schema";
-import { sql, eq, and } from "drizzle-orm";
+
 
 type MerkleTreeData = {
   id: string;

@@ -1,6 +1,5 @@
-import * as offchainSchema from "../../offchain.schema";
 import { Context, Hono } from "hono";
-import { drizzle } from "drizzle-orm/node-postgres";
+
 import { offchainDb } from "./db";
 
 declare global {

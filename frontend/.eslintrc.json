@@ -1,6 +1,5 @@
 {
-  "extends": ["plugin:prettier/recommended"],
-  "ignorePatterns": ["node_modules", "dist"],
+  "ignorePatterns": ["node_modules", "dist", "lib/wasm"],
   "parserOptions": {
     "ecmaVersion": "latest"
   },

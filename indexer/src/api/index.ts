@@ -1,13 +1,13 @@
-import { db } from "ponder:api";
-import schema from "ponder:schema";
 import { Hono } from "hono";
 import { client, graphql } from "ponder";
+import { db } from "ponder:api";
+import schema from "ponder:schema";
 
 import attestations from "./attestations";
+import localismFund from "./localism-fund";
 import merkle from "./merkle";
 import network from "./network";
 
-import localismFund from "./localism-fund";
 
 const app = new Hono();
 

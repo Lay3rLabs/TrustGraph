@@ -1,4 +1,4 @@
 {
-  "eslint.workingDirectories": ["frontend", "ponder"],
+  "eslint.workingDirectories": ["frontend", "indexer"],
   "makefile.configureOnOpen": false
 }

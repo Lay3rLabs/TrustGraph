@@ -1,7 +1,8 @@
 import { ponder } from "ponder:registry";
 import { wavsIndexerEvent } from "ponder:schema";
-import { wavsIndexerAbi } from "../../frontend/lib/contracts";
 import { Hex } from "viem";
+
+import { wavsIndexerAbi } from "../../frontend/lib/contracts";
 
 ponder.on("wavsIndexer:EventIndexed", async ({ event, context }) => {
   // Get the entire indexed event.

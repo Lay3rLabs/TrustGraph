@@ -1,12 +1,12 @@
 import { createConfig } from "ponder";
+import { Hex } from "viem";
 
+import deploymentSummary from "../.docker/deployment_summary.json";
 import {
   easIndexerResolverAbi,
   merkleSnapshotAbi,
   wavsIndexerAbi,
 } from "../frontend/lib/contracts";
-import deploymentSummary from "../.docker/deployment_summary.json";
-import { Hex } from "viem";
 
 // const CHAIN = "optimism" as const;
 // const CHAIN_ID = 10;

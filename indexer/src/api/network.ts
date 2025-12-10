@@ -1,8 +1,9 @@
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "ponder:api";
 import { easAttestation } from "ponder:schema";
+
 import { offchainDb } from "./db";
-import { and, asc, desc, eq, inArray, or } from "drizzle-orm";
 
 const app = new Hono();
 

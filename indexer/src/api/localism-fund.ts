@@ -1,8 +1,10 @@
-import { Hono } from "hono";
-import { offchainDb } from "./db";
 import { Client } from "@notionhq/client";
-import * as offchainSchema from "../../offchain.schema";
 import { sql } from "drizzle-orm";
+import { Hono } from "hono";
+
+import { offchainDb } from "./db";
+import * as offchainSchema from "../../offchain.schema";
+
 
 const app = new Hono();
 

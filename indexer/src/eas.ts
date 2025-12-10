@@ -1,5 +1,6 @@
 import { ponder } from "ponder:registry";
 import { easAttestation } from "ponder:schema";
+
 import { easAbi } from "../../frontend/lib/contracts";
 
 ponder.on("easIndexerResolver:AttestationAttested", async ({ event, context }) => {
