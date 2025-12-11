@@ -6,6 +6,7 @@ import {
   easIndexerResolverAbi,
   merkleSnapshotAbi,
   wavsIndexerAbi,
+  merkleGovModuleAbi,
 } from "../frontend/lib/contracts";
 
 // const CHAIN = "optimism" as const;
@@ -52,6 +53,14 @@ export default createConfig({
       // startBlock: 35855002,
       chain: {
         [CHAIN]: { address: deploymentSummary.merkler.merkle_snapshot as Hex },
+      },
+    },
+    merkleGovModule: {
+      abi: merkleGovModuleAbi,
+      startBlock: 1,
+      // startBlock: 35855002,
+      chain: {
+        [CHAIN]: { address: deploymentSummary.zodiac_safes.safe1.merkle_gov_module as Hex },
       },
     },
   },

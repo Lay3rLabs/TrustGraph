@@ -27,12 +27,13 @@ export interface ProposalCore {
   proposer: string
   startBlock: bigint
   endBlock: bigint
-  forVotes: bigint
-  againstVotes: bigint
+  yesVotes: bigint
+  noVotes: bigint
   abstainVotes: bigint
   executed: boolean
   cancelled: boolean
   merkleRoot: string
+  totalVotingPower: bigint
   description?: string // For UI purposes
   state: number // ProposalState enum
 }
@@ -40,15 +41,15 @@ export interface ProposalCore {
 export enum ProposalState {
   Pending = 0,
   Active = 1,
-  Defeated = 2,
-  Succeeded = 3,
+  Rejected = 2,
+  Passed = 3,
   Executed = 4,
   Cancelled = 5,
 }
 
 export enum VoteType {
-  Against = 0,
-  For = 1,
+  No = 0,
+  Yes = 1,
   Abstain = 2,
 }
 
@@ -202,39 +203,81 @@ export function useGovernance() {
     loadMerkleData()
   }, [ipfsHashCid, address])
 
-  // Get a single proposal with its actions
+  // Get a single proposal with its actions using the contract's getProposal function
   const getProposal = useCallback(
     async (
       proposalId: number
     ): Promise<{ core: ProposalCore; actions: ProposalAction[] } | null> => {
+      if (!publicClient) {
+        console.error('Public client not available')
+        return null
+      }
+
       try {
         console.log(`Getting proposal ${proposalId}`)
-        // This is a simplified implementation. In production, you'd use a subgraph or multicall
-        // For now, we'll return a placeholder structure
-        return {
-          core: {
-            id: BigInt(proposalId),
-            proposer: '0x0000000000000000000000000000000000000000',
-            startBlock: 0n,
-            endBlock: 0n,
-            forVotes: 0n,
-            againstVotes: 0n,
-            abstainVotes: 0n,
-            executed: false,
-            cancelled: false,
-            merkleRoot:
-              '0x0000000000000000000000000000000000000000000000000000000000000000',
-            description: 'Proposal data not loaded',
-            state: 0,
+
+        // Call the contract's getProposal function which returns (Proposal, ProposalState, ProposalAction[])
+        const result = await publicClient.readContract({
+          address: merkleGovModuleAddress,
+          abi: merkleGovModuleAbi,
+          functionName: 'getProposal',
+          args: [BigInt(proposalId)],
+        })
+
+        const [proposalData, proposalState, actions] = result as [
+          {
+            id: bigint
+            proposer: string
+            startBlock: bigint
+            endBlock: bigint
+            yesVotes: bigint
+            noVotes: bigint
+            abstainVotes: bigint
+            executed: boolean
+            cancelled: boolean
+            merkleRoot: string
+            totalVotingPower: bigint
           },
-          actions: [],
+          number,
+          Array<{
+            target: string
+            value: bigint
+            data: string
+            operation: number
+          }>
+        ]
+
+        const core: ProposalCore = {
+          id: proposalData.id,
+          proposer: proposalData.proposer,
+          startBlock: proposalData.startBlock,
+          endBlock: proposalData.endBlock,
+          yesVotes: proposalData.yesVotes,
+          noVotes: proposalData.noVotes,
+          abstainVotes: proposalData.abstainVotes,
+          executed: proposalData.executed,
+          cancelled: proposalData.cancelled,
+          merkleRoot: proposalData.merkleRoot,
+          totalVotingPower: proposalData.totalVotingPower,
+          description: `Proposal ${proposalId}`,
+          state: Number(proposalState),
         }
+
+        const proposalActions: ProposalAction[] = actions.map((action) => ({
+          target: action.target,
+          value: action.value.toString(),
+          data: action.data,
+          operation: Number(action.operation),
+          description: `Action for ${action.target}`,
+        }))
+
+        return { core, actions: proposalActions }
       } catch (err) {
         console.error(`Error getting proposal ${proposalId}:`, err)
         return null
       }
     },
-    []
+    [publicClient]
   )
 
   // Get all proposals (by querying from 1 to proposalCount)
@@ -248,104 +291,26 @@ export function useGovernance() {
       }
 
       console.log(`Getting all ${proposalCount} proposals`)
-      const proposals: { core: ProposalCore; actions: ProposalAction[] }[] = []
+      const allProposals: { core: ProposalCore; actions: ProposalAction[] }[] =
+        []
 
-      if (!publicClient) {
-        console.error('Public client not available')
-        return []
-      }
-
-      // Query each proposal individually
+      // Query each proposal using getProposal
       for (let i = 1; i <= proposalCount; i++) {
-        try {
-          // Read proposal core data
-          const proposalData = await publicClient.readContract({
-            address: merkleGovModuleAddress,
-            abi: merkleGovModuleAbi,
-            functionName: 'proposals',
-            args: [BigInt(i)],
-          })
-
-          // Read proposal actions
-          const actions = await publicClient.readContract({
-            address: merkleGovModuleAddress,
-            abi: merkleGovModuleAbi,
-            functionName: 'getActions',
-            args: [BigInt(i)],
-          })
-
-          // Get proposal state
-          const proposalState = await publicClient.readContract({
-            address: merkleGovModuleAddress,
-            abi: merkleGovModuleAbi,
-            functionName: 'state',
-            args: [BigInt(i)],
-          })
-
-          const [
-            id,
-            proposer,
-            startBlock,
-            endBlock,
-            forVotes,
-            againstVotes,
-            abstainVotes,
-            executed,
-            cancelled,
-            merkleRoot,
-          ] = proposalData as [
-            bigint,
-            string,
-            bigint,
-            bigint,
-            bigint,
-            bigint,
-            bigint,
-            boolean,
-            boolean,
-            string
-          ]
-
-          const core: ProposalCore = {
-            id: id,
-            proposer: proposer,
-            startBlock: startBlock,
-            endBlock: endBlock,
-            forVotes: forVotes,
-            againstVotes: againstVotes,
-            abstainVotes: abstainVotes,
-            executed: executed,
-            cancelled: cancelled,
-            merkleRoot: merkleRoot,
-            description: `Proposal ${i}`, // We don't store description in contract
-            state: Number(proposalState),
-          }
-
-          const proposalActions: ProposalAction[] = (actions as any[]).map(
-            (action: any) => ({
-              target: action.target,
-              value: BigInt(action.value).toString(),
-              data: action.data,
-              operation: Number(action.operation),
-              description: `Action for ${action.target}`,
-            })
-          )
-
-          proposals.push({ core, actions: proposalActions })
-        } catch (err) {
-          console.error(`Error fetching proposal ${i}:`, err)
+        const proposal = await getProposal(i)
+        if (proposal) {
+          allProposals.push(proposal)
         }
       }
 
-      console.log(`Fetched ${proposals.length} proposals`)
-      return proposals
+      console.log(`Fetched ${allProposals.length} proposals`)
+      return allProposals
     } catch (err) {
       console.error('Error getting all proposals:', err)
       return []
     }
-  }, [proposalCount, publicClient])
+  }, [proposalCount, getProposal])
 
-  // Create proposal using MerkleGovModule
+  // Create proposal using MerkleGovModule (requires merkle proof for membership)
   const createProposal = useCallback(
     async (
       actions: ProposalAction[],
@@ -366,6 +331,13 @@ export function useGovernance() {
       ) {
         console.log('No merkle root set', { currentMerkleRoot })
         setError('No merkle root set. Governance not initialized.')
+        return null
+      }
+
+      if (!userVotingPower) {
+        setError(
+          'No voting power found. Only members of the merkle tree can create proposals.'
+        )
         return null
       }
 
@@ -391,6 +363,8 @@ export function useGovernance() {
           calldatas,
           operations,
           description,
+          votingPower: userVotingPower.value,
+          proof: userVotingPower.proof,
         })
 
         // Get current nonce
@@ -404,7 +378,15 @@ export function useGovernance() {
           address: merkleGovModuleAddress,
           abi: merkleGovModuleAbi,
           functionName: 'propose',
-          args: [targets, values, calldatas, operations, description],
+          args: [
+            targets,
+            values,
+            calldatas,
+            operations,
+            description,
+            BigInt(userVotingPower.value),
+            userVotingPower.proof as `0x${string}`[],
+          ],
           account: address,
         })
 
@@ -418,7 +400,15 @@ export function useGovernance() {
             address: merkleGovModuleAddress,
             abi: merkleGovModuleAbi,
             functionName: 'propose',
-            args: [targets, values, calldatas, operations, description],
+            args: [
+              targets,
+              values,
+              calldatas,
+              operations,
+              description,
+              BigInt(userVotingPower.value),
+              userVotingPower.proof as `0x${string}`[],
+            ],
             gas: (gasEstimate * 120n) / 100n, // Add 20% buffer
             gasPrice,
             nonce,
@@ -440,6 +430,7 @@ export function useGovernance() {
       isConnected,
       address,
       currentMerkleRoot,
+      userVotingPower,
       publicClient,
       writeContract,
       writeHash,
@@ -447,18 +438,82 @@ export function useGovernance() {
     ]
   )
 
-  // Cast vote with merkle proof
+  // Helper to get voting power for a specific merkle root (used for voting on proposals)
+  const getVotingPowerForMerkleRoot = useCallback(
+    async (
+      merkleRoot: string,
+      voterAddress: string
+    ): Promise<VotingPowerEntry | null> => {
+      if (!publicClient) return null
+
+      // If it matches the current merkle root, use the already-loaded data
+      if (merkleRoot === currentMerkleRoot && merkleData) {
+        const entry = merkleData.tree.find(
+          (e) => e.account.toLowerCase() === voterAddress.toLowerCase()
+        )
+        return entry || null
+      }
+
+      // Otherwise, we need to find the IPFS CID for this merkle root by querying events
+      try {
+        console.log(`Looking up merkle data for root: ${merkleRoot}`)
+
+        // Query MerkleRootUpdated events to find the CID for this root
+        const logs = await publicClient.getLogs({
+          address: merkleGovModuleAddress,
+          event: {
+            type: 'event',
+            name: 'MerkleRootUpdated',
+            inputs: [
+              { type: 'bytes32', name: 'root', indexed: true },
+              { type: 'bytes32', name: 'ipfsHash', indexed: true },
+              { type: 'string', name: 'ipfsHashCid', indexed: false },
+              { type: 'uint256', name: 'totalValue', indexed: false },
+            ],
+          },
+          args: {
+            root: merkleRoot as `0x${string}`,
+          },
+          fromBlock: 'earliest',
+          toBlock: 'latest',
+        })
+
+        if (logs.length === 0) {
+          console.error(`No MerkleRootUpdated event found for root: ${merkleRoot}`)
+          return null
+        }
+
+        // Get the IPFS CID from the event
+        const ipfsCid = (logs[0] as any).args.ipfsHashCid as string
+        console.log(`Found IPFS CID for merkle root: ${ipfsCid}`)
+
+        // Fetch the merkle data from IPFS
+        const ipfsUrl = cidToUrl(ipfsCid)
+        const response = await fetch(ipfsUrl)
+        if (!response.ok) {
+          throw new Error(`Failed to fetch IPFS data: ${response.status}`)
+        }
+
+        const data: MerkleTreeData = await response.json()
+
+        // Find the user's entry
+        const entry = data.tree.find(
+          (e) => e.account.toLowerCase() === voterAddress.toLowerCase()
+        )
+        return entry || null
+      } catch (err) {
+        console.error('Error fetching merkle data for root:', err)
+        return null
+      }
+    },
+    [publicClient, currentMerkleRoot, merkleData]
+  )
+
+  // Cast vote with merkle proof (uses the proposal's snapshotted merkle root)
   const castVote = useCallback(
     async (proposalId: number, support: VoteType): Promise<string | null> => {
       if (!isConnected || !address) {
         setError('Wallet not connected')
-        return null
-      }
-
-      if (!userVotingPower) {
-        setError(
-          'No voting power found. Please check if you have governance tokens.'
-        )
         return null
       }
 
@@ -471,11 +526,32 @@ export function useGovernance() {
         setError(null)
         setIsLoading(true)
 
+        // Get the proposal to find its snapshotted merkle root
+        const proposal = await getProposal(proposalId)
+        if (!proposal) {
+          setError('Proposal not found')
+          return null
+        }
+
+        // Get voting power for the proposal's merkle root (not the current one)
+        const votingPower = await getVotingPowerForMerkleRoot(
+          proposal.core.merkleRoot,
+          address
+        )
+
+        if (!votingPower) {
+          setError(
+            'No voting power found for this proposal. You may not have been a member when it was created.'
+          )
+          return null
+        }
+
         console.log('Casting vote with:', {
           proposalId: BigInt(proposalId),
           voteType: support,
-          votingPower: userVotingPower.value,
-          proof: userVotingPower.proof,
+          proposalMerkleRoot: proposal.core.merkleRoot,
+          votingPower: votingPower.value,
+          proof: votingPower.proof,
         })
 
         // Get current nonce
@@ -492,8 +568,8 @@ export function useGovernance() {
           args: [
             BigInt(proposalId),
             support,
-            BigInt(userVotingPower.value),
-            userVotingPower.proof as `0x${string}`[],
+            BigInt(votingPower.value),
+            votingPower.proof as `0x${string}`[],
           ],
           account: address,
         })
@@ -510,8 +586,8 @@ export function useGovernance() {
             args: [
               BigInt(proposalId),
               support,
-              BigInt(userVotingPower.value),
-              userVotingPower.proof as `0x${string}`[],
+              BigInt(votingPower.value),
+              votingPower.proof as `0x${string}`[],
             ],
             gas: (gasEstimate * 120n) / 100n,
             gasPrice,
@@ -533,16 +609,13 @@ export function useGovernance() {
     [
       isConnected,
       address,
-      userVotingPower,
-      merkleData,
       publicClient,
-      writeContract,
-      writeHash,
-      writeError,
+      getProposal,
+      getVotingPowerForMerkleRoot,
     ]
   )
 
-  // No queuing in MerkleGovModule - proposals go directly from Succeeded to executable
+  // No queuing in MerkleGovModule - proposals go directly from Passed to executable
   const queueProposal = useCallback(async (_proposalId: number) => {
     console.log(
       'Queue not supported in MerkleGovModule - proposals are directly executable when succeeded'
@@ -627,10 +700,10 @@ export function useGovernance() {
         return 'Pending'
       case ProposalState.Active:
         return 'Active'
-      case ProposalState.Defeated:
-        return 'Defeated'
-      case ProposalState.Succeeded:
-        return 'Succeeded'
+      case ProposalState.Rejected:
+        return 'Rejected'
+      case ProposalState.Passed:
+        return 'Passed'
       case ProposalState.Executed:
         return 'Executed'
       case ProposalState.Cancelled:
@@ -641,11 +714,12 @@ export function useGovernance() {
   }
 
   const canCreateProposal = (): boolean => {
-    // In MerkleGovModule, anyone can create a proposal if merkle root is set
+    // In MerkleGovModule, only members of the merkle tree can create proposals
     return (
       currentMerkleRoot !== undefined &&
       currentMerkleRoot !==
-        '0x0000000000000000000000000000000000000000000000000000000000000000'
+        '0x0000000000000000000000000000000000000000000000000000000000000000' &&
+      userVotingPower !== null
     )
   }
 

@@ -40,18 +40,18 @@ export function ProposalCard({
   const proposalId = Number(proposal.id)
   const state = proposal.state
   const isActive = state === ProposalState.Active
-  const isSucceeded = state === ProposalState.Succeeded
+  const isPassed = state === ProposalState.Passed
   const canVote = isActive && userVotingPower && Number(userVotingPower) > 0
 
   // Calculate total votes and percentages
   const totalVotes =
-    Number(proposal.forVotes) +
-    Number(proposal.againstVotes) +
+    Number(proposal.yesVotes) +
+    Number(proposal.noVotes) +
     Number(proposal.abstainVotes)
   const forPercentage =
-    totalVotes > 0 ? (Number(proposal.forVotes) / totalVotes) * 100 : 0
+    totalVotes > 0 ? (Number(proposal.yesVotes) / totalVotes) * 100 : 0
   const againstPercentage =
-    totalVotes > 0 ? (Number(proposal.againstVotes) / totalVotes) * 100 : 0
+    totalVotes > 0 ? (Number(proposal.noVotes) / totalVotes) * 100 : 0
   const abstainPercentage =
     totalVotes > 0 ? (Number(proposal.abstainVotes) / totalVotes) * 100 : 0
 
@@ -82,9 +82,9 @@ export function ProposalCard({
         const hash = await onVote(proposalId, support)
         if (hash) {
           const voteText =
-            support === VoteType.For
+            support === VoteType.Yes
               ? 'FOR'
-              : support === VoteType.Against
+              : support === VoteType.No
               ? 'AGAINST'
               : 'ABSTAIN'
           setSuccessMessage(`Vote cast ${voteText}! Transaction: ${hash}`)
@@ -136,7 +136,7 @@ export function ProposalCard({
               className={`text-xs px-2 py-1 rounded border ${
                 isActive
                   ? 'border-green-500 bg-green-50 text-green-700'
-                  : state === ProposalState.Succeeded
+                  : state === ProposalState.Passed
                   ? 'border-blue-500 bg-blue-50 text-blue-700'
                   : state === ProposalState.Executed
                   ? 'border-purple-500 bg-purple-50 text-purple-700'
@@ -217,7 +217,7 @@ export function ProposalCard({
             <div className="flex justify-between">
               <span className="text-gray-600">FOR</span>
               <span className="text-gray-800">
-                {proposal.forVotes.toString()}
+                {proposal.yesVotes.toString()}
               </span>
             </div>
             <div className="bg-gray-200 h-2 rounded">
@@ -234,7 +234,7 @@ export function ProposalCard({
             <div className="flex justify-between">
               <span className="text-gray-600">AGAINST</span>
               <span className="text-gray-800">
-                {proposal.againstVotes.toString()}
+                {proposal.noVotes.toString()}
               </span>
             </div>
             <div className="bg-gray-200 h-2 rounded">
@@ -281,7 +281,7 @@ export function ProposalCard({
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
             <Button
-              onClick={() => handleVote(VoteType.For)}
+              onClick={() => handleVote(VoteType.Yes)}
               disabled={isVoting || isLoading}
               variant="outline"
               className="flex-1 border-green-600 text-green-700 hover:bg-green-50 !px-4 !py-2"
@@ -289,7 +289,7 @@ export function ProposalCard({
               <span className="text-xs">VOTE FOR</span>
             </Button>
             <Button
-              onClick={() => handleVote(VoteType.Against)}
+              onClick={() => handleVote(VoteType.No)}
               disabled={isVoting || isLoading}
               variant="outline"
               className="flex-1 border-red-600 text-red-700 hover:bg-red-50 !px-4 !py-2"
@@ -309,13 +309,13 @@ export function ProposalCard({
       )}
 
       {/* Admin Actions */}
-      {isSucceeded && (
+      {isPassed && (
         <div className="border-t border-gray-300 pt-4 space-y-3">
           <div className="text-sm font-semibold text-gray-900">
             PROPOSAL EXECUTION
           </div>
           <div className="text-xs mb-3 text-gray-600">
-            Succeeded proposals can be executed immediately
+            Passed proposals can be executed immediately
           </div>
           <div className="flex gap-3">
             {onExecute && (
