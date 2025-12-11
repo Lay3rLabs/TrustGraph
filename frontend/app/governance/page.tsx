@@ -11,6 +11,7 @@ import { useOpenWalletConnector } from '@/components/WalletConnectionProvider'
 import {
   ProposalAction,
   ProposalCore,
+  VoteType,
   useGovernance,
 } from '@/hooks/useGovernance'
 
@@ -31,7 +32,6 @@ export default function GovernancePage() {
     votingPeriod,
     quorumBasisPoints,
     userVotingPower,
-    merkleData,
     canCreateProposal,
     createProposal,
     castVote,
@@ -41,7 +41,6 @@ export default function GovernancePage() {
     getAllProposals,
     getProposalStateText,
     merkleGovAddress,
-    merkleVoteAddress,
     safeBalance,
     safeAddress,
   } = useGovernance()
@@ -59,11 +58,15 @@ export default function GovernancePage() {
   }, [isConnected, proposalCounter, getAllProposals])
 
   const handleCreateProposal = useCallback(
-    async (actions: ProposalAction[], description: string) => {
+    async (actions: ProposalAction[], description: string, voteType?: VoteType | null) => {
       setSuccessMessage(null)
-      const hash = await createProposal(actions, description)
+      const hash = await createProposal(actions, description, voteType)
       if (hash) {
-        setSuccessMessage(`Proposal created successfully! Transaction: ${hash}`)
+        setSuccessMessage(
+          voteType === undefined || voteType === null
+            ? `Proposal created successfully! Transaction: ${hash}`
+            : `Proposal created & vote cast! Transaction: ${hash}`
+        )
         setTimeout(() => setSuccessMessage(null), 5000)
         // Reload proposals
         const allProposals = await getAllProposals()
@@ -75,12 +78,12 @@ export default function GovernancePage() {
   )
 
   const handleVote = useCallback(
-    async (proposalId: number, support: number) => {
+    async (proposalId: number, voteType: number) => {
       setSuccessMessage(null)
-      const hash = await castVote(proposalId, support)
+      const hash = await castVote(proposalId, voteType)
       if (hash) {
         const voteText =
-          support === 1 ? 'FOR' : support === 0 ? 'AGAINST' : 'ABSTAIN'
+          voteType === VoteType.Yes ? 'FOR' : voteType === VoteType.No ? 'AGAINST' : 'ABSTAIN'
         setSuccessMessage(`Vote cast ${voteText}! Transaction: ${hash}`)
         setTimeout(() => setSuccessMessage(null), 5000)
         // Reload proposals to update vote counts
@@ -351,8 +354,8 @@ export default function GovernancePage() {
               canCreateProposal={canCreateProposal}
               userVotingPower={userVotingPower?.value}
               proposalThreshold={proposalThreshold}
-              onCreateProposal={async (actions, description) => {
-                const result = await handleCreateProposal(actions, description)
+              onCreateProposal={async (actions, description, voteType) => {
+                const result = await handleCreateProposal(actions, description, voteType)
                 if (result) {
                   setShowCreateForm(false)
                 }

@@ -1863,6 +1863,26 @@ export const merkleGovModuleAbi = [
   },
   {
     type: 'function',
+    inputs: [
+      { name: 'targets', internalType: 'address[]', type: 'address[]' },
+      { name: 'values', internalType: 'uint256[]', type: 'uint256[]' },
+      { name: 'calldatas', internalType: 'bytes[]', type: 'bytes[]' },
+      { name: 'operations', internalType: 'enum Operation[]', type: 'uint8[]' },
+      { name: '', internalType: 'string', type: 'string' },
+      { name: 'votingPower', internalType: 'uint256', type: 'uint256' },
+      { name: 'proof', internalType: 'bytes32[]', type: 'bytes32[]' },
+      {
+        name: 'voteType',
+        internalType: 'enum MerkleGovModule.VoteType',
+        type: 'uint8',
+      },
+    ],
+    name: 'proposeWithVote',
+    outputs: [{ name: 'proposalId', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
     inputs: [],
     name: 'quorum',
     outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],

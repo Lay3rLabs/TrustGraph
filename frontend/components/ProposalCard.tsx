@@ -4,6 +4,7 @@ import type React from 'react'
 import { useCallback, useState } from 'react'
 
 import { Button } from '@/components/Button'
+import { VoteButtons } from '@/components/VoteButtons'
 import {
   ProposalAction,
   ProposalCore,
@@ -279,32 +280,11 @@ export function ProposalCard({
           <div className="text-xs text-gray-600">
             Your voting power: {userVotingPower!}
           </div>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button
-              onClick={() => handleVote(VoteType.Yes)}
-              disabled={isVoting || isLoading}
-              variant="outline"
-              className="flex-1 border-green-600 text-green-700 hover:bg-green-50 !px-4 !py-2"
-            >
-              <span className="text-xs">VOTE FOR</span>
-            </Button>
-            <Button
-              onClick={() => handleVote(VoteType.No)}
-              disabled={isVoting || isLoading}
-              variant="outline"
-              className="flex-1 border-red-600 text-red-700 hover:bg-red-50 !px-4 !py-2"
-            >
-              <span className="text-xs">VOTE AGAINST</span>
-            </Button>
-            <Button
-              onClick={() => handleVote(VoteType.Abstain)}
-              disabled={isVoting || isLoading}
-              variant="outline"
-              className="flex-1 border-gray-500 text-gray-700 hover:bg-gray-50 !px-4 !py-2"
-            >
-              <span className="text-xs">ABSTAIN</span>
-            </Button>
-          </div>
+          <VoteButtons
+            disabled={isVoting}
+            isLoading={isLoading}
+            onSelect={(vt) => handleVote(vt)}
+          />
         </div>
       )}
 

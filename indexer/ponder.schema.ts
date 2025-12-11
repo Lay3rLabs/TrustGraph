@@ -76,6 +76,8 @@ export const merkleGovModule = onchainTable(
   'merkle_gov_module',
   (t) => ({
     address: t.hex().primaryKey(),
+    avatar: t.hex().notNull(),
+    target: t.hex().notNull(),
     merkleSnapshot: t.hex().notNull(),
     currentMerkleRoot: t.hex().notNull(),
     ipfsHash: t.hex().notNull(),
@@ -87,6 +89,8 @@ export const merkleGovModule = onchainTable(
     quorum: t.bigint().notNull(),
   }),
   (t) => ({
+    avatarIdx: index().on(t.avatar),
+    targetIdx: index().on(t.target),
     merkleSnapshotIdx: index().on(t.merkleSnapshot),
     currentMerkleRootIdx: index().on(t.currentMerkleRoot),
     ipfsHashCidIdx: index().on(t.ipfsHashCid),

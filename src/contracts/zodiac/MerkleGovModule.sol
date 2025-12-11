@@ -210,51 +210,51 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
         uint256 votingPower,
         bytes32[] calldata proof
     ) external returns (uint256 proposalId) {
-        if (currentMerkleRoot == bytes32(0)) revert NoMerkleRootSet();
-        if (
-            targets.length != values.length ||
-            targets.length != calldatas.length ||
-            targets.length != operations.length
-        ) revert InvalidProposalData();
-        if (targets.length == 0) revert EmptyProposal();
-
-        // Verify proposer is in merkle tree
-        _verifyMerkleProof(msg.sender, votingPower, currentMerkleRoot, proof);
-
-        proposalId = ++proposalCount;
-        Proposal storage proposal = proposals[proposalId];
-
-        proposal.id = proposalId;
-        proposal.proposer = msg.sender;
-        proposal.startBlock = block.number + votingDelay;
-        proposal.endBlock = proposal.startBlock + votingPeriod;
-        proposal.merkleRoot = currentMerkleRoot;
-        proposal.totalVotingPower = totalVotingPower;
-
-        // Store actions
-        for (uint256 i = 0; i < targets.length; i++) {
-            proposalActions[proposalId].push(
-                ProposalAction({
-                    target: targets[i],
-                    value: values[i],
-                    data: calldatas[i],
-                    operation: operations[i]
-                })
-            );
-        }
-
-        emit ProposalCreated(
-            proposalId,
-            msg.sender,
-            proposal.startBlock,
-            proposal.endBlock,
-            currentMerkleRoot
+        proposalId = _propose(
+            targets,
+            values,
+            calldatas,
+            operations,
+            votingPower,
+            proof
         );
+    }
+
+    /// @notice Create a new proposal and cast the proposer's vote in one transaction
+    /// @param targets Array of target addresses
+    /// @param values Array of ETH values
+    /// @param calldatas Array of encoded function calls
+    /// @param operations Array of operation types
+    /// @param votingPower The claimed voting power (for merkle proof verification)
+    /// @param proof Merkle proof for membership verification
+    /// @param voteType The type of vote to cast (No, Yes, Abstain)
+    function proposeWithVote(
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        Operation[] memory operations,
+        string memory /* description */,
+        uint256 votingPower,
+        bytes32[] calldata proof,
+        VoteType voteType
+    ) external returns (uint256 proposalId) {
+        proposalId = _propose(
+            targets,
+            values,
+            calldatas,
+            operations,
+            votingPower,
+            proof
+        );
+
+        // Record the proposer's vote immediately
+        // The proof was already verified in _propose, so we can record the vote directly
+        _castVote(proposalId, msg.sender, voteType, votingPower);
     }
 
     /// @notice Cast a vote with merkle proof verification
     /// @param proposalId The proposal to vote on
-    /// @param voteType The type of vote (Yes, No, Abstain)
+    /// @param voteType The type of vote (No, Yes, Abstain)
     /// @param votingPower The claimed voting power
     /// @param proof Merkle proof for voting power
     function castVote(
@@ -270,19 +270,7 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
         // Verify voter is in merkle tree (using proposal's snapshot)
         _verifyMerkleProof(msg.sender, votingPower, proposal.merkleRoot, proof);
 
-        // Record vote
-        hasVoted[proposalId][msg.sender] = true;
-        votes[proposalId][msg.sender] = voteType;
-
-        if (voteType == VoteType.Yes) {
-            proposal.yesVotes += votingPower;
-        } else if (voteType == VoteType.No) {
-            proposal.noVotes += votingPower;
-        } else {
-            proposal.abstainVotes += votingPower;
-        }
-
-        emit VoteCast(msg.sender, proposalId, voteType, votingPower);
+        _castVote(proposalId, msg.sender, voteType, votingPower);
     }
 
     /// @notice Execute a successful proposal
@@ -456,6 +444,90 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
     /*///////////////////////////////////////////////////////////////
                           INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
+
+    /// @notice Internal function to create a proposal
+    /// @param targets Array of target addresses
+    /// @param values Array of ETH values
+    /// @param calldatas Array of encoded function calls
+    /// @param operations Array of operation types
+    /// @param votingPower The claimed voting power (for merkle proof verification)
+    /// @param proof Merkle proof for membership verification
+    function _propose(
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        Operation[] memory operations,
+        uint256 votingPower,
+        bytes32[] calldata proof
+    ) internal returns (uint256 proposalId) {
+        if (currentMerkleRoot == bytes32(0)) revert NoMerkleRootSet();
+        if (
+            targets.length != values.length ||
+            targets.length != calldatas.length ||
+            targets.length != operations.length
+        ) revert InvalidProposalData();
+        if (targets.length == 0) revert EmptyProposal();
+
+        // Verify proposer is in merkle tree
+        _verifyMerkleProof(msg.sender, votingPower, currentMerkleRoot, proof);
+
+        proposalId = ++proposalCount;
+        Proposal storage proposal = proposals[proposalId];
+
+        proposal.id = proposalId;
+        proposal.proposer = msg.sender;
+        proposal.startBlock = block.number + votingDelay;
+        proposal.endBlock = proposal.startBlock + votingPeriod;
+        proposal.merkleRoot = currentMerkleRoot;
+        proposal.totalVotingPower = totalVotingPower;
+
+        // Store actions
+        for (uint256 i = 0; i < targets.length; i++) {
+            proposalActions[proposalId].push(
+                ProposalAction({
+                    target: targets[i],
+                    value: values[i],
+                    data: calldatas[i],
+                    operation: operations[i]
+                })
+            );
+        }
+
+        emit ProposalCreated(
+            proposalId,
+            msg.sender,
+            proposal.startBlock,
+            proposal.endBlock,
+            currentMerkleRoot
+        );
+    }
+
+    /// @notice Internal function to record a vote
+    /// @param proposalId The proposal to vote on
+    /// @param voter The address casting the vote
+    /// @param voteType The type of vote (No, Yes, Abstain)
+    /// @param votingPower The voting power to apply
+    function _castVote(
+        uint256 proposalId,
+        address voter,
+        VoteType voteType,
+        uint256 votingPower
+    ) internal {
+        Proposal storage proposal = proposals[proposalId];
+
+        hasVoted[proposalId][voter] = true;
+        votes[proposalId][voter] = voteType;
+
+        if (voteType == VoteType.Yes) {
+            proposal.yesVotes += votingPower;
+        } else if (voteType == VoteType.No) {
+            proposal.noVotes += votingPower;
+        } else {
+            proposal.abstainVotes += votingPower;
+        }
+
+        emit VoteCast(voter, proposalId, voteType, votingPower);
+    }
 
     /// @notice Verifies a merkle proof for an account's voting power
     /// @param account The account to verify

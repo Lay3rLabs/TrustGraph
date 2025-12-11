@@ -1014,6 +1014,198 @@ contract MerkleGovModuleTest is Test {
         vm.expectRevert(MerkleGovModule.ProposalNotFound.selector);
         govModule.getProposal(0);
     }
+
+    function test_ProposeWithVote() public {
+        // Create proposal data
+        address[] memory targets = new address[](1);
+        uint256[] memory values = new uint256[](1);
+        bytes[] memory calldatas = new bytes[](1);
+        Operation[] memory operations = new Operation[](1);
+
+        targets[0] = address(0x9999);
+        values[0] = 1 ether;
+        calldatas[0] = "";
+        operations[0] = Operation.Call;
+
+        // Expect both ProposalCreated and VoteCast events
+        vm.expectEmit(true, true, false, true);
+        emit ProposalCreated(
+            1,
+            alice,
+            block.number + 1,
+            block.number + 1 + 50400,
+            merkleRoot
+        );
+
+        vm.expectEmit(true, true, false, true);
+        emit VoteCast(
+            alice,
+            1,
+            MerkleGovModule.VoteType.Yes,
+            votingPowers[alice]
+        );
+
+        // Create proposal and vote in one transaction
+        vm.prank(alice);
+        uint256 proposalId = govModule.proposeWithVote(
+            targets,
+            values,
+            calldatas,
+            operations,
+            "Send 1 ETH",
+            votingPowers[alice],
+            proofs[alice],
+            MerkleGovModule.VoteType.Yes
+        );
+
+        assertEq(proposalId, 1);
+        assertEq(govModule.proposalCount(), 1);
+
+        // Check proposal details - should have alice's vote already recorded
+        (
+            uint256 id,
+            address proposer,
+            uint256 startBlock,
+            uint256 endBlock,
+            uint256 yesVotes,
+            uint256 noVotes,
+            uint256 abstainVotes,
+            bool executed,
+            bool cancelled,
+            ,
+            uint256 totalVotingPower
+        ) = govModule.proposals(proposalId);
+
+        assertEq(id, proposalId);
+        assertEq(proposer, alice);
+        assertEq(startBlock, block.number + 1);
+        assertEq(endBlock, block.number + 1 + 50400);
+        assertEq(yesVotes, votingPowers[alice]); // Alice's vote already counted
+        assertEq(noVotes, 0);
+        assertEq(abstainVotes, 0);
+        assertFalse(executed);
+        assertFalse(cancelled);
+        assertEq(totalVotingPower, 575e18);
+
+        // Verify alice has voted
+        assertTrue(govModule.hasVoted(proposalId, alice));
+        assertEq(
+            uint256(govModule.votes(proposalId, alice)),
+            uint256(MerkleGovModule.VoteType.Yes)
+        );
+
+        // Alice cannot vote again
+        vm.roll(block.number + 2); // Move to active period
+        vm.prank(alice);
+        vm.expectRevert(MerkleGovModule.AlreadyVoted.selector);
+        govModule.castVote(
+            proposalId,
+            MerkleGovModule.VoteType.No,
+            votingPowers[alice],
+            proofs[alice]
+        );
+
+        // Bob can still vote
+        vm.prank(bob);
+        govModule.castVote(
+            proposalId,
+            MerkleGovModule.VoteType.Yes,
+            votingPowers[bob],
+            proofs[bob]
+        );
+
+        // Check updated vote tallies
+        (, , , , yesVotes, noVotes, abstainVotes, , , , ) = govModule.proposals(
+            proposalId
+        );
+        assertEq(yesVotes, votingPowers[alice] + votingPowers[bob]);
+        assertEq(noVotes, 0);
+        assertEq(abstainVotes, 0);
+    }
+
+    function test_ProposeWithVoteNo() public {
+        // Test proposeWithVote with a No vote
+        address[] memory targets = new address[](1);
+        uint256[] memory values = new uint256[](1);
+        bytes[] memory calldatas = new bytes[](1);
+        Operation[] memory operations = new Operation[](1);
+
+        targets[0] = address(0x9999);
+        values[0] = 1 ether;
+        calldatas[0] = "";
+        operations[0] = Operation.Call;
+
+        vm.prank(bob);
+        uint256 proposalId = govModule.proposeWithVote(
+            targets,
+            values,
+            calldatas,
+            operations,
+            "Test No Vote",
+            votingPowers[bob],
+            proofs[bob],
+            MerkleGovModule.VoteType.No
+        );
+
+        // Check that No vote is recorded
+        (, , , , uint256 yesVotes, uint256 noVotes, , , , , ) = govModule
+            .proposals(proposalId);
+        assertEq(yesVotes, 0);
+        assertEq(noVotes, votingPowers[bob]);
+
+        assertEq(
+            uint256(govModule.votes(proposalId, bob)),
+            uint256(MerkleGovModule.VoteType.No)
+        );
+    }
+
+    function test_ProposeWithVoteAbstain() public {
+        // Test proposeWithVote with an Abstain vote
+        address[] memory targets = new address[](1);
+        uint256[] memory values = new uint256[](1);
+        bytes[] memory calldatas = new bytes[](1);
+        Operation[] memory operations = new Operation[](1);
+
+        targets[0] = address(0x9999);
+        values[0] = 1 ether;
+        calldatas[0] = "";
+        operations[0] = Operation.Call;
+
+        vm.prank(charlie);
+        uint256 proposalId = govModule.proposeWithVote(
+            targets,
+            values,
+            calldatas,
+            operations,
+            "Test Abstain Vote",
+            votingPowers[charlie],
+            proofs[charlie],
+            MerkleGovModule.VoteType.Abstain
+        );
+
+        // Check that Abstain vote is recorded
+        (
+            ,
+            ,
+            ,
+            ,
+            uint256 yesVotes,
+            uint256 noVotes,
+            uint256 abstainVotes,
+            ,
+            ,
+            ,
+
+        ) = govModule.proposals(proposalId);
+        assertEq(yesVotes, 0);
+        assertEq(noVotes, 0);
+        assertEq(abstainVotes, votingPowers[charlie]);
+
+        assertEq(
+            uint256(govModule.votes(proposalId, charlie)),
+            uint256(MerkleGovModule.VoteType.Abstain)
+        );
+    }
 }
 
 // Helper contract for testing execution

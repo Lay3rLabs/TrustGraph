@@ -22,6 +22,8 @@ ponder.on('merkleGovModule:setup', async ({ context }) => {
 
     // Read all relevant state from the contract
     const [
+      avatar,
+      target,
       merkleSnapshotContract,
       currentMerkleRoot,
       ipfsHash,
@@ -32,6 +34,16 @@ ponder.on('merkleGovModule:setup', async ({ context }) => {
       votingPeriod,
       quorum,
     ] = await Promise.all([
+      context.client.readContract({
+        address,
+        abi: merkleGovModuleAbi,
+        functionName: 'avatar',
+      }),
+      context.client.readContract({
+        address,
+        abi: merkleGovModuleAbi,
+        functionName: 'target',
+      }),
       context.client.readContract({
         address,
         abi: merkleGovModuleAbi,
@@ -81,6 +93,8 @@ ponder.on('merkleGovModule:setup', async ({ context }) => {
 
     await context.db.insert(merkleGovModule).values({
       address,
+      avatar,
+      target,
       merkleSnapshot: merkleSnapshotContract,
       currentMerkleRoot,
       ipfsHash,
@@ -106,7 +120,7 @@ ponder.on('merkleGovModule:setup', async ({ context }) => {
         target: action.target,
         value: action.value.toString(),
         data: action.data,
-        operation: Number(action.operation),
+        operation: action.operation,
       }))
 
       await context.db.insert(merkleGovModuleProposal).values({
@@ -136,7 +150,7 @@ ponder.on('merkleGovModule:setup', async ({ context }) => {
 
 // ProposalCreated: Create a new proposal record
 ponder.on('merkleGovModule:ProposalCreated', async ({ event, context }) => {
-  const { proposalId, proposer, startBlock, endBlock, merkleRoot } = event.args
+  const { proposalId } = event.args
   const address = context.contracts.merkleGovModule.address!
 
   // Get full proposal data including actions from contract
@@ -152,22 +166,22 @@ ponder.on('merkleGovModule:ProposalCreated', async ({ event, context }) => {
     target: action.target,
     value: action.value.toString(),
     data: action.data,
-    operation: Number(action.operation),
+    operation: action.operation,
   }))
 
   // Insert the new proposal
   await context.db.insert(merkleGovModuleProposal).values({
     module: address,
     id: proposalId,
-    proposer,
-    startBlock,
-    endBlock,
-    yesVotes: 0n,
-    noVotes: 0n,
-    abstainVotes: 0n,
-    executed: false,
-    cancelled: false,
-    merkleRoot,
+    proposer: proposal.proposer,
+    startBlock: proposal.startBlock,
+    endBlock: proposal.endBlock,
+    yesVotes: proposal.yesVotes,
+    noVotes: proposal.noVotes,
+    abstainVotes: proposal.abstainVotes,
+    executed: proposal.executed,
+    cancelled: proposal.cancelled,
+    merkleRoot: proposal.merkleRoot,
     totalVotingPower: proposal.totalVotingPower,
     actions: formattedActions,
     blockNumber: event.block.number,
@@ -190,7 +204,7 @@ ponder.on('merkleGovModule:VoteCast', async ({ event, context }) => {
     module: address,
     proposalId,
     voter,
-    voteType: Number(voteType),
+    voteType,
     votingPower,
     blockNumber: event.block.number,
     timestamp: event.block.timestamp,
@@ -288,4 +302,20 @@ ponder.on('merkleGovModule:MerkleRootUpdated', async ({ event, context }) => {
     ipfsHashCid,
     totalVotingPower: totalValue,
   })
+})
+
+// AvatarSet (from Module.sol): Update avatar address on the module
+ponder.on('merkleGovModule:AvatarSet', async ({ event, context }) => {
+  const { newAvatar } = event.args
+  const address = context.contracts.merkleGovModule.address!
+
+  await context.db.update(merkleGovModule, { address }).set({ avatar: newAvatar })
+})
+
+// TargetSet (from Module.sol): Update target address on the module
+ponder.on('merkleGovModule:TargetSet', async ({ event, context }) => {
+  const { newTarget } = event.args
+  const address = context.contracts.merkleGovModule.address!
+
+  await context.db.update(merkleGovModule, { address }).set({ target: newTarget })
 })

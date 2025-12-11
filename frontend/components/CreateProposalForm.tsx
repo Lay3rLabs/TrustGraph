@@ -4,7 +4,8 @@ import type React from 'react'
 import { useCallback, useState } from 'react'
 
 import { Button } from '@/components/Button'
-import { ProposalAction } from '@/hooks/useGovernance'
+import { VoteButtons } from '@/components/VoteButtons'
+import { ProposalAction, VoteType } from '@/hooks/useGovernance'
 
 interface CreateProposalFormProps {
   canCreateProposal: boolean
@@ -12,7 +13,8 @@ interface CreateProposalFormProps {
   proposalThreshold?: string
   onCreateProposal?: (
     actions: ProposalAction[],
-    description: string
+    description: string,
+    voteType?: VoteType | null
   ) => Promise<string | null>
   isLoading?: boolean
   formatVotingPower?: (amount: string) => string
@@ -21,16 +23,18 @@ interface CreateProposalFormProps {
 export function CreateProposalForm({
   canCreateProposal,
   userVotingPower,
-  proposalThreshold,
+  proposalThreshold: _proposalThreshold,
   onCreateProposal,
   isLoading = false,
-  formatVotingPower = (amount) => amount,
+  formatVotingPower: _formatVotingPower = (amount) => amount,
 }: CreateProposalFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Form state
   const [description, setDescription] = useState('')
+  const [castVoteOnCreate, setCastVoteOnCreate] = useState(false)
+  const [voteType, setVoteType] = useState<VoteType>(VoteType.Yes)
   const [actions, setActions] = useState<ProposalAction[]>([
     {
       target: '',
@@ -113,11 +117,17 @@ export function CreateProposalForm({
       setError(null)
 
       try {
-        const hash = await onCreateProposal(actions, description)
+        const hash = await onCreateProposal(
+          actions,
+          description,
+          castVoteOnCreate ? voteType : null
+        )
 
         if (hash && hash !== 'undefined') {
           // Reset form
           setDescription('')
+          setCastVoteOnCreate(false)
+          setVoteType(VoteType.Yes)
           setActions([
             {
               target: '',
@@ -311,6 +321,35 @@ export function CreateProposalForm({
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Optional initial vote (same UI as ProposalCard) */}
+        <div className="border border-border bg-muted/20 p-4 rounded-md space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-medium">CAST YOUR VOTE (OPTIONAL)</div>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={castVoteOnCreate}
+                onChange={(e) => setCastVoteOnCreate(e.target.checked)}
+              />
+              Include vote in proposal TX
+            </label>
+          </div>
+
+          <div className="text-xs text-muted-foreground">
+            Your voting power: {userVotingPower ?? '0'}
+          </div>
+
+          <VoteButtons
+            disabled={!castVoteOnCreate}
+            isLoading={isSubmitting || isLoading}
+            selected={castVoteOnCreate ? voteType : null}
+            onSelect={(vt) => {
+              setVoteType(vt)
+              setCastVoteOnCreate(true)
+            }}
+          />
         </div>
 
         {/* Submit Button */}
