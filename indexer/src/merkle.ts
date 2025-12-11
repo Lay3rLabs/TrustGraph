@@ -1,9 +1,17 @@
 import { and, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { ponder } from "ponder:registry";
-import { merkleSnapshot } from "ponder:schema";
+import {
+  merkleFundDistribution,
+  merkleFundDistributionClaim,
+  merkleFundDistributor,
+  merkleSnapshot,
+} from "ponder:schema";
 
-import { merkleSnapshotAbi } from "../../frontend/lib/contracts";
+import {
+  merkleFundDistributorAbi,
+  merkleSnapshotAbi,
+} from "../../frontend/lib/contracts";
 import * as offchainSchema from "../offchain.schema";
 
 
@@ -41,16 +49,21 @@ ponder.on("merkleSnapshot:setup", async ({ context }) => {
       retryEmptyResponse: false,
     });
 
+    const chainId = context.chain.id.toString();
+    const snapshotAddress = context.contracts.merkleSnapshot.address!;
+
     for (let i = 0; i < Number(stateCount); i++) {
       const state = await context.client.readContract({
-        address: context.contracts.merkleSnapshot.address,
+        address: snapshotAddress,
         abi: merkleSnapshotAbi,
         functionName: "getStateAtIndex",
         args: [BigInt(i)],
       });
 
       await context.db.insert(merkleSnapshot).values({
-        id: i.toString(),
+        id: `${chainId}-${snapshotAddress}-${state.root}-${i}`,
+        address: snapshotAddress,
+        chainId,
         blockNumber: state.blockNumber,
         timestamp: state.timestamp,
         root: state.root,
@@ -69,6 +82,8 @@ ponder.on("merkleSnapshot:MerkleRootUpdated", async ({ event, context }) => {
 
   await context.db.insert(merkleSnapshot).values({
     id: event.id,
+    address: event.log.address,
+    chainId: context.chain.id.toString(),
     blockNumber: event.block.number,
     timestamp: event.block.timestamp,
     root,
@@ -198,3 +213,269 @@ async function insertMerkleData(
       },
     });
 }
+
+ponder.on("merkleFundDistributor:setup", async ({ context }) => {
+  const contractAddress = context.contracts.merkleFundDistributor.address;
+  if (!contractAddress) {
+    throw new Error("Contract address is not set");
+  }
+
+  const [
+    merkleSnapshotAddress,
+    owner,
+    pendingOwner,
+    feeRecipient,
+    feePercentage,
+    feeRange,
+    allowlistEnabled,
+    paused,
+    allowlist,
+  ] = await Promise.all([
+    context.client.readContract({
+      address: contractAddress,
+      abi: merkleFundDistributorAbi,
+      functionName: "merkleSnapshot",
+      retryEmptyResponse: false,
+    }),
+    context.client.readContract({
+      address: contractAddress,
+      abi: merkleFundDistributorAbi,
+      functionName: "owner",
+    }),
+    context.client.readContract({
+      address: contractAddress,
+      abi: merkleFundDistributorAbi,
+      functionName: "pendingOwner",
+    }),
+    context.client.readContract({
+      address: contractAddress,
+      abi: merkleFundDistributorAbi,
+      functionName: "feeRecipient",
+    }),
+    context.client.readContract({
+      address: contractAddress,
+      abi: merkleFundDistributorAbi,
+      functionName: "feePercentage",
+    }),
+    context.client.readContract({
+      address: contractAddress,
+      abi: merkleFundDistributorAbi,
+      functionName: "FEE_RANGE",
+    }),
+    context.client.readContract({
+      address: contractAddress,
+      abi: merkleFundDistributorAbi,
+      functionName: "allowlistEnabled",
+    }),
+    context.client.readContract({
+      address: contractAddress,
+      abi: merkleFundDistributorAbi,
+      functionName: "paused",
+    }),
+    context.client.readContract({
+      address: contractAddress,
+      abi: merkleFundDistributorAbi,
+      functionName: "getAllowlist",
+    }),
+  ]);
+
+  await context.db.insert(merkleFundDistributor).values({
+    address: contractAddress,
+    chainId: context.chain.id.toString(),
+    paused,
+    merkleSnapshot: merkleSnapshotAddress,
+    owner,
+    pendingOwner,
+    feeRecipient,
+    feePercentage: (Number(feePercentage) / Number(feeRange)).toString(),
+    allowlistEnabled,
+    allowlist: [...allowlist],
+  });
+});
+
+ponder.on(
+  "merkleFundDistributor:OwnershipTransferStarted",
+  async ({ event, context }) => {
+    const { pendingOwner } = event.args;
+    await context.db
+      .update(merkleFundDistributor, { address: event.log.address })
+      .set({
+        pendingOwner,
+      });
+  }
+);
+
+ponder.on(
+  "merkleFundDistributor:OwnershipTransferred",
+  async ({ event, context }) => {
+    const { newOwner } = event.args;
+    await context.db
+      .update(merkleFundDistributor, { address: event.log.address })
+      .set({
+        owner: newOwner,
+        pendingOwner: "0x0000000000000000000000000000000000000000",
+      });
+  }
+);
+
+ponder.on(
+  "merkleFundDistributor:FeeRecipientSet",
+  async ({ event, context }) => {
+    const { newFeeRecipient } = event.args;
+    await context.db
+      .update(merkleFundDistributor, { address: event.log.address })
+      .set({
+        feeRecipient: newFeeRecipient,
+      });
+  }
+);
+
+ponder.on(
+  "merkleFundDistributor:FeePercentageSet",
+  async ({ event, context }) => {
+    const { newFeePercentage } = event.args;
+    // Read FEE_RANGE to calculate the percentage
+    const feeRange = await context.client.readContract({
+      address: event.log.address,
+      abi: merkleFundDistributorAbi,
+      functionName: "FEE_RANGE",
+    });
+    await context.db
+      .update(merkleFundDistributor, { address: event.log.address })
+      .set({
+        feePercentage: (Number(newFeePercentage) / Number(feeRange)).toString(),
+      });
+  }
+);
+
+ponder.on(
+  "merkleFundDistributor:MerkleSnapshotUpdated",
+  async ({ event, context }) => {
+    const { newContract } = event.args;
+    await context.db
+      .update(merkleFundDistributor, { address: event.log.address })
+      .set({
+        merkleSnapshot: newContract,
+      });
+  }
+);
+
+ponder.on(
+  "merkleFundDistributor:DistributorAllowanceUpdated",
+  async ({ event, context }) => {
+    const { distributor, canDistribute } = event.args;
+    // Read the current allowlist and update it
+    const current = await context.db.find(merkleFundDistributor, {
+      address: event.log.address,
+    });
+    if (!current) return;
+
+    let newAllowlist: `0x${string}`[];
+    if (canDistribute) {
+      // Add to allowlist if not already present
+      if (!current.allowlist.includes(distributor)) {
+        newAllowlist = [...current.allowlist, distributor];
+      } else {
+        newAllowlist = current.allowlist;
+      }
+    } else {
+      // Remove from allowlist
+      newAllowlist = current.allowlist.filter((addr) => addr !== distributor);
+    }
+
+    await context.db
+      .update(merkleFundDistributor, { address: event.log.address })
+      .set({
+        allowlist: newAllowlist,
+      });
+  }
+);
+
+ponder.on(
+  "merkleFundDistributor:DistributorAllowlistUpdated",
+  async ({ event, context }) => {
+    const { enabled } = event.args;
+    await context.db
+      .update(merkleFundDistributor, { address: event.log.address })
+      .set({
+        allowlistEnabled: enabled,
+      });
+  }
+);
+
+ponder.on("merkleFundDistributor:Paused", async ({ event, context }) => {
+  await context.db
+    .update(merkleFundDistributor, { address: event.log.address })
+    .set({
+      paused: true,
+    });
+});
+
+ponder.on("merkleFundDistributor:Unpaused", async ({ event, context }) => {
+  await context.db
+    .update(merkleFundDistributor, { address: event.log.address })
+    .set({
+      paused: false,
+    });
+});
+
+ponder.on("merkleFundDistributor:Distributed", async ({ event, context }) => {
+  const { distributionIndex, distributor, token, amountFunded, feeAmount } =
+    event.args;
+
+  // Read the full distribution state from the contract
+  const distribution = await context.client.readContract({
+    address: event.log.address,
+    abi: merkleFundDistributorAbi,
+    functionName: "getDistribution",
+    args: [distributionIndex],
+  });
+
+  await context.db.insert(merkleFundDistribution).values({
+    id: distributionIndex,
+    merkleFundDistributor: event.log.address,
+    blockNumber: event.block.number,
+    timestamp: event.block.timestamp,
+    root: distribution.root,
+    ipfsHash: distribution.ipfsHash,
+    ipfsHashCid: distribution.ipfsHashCid,
+    totalMerkleValue: distribution.totalMerkleValue,
+    distributor,
+    token,
+    amountFunded,
+    amountDistributed: 0n,
+    feeRecipient: distribution.feeRecipient,
+    feeAmount,
+  });
+});
+
+ponder.on("merkleFundDistributor:Claimed", async ({ event, context }) => {
+  const {
+    distributionIndex,
+    account,
+    token,
+    amount,
+    value,
+    newAmountDistributed,
+  } = event.args;
+
+  // Update the distribution's amountDistributed
+  await context.db
+    .update(merkleFundDistribution, { id: distributionIndex })
+    .set({
+      amountDistributed: newAmountDistributed,
+    });
+
+  // Insert the claim record
+  await context.db.insert(merkleFundDistributionClaim).values({
+    id: `${event.log.address}-${distributionIndex}-${account}`,
+    merkleFundDistributor: event.log.address,
+    distributionIndex,
+    account,
+    token,
+    amount,
+    merkleValue: value,
+    blockNumber: event.block.number,
+    timestamp: event.block.timestamp,
+  });
+});

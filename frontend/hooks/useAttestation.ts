@@ -3,7 +3,13 @@
 import { usePonderQuery } from '@ponder/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
-import { Hex, WatchContractEventOnLogsFn, keccak256, stringToBytes } from 'viem'
+import {
+  Hex,
+  WatchContractEventOnLogsFn,
+  isAddressEqual,
+  keccak256,
+  stringToBytes,
+} from 'viem'
 import { useAccount, usePublicClient, useWatchContractEvent } from 'wagmi'
 
 import { intoAttestationData, intoAttestationsData } from '@/lib/attestation'
@@ -16,7 +22,6 @@ import {
 import { parseErrorMessage, shouldRetryTxError } from '@/lib/error'
 import { SchemaKey, SchemaManager } from '@/lib/schemas'
 import { txToast } from '@/lib/tx'
-import { areAddressesEqual } from '@/lib/utils'
 import { attestationKeys } from '@/queries/attestation'
 import { ponderQueryFns } from '@/queries/ponder'
 
@@ -290,7 +295,7 @@ export function useAttestation(uid?: Hex) {
   const canRevoke =
     !!connectedAddress &&
     !!query.data &&
-    areAddressesEqual(connectedAddress, query.data?.attester) &&
+    isAddressEqual(connectedAddress, query.data.attester) &&
     query.data.revocationTime === 0n
 
   return {

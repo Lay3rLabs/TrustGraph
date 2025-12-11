@@ -19,10 +19,10 @@ tasks:
       - 'echo "{{.INDEXER_ADDR}}"'
     silent: true
 
-  reward-distributor-address:
-    desc: "Get the reward distributor address"
+  merkle-fund-distributor-address:
+    desc: "Get the merkle fund distributor contract address"
     cmds:
-      - 'echo "{{.REWARD_DISTRIBUTOR_ADDRESS}}"'
+      - 'echo "{{.MERKLE_FUND_DISTRIBUTOR_ADDRESS}}"'
     silent: true
 
   merkle-snapshot-address:
@@ -96,9 +96,9 @@ vars:
   VOTING_POWER_ADDR:
     sh: test -f .docker/deployment_summary.json && jq -r '.governance.voting_power' .docker/deployment_summary.json || echo ""
   REWARDS_TOKEN_ADDRESS:
-    sh: test -f .docker/deployment_summary.json && jq -r '.merkler.reward_token' .docker/deployment_summary.json || echo ""
-  REWARD_DISTRIBUTOR_ADDRESS:
-    sh: test -f .docker/deployment_summary.json && jq -r '.merkler.reward_distributor' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.merkler.token' .docker/deployment_summary.json || echo ""
+  MERKLE_FUND_DISTRIBUTOR_ADDRESS:
+    sh: test -f .docker/deployment_summary.json && jq -r '.merkler.fund_distributor' .docker/deployment_summary.json || echo ""
   MERKLE_SNAPSHOT_ADDR:
     sh: test -f .docker/merkler_deploy.json && jq -r '.merkle_snapshot' .docker/merkler_deploy.json || echo ""
 

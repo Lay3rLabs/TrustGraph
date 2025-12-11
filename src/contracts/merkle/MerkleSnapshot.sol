@@ -1,9 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import {IWavsServiceManager} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
-import {IWavsServiceHandler} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
-import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import {
+    IWavsServiceManager
+} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceManager.sol";
+import {
+    IWavsServiceHandler
+} from "@wavs/src/eigenlayer/ecdsa/interfaces/IWavsServiceHandler.sol";
+import {
+    MerkleProof
+} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import {ITypes} from "interfaces/ITypes.sol";
 import {IMerkler} from "interfaces/merkle/IMerkler.sol";
 import {IMerkleSnapshot} from "interfaces/merkle/IMerkleSnapshot.sol";
@@ -100,7 +106,7 @@ contract MerkleSnapshot is
 
         // Call the hooks.
         for (uint256 i = 1; i < nextHookIndex; i++) {
-            if (hooks[i] == IMerkleSnapshotHook(address(0))) {
+            if (address(hooks[i]) == address(0)) {
                 continue;
             }
             hooks[i].onMerkleUpdate(states[stateIndex]);
@@ -208,6 +214,7 @@ contract MerkleSnapshot is
         return verifyProofAtStateIndex(msg.sender, value, proof, stateIndex);
     }
 
+    /// @inheritdoc IMerkleSnapshot
     function getLatestState() public view returns (MerkleState memory) {
         if (stateBlocks.length == 0) {
             revert NoMerkleStates();
@@ -364,7 +371,7 @@ contract MerkleSnapshot is
         );
         uint256 resultIndex = 0;
         for (uint256 i = 1; i < nextHookIndex; i++) {
-            if (hooks[i] == IMerkleSnapshotHook(address(0))) {
+            if (address(hooks[i]) == address(0)) {
                 continue;
             }
             result[resultIndex] = hooks[i];

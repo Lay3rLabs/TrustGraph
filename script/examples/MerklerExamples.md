@@ -17,7 +17,7 @@ Before running any rewards scripts, ensure you have:
 1. Set the `IPFS_GATEWAY_URL` environment variable
 2. Set the `FUNDED_KEY` environment variable (or use default)
 3. Access to `curl` and `jq` commands for IPFS data retrieval
-4. Deployed RewardDistributor and ENOVA token contracts
+4. Deployed MerkleFundDistributor and ENOVA token contracts
 
 ## Environment Variables
 
@@ -63,7 +63,7 @@ forge script script/Merkler.s.sol:Merkler \
 
 **Parameters:**
 
-- `rewardDistributorAddr`: Address of the deployed RewardDistributor contract
+- `merkleFundDistributorAddr`: Address of the deployed MerkleFundDistributor contract
 - `rewardTokenAddr`: Address of the ENOVA token contract
 
 **Output:**
@@ -91,7 +91,7 @@ forge script script/Merkler.s.sol:Merkler \
 **Parameters:**
 
 - `merkleSnapshotAddr`: Address of the deployed MerkleSnapshot contract
-- `rewardDistributorAddr`: Address of the deployed RewardDistributor contract
+- `merkleFundDistributorAddr`: Address of the deployed MerkleFundDistributor contract
 - `rewardTokenAddr`: Address of the ENOVA token contract
 
 **Output:**
@@ -111,7 +111,7 @@ forge script script/Merkler.s.sol:Merkler \
 
 **Parameters:**
 
-- `rewardDistributorAddr`: Address of the deployed RewardDistributor contract
+- `merkleFundDistributorAddr`: Address of the deployed MerkleFundDistributor contract
 
 ### 5. Get IPFS URI
 
@@ -126,11 +126,11 @@ forge script script/Merkler.s.sol:Merkler \
 
 **Parameters:**
 
-- `rewardDistributorAddr`: Address of the deployed RewardDistributor contract
+- `merkleFundDistributorAddr`: Address of the deployed MerkleFundDistributor contract
 
 **Parameters:**
 
-- `rewardDistributorAddr`: Address of the deployed RewardDistributor contract
+- `merkleFundDistributorAddr`: Address of the deployed MerkleFundDistributor contract
 - `triggerId`: The trigger ID to query (e.g., 1, 2, 3...)
 
 ### 6. Query Claim Status
@@ -148,7 +148,7 @@ forge script script/Merkler.s.sol:Merkler \
 
 **Parameters:**
 
-- `rewardDistributorAddr`: Address of the deployed RewardDistributor contract
+- `merkleFundDistributorAddr`: Address of the deployed MerkleFundDistributor contract
 - `rewardTokenAddr`: Address of the ENOVA token contract
 - `account`: Address to check claim status for
 
@@ -184,7 +184,7 @@ forge script script/Merkler.s.sol:Merkler \
 
 **Parameters:**
 
-- `rewardDistributorAddr`: Address of the deployed RewardDistributor contract
+- `merkleFundDistributorAddr`: Address of the deployed MerkleFundDistributor contract
 - `rewardTokenAddr`: Address of the ENOVA token contract
 - `account`: Address to check information for
 

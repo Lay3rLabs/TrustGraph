@@ -6,7 +6,7 @@ import type React from 'react'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
-import { Hex } from 'viem'
+import { Hex, isAddressEqual } from 'viem'
 import { useAccount } from 'wagmi'
 
 import { Button, ButtonProps } from '@/components/Button'
@@ -39,12 +39,7 @@ import { useResolveEnsName } from '@/hooks/useEns'
 import { AttestationData } from '@/lib/attestation'
 import { parseErrorMessage } from '@/lib/error'
 import { SCHEMAS, SchemaManager } from '@/lib/schemas'
-import {
-  areAddressesEqual,
-  formatBigNumber,
-  formatPercentage,
-  mightBeEnsName,
-} from '@/lib/utils'
+import { formatBigNumber, formatPercentage, mightBeEnsName } from '@/lib/utils'
 
 import { Card } from './Card'
 import { CopyableText } from './CopyableText'
@@ -230,8 +225,8 @@ export const CreateAttestationModal = ({
     recipient.startsWith('0x') && selectedSchemaInfo
       ? allAttestationsGiven.filter(
           (attestation) =>
-            areAddressesEqual(attestation.recipient, recipient as Hex) &&
-            areAddressesEqual(attestation.schema, selectedSchemaInfo.uid) &&
+            isAddressEqual(attestation.recipient, recipient as Hex) &&
+            isAddressEqual(attestation.schema, selectedSchemaInfo.uid) &&
             // At least 10 seconds old, so we don't show the one we just made.
             attestation.time < BigInt(Math.floor(Date.now() / 1000) - 10)
         )

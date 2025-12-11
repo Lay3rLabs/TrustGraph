@@ -64,9 +64,8 @@ try {
 
     // Merkler
     MerkleSnapshot: deployment.merkler.merkle_snapshot,
-    RewardDistributor: deployment.merkler.reward_distributor,
-    ERC20: deployment.merkler.reward_token,
     MerkleGovModule: deployment.zodiac_safes.safe1.merkle_gov_module,
+    MerkleFundDistributor: deployment.merkler.fund_distributor,
   }
 
   // Make sure ABIs exist for all contracts, and copy them to the frontend.

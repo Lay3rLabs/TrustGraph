@@ -39,7 +39,7 @@ forge script script/DeployEAS.s.sol:DeployEAS \
 
 echo "💰 Deploying Merkler contracts..."
 forge script script/DeployMerkler.s.sol:DeployScript \
-    --sig 'run(string,bool)' "${WAVS_SERVICE_MANAGER_ADDRESS}" "${DEPLOY_REWARD_DISTRIBUTOR:-true}" \
+    --sig 'run(string)' "${WAVS_SERVICE_MANAGER_ADDRESS}" \
     --rpc-url "${RPC_URL}" \
     --private-key "${FUNDED_KEY}" \
     --broadcast

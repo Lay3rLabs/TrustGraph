@@ -1,7 +1,10 @@
 import { Hex } from 'viem'
 
 import { TRUSTED_SEEDS } from './config'
-import { merkleSnapshotAddress } from './contracts'
+import {
+  merkleFundDistributorAddress,
+  merkleSnapshotAddress,
+} from './contracts'
 
 export type Network = {
   id: string
@@ -17,8 +20,9 @@ export type Network = {
     href: string
   }
   criteria: string
-  trustedSeeds: string[]
-  merkleSnapshotContract: string
+  trustedSeeds: Hex[]
+  merkleSnapshotContract: Hex
+  merkleFundDistributorContract: Hex
 }
 
 export const LOCALISM_FUND: Network = {
@@ -51,6 +55,7 @@ Everyone helps **decentralize trust** by making honest, careful attestations.
 `.trim(),
   trustedSeeds: TRUSTED_SEEDS,
   merkleSnapshotContract: merkleSnapshotAddress,
+  merkleFundDistributorContract: merkleFundDistributorAddress,
 }
 
 export const NETWORKS: Network[] = [LOCALISM_FUND]

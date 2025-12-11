@@ -159,7 +159,7 @@ export default function RewardsPage() {
             </div>
             <div>• Trigger updates to refresh the reward calculations</div>
             <div>
-              • Claims are processed on-chain through the RewardDistributor
+              • Claims are processed on-chain through the MerkleFundDistributor
               contract
             </div>
             <div>

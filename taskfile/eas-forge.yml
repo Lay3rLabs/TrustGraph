@@ -119,16 +119,16 @@ tasks:
     vars:
       RPC_URL:
         sh: task get-rpc
-      REWARD_DISTRIBUTOR_ADDRESS: "{{.REWARD_DISTRIBUTOR_ADDRESS}}"
+      MERKLE_FUND_DISTRIBUTOR_ADDRESS: "{{.MERKLE_FUND_DISTRIBUTOR_ADDRESS}}"
     preconditions:
       - test -f .docker/deployment_summary.json
-      - test -n "{{.REWARD_DISTRIBUTOR_ADDRESS}}"
+      - test -n "{{.MERKLE_FUND_DISTRIBUTOR_ADDRESS}}"
     cmds:
       - |
-        echo "Using reward distributor: {{.REWARD_DISTRIBUTOR_ADDRESS}}"
+        echo "Using reward distributor: {{.MERKLE_FUND_DISTRIBUTOR_ADDRESS}}"
         forge script script/Merkler.s.sol:Merkler \
           --sig "queryContractState(string)" \
-          "{{.REWARD_DISTRIBUTOR_ADDRESS}}" \
+          "{{.MERKLE_FUND_DISTRIBUTOR_ADDRESS}}" \
           --rpc-url {{.RPC_URL}}
 
   claim-rewards:
@@ -136,21 +136,21 @@ tasks:
     vars:
       RPC_URL:
         sh: task get-rpc
-      REWARD_DISTRIBUTOR_ADDRESS: "{{.REWARD_DISTRIBUTOR_ADDRESS}}"
+      MERKLE_FUND_DISTRIBUTOR_ADDRESS: "{{.MERKLE_FUND_DISTRIBUTOR_ADDRESS}}"
       REWARDS_TOKEN_ADDRESS: "{{.REWARDS_TOKEN_ADDRESS}}"
     env:
       IPFS_GATEWAY_URL: "http://127.0.0.1:8080/ipfs/"
     preconditions:
       - test -f .docker/deployment_summary.json
-      - test -n "{{.REWARD_DISTRIBUTOR_ADDRESS}}"
+      - test -n "{{.MERKLE_FUND_DISTRIBUTOR_ADDRESS}}"
       - test -n "{{.REWARDS_TOKEN_ADDRESS}}"
     cmds:
       - |
-        echo "Using reward distributor: {{.REWARD_DISTRIBUTOR_ADDRESS}}"
+        echo "Using reward distributor: {{.MERKLE_FUND_DISTRIBUTOR_ADDRESS}}"
         echo "Using rewards token: {{.REWARDS_TOKEN_ADDRESS}}"
         forge script script/Merkler.s.sol:Merkler \
           --sig "claimRewards(string,string)" \
-          "{{.REWARD_DISTRIBUTOR_ADDRESS}}" \
+          "{{.MERKLE_FUND_DISTRIBUTOR_ADDRESS}}" \
           "{{.REWARDS_TOKEN_ADDRESS}}" \
           --rpc-url {{.RPC_URL}} \
           --broadcast --ffi

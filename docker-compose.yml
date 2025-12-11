@@ -9,7 +9,7 @@
 services:
   warg-server:
     image: "ghcr.io/reecepbcups/warg-registry:v0.9.3"
-    container_name: "warg-server"
+    # container_name: "warg-server"
     platform: linux/amd64
     environment:
       WARG_OPERATOR_KEY: ecdsa-p256:I+UlDo0HxyBBFeelhPPWmD+LnklOpqZDkrFP5VduASk=
@@ -24,7 +24,7 @@ services:
 
   ipfs:
     image: ipfs/kubo:v0.37.0
-    container_name: ipfs
+    # container_name: ipfs
     network_mode: host
     ports:
       - "4001:4001"
