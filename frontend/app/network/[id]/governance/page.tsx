@@ -1,30 +1,35 @@
 'use client'
 
 import { ExternalLink } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import type React from 'react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useAccount } from 'wagmi'
 
-import { Address } from '@/components/Address'
+import { Address, TableAddress } from '@/components/Address'
 import { Button } from '@/components/Button'
 import { CreateProposalForm } from '@/components/CreateProposalForm'
-import { ProposalCard } from '@/components/ProposalCard'
 import { StatisticCard } from '@/components/StatisticCard'
-import { useOpenWalletConnector } from '@/components/WalletConnectionProvider'
+import { Column, Table } from '@/components/Table'
 import {
   ProposalAction,
   ProposalCore,
+  ProposalState,
   VoteType,
   useGovernance,
 } from '@/hooks/useGovernance'
+import { usePushBreadcrumb } from '@/hooks/usePushBreadcrumb'
 import { formatBigNumber } from '@/lib/utils'
 
+interface ProposalRow {
+  core: ProposalCore
+  actions: ProposalAction[]
+}
+
 export default function GovernancePage() {
+  const router = useRouter()
   const { isConnected } = useAccount()
-  const openConnectWallet = useOpenWalletConnector()
-  const [proposals, setProposals] = useState<
-    { core: ProposalCore; actions: ProposalAction[] }[]
-  >([])
+  const pushBreadcrumb = usePushBreadcrumb()
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const {
@@ -42,9 +47,6 @@ export default function GovernancePage() {
     totalVotingPower,
     canCreateProposal,
     createProposal,
-    castVote,
-    queueProposal,
-    executeProposal,
     getAllProposals,
     getProposalStateText,
     merkleGovAddress,
@@ -52,17 +54,7 @@ export default function GovernancePage() {
     safeAddress,
   } = useGovernance()
 
-  // Load proposals when connected
-  useEffect(() => {
-    const loadProposals = async () => {
-      if (isConnected && proposalCounter > 0) {
-        const allProposals = await getAllProposals()
-        setProposals(allProposals)
-      }
-    }
-
-    loadProposals()
-  }, [isConnected, proposalCounter, getAllProposals])
+  const proposals = getAllProposals()
 
   const handleCreateProposal = useCallback(
     async (
@@ -80,72 +72,120 @@ export default function GovernancePage() {
             : `Proposal created & vote cast! Transaction: ${hash}`
         )
         setTimeout(() => setSuccessMessage(null), 5000)
-        // Reload proposals
-        const allProposals = await getAllProposals()
-        setProposals(allProposals)
       }
       return hash
     },
-    [createProposal, getAllProposals]
-  )
-
-  const handleVote = useCallback(
-    async (proposalId: number, voteType: number) => {
-      setSuccessMessage(null)
-      const hash = await castVote(proposalId, voteType)
-      if (hash) {
-        const voteText =
-          voteType === VoteType.Yes
-            ? 'FOR'
-            : voteType === VoteType.No
-              ? 'AGAINST'
-              : 'ABSTAIN'
-        setSuccessMessage(`Vote cast ${voteText}! Transaction: ${hash}`)
-        setTimeout(() => setSuccessMessage(null), 5000)
-        // Reload proposals to update vote counts
-        const allProposals = await getAllProposals()
-        setProposals(allProposals)
-      }
-      return hash
-    },
-    [castVote, getAllProposals]
-  )
-
-  const handleQueue = useCallback(
-    async (proposalId: number) => {
-      setSuccessMessage(null)
-      const hash = await queueProposal(proposalId)
-      if (hash) {
-        setSuccessMessage(`Proposal queued! Transaction: ${hash}`)
-        setTimeout(() => setSuccessMessage(null), 5000)
-        // Reload proposals
-        const allProposals = await getAllProposals()
-        setProposals(allProposals)
-      }
-      return hash
-    },
-    [queueProposal, getAllProposals]
-  )
-
-  const handleExecute = useCallback(
-    async (proposalId: number) => {
-      setSuccessMessage(null)
-      const hash = await executeProposal(proposalId)
-      if (hash) {
-        setSuccessMessage(`Proposal executed! Transaction: ${hash}`)
-        setTimeout(() => setSuccessMessage(null), 5000)
-        // Reload proposals
-        const allProposals = await getAllProposals()
-        setProposals(allProposals)
-      }
-      return hash
-    },
-    [executeProposal, getAllProposals]
+    [createProposal]
   )
 
   const [showCreateForm, setShowCreateForm] = useState(false)
 
   const isLoading = isLoadingModule || isLoadingSafeBalance
+
+  // Define table columns for proposals
+  const columns: Column<ProposalRow>[] = [
+    {
+      key: 'id',
+      header: 'ID',
+      tooltip: 'The unique identifier for this proposal.',
+      sortable: true,
+      accessor: (row) => Number(row.core.id),
+      render: (row) => (
+        <span className="font-medium">#{row.core.id.toString()}</span>
+      ),
+    },
+    {
+      key: 'title',
+      header: 'TITLE',
+      tooltip: 'The title of the proposal.',
+      sortable: false,
+      render: (row) => (
+        <div className="max-w-[300px] truncate">{row.core.title}</div>
+      ),
+    },
+    {
+      key: 'proposer',
+      header: 'PROPOSER',
+      tooltip: 'The account that created this proposal.',
+      sortable: false,
+      render: (row) => <TableAddress address={row.core.proposer} />,
+    },
+    {
+      key: 'state',
+      header: 'STATUS',
+      tooltip: 'The current state of the proposal.',
+      sortable: true,
+      accessor: (row) => row.core.state,
+      render: (row) => {
+        const state = row.core.state
+        const stateText = getProposalStateText(state)
+        const stateStyles =
+          state === ProposalState.Active
+            ? 'border-green-600/50 bg-green-50 text-green-700'
+            : state === ProposalState.Passed
+              ? 'border-blue-600/50 bg-blue-50 text-blue-700'
+              : state === ProposalState.Executed
+                ? 'border-brand/50 bg-brand/10 text-brand'
+                : state === ProposalState.Rejected
+                  ? 'border-red-600/50 bg-red-50 text-red-700'
+                  : 'border-border bg-muted text-muted-foreground'
+
+        return (
+          <span
+            className={`text-xs px-2 py-1 rounded-md border font-medium ${stateStyles}`}
+          >
+            {stateText}
+          </span>
+        )
+      },
+    },
+    {
+      key: 'votes',
+      header: 'VOTES',
+      tooltip: 'The current vote count (Yes / No / Abstain).',
+      sortable: true,
+      accessor: (row) =>
+        Number(row.core.yesVotes) +
+        Number(row.core.noVotes) +
+        Number(row.core.abstainVotes),
+      render: (row) => {
+        const total =
+          Number(row.core.yesVotes) +
+          Number(row.core.noVotes) +
+          Number(row.core.abstainVotes)
+        return (
+          <div className="text-sm">
+            <span className="text-green-700">
+              {formatBigNumber(row.core.yesVotes, undefined, true)}
+            </span>
+            <span className="text-muted-foreground"> / </span>
+            <span className="text-red-700">
+              {formatBigNumber(row.core.noVotes, undefined, true)}
+            </span>
+            <span className="text-muted-foreground"> / </span>
+            <span className="text-muted-foreground">
+              {formatBigNumber(row.core.abstainVotes, undefined, true)}
+            </span>
+            <span className="text-muted-foreground text-xs ml-2">
+              ({formatBigNumber(total, undefined, true)} total)
+            </span>
+          </div>
+        )
+      },
+    },
+    {
+      key: 'actions',
+      header: 'ACTIONS',
+      tooltip: 'The number of on-chain actions in this proposal.',
+      sortable: true,
+      accessor: (row) => row.actions.length,
+      render: (row) => (
+        <span className="text-muted-foreground">
+          {row.actions.length} {row.actions.length === 1 ? 'action' : 'actions'}
+        </span>
+      ),
+    },
+  ]
 
   return (
     <div className="space-y-6">
@@ -159,29 +199,30 @@ export default function GovernancePage() {
         </div>
 
         {/* Key Statistics - Right under header */}
-        {isConnected && (
-          <div className="flex flex-row gap-4 flex-wrap">
-            <StatisticCard
-              title="TREASURY BALANCE"
-              tooltip="The total ETH balance held in the governance treasury (Safe). This can be distributed through governance proposals."
-              value={
-                isLoading
-                  ? '...'
-                  : safeBalance
-                    ? `${(Number(safeBalance) / 1e18).toFixed(2)} ETH`
-                    : '0.00 ETH'
-              }
-            />
-            <StatisticCard
-              title="TOTAL PROPOSALS"
-              tooltip="The total number of governance proposals that have been created."
-              value={isLoadingModule ? '...' : String(proposalCounter)}
-            />
-            <StatisticCard
-              title="YOUR VOTING POWER"
-              tooltip="Your voting power as a percentage of total voting power. This is based on your Trust Score in the network."
-              value={
-                isLoadingUserVotingPower || isLoadingModule
+        <div className="flex flex-row gap-4 flex-wrap">
+          <StatisticCard
+            title="TREASURY BALANCE"
+            tooltip="The total ETH balance held in the governance treasury (Safe). This can be distributed through governance proposals."
+            value={
+              isLoading
+                ? '...'
+                : safeBalance
+                  ? `${(Number(safeBalance) / 1e18).toFixed(2)} ETH`
+                  : '0.00 ETH'
+            }
+          />
+          <StatisticCard
+            title="TOTAL PROPOSALS"
+            tooltip="The total number of governance proposals that have been created."
+            value={isLoadingModule ? '...' : String(proposalCounter)}
+          />
+          <StatisticCard
+            title="YOUR VOTING POWER"
+            tooltip="Your voting power as a percentage of total voting power. This is based on your Trust Score in the network."
+            value={
+              !isConnected
+                ? '?'
+                : isLoadingUserVotingPower || isLoadingModule
                   ? '...'
                   : userVotingPower && totalVotingPower
                     ? formatBigNumber(
@@ -190,10 +231,9 @@ export default function GovernancePage() {
                           100
                       ) + '%'
                     : '0%'
-              }
-            />
-          </div>
-        )}
+            }
+          />
+        </div>
       </div>
 
       {/* Success Message */}
@@ -212,183 +252,160 @@ export default function GovernancePage() {
         </div>
       )}
 
-      {/* Wallet Connection */}
-      {!isConnected && (
-        <div className="border border-border bg-card p-6 rounded-md text-center space-y-4">
-          <div className="text-lg font-medium">Wallet Connection Required</div>
-          <div className="text-muted-foreground text-sm">
-            Connect your wallet to participate in governance
+      {/* Parameters & Contracts */}
+      <div className="border-y border-border py-6 space-y-4">
+        <h2 className="font-bold">PARAMETERS</h2>
+        <div className="flex flex-row gap-4 flex-wrap">
+          <StatisticCard
+            title="VOTING DELAY"
+            tooltip="The number of blocks that must pass after a proposal is created before voting can begin."
+            value={
+              isLoadingModule ? '...' : `${formatBigNumber(votingDelay)} blocks`
+            }
+          />
+          <StatisticCard
+            title="VOTING PERIOD"
+            tooltip="The number of blocks during which voting is open."
+            value={
+              isLoadingModule
+                ? '...'
+                : `${formatBigNumber(votingPeriod, undefined, true)} blocks`
+            }
+          />
+          <StatisticCard
+            title="QUORUM"
+            tooltip="The minimum percentage of total voting power that must participate for a proposal to be valid."
+            value={
+              isLoadingModule ? '...' : `${formatBigNumber(quorum * 100)}%`
+            }
+          />
+        </div>
+
+        <h2 className="font-bold mt-6">CONTRACTS</h2>
+
+        {/* Contract Addresses */}
+        <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <span className="font-bold">Zodiac Module:</span>
+            {merkleGovAddress ? (
+              <Address
+                address={merkleGovAddress}
+                displayMode="truncated"
+                showCopyIcon
+                link={false}
+                noHighlight
+              />
+            ) : (
+              <span>Not available</span>
+            )}
           </div>
-          <Button onClick={openConnectWallet} className="px-6 py-2">
-            Connect Wallet
+          <div className="flex items-center gap-2">
+            <span className="font-bold">Treasury Safe:</span>
+            {isLoadingModule ? (
+              <span>...</span>
+            ) : safeAddress ? (
+              <>
+                <Address
+                  address={safeAddress}
+                  displayMode="truncated"
+                  showCopyIcon
+                  link={false}
+                  noHighlight
+                />
+                <a
+                  href={`https://app.safe.global/home?safe=eth:${safeAddress}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-brand hover:text-brand/80 transition-colors"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              </>
+            ) : (
+              <span>Not available</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Proposals Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-bold">PROPOSALS</h2>
+          <Button onClick={() => setShowCreateForm(!showCreateForm)} size="sm">
+            {showCreateForm ? 'Cancel' : '+ New Proposal'}
           </Button>
         </div>
-      )}
 
-      {/* Connected Content */}
-      {isConnected && (
-        <>
-          {/* Parameters & Contracts */}
-          <div className="border-y border-border py-6 space-y-4">
-            <h2 className="font-bold">PARAMETERS</h2>
-            <div className="flex flex-row gap-4 flex-wrap">
-              <StatisticCard
-                title="VOTING DELAY"
-                tooltip="The number of blocks that must pass after a proposal is created before voting can begin."
-                value={
-                  isLoadingModule
-                    ? '...'
-                    : `${formatBigNumber(votingDelay)} blocks`
-                }
-              />
-              <StatisticCard
-                title="VOTING PERIOD"
-                tooltip="The number of blocks during which voting is open."
-                value={
-                  isLoadingModule
-                    ? '...'
-                    : `${formatBigNumber(votingPeriod, undefined, true)} blocks`
-                }
-              />
-              <StatisticCard
-                title="QUORUM"
-                tooltip="The minimum percentage of total voting power that must participate for a proposal to be valid."
-                value={
-                  isLoadingModule ? '...' : `${formatBigNumber(quorum * 100)}%`
-                }
-              />
-            </div>
+        {/* Create Proposal Form - Conditional */}
+        {showCreateForm && (
+          <CreateProposalForm
+            canCreateProposal={canCreateProposal}
+            userVotingPower={userVotingPower?.value}
+            onCreateProposal={async (title, description, actions, voteType) => {
+              const result = await handleCreateProposal(
+                title,
+                description,
+                actions,
+                voteType
+              )
+              if (result) {
+                setShowCreateForm(false)
+              }
+              return result
+            }}
+            isLoading={isAnyActionLoading}
+          />
+        )}
 
-            <h2 className="font-bold mt-6">CONTRACTS</h2>
+        {/* Proposals Count */}
+        {!isLoadingProposals && (
+          <div className="text-muted-foreground text-sm">
+            {formatBigNumber(proposals.length)}{' '}
+            {proposals.length === 1 ? 'proposal' : 'proposals'}
+          </div>
+        )}
 
-            {/* Contract Addresses */}
-            <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <span className="font-bold">Zodiac Module:</span>
-                {merkleGovAddress ? (
-                  <Address
-                    address={merkleGovAddress}
-                    displayMode="truncated"
-                    showCopyIcon
-                    link={false}
-                    noHighlight
-                  />
-                ) : (
-                  <span>Not available</span>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold">Treasury Safe:</span>
-                {isLoadingModule ? (
-                  <span>...</span>
-                ) : safeAddress ? (
-                  <>
-                    <Address
-                      address={safeAddress}
-                      displayMode="truncated"
-                      showCopyIcon
-                      link={false}
-                      noHighlight
-                    />
-                    <a
-                      href={`https://app.safe.global/home?safe=eth:${safeAddress}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-brand hover:text-brand/80 transition-colors"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  </>
-                ) : (
-                  <span>Not available</span>
-                )}
-              </div>
+        {/* Loading State */}
+        {isLoadingProposals && proposals.length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-muted-foreground text-sm">
+              Loading proposals...
             </div>
           </div>
+        )}
 
-          {/* Proposals Section */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-bold">PROPOSALS</h2>
-              <Button
-                onClick={() => setShowCreateForm(!showCreateForm)}
-                size="sm"
-              >
-                {showCreateForm ? 'Cancel' : '+ New Proposal'}
-              </Button>
+        {/* Empty State */}
+        {proposals.length === 0 && !isLoadingProposals && (
+          <div className="border border-border bg-muted/30 p-12 rounded-md text-center space-y-3">
+            <div className="text-foreground text-sm font-medium">
+              No proposals yet
             </div>
-
-            {/* Create Proposal Form - Conditional */}
-            {showCreateForm && (
-              <CreateProposalForm
-                canCreateProposal={canCreateProposal}
-                userVotingPower={userVotingPower?.value}
-                onCreateProposal={async (
-                  title,
-                  description,
-                  actions,
-                  voteType
-                ) => {
-                  const result = await handleCreateProposal(
-                    title,
-                    description,
-                    actions,
-                    voteType
-                  )
-                  if (result) {
-                    setShowCreateForm(false)
-                  }
-                  return result
-                }}
-                isLoading={isAnyActionLoading}
-              />
-            )}
-
-            {/* Proposals List */}
-            {!isLoadingProposals && (
-              <div className="text-muted-foreground text-sm">
-                {formatBigNumber(proposals.length)}{' '}
-                {proposals.length === 1 ? 'proposal' : 'proposals'}
-              </div>
-            )}
-
-            {isLoadingProposals && proposals.length === 0 && (
-              <div className="text-center py-12">
-                <div className="text-muted-foreground text-sm">
-                  Loading proposals...
-                </div>
-              </div>
-            )}
-
-            {proposals.length === 0 && !isLoadingProposals && (
-              <div className="border border-border bg-muted/30 p-12 rounded-md text-center space-y-3">
-                <div className="text-foreground text-sm font-medium">
-                  No proposals yet
-                </div>
-                <div className="text-muted-foreground text-xs">
-                  {canCreateProposal
-                    ? 'Be the first to create a governance proposal'
-                    : 'Participate in attestations to earn proposal creation rights'}
-                </div>
-              </div>
-            )}
-
-            {proposals.map((proposal) => (
-              <ProposalCard
-                key={proposal.core.id.toString()}
-                proposal={proposal.core}
-                actions={proposal.actions}
-                userVotingPower={userVotingPower?.value}
-                onVote={handleVote}
-                onQueue={handleQueue}
-                onExecute={handleExecute}
-                isLoading={isAnyActionLoading}
-                getProposalStateText={getProposalStateText}
-              />
-            ))}
+            <div className="text-muted-foreground text-xs">
+              {canCreateProposal
+                ? 'Be the first to create a governance proposal'
+                : 'Participate in attestations to earn proposal creation rights'}
+            </div>
           </div>
-        </>
-      )}
+        )}
+
+        {/* Proposals Table */}
+        {proposals.length > 0 && (
+          <Table
+            columns={columns}
+            data={proposals}
+            defaultSortColumn="id"
+            defaultSortDirection="desc"
+            cellClassName="text-sm"
+            getRowKey={(row) => row.core.id.toString()}
+            onRowClick={(row) => {
+              pushBreadcrumb()
+              router.push(`governance/${row.core.id}`)
+            }}
+            rowClickTitle="View proposal details"
+          />
+        )}
+      </div>
     </div>
   )
 }

@@ -2279,7 +2279,6 @@ export const merkleGovModuleAbi = [
   },
   { type: 'error', inputs: [], name: 'AlreadyInitialized' },
   { type: 'error', inputs: [], name: 'AlreadyVoted' },
-  { type: 'error', inputs: [], name: 'EmptyProposal' },
   { type: 'error', inputs: [], name: 'InvalidAddress' },
   { type: 'error', inputs: [], name: 'InvalidInitialization' },
   { type: 'error', inputs: [], name: 'InvalidMerkleProof' },

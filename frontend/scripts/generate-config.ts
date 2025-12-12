@@ -35,7 +35,7 @@ try {
   configOutput.apis = {
     ponder:
       env === 'development'
-        ? 'http://localhost:65421'
+        ? 'http://127.0.0.1:65421'
         : 'https://trust-graph.wavs.xyz/ponder',
     ipfsGateway:
       env === 'development'

@@ -42,6 +42,8 @@ export const usePushBreadcrumb = (defaultBreadcrumb?: Partial<Breadcrumb>) => {
         ) {
           // ENS name
           finalBreadcrumb.title = lastSegment
+        } else if (lastSegment === 'governance') {
+          finalBreadcrumb.title = 'proposals'
         } else if (
           // Trailing slash ensures this is a specific resource page, not the list page
           pathname.startsWith('/account/') ||

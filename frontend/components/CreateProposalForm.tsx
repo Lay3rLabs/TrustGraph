@@ -71,10 +71,6 @@ export function CreateProposalForm({
       return 'Description is required'
     }
 
-    if (actions.length === 0) {
-      return 'At least one action is required'
-    }
-
     for (let i = 0; i < actions.length; i++) {
       const action = actions[i]
       if (!action.target.trim()) {

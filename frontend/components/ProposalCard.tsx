@@ -1,7 +1,10 @@
 'use client'
 
+import { Check } from 'lucide-react'
 import type React from 'react'
 import { useCallback, useState } from 'react'
+import { parseUnits } from 'viem'
+import { useAccount } from 'wagmi'
 
 import { Button } from '@/components/Button'
 import { VoteButtons } from '@/components/VoteButtons'
@@ -13,10 +16,14 @@ import {
 } from '@/hooks/useGovernance'
 import { formatBigNumber } from '@/lib/utils'
 
+import { Address } from './Address'
+import { Card } from './Card'
+
 interface ProposalCardProps {
   proposal: ProposalCore
   actions: ProposalAction[]
   userVotingPower?: string
+  userVote?: VoteType | null
   onVote?: (proposalId: number, support: VoteType) => Promise<string | null>
   onQueue?: (proposalId: number) => Promise<string | null>
   onExecute?: (proposalId: number) => Promise<string | null>
@@ -28,12 +35,15 @@ export function ProposalCard({
   proposal,
   actions,
   userVotingPower,
+  userVote,
   onVote,
   onQueue,
   onExecute,
   isLoading = false,
   getProposalStateText = (state) => `State ${state}`,
 }: ProposalCardProps) {
+  const { isConnected } = useAccount()
+
   const [isVoting, setIsVoting] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
@@ -41,7 +51,9 @@ export function ProposalCard({
   const state = proposal.state
   const isActive = state === ProposalState.Active
   const isPassed = state === ProposalState.Passed
-  const canVote = isActive && userVotingPower && Number(userVotingPower) > 0
+  const hasVoted = userVote !== undefined && userVote !== null
+  const canVote =
+    isActive && userVotingPower && Number(userVotingPower) > 0 && !hasVoted
 
   // Calculate total votes and percentages
   const totalVotes =
@@ -56,19 +68,42 @@ export function ProposalCard({
     totalVotes > 0 ? (Number(proposal.abstainVotes) / totalVotes) * 100 : 0
 
   // Block-based timing for MerkleGovModule
-  // Note: In a real app, you'd want to get current block number and estimate block times
   const startBlock = Number(proposal.startBlock || 0)
   const endBlock = Number(proposal.endBlock || 0)
 
   const getTimeLeft = () => {
-    // Since we don't have current block number easily available in the frontend,
-    // we'll show block numbers instead of estimated time
     if (state === ProposalState.Pending) {
       return `Starts at block ${startBlock}`
     } else if (isActive) {
       return `Ends at block ${endBlock}`
     }
     return null
+  }
+
+  const getVoteTypeText = (voteType: VoteType) => {
+    switch (voteType) {
+      case VoteType.Yes:
+        return 'FOR'
+      case VoteType.No:
+        return 'AGAINST'
+      case VoteType.Abstain:
+        return 'ABSTAIN'
+      default:
+        return 'UNKNOWN'
+    }
+  }
+
+  const getVoteTypeStyles = (voteType: VoteType) => {
+    switch (voteType) {
+      case VoteType.Yes:
+        return 'border-green-600/50 bg-green-50 text-green-700'
+      case VoteType.No:
+        return 'border-red-600/50 bg-red-50 text-red-700'
+      case VoteType.Abstain:
+        return 'border-border bg-muted text-muted-foreground'
+      default:
+        return 'border-border bg-muted text-muted-foreground'
+    }
   }
 
   const handleVote = useCallback(
@@ -81,12 +116,7 @@ export function ProposalCard({
       try {
         const hash = await onVote(proposalId, support)
         if (hash) {
-          const voteText =
-            support === VoteType.Yes
-              ? 'FOR'
-              : support === VoteType.No
-                ? 'AGAINST'
-                : 'ABSTAIN'
+          const voteText = getVoteTypeText(support)
           setSuccessMessage(`Vote cast ${voteText}! Transaction: ${hash}`)
           setTimeout(() => setSuccessMessage(null), 5000)
         }
@@ -99,7 +129,7 @@ export function ProposalCard({
     [onVote, canVote, proposalId]
   )
 
-  const handleQueue = useCallback(async () => {
+  const _handleQueue = useCallback(async () => {
     if (!onQueue) return
 
     const hash = await onQueue(proposalId)
@@ -119,164 +149,195 @@ export function ProposalCard({
     }
   }, [onExecute, proposalId])
 
+  const timeLeft = getTimeLeft()
+
+  const getStatusStyles = () => {
+    if (isActive) {
+      return 'border-green-600/50 bg-green-50 text-green-700'
+    }
+    if (state === ProposalState.Passed) {
+      return 'border-blue-600/50 bg-blue-50 text-blue-700'
+    }
+    if (state === ProposalState.Executed) {
+      return 'border-brand/50 bg-brand/10 text-brand'
+    }
+    return 'border-border bg-muted text-muted-foreground'
+  }
+
   return (
-    <div className="border border-gray-300 bg-white p-6 rounded-sm space-y-4 shadow-sm">
+    <Card type="primary" size="lg" className="space-y-6">
       {/* Header */}
-      <div className="space-y-2">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div className="space-y-1">
-            <div className="text-lg text-gray-900">PROPOSAL #{proposalId}</div>
-            <div className="text-xs text-gray-600">
-              Proposer: {proposal.proposer.slice(0, 10)}...
-              {proposal.proposer.slice(-8)}
+            <h3 className="text-lg font-semibold text-foreground">
+              {proposal.title}
+            </h3>
+            {timeLeft && (
+              <div className="text-xs text-muted-foreground">{timeLeft}</div>
+            )}
+            <div className="text-xs text-muted-foreground">
+              <span className="font-medium">Proposer:</span>{' '}
+              <Address textClassName="text-xs" address={proposal.proposer} />
             </div>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-3">
             <div
-              className={`text-xs px-2 py-1 rounded border ${
-                isActive
-                  ? 'border-green-500 bg-green-50 text-green-700'
-                  : state === ProposalState.Passed
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : state === ProposalState.Executed
-                      ? 'border-purple-500 bg-purple-50 text-purple-700'
-                      : 'border-gray-400 bg-gray-50 text-gray-700'
-              }`}
+              className={`text-xs px-2.5 py-1 rounded-md border font-medium ${getStatusStyles()}`}
             >
               {getProposalStateText(state)}
             </div>
-            {getTimeLeft() && (
-              <div className="text-xs text-gray-600">{getTimeLeft()}</div>
-            )}
           </div>
         </div>
 
-        <div className="text-sm text-gray-800">{proposal.description}</div>
+        <p className="text-sm text-foreground/80">{proposal.description}</p>
       </div>
 
       {/* Success Message */}
       {successMessage && (
-        <div className="border border-green-500 bg-green-50 p-3 rounded-sm">
+        <div className="border border-green-600/50 bg-green-50 p-4 rounded-md">
           <div className="text-green-700 text-sm">✓ {successMessage}</div>
         </div>
       )}
 
       {/* Actions */}
       {actions.length > 0 && (
-        <div className="border-t border-gray-300 pt-4 space-y-3">
-          <div className="text-sm font-semibold text-gray-900">
+        <div className="border-t border-border pt-6 space-y-4">
+          <h4 className="text-sm font-bold text-foreground">
             PROPOSED ACTIONS
-          </div>
-          {actions.map((action, index) => (
-            <div
-              key={index}
-              className="border border-gray-300 bg-gray-50 p-3 rounded-sm space-y-2"
-            >
-              <div className="flex justify-between items-start">
-                <div className="text-xs text-gray-600">ACTION #{index + 1}</div>
-                {action.value !== '0' && (
-                  <div className="text-xs text-gray-800">
-                    {formatBigNumber(action.value, 18)} ETH
+          </h4>
+          <div className="space-y-3">
+            {actions.map((action, index) => (
+              <Card key={index} type="accent" size="md" className="space-y-3">
+                <div className="flex justify-between items-start">
+                  <div className="text-xs font-medium text-muted-foreground">
+                    ACTION #{index + 1}
+                  </div>
+                  {action.value !== '0' && (
+                    <div className="text-xs font-medium text-foreground">
+                      {formatBigNumber(parseUnits(action.value, 18), 18)} ETH
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <div className="text-xs text-muted-foreground">TARGET</div>
+                  <div className="text-sm font-mono break-all text-foreground">
+                    {action.target}
+                  </div>
+                </div>
+                {action.description && (
+                  <div className="space-y-1">
+                    <div className="text-xs text-muted-foreground">
+                      DESCRIPTION
+                    </div>
+                    <div className="text-sm text-foreground">
+                      {action.description}
+                    </div>
                   </div>
                 )}
-              </div>
-              <div className="space-y-1">
-                <div className="text-xs text-gray-600">TARGET</div>
-                <div className="text-sm font-mono break-all text-gray-800">
-                  {action.target}
-                </div>
-              </div>
-              {action.description && (
-                <div className="space-y-1">
-                  <div className="text-xs text-gray-600">DESCRIPTION</div>
-                  <div className="text-sm text-gray-800">
-                    {action.description}
+                {action.data !== '0x' && (
+                  <div className="space-y-1">
+                    <div className="text-xs text-muted-foreground">
+                      CALLDATA
+                    </div>
+                    <div className="text-xs font-mono break-all text-muted-foreground">
+                      {action.data.slice(0, 100)}...
+                    </div>
                   </div>
-                </div>
-              )}
-              {action.data !== '0x' && (
-                <div className="space-y-1">
-                  <div className="text-xs text-gray-600">CALLDATA</div>
-                  <div className="text-xs font-mono break-all text-gray-800">
-                    {action.data.slice(0, 100)}...
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+                )}
+              </Card>
+            ))}
+          </div>
         </div>
       )}
 
       {/* Vote Results */}
-      <div className="border-t border-gray-300 pt-4 space-y-3">
-        <div className="text-sm font-semibold text-gray-900">
-          VOTING RESULTS
-        </div>
+      <div className="border-t border-border pt-6 space-y-4">
+        <h4 className="text-sm font-bold text-foreground">VOTING RESULTS</h4>
         <div className="grid grid-cols-3 gap-4 text-xs">
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-gray-600">FOR</span>
-              <span className="text-gray-800">
+              <span className="text-muted-foreground">FOR</span>
+              <span className="text-foreground font-medium">
                 {proposal.yesVotes.toString()}
               </span>
             </div>
-            <div className="bg-gray-200 h-2 rounded">
+            <div className="bg-muted h-2 rounded-full overflow-hidden">
               <div
-                className="bg-green-600 h-2 rounded transition-all"
+                className="bg-green-600 h-2 transition-all"
                 style={{ width: `${forPercentage}%` }}
               />
             </div>
-            <div className="text-center text-gray-600">
+            <div className="text-center text-muted-foreground">
               {forPercentage.toFixed(1)}%
             </div>
           </div>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-gray-600">AGAINST</span>
-              <span className="text-gray-800">
+              <span className="text-muted-foreground">AGAINST</span>
+              <span className="text-foreground font-medium">
                 {proposal.noVotes.toString()}
               </span>
             </div>
-            <div className="bg-gray-200 h-2 rounded">
+            <div className="bg-muted h-2 rounded-full overflow-hidden">
               <div
-                className="bg-red-600 h-2 rounded transition-all"
+                className="bg-red-600 h-2 transition-all"
                 style={{ width: `${againstPercentage}%` }}
               />
             </div>
-            <div className="text-center text-gray-600">
+            <div className="text-center text-muted-foreground">
               {againstPercentage.toFixed(1)}%
             </div>
           </div>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-gray-600">ABSTAIN</span>
-              <span className="text-gray-800">
+              <span className="text-muted-foreground">ABSTAIN</span>
+              <span className="text-foreground font-medium">
                 {proposal.abstainVotes.toString()}
               </span>
             </div>
-            <div className="bg-gray-200 h-2 rounded">
+            <div className="bg-muted h-2 rounded-full overflow-hidden">
               <div
-                className="bg-yellow-600 h-2 rounded transition-all"
+                className="bg-gray-500 h-2 transition-all"
                 style={{ width: `${abstainPercentage}%` }}
               />
             </div>
-            <div className="text-center text-gray-600">
+            <div className="text-center text-muted-foreground">
               {abstainPercentage.toFixed(1)}%
             </div>
           </div>
         </div>
-        <div className="text-xs text-center text-gray-600">
+        <div className="text-xs text-center text-muted-foreground">
           Total: {totalVotes.toString()} votes
         </div>
       </div>
 
+      {/* Already Voted Message */}
+      {hasVoted && (
+        <div className="border-t border-border pt-6 space-y-3">
+          <h4 className="text-sm font-bold text-foreground">YOUR VOTE</h4>
+          <div className="flex items-center gap-3">
+            <div
+              className={`flex items-center gap-2 text-sm px-3 py-2 rounded-md border font-medium ${getVoteTypeStyles(userVote)}`}
+            >
+              <Check className="w-4 h-4" />
+              <span>Voted {getVoteTypeText(userVote)}</span>
+            </div>
+            {userVotingPower && (
+              <span className="text-xs text-muted-foreground">
+                with {formatBigNumber(userVotingPower, undefined, true)} voting
+                power
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Voting Buttons */}
       {canVote && (
-        <div className="border-t border-gray-300 pt-4 space-y-3">
-          <div className="text-sm font-semibold text-gray-900">
-            CAST YOUR VOTE
-          </div>
-          <div className="text-xs text-gray-600">
+        <div className="border-t border-border pt-6 space-y-4">
+          <h4 className="text-sm font-bold text-foreground">CAST YOUR VOTE</h4>
+          <div className="text-xs text-muted-foreground">
             Your voting power: {userVotingPower!}
           </div>
           <VoteButtons
@@ -289,11 +350,11 @@ export function ProposalCard({
 
       {/* Admin Actions */}
       {isPassed && (
-        <div className="border-t border-gray-300 pt-4 space-y-3">
-          <div className="text-sm font-semibold text-gray-900">
+        <div className="border-t border-border pt-6 space-y-4">
+          <h4 className="text-sm font-bold text-foreground">
             PROPOSAL EXECUTION
-          </div>
-          <div className="text-xs mb-3 text-gray-600">
+          </h4>
+          <div className="text-xs text-muted-foreground">
             Passed proposals can be executed immediately
           </div>
           <div className="flex gap-3">
@@ -301,10 +362,10 @@ export function ProposalCard({
               <Button
                 onClick={handleExecute}
                 disabled={isLoading}
-                variant="outline"
-                className="border-purple-600 text-purple-700 hover:bg-purple-50 !px-4 !py-2"
+                variant="brand"
+                size="sm"
               >
-                <span className="text-xs">EXECUTE PROPOSAL</span>
+                EXECUTE PROPOSAL
               </Button>
             )}
           </div>
@@ -312,14 +373,18 @@ export function ProposalCard({
       )}
 
       {/* No Voting Power Message */}
-      {isActive && (!userVotingPower || Number(userVotingPower) === 0) && (
-        <div className="border-t border-gray-300 pt-4 text-center">
-          <div className="text-sm text-gray-600">NO VOTING POWER</div>
-          <div className="text-xs mt-2 text-gray-700">
-            ◆ YOU NEED VOTING POWER TO PARTICIPATE IN GOVERNANCE ◆
+      {isConnected && isActive &&
+        !hasVoted &&
+        (!userVotingPower || Number(userVotingPower) === 0) && (
+          <div className="border-t border-border pt-6 text-center space-y-2">
+            <div className="text-sm font-medium text-muted-foreground">
+              NO VOTING POWER
+            </div>
+            <div className="text-xs text-muted-foreground">
+              ◆ YOU NEED VOTING POWER TO PARTICIPATE IN GOVERNANCE ◆
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+    </Card>
   )
 }

@@ -22,7 +22,6 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
     error AlreadyInitialized();
     error NoMerkleRootSet();
     error InvalidProposalData();
-    error EmptyProposal();
     error InvalidMerkleProof();
     error VotingClosed();
     error AlreadyVoted();
@@ -61,6 +60,7 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
         uint256 value;
         bytes data;
         Operation operation;
+        string description;
     }
 
     struct Proposal {
@@ -206,6 +206,7 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
     /// @param values Array of ETH values
     /// @param calldatas Array of encoded function calls
     /// @param operations Array of operation types
+    /// @param actionDescriptions Array of action descriptions
     /// @param votingPower The claimed voting power (for merkle proof verification)
     /// @param proof Merkle proof for membership verification
     function propose(
@@ -215,6 +216,7 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
         uint256[] memory values,
         bytes[] memory calldatas,
         Operation[] memory operations,
+        string[] memory actionDescriptions,
         uint256 votingPower,
         bytes32[] calldata proof
     ) external returns (uint256 proposalId) {
@@ -225,6 +227,7 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
             values,
             calldatas,
             operations,
+            actionDescriptions,
             votingPower,
             proof
         );
@@ -237,6 +240,7 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
     /// @param values Array of ETH values
     /// @param calldatas Array of encoded function calls
     /// @param operations Array of operation types
+    /// @param actionDescriptions Array of action descriptions
     /// @param votingPower The claimed voting power (for merkle proof verification)
     /// @param proof Merkle proof for membership verification
     /// @param voteType The type of vote to cast (No, Yes, Abstain)
@@ -247,6 +251,7 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
         uint256[] memory values,
         bytes[] memory calldatas,
         Operation[] memory operations,
+        string[] memory actionDescriptions,
         uint256 votingPower,
         bytes32[] calldata proof,
         VoteType voteType
@@ -258,6 +263,7 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
             values,
             calldatas,
             operations,
+            actionDescriptions,
             votingPower,
             proof
         );
@@ -464,6 +470,7 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
     /// @param values Array of ETH values
     /// @param calldatas Array of encoded function calls
     /// @param operations Array of operation types
+    /// @param actionDescriptions Array of action descriptions
     /// @param votingPower The claimed voting power (for merkle proof verification)
     /// @param proof Merkle proof for membership verification
     function _propose(
@@ -473,6 +480,7 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
         uint256[] memory values,
         bytes[] memory calldatas,
         Operation[] memory operations,
+        string[] memory actionDescriptions,
         uint256 votingPower,
         bytes32[] calldata proof
     ) internal returns (uint256 proposalId) {
@@ -480,9 +488,9 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
         if (
             targets.length != values.length ||
             targets.length != calldatas.length ||
-            targets.length != operations.length
+            targets.length != operations.length ||
+            targets.length != actionDescriptions.length
         ) revert InvalidProposalData();
-        if (targets.length == 0) revert EmptyProposal();
 
         // Verify proposer is in merkle tree
         _verifyMerkleProof(msg.sender, votingPower, currentMerkleRoot, proof);
@@ -506,7 +514,8 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
                     target: targets[i],
                     value: values[i],
                     data: calldatas[i],
-                    operation: operations[i]
+                    operation: operations[i],
+                    description: actionDescriptions[i]
                 })
             );
         }

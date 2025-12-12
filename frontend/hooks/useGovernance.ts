@@ -3,11 +3,7 @@
 import { usePonderQuery } from '@ponder/react'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { useCallback, useMemo, useState } from 'react'
-import {
-  useAccount,
-  useBalance,
-  usePublicClient,
-} from 'wagmi'
+import { useAccount, useBalance, usePublicClient } from 'wagmi'
 
 import { merkleGovModuleAbi, merkleGovModuleAddress } from '@/lib/contracts'
 import { parseErrorMessage } from '@/lib/error'
@@ -94,9 +90,9 @@ function computeProposalState(
   if (currentBlockNumber <= proposal.endBlock) return ProposalState.Active
 
   // Voting has ended - check if passed
-  const totalVotes = proposal.yesVotes + proposal.noVotes + proposal.abstainVotes
-  const quorumThreshold =
-    (proposal.totalVotingPower * quorum) / quorumRange
+  const totalVotes =
+    proposal.yesVotes + proposal.noVotes + proposal.abstainVotes
+  const quorumThreshold = (proposal.totalVotingPower * quorum) / quorumRange
 
   if (totalVotes >= quorumThreshold && proposal.yesVotes > proposal.noVotes) {
     return ProposalState.Passed
@@ -126,20 +122,22 @@ export function useGovernance() {
   })
 
   // Query proposals from ponder
-  const { data: proposals = [], isLoading: isLoadingProposals } = usePonderQuery(
-    {
-      queryFn: (db) =>
-        db.query.merkleGovModuleProposal.findMany({
-          where: (t, { eq }) => eq(t.module, merkleGovModuleAddress),
-          orderBy: (t, { desc }) => desc(t.id),
-          limit: 100,
-        }),
-    }
-  )
+  const {
+    data: proposals = [],
+    isLoading: isLoadingProposals,
+    refetch: refetchProposals,
+  } = usePonderQuery({
+    queryFn: (db) =>
+      db.query.merkleGovModuleProposal.findMany({
+        where: (t, { eq }) => eq(t.module, merkleGovModuleAddress),
+        orderBy: (t, { desc }) => desc(t.id),
+        limit: 100,
+      }),
+  })
 
   // Query user's votes from ponder
-  const { data: userVotes = [], isLoading: isLoadingUserVotes } = usePonderQuery(
-    {
+  const { data: userVotes = [], isLoading: isLoadingUserVotes } =
+    usePonderQuery({
       queryFn: (db) =>
         db.query.merkleGovModuleVote.findMany({
           where: (t, { and, eq }) =>
@@ -151,8 +149,7 @@ export function useGovernance() {
           limit: 100,
         }),
       enabled: !!address,
-    }
-  )
+    })
 
   // Create a map of proposalId -> userVote for quick lookup
   const userVotesByProposal = useMemo(() => {
@@ -180,7 +177,7 @@ export function useGovernance() {
       ...ponderQueries.merkleTreeEntry(moduleState?.currentMerkleRoot, address),
       enabled: !!moduleState?.currentMerkleRoot && !!address,
     })
-  
+
   console.log('userVotingPower', userVotingPower, isLoadingUserVotingPower)
   console.log('moduleState?.currentMerkleRoot', moduleState?.currentMerkleRoot)
   console.log('address', address)
@@ -216,10 +213,12 @@ export function useGovernance() {
   const avatarAddress = moduleState?.avatar
 
   // Read Safe ETH balance using useBalance hook
-  const { data: safeBalanceData, isLoading: isLoadingSafeBalance } = useBalance({
-    address: safeAddress as `0x${string}` | undefined,
-    query: { enabled: !!safeAddress },
-  })
+  const { data: safeBalanceData, isLoading: isLoadingSafeBalance } = useBalance(
+    {
+      address: safeAddress as `0x${string}` | undefined,
+      query: { enabled: !!safeAddress },
+    }
+  )
 
   // Transform proposals to include computed state
 
@@ -308,7 +307,12 @@ export function useGovernance() {
       actions: ProposalAction[],
       voteType?: VoteType | null
     ): Promise<string | null> => {
-      console.log('createProposal called with:', { title, description, actions, voteType })
+      console.log('createProposal called with:', {
+        title,
+        description,
+        actions,
+        voteType,
+      })
 
       if (!isConnected || !address) {
         console.log('Wallet not connected')
@@ -316,8 +320,14 @@ export function useGovernance() {
         return null
       }
 
-      if (!moduleState?.currentMerkleRoot || moduleState.currentMerkleRoot === '0x0000000000000000000000000000000000000000000000000000000000000000') {
-        console.log('No merkle root set', { currentMerkleRoot: moduleState?.currentMerkleRoot })
+      if (
+        !moduleState?.currentMerkleRoot ||
+        moduleState.currentMerkleRoot ===
+          '0x0000000000000000000000000000000000000000000000000000000000000000'
+      ) {
+        console.log('No merkle root set', {
+          currentMerkleRoot: moduleState?.currentMerkleRoot,
+        })
         setError('No merkle root set. Governance not initialized.')
         return null
       }
@@ -393,11 +403,12 @@ export function useGovernance() {
                     abi: merkleGovModuleAbi,
                     functionName: 'propose',
                     args: [
+                      title,
+                      description,
                       targets,
                       values,
                       calldatas,
                       operations,
-                      description,
                       BigInt(userVotingPower.value),
                       userVotingPower.proof as `0x${string}`[],
                     ],
@@ -436,11 +447,12 @@ export function useGovernance() {
                     abi: merkleGovModuleAbi,
                     functionName: 'proposeWithVote',
                     args: [
+                      title,
+                      description,
                       targets,
                       values,
                       calldatas,
                       operations,
-                      description,
                       BigInt(userVotingPower.value),
                       userVotingPower.proof as `0x${string}`[],
                       voteType,
@@ -453,6 +465,8 @@ export function useGovernance() {
                   successMessage: 'Proposal created & vote cast!',
                 })
               })()
+
+        refetchProposals()
 
         return receipt.transactionHash
       } catch (err: any) {
@@ -565,13 +579,7 @@ export function useGovernance() {
         setIsCastingVote(false)
       }
     },
-    [
-      isConnected,
-      address,
-      publicClient,
-      getProposal,
-      userEntriesByRoot,
-    ]
+    [isConnected, address, publicClient, getProposal, userEntriesByRoot]
   )
 
   // No queuing in MerkleGovModule - proposals go directly from Passed to executable
@@ -699,9 +707,7 @@ export function useGovernance() {
     votingPeriod: moduleState?.votingPeriod
       ? Number(moduleState.votingPeriod)
       : 0,
-    quorum: moduleState?.quorum
-      ? Number(moduleState.quorum) / QUORUM_RANGE
-      : 0,
+    quorum: moduleState?.quorum ? Number(moduleState.quorum) / QUORUM_RANGE : 0,
     safeBalance: safeBalanceData?.value
       ? safeBalanceData.value.toString()
       : '0',
