@@ -66,6 +66,8 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
     struct Proposal {
         uint256 id;
         address proposer;
+        string title;
+        string description;
         uint256 startBlock;
         uint256 endBlock;
         uint256 yesVotes;
@@ -84,9 +86,12 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
     event ProposalCreated(
         uint256 indexed proposalId,
         address indexed proposer,
+        string title,
+        string description,
         uint256 startBlock,
         uint256 endBlock,
-        bytes32 merkleRoot
+        bytes32 merkleRoot,
+        uint256 totalVotingPower
     );
 
     event VoteCast(
@@ -169,7 +174,7 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
         _transferOwnership(_owner);
         avatar = _avatar;
         target = _target;
-        merkleSnapshotContract = _merkleSnapshot;
+        _setMerkleSnapshotContract(_merkleSnapshot);
     }
 
     /// @notice Sets up the module for factory deployment
@@ -187,7 +192,7 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
         _transferOwnership(_owner);
         avatar = _avatar;
         target = _target;
-        merkleSnapshotContract = _merkleSnapshot;
+        _setMerkleSnapshotContract(_merkleSnapshot);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -195,6 +200,8 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Create a new proposal
+    /// @param title The title of the proposal
+    /// @param description The description of the proposal
     /// @param targets Array of target addresses
     /// @param values Array of ETH values
     /// @param calldatas Array of encoded function calls
@@ -202,15 +209,18 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
     /// @param votingPower The claimed voting power (for merkle proof verification)
     /// @param proof Merkle proof for membership verification
     function propose(
+        string memory title,
+        string memory description,
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory calldatas,
         Operation[] memory operations,
-        string memory /* description */,
         uint256 votingPower,
         bytes32[] calldata proof
     ) external returns (uint256 proposalId) {
         proposalId = _propose(
+            title,
+            description,
             targets,
             values,
             calldatas,
@@ -221,6 +231,8 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
     }
 
     /// @notice Create a new proposal and cast the proposer's vote in one transaction
+    /// @param title The title of the proposal
+    /// @param description The description of the proposal
     /// @param targets Array of target addresses
     /// @param values Array of ETH values
     /// @param calldatas Array of encoded function calls
@@ -229,16 +241,19 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
     /// @param proof Merkle proof for membership verification
     /// @param voteType The type of vote to cast (No, Yes, Abstain)
     function proposeWithVote(
+        string memory title,
+        string memory description,
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory calldatas,
         Operation[] memory operations,
-        string memory /* description */,
         uint256 votingPower,
         bytes32[] calldata proof,
         VoteType voteType
     ) external returns (uint256 proposalId) {
         proposalId = _propose(
+            title,
+            description,
             targets,
             values,
             calldatas,
@@ -412,10 +427,7 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
 
     /// @notice Update merkle snapshot contract
     function setMerkleSnapshotContract(address newContract) external onlyOwner {
-        if (newContract == address(0)) revert InvalidAddress();
-        address previousContract = merkleSnapshotContract;
-        merkleSnapshotContract = newContract;
-        emit MerkleSnapshotContractUpdated(previousContract, newContract);
+        _setMerkleSnapshotContract(newContract);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -446,6 +458,8 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Internal function to create a proposal
+    /// @param title The title of the proposal
+    /// @param description The description of the proposal
     /// @param targets Array of target addresses
     /// @param values Array of ETH values
     /// @param calldatas Array of encoded function calls
@@ -453,6 +467,8 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
     /// @param votingPower The claimed voting power (for merkle proof verification)
     /// @param proof Merkle proof for membership verification
     function _propose(
+        string memory title,
+        string memory description,
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory calldatas,
@@ -476,6 +492,8 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
 
         proposal.id = proposalId;
         proposal.proposer = msg.sender;
+        proposal.title = title;
+        proposal.description = description;
         proposal.startBlock = block.number + votingDelay;
         proposal.endBlock = proposal.startBlock + votingPeriod;
         proposal.merkleRoot = currentMerkleRoot;
@@ -496,9 +514,12 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
         emit ProposalCreated(
             proposalId,
             msg.sender,
+            proposal.title,
+            proposal.description,
             proposal.startBlock,
             proposal.endBlock,
-            currentMerkleRoot
+            proposal.merkleRoot,
+            proposal.totalVotingPower
         );
     }
 
@@ -546,5 +567,41 @@ contract MerkleGovModule is Module, IMerkleSnapshotHook {
         );
         if (!MerkleProof.verifyCalldata(proof, merkleRoot, leaf))
             revert InvalidMerkleProof();
+    }
+
+    /// @notice Internal function to set the merkle snapshot contract and update the relevant state
+    function _setMerkleSnapshotContract(address newContract) internal {
+        if (newContract == address(0)) revert InvalidAddress();
+
+        address previousContract = merkleSnapshotContract;
+        merkleSnapshotContract = newContract;
+
+        // Pull latest merkle state from the snapshot contract.
+        // If the snapshot has no states yet, gracefully initialize fields to empty.
+        try IMerkleSnapshot(newContract).getLatestState() returns (
+            IMerkleSnapshot.MerkleState memory merkleState
+        ) {
+            currentMerkleRoot = merkleState.root;
+            ipfsHash = merkleState.ipfsHash;
+            ipfsHashCid = merkleState.ipfsHashCid;
+            totalVotingPower = merkleState.totalValue;
+        } catch (bytes memory reason) {
+            // Custom errors encode as: selector (4 bytes) + args.
+            // NoMerkleStates has no args, so revert data is just the selector.
+            if (
+                reason.length == 4 &&
+                bytes4(reason) == IMerkleSnapshot.NoMerkleStates.selector
+            ) {
+                currentMerkleRoot = bytes32(0);
+                ipfsHash = bytes32(0);
+                ipfsHashCid = "";
+                totalVotingPower = 0;
+            } else {
+                assembly ("memory-safe") {
+                    revert(add(reason, 0x20), mload(reason))
+                }
+            }
+        }
+        emit MerkleSnapshotContractUpdated(previousContract, newContract);
     }
 }

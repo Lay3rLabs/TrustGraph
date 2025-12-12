@@ -589,7 +589,7 @@ export const easAbi = [
   { type: 'error', inputs: [], name: 'WrongSchema' },
 ] as const
 
-export const easAddress = '0x2AA4BFcAA149FdCe066C13a194C5A50125A3ECC5' as const
+export const easAddress = '0x247627D167BB7b207661661D2e3a7E2C59802eCF' as const
 
 export const easConfig = { address: easAddress, abi: easAbi } as const
 
@@ -690,7 +690,7 @@ export const easAttestTriggerAbi = [
 ] as const
 
 export const easAttestTriggerAddress =
-  '0xC37E59cF56d53738afAF1C97AFE83ED1258C69ED' as const
+  '0x94D7d10Cae058fbcd159c2A89C85C3878c1F71d1' as const
 
 export const easAttestTriggerConfig = {
   address: easAttestTriggerAddress,
@@ -876,7 +876,7 @@ export const easIndexerResolverAbi = [
 ] as const
 
 export const easIndexerResolverAddress =
-  '0xb2536959D1dA383f09afE40615e4555638ab7987' as const
+  '0x53Bed81fb3624c6F5D9A60176648AaaF3dE02C06' as const
 
 export const easIndexerResolverConfig = {
   address: easIndexerResolverAddress,
@@ -1017,7 +1017,7 @@ export const iWavsServiceManagerAbi = [
 ] as const
 
 export const iWavsServiceManagerAddress =
-  '0xd81CB5e357eA2e7F673C799FAAe4F0c63A037C74' as const
+  '0x13bAee49Ca3A311421D0f264b0d42ff1d370F16A' as const
 
 export const iWavsServiceManagerConfig = {
   address: iWavsServiceManagerAddress,
@@ -1608,7 +1608,7 @@ export const merkleFundDistributorAbi = [
 ] as const
 
 export const merkleFundDistributorAddress =
-  '0xda1367fE611a096670DdE7Cafe540fEcd830ea80' as const
+  '0x9c6109bbC969Bf57d4C226Ef9f1264a09399B2f0' as const
 
 export const merkleFundDistributorConfig = {
   address: merkleFundDistributorAddress,
@@ -1712,6 +1712,8 @@ export const merkleGovModuleAbi = [
         components: [
           { name: 'id', internalType: 'uint256', type: 'uint256' },
           { name: 'proposer', internalType: 'address', type: 'address' },
+          { name: 'title', internalType: 'string', type: 'string' },
+          { name: 'description', internalType: 'string', type: 'string' },
           { name: 'startBlock', internalType: 'uint256', type: 'uint256' },
           { name: 'endBlock', internalType: 'uint256', type: 'uint256' },
           { name: 'yesVotes', internalType: 'uint256', type: 'uint256' },
@@ -1834,6 +1836,8 @@ export const merkleGovModuleAbi = [
     outputs: [
       { name: 'id', internalType: 'uint256', type: 'uint256' },
       { name: 'proposer', internalType: 'address', type: 'address' },
+      { name: 'title', internalType: 'string', type: 'string' },
+      { name: 'description', internalType: 'string', type: 'string' },
       { name: 'startBlock', internalType: 'uint256', type: 'uint256' },
       { name: 'endBlock', internalType: 'uint256', type: 'uint256' },
       { name: 'yesVotes', internalType: 'uint256', type: 'uint256' },
@@ -1849,11 +1853,12 @@ export const merkleGovModuleAbi = [
   {
     type: 'function',
     inputs: [
+      { name: 'title', internalType: 'string', type: 'string' },
+      { name: 'description', internalType: 'string', type: 'string' },
       { name: 'targets', internalType: 'address[]', type: 'address[]' },
       { name: 'values', internalType: 'uint256[]', type: 'uint256[]' },
       { name: 'calldatas', internalType: 'bytes[]', type: 'bytes[]' },
       { name: 'operations', internalType: 'enum Operation[]', type: 'uint8[]' },
-      { name: '', internalType: 'string', type: 'string' },
       { name: 'votingPower', internalType: 'uint256', type: 'uint256' },
       { name: 'proof', internalType: 'bytes32[]', type: 'bytes32[]' },
     ],
@@ -1864,11 +1869,12 @@ export const merkleGovModuleAbi = [
   {
     type: 'function',
     inputs: [
+      { name: 'title', internalType: 'string', type: 'string' },
+      { name: 'description', internalType: 'string', type: 'string' },
       { name: 'targets', internalType: 'address[]', type: 'address[]' },
       { name: 'values', internalType: 'uint256[]', type: 'uint256[]' },
       { name: 'calldatas', internalType: 'bytes[]', type: 'bytes[]' },
       { name: 'operations', internalType: 'enum Operation[]', type: 'uint8[]' },
-      { name: '', internalType: 'string', type: 'string' },
       { name: 'votingPower', internalType: 'uint256', type: 'uint256' },
       { name: 'proof', internalType: 'bytes32[]', type: 'bytes32[]' },
       {
@@ -2135,6 +2141,13 @@ export const merkleGovModuleAbi = [
         type: 'address',
         indexed: true,
       },
+      { name: 'title', internalType: 'string', type: 'string', indexed: false },
+      {
+        name: 'description',
+        internalType: 'string',
+        type: 'string',
+        indexed: false,
+      },
       {
         name: 'startBlock',
         internalType: 'uint256',
@@ -2151,6 +2164,12 @@ export const merkleGovModuleAbi = [
         name: 'merkleRoot',
         internalType: 'bytes32',
         type: 'bytes32',
+        indexed: false,
+      },
+      {
+        name: 'totalVotingPower',
+        internalType: 'uint256',
+        type: 'uint256',
         indexed: false,
       },
     ],
@@ -2290,7 +2309,7 @@ export const merkleGovModuleAbi = [
 ] as const
 
 export const merkleGovModuleAddress =
-  '0x331e764BBA6BB81b73d10dcbAF819E3DbE1F7ae7' as const
+  '0x5C0bc90752427Cd007B64F7bd07423629dA7519f' as const
 
 export const merkleGovModuleConfig = {
   address: merkleGovModuleAddress,
@@ -2780,7 +2799,7 @@ export const merkleSnapshotAbi = [
 ] as const
 
 export const merkleSnapshotAddress =
-  '0x52d5b044a3E795F9225288C2562F031Bd33Ee63D' as const
+  '0x7080ce41d550817Bd35fF89Fec279D57e3ACFA9A' as const
 
 export const merkleSnapshotConfig = {
   address: merkleSnapshotAddress,
@@ -2824,7 +2843,7 @@ export const schemaRegistrarAbi = [
 ] as const
 
 export const schemaRegistrarAddress =
-  '0x49dbdB82e35D5bBf427a85321258e1c470d55587' as const
+  '0x9FeCefc32bD364Fa5D3aC5Ca8041D282CfD69C77' as const
 
 export const schemaRegistrarConfig = {
   address: schemaRegistrarAddress,
@@ -2916,7 +2935,7 @@ export const schemaRegistryAbi = [
 ] as const
 
 export const schemaRegistryAddress =
-  '0xDb47309e0cE62eB76913110b7671f9B9EaC9D9bF' as const
+  '0xE994b6D21f9BAdc7F684915759CE0f3e1e07323a' as const
 
 export const schemaRegistryConfig = {
   address: schemaRegistryAddress,
@@ -3104,7 +3123,7 @@ export const wavsAttesterAbi = [
 ] as const
 
 export const wavsAttesterAddress =
-  '0xee7108DF7393204cbC362efeD7D1F391B4E6957a' as const
+  '0x168B39E5fca01289c6F7Cc1198894C37B9b6c051' as const
 
 export const wavsAttesterConfig = {
   address: wavsAttesterAddress,
@@ -4136,7 +4155,7 @@ export const wavsIndexerAbi = [
 ] as const
 
 export const wavsIndexerAddress =
-  '0xE32a36edD91FAf8724F26af041f033eb86554FA3' as const
+  '0x2eC894B37CE97a01577a8c41B4d0fB57900FCE3c' as const
 
 export const wavsIndexerConfig = {
   address: wavsIndexerAddress,

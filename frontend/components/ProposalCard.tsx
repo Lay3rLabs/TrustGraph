@@ -11,6 +11,7 @@ import {
   ProposalState,
   VoteType,
 } from '@/hooks/useGovernance'
+import { formatBigNumber } from '@/lib/utils'
 
 interface ProposalCardProps {
   proposal: ProposalCore
@@ -20,7 +21,6 @@ interface ProposalCardProps {
   onQueue?: (proposalId: number) => Promise<string | null>
   onExecute?: (proposalId: number) => Promise<string | null>
   isLoading?: boolean
-  formatVotingPower?: (amount: string) => string
   getProposalStateText?: (state: number) => string
 }
 
@@ -32,7 +32,6 @@ export function ProposalCard({
   onQueue,
   onExecute,
   isLoading = false,
-  formatVotingPower = (amount) => amount,
   getProposalStateText = (state) => `State ${state}`,
 }: ProposalCardProps) {
   const [isVoting, setIsVoting] = useState(false)
@@ -86,8 +85,8 @@ export function ProposalCard({
             support === VoteType.Yes
               ? 'FOR'
               : support === VoteType.No
-              ? 'AGAINST'
-              : 'ABSTAIN'
+                ? 'AGAINST'
+                : 'ABSTAIN'
           setSuccessMessage(`Vote cast ${voteText}! Transaction: ${hash}`)
           setTimeout(() => setSuccessMessage(null), 5000)
         }
@@ -138,10 +137,10 @@ export function ProposalCard({
                 isActive
                   ? 'border-green-500 bg-green-50 text-green-700'
                   : state === ProposalState.Passed
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
-                  : state === ProposalState.Executed
-                  ? 'border-purple-500 bg-purple-50 text-purple-700'
-                  : 'border-gray-400 bg-gray-50 text-gray-700'
+                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                    : state === ProposalState.Executed
+                      ? 'border-purple-500 bg-purple-50 text-purple-700'
+                      : 'border-gray-400 bg-gray-50 text-gray-700'
               }`}
             >
               {getProposalStateText(state)}
@@ -177,7 +176,7 @@ export function ProposalCard({
                 <div className="text-xs text-gray-600">ACTION #{index + 1}</div>
                 {action.value !== '0' && (
                   <div className="text-xs text-gray-800">
-                    {formatVotingPower(action.value)} ETH
+                    {formatBigNumber(action.value, 18)} ETH
                   </div>
                 )}
               </div>

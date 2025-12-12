@@ -7,7 +7,6 @@ import {
   useAccount,
   useBalance,
   usePublicClient,
-  useWriteContract,
 } from 'wagmi'
 
 import { merkleGovModuleAbi, merkleGovModuleAddress } from '@/lib/contracts'
@@ -32,6 +31,8 @@ export interface ProposalAction {
 export interface ProposalCore {
   id: bigint
   proposer: string
+  title: string
+  description: string
   startBlock: bigint
   endBlock: bigint
   yesVotes: bigint
@@ -41,7 +42,6 @@ export interface ProposalCore {
   cancelled: boolean
   merkleRoot: string
   totalVotingPower: bigint
-  description?: string // For UI purposes
   state: number // ProposalState enum
   blockNumber: bigint
   timestamp: bigint
@@ -105,27 +105,16 @@ function computeProposalState(
   return ProposalState.Rejected
 }
 
+const QUORUM_RANGE = 1e18
+
 export function useGovernance() {
   const { address, isConnected } = useAccount()
   const publicClient = usePublicClient()
-  const {
-    writeContract,
-    isPending: isWriting,
-    error: writeError,
-    data: writeHash,
-  } = useWriteContract({
-    mutation: {
-      onSuccess: (hash) => {
-        console.log(`✅ Proposal transaction submitted: ${hash}`)
-      },
-      onError: (error) => {
-        console.error('Proposal transaction failed:', error)
-      },
-    },
-  })
 
   // Local state
-  const [isLoading, setIsLoading] = useState(false)
+  const [isCreatingProposal, setIsCreatingProposal] = useState(false)
+  const [isCastingVote, setIsCastingVote] = useState(false)
+  const [isExecutingProposal, setIsExecutingProposal] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Query module state from ponder
@@ -152,17 +141,15 @@ export function useGovernance() {
   const { data: userVotes = [], isLoading: isLoadingUserVotes } = usePonderQuery(
     {
       queryFn: (db) =>
-        address
-          ? db.query.merkleGovModuleVote.findMany({
-              where: (t, { and, eq }) =>
-                and(
-                  eq(t.module, merkleGovModuleAddress),
-                  eq(t.voter, address)
-                ),
-              orderBy: (t, { desc }) => desc(t.timestamp),
-              limit: 100,
-            })
-          : Promise.resolve([]),
+        db.query.merkleGovModuleVote.findMany({
+          where: (t, { and, eq }) =>
+            and(
+              eq(t.module, merkleGovModuleAddress),
+              eq(t.voter, address || '0x0')
+            ),
+          orderBy: (t, { desc }) => desc(t.timestamp),
+          limit: 100,
+        }),
       enabled: !!address,
     }
   )
@@ -177,7 +164,7 @@ export function useGovernance() {
   }, [userVotes])
 
   // Query the current block number for state computation
-  const { data: blockNumber } = useQuery({
+  const { data: currentBlockNumber = 0n } = useQuery({
     queryKey: ['blockNumber'],
     queryFn: async () => {
       if (!publicClient) return 0n
@@ -193,6 +180,10 @@ export function useGovernance() {
       ...ponderQueries.merkleTreeEntry(moduleState?.currentMerkleRoot, address),
       enabled: !!moduleState?.currentMerkleRoot && !!address,
     })
+  
+  console.log('userVotingPower', userVotingPower, isLoadingUserVotingPower)
+  console.log('moduleState?.currentMerkleRoot', moduleState?.currentMerkleRoot)
+  console.log('address', address)
 
   // Get unique merkle roots from proposals for fetching user entries
   const uniqueProposalRoots = useMemo(() => {
@@ -225,23 +216,25 @@ export function useGovernance() {
   const avatarAddress = moduleState?.avatar
 
   // Read Safe ETH balance using useBalance hook
-  const { data: safeBalanceData } = useBalance({
+  const { data: safeBalanceData, isLoading: isLoadingSafeBalance } = useBalance({
     address: safeAddress as `0x${string}` | undefined,
     query: { enabled: !!safeAddress },
   })
 
   // Transform proposals to include computed state
+
   const proposalsWithState = useMemo(() => {
-    const currentBlock = blockNumber ?? 0n
     const quorum = moduleState?.quorum ?? 4n * BigInt(1e16) // Default 4%
 
     return proposals.map((proposal) => {
-      const state = computeProposalState(proposal, currentBlock, quorum)
+      const state = computeProposalState(proposal, currentBlockNumber, quorum)
       const actions = (proposal.actions as ProposalAction[]) || []
 
       const core: ProposalCore = {
         id: proposal.id,
         proposer: proposal.proposer,
+        title: proposal.title,
+        description: proposal.description,
         startBlock: proposal.startBlock,
         endBlock: proposal.endBlock,
         yesVotes: proposal.yesVotes,
@@ -251,7 +244,6 @@ export function useGovernance() {
         cancelled: proposal.cancelled,
         merkleRoot: proposal.merkleRoot,
         totalVotingPower: proposal.totalVotingPower,
-        description: `Proposal ${proposal.id}`,
         state,
         blockNumber: proposal.blockNumber,
         timestamp: proposal.timestamp,
@@ -259,7 +251,7 @@ export function useGovernance() {
 
       return { core, actions }
     })
-  }, [proposals, blockNumber, moduleState?.quorum])
+  }, [proposals, currentBlockNumber, moduleState?.quorum])
 
   // Get a single proposal by ID
   const getProposal = useCallback(
@@ -311,11 +303,12 @@ export function useGovernance() {
   // Create proposal using MerkleGovModule (requires merkle proof for membership)
   const createProposal = useCallback(
     async (
-      actions: ProposalAction[],
+      title: string,
       description: string,
+      actions: ProposalAction[],
       voteType?: VoteType | null
     ): Promise<string | null> => {
-      console.log('createProposal called with:', { actions, description, voteType })
+      console.log('createProposal called with:', { title, description, actions, voteType })
 
       if (!isConnected || !address) {
         console.log('Wallet not connected')
@@ -344,7 +337,7 @@ export function useGovernance() {
       try {
         console.log('Starting proposal creation...')
         setError(null)
-        setIsLoading(true)
+        setIsCreatingProposal(true)
 
         // Convert actions to the format expected by MerkleGovModule
         const targets = actions.map((action) => action.target as `0x${string}`)
@@ -353,11 +346,12 @@ export function useGovernance() {
         const operations = actions.map((action) => action.operation || 0)
 
         console.log('Proposal parameters:', {
+          title,
+          description,
           targets,
           values,
           calldatas,
           operations,
-          description,
           votingPower: userVotingPower.value,
           proof: userVotingPower.proof,
         })
@@ -379,11 +373,12 @@ export function useGovernance() {
                   abi: merkleGovModuleAbi,
                   functionName: 'propose',
                   args: [
+                    title,
+                    description,
                     targets,
                     values,
                     calldatas,
                     operations,
-                    description,
                     BigInt(userVotingPower.value),
                     userVotingPower.proof as `0x${string}`[],
                   ],
@@ -420,11 +415,12 @@ export function useGovernance() {
                   abi: merkleGovModuleAbi,
                   functionName: 'proposeWithVote',
                   args: [
+                    title,
+                    description,
                     targets,
                     values,
                     calldatas,
                     operations,
-                    description,
                     BigInt(userVotingPower.value),
                     userVotingPower.proof as `0x${string}`[],
                     voteType,
@@ -464,7 +460,7 @@ export function useGovernance() {
         setError(`Failed to create proposal: ${parseErrorMessage(err)}`)
         return null
       } finally {
-        setIsLoading(false)
+        setIsCreatingProposal(false)
       }
     },
     [
@@ -473,9 +469,6 @@ export function useGovernance() {
       moduleState?.currentMerkleRoot,
       userVotingPower,
       publicClient,
-      writeContract,
-      writeHash,
-      writeError,
     ]
   )
 
@@ -494,7 +487,7 @@ export function useGovernance() {
 
       try {
         setError(null)
-        setIsLoading(true)
+        setIsCastingVote(true)
 
         // Get the proposal to find its snapshotted merkle root
         const proposal = getProposal(proposalId)
@@ -544,7 +537,6 @@ export function useGovernance() {
         // Get gas price
         const gasPrice = await publicClient.getGasPrice()
 
-        // Call writeContract
         const [receipt] = await txToast({
           tx: {
             address: merkleGovModuleAddress,
@@ -570,7 +562,7 @@ export function useGovernance() {
         setError(`Failed to cast vote: ${parseErrorMessage(err)}`)
         return null
       } finally {
-        setIsLoading(false)
+        setIsCastingVote(false)
       }
     },
     [
@@ -605,7 +597,7 @@ export function useGovernance() {
 
       try {
         setError(null)
-        setIsLoading(true)
+        setIsExecutingProposal(true)
 
         console.log('Executing proposal:', proposalId)
 
@@ -647,19 +639,11 @@ export function useGovernance() {
         setError(`Failed to execute proposal: ${parseErrorMessage(err)}`)
         return null
       } finally {
-        setIsLoading(false)
+        setIsExecutingProposal(false)
       }
     },
-    [isConnected, address, publicClient, writeContract, writeHash, writeError]
+    [isConnected, address, publicClient]
   )
-
-  // Helper functions
-  const formatVotingPower = (amount: string | undefined) => {
-    if (!amount || amount === '0') return '0'
-    const value = BigInt(amount)
-    const formatted = Number(value) / Math.pow(10, 18)
-    return formatted.toFixed(6)
-  }
 
   const getProposalStateText = (state: number): string => {
     switch (state) {
@@ -690,26 +674,34 @@ export function useGovernance() {
     )
   }, [moduleState?.currentMerkleRoot, userVotingPower])
 
+  const isAnyActionLoading =
+    isCreatingProposal || isCastingVote || isExecutingProposal
+
   return {
     // Loading states
-    isLoading: isLoading || isWriting || isLoadingModule || isLoadingProposals,
+    isCreatingProposal,
+    isCastingVote,
+    isExecutingProposal,
+    isAnyActionLoading,
+    isLoadingModule,
     isLoadingProposals,
     isLoadingUserVotes,
     isLoadingUserVotingPower,
+    isLoadingSafeBalance,
     error,
 
     // Governance parameters (from indexer)
     proposalCounter: moduleState?.proposalCount
       ? Number(moduleState.proposalCount)
       : 0,
-    proposalThreshold: '0', // No threshold in MerkleGovModule
+    // proposalThreshold: '0', // No threshold in MerkleGovModule
     votingDelay: moduleState?.votingDelay ? Number(moduleState.votingDelay) : 0,
     votingPeriod: moduleState?.votingPeriod
       ? Number(moduleState.votingPeriod)
       : 0,
-    quorumBasisPoints: moduleState?.quorum
-      ? Number(moduleState.quorum) * 100
-      : 0, // Convert to basis points
+    quorum: moduleState?.quorum
+      ? Number(moduleState.quorum) / QUORUM_RANGE
+      : 0,
     safeBalance: safeBalanceData?.value
       ? safeBalanceData.value.toString()
       : '0',
@@ -748,7 +740,6 @@ export function useGovernance() {
     getUserVote,
 
     // Utilities
-    formatVotingPower,
     getProposalStateText,
 
     // Contract addresses

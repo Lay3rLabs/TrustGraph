@@ -103,6 +103,8 @@ export const merkleGovModuleProposal = onchainTable(
     module: t.hex().notNull(),
     id: t.bigint().notNull(),
     proposer: t.hex().notNull(),
+    title: t.text().notNull(),
+    description: t.text().notNull(),
     startBlock: t.bigint().notNull(),
     endBlock: t.bigint().notNull(),
     yesVotes: t.bigint().notNull(),
