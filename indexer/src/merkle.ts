@@ -98,6 +98,7 @@ ponder.on("merkleSnapshot:MerkleRootUpdated", async ({ event, context }) => {
     .from(offchainSchema.merkleMetadata)
     .where(
       and(
+        eq(offchainSchema.merkleMetadata.merkleSnapshotContract, event.log.address),
         eq(offchainSchema.merkleMetadata.root, root),
         eq(offchainSchema.merkleMetadata.ipfsHashCid, ipfsHashCid)
       )
@@ -108,6 +109,7 @@ ponder.on("merkleSnapshot:MerkleRootUpdated", async ({ event, context }) => {
     .from(offchainSchema.merkleEntry)
     .where(
       and(
+        eq(offchainSchema.merkleEntry.merkleSnapshotContract, event.log.address),
         eq(offchainSchema.merkleEntry.root, root),
         eq(offchainSchema.merkleEntry.ipfsHashCid, ipfsHashCid)
       )
@@ -144,6 +146,7 @@ async function insertMerkleData(
   await offchainDb
     .insert(offchainSchema.merkleMetadata)
     .values({
+      merkleSnapshotContract: event.log.address,
       root,
       ipfsHash,
       ipfsHashCid,
@@ -154,7 +157,10 @@ async function insertMerkleData(
       timestamp: event.block.timestamp,
     })
     .onConflictDoUpdate({
-      target: offchainSchema.merkleMetadata.root,
+      target: [
+        offchainSchema.merkleMetadata.merkleSnapshotContract,
+        offchainSchema.merkleMetadata.root,
+      ],
       set: {
         ipfsHash: sql.raw(
           `excluded."${offchainSchema.merkleMetadata.ipfsHash.name}"`
@@ -184,6 +190,7 @@ async function insertMerkleData(
     .insert(offchainSchema.merkleEntry)
     .values(
       merkleTreeData.tree.map((entry) => ({
+        merkleSnapshotContract: event.log.address,
         root,
         ipfsHashCid,
         account: entry.account,
@@ -195,6 +202,7 @@ async function insertMerkleData(
     )
     .onConflictDoUpdate({
       target: [
+        offchainSchema.merkleEntry.merkleSnapshotContract,
         offchainSchema.merkleEntry.root,
         offchainSchema.merkleEntry.account,
       ],

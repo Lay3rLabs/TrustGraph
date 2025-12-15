@@ -21,7 +21,7 @@ export default async function AccountProfilePageServer({
   params,
 }: {
   params: Promise<{ address: string }>
-}) {
+  }) {
   const { address: _address } = await params
 
   const queryClient = makeQueryClient()
@@ -87,7 +87,7 @@ export default async function AccountProfilePageServer({
 
     // Network
     queryClient.prefetchQuery(ponderQueries.latestMerkleTree),
-    queryClient.prefetchQuery(ponderQueries.network),
+    queryClient.prefetchQuery(ponderQueries.network(LOCALISM_FUND.contracts.merkleSnapshot)),
   ])
 
   const dehydratedState = dehydrate(queryClient)

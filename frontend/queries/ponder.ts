@@ -30,7 +30,7 @@ export const ponderKeys = {
     attester?: string
     recipient?: string
   }) => [...ponderKeys.all, 'attestationCount', options] as const,
-  network: () => [...ponderKeys.all, 'network'] as const,
+  network: (merkleSnapshotContract: string) => [...ponderKeys.all, 'network', merkleSnapshotContract] as const,
   localismFundApplicationUrl: (address: string) =>
     [...ponderKeys.all, 'localismFundApplicationUrl', address] as const,
 }
@@ -98,6 +98,7 @@ export type NetworkData = {
 }
 
 export const ponderQueries = {
+  // TODO: make this work for multiple merkle snapshot contracts
   latestMerkleTree: queryOptions({
     queryKey: ponderKeys.latestMerkleTree(),
     queryFn: async () => {
@@ -127,6 +128,7 @@ export const ponderQueries = {
     },
     enabled: !!APIS.ponder,
   }),
+  // TODO: make this work for multiple merkle snapshot contracts
   merkleTree: (root?: string) =>
     queryOptions({
       queryKey: ponderKeys.merkleTree(root),
@@ -165,6 +167,7 @@ export const ponderQueries = {
       },
       enabled: !!root && !!APIS.ponder,
     }),
+  // TODO: make this work for multiple merkle snapshot contracts
   merkleTreeEntry: (root?: string, account?: string) =>
     queryOptions({
       queryKey: ponderKeys.merkleTreeEntry(root, account),
@@ -195,10 +198,10 @@ export const ponderQueries = {
       },
       enabled: !!root && !!account && !!APIS.ponder,
     }),
-  network: queryOptions({
-    queryKey: ponderKeys.network(),
+  network: (merkleSnapshotContract: string) => queryOptions({
+    queryKey: ponderKeys.network(merkleSnapshotContract),
     queryFn: async (): Promise<NetworkData> => {
-      const response = await fetch(`${APIS.ponder}/network`)
+      const response = await fetch(`${APIS.ponder}/network/${merkleSnapshotContract}`)
 
       if (response.ok) {
         const data = await response.json()

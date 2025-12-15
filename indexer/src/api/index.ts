@@ -8,7 +8,6 @@ import localismFund from "./localism-fund";
 import merkle from "./merkle";
 import network from "./network";
 
-
 const app = new Hono();
 
 app.use("/sql/*", client({ db, schema }));

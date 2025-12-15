@@ -99,7 +99,7 @@ export const NetworkProvider = ({
     error: networkError,
     refetch: refetchNetwork,
   } = useQuery({
-    ...ponderQueries.network,
+    ...ponderQueries.network(network.contracts.merkleSnapshot),
     refetchInterval: 10_000,
   })
 

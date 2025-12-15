@@ -1,6 +1,6 @@
 import { Hex } from 'viem'
 
-import { TRUSTED_SEEDS } from './config'
+import { SCHEMA_CONFIG, TRUSTED_SEEDS } from './config'
 import {
   merkleFundDistributorAddress,
   merkleGovModuleAddress,
@@ -22,11 +22,23 @@ export type Network = {
   }
   criteria: string
   trustedSeeds: Hex[]
+  schemas: NetworkSchema[]
   contracts: {
     merkleSnapshot: Hex
     merkleFundDistributor: Hex
     merkleGovModule: Hex
   }
+}
+
+export type NetworkSchema = {
+  uid: Hex
+  key: string
+  name: string
+  description: string
+  resolver: Hex
+  revocable: boolean
+  schema: string
+  fields: { name: string; type: string }[]
 }
 
 export const LOCALISM_FUND: Network = {
@@ -58,6 +70,22 @@ By attesting, you're **vouching** that this person meets the above criteria, and
 Everyone helps **decentralize trust** by making honest, careful attestations.
 `.trim(),
   trustedSeeds: TRUSTED_SEEDS,
+  schemas: Object.entries(SCHEMA_CONFIG).map(
+    ([key, schema]) =>
+      ({
+        key,
+        ...schema,
+      }) as {
+        uid: Hex
+        key: string
+        name: string
+        description: string
+        resolver: Hex
+        revocable: boolean
+        schema: string
+        fields: { name: string; type: string }[]
+      }
+  ),
   contracts: {
     merkleSnapshot: merkleSnapshotAddress,
     merkleFundDistributor: merkleFundDistributorAddress,
