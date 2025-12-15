@@ -5,7 +5,8 @@ import { useQueries, useQuery } from '@tanstack/react-query'
 import { useCallback, useMemo, useState } from 'react'
 import { useAccount, useBalance, usePublicClient } from 'wagmi'
 
-import { merkleGovModuleAbi, merkleGovModuleAddress } from '@/lib/contracts'
+import { useNetwork } from '@/contexts/NetworkContext'
+import { merkleGovModuleAbi } from '@/lib/contracts'
 import { parseErrorMessage } from '@/lib/error'
 import { txToast } from '@/lib/tx'
 import {
@@ -104,6 +105,7 @@ function computeProposalState(
 const QUORUM_RANGE = 1e18
 
 export function useGovernance() {
+  const {network} = useNetwork()
   const { address, isConnected } = useAccount()
   const publicClient = usePublicClient()
 
@@ -117,7 +119,7 @@ export function useGovernance() {
   const { data: moduleState, isLoading: isLoadingModule } = usePonderQuery({
     queryFn: (db) =>
       db.query.merkleGovModule.findFirst({
-        where: (t, { eq }) => eq(t.address, merkleGovModuleAddress),
+        where: (t, { eq }) => eq(t.address, network.contracts.merkleGovModule),
       }),
   })
 
@@ -129,7 +131,7 @@ export function useGovernance() {
   } = usePonderQuery({
     queryFn: (db) =>
       db.query.merkleGovModuleProposal.findMany({
-        where: (t, { eq }) => eq(t.module, merkleGovModuleAddress),
+        where: (t, { eq }) => eq(t.module, network.contracts.merkleGovModule),
         orderBy: (t, { desc }) => desc(t.id),
         limit: 100,
       }),
@@ -142,7 +144,7 @@ export function useGovernance() {
         db.query.merkleGovModuleVote.findMany({
           where: (t, { and, eq }) =>
             and(
-              eq(t.module, merkleGovModuleAddress),
+              eq(t.module, network.contracts.merkleGovModule),
               eq(t.voter, address || '0x0')
             ),
           orderBy: (t, { desc }) => desc(t.timestamp),
@@ -379,8 +381,8 @@ export function useGovernance() {
           voteType === undefined || voteType === null
             ? await (async () => {
                 const gasEstimate = await publicClient.estimateContractGas({
-                  address: merkleGovModuleAddress,
                   abi: merkleGovModuleAbi,
+                  address: network.contracts.merkleGovModule,
                   functionName: 'propose',
                   args: [
                     title,
@@ -399,7 +401,7 @@ export function useGovernance() {
 
                 return txToast({
                   tx: {
-                    address: merkleGovModuleAddress,
+                    address: network.contracts.merkleGovModule,
                     abi: merkleGovModuleAbi,
                     functionName: 'propose',
                     args: [
@@ -422,7 +424,7 @@ export function useGovernance() {
               })()
             : await (async () => {
                 const gasEstimate = await publicClient.estimateContractGas({
-                  address: merkleGovModuleAddress,
+                  address: network.contracts.merkleGovModule,
                   abi: merkleGovModuleAbi,
                   functionName: 'proposeWithVote',
                   args: [
@@ -443,7 +445,7 @@ export function useGovernance() {
 
                 return txToast({
                   tx: {
-                    address: merkleGovModuleAddress,
+                    address: network.contracts.merkleGovModule,
                     abi: merkleGovModuleAbi,
                     functionName: 'proposeWithVote',
                     args: [
@@ -536,7 +538,7 @@ export function useGovernance() {
 
         // Estimate gas
         const gasEstimate = await publicClient.estimateContractGas({
-          address: merkleGovModuleAddress,
+          address: network.contracts.merkleGovModule,
           abi: merkleGovModuleAbi,
           functionName: 'castVote',
           args: [
@@ -553,7 +555,7 @@ export function useGovernance() {
 
         const [receipt] = await txToast({
           tx: {
-            address: merkleGovModuleAddress,
+            address: network.contracts.merkleGovModule,
             abi: merkleGovModuleAbi,
             functionName: 'castVote',
             args: [
@@ -617,7 +619,7 @@ export function useGovernance() {
 
         // Estimate gas
         const gasEstimate = await publicClient.estimateContractGas({
-          address: merkleGovModuleAddress,
+          address: network.contracts.merkleGovModule,
           abi: merkleGovModuleAbi,
           functionName: 'execute',
           args: [BigInt(proposalId)],
@@ -629,7 +631,7 @@ export function useGovernance() {
 
         const [receipt] = await txToast({
           tx: {
-            address: merkleGovModuleAddress,
+            address: network.contracts.merkleGovModule,
             abi: merkleGovModuleAbi,
             functionName: 'execute',
             args: [BigInt(proposalId)],
@@ -749,7 +751,6 @@ export function useGovernance() {
     getProposalStateText,
 
     // Contract addresses
-    merkleGovAddress: merkleGovModuleAddress,
-    merkleVoteAddress: merkleGovModuleAddress, // Same contract now
+    merkleGovAddress: network.contracts.merkleGovModule,
   }
 }

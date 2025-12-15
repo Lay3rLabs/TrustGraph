@@ -31,7 +31,7 @@ import {
 import { StatisticCard } from '@/components/StatisticCard'
 import { Column, Table } from '@/components/Table'
 import { useNetwork } from '@/contexts/NetworkContext'
-import { merkleFundDistributorConfig } from '@/lib/contracts'
+import { merkleFundDistributorAbi } from '@/lib/contracts'
 import { parseErrorMessage } from '@/lib/error'
 import { txToast } from '@/lib/tx'
 import { formatBigNumber } from '@/lib/utils'
@@ -60,16 +60,12 @@ export const DistributePage = () => {
   const [tokenAddress, setTokenAddress] = useState('')
   const [amount, setAmount] = useState('')
 
-  // Get contract addresses from the network config
-  const distributorAddress = network.merkleFundDistributorContract
-  const snapshotAddress = network.merkleSnapshotContract
-
   // Query distributions from ponder
   const { data: distributions = [], isLoading: isLoadingDistributions } =
     usePonderQuery({
       queryFn: (db) =>
         db.query.merkleFundDistribution.findMany({
-          where: (t, { eq }) => eq(t.merkleFundDistributor, distributorAddress),
+          where: (t, { eq }) => eq(t.merkleFundDistributor, network.contracts.merkleFundDistributor),
           orderBy: (t, { desc }) => desc(t.timestamp),
           limit: 50,
         }),
@@ -83,7 +79,7 @@ export const DistributePage = () => {
           where: (t, { and, eq }) =>
             connectedAddress
               ? and(
-                  eq(t.merkleFundDistributor, distributorAddress),
+                  eq(t.merkleFundDistributor, network.contracts.merkleFundDistributor),
                   eq(t.account, connectedAddress)
                 )
               : undefined,
@@ -106,7 +102,7 @@ export const DistributePage = () => {
   const { data: latestMerkleSnapshot } = usePonderQuery({
     queryFn: (db) =>
       db.query.merkleSnapshot.findFirst({
-        where: (t, { eq }) => eq(t.address, snapshotAddress),
+        where: (t, { eq }) => eq(t.address, network.contracts.merkleSnapshot),
         orderBy: (t, { desc }) => desc(t.timestamp),
       }),
   })
@@ -147,7 +143,7 @@ export const DistributePage = () => {
   const { data: distributorState } = usePonderQuery({
     queryFn: (db) =>
       db.query.merkleFundDistributor.findFirst({
-        where: (t, { eq }) => eq(t.address, distributorAddress),
+        where: (t, { eq }) => eq(t.address, network.contracts.merkleFundDistributor),
       }),
   })
 
@@ -187,7 +183,7 @@ export const DistributePage = () => {
               abi: erc20Abi,
               functionName: 'allowance',
               args: connectedAddress
-                ? [connectedAddress, distributorAddress]
+                ? [connectedAddress, network.contracts.merkleFundDistributor]
                 : undefined,
             },
           ]
@@ -233,7 +229,7 @@ export const DistributePage = () => {
         address: tokenAddress as Hex,
         abi: erc20Abi,
         functionName: 'approve',
-        args: [distributorAddress, parsedAmount],
+        args: [network.contracts.merkleFundDistributor, parsedAmount],
         account: connectedAddress,
       })
 
@@ -242,7 +238,7 @@ export const DistributePage = () => {
           address: tokenAddress as Hex,
           abi: erc20Abi,
           functionName: 'approve',
-          args: [distributorAddress, parsedAmount],
+          args: [network.contracts.merkleFundDistributor, parsedAmount],
           gas: (gasEstimate * 120n) / 100n,
         },
         successMessage: 'Token approval successful!',
@@ -273,7 +269,8 @@ export const DistributePage = () => {
           : tokenAddress
       const expectedRoot = latestMerkleTree.tree.root as Hex
       const gasEstimate = await publicClient.estimateContractGas({
-        ...merkleFundDistributorConfig,
+        abi: merkleFundDistributorAbi,
+        address: network.contracts.merkleFundDistributor,
         functionName: 'distribute',
         args: [token as Hex, parsedAmount, expectedRoot],
         account: connectedAddress,
@@ -282,7 +279,8 @@ export const DistributePage = () => {
 
       await txToast({
         tx: {
-          ...merkleFundDistributorConfig,
+          abi: merkleFundDistributorAbi,
+          address: network.contracts.merkleFundDistributor,
           functionName: 'distribute',
           args: [token as Hex, parsedAmount, expectedRoot],
           gas: (gasEstimate * 120n) / 100n,
@@ -328,7 +326,8 @@ export const DistributePage = () => {
       }
 
       const gasEstimate = await publicClient.estimateContractGas({
-        ...merkleFundDistributorConfig,
+        abi: merkleFundDistributorAbi,
+        address: network.contracts.merkleFundDistributor,
         functionName: 'claim',
         args: [
           distribution.id,
@@ -341,7 +340,8 @@ export const DistributePage = () => {
 
       await txToast({
         tx: {
-          ...merkleFundDistributorConfig,
+          abi: merkleFundDistributorAbi,
+          address: network.contracts.merkleFundDistributor,
           functionName: 'claim',
           args: [
             distribution.id,
@@ -392,7 +392,8 @@ export const DistributePage = () => {
         }
 
         const gasEstimate = await publicClient.estimateContractGas({
-          ...merkleFundDistributorConfig,
+          abi: merkleFundDistributorAbi,
+          address: network.contracts.merkleFundDistributor,
           functionName: 'claim',
           args: [
             distribution.id,
@@ -405,7 +406,8 @@ export const DistributePage = () => {
 
         txs.push({
           tx: {
-            ...merkleFundDistributorConfig,
+            abi: merkleFundDistributorAbi,
+            address: network.contracts.merkleFundDistributor,
             functionName: 'claim',
             args: [
               distribution.id,
