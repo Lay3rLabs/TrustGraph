@@ -269,7 +269,7 @@ const main = async () => {
   const servicesRes = await fetch(wavsUrl + '/services')
   if (!servicesRes.ok) {
     throw new Error(
-      `❌ Failed to fetch services from operator: ${res.statusText} (${(await res.text().catch(() => '<unable to parse response body>')) || '<no body>'})`
+      `❌ Failed to fetch services from operator: ${servicesRes.statusText} (${(await servicesRes.text().catch(() => '<unable to parse response body>')) || '<no body>'})`
     )
   }
 
