@@ -45,16 +45,16 @@ impl MerklerConfig {
         println!("  - Indexer: {}", indexer_address);
         println!("  - Chain: {}", chain_name);
 
-        // IPFS configuration - try Pinata first, fallback to local IPFS
+        // IPFS configuration - use Pinata only if api_key exists and is nonempty, otherwise local IPFS
         let (ipfs_url, ipfs_api_key) = match std::env::var("WAVS_ENV_PINATA_API_KEY") {
-            Ok(api_key) => {
+            Ok(api_key) if !api_key.trim().is_empty() => {
                 let url = std::env::var("WAVS_ENV_PINATA_API_URL")
                     .unwrap_or_else(|_| "https://uploads.pinata.cloud/v3/files".to_string());
                 println!("🌐 Using Pinata IPFS service");
                 (url, Some(api_key))
             }
-            Err(_) => {
-                println!("🏠 Pinata API key not found, using local IPFS node");
+            _ => {
+                println!("🏠 Pinata API key not set or empty, using local IPFS node");
                 ("http://localhost:5001/api/v0/add".to_string(), None)
             }
         };

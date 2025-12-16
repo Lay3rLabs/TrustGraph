@@ -1,12 +1,12 @@
-import { and, count, eq, ne } from "drizzle-orm";
-import { Hono } from "hono";
-import { db } from "ponder:api";
-import { easAttestation } from "ponder:schema";
+import { and, count, eq, ne } from 'drizzle-orm'
+import { Hono } from 'hono'
+import { db } from 'ponder:api'
+import { easAttestation } from 'ponder:schema'
 
-const app = new Hono();
+const app = new Hono()
 
 // Get attestation counts for all accounts
-app.get("/counts", async (c) => {
+app.get('/counts', async (c) => {
   try {
     // Get sent counts (where account is attester)
     const sentCounts = await db
@@ -22,7 +22,7 @@ app.get("/counts", async (c) => {
           ne(easAttestation.attester, easAttestation.recipient)
         )
       )
-      .groupBy(easAttestation.attester);
+      .groupBy(easAttestation.attester)
 
     // Get received counts (where account is recipient)
     const receivedCounts = await db
@@ -38,26 +38,25 @@ app.get("/counts", async (c) => {
           ne(easAttestation.attester, easAttestation.recipient)
         )
       )
-      .groupBy(easAttestation.recipient);
+      .groupBy(easAttestation.recipient)
 
     // Combine the results
-    const accountCounts: Record<string, { sent: number; received: number }> =
-      {};
+    const accountCounts: Record<string, { sent: number; received: number }> = {}
 
     // Add sent counts
     for (const item of sentCounts) {
       if (!accountCounts[item.account]) {
-        accountCounts[item.account] = { sent: 0, received: 0 };
+        accountCounts[item.account] = { sent: 0, received: 0 }
       }
-      accountCounts[item.account]!.sent = item.sent;
+      accountCounts[item.account]!.sent = item.sent
     }
 
     // Add received counts
     for (const item of receivedCounts) {
       if (!accountCounts[item.account]) {
-        accountCounts[item.account] = { sent: 0, received: 0 };
+        accountCounts[item.account] = { sent: 0, received: 0 }
       }
-      accountCounts[item.account]!.received = item.received;
+      accountCounts[item.account]!.received = item.received
     }
 
     // Convert to array format
@@ -65,22 +64,22 @@ app.get("/counts", async (c) => {
       account,
       sent: counts.sent,
       received: counts.received,
-    }));
+    }))
 
-    return c.json({ attestationCounts: results });
+    return c.json({ attestationCounts: results })
   } catch (error) {
-    console.error("Error fetching attestation counts:", error);
-    return c.json({ error: "Failed to fetch attestation counts" }, 500);
+    console.error('Error fetching attestation counts:', error)
+    return c.json({ error: 'Failed to fetch attestation counts' }, 500)
   }
-});
+})
 
 // Get attestation counts for a specific account
-app.get("/counts/:account", async (c) => {
+app.get('/counts/:account', async (c) => {
   try {
-    const account = c.req.param("account");
+    const account = c.req.param('account')
 
     if (!account) {
-      return c.json({ error: "Account parameter is required" }, 400);
+      return c.json({ error: 'Account parameter is required' }, 400)
     }
 
     // Get sent count
@@ -95,7 +94,7 @@ app.get("/counts/:account", async (c) => {
           // not self-attested
           ne(easAttestation.attester, easAttestation.recipient)
         )
-      );
+      )
 
     // Get received count
     const receivedResult = await db
@@ -109,46 +108,46 @@ app.get("/counts/:account", async (c) => {
           // not self-attested
           ne(easAttestation.attester, easAttestation.recipient)
         )
-      );
+      )
 
-    const sent = sentResult[0]?.count || 0;
-    const received = receivedResult[0]?.count || 0;
+    const sent = sentResult[0]?.count || 0
+    const received = receivedResult[0]?.count || 0
 
     return c.json({
       account,
       sent,
       received,
-    });
+    })
   } catch (error) {
-    console.error("Error fetching attestation counts for account:", error);
-    return c.json({ error: "Failed to fetch attestation counts" }, 500);
+    console.error('Error fetching attestation counts for account:', error)
+    return c.json({ error: 'Failed to fetch attestation counts' }, 500)
   }
-});
+})
 
 // Get individual attestation by UID (must come after specific routes)
-app.get("/:uid", async (c) => {
+app.get('/:uid', async (c) => {
   try {
-    const uid = c.req.param("uid") as `0x${string}`;
+    const uid = c.req.param('uid') as `0x${string}`
 
     if (!uid) {
-      return c.json({ error: "UID parameter is required" }, 400);
+      return c.json({ error: 'UID parameter is required' }, 400)
     }
 
     const attestation = await db
       .select()
       .from(easAttestation)
       .where(eq(easAttestation.uid, uid))
-      .limit(1);
+      .limit(1)
 
     if (attestation.length === 0) {
-      return c.json({ error: "Attestation not found" }, 404);
+      return c.json({ error: 'Attestation not found' }, 404)
     }
 
-    return c.json(attestation[0]);
+    return c.json(attestation[0])
   } catch (error) {
-    console.error("Error fetching attestation:", error);
-    return c.json({ error: "Failed to fetch attestation" }, 500);
+    console.error('Error fetching attestation:', error)
+    return c.json({ error: 'Failed to fetch attestation' }, 500)
   }
-});
+})
 
-export default app;
+export default app

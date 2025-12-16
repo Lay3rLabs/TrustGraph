@@ -589,7 +589,7 @@ export const easAbi = [
   { type: 'error', inputs: [], name: 'WrongSchema' },
 ] as const
 
-export const easAddress = '0x4200000000000000000000000000000000000021' as const
+export const easAddress = '0xD8F963769B1161C6007219ad821279D73294f6F2' as const
 
 export const easConfig = { address: easAddress, abi: easAbi } as const
 
@@ -690,7 +690,7 @@ export const easAttestTriggerAbi = [
 ] as const
 
 export const easAttestTriggerAddress =
-  '0xA91F15f5632A98278daBED81C4A6Fe87f9cF4161' as const
+  '0x65780E3B4dEaDBD6B38cFC24080C4CaB288E8b69' as const
 
 export const easAttestTriggerConfig = {
   address: easAttestTriggerAddress,
@@ -876,7 +876,7 @@ export const easIndexerResolverAbi = [
 ] as const
 
 export const easIndexerResolverAddress =
-  '0xF0278E089aA3361796e9B9d30C30Ee427747225E' as const
+  '0x4cC54CfCF18425cc4CeCB3c81e42E1b6684aF24a' as const
 
 export const easIndexerResolverConfig = {
   address: easIndexerResolverAddress,
@@ -1017,11 +1017,1315 @@ export const iWavsServiceManagerAbi = [
 ] as const
 
 export const iWavsServiceManagerAddress =
-  '0x197484FACcBdb900788f50F553907bbaea20701C' as const
+  '0x0710952Eb234bBF1078136200B7127247De9E0eB' as const
 
 export const iWavsServiceManagerConfig = {
   address: iWavsServiceManagerAddress,
   abi: iWavsServiceManagerAbi,
+} as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// MerkleFundDistributor
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const merkleFundDistributorAbi = [
+  {
+    type: 'constructor',
+    inputs: [
+      { name: 'owner_', internalType: 'address', type: 'address' },
+      { name: 'merkleSnapshot_', internalType: 'address', type: 'address' },
+      { name: 'feeRecipient_', internalType: 'address', type: 'address' },
+      { name: 'feePercentage_', internalType: 'uint256', type: 'uint256' },
+      { name: 'allowlistEnabled_', internalType: 'bool', type: 'bool' },
+    ],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'FEE_RANGE',
+    outputs: [{ name: '', internalType: 'uint64', type: 'uint64' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'acceptOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'allowlistEnabled',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'distributionIndex', internalType: 'uint256', type: 'uint256' },
+      { name: 'account', internalType: 'address', type: 'address' },
+      { name: 'value', internalType: 'uint256', type: 'uint256' },
+      { name: 'proof', internalType: 'bytes32[]', type: 'bytes32[]' },
+    ],
+    name: 'claim',
+    outputs: [
+      { name: 'claimedAmount', internalType: 'uint256', type: 'uint256' },
+    ],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'distributionIndex', internalType: 'uint256', type: 'uint256' },
+      { name: 'account', internalType: 'address', type: 'address' },
+    ],
+    name: 'claimed',
+    outputs: [{ name: 'amount', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'token', internalType: 'address', type: 'address' },
+      { name: 'amount', internalType: 'uint256', type: 'uint256' },
+      { name: 'expectedRoot', internalType: 'bytes32', type: 'bytes32' },
+    ],
+    name: 'distribute',
+    outputs: [
+      { name: 'distributionIndex', internalType: 'uint256', type: 'uint256' },
+    ],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    name: 'distributions',
+    outputs: [
+      { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
+      { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+      { name: 'root', internalType: 'bytes32', type: 'bytes32' },
+      { name: 'ipfsHash', internalType: 'bytes32', type: 'bytes32' },
+      { name: 'ipfsHashCid', internalType: 'string', type: 'string' },
+      { name: 'totalMerkleValue', internalType: 'uint256', type: 'uint256' },
+      { name: 'distributor', internalType: 'address', type: 'address' },
+      { name: 'token', internalType: 'address', type: 'address' },
+      { name: 'amountFunded', internalType: 'uint256', type: 'uint256' },
+      { name: 'amountDistributed', internalType: 'uint256', type: 'uint256' },
+      { name: 'feeRecipient', internalType: 'address', type: 'address' },
+      { name: 'feeAmount', internalType: 'uint256', type: 'uint256' },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'feePercentage',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'feeRecipient',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getAllowlist',
+    outputs: [{ name: '', internalType: 'address[]', type: 'address[]' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'index', internalType: 'uint256', type: 'uint256' }],
+    name: 'getAllowlistAt',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getAllowlistLength',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'offset', internalType: 'uint256', type: 'uint256' },
+      { name: 'limit', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'getAllowlistPaginated',
+    outputs: [{ name: '', internalType: 'address[]', type: 'address[]' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'distributionIndex', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'getDistribution',
+    outputs: [
+      {
+        name: '',
+        internalType: 'struct IMerkleFundDistributor.DistributionState',
+        type: 'tuple',
+        components: [
+          { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
+          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+          { name: 'root', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'ipfsHash', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'ipfsHashCid', internalType: 'string', type: 'string' },
+          {
+            name: 'totalMerkleValue',
+            internalType: 'uint256',
+            type: 'uint256',
+          },
+          { name: 'distributor', internalType: 'address', type: 'address' },
+          { name: 'token', internalType: 'address', type: 'address' },
+          { name: 'amountFunded', internalType: 'uint256', type: 'uint256' },
+          {
+            name: 'amountDistributed',
+            internalType: 'uint256',
+            type: 'uint256',
+          },
+          { name: 'feeRecipient', internalType: 'address', type: 'address' },
+          { name: 'feeAmount', internalType: 'uint256', type: 'uint256' },
+        ],
+      },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'getDistributionCount',
+    outputs: [{ name: 'total', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'offset', internalType: 'uint256', type: 'uint256' },
+      { name: 'limit', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'getDistributions',
+    outputs: [
+      {
+        name: '',
+        internalType: 'struct IMerkleFundDistributor.DistributionState[]',
+        type: 'tuple[]',
+        components: [
+          { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
+          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+          { name: 'root', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'ipfsHash', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'ipfsHashCid', internalType: 'string', type: 'string' },
+          {
+            name: 'totalMerkleValue',
+            internalType: 'uint256',
+            type: 'uint256',
+          },
+          { name: 'distributor', internalType: 'address', type: 'address' },
+          { name: 'token', internalType: 'address', type: 'address' },
+          { name: 'amountFunded', internalType: 'uint256', type: 'uint256' },
+          {
+            name: 'amountDistributed',
+            internalType: 'uint256',
+            type: 'uint256',
+          },
+          { name: 'feeRecipient', internalType: 'address', type: 'address' },
+          { name: 'feeAmount', internalType: 'uint256', type: 'uint256' },
+        ],
+      },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'distributor', internalType: 'address', type: 'address' }],
+    name: 'isAllowlisted',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'merkleSnapshot',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'owner',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'pause',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'paused',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'pendingOwner',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'allowlistEnabled_', internalType: 'bool', type: 'bool' }],
+    name: 'setAllowlistEnabled',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'newFeePercentage', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'setFeePercentage',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'newFeeRecipient', internalType: 'address', type: 'address' },
+    ],
+    name: 'setFeeRecipient',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'newMerkleSnapshot', internalType: 'address', type: 'address' },
+    ],
+    name: 'setMerkleSnapshot',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
+    name: 'transferOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'unpause',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'distributor', internalType: 'address', type: 'address' },
+      { name: 'canDistribute_', internalType: 'bool', type: 'bool' },
+    ],
+    name: 'updateDistributorAllowance',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'distributionIndex',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: true,
+      },
+      {
+        name: 'account',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'token',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'amount',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+      {
+        name: 'value',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+      {
+        name: 'newAmountDistributed',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'Claimed',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'distributionIndex',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: true,
+      },
+      {
+        name: 'distributor',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'token',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'amountFunded',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+      {
+        name: 'feeAmount',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'Distributed',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'distributor',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'canDistribute',
+        internalType: 'bool',
+        type: 'bool',
+        indexed: true,
+      },
+    ],
+    name: 'DistributorAllowanceUpdated',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      { name: 'enabled', internalType: 'bool', type: 'bool', indexed: true },
+    ],
+    name: 'DistributorAllowlistUpdated',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'previousFeePercentage',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: true,
+      },
+      {
+        name: 'newFeePercentage',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: true,
+      },
+    ],
+    name: 'FeePercentageSet',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'previousFeeRecipient',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newFeeRecipient',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'FeeRecipientSet',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'previousContract',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newContract',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'MerkleSnapshotUpdated',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'pendingOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipTransferStarted',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'previousOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipTransferred',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'account',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+    ],
+    name: 'Paused',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'account',
+        internalType: 'address',
+        type: 'address',
+        indexed: false,
+      },
+    ],
+    name: 'Unpaused',
+  },
+  { type: 'error', inputs: [], name: 'AlreadyClaimed' },
+  { type: 'error', inputs: [], name: 'CannotDistribute' },
+  { type: 'error', inputs: [], name: 'DistributionNotFound' },
+  { type: 'error', inputs: [], name: 'EnforcedPause' },
+  { type: 'error', inputs: [], name: 'ExpectedPause' },
+  {
+    type: 'error',
+    inputs: [{ name: 'data', internalType: 'bytes', type: 'bytes' }],
+    name: 'FailedToTransferFee',
+  },
+  {
+    type: 'error',
+    inputs: [{ name: 'data', internalType: 'bytes', type: 'bytes' }],
+    name: 'FailedToTransferTokens',
+  },
+  { type: 'error', inputs: [], name: 'FeePercentageTooHigh' },
+  { type: 'error', inputs: [], name: 'InvalidAddress' },
+  { type: 'error', inputs: [], name: 'InvalidMerkleProof' },
+  { type: 'error', inputs: [], name: 'InvalidMerkleState' },
+  { type: 'error', inputs: [], name: 'InvalidNativeTokenTransfer' },
+  { type: 'error', inputs: [], name: 'InvalidNativeTokenTransferAmount' },
+  { type: 'error', inputs: [], name: 'NoFundsToClaim' },
+  { type: 'error', inputs: [], name: 'NotOwner' },
+  { type: 'error', inputs: [], name: 'NotPendingOwner' },
+  { type: 'error', inputs: [], name: 'ReentrancyGuardReentrantCall' },
+  {
+    type: 'error',
+    inputs: [{ name: 'token', internalType: 'address', type: 'address' }],
+    name: 'SafeERC20FailedOperation',
+  },
+  {
+    type: 'error',
+    inputs: [
+      { name: 'expected', internalType: 'bytes32', type: 'bytes32' },
+      { name: 'actual', internalType: 'bytes32', type: 'bytes32' },
+    ],
+    name: 'UnexpectedMerkleRoot',
+  },
+] as const
+
+export const merkleFundDistributorAddress =
+  '0x7c26Bbca169A1410529Ec47E8281921C47E1b408' as const
+
+export const merkleFundDistributorConfig = {
+  address: merkleFundDistributorAddress,
+  abi: merkleFundDistributorAbi,
+} as const
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// MerkleGovModule
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const merkleGovModuleAbi = [
+  {
+    type: 'constructor',
+    inputs: [
+      { name: '_owner', internalType: 'address', type: 'address' },
+      { name: '_avatar', internalType: 'address', type: 'address' },
+      { name: '_target', internalType: 'address', type: 'address' },
+      { name: '_merkleSnapshot', internalType: 'address', type: 'address' },
+    ],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'QUORUM_RANGE',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'avatar',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'proposalId', internalType: 'uint256', type: 'uint256' }],
+    name: 'cancel',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'proposalId', internalType: 'uint256', type: 'uint256' },
+      {
+        name: 'voteType',
+        internalType: 'enum MerkleGovModule.VoteType',
+        type: 'uint8',
+      },
+      { name: 'votingPower', internalType: 'uint256', type: 'uint256' },
+      { name: 'proof', internalType: 'bytes32[]', type: 'bytes32[]' },
+    ],
+    name: 'castVote',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'currentMerkleRoot',
+    outputs: [{ name: '', internalType: 'bytes32', type: 'bytes32' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'proposalId', internalType: 'uint256', type: 'uint256' }],
+    name: 'execute',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'proposalId', internalType: 'uint256', type: 'uint256' }],
+    name: 'getActions',
+    outputs: [
+      {
+        name: '',
+        internalType: 'struct MerkleGovModule.ProposalAction[]',
+        type: 'tuple[]',
+        components: [
+          { name: 'target', internalType: 'address', type: 'address' },
+          { name: 'value', internalType: 'uint256', type: 'uint256' },
+          { name: 'data', internalType: 'bytes', type: 'bytes' },
+          { name: 'operation', internalType: 'enum Operation', type: 'uint8' },
+          { name: 'description', internalType: 'string', type: 'string' },
+        ],
+      },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'proposalId', internalType: 'uint256', type: 'uint256' }],
+    name: 'getProposal',
+    outputs: [
+      {
+        name: 'proposal',
+        internalType: 'struct MerkleGovModule.Proposal',
+        type: 'tuple',
+        components: [
+          { name: 'id', internalType: 'uint256', type: 'uint256' },
+          { name: 'proposer', internalType: 'address', type: 'address' },
+          { name: 'title', internalType: 'string', type: 'string' },
+          { name: 'description', internalType: 'string', type: 'string' },
+          { name: 'startBlock', internalType: 'uint256', type: 'uint256' },
+          { name: 'endBlock', internalType: 'uint256', type: 'uint256' },
+          { name: 'yesVotes', internalType: 'uint256', type: 'uint256' },
+          { name: 'noVotes', internalType: 'uint256', type: 'uint256' },
+          { name: 'abstainVotes', internalType: 'uint256', type: 'uint256' },
+          { name: 'executed', internalType: 'bool', type: 'bool' },
+          { name: 'cancelled', internalType: 'bool', type: 'bool' },
+          { name: 'merkleRoot', internalType: 'bytes32', type: 'bytes32' },
+          {
+            name: 'totalVotingPower',
+            internalType: 'uint256',
+            type: 'uint256',
+          },
+        ],
+      },
+      {
+        name: 'proposalState',
+        internalType: 'enum MerkleGovModule.ProposalState',
+        type: 'uint8',
+      },
+      {
+        name: 'actions',
+        internalType: 'struct MerkleGovModule.ProposalAction[]',
+        type: 'tuple[]',
+        components: [
+          { name: 'target', internalType: 'address', type: 'address' },
+          { name: 'value', internalType: 'uint256', type: 'uint256' },
+          { name: 'data', internalType: 'bytes', type: 'bytes' },
+          { name: 'operation', internalType: 'enum Operation', type: 'uint8' },
+          { name: 'description', internalType: 'string', type: 'string' },
+        ],
+      },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'proposalId', internalType: 'uint256', type: 'uint256' },
+      { name: 'voter', internalType: 'address', type: 'address' },
+    ],
+    name: 'hasVoted',
+    outputs: [{ name: '', internalType: 'bool', type: 'bool' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'ipfsHash',
+    outputs: [{ name: '', internalType: 'bytes32', type: 'bytes32' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'ipfsHashCid',
+    outputs: [{ name: '', internalType: 'string', type: 'string' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'merkleSnapshotContract',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      {
+        name: 'state_',
+        internalType: 'struct IMerkleSnapshot.MerkleState',
+        type: 'tuple',
+        components: [
+          { name: 'blockNumber', internalType: 'uint256', type: 'uint256' },
+          { name: 'timestamp', internalType: 'uint256', type: 'uint256' },
+          { name: 'root', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'ipfsHash', internalType: 'bytes32', type: 'bytes32' },
+          { name: 'ipfsHashCid', internalType: 'string', type: 'string' },
+          { name: 'totalValue', internalType: 'uint256', type: 'uint256' },
+        ],
+      },
+    ],
+    name: 'onMerkleUpdate',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'owner',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: '', internalType: 'uint256', type: 'uint256' },
+      { name: '', internalType: 'uint256', type: 'uint256' },
+    ],
+    name: 'proposalActions',
+    outputs: [
+      { name: 'target', internalType: 'address', type: 'address' },
+      { name: 'value', internalType: 'uint256', type: 'uint256' },
+      { name: 'data', internalType: 'bytes', type: 'bytes' },
+      { name: 'operation', internalType: 'enum Operation', type: 'uint8' },
+      { name: 'description', internalType: 'string', type: 'string' },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'proposalCount',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    name: 'proposals',
+    outputs: [
+      { name: 'id', internalType: 'uint256', type: 'uint256' },
+      { name: 'proposer', internalType: 'address', type: 'address' },
+      { name: 'title', internalType: 'string', type: 'string' },
+      { name: 'description', internalType: 'string', type: 'string' },
+      { name: 'startBlock', internalType: 'uint256', type: 'uint256' },
+      { name: 'endBlock', internalType: 'uint256', type: 'uint256' },
+      { name: 'yesVotes', internalType: 'uint256', type: 'uint256' },
+      { name: 'noVotes', internalType: 'uint256', type: 'uint256' },
+      { name: 'abstainVotes', internalType: 'uint256', type: 'uint256' },
+      { name: 'executed', internalType: 'bool', type: 'bool' },
+      { name: 'cancelled', internalType: 'bool', type: 'bool' },
+      { name: 'merkleRoot', internalType: 'bytes32', type: 'bytes32' },
+      { name: 'totalVotingPower', internalType: 'uint256', type: 'uint256' },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'title', internalType: 'string', type: 'string' },
+      { name: 'description', internalType: 'string', type: 'string' },
+      { name: 'targets', internalType: 'address[]', type: 'address[]' },
+      { name: 'values', internalType: 'uint256[]', type: 'uint256[]' },
+      { name: 'calldatas', internalType: 'bytes[]', type: 'bytes[]' },
+      { name: 'operations', internalType: 'enum Operation[]', type: 'uint8[]' },
+      {
+        name: 'actionDescriptions',
+        internalType: 'string[]',
+        type: 'string[]',
+      },
+      { name: 'votingPower', internalType: 'uint256', type: 'uint256' },
+      { name: 'proof', internalType: 'bytes32[]', type: 'bytes32[]' },
+    ],
+    name: 'propose',
+    outputs: [{ name: 'proposalId', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'title', internalType: 'string', type: 'string' },
+      { name: 'description', internalType: 'string', type: 'string' },
+      { name: 'targets', internalType: 'address[]', type: 'address[]' },
+      { name: 'values', internalType: 'uint256[]', type: 'uint256[]' },
+      { name: 'calldatas', internalType: 'bytes[]', type: 'bytes[]' },
+      { name: 'operations', internalType: 'enum Operation[]', type: 'uint8[]' },
+      {
+        name: 'actionDescriptions',
+        internalType: 'string[]',
+        type: 'string[]',
+      },
+      { name: 'votingPower', internalType: 'uint256', type: 'uint256' },
+      { name: 'proof', internalType: 'bytes32[]', type: 'bytes32[]' },
+      {
+        name: 'voteType',
+        internalType: 'enum MerkleGovModule.VoteType',
+        type: 'uint8',
+      },
+    ],
+    name: 'proposeWithVote',
+    outputs: [{ name: 'proposalId', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'quorum',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'renounceOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '_avatar', internalType: 'address', type: 'address' }],
+    name: 'setAvatar',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'newContract', internalType: 'address', type: 'address' }],
+    name: 'setMerkleSnapshotContract',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'newQuorum', internalType: 'uint256', type: 'uint256' }],
+    name: 'setQuorum',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: '_target', internalType: 'address', type: 'address' }],
+    name: 'setTarget',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'initializeParams', internalType: 'bytes', type: 'bytes' },
+    ],
+    name: 'setUp',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'newDelay', internalType: 'uint256', type: 'uint256' }],
+    name: 'setVotingDelay',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'newPeriod', internalType: 'uint256', type: 'uint256' }],
+    name: 'setVotingPeriod',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'proposalId', internalType: 'uint256', type: 'uint256' }],
+    name: 'state',
+    outputs: [
+      {
+        name: '',
+        internalType: 'enum MerkleGovModule.ProposalState',
+        type: 'uint8',
+      },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'target',
+    outputs: [{ name: '', internalType: 'address', type: 'address' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'totalVotingPower',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [{ name: 'newOwner', internalType: 'address', type: 'address' }],
+    name: 'transferOwnership',
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    inputs: [
+      { name: 'proposalId', internalType: 'uint256', type: 'uint256' },
+      { name: 'voter', internalType: 'address', type: 'address' },
+    ],
+    name: 'votes',
+    outputs: [
+      {
+        name: '',
+        internalType: 'enum MerkleGovModule.VoteType',
+        type: 'uint8',
+      },
+    ],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'votingDelay',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    inputs: [],
+    name: 'votingPeriod',
+    outputs: [{ name: '', internalType: 'uint256', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'previousAvatar',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newAvatar',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'AvatarSet',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'version',
+        internalType: 'uint64',
+        type: 'uint64',
+        indexed: false,
+      },
+    ],
+    name: 'Initialized',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      { name: 'root', internalType: 'bytes32', type: 'bytes32', indexed: true },
+      {
+        name: 'ipfsHash',
+        internalType: 'bytes32',
+        type: 'bytes32',
+        indexed: false,
+      },
+      {
+        name: 'ipfsHashCid',
+        internalType: 'string',
+        type: 'string',
+        indexed: false,
+      },
+      {
+        name: 'totalValue',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'MerkleRootUpdated',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'previousContract',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newContract',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'MerkleSnapshotContractUpdated',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'previousOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newOwner',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'OwnershipTransferred',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'proposalId',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: true,
+      },
+    ],
+    name: 'ProposalCancelled',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'proposalId',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: true,
+      },
+      {
+        name: 'proposer',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      { name: 'title', internalType: 'string', type: 'string', indexed: false },
+      {
+        name: 'description',
+        internalType: 'string',
+        type: 'string',
+        indexed: false,
+      },
+      {
+        name: 'startBlock',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+      {
+        name: 'endBlock',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+      {
+        name: 'merkleRoot',
+        internalType: 'bytes32',
+        type: 'bytes32',
+        indexed: false,
+      },
+      {
+        name: 'totalVotingPower',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'ProposalCreated',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'proposalId',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: true,
+      },
+    ],
+    name: 'ProposalExecuted',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'newQuorum',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'QuorumUpdated',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'previousTarget',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'newTarget',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+    ],
+    name: 'TargetSet',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'voter',
+        internalType: 'address',
+        type: 'address',
+        indexed: true,
+      },
+      {
+        name: 'proposalId',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: true,
+      },
+      {
+        name: 'voteType',
+        internalType: 'enum MerkleGovModule.VoteType',
+        type: 'uint8',
+        indexed: false,
+      },
+      {
+        name: 'votingPower',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'VoteCast',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'newDelay',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'VotingDelayUpdated',
+  },
+  {
+    type: 'event',
+    anonymous: false,
+    inputs: [
+      {
+        name: 'newPeriod',
+        internalType: 'uint256',
+        type: 'uint256',
+        indexed: false,
+      },
+    ],
+    name: 'VotingPeriodUpdated',
+  },
+  { type: 'error', inputs: [], name: 'AlreadyInitialized' },
+  { type: 'error', inputs: [], name: 'AlreadyVoted' },
+  { type: 'error', inputs: [], name: 'InvalidAddress' },
+  { type: 'error', inputs: [], name: 'InvalidInitialization' },
+  { type: 'error', inputs: [], name: 'InvalidMerkleProof' },
+  { type: 'error', inputs: [], name: 'InvalidProposalData' },
+  { type: 'error', inputs: [], name: 'InvalidQuorum' },
+  { type: 'error', inputs: [], name: 'InvalidTotalVotingPower' },
+  { type: 'error', inputs: [], name: 'InvalidVotingPeriod' },
+  { type: 'error', inputs: [], name: 'NoMerkleRootSet' },
+  { type: 'error', inputs: [], name: 'NotAuthorized' },
+  { type: 'error', inputs: [], name: 'NotInitializing' },
+  { type: 'error', inputs: [], name: 'OnlyMerkleSnapshot' },
+  {
+    type: 'error',
+    inputs: [{ name: 'owner', internalType: 'address', type: 'address' }],
+    name: 'OwnableInvalidOwner',
+  },
+  {
+    type: 'error',
+    inputs: [{ name: 'account', internalType: 'address', type: 'address' }],
+    name: 'OwnableUnauthorizedAccount',
+  },
+  { type: 'error', inputs: [], name: 'ProposalAlreadyCancelled' },
+  { type: 'error', inputs: [], name: 'ProposalAlreadyExecuted' },
+  { type: 'error', inputs: [], name: 'ProposalNotFound' },
+  { type: 'error', inputs: [], name: 'ProposalNotPassed' },
+  { type: 'error', inputs: [], name: 'VotingClosed' },
+] as const
+
+export const merkleGovModuleAddress =
+  '0x040043379bAfa1A5D7D0621e96B0b6D5868FEBCF' as const
+
+export const merkleGovModuleConfig = {
+  address: merkleGovModuleAddress,
+  abi: merkleGovModuleAbi,
 } as const
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1507,7 +2811,7 @@ export const merkleSnapshotAbi = [
 ] as const
 
 export const merkleSnapshotAddress =
-  '0x6d5339Fd17235803AE68e04d0b820bdd987427AC' as const
+  '0x099494B83F9dAA619b98Feda917D695EE1376eB9' as const
 
 export const merkleSnapshotConfig = {
   address: merkleSnapshotAddress,
@@ -1551,7 +2855,7 @@ export const schemaRegistrarAbi = [
 ] as const
 
 export const schemaRegistrarAddress =
-  '0x33b9885aC3cB1891b0bC43F55D71963BD1Fee5F2' as const
+  '0xa66a89F12F504Ea4A0E57fb317B637741728188A' as const
 
 export const schemaRegistrarConfig = {
   address: schemaRegistrarAddress,
@@ -1643,7 +2947,7 @@ export const schemaRegistryAbi = [
 ] as const
 
 export const schemaRegistryAddress =
-  '0x4200000000000000000000000000000000000020' as const
+  '0xdbD9a8e42AB083CFA70638295a43fa9825f0EcC0' as const
 
 export const schemaRegistryConfig = {
   address: schemaRegistryAddress,
@@ -1831,7 +3135,7 @@ export const wavsAttesterAbi = [
 ] as const
 
 export const wavsAttesterAddress =
-  '0xbaF18D8045521a6d91243BBB2CaaFb37a35d70F4' as const
+  '0x7E2D0C8d7Bd461Ce87eE04f0E685fB3791853944' as const
 
 export const wavsAttesterConfig = {
   address: wavsAttesterAddress,
@@ -2863,7 +4167,7 @@ export const wavsIndexerAbi = [
 ] as const
 
 export const wavsIndexerAddress =
-  '0xF56904778BcCF9B89c4B2f214eB07Fb2B9872b5E' as const
+  '0x50a3c74C18dcbaaD004687Ad6609336D59D22aEd' as const
 
 export const wavsIndexerConfig = {
   address: wavsIndexerAddress,

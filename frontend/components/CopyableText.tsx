@@ -12,6 +12,7 @@ interface CopyableTextProps {
   truncate?: boolean
   truncateEnds?: [number, number]
   truncateOnMobile?: boolean
+  alwaysShowCopyIcon?: boolean
 }
 
 export function CopyableText({
@@ -21,6 +22,7 @@ export function CopyableText({
   truncate = false,
   truncateOnMobile = true,
   truncateEnds = [6, 4],
+  alwaysShowCopyIcon = false,
 }: CopyableTextProps) {
   const [copied, setCopied] = useState(false)
 
@@ -59,7 +61,12 @@ export function CopyableText({
       {copied ? (
         <Check className="w-3 h-3 text-green-600 flex-shrink-0" />
       ) : (
-        <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+        <Copy
+          className={cn(
+            'w-3 h-3 transition-opacity flex-shrink-0',
+            !alwaysShowCopyIcon && 'opacity-0 group-hover:opacity-100'
+          )}
+        />
       )}
     </button>
   )

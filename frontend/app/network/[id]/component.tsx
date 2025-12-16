@@ -159,7 +159,15 @@ export const NetworkPage = () => {
           <h2 className="mt-2 -mb-3 font-bold">CRITERIA</h2>
           <Markdown>{criteria}</Markdown>
 
-          <CreateAttestationModal className="mt-3" />
+          <div className="flex flex-row gap-3 mt-3 flex-wrap">
+            <CreateAttestationModal />
+            {/* <ButtonLink
+              href={`/network/${network.id}/distribute`}
+              variant="secondary"
+            >
+              Distribute Funds
+            </ButtonLink> */}
+          </div>
         </div>
 
         <div className="h-[66vh] lg:h-4/5">

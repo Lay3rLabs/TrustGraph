@@ -16,7 +16,7 @@ const deploymentSummaryFile = path.join(
 )
 const trustGraphConfigFile = path.join(
   __dirname,
-  '../../config/trust_graph.json'
+  '../../config/trust_graph.template.json'
 )
 
 console.log('🔄 Updating config with latest deployment data...')
@@ -35,7 +35,7 @@ try {
   configOutput.apis = {
     ponder:
       env === 'development'
-        ? 'http://localhost:65421'
+        ? 'http://127.0.0.1:65421'
         : 'https://trust-graph.wavs.xyz/ponder',
     ipfsGateway:
       env === 'development'
@@ -64,8 +64,8 @@ try {
 
     // Merkler
     MerkleSnapshot: deployment.merkler.merkle_snapshot,
-    RewardDistributor: deployment.merkler.reward_distributor,
-    ERC20: deployment.merkler.reward_token,
+    MerkleGovModule: deployment.zodiac_safes?.safe1?.merkle_gov_module,
+    MerkleFundDistributor: deployment.merkler?.fund_distributor,
   }
 
   // Make sure ABIs exist for all contracts, and copy them to the frontend.

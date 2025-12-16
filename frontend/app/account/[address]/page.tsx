@@ -86,8 +86,12 @@ export default async function AccountProfilePageServer({
     ),
 
     // Network
-    queryClient.prefetchQuery(ponderQueries.latestMerkleTree),
-    queryClient.prefetchQuery(ponderQueries.network),
+    queryClient.prefetchQuery(
+      ponderQueries.latestMerkleTree(LOCALISM_FUND.contracts.merkleSnapshot)
+    ),
+    queryClient.prefetchQuery(
+      ponderQueries.network(LOCALISM_FUND.contracts.merkleSnapshot)
+    ),
   ])
 
   const dehydratedState = dehydrate(queryClient)

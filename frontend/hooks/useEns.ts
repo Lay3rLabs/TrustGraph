@@ -344,13 +344,13 @@ export function useResolveEnsName(
             isLoading: false,
           }
         : isResolvingEnsAddress || ensAddressError
-        ? {
-            address: '',
-            name: null,
-            avatar: null,
-            isLoading: isResolvingEnsAddress,
-          }
-        : resolvedEns,
+          ? {
+              address: '',
+              name: null,
+              avatar: null,
+              isLoading: isResolvingEnsAddress,
+            }
+          : resolvedEns,
     [isResolvingEnsAddress, ensAddressError, resolvedEns, cachedData]
   )
 }

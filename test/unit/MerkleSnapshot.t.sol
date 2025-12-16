@@ -150,8 +150,8 @@ contract MerkleSnapshotTest is Test {
 
     function testHandleSignedEnvelope_ShouldCreateMultipleStates() public {
         // Ensure hook states are empty
-        assertEq(mockMerkleSnapshotHook1.latestState().root, bytes32(0));
-        assertEq(mockMerkleSnapshotHook2.latestState().root, bytes32(0));
+        assertEq(mockMerkleSnapshotHook1.getLatestState().root, bytes32(0));
+        assertEq(mockMerkleSnapshotHook2.getLatestState().root, bytes32(0));
 
         // Create states in different blocks
         // Block 100
@@ -165,8 +165,8 @@ contract MerkleSnapshotTest is Test {
         );
 
         // Ensure hook states are updated
-        assertEq(mockMerkleSnapshotHook1.latestState().root, TEST_ROOT_1);
-        assertEq(mockMerkleSnapshotHook2.latestState().root, TEST_ROOT_1);
+        assertEq(mockMerkleSnapshotHook1.getLatestState().root, TEST_ROOT_1);
+        assertEq(mockMerkleSnapshotHook2.getLatestState().root, TEST_ROOT_1);
 
         // Block 200
         vm.roll(200);
@@ -179,8 +179,8 @@ contract MerkleSnapshotTest is Test {
         );
 
         // Ensure hook states are updated
-        assertEq(mockMerkleSnapshotHook1.latestState().root, TEST_ROOT_2);
-        assertEq(mockMerkleSnapshotHook2.latestState().root, TEST_ROOT_2);
+        assertEq(mockMerkleSnapshotHook1.getLatestState().root, TEST_ROOT_2);
+        assertEq(mockMerkleSnapshotHook2.getLatestState().root, TEST_ROOT_2);
 
         // Remove first hook.
         merkleSnapshot.removeHook(mockMerkleSnapshotHook1);
@@ -196,8 +196,8 @@ contract MerkleSnapshotTest is Test {
         );
 
         // Ensure only second hook state is updated
-        assertEq(mockMerkleSnapshotHook1.latestState().root, TEST_ROOT_2);
-        assertEq(mockMerkleSnapshotHook2.latestState().root, TEST_ROOT_3);
+        assertEq(mockMerkleSnapshotHook1.getLatestState().root, TEST_ROOT_2);
+        assertEq(mockMerkleSnapshotHook2.getLatestState().root, TEST_ROOT_3);
 
         // Verify all states
         assertEq(merkleSnapshot.getStateCount(), 3);
@@ -914,7 +914,7 @@ contract MockWavsServiceManager is IWavsServiceManager {
 contract MockMerkleSnapshotHook is IMerkleSnapshotHook, IMerkleSnapshot {
     IMerkleSnapshot.MerkleState public _state;
 
-    function latestState()
+    function getLatestState()
         external
         view
         returns (IMerkleSnapshot.MerkleState memory)

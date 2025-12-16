@@ -1,6 +1,5 @@
 'use client'
 
-import { count } from '@ponder/client'
 import { usePonderQuery } from '@ponder/react'
 import { useRouter } from 'next/navigation'
 import type React from 'react'
@@ -13,37 +12,33 @@ import { NetworkProvider } from '@/contexts/NetworkContext'
 import { useIntoAttestationsData } from '@/hooks/useAttestation'
 import { usePushBreadcrumb } from '@/hooks/usePushBreadcrumb'
 import { LOCALISM_FUND } from '@/lib/network'
-import { SCHEMAS } from '@/lib/schemas'
-import { easAttestation } from '@/ponder.schema'
+import { ponderQueryFns } from '@/queries/ponder'
 
 export default function AttestationsPage() {
   const router = useRouter()
   const pushBreadcrumb = usePushBreadcrumb()
-  const [selectedSchema, setSelectedSchema] = useState<string>('all')
+  const [selectedSchema, _setSelectedSchema] = useState<string>('all')
   const [selectedStatus, setSelectedStatus] = useState<string>('all')
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest')
-  const [limit, _setLimit] = useState(50)
+  const [limit, _setLimit] = useState(500)
 
   const {
     data: [{ count: totalAttestations }] = [{ count: 0 }],
     isLoading: isLoadingTotalAttestations,
   } = usePonderQuery({
-    queryFn: (db) =>
-      db.select({ count: count(easAttestation.uid) }).from(easAttestation),
+    queryFn: ponderQueryFns.getAttestationCount,
   })
 
   const { data: attestations = [], isLoading: isLoadingAttestations } =
     usePonderQuery({
-      queryFn: (db) =>
-        db.query.easAttestation.findMany({
-          where: (t, { eq }) =>
-            selectedSchema === 'all' || !selectedSchema.startsWith('0x')
-              ? undefined
-              : eq(t.schema, selectedSchema as Hex),
-          orderBy: (t, { asc, desc }) =>
-            sortOrder === 'newest' ? desc(t.timestamp) : asc(t.timestamp),
-          limit,
-        }),
+      queryFn: ponderQueryFns.getAttestations({
+        schema:
+          selectedSchema === 'all' || !selectedSchema.startsWith('0x')
+            ? undefined
+            : (selectedSchema as Hex),
+        order: sortOrder === 'newest' ? 'desc' : 'asc',
+        limit,
+      }),
       select: useIntoAttestationsData(),
     })
 
@@ -62,8 +57,8 @@ export default function AttestationsPage() {
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* <div>
           <label className="text-sm mb-2 block">SCHEMA TYPE</label>
           <select
             value={selectedSchema}
@@ -77,7 +72,7 @@ export default function AttestationsPage() {
               </option>
             ))}
           </select>
-        </div>
+        </div> */}
 
         <div>
           <label className="text-sm mb-2 block">VERIFICATION STATUS</label>

@@ -35,8 +35,8 @@ export const Slider = ({
         'touches' in e && e.touches.length > 0
           ? e.touches[0].pageX
           : 'pageX' in e
-          ? e.pageX
-          : 0
+            ? e.pageX
+            : 0
 
       // Mouse event may or may not be within the bounds of the slider, so clamp.
       const x = Math.max(rect.left, Math.min(rect.right, pageX))

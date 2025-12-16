@@ -5,7 +5,7 @@ import { useCallback } from 'react'
 import { Hex } from 'viem'
 
 import { useNetwork } from '@/contexts/NetworkContext'
-import { areAddressesEqual } from '@/lib/utils'
+import { isHexEqual } from '@/lib/utils'
 import { ponderQueryFns } from '@/queries/ponder'
 
 import { useIntoAttestationsData } from './useAttestation'
@@ -89,24 +89,24 @@ export function useAccountNetworkProfile(address: Hex) {
         networkParticipant: true,
       }
     : address
-    ? {
-        account: address,
-        trustScore: '0',
-        validated: false,
-        rank: 0,
-        attestationsReceived: 0,
-        attestationsGiven: 0,
-        networkParticipant: false,
-      }
-    : null
+      ? {
+          account: address,
+          trustScore: '0',
+          validated: false,
+          rank: 0,
+          attestationsReceived: 0,
+          attestationsGiven: 0,
+          networkParticipant: false,
+        }
+      : null
 
   const networkAttestationsGiven =
     networkAttestationsData?.filter((attestation) =>
-      areAddressesEqual(attestation.attester, address)
+      isHexEqual(attestation.attester, address)
     ) || []
   const networkAttestationsReceived =
     networkAttestationsData?.filter((attestation) =>
-      areAddressesEqual(attestation.recipient, address)
+      isHexEqual(attestation.recipient, address)
     ) || []
 
   // Combined loading state

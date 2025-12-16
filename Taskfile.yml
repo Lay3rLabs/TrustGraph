@@ -8,20 +8,20 @@ dotenv: [".env"]
 
 includes:
   # Upstream common taskfiles (from wavs-taskfiles repo)
-  build: https://raw.githubusercontent.com/Lay3rLabs/wavs-taskfiles/main/base/build.yml
   docker: https://raw.githubusercontent.com/Lay3rLabs/wavs-taskfiles/main/base/docker.yml
   operator: https://raw.githubusercontent.com/Lay3rLabs/wavs-taskfiles/main/base/poa-operator.yml
-  services: https://raw.githubusercontent.com/Lay3rLabs/wavs-taskfiles/main/base/services.yml
   wasi: https://raw.githubusercontent.com/Lay3rLabs/wavs-taskfiles/main/base/wasi.yml
-  deploy: https://raw.githubusercontent.com/Lay3rLabs/wavs-taskfiles/main/base/deploy.yml
   core:
     taskfile: https://raw.githubusercontent.com/Lay3rLabs/wavs-taskfiles/main/base/core.yml
     flatten: true
 
   # Project-specific taskfiles (with customizations)
+  build: ./taskfile/build.yml
+  deploy: ./taskfile/deploy.yml
   eas: ./taskfile/eas.yml
   forge: ./taskfile/eas-forge.yml
-  rewards: ./taskfile/rewards.yml
+  merkle: ./taskfile/merkle.yml
+  services: ./taskfile/services.yml
   trustgraph: ./taskfile/trustgraph.yml
   env:
     taskfile: ./taskfile/env.yml
@@ -68,11 +68,3 @@ tasks:
     deps: [setup-env]
     cmds:
       - task: services:start-all
-
-  deploy-full:
-    desc: "Run complete WAVS deployment pipeline"
-    cmds:
-      - |
-        export AGGREGATOR_URL={{.AGGREGATOR_URL}}
-        bash ./script/deploy-script.sh
-

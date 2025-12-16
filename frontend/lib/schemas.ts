@@ -20,7 +20,7 @@ export const SCHEMAS = Object.entries(SCHEMA_CONFIG).map(
       name:
         SCHEMA_NAME_OVERRIDES[key as keyof typeof SCHEMA_NAME_OVERRIDES] ||
         schema.name,
-    } as {
+    }) as {
       uid: Hex
       key: SchemaKey
       name: string
@@ -29,7 +29,7 @@ export const SCHEMAS = Object.entries(SCHEMA_CONFIG).map(
       revocable: boolean
       schema: string
       fields: { name: string; type: string }[]
-    })
+    }
 )
 
 // Schema definitions with metadata for UI
@@ -126,10 +126,10 @@ export class SchemaManager {
           typeof value === 'bigint'
             ? BigInt(value).toString()
             : value instanceof Uint8Array
-            ? toHex(value)
-            : typeof value !== 'string'
-            ? `${value}`
-            : value,
+              ? toHex(value)
+              : typeof value !== 'string'
+                ? `${value}`
+                : value,
       }),
       {} as Record<string, string | boolean>
     )

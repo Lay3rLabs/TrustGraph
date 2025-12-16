@@ -39,7 +39,7 @@ import {
   NetworkGraphHoverState,
   NetworkGraphManager,
 } from '@/lib/NetworkGraphManager'
-import { areAddressesEqual, cn, formatBigNumber } from '@/lib/utils'
+import { cn, formatBigNumber, isHexEqual } from '@/lib/utils'
 
 const forceAtlas2SettingsOverrides: ForceAtlas2Settings = {
   // Bind nodes more tightly together.
@@ -178,8 +178,8 @@ export function NetworkGraph({
     const attestations = attestationsData.filter(
       (attestation) =>
         !onlyAddress ||
-        areAddressesEqual(attestation.attester, onlyAddress) ||
-        areAddressesEqual(attestation.recipient, onlyAddress)
+        isHexEqual(attestation.attester, onlyAddress) ||
+        isHexEqual(attestation.recipient, onlyAddress)
     )
 
     for (const { account, value, sent, received } of accountData) {
@@ -187,8 +187,8 @@ export function NetworkGraph({
       if (
         !attestations.some(
           (attestation) =>
-            areAddressesEqual(attestation.attester, account) ||
-            areAddressesEqual(attestation.recipient, account)
+            isHexEqual(attestation.attester, account) ||
+            isHexEqual(attestation.recipient, account)
         )
       ) {
         continue

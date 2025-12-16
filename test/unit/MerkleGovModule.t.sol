@@ -5,7 +5,9 @@ import {Test} from "forge-std/Test.sol";
 
 // Safe contracts
 import {GnosisSafe} from "@gnosis.pm/safe-contracts/GnosisSafe.sol";
-import {GnosisSafeProxyFactory} from "@gnosis.pm/safe-contracts/proxies/GnosisSafeProxyFactory.sol";
+import {
+    GnosisSafeProxyFactory
+} from "@gnosis.pm/safe-contracts/proxies/GnosisSafeProxyFactory.sol";
 
 // Zodiac
 import {Operation} from "@gnosis-guild/zodiac-core/core/Operation.sol";
@@ -14,6 +16,7 @@ import {Operation} from "@gnosis-guild/zodiac-core/core/Operation.sol";
 import {MerkleGovModule} from "../../src/contracts/zodiac/MerkleGovModule.sol";
 import {MerkleTreeHelper} from "../merkle-governance/MerkleTreeHelper.sol";
 import {IMerkleSnapshot} from "interfaces/merkle/IMerkleSnapshot.sol";
+import {IMerkleSnapshotHook} from "interfaces/merkle/IMerkleSnapshotHook.sol";
 
 contract MerkleGovModuleTest is Test {
     // Core contracts
@@ -22,6 +25,7 @@ contract MerkleGovModuleTest is Test {
     GnosisSafe public safe;
     MerkleGovModule public govModule;
     MerkleTreeHelper public merkleHelper;
+    MockMerkleSnapshot public merkleSnapshot;
 
     // Test accounts
     address public owner = address(0x1111111111111111111111111111111111111111);
@@ -37,14 +41,20 @@ contract MerkleGovModuleTest is Test {
     MerkleTreeHelper.AccountData[] public accounts;
     mapping(address => bytes32[]) public proofs;
     mapping(address => uint256) public votingPowers;
+    uint256 public initialTotalVotingPower;
+    bytes32 public initialIpfsHash;
+    string public initialIpfsHashCid;
 
     // Events
     event ProposalCreated(
         uint256 indexed proposalId,
         address indexed proposer,
+        string title,
+        string description,
         uint256 startBlock,
         uint256 endBlock,
-        bytes32 merkleRoot
+        bytes32 merkleRoot,
+        uint256 totalVotingPower
     );
     event VoteCast(
         address indexed voter,
@@ -96,11 +106,30 @@ contract MerkleGovModuleTest is Test {
         // Deploy merkle helper
         merkleHelper = new MerkleTreeHelper();
 
-        // Deploy governance module (using address(this) as merkleSnapshot for testing)
-        govModule = new MerkleGovModule(owner, address(safe), address(safe), address(this));
-
-        // Setup merkle tree
+        // Setup merkle tree (build root/proofs before deploying gov module)
         _setupMerkleTree();
+
+        // Deploy mock MerkleSnapshot with an initial latest state
+        initialIpfsHash = bytes32(uint256(0x1234));
+        initialIpfsHashCid = "ipfs://test";
+        merkleSnapshot = new MockMerkleSnapshot(
+            IMerkleSnapshot.MerkleState({
+                blockNumber: block.number,
+                timestamp: block.timestamp,
+                root: merkleRoot,
+                ipfsHash: initialIpfsHash,
+                ipfsHashCid: initialIpfsHashCid,
+                totalValue: initialTotalVotingPower
+            })
+        );
+
+        // Deploy governance module pointing at the snapshot (constructor should pull getLatestState())
+        govModule = new MerkleGovModule(
+            owner,
+            address(safe),
+            address(safe),
+            address(merkleSnapshot)
+        );
 
         // Enable module on Safe (in practice, this would require multi-sig)
         vm.prank(address(safe));
@@ -112,11 +141,24 @@ contract MerkleGovModuleTest is Test {
 
     function _setupMerkleTree() internal {
         // Create voting power distribution
-        accounts.push(MerkleTreeHelper.AccountData({account: alice, votingPower: 100e18}));
-        accounts.push(MerkleTreeHelper.AccountData({account: bob, votingPower: 200e18}));
-        accounts.push(MerkleTreeHelper.AccountData({account: charlie, votingPower: 150e18}));
-        accounts.push(MerkleTreeHelper.AccountData({account: dave, votingPower: 50e18}));
-        accounts.push(MerkleTreeHelper.AccountData({account: eve, votingPower: 75e18}));
+        accounts.push(
+            MerkleTreeHelper.AccountData({account: alice, votingPower: 100e18})
+        );
+        accounts.push(
+            MerkleTreeHelper.AccountData({account: bob, votingPower: 200e18})
+        );
+        accounts.push(
+            MerkleTreeHelper.AccountData({
+                account: charlie,
+                votingPower: 150e18
+            })
+        );
+        accounts.push(
+            MerkleTreeHelper.AccountData({account: dave, votingPower: 50e18})
+        );
+        accounts.push(
+            MerkleTreeHelper.AccountData({account: eve, votingPower: 75e18})
+        );
 
         // Build merkle tree
         (merkleRoot, ) = merkleHelper.buildMerkleTree(accounts);
@@ -131,22 +173,16 @@ contract MerkleGovModuleTest is Test {
         }
 
         // Calculate total voting power (100 + 200 + 150 + 50 + 75 = 575)
-        uint256 totalVotingPower = 575e18;
-
-        // Update merkle root
-        _updateMerkleRoot(merkleRoot, bytes32(uint256(0x1234)), totalVotingPower);
+        initialTotalVotingPower = 575e18;
     }
 
-    function _updateMerkleRoot(bytes32 root, bytes32 ipfsHash, uint256 totalValue) internal {
-        // Execute merkle root update
-        vm.expectEmit(true, false, false, true);
-        emit IMerkleSnapshot.MerkleRootUpdated(
-            root,
-            ipfsHash,
-            "ipfs://test",
-            totalValue
-        );
-        govModule.onMerkleUpdate(
+    function _updateMerkleRoot(
+        bytes32 root,
+        bytes32 ipfsHash,
+        uint256 totalValue
+    ) internal {
+        // Update snapshot state and execute hook
+        merkleSnapshot.setLatestState(
             IMerkleSnapshot.MerkleState({
                 blockNumber: block.number,
                 timestamp: block.timestamp,
@@ -156,15 +192,25 @@ contract MerkleGovModuleTest is Test {
                 totalValue: totalValue
             })
         );
+        vm.expectEmit(true, false, false, true);
+        emit IMerkleSnapshot.MerkleRootUpdated(
+            root,
+            ipfsHash,
+            "ipfs://test",
+            totalValue
+        );
+        merkleSnapshot.pushUpdate(address(govModule));
     }
 
     function test_ModuleSetup() public view {
         assertEq(govModule.avatar(), address(safe));
         assertEq(govModule.target(), address(safe));
         assertEq(govModule.owner(), owner);
-        assertEq(govModule.merkleSnapshotContract(), address(this));
+        assertEq(govModule.merkleSnapshotContract(), address(merkleSnapshot));
         assertEq(govModule.currentMerkleRoot(), merkleRoot);
-        assertEq(govModule.totalVotingPower(), 575e18);
+        assertEq(govModule.ipfsHash(), initialIpfsHash);
+        assertEq(govModule.ipfsHashCid(), initialIpfsHashCid);
+        assertEq(govModule.totalVotingPower(), initialTotalVotingPower);
         assertEq(govModule.votingDelay(), 1);
         assertEq(govModule.votingPeriod(), 50400);
         assertEq(govModule.quorum(), 4e16);
@@ -187,18 +233,24 @@ contract MerkleGovModuleTest is Test {
         emit ProposalCreated(
             1,
             alice,
+            "Send 1 ETH",
+            "Proposal to send 1 ETH",
             block.number + 1,
             block.number + 1 + 50400,
-            merkleRoot
+            merkleRoot,
+            575e18
         );
 
         vm.prank(alice);
         uint256 proposalId = govModule.propose(
+            "Send 1 ETH",
+            "Proposal to send 1 ETH",
             targets,
             values,
             calldatas,
             operations,
-            "Send 1 ETH"
+            votingPowers[alice],
+            proofs[alice]
         );
 
         assertEq(proposalId, 1);
@@ -212,25 +264,29 @@ contract MerkleGovModuleTest is Test {
         (
             uint256 id,
             address proposer,
+            ,
+            ,
             uint256 startBlock,
             uint256 endBlock,
-            uint256 forVotes,
-            uint256 againstVotes,
+            uint256 yesVotes,
+            uint256 noVotes,
             uint256 abstainVotes,
             bool executed,
-            bool cancelled /* bytes32 merkleRootSnapshot */,
-
+            bool cancelled,
+            ,
+            uint256 totalVotingPower
         ) = govModule.proposals(proposalId);
 
         assertEq(id, proposalId);
         assertEq(proposer, alice);
         assertEq(startBlock, block.number + 1);
         assertEq(endBlock, block.number + 1 + 50400);
-        assertEq(forVotes, 0);
-        assertEq(againstVotes, 0);
+        assertEq(yesVotes, 0);
+        assertEq(noVotes, 0);
         assertEq(abstainVotes, 0);
         assertFalse(executed);
         assertFalse(cancelled);
+        assertEq(totalVotingPower, 575e18);
     }
 
     function test_VotingFlow() public {
@@ -247,11 +303,14 @@ contract MerkleGovModuleTest is Test {
 
         vm.prank(alice);
         uint256 proposalId = govModule.propose(
+            "Send 1 ETH",
+            "Proposal to send 1 ETH",
             targets,
             values,
             calldatas,
             operations,
-            "Send 1 ETH"
+            votingPowers[alice],
+            proofs[alice]
         );
 
         // Move to voting period
@@ -266,24 +325,34 @@ contract MerkleGovModuleTest is Test {
         emit VoteCast(
             alice,
             proposalId,
-            MerkleGovModule.VoteType.For,
+            MerkleGovModule.VoteType.Yes,
             votingPowers[alice]
         );
 
         vm.prank(alice);
-        govModule.castVote(proposalId, MerkleGovModule.VoteType.For, votingPowers[alice], proofs[alice]);
+        govModule.castVote(
+            proposalId,
+            MerkleGovModule.VoteType.Yes,
+            votingPowers[alice],
+            proofs[alice]
+        );
 
         // Bob votes Against
         vm.expectEmit(true, true, false, true);
         emit VoteCast(
             bob,
             proposalId,
-            MerkleGovModule.VoteType.Against,
+            MerkleGovModule.VoteType.No,
             votingPowers[bob]
         );
 
         vm.prank(bob);
-        govModule.castVote(proposalId, MerkleGovModule.VoteType.Against, votingPowers[bob], proofs[bob]);
+        govModule.castVote(
+            proposalId,
+            MerkleGovModule.VoteType.No,
+            votingPowers[bob],
+            proofs[bob]
+        );
 
         // Charlie abstains
         vm.expectEmit(true, true, false, true);
@@ -295,7 +364,12 @@ contract MerkleGovModuleTest is Test {
         );
 
         vm.prank(charlie);
-        govModule.castVote(proposalId, MerkleGovModule.VoteType.Abstain, votingPowers[charlie], proofs[charlie]);
+        govModule.castVote(
+            proposalId,
+            MerkleGovModule.VoteType.Abstain,
+            votingPowers[charlie],
+            proofs[charlie]
+        );
 
         // Check vote tallies
         (
@@ -303,15 +377,18 @@ contract MerkleGovModuleTest is Test {
             ,
             ,
             ,
-            uint256 forVotes,
-            uint256 againstVotes,
+            ,
+            ,
+            uint256 yesVotes,
+            uint256 noVotes,
             uint256 abstainVotes,
+            ,
             ,
             ,
 
         ) = govModule.proposals(proposalId);
-        assertEq(forVotes, votingPowers[alice]);
-        assertEq(againstVotes, votingPowers[bob]);
+        assertEq(yesVotes, votingPowers[alice]);
+        assertEq(noVotes, votingPowers[bob]);
         assertEq(abstainVotes, votingPowers[charlie]);
 
         // Check voting status
@@ -335,11 +412,14 @@ contract MerkleGovModuleTest is Test {
 
         vm.prank(alice);
         uint256 proposalId = govModule.propose(
+            "Test proposal",
+            "Test proposal description",
             targets,
             values,
             calldatas,
             operations,
-            "Test proposal"
+            votingPowers[alice],
+            proofs[alice]
         );
 
         // Move to voting period
@@ -347,12 +427,22 @@ contract MerkleGovModuleTest is Test {
 
         // First vote succeeds
         vm.prank(alice);
-        govModule.castVote(proposalId, MerkleGovModule.VoteType.For, votingPowers[alice], proofs[alice]);
+        govModule.castVote(
+            proposalId,
+            MerkleGovModule.VoteType.Yes,
+            votingPowers[alice],
+            proofs[alice]
+        );
 
         // Second vote fails
         vm.prank(alice);
-        vm.expectRevert("Already voted");
-        govModule.castVote(proposalId, MerkleGovModule.VoteType.For, votingPowers[alice], proofs[alice]);
+        vm.expectRevert(MerkleGovModule.AlreadyVoted.selector);
+        govModule.castVote(
+            proposalId,
+            MerkleGovModule.VoteType.Yes,
+            votingPowers[alice],
+            proofs[alice]
+        );
     }
 
     function test_ProposalExecution() public {
@@ -372,11 +462,14 @@ contract MerkleGovModuleTest is Test {
 
         vm.prank(alice);
         uint256 proposalId = govModule.propose(
+            "Set value to 42",
+            "Set the test target value to 42",
             targets,
             values,
             calldatas,
             operations,
-            "Set value to 42"
+            votingPowers[alice],
+            proofs[alice]
         );
 
         // Move to voting period
@@ -385,10 +478,20 @@ contract MerkleGovModuleTest is Test {
         // Get enough votes to pass (need >= 4% quorum and more for than against)
         // Total voting power = 575e18, so need >= 23e18 total votes (4% of 575e18 = 23e18)
         vm.prank(alice);
-        govModule.castVote(proposalId, MerkleGovModule.VoteType.For, votingPowers[alice], proofs[alice]); // 100e18
+        govModule.castVote(
+            proposalId,
+            MerkleGovModule.VoteType.Yes,
+            votingPowers[alice],
+            proofs[alice]
+        ); // 100e18
 
         vm.prank(bob);
-        govModule.castVote(proposalId, MerkleGovModule.VoteType.For, votingPowers[bob], proofs[bob]); // 200e18
+        govModule.castVote(
+            proposalId,
+            MerkleGovModule.VoteType.Yes,
+            votingPowers[bob],
+            proofs[bob]
+        ); // 200e18
 
         // Move past voting period
         vm.roll(block.number + 50401);
@@ -396,7 +499,7 @@ contract MerkleGovModuleTest is Test {
         // Check proposal succeeded
         assertEq(
             uint256(govModule.state(proposalId)),
-            uint256(MerkleGovModule.ProposalState.Succeeded)
+            uint256(MerkleGovModule.ProposalState.Passed)
         );
 
         // Execute proposal
@@ -427,19 +530,39 @@ contract MerkleGovModuleTest is Test {
 
         vm.prank(alice);
         uint256 proposalId = govModule.propose(
+            "Test proposal",
+            "Test proposal description",
             targets,
             values,
             calldatas,
             operations,
-            "Test proposal"
+            votingPowers[alice],
+            proofs[alice]
         );
 
-        // Proposer can cancel
+        // Owner can cancel
         vm.expectEmit(true, false, false, true);
         emit ProposalCancelled(proposalId);
 
-        vm.prank(alice);
+        vm.prank(owner);
         govModule.cancel(proposalId);
+
+        // Proposer cannot cancel (only owner or avatar)
+        vm.prank(alice);
+        uint256 proposalId2 = govModule.propose(
+            "Test proposal 2",
+            "Test proposal 2 description",
+            targets,
+            values,
+            calldatas,
+            operations,
+            votingPowers[alice],
+            proofs[alice]
+        );
+
+        vm.prank(alice);
+        vm.expectRevert(MerkleGovModule.NotAuthorized.selector);
+        govModule.cancel(proposalId2);
 
         assertEq(
             uint256(govModule.state(proposalId)),
@@ -463,7 +586,7 @@ contract MerkleGovModuleTest is Test {
 
         vm.prank(alice);
         vm.expectRevert();
-        govModule.setMerkleSnapshotContract(address(0x1234));
+        govModule.setMerkleSnapshotContract(address(0x1234)); // also reverts due to onlyOwner
 
         // Owner can update parameters
         vm.prank(owner);
@@ -478,9 +601,64 @@ contract MerkleGovModuleTest is Test {
         govModule.setVotingPeriod(100000);
         assertEq(govModule.votingPeriod(), 100000);
 
+        MockMerkleSnapshot newSnapshot = new MockMerkleSnapshot(
+            IMerkleSnapshot.MerkleState({
+                blockNumber: block.number,
+                timestamp: block.timestamp,
+                root: bytes32(uint256(0xbeef)),
+                ipfsHash: bytes32(uint256(0x5678)),
+                ipfsHashCid: "ipfs://new",
+                totalValue: 999e18
+            })
+        );
         vm.prank(owner);
-        govModule.setMerkleSnapshotContract(address(0x1234));
-        assertEq(govModule.merkleSnapshotContract(), address(0x1234));
+        govModule.setMerkleSnapshotContract(address(newSnapshot));
+        assertEq(govModule.merkleSnapshotContract(), address(newSnapshot));
+    }
+
+    function test_NonMemberCannotPropose() public {
+        // Create proposal data
+        address[] memory targets = new address[](1);
+        uint256[] memory values = new uint256[](1);
+        bytes[] memory calldatas = new bytes[](1);
+        Operation[] memory operations = new Operation[](1);
+
+        targets[0] = address(0x9999);
+        values[0] = 0;
+        calldatas[0] = "";
+        operations[0] = Operation.Call;
+
+        // Non-member with fake proof should fail
+        address nonMember = address(0x7777777777777777777777777777777777777777);
+        bytes32[] memory fakeProof = new bytes32[](1);
+        fakeProof[0] = bytes32(uint256(0xdead));
+
+        vm.prank(nonMember);
+        vm.expectRevert(MerkleGovModule.InvalidMerkleProof.selector);
+        govModule.propose(
+            "Unauthorized proposal",
+            "Unauthorized proposal description",
+            targets,
+            values,
+            calldatas,
+            operations,
+            100e18,
+            fakeProof
+        );
+
+        // Member with wrong voting power should fail
+        vm.prank(alice);
+        vm.expectRevert(MerkleGovModule.InvalidMerkleProof.selector);
+        govModule.propose(
+            "Wrong power proposal",
+            "Wrong power proposal description",
+            targets,
+            values,
+            calldatas,
+            operations,
+            999e18, // Wrong voting power
+            proofs[alice]
+        );
     }
 
     function test_InvalidMerkleProof() public {
@@ -497,11 +675,14 @@ contract MerkleGovModuleTest is Test {
 
         vm.prank(alice);
         uint256 proposalId = govModule.propose(
+            "Test proposal",
+            "Test proposal description",
             targets,
             values,
             calldatas,
             operations,
-            "Test proposal"
+            votingPowers[alice],
+            proofs[alice]
         );
 
         // Move to voting period
@@ -509,16 +690,26 @@ contract MerkleGovModuleTest is Test {
 
         // Try to vote with wrong voting power
         vm.prank(alice);
-        vm.expectRevert("Invalid voting proof");
-        govModule.castVote(proposalId, MerkleGovModule.VoteType.For, 500e18, proofs[alice]); // Wrong amount
+        vm.expectRevert(MerkleGovModule.InvalidMerkleProof.selector);
+        govModule.castVote(
+            proposalId,
+            MerkleGovModule.VoteType.Yes,
+            500e18,
+            proofs[alice]
+        ); // Wrong amount
 
         // Try to vote with wrong proof
         bytes32[] memory wrongProof = new bytes32[](1);
         wrongProof[0] = bytes32(uint256(0xdead));
 
         vm.prank(alice);
-        vm.expectRevert("Invalid voting proof");
-        govModule.castVote(proposalId, MerkleGovModule.VoteType.For, votingPowers[alice], wrongProof);
+        vm.expectRevert(MerkleGovModule.InvalidMerkleProof.selector);
+        govModule.castVote(
+            proposalId,
+            MerkleGovModule.VoteType.Yes,
+            votingPowers[alice],
+            wrongProof
+        );
     }
 
     function test_ProposalWithMultipleActions() public {
@@ -548,21 +739,34 @@ contract MerkleGovModuleTest is Test {
 
         vm.prank(alice);
         uint256 proposalId = govModule.propose(
+            "Multiple actions",
+            "Proposal with multiple actions",
             targets,
             values,
             calldatas,
             operations,
-            "Multiple actions"
+            votingPowers[alice],
+            proofs[alice]
         );
 
         // Vote and pass
         vm.roll(block.number + 2);
 
         vm.prank(alice);
-        govModule.castVote(proposalId, MerkleGovModule.VoteType.For, votingPowers[alice], proofs[alice]);
+        govModule.castVote(
+            proposalId,
+            MerkleGovModule.VoteType.Yes,
+            votingPowers[alice],
+            proofs[alice]
+        );
 
         vm.prank(bob);
-        govModule.castVote(proposalId, MerkleGovModule.VoteType.For, votingPowers[bob], proofs[bob]);
+        govModule.castVote(
+            proposalId,
+            MerkleGovModule.VoteType.Yes,
+            votingPowers[bob],
+            proofs[bob]
+        );
 
         // Execute
         vm.roll(block.number + 50401);
@@ -579,7 +783,7 @@ contract MerkleGovModuleTest is Test {
     function test_OnlyMerkleSnapshotCanUpdate() public {
         // Non-merkleSnapshot address cannot call onMerkleUpdate
         vm.prank(alice);
-        vm.expectRevert("Only MerkleSnapshot");
+        vm.expectRevert(MerkleGovModule.OnlyMerkleSnapshot.selector);
         govModule.onMerkleUpdate(
             IMerkleSnapshot.MerkleState({
                 blockNumber: block.number,
@@ -592,8 +796,7 @@ contract MerkleGovModuleTest is Test {
         );
 
         // Invalid totalValue should revert
-        vm.expectRevert("Invalid total voting power");
-        govModule.onMerkleUpdate(
+        merkleSnapshot.setLatestState(
             IMerkleSnapshot.MerkleState({
                 blockNumber: block.number,
                 timestamp: block.timestamp,
@@ -603,6 +806,8 @@ contract MerkleGovModuleTest is Test {
                 totalValue: 0
             })
         );
+        vm.expectRevert(MerkleGovModule.InvalidTotalVotingPower.selector);
+        merkleSnapshot.pushUpdate(address(govModule));
     }
 
     function test_MerkleRootUpdateDuringVoting() public {
@@ -619,11 +824,14 @@ contract MerkleGovModuleTest is Test {
 
         vm.prank(alice);
         uint256 proposalId = govModule.propose(
+            "Test proposal",
+            "Test proposal description",
             targets,
             values,
             calldatas,
             operations,
-            "Test proposal"
+            votingPowers[alice],
+            proofs[alice]
         );
 
         // Move to voting period
@@ -631,7 +839,12 @@ contract MerkleGovModuleTest is Test {
 
         // Alice votes with current merkle root
         vm.prank(alice);
-        govModule.castVote(proposalId, MerkleGovModule.VoteType.For, votingPowers[alice], proofs[alice]);
+        govModule.castVote(
+            proposalId,
+            MerkleGovModule.VoteType.Yes,
+            votingPowers[alice],
+            proofs[alice]
+        );
 
         // Update merkle root (simulating new distribution)
         bytes32 newRoot = bytes32(uint256(0xbeef));
@@ -639,20 +852,531 @@ contract MerkleGovModuleTest is Test {
 
         // Bob can still vote because the proposal uses the snapshot from creation
         vm.prank(bob);
-        govModule.castVote(proposalId, MerkleGovModule.VoteType.For, votingPowers[bob], proofs[bob]);
+        govModule.castVote(
+            proposalId,
+            MerkleGovModule.VoteType.Yes,
+            votingPowers[bob],
+            proofs[bob]
+        );
 
-        // New proposal would use the new merkle root
+        // New proposal would use the new merkle root - old proofs should fail
         vm.prank(alice);
+        vm.expectRevert(MerkleGovModule.InvalidMerkleProof.selector);
         govModule.propose(
+            "New proposal",
+            "New proposal description",
             targets,
             values,
             calldatas,
             operations,
-            "New proposal"
+            votingPowers[alice],
+            proofs[alice]
+        );
+    }
+
+    function test_ProposalNotFound() public {
+        // Non-existent proposal ID should revert
+        vm.expectRevert(MerkleGovModule.ProposalNotFound.selector);
+        govModule.state(0);
+
+        vm.expectRevert(MerkleGovModule.ProposalNotFound.selector);
+        govModule.state(999);
+
+        // Cancel non-existent proposal should revert
+        vm.prank(owner);
+        vm.expectRevert(MerkleGovModule.ProposalNotFound.selector);
+        govModule.cancel(0);
+
+        vm.prank(owner);
+        vm.expectRevert(MerkleGovModule.ProposalNotFound.selector);
+        govModule.cancel(999);
+    }
+
+    function test_CannotCancelTwice() public {
+        // Create proposal
+        address[] memory targets = new address[](1);
+        uint256[] memory values = new uint256[](1);
+        bytes[] memory calldatas = new bytes[](1);
+        Operation[] memory operations = new Operation[](1);
+
+        targets[0] = address(0x9999);
+        values[0] = 0;
+        calldatas[0] = "";
+        operations[0] = Operation.Call;
+
+        vm.prank(alice);
+        uint256 proposalId = govModule.propose(
+            "Test proposal",
+            "Test proposal description",
+            targets,
+            values,
+            calldatas,
+            operations,
+            votingPowers[alice],
+            proofs[alice]
         );
 
-        // Verify the new proposal has the updated merkle root
-        // (We can't directly access the merkleRoot from proposal struct, but it would fail to vote with old proofs)
+        // First cancel succeeds
+        vm.prank(owner);
+        govModule.cancel(proposalId);
+
+        // Second cancel fails
+        vm.prank(owner);
+        vm.expectRevert(MerkleGovModule.ProposalAlreadyCancelled.selector);
+        govModule.cancel(proposalId);
+    }
+
+    function test_SnapshotTotalVotingPowerUsedForQuorum() public {
+        // Create proposal with current totalVotingPower = 575e18
+        address[] memory targets = new address[](1);
+        uint256[] memory values = new uint256[](1);
+        bytes[] memory calldatas = new bytes[](1);
+        Operation[] memory operations = new Operation[](1);
+
+        targets[0] = address(0x9999);
+        values[0] = 0;
+        calldatas[0] = "";
+        operations[0] = Operation.Call;
+
+        vm.prank(alice);
+        uint256 proposalId = govModule.propose(
+            "Test proposal",
+            "Test proposal description",
+            targets,
+            values,
+            calldatas,
+            operations,
+            votingPowers[alice],
+            proofs[alice]
+        );
+
+        // Move to voting period
+        vm.roll(block.number + 2);
+
+        // Alice votes Yes (100e18) - this alone meets 4% quorum of 575e18 (23e18)
+        vm.prank(alice);
+        govModule.castVote(
+            proposalId,
+            MerkleGovModule.VoteType.Yes,
+            votingPowers[alice],
+            proofs[alice]
+        );
+
+        // Simulate merkle root update that increases totalVotingPower significantly
+        // If quorum used current totalVotingPower, the proposal would fail
+        // But since we snapshot, it should still pass
+        bytes32 newRoot = bytes32(uint256(0xbeef));
+        merkleSnapshot.setLatestState(
+            IMerkleSnapshot.MerkleState({
+                blockNumber: block.number,
+                timestamp: block.timestamp,
+                root: newRoot,
+                ipfsHash: bytes32(uint256(0x5678)),
+                ipfsHashCid: "ipfs://test",
+                totalValue: 10000e18 // 10x increase - 4% would be 400e18
+            })
+        );
+        merkleSnapshot.pushUpdate(address(govModule));
+
+        // Move past voting period
+        vm.roll(block.number + 50401);
+
+        // Proposal should still be Passed because it uses snapshotted totalVotingPower (575e18)
+        // 100e18 votes >= 4% of 575e18 (23e18), and yesVotes > noVotes
+        assertEq(
+            uint256(govModule.state(proposalId)),
+            uint256(MerkleGovModule.ProposalState.Passed)
+        );
+    }
+
+    function test_GetProposal() public {
+        // Create proposal with multiple actions
+        address[] memory targets = new address[](2);
+        uint256[] memory values = new uint256[](2);
+        bytes[] memory calldatas = new bytes[](2);
+        Operation[] memory operations = new Operation[](2);
+
+        targets[0] = address(0x9999);
+        values[0] = 1 ether;
+        calldatas[0] = "";
+        operations[0] = Operation.Call;
+
+        targets[1] = address(0x8888);
+        values[1] = 2 ether;
+        calldatas[1] = abi.encodeWithSignature("setValue(uint256)", 42);
+        operations[1] = Operation.Call;
+
+        vm.prank(alice);
+        uint256 proposalId = govModule.propose(
+            "Test proposal",
+            "Test proposal description",
+            targets,
+            values,
+            calldatas,
+            operations,
+            votingPowers[alice],
+            proofs[alice]
+        );
+
+        // Get proposal using the new getProposal function
+        (
+            MerkleGovModule.Proposal memory proposal,
+            MerkleGovModule.ProposalState proposalState,
+            MerkleGovModule.ProposalAction[] memory actions
+        ) = govModule.getProposal(proposalId);
+
+        // Verify proposal data
+        assertEq(proposal.id, proposalId);
+        assertEq(proposal.proposer, alice);
+        assertEq(proposal.startBlock, block.number + 1);
+        assertEq(proposal.endBlock, block.number + 1 + 50400);
+        assertEq(proposal.yesVotes, 0);
+        assertEq(proposal.noVotes, 0);
+        assertEq(proposal.abstainVotes, 0);
+        assertFalse(proposal.executed);
+        assertFalse(proposal.cancelled);
+        assertEq(proposal.merkleRoot, merkleRoot);
+        assertEq(proposal.totalVotingPower, 575e18);
+
+        // Verify state
+        assertEq(
+            uint256(proposalState),
+            uint256(MerkleGovModule.ProposalState.Pending)
+        );
+
+        // Verify actions
+        assertEq(actions.length, 2);
+        assertEq(actions[0].target, address(0x9999));
+        assertEq(actions[0].value, 1 ether);
+        assertEq(actions[0].data, "");
+        assertEq(uint256(actions[0].operation), uint256(Operation.Call));
+
+        assertEq(actions[1].target, address(0x8888));
+        assertEq(actions[1].value, 2 ether);
+        assertEq(
+            actions[1].data,
+            abi.encodeWithSignature("setValue(uint256)", 42)
+        );
+        assertEq(uint256(actions[1].operation), uint256(Operation.Call));
+
+        // Test that getProposal reverts for non-existent proposal
+        vm.expectRevert(MerkleGovModule.ProposalNotFound.selector);
+        govModule.getProposal(999);
+
+        vm.expectRevert(MerkleGovModule.ProposalNotFound.selector);
+        govModule.getProposal(0);
+    }
+
+    function test_ConstructorUpdatesMerkleStateFromSnapshot() public view {
+        // These should be pulled from merkleSnapshot.getLatestState() during construction
+        assertEq(govModule.currentMerkleRoot(), merkleRoot);
+        assertEq(govModule.ipfsHash(), initialIpfsHash);
+        assertEq(govModule.ipfsHashCid(), initialIpfsHashCid);
+        assertEq(govModule.totalVotingPower(), initialTotalVotingPower);
+    }
+
+    function test_SetMerkleSnapshotContractUpdatesMerkleStateFromNewSnapshot()
+        public
+    {
+        bytes32 newRoot = bytes32(uint256(0xaaaa));
+        bytes32 newIpfsHash = bytes32(uint256(0xbbbb));
+        string memory newCid = "ipfs://new-snapshot";
+        uint256 newTotal = 1234e18;
+
+        MockMerkleSnapshot newSnapshot = new MockMerkleSnapshot(
+            IMerkleSnapshot.MerkleState({
+                blockNumber: block.number,
+                timestamp: block.timestamp,
+                root: newRoot,
+                ipfsHash: newIpfsHash,
+                ipfsHashCid: newCid,
+                totalValue: newTotal
+            })
+        );
+
+        vm.prank(owner);
+        govModule.setMerkleSnapshotContract(address(newSnapshot));
+
+        assertEq(govModule.merkleSnapshotContract(), address(newSnapshot));
+        assertEq(govModule.currentMerkleRoot(), newRoot);
+        assertEq(govModule.ipfsHash(), newIpfsHash);
+        assertEq(govModule.ipfsHashCid(), newCid);
+        assertEq(govModule.totalVotingPower(), newTotal);
+    }
+
+    function test_ConstructorGracefullyHandlesNoMerkleStates() public {
+        MockMerkleSnapshotNoStates emptySnapshot = new MockMerkleSnapshotNoStates();
+
+        MerkleGovModule freshGov = new MerkleGovModule(
+            owner,
+            address(safe),
+            address(safe),
+            address(emptySnapshot)
+        );
+
+        assertEq(freshGov.merkleSnapshotContract(), address(emptySnapshot));
+        assertEq(freshGov.currentMerkleRoot(), bytes32(0));
+        assertEq(freshGov.ipfsHash(), bytes32(0));
+        assertEq(freshGov.ipfsHashCid(), "");
+        assertEq(freshGov.totalVotingPower(), 0);
+    }
+
+    function test_SetMerkleSnapshotContractGracefullyHandlesNoMerkleStates()
+        public
+    {
+        // First ensure we have non-empty state
+        assertEq(govModule.currentMerkleRoot(), merkleRoot);
+        assertGt(govModule.totalVotingPower(), 0);
+
+        MockMerkleSnapshotNoStates emptySnapshot = new MockMerkleSnapshotNoStates();
+
+        vm.prank(owner);
+        govModule.setMerkleSnapshotContract(address(emptySnapshot));
+
+        assertEq(govModule.merkleSnapshotContract(), address(emptySnapshot));
+        assertEq(govModule.currentMerkleRoot(), bytes32(0));
+        assertEq(govModule.ipfsHash(), bytes32(0));
+        assertEq(govModule.ipfsHashCid(), "");
+        assertEq(govModule.totalVotingPower(), 0);
+    }
+
+    function test_ProposeWithVote() public {
+        // Create proposal data
+        address[] memory targets = new address[](1);
+        uint256[] memory values = new uint256[](1);
+        bytes[] memory calldatas = new bytes[](1);
+        Operation[] memory operations = new Operation[](1);
+
+        targets[0] = address(0x9999);
+        values[0] = 1 ether;
+        calldatas[0] = "";
+        operations[0] = Operation.Call;
+
+        // Expect both ProposalCreated and VoteCast events
+        vm.expectEmit(true, true, false, true);
+        emit ProposalCreated(
+            1,
+            alice,
+            "Send 1 ETH",
+            "Proposal to send 1 ETH",
+            block.number + 1,
+            block.number + 1 + 50400,
+            merkleRoot,
+            575e18
+        );
+
+        vm.expectEmit(true, true, false, true);
+        emit VoteCast(
+            alice,
+            1,
+            MerkleGovModule.VoteType.Yes,
+            votingPowers[alice]
+        );
+
+        // Create proposal and vote in one transaction
+        vm.prank(alice);
+        uint256 proposalId = govModule.proposeWithVote(
+            "Send 1 ETH",
+            "Proposal to send 1 ETH",
+            targets,
+            values,
+            calldatas,
+            operations,
+            votingPowers[alice],
+            proofs[alice],
+            MerkleGovModule.VoteType.Yes
+        );
+
+        assertEq(proposalId, 1);
+        assertEq(govModule.proposalCount(), 1);
+
+        // Check proposal details - should have alice's vote already recorded
+        (
+            uint256 id,
+            address proposer,
+            ,
+            ,
+            uint256 startBlock,
+            uint256 endBlock,
+            uint256 yesVotes,
+            uint256 noVotes,
+            uint256 abstainVotes,
+            bool executed,
+            bool cancelled,
+            ,
+            uint256 totalVotingPower
+        ) = govModule.proposals(proposalId);
+
+        assertEq(id, proposalId);
+        assertEq(proposer, alice);
+        assertEq(startBlock, block.number + 1);
+        assertEq(endBlock, block.number + 1 + 50400);
+        assertEq(yesVotes, votingPowers[alice]); // Alice's vote already counted
+        assertEq(noVotes, 0);
+        assertEq(abstainVotes, 0);
+        assertFalse(executed);
+        assertFalse(cancelled);
+        assertEq(totalVotingPower, 575e18);
+
+        // Verify alice has voted
+        assertTrue(govModule.hasVoted(proposalId, alice));
+        assertEq(
+            uint256(govModule.votes(proposalId, alice)),
+            uint256(MerkleGovModule.VoteType.Yes)
+        );
+
+        // Alice cannot vote again
+        vm.roll(block.number + 2); // Move to active period
+        vm.prank(alice);
+        vm.expectRevert(MerkleGovModule.AlreadyVoted.selector);
+        govModule.castVote(
+            proposalId,
+            MerkleGovModule.VoteType.No,
+            votingPowers[alice],
+            proofs[alice]
+        );
+
+        // Bob can still vote
+        vm.prank(bob);
+        govModule.castVote(
+            proposalId,
+            MerkleGovModule.VoteType.Yes,
+            votingPowers[bob],
+            proofs[bob]
+        );
+
+        // Check updated vote tallies
+        (, , , , , , yesVotes, noVotes, abstainVotes, , , , ) = govModule
+            .proposals(proposalId);
+        assertEq(yesVotes, votingPowers[alice] + votingPowers[bob]);
+        assertEq(noVotes, 0);
+        assertEq(abstainVotes, 0);
+    }
+
+    function test_ProposeWithVoteNo() public {
+        // Test proposeWithVote with a No vote
+        address[] memory targets = new address[](1);
+        uint256[] memory values = new uint256[](1);
+        bytes[] memory calldatas = new bytes[](1);
+        Operation[] memory operations = new Operation[](1);
+
+        targets[0] = address(0x9999);
+        values[0] = 1 ether;
+        calldatas[0] = "";
+        operations[0] = Operation.Call;
+
+        vm.prank(bob);
+        uint256 proposalId = govModule.proposeWithVote(
+            "Test No Vote",
+            "Test No Vote description",
+            targets,
+            values,
+            calldatas,
+            operations,
+            votingPowers[bob],
+            proofs[bob],
+            MerkleGovModule.VoteType.No
+        );
+
+        // Check that No vote is recorded
+        (, , , , , , uint256 yesVotes, uint256 noVotes, , , , , ) = govModule
+            .proposals(proposalId);
+        assertEq(yesVotes, 0);
+        assertEq(noVotes, votingPowers[bob]);
+
+        assertEq(
+            uint256(govModule.votes(proposalId, bob)),
+            uint256(MerkleGovModule.VoteType.No)
+        );
+    }
+
+    function test_ProposeWithVoteAbstain() public {
+        // Test proposeWithVote with an Abstain vote
+        address[] memory targets = new address[](1);
+        uint256[] memory values = new uint256[](1);
+        bytes[] memory calldatas = new bytes[](1);
+        Operation[] memory operations = new Operation[](1);
+
+        targets[0] = address(0x9999);
+        values[0] = 1 ether;
+        calldatas[0] = "";
+        operations[0] = Operation.Call;
+
+        vm.prank(charlie);
+        uint256 proposalId = govModule.proposeWithVote(
+            "Test Abstain Vote",
+            "Test Abstain Vote description",
+            targets,
+            values,
+            calldatas,
+            operations,
+            votingPowers[charlie],
+            proofs[charlie],
+            MerkleGovModule.VoteType.Abstain
+        );
+
+        // Check that Abstain vote is recorded
+        (
+            ,
+            ,
+            ,
+            ,
+            ,
+            ,
+            uint256 yesVotes,
+            uint256 noVotes,
+            uint256 abstainVotes,
+            ,
+            ,
+            ,
+
+        ) = govModule.proposals(proposalId);
+        assertEq(yesVotes, 0);
+        assertEq(noVotes, 0);
+        assertEq(abstainVotes, votingPowers[charlie]);
+
+        assertEq(
+            uint256(govModule.votes(proposalId, charlie)),
+            uint256(MerkleGovModule.VoteType.Abstain)
+        );
+    }
+}
+
+contract MockMerkleSnapshot is IMerkleSnapshot {
+    IMerkleSnapshot.MerkleState private _latest;
+
+    constructor(IMerkleSnapshot.MerkleState memory initialState) {
+        _latest = initialState;
+    }
+
+    function setLatestState(
+        IMerkleSnapshot.MerkleState memory newState
+    ) external {
+        _latest = newState;
+    }
+
+    function getLatestState()
+        external
+        view
+        override
+        returns (IMerkleSnapshot.MerkleState memory)
+    {
+        return _latest;
+    }
+
+    function pushUpdate(address hook) external {
+        IMerkleSnapshotHook(hook).onMerkleUpdate(_latest);
+    }
+}
+
+contract MockMerkleSnapshotNoStates is IMerkleSnapshot {
+    function getLatestState()
+        external
+        pure
+        override
+        returns (IMerkleSnapshot.MerkleState memory)
+    {
+        revert IMerkleSnapshot.NoMerkleStates();
     }
 }
 

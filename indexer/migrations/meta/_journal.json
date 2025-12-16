@@ -15,6 +15,13 @@
       "when": 1761007098799,
       "tag": "0001_smiling_drax",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1765838296733,
+      "tag": "0002_chief_veda",
+      "breakpoints": true
     }
   ]
 }

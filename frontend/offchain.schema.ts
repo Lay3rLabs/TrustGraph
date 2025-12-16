@@ -5,7 +5,8 @@ export const offchainSchema = pgSchema('offchain')
 export const merkleMetadata = offchainSchema.table(
   'merkle_metadata',
   (t) => ({
-    root: t.text().primaryKey(),
+    merkleSnapshotContract: t.text().notNull(),
+    root: t.text().notNull(),
     ipfsHash: t.text().notNull(),
     ipfsHashCid: t.text().notNull(),
     numAccounts: t.integer().notNull(),
@@ -20,6 +21,7 @@ export const merkleMetadata = offchainSchema.table(
     timestamp: t.bigint({ mode: 'bigint' }).notNull(),
   }),
   (t) => [
+    primaryKey({ columns: [t.merkleSnapshotContract, t.root] }),
     index().on(t.root),
     index().on(t.ipfsHashCid),
     index().on(t.blockNumber),
@@ -30,6 +32,7 @@ export const merkleMetadata = offchainSchema.table(
 export const merkleEntry = offchainSchema.table(
   'merkle_entry',
   (t) => ({
+    merkleSnapshotContract: t.text().notNull(),
     root: t.text().notNull(),
     account: t.text().notNull(),
     ipfsHashCid: t.text().notNull(),
@@ -39,7 +42,7 @@ export const merkleEntry = offchainSchema.table(
     timestamp: t.bigint({ mode: 'bigint' }).notNull(),
   }),
   (t) => [
-    primaryKey({ columns: [t.root, t.account] }),
+    primaryKey({ columns: [t.merkleSnapshotContract, t.root, t.account] }),
     index().on(t.root),
     index().on(t.account),
     index().on(t.ipfsHashCid),
