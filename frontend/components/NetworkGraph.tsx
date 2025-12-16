@@ -30,7 +30,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { EdgeArrowProgram } from 'sigma/rendering'
 import { NodeDisplayData } from 'sigma/types'
 import { animateNodes } from 'sigma/utils'
-import { Hex, isAddressEqual } from 'viem'
+import { Hex } from 'viem'
 
 import { useNetwork } from '@/contexts/NetworkContext'
 import { useBatchEnsQuery } from '@/hooks/useEns'
@@ -39,7 +39,7 @@ import {
   NetworkGraphHoverState,
   NetworkGraphManager,
 } from '@/lib/NetworkGraphManager'
-import { cn, formatBigNumber } from '@/lib/utils'
+import { cn, formatBigNumber, isHexEqual } from '@/lib/utils'
 
 const forceAtlas2SettingsOverrides: ForceAtlas2Settings = {
   // Bind nodes more tightly together.
@@ -178,8 +178,8 @@ export function NetworkGraph({
     const attestations = attestationsData.filter(
       (attestation) =>
         !onlyAddress ||
-        isAddressEqual(attestation.attester, onlyAddress) ||
-        isAddressEqual(attestation.recipient, onlyAddress)
+        isHexEqual(attestation.attester, onlyAddress) ||
+        isHexEqual(attestation.recipient, onlyAddress)
     )
 
     for (const { account, value, sent, received } of accountData) {
@@ -187,8 +187,8 @@ export function NetworkGraph({
       if (
         !attestations.some(
           (attestation) =>
-            isAddressEqual(attestation.attester, account) ||
-            isAddressEqual(attestation.recipient, account)
+            isHexEqual(attestation.attester, account) ||
+            isHexEqual(attestation.recipient, account)
         )
       ) {
         continue

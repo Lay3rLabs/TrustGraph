@@ -6,7 +6,7 @@ import type React from 'react'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
-import { Hex, isAddressEqual } from 'viem'
+import { Hex } from 'viem'
 import { useAccount } from 'wagmi'
 
 import { Button, ButtonProps } from '@/components/Button'
@@ -230,7 +230,7 @@ export const CreateAttestationModal = ({
     recipient.startsWith('0x') && selectedSchemaInfo
       ? allAttestationsGiven.filter(
           (attestation) =>
-            isAddressEqual(attestation.recipient, recipient as Hex) &&
+            isHexEqual(attestation.recipient, recipient as Hex) &&
             isHexEqual(attestation.schema, selectedSchemaInfo.uid) &&
             // At least 10 seconds old, so we don't show the one we just made.
             attestation.time < BigInt(Math.floor(Date.now() / 1000) - 10)

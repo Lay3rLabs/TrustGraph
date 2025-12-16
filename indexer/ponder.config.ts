@@ -73,21 +73,25 @@ export default createConfig({
     merkleGovModule: {
       abi: merkleGovModuleAbi,
       startBlock: IS_PRODUCTION ? 0 : 'latest',
-      chain: {
-        [CORE_CHAIN]: {
-          address: deploymentSummary.zodiac_safes.safe1
-            .merkle_gov_module as Hex,
-        },
-      },
+      chain: deploymentSummary.zodiac_safes?.safe1?.merkle_gov_module
+        ? {
+            [CORE_CHAIN]: {
+              address: deploymentSummary.zodiac_safes.safe1
+                .merkle_gov_module as Hex,
+            },
+          }
+        : {},
     },
     merkleFundDistributor: {
       abi: merkleFundDistributorAbi,
       startBlock: IS_PRODUCTION ? 0 : 'latest',
-      chain: {
-        [CORE_CHAIN]: {
-          address: deploymentSummary.merkler.fund_distributor as Hex,
-        },
-      },
+      chain: deploymentSummary.merkler?.fund_distributor
+        ? {
+            [CORE_CHAIN]: {
+              address: deploymentSummary.merkler.fund_distributor as Hex,
+            },
+          }
+        : {},
     },
   },
 })

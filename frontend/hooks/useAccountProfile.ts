@@ -2,9 +2,10 @@
 
 import { usePonderQuery } from '@ponder/react'
 import { useCallback } from 'react'
-import { Hex, isAddressEqual } from 'viem'
+import { Hex } from 'viem'
 
 import { useNetwork } from '@/contexts/NetworkContext'
+import { isHexEqual } from '@/lib/utils'
 import { ponderQueryFns } from '@/queries/ponder'
 
 import { useIntoAttestationsData } from './useAttestation'
@@ -101,11 +102,11 @@ export function useAccountNetworkProfile(address: Hex) {
 
   const networkAttestationsGiven =
     networkAttestationsData?.filter((attestation) =>
-      isAddressEqual(attestation.attester, address)
+      isHexEqual(attestation.attester, address)
     ) || []
   const networkAttestationsReceived =
     networkAttestationsData?.filter((attestation) =>
-      isAddressEqual(attestation.recipient, address)
+      isHexEqual(attestation.recipient, address)
     ) || []
 
   // Combined loading state
