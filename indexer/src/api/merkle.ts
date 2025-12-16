@@ -1,31 +1,44 @@
-import { Context, Hono } from "hono";
+import { Context, Hono } from 'hono'
 
-import { offchainDb } from "./db";
+import { offchainDb } from './db'
+import { lower } from './utils'
 
 declare global {
   interface BigInt {
-    toJSON: () => string;
+    toJSON: () => string
   }
 }
 
 BigInt.prototype.toJSON = function () {
-  return this.toString();
-};
+  return this.toString()
+}
 
-const merkleApp = new Hono();
+const merkleApp = new Hono()
 
 /**
  * Get the merkle tree with its entries.
  * @param c The context.
+ * @param merkleSnapshotContract The contract address of the merkle snapshot.
  * @param root The root of the merkle tree.
  * @returns The merkle tree with its entries.
  */
-export const getMerkleTreeWithEntries = async (c: Context, root: string) => {
+export const getMerkleTreeWithEntries = async (
+  c: Context,
+  merkleSnapshotContract: string,
+  root: string
+) => {
   const tree = await offchainDb.query.merkleMetadata.findFirst({
-    where: (t, { eq }) => eq(t.root, root),
-  });
+    where: (t, { eq, and }) =>
+      and(
+        eq(
+          lower(t.merkleSnapshotContract),
+          merkleSnapshotContract.toLowerCase()
+        ),
+        eq(lower(t.root), root.toLowerCase())
+      ),
+  })
   if (!tree) {
-    return c.json({ error: "Merkle tree not found" }, 404);
+    return c.json({ error: 'Merkle tree not found' }, 404)
   }
 
   const entries = await offchainDb.query.merkleEntry.findMany({
@@ -34,73 +47,113 @@ export const getMerkleTreeWithEntries = async (c: Context, root: string) => {
       value: true,
       proof: true,
     },
-    where: (t, { eq }) => eq(t.root, tree.root),
+    where: (t, { eq, and }) =>
+      and(
+        eq(
+          lower(t.merkleSnapshotContract),
+          merkleSnapshotContract.toLowerCase()
+        ),
+        eq(lower(t.root), root.toLowerCase())
+      ),
     orderBy: (t, { asc }) => asc(t.account),
-  });
+  })
 
-  return c.json({ tree, entries });
-};
+  return c.json({ tree, entries })
+}
 
 /**
  * Resolve the root of the merkle tree.
  * If the root is "current", return the root of the current merkle tree.
  * Otherwise, return the root of the merkle tree with that root. If no such tree exists, throw an error.
+ * @param merkleSnapshotContract The contract address of the merkle snapshot.
  * @param root The root of the merkle tree.
  * @returns The resolved root, if found.
  */
-const resolveRoot = async (root: string): Promise<string> => {
-  if (root === "current") {
+const resolveRoot = async (
+  merkleSnapshotContract: string,
+  root: string
+): Promise<string> => {
+  if (root === 'current') {
     const tree = await offchainDb.query.merkleMetadata.findFirst({
+      where: (t, { eq }) =>
+        eq(
+          lower(t.merkleSnapshotContract),
+          merkleSnapshotContract.toLowerCase()
+        ),
       orderBy: (t, { desc }) => desc(t.timestamp),
-    });
+    })
     if (!tree) {
-      throw new Error("Current merkle tree not found");
+      throw new Error('Current merkle tree not found')
     }
-    return tree.root;
+    return tree.root
   }
 
   const tree = await offchainDb.query.merkleMetadata.findFirst({
-    where: (t, { eq }) => eq(t.root, root),
-  });
+    where: (t, { eq, and }) =>
+      and(
+        eq(
+          lower(t.merkleSnapshotContract),
+          merkleSnapshotContract.toLowerCase()
+        ),
+        eq(lower(t.root), root.toLowerCase())
+      ),
+  })
   if (!tree) {
-    throw new Error("Merkle tree not found for root");
+    throw new Error('Merkle tree not found for root')
   }
 
-  return root;
-};
+  return root
+}
 
-merkleApp.get("/all", async (c) => {
+merkleApp.get('/:snapshot/all', async (c) => {
+  const merkleSnapshotContract = c.req.param('snapshot')
+  if (!merkleSnapshotContract) {
+    return c.json({ error: 'Merkle snapshot contract is required' }, 400)
+  }
+
   const trees = await offchainDb.query.merkleMetadata.findMany({
+    where: (t, { eq }) =>
+      eq(lower(t.merkleSnapshotContract), merkleSnapshotContract.toLowerCase()),
     orderBy: (t, { desc }) => desc(t.timestamp),
-  });
-  return c.json({ trees });
-});
+  })
+  return c.json({ trees })
+})
 
-merkleApp.get("/:root", async (c) => {
-  let { root } = c.req.param();
+merkleApp.get('/:snapshot/:root', async (c) => {
+  const merkleSnapshotContract = c.req.param('snapshot')
+  if (!merkleSnapshotContract) {
+    return c.json({ error: 'Merkle snapshot contract is required' }, 400)
+  }
+
+  let { root } = c.req.param()
   if (!root) {
-    return c.json({ error: "Root is required" }, 400);
+    return c.json({ error: 'Root is required' }, 400)
   }
 
   try {
-    root = await resolveRoot(root);
+    root = await resolveRoot(merkleSnapshotContract, root)
   } catch (error: any) {
-    return c.json({ error: error.message }, 400);
+    return c.json({ error: error.message }, 400)
   }
 
-  return getMerkleTreeWithEntries(c, root);
-});
+  return getMerkleTreeWithEntries(c, merkleSnapshotContract, root)
+})
 
-merkleApp.get("/:root/:account", async (c) => {
-  let { root, account } = c.req.param();
+merkleApp.get('/:snapshot/:root/:account', async (c) => {
+  const merkleSnapshotContract = c.req.param('snapshot')
+  if (!merkleSnapshotContract) {
+    return c.json({ error: 'Merkle snapshot contract is required' }, 400)
+  }
+
+  let { root, account } = c.req.param()
   if (!root || !account) {
-    return c.json({ error: "Root and account are required" }, 400);
+    return c.json({ error: 'Root and account are required' }, 400)
   }
 
   try {
-    root = await resolveRoot(root);
+    root = await resolveRoot(merkleSnapshotContract, root)
   } catch (error: any) {
-    return c.json({ error: error.message }, 400);
+    return c.json({ error: error.message }, 400)
   }
 
   const entry = await offchainDb.query.merkleEntry.findFirst({
@@ -110,13 +163,20 @@ merkleApp.get("/:root/:account", async (c) => {
       proof: true,
     },
     where: (t, { and, eq }) =>
-      and(eq(t.root, root), eq(t.account, account.toLowerCase())),
-  });
+      and(
+        eq(
+          lower(t.merkleSnapshotContract),
+          merkleSnapshotContract.toLowerCase()
+        ),
+        eq(lower(t.root), root.toLowerCase()),
+        eq(lower(t.account), account.toLowerCase())
+      ),
+  })
   if (!entry) {
-    return c.json({ error: "Merkle entry not found" }, 404);
+    return c.json({ error: 'Merkle entry not found' }, 404)
   }
 
-  return c.json({ entry });
-});
+  return c.json({ entry })
+})
 
-export default merkleApp;
+export default merkleApp

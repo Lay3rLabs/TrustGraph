@@ -4,16 +4,20 @@ import { db } from 'ponder:api'
 import { easAttestation } from 'ponder:schema'
 
 import { offchainDb } from './db'
+import { lower } from './utils'
 
 const app = new Hono()
 
 // Get the accounts and attestations that are part of the network defined by the Merkle Snapshot contract.
-app.get('/:merkleSnapshotContract', async (c) => {
-  const merkleSnapshotContract = c.req.param('merkleSnapshotContract')
+app.get('/:snapshot', async (c) => {
+  const merkleSnapshotContract = c.req.param('snapshot')
   try {
     const latestMerkleTree = await offchainDb.query.merkleMetadata.findFirst({
       where: (t, { eq }) =>
-        eq(t.merkleSnapshotContract, merkleSnapshotContract),
+        eq(
+          lower(t.merkleSnapshotContract),
+          merkleSnapshotContract.toLowerCase()
+        ),
       orderBy: (t, { desc }) => desc(t.timestamp),
     })
     if (!latestMerkleTree) {
@@ -27,8 +31,11 @@ app.get('/:merkleSnapshotContract', async (c) => {
       },
       where: (t, { eq, gt, and }) =>
         and(
-          eq(t.merkleSnapshotContract, merkleSnapshotContract),
-          eq(t.root, latestMerkleTree.root),
+          eq(
+            lower(t.merkleSnapshotContract),
+            merkleSnapshotContract.toLowerCase()
+          ),
+          eq(lower(t.root), latestMerkleTree.root.toLowerCase()),
           gt(t.value, 0n)
         ),
       orderBy: (t, { asc }) => asc(t.account),

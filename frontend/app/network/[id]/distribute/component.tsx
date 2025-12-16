@@ -36,7 +36,7 @@ import { parseErrorMessage } from '@/lib/error'
 import { txToast } from '@/lib/tx'
 import { formatBigNumber } from '@/lib/utils'
 import { merkleFundDistribution } from '@/ponder.schema'
-import { ponderQueries } from '@/queries/ponder'
+import { ponderQueries, ponderQueryFns } from '@/queries/ponder'
 
 type DistributionRow = typeof merkleFundDistribution.$inferSelect
 
@@ -63,29 +63,18 @@ export const DistributePage = () => {
   // Query distributions from ponder
   const { data: distributions = [], isLoading: isLoadingDistributions } =
     usePonderQuery({
-      queryFn: (db) =>
-        db.query.merkleFundDistribution.findMany({
-          where: (t, { eq }) => eq(t.merkleFundDistributor, network.contracts.merkleFundDistributor),
-          orderBy: (t, { desc }) => desc(t.timestamp),
-          limit: 50,
-        }),
+      queryFn: ponderQueryFns.getFundDistributions(
+        network.contracts.merkleFundDistributor
+      ),
     })
 
   // Query user's claims from ponder
   const { data: userClaims = [], isLoading: isLoadingUserClaims } =
     usePonderQuery({
-      queryFn: (db) =>
-        db.query.merkleFundDistributionClaim.findMany({
-          where: (t, { and, eq }) =>
-            connectedAddress
-              ? and(
-                  eq(t.merkleFundDistributor, network.contracts.merkleFundDistributor),
-                  eq(t.account, connectedAddress)
-                )
-              : undefined,
-          orderBy: (t, { desc }) => desc(t.timestamp),
-          limit: 100,
-        }),
+      queryFn: ponderQueryFns.getFundDistributionClaims({
+        distributor: network.contracts.merkleFundDistributor,
+        account: connectedAddress,
+      }),
       enabled: !!connectedAddress,
     })
 
@@ -100,16 +89,17 @@ export const DistributePage = () => {
 
   // Query the latest merkle snapshot to get the root
   const { data: latestMerkleSnapshot } = usePonderQuery({
-    queryFn: (db) =>
-      db.query.merkleSnapshot.findFirst({
-        where: (t, { eq }) => eq(t.address, network.contracts.merkleSnapshot),
-        orderBy: (t, { desc }) => desc(t.timestamp),
-      }),
+    queryFn: ponderQueryFns.getLatestMerkleSnapshot(
+      network.contracts.merkleSnapshot
+    ),
   })
 
   // Query the full merkle tree using the latest root (for create distribution)
   const { data: latestMerkleTree, isLoading: isLoadingMerkleTree } = useQuery({
-    ...ponderQueries.merkleTree(latestMerkleSnapshot?.root),
+    ...ponderQueries.merkleTree({
+      snapshot: network.contracts.merkleSnapshot,
+      root: latestMerkleSnapshot?.root,
+    }),
     enabled: !!latestMerkleSnapshot?.root,
   })
 
@@ -122,7 +112,11 @@ export const DistributePage = () => {
   // Fetch user's merkle entry for each distribution's root
   const userEntriesQueries = useQueries({
     queries: uniqueDistributionRoots.map((root) => ({
-      ...ponderQueries.merkleTreeEntry(root, connectedAddress),
+      ...ponderQueries.merkleTreeEntry({
+        snapshot: network.contracts.merkleSnapshot,
+        root,
+        account: connectedAddress,
+      }),
       enabled: !!connectedAddress && !!root,
     })),
   })
@@ -141,10 +135,9 @@ export const DistributePage = () => {
 
   // Query distributor state from ponder
   const { data: distributorState } = usePonderQuery({
-    queryFn: (db) =>
-      db.query.merkleFundDistributor.findFirst({
-        where: (t, { eq }) => eq(t.address, network.contracts.merkleFundDistributor),
-      }),
+    queryFn: ponderQueryFns.getFundDistributor(
+      network.contracts.merkleFundDistributor
+    ),
   })
 
   const allowlistEnabled = distributorState?.allowlistEnabled
@@ -314,7 +307,10 @@ export const DistributePage = () => {
       // First, we need to get the merkle proof for this specific distribution's root
       // We'll fetch the merkle tree for this root
       const { entries } = (await queryClient.fetchQuery({
-        ...ponderQueries.merkleTree(distribution.root),
+        ...ponderQueries.merkleTree({
+          snapshot: network.contracts.merkleSnapshot,
+          root: distribution.root,
+        }),
       })) ?? { entries: [] }
 
       const userEntry = entries.find((entry) =>
@@ -379,7 +375,10 @@ export const DistributePage = () => {
 
       for (const distribution of toClaim) {
         const { entries } = (await queryClient.fetchQuery({
-          ...ponderQueries.merkleTree(distribution.root),
+          ...ponderQueries.merkleTree({
+            snapshot: network.contracts.merkleSnapshot,
+            root: distribution.root,
+          }),
         })) ?? { entries: [] }
 
         const userEntry = entries.find((entry) =>
@@ -634,10 +633,10 @@ export const DistributePage = () => {
               !isConnected
                 ? '?'
                 : isLoading || isLoadingUserEntries
-                ? '...'
-                : claimableSummary.totalCount > 0
-                ? claimableSummary.totalCount.toLocaleString()
-                : '0'
+                  ? '...'
+                  : claimableSummary.totalCount > 0
+                    ? claimableSummary.totalCount.toLocaleString()
+                    : '0'
             }
           />
           <StatisticCard
@@ -647,10 +646,10 @@ export const DistributePage = () => {
               !isConnected
                 ? '?'
                 : isLoadingUserClaims
-                ? '...'
-                : userClaims.length > 0
-                ? userClaims.length.toLocaleString()
-                : '0'
+                  ? '...'
+                  : userClaims.length > 0
+                    ? userClaims.length.toLocaleString()
+                    : '0'
             }
           />
         </div>

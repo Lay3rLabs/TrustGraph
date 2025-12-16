@@ -88,7 +88,7 @@ export const NetworkProvider = ({
     error: merkleError,
     refetch: refetchMerkle,
   } = useQuery({
-    ...ponderQueries.latestMerkleTree,
+    ...ponderQueries.latestMerkleTree(network.contracts.merkleSnapshot),
     refetchInterval: 10_000,
   })
 

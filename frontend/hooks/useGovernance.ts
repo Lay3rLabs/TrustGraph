@@ -14,7 +14,7 @@ import {
   merkleGovModuleProposal,
   merkleGovModuleVote,
 } from '@/ponder.schema'
-import { ponderQueries } from '@/queries/ponder'
+import { ponderQueries, ponderQueryFns } from '@/queries/ponder'
 
 // Types matching the MerkleGovModule contract structs
 export interface ProposalAction {
@@ -105,7 +105,7 @@ function computeProposalState(
 const QUORUM_RANGE = 1e18
 
 export function useGovernance() {
-  const {network} = useNetwork()
+  const { network } = useNetwork()
   const { address, isConnected } = useAccount()
   const publicClient = usePublicClient()
 
@@ -117,10 +117,7 @@ export function useGovernance() {
 
   // Query module state from ponder
   const { data: moduleState, isLoading: isLoadingModule } = usePonderQuery({
-    queryFn: (db) =>
-      db.query.merkleGovModule.findFirst({
-        where: (t, { eq }) => eq(t.address, network.contracts.merkleGovModule),
-      }),
+    queryFn: ponderQueryFns.getGovModule(network.contracts.merkleGovModule),
   })
 
   // Query proposals from ponder
@@ -129,27 +126,19 @@ export function useGovernance() {
     isLoading: isLoadingProposals,
     refetch: refetchProposals,
   } = usePonderQuery({
-    queryFn: (db) =>
-      db.query.merkleGovModuleProposal.findMany({
-        where: (t, { eq }) => eq(t.module, network.contracts.merkleGovModule),
-        orderBy: (t, { desc }) => desc(t.id),
-        limit: 100,
-      }),
+    queryFn: ponderQueryFns.getGovModuleProposals(
+      network.contracts.merkleGovModule
+    ),
   })
 
   // Query user's votes from ponder
   const { data: userVotes = [], isLoading: isLoadingUserVotes } =
     usePonderQuery({
-      queryFn: (db) =>
-        db.query.merkleGovModuleVote.findMany({
-          where: (t, { and, eq }) =>
-            and(
-              eq(t.module, network.contracts.merkleGovModule),
-              eq(t.voter, address || '0x0')
-            ),
-          orderBy: (t, { desc }) => desc(t.timestamp),
-          limit: 100,
-        }),
+      queryFn: ponderQueryFns.getGovModuleVotes({
+        address: network.contracts.merkleGovModule,
+        voter: address,
+        limit: 100,
+      }),
       enabled: !!address,
     })
 
@@ -176,13 +165,13 @@ export function useGovernance() {
   // Get user's voting power from the current merkle tree
   const { data: userVotingPower, isLoading: isLoadingUserVotingPower } =
     useQuery({
-      ...ponderQueries.merkleTreeEntry(moduleState?.currentMerkleRoot, address),
+      ...ponderQueries.merkleTreeEntry({
+        snapshot: network.contracts.merkleSnapshot,
+        root: moduleState?.currentMerkleRoot,
+        account: address,
+      }),
       enabled: !!moduleState?.currentMerkleRoot && !!address,
     })
-
-  console.log('userVotingPower', userVotingPower, isLoadingUserVotingPower)
-  console.log('moduleState?.currentMerkleRoot', moduleState?.currentMerkleRoot)
-  console.log('address', address)
 
   // Get unique merkle roots from proposals for fetching user entries
   const uniqueProposalRoots = useMemo(() => {
@@ -193,7 +182,11 @@ export function useGovernance() {
   // Fetch user's merkle entry for each proposal's root (for voting)
   const userEntriesQueries = useQueries({
     queries: uniqueProposalRoots.map((root) => ({
-      ...ponderQueries.merkleTreeEntry(root, address),
+      ...ponderQueries.merkleTreeEntry({
+        snapshot: network.contracts.merkleSnapshot,
+        root,
+        account: address,
+      }),
       enabled: !!address && !!root,
     })),
   })
@@ -309,13 +302,6 @@ export function useGovernance() {
       actions: ProposalAction[],
       voteType?: VoteType | null
     ): Promise<string | null> => {
-      console.log('createProposal called with:', {
-        title,
-        description,
-        actions,
-        voteType,
-      })
-
       if (!isConnected || !address) {
         console.log('Wallet not connected')
         setError('Wallet not connected')

@@ -1,4 +1,4 @@
-import { Client } from '@ponder/client'
+import { Client, count } from '@ponder/client'
 import { ResolvedSchema } from '@ponder/react'
 import { queryOptions } from '@tanstack/react-query'
 import { Hex } from 'viem'
@@ -10,11 +10,15 @@ import { easAttestation } from '@/ponder.schema'
 // Query keys for consistent caching
 export const ponderKeys = {
   all: ['ponder'] as const,
-  latestMerkleTree: () => [...ponderKeys.all, 'latestMerkleTree'] as const,
-  merkleTree: (root?: string) =>
-    [...ponderKeys.all, 'merkleTree', root] as const,
-  merkleTreeEntry: (root?: string, account?: string) =>
-    [...ponderKeys.all, 'merkleTreeEntry', root, account] as const,
+  latestMerkleTree: (snapshot: string) =>
+    [...ponderKeys.all, 'latestMerkleTree', snapshot] as const,
+  merkleTree: (options?: { snapshot?: string; root?: string }) =>
+    [...ponderKeys.all, 'merkleTree', options] as const,
+  merkleTreeEntry: (options?: {
+    snapshot?: string
+    root?: string
+    account?: string
+  }) => [...ponderKeys.all, 'merkleTreeEntry', options] as const,
   attestation: (uid: string) =>
     [...ponderKeys.all, 'attestation', uid] as const,
   attestations: (options: {
@@ -30,7 +34,8 @@ export const ponderKeys = {
     attester?: string
     recipient?: string
   }) => [...ponderKeys.all, 'attestationCount', options] as const,
-  network: (merkleSnapshotContract: string) => [...ponderKeys.all, 'network', merkleSnapshotContract] as const,
+  network: (snapshot: string) =>
+    [...ponderKeys.all, 'network', snapshot] as const,
   localismFundApplicationUrl: (address: string) =>
     [...ponderKeys.all, 'localismFundApplicationUrl', address] as const,
 }
@@ -98,46 +103,49 @@ export type NetworkData = {
 }
 
 export const ponderQueries = {
-  // TODO: make this work for multiple merkle snapshot contracts
-  latestMerkleTree: queryOptions({
-    queryKey: ponderKeys.latestMerkleTree(),
-    queryFn: async () => {
-      const response = await fetch(`${APIS.ponder}/merkle/current`)
-
-      if (response.ok) {
-        const data = (await response.json()) as MerkleTreeResponse
-
-        // Sort entries by value (descending) for ranking
-        const sortedEntries = data.entries.sort((a, b) => {
-          const aValue = BigInt(a.value)
-          const bValue = BigInt(b.value)
-          return bValue > aValue ? 1 : bValue < aValue ? -1 : 0
-        })
-
-        return {
-          tree: data.tree,
-          entries: sortedEntries,
-        }
-      } else {
-        throw new Error(
-          `Failed to fetch latest merkle tree: ${response.status} ${
-            response.statusText
-          } (${await response.text()})`
-        )
-      }
-    },
-    enabled: !!APIS.ponder,
-  }),
-  // TODO: make this work for multiple merkle snapshot contracts
-  merkleTree: (root?: string) =>
+  latestMerkleTree: (snapshot: string) =>
     queryOptions({
-      queryKey: ponderKeys.merkleTree(root),
+      queryKey: ponderKeys.latestMerkleTree(snapshot),
       queryFn: async () => {
-        if (!root) {
+        const response = await fetch(
+          `${APIS.ponder}/merkle/${snapshot}/current`
+        )
+
+        if (response.ok) {
+          const data = (await response.json()) as MerkleTreeResponse
+
+          // Sort entries by value (descending) for ranking
+          const sortedEntries = data.entries.sort((a, b) => {
+            const aValue = BigInt(a.value)
+            const bValue = BigInt(b.value)
+            return bValue > aValue ? 1 : bValue < aValue ? -1 : 0
+          })
+
+          return {
+            tree: data.tree,
+            entries: sortedEntries,
+          }
+        } else {
+          throw new Error(
+            `Failed to fetch latest merkle tree: ${response.status} ${
+              response.statusText
+            } (${await response.text()})`
+          )
+        }
+      },
+      enabled: !!APIS.ponder,
+    }),
+  merkleTree: (options?: { snapshot?: string; root?: string }) =>
+    queryOptions({
+      queryKey: ponderKeys.merkleTree(options),
+      queryFn: async () => {
+        if (!options?.root) {
           throw new Error('Root is required for merkle tree query')
         }
 
-        const response = await fetch(`${APIS.ponder}/merkle/${root}`)
+        const response = await fetch(
+          `${APIS.ponder}/merkle/${options.snapshot}/${options.root}`
+        )
 
         if (response.ok) {
           const data = (await response.json()) as MerkleTreeResponse
@@ -165,21 +173,26 @@ export const ponderQueries = {
           )
         }
       },
-      enabled: !!root && !!APIS.ponder,
+      enabled: !!options?.snapshot && !!options?.root && !!APIS.ponder,
     }),
-  // TODO: make this work for multiple merkle snapshot contracts
-  merkleTreeEntry: (root?: string, account?: string) =>
+  merkleTreeEntry: (options?: {
+    snapshot?: string
+    root?: string
+    account?: string
+  }) =>
     queryOptions({
-      queryKey: ponderKeys.merkleTreeEntry(root, account),
+      queryKey: ponderKeys.merkleTreeEntry(options),
       queryFn: async () => {
-        if (!root) {
+        if (!options?.root) {
           throw new Error('Root is required for merkle tree query')
         }
-        if (!account) {
+        if (!options?.account) {
           throw new Error('Account is required for merkle tree entry query')
         }
 
-        const response = await fetch(`${APIS.ponder}/merkle/${root}/${account}`)
+        const response = await fetch(
+          `${APIS.ponder}/merkle/${options.snapshot}/${options.root}/${options.account}`
+        )
 
         if (response.ok) {
           const { entry } = (await response.json()) as MerkleTreeEntryResponse
@@ -196,32 +209,37 @@ export const ponderQueries = {
           )
         }
       },
-      enabled: !!root && !!account && !!APIS.ponder,
+      enabled:
+        !!options?.snapshot &&
+        !!options?.root &&
+        !!options?.account &&
+        !!APIS.ponder,
     }),
-  network: (merkleSnapshotContract: string) => queryOptions({
-    queryKey: ponderKeys.network(merkleSnapshotContract),
-    queryFn: async (): Promise<NetworkData> => {
-      const response = await fetch(`${APIS.ponder}/network/${merkleSnapshotContract}`)
+  network: (snapshot: string) =>
+    queryOptions({
+      queryKey: ponderKeys.network(snapshot),
+      queryFn: async (): Promise<NetworkData> => {
+        const response = await fetch(`${APIS.ponder}/network/${snapshot}`)
 
-      if (response.ok) {
-        const data = await response.json()
+        if (response.ok) {
+          const data = await response.json()
 
-        return {
-          accounts: data.accounts,
-          attestations: intoAttestationsData(
-            data.attestations as (typeof easAttestation.$inferSelect)[]
-          ),
+          return {
+            accounts: data.accounts,
+            attestations: intoAttestationsData(
+              data.attestations as (typeof easAttestation.$inferSelect)[]
+            ),
+          }
+        } else {
+          throw new Error(
+            `Failed to fetch network: ${response.status} ${
+              response.statusText
+            } (${await response.text()})`
+          )
         }
-      } else {
-        throw new Error(
-          `Failed to fetch network: ${response.status} ${
-            response.statusText
-          } (${await response.text()})`
-        )
-      }
-    },
-    enabled: !!APIS.ponder,
-  }),
+      },
+      enabled: !!APIS.ponder,
+    }),
   localismFundApplicationUrl: (address: string) =>
     queryOptions({
       queryKey: ponderKeys.localismFundApplicationUrl(address),
@@ -282,5 +300,72 @@ export const ponderQueryFns = {
           ),
         orderBy: (t, { desc }) => desc(t.timestamp),
         limit: 100,
+      }),
+  getAttestationCount: (db: Client<ResolvedSchema>['db']) =>
+    db.select({ count: count(easAttestation.uid) }).from(easAttestation),
+  getAttestations:
+    (options: { schema?: Hex; order?: 'asc' | 'desc'; limit?: number }) =>
+    (db: Client<ResolvedSchema>['db']) =>
+      db.query.easAttestation.findMany({
+        where: (t, { eq }) =>
+          options.schema ? eq(t.schema, options.schema) : undefined,
+        orderBy: (t, { asc, desc }) =>
+          options.order === 'asc' ? asc(t.timestamp) : desc(t.timestamp),
+        limit: options.limit ?? 100,
+      }),
+  getFundDistributions:
+    (distributor: Hex, limit: number = 100) =>
+    (db: Client<ResolvedSchema>['db']) =>
+      db.query.merkleFundDistribution.findMany({
+        where: (t, { eq }) => eq(t.distributor, distributor),
+        orderBy: (t, { desc }) => desc(t.timestamp),
+        limit,
+      }),
+  getFundDistributionClaims:
+    (options: { distributor: Hex; account?: Hex; limit?: number }) =>
+    (db: Client<ResolvedSchema>['db']) =>
+      db.query.merkleFundDistributionClaim.findMany({
+        where: (t, { and, eq }) =>
+          and(
+            eq(t.merkleFundDistributor, options.distributor),
+            options.account ? eq(t.account, options.account) : undefined
+          ),
+        orderBy: (t, { desc }) => desc(t.timestamp),
+        limit: options.limit ?? 100,
+      }),
+  getLatestMerkleSnapshot:
+    (snapshot: Hex) => (db: Client<ResolvedSchema>['db']) =>
+      db.query.merkleSnapshot.findFirst({
+        where: (t, { eq }) => eq(t.address, snapshot),
+        orderBy: (t, { desc }) => desc(t.timestamp),
+      }),
+  getFundDistributor:
+    (distributor: Hex) => (db: Client<ResolvedSchema>['db']) =>
+      db.query.merkleFundDistributor.findFirst({
+        where: (t, { eq }) => eq(t.address, distributor),
+      }),
+  getGovModule: (address: Hex) => (db: Client<ResolvedSchema>['db']) =>
+    db.query.merkleGovModule.findFirst({
+      where: (t, { eq }) => eq(t.address, address),
+    }),
+  getGovModuleProposals:
+    (address: Hex, limit: number = 100) =>
+    (db: Client<ResolvedSchema>['db']) =>
+      db.query.merkleGovModuleProposal.findMany({
+        where: (t, { eq }) => eq(t.module, address),
+        orderBy: (t, { desc }) => desc(t.id),
+        limit,
+      }),
+  getGovModuleVotes:
+    (options: { address: Hex; voter?: Hex; limit?: number }) =>
+    (db: Client<ResolvedSchema>['db']) =>
+      db.query.merkleGovModuleVote.findMany({
+        where: (t, { and, eq }) =>
+          and(
+            eq(t.module, options.address),
+            options.voter ? eq(t.voter, options.voter) : undefined
+          ),
+        orderBy: (t, { desc }) => desc(t.timestamp),
+        limit: options.limit ?? 100,
       }),
 }
