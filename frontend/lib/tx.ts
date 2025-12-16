@@ -44,9 +44,9 @@ export const txToast = async (...txs: TransactionToast[]) => {
       (wagmiConfig.chains.length === 1 && wagmiConfig.chains[0].id === 31337
         ? 1
         : // Use 1 for all preceding transactions, and 3 for the last one.
-        index < txs.length - 1
-        ? 1
-        : 3)
+          index < txs.length - 1
+          ? 1
+          : 3)
 
     toast.loading('Waiting for signature...', { id: toastId })
 

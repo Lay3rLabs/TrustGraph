@@ -55,6 +55,9 @@ task -y build:wasi
 > This must remain running in your terminal. Use new terminals to run other commands. You can stop the services with `ctrl+c`. Some terminals require pressing it twice.
 
 ```bash docci-background docci-delay-after=5
+# Create wavs.toml file from the example
+cp wavs.toml.example wavs.toml
+
 # Create a .env file from the example
 cp .env.example .env
 
@@ -67,14 +70,7 @@ task -y start-all-local
 This script automates the complete WAVS deployment process, including contract deployments and component uploads, in a single command:
 
 ```bash
-task -y deploy:full && task deploy:single-operator-poa-local
-```
-
-Optionally skip the component upload and/or contract deployment if already done or redeploying:
-
-```bash docci-ignore
-export SKIP_COMPONENT_UPLOAD=true
-export SKIP_CONTRACT_UPLOAD=true
+pnpm deploy:full
 ```
 
 ### 6. Start frontend

@@ -63,7 +63,8 @@ The system operates as an AVS (Actively Validated Service) where:
 
 ### Environment Variables
 - Copy `.env.example` to `.env` before development
-- `DEPLOY_ENV`: Set to LOCAL or TESTNET
+- `DEPLOY_ENV`: Set to DEV or PROD
+- `RPC_URL`: RPC URL for the chain
 - `FUNDED_KEY`: Private key with funds for contract deployment
 - `WAVS_ENV_*`: Prefix for private variables accessible to WASI components
 

@@ -99,17 +99,20 @@ export const _makeWagmiConfig = () =>
           ]
         : []),
     ],
-    transports: supportedChains.reduce((acc, chain) => {
-      const transports = [
-        ...(chain.rpcUrls.default.webSocket?.map((url) => webSocket(url)) ||
-          []),
-        ...(chain.rpcUrls.default.http.map((url) => http(url)) || []),
-      ]
+    transports: supportedChains.reduce(
+      (acc, chain) => {
+        const transports = [
+          ...(chain.rpcUrls.default.webSocket?.map((url) => webSocket(url)) ||
+            []),
+          ...(chain.rpcUrls.default.http.map((url) => http(url)) || []),
+        ]
 
-      acc[chain.id] =
-        transports.length > 1 ? fallback(transports) : transports[0]
-      return acc
-    }, {} as Record<number, any>),
+        acc[chain.id] =
+          transports.length > 1 ? fallback(transports) : transports[0]
+        return acc
+      },
+      {} as Record<number, any>
+    ),
   })
 
 // Export utility functions for network management

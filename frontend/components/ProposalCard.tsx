@@ -373,7 +373,8 @@ export function ProposalCard({
       )}
 
       {/* No Voting Power Message */}
-      {isConnected && isActive &&
+      {isConnected &&
+        isActive &&
         !hasVoted &&
         (!userVotingPower || Number(userVotingPower) === 0) && (
           <div className="border-t border-border pt-6 text-center space-y-2">

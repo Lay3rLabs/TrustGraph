@@ -39,7 +39,12 @@ import { useResolveEnsName } from '@/hooks/useEns'
 import { AttestationData } from '@/lib/attestation'
 import { parseErrorMessage } from '@/lib/error'
 import { SCHEMAS, SchemaManager } from '@/lib/schemas'
-import { formatBigNumber, formatPercentage, mightBeEnsName } from '@/lib/utils'
+import {
+  formatBigNumber,
+  formatPercentage,
+  isHexEqual,
+  mightBeEnsName,
+} from '@/lib/utils'
 
 import { Card } from './Card'
 import { CopyableText } from './CopyableText'
@@ -226,7 +231,7 @@ export const CreateAttestationModal = ({
       ? allAttestationsGiven.filter(
           (attestation) =>
             isAddressEqual(attestation.recipient, recipient as Hex) &&
-            isAddressEqual(attestation.schema, selectedSchemaInfo.uid) &&
+            isHexEqual(attestation.schema, selectedSchemaInfo.uid) &&
             // At least 10 seconds old, so we don't show the one we just made.
             attestation.time < BigInt(Math.floor(Date.now() / 1000) - 10)
         )
@@ -269,8 +274,8 @@ export const CreateAttestationModal = ({
           {isRevokingUid === row.uid
             ? 'Revoking...'
             : revoked[row.uid]
-            ? 'Revoked'
-            : 'Revoke'}
+              ? 'Revoked'
+              : 'Revoke'}
         </Button>
       ),
     },
@@ -349,8 +354,8 @@ export const CreateAttestationModal = ({
                                     invalidResolvedEnsName
                                       ? 'ENS name not found'
                                       : validResolvedEnsAddress
-                                      ? 'ENS name resolved'
-                                      : 'Resolving ENS name...'
+                                        ? 'ENS name resolved'
+                                        : 'Resolving ENS name...'
                                   }
                                 >
                                   {isResolvingEnsName ? (

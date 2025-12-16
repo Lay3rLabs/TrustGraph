@@ -58,8 +58,8 @@ vars:
   MIDDLEWARE_DOCKER_IMAGE: "ghcr.io/lay3rlabs/wavs-middleware:0.5.0-beta.10"
 
   # Service endpoints
-  IPFS_ENDPOINT: "http://localhost:5001"
-  IPFS_GATEWAY: "http://localhost:8080/ipfs/"
+  IPFS_ENDPOINT: "http://127.0.0.1:5001"
+  IPFS_GATEWAY: "http://127.0.0.1:8080/ipfs/"
   RPC_URL: "http://127.0.0.1:8545"
   WAVS_ENDPOINT: "http://127.0.0.1:8041"
   AGGREGATOR_URL: "http://127.0.0.1:8040"

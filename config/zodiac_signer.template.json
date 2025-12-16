@@ -1,0 +1,6 @@
+{
+  "top_n_signers": "5",
+  "min_threshold": "3",
+  "signer_module_address": "${get(zodiac_safes.safe1.signer_module)}",
+  "chain_name": "${getEnv(triggerChain)}"
+}

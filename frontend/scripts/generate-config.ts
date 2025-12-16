@@ -16,7 +16,7 @@ const deploymentSummaryFile = path.join(
 )
 const trustGraphConfigFile = path.join(
   __dirname,
-  '../../config/trust_graph.json'
+  '../../config/trust_graph.template.json'
 )
 
 console.log('🔄 Updating config with latest deployment data...')

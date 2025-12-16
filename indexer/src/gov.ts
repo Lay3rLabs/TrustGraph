@@ -313,7 +313,9 @@ ponder.on('merkleGovModule:AvatarSet', async ({ event, context }) => {
   const { newAvatar } = event.args
   const address = context.contracts.merkleGovModule.address!
 
-  await context.db.update(merkleGovModule, { address }).set({ avatar: newAvatar })
+  await context.db
+    .update(merkleGovModule, { address })
+    .set({ avatar: newAvatar })
 })
 
 // TargetSet (from Module.sol): Update target address on the module
@@ -321,5 +323,7 @@ ponder.on('merkleGovModule:TargetSet', async ({ event, context }) => {
   const { newTarget } = event.args
   const address = context.contracts.merkleGovModule.address!
 
-  await context.db.update(merkleGovModule, { address }).set({ target: newTarget })
+  await context.db
+    .update(merkleGovModule, { address })
+    .set({ target: newTarget })
 })

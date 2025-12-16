@@ -1,78 +1,93 @@
-import { createConfig } from "ponder";
-import { Hex } from "viem";
+import path from 'path'
 
-import deploymentSummary from "../.docker/deployment_summary.json";
+import dotenv from 'dotenv'
+import { createConfig } from 'ponder'
+import { Hex } from 'viem'
+
+import deploymentSummary from '../.docker/deployment_summary.json'
 import {
   easIndexerResolverAbi,
   merkleFundDistributorAbi,
   merkleGovModuleAbi,
   merkleSnapshotAbi,
   wavsIndexerAbi,
-} from "../frontend/lib/contracts";
+} from '../frontend/lib/contracts'
 
-// const CHAIN = "optimism" as const;
-// const CHAIN_ID = 10;
+const dotenvFile = path.join(__dirname, '../.env')
+const { parsed: { DEPLOY_ENV } = {} } = dotenv.config({
+  path: dotenvFile,
+  quiet: true,
+})
 
-const CHAIN = "local" as const;
-const CHAIN_ID = 31337;
+if (!DEPLOY_ENV) {
+  throw new Error(`Failed to load DEPLOY_ENV from ${dotenvFile}`)
+}
+
+const IS_PRODUCTION = DEPLOY_ENV.toUpperCase().trim() === 'PROD'
+const CORE_CHAIN = IS_PRODUCTION ? 'optimism' : 'local'
 
 export default createConfig({
-  ordering: "multichain",
+  ordering: 'multichain',
   chains: {
-    [CHAIN]: {
-      id: CHAIN_ID,
-      rpc:
-        CHAIN === "local"
-          ? "http://localhost:8545"
-          : process.env[`PONDER_RPC_URL_${CHAIN_ID}`],
-      ws:
-        CHAIN === "local"
-          ? "ws://localhost:8545"
-          : process.env[`PONDER_WS_URL_${CHAIN_ID}`],
+    ...(!IS_PRODUCTION
+      ? {
+          local: {
+            id: 31337,
+            rpc: 'http://localhost:8545',
+            ws: 'ws://localhost:8545',
+          },
+        }
+      : {}),
+    optimism: {
+      id: 10,
+      rpc: process.env.PONDER_RPC_URL_10,
+      ws: process.env.PONDER_WS_URL_10,
     },
   },
   contracts: {
     wavsIndexer: {
       abi: wavsIndexerAbi,
-      startBlock: 1,
-      // startBlock: 35855002,
+      startBlock: IS_PRODUCTION ? 142786355 : 1,
       chain: {
-        [CHAIN]: { address: deploymentSummary.wavs_indexer as Hex },
+        [CORE_CHAIN]: { address: deploymentSummary.wavs_indexer as Hex },
       },
     },
     easIndexerResolver: {
       abi: easIndexerResolverAbi,
-      startBlock: 1,
-      // startBlock: 35855002,
+      startBlock: IS_PRODUCTION ? 142786483 : 1,
       chain: {
-        [CHAIN]: { address: deploymentSummary.eas.contracts.indexer_resolver as Hex },
+        [CORE_CHAIN]: {
+          address: deploymentSummary.eas.contracts.indexer_resolver as Hex,
+        },
       },
     },
     merkleSnapshot: {
       abi: merkleSnapshotAbi,
-      startBlock: 1,
-      // startBlock: 35855002,
+      startBlock: IS_PRODUCTION ? 142786328 : 1,
       chain: {
-        [CHAIN]: { address: deploymentSummary.merkler.merkle_snapshot as Hex },
+        [CORE_CHAIN]: {
+          address: deploymentSummary.merkler.merkle_snapshot as Hex,
+        },
       },
     },
     merkleGovModule: {
       abi: merkleGovModuleAbi,
-      // startBlock: 1,
-      startBlock: 'latest',
-      // startBlock: 35855002,
+      startBlock: IS_PRODUCTION ? 0 : 'latest',
       chain: {
-        [CHAIN]: { address: deploymentSummary.zodiac_safes.safe1.merkle_gov_module as Hex },
+        [CORE_CHAIN]: {
+          address: deploymentSummary.zodiac_safes.safe1
+            .merkle_gov_module as Hex,
+        },
       },
     },
     merkleFundDistributor: {
       abi: merkleFundDistributorAbi,
-      // startBlock: 1,
-      startBlock: 'latest',
-      // startBlock: 35855002,
+      startBlock: IS_PRODUCTION ? 0 : 'latest',
       chain: {
-        [CHAIN]: { address: deploymentSummary.merkler.fund_distributor as Hex },
+        [CORE_CHAIN]: {
+          address: deploymentSummary.merkler.fund_distributor as Hex,
+        },
       },
     },
   },
-});
+})

@@ -223,8 +223,8 @@ export function Table<T>({
                       {column.render
                         ? column.render(row)
                         : column.accessor
-                        ? String(column.accessor(row))
-                        : null}
+                          ? String(column.accessor(row))
+                          : null}
                     </td>
                   )
                 })}

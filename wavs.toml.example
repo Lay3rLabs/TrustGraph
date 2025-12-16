@@ -70,7 +70,7 @@ event_channel_size = 100000
 # [default.chains.dev.holesky-fork]
 # type = "evm"
 # chain_id = "17000"
-# ws_endpoints = ["ws://localhost:8545"
+# ws_endpoints = ["ws://localhost:8545"]
 # http_endpoint ="http://localhost:8545"
 # poll_interval_ms = 7000
 
@@ -103,7 +103,7 @@ port = 8041
 # Example:
 # [wavs.chains.evm.local]
 # chain_id = "31337"
-# ws_endpoints = ["ws://localhost:8545"
+# ws_endpoints = ["ws://localhost:8545"]
 # http_endpoint ="http://localhost:8545"
 
 # ----------------------------
@@ -139,5 +139,5 @@ port = 8040
 # Example:
 # [aggregator.chains.evm.local]
 # chain_id = "31337"
-# ws_endpoints = ["ws://localhost:8545"
+# ws_endpoints = ["ws://localhost:8545"]
 # http_endpoint ="http://localhost:8545"

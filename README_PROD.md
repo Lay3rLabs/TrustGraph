@@ -1,59 +1,27 @@
-## Testnet Deployment
+## Production
 
-### Recommended Approach
-
-Use the task-based deployment commands:
+### Build service.json
 
 ```bash
-# Update .env for TESTNET environment
-# export DEPLOY_ENV=TESTNET
-
-# Full deployment pipeline
-task deploy:full
-
-# deploy just the components -> wa.dev
-bash script/upload-components-background.sh
-
-# Upload service config to IPFS
-task deploy:ipfs
-
-# Deploy service
-task deploy:service
+pnpm deploy:build-service
 ```
 
-### Manual Deployment Steps (Legacy)
+### Update service.json
 
 ```bash
-echo "COMPLETED" > .docker/component-upload-status
+pnpm deploy:upload-service
+```
 
-# TESTNET
-export WAVS_SERVICE_MANAGER_ADDRESS=`task config:service-manager-address`
-export RPC_URL=`task get-rpc`
-export INDEXER_ADDRESS=$(jq -r '.wavs_indexer' .docker/deployment_summary.json)
-export EAS_ADDRESS=$(jq -r '.eas.contracts.eas' .docker/deployment_summary.json)
-export VOUCHING_SCHEMA_UID=$(jq -r '.eas.schemas.vouching.uid' .docker/deployment_summary.json)
-export TRIGGER_CHAIN=evm:$(task get-chain-id)
-export SUBMIT_CHAIN=evm:$(task get-chain-id)
-export REGISTRY=$(task get-registry)
-export AGGREGATOR_URL=http://127.0.0.1:8040
-export CHAIN_NAME=evm:$(task get-chain-id)
-export AGGREGATOR_TIMER_DELAYER_SECS=3
+### Run WAVS
 
-# build service.json
-bash ./script/build-service.sh
-
-# Update IPFS service
-export PINATA_API_KEY=$(grep ^WAVS_ENV_PINATA_API_KEY= .env | cut -d '=' -f2-)
-export ipfs_cid=`task deploy:ipfs`
-cast send `task config:service-manager-address` 'setServiceURI(string)' "ipfs://${ipfs_cid}" -r `task get-rpc` --private-key `task config:funded-key`
-cast call ${WAVS_SERVICE_MANAGER_ADDRESS} "getServiceURI()(string)" --rpc-url ${RPC_URL}
-
+```bash
 # ----
-(cd infra/wavs-1; sh start.sh)
-(cd infra/aggregator-1; sh start.sh)
-# Use task deploy:service instead
+cd infra/wavs-1
+sh start.sh
+```
+⚠️ If you get `0x3dda1739` in the aggregator, make sure to run this because there is no operator:
 
-# ! If you get 0x3dda1739 in the aggregator, make sure to run this (there is no operator)
+```bash
 export op_num=2
 export op_priv_key=$(grep ^WAVS_CLI_EVM_CREDENTIAL= infra/wavs-$op_num/.env | cut -d '=' -f2- | tr -d '"')
 export op_mnemonic=$(grep ^WAVS_SUBMISSION_MNEMONIC= infra/wavs-$op_num/.env | cut -d '=' -f2- | tr -d '"')

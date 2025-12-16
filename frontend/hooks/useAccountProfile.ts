@@ -88,16 +88,16 @@ export function useAccountNetworkProfile(address: Hex) {
         networkParticipant: true,
       }
     : address
-    ? {
-        account: address,
-        trustScore: '0',
-        validated: false,
-        rank: 0,
-        attestationsReceived: 0,
-        attestationsGiven: 0,
-        networkParticipant: false,
-      }
-    : null
+      ? {
+          account: address,
+          trustScore: '0',
+          validated: false,
+          rank: 0,
+          attestationsReceived: 0,
+          attestationsGiven: 0,
+          networkParticipant: false,
+        }
+      : null
 
   const networkAttestationsGiven =
     networkAttestationsData?.filter((attestation) =>
