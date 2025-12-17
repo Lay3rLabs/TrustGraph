@@ -13,12 +13,7 @@ import {
 import { useAccount, usePublicClient, useWatchContractEvent } from 'wagmi'
 
 import { intoAttestationData, intoAttestationsData } from '@/lib/attestation'
-import {
-  easAbi,
-  easAddress,
-  wavsIndexerAbi,
-  wavsIndexerConfig,
-} from '@/lib/contracts'
+import { easConfig, wavsIndexerConfig } from '@/lib/contracts'
 import { parseErrorMessage, shouldRetryTxError } from '@/lib/error'
 import { SchemaKey, SchemaManager } from '@/lib/schemas'
 import { txToast } from '@/lib/tx'
@@ -49,21 +44,22 @@ export function useAttestation(uid?: Hex) {
   const [hash, setHash] = useState<`0x${string}` | null>(null)
 
   // Watch for EventIndexed events with eventType "attestation"
-  const handleEventIndexed: WatchContractEventOnLogsFn<typeof wavsIndexerAbi> =
-    useCallback(
-      ([event]) => {
-        if (
-          event.eventName === 'EventIndexed' &&
-          event.args.eventType === ATTESTATION_HASH
-        ) {
-          console.log(
-            '🔍 EventIndexed event detected for attestation - invalidating queries'
-          )
-          queryClient.invalidateQueries({ queryKey: attestationKeys.all })
-        }
-      },
-      [queryClient]
-    )
+  const handleEventIndexed: WatchContractEventOnLogsFn<
+    typeof wavsIndexerConfig.abi
+  > = useCallback(
+    ([event]) => {
+      if (
+        event.eventName === 'EventIndexed' &&
+        event.args.eventType === ATTESTATION_HASH
+      ) {
+        console.log(
+          '🔍 EventIndexed event detected for attestation - invalidating queries'
+        )
+        queryClient.invalidateQueries({ queryKey: attestationKeys.all })
+      }
+    },
+    [queryClient]
+  )
 
   useWatchContractEvent({
     ...wavsIndexerConfig,
@@ -123,16 +119,14 @@ export function useAttestation(uid?: Hex) {
 
         // Estimate gas and simulate
         const gasEstimate = await publicClient!.estimateContractGas({
-          address: easAddress,
-          abi: easAbi,
+          ...easConfig,
           functionName: 'attest',
           args: [attestationRequest],
           account: connectedAddress,
         })
 
         await publicClient!.simulateContract({
-          address: easAddress as `0x${string}`,
-          abi: easAbi,
+          ...easConfig,
           functionName: 'attest',
           args: [attestationRequest],
           account: connectedAddress,
@@ -142,8 +136,7 @@ export function useAttestation(uid?: Hex) {
 
         const [receipt] = await txToast({
           tx: {
-            address: easAddress as `0x${string}`,
-            abi: easAbi,
+            ...easConfig,
             functionName: 'attest',
             args: [attestationRequest],
             gas: (gasEstimate * 120n) / 100n,
@@ -224,16 +217,14 @@ export function useAttestation(uid?: Hex) {
 
         // Estimate gas and simulate
         const gasEstimate = await publicClient!.estimateContractGas({
-          address: easAddress,
-          abi: easAbi,
+          ...easConfig,
           functionName: 'revoke',
           args: [revocationRequest],
           account: connectedAddress,
         })
 
         await publicClient!.simulateContract({
-          address: easAddress as `0x${string}`,
-          abi: easAbi,
+          ...easConfig,
           functionName: 'revoke',
           args: [revocationRequest],
           account: connectedAddress,
@@ -243,8 +234,7 @@ export function useAttestation(uid?: Hex) {
 
         const [receipt] = await txToast({
           tx: {
-            address: easAddress as `0x${string}`,
-            abi: easAbi,
+            ...easConfig,
             functionName: 'revoke',
             args: [revocationRequest],
             gas: (gasEstimate * 120n) / 100n,

@@ -342,6 +342,9 @@ export function useGovernance() {
         const values = actions.map((action) => BigInt(action.value || '0'))
         const calldatas = actions.map((action) => action.data as `0x${string}`)
         const operations = actions.map((action) => action.operation || 0)
+        const actionDescriptions = actions.map(
+          (action) => action.description || ''
+        )
 
         console.log('Proposal parameters:', {
           title,
@@ -350,6 +353,7 @@ export function useGovernance() {
           values,
           calldatas,
           operations,
+          actionDescriptions,
           votingPower: userVotingPower.value,
           proof: userVotingPower.proof,
         })
@@ -377,6 +381,7 @@ export function useGovernance() {
                     values,
                     calldatas,
                     operations,
+                    actionDescriptions,
                     BigInt(userVotingPower.value),
                     userVotingPower.proof as `0x${string}`[],
                   ],
@@ -397,6 +402,7 @@ export function useGovernance() {
                       values,
                       calldatas,
                       operations,
+                      actionDescriptions,
                       BigInt(userVotingPower.value),
                       userVotingPower.proof as `0x${string}`[],
                     ],
@@ -420,6 +426,7 @@ export function useGovernance() {
                     values,
                     calldatas,
                     operations,
+                    actionDescriptions,
                     BigInt(userVotingPower.value),
                     userVotingPower.proof as `0x${string}`[],
                     voteType,
@@ -441,6 +448,7 @@ export function useGovernance() {
                       values,
                       calldatas,
                       operations,
+                      actionDescriptions,
                       BigInt(userVotingPower.value),
                       userVotingPower.proof as `0x${string}`[],
                       voteType,
