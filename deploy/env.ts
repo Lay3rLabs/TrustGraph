@@ -130,8 +130,8 @@ export class DevEnv extends EnvBase {
         {
           name: 'Merkler',
           script: 'script/DeployMerkler.s.sol:DeployScript',
-          sig: 'run(string)',
-          args: (ctx) => [ctx.options.serviceManagerAddress],
+          sig: 'run(string,bool)',
+          args: (ctx) => [ctx.options.serviceManagerAddress, true],
         },
         {
           name: 'Safes and Zodiac Modules',
@@ -225,8 +225,8 @@ export class ProdEnv extends EnvBase {
         {
           name: 'Merkler',
           script: 'script/DeployMerkler.s.sol:DeployScript',
-          sig: 'run(string)',
-          args: (ctx) => [ctx.options.serviceManagerAddress],
+          sig: 'run(string,bool)',
+          args: (ctx) => [ctx.options.serviceManagerAddress, false],
         },
         {
           name: 'Indexer',
