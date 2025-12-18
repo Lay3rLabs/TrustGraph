@@ -3,6 +3,7 @@
 import { usePonderQuery } from '@ponder/react'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import {
+  ArrowUpRight,
   Check,
   FileText,
   ListFilter,
@@ -10,6 +11,7 @@ import {
   MessageSquareOff,
 } from 'lucide-react'
 import dynamic from 'next/dynamic'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type React from 'react'
 import { Suspense, useEffect, useMemo, useState } from 'react'
@@ -35,6 +37,14 @@ import { isTrustedSeed } from '@/lib/network'
 import { Network } from '@/lib/types'
 import { cn, formatBigNumber, isHexEqual } from '@/lib/utils'
 import { NetworkProfile, ponderQueries, ponderQueryFns } from '@/queries/ponder'
+
+// Pre-compute schema UID to network name mapping
+const SCHEMA_TO_NETWORK: Record<string, Network> = {}
+for (const network of NETWORKS) {
+  for (const schema of network.schemas) {
+    SCHEMA_TO_NETWORK[schema.uid.toLowerCase()] = network
+  }
+}
 
 // Uses web2gl, which is not supported on the server
 const NetworkGraph = dynamic(
@@ -224,8 +234,15 @@ export const AccountProfilePage = ({
   ]
 
   const [filterMode, setFilterMode] = useState<'network' | 'all'>('network')
+  const [selectedNetworkId, setSelectedNetworkId] = useState<string>('all')
 
   const inAnyNetwork = networkRows.length > 0
+
+  // Get the selected network row (if any)
+  const selectedNetworkRow =
+    selectedNetworkId === 'all'
+      ? null
+      : networkRows.find((row) => row.network.id === selectedNetworkId)
 
   // If not a network participant, always show all attestations.
   const onlyNetworkAttestations = !inAnyNetwork
@@ -241,12 +258,17 @@ export const AccountProfilePage = ({
         row.attestationsGiven.inNetwork.length > 0
     )
 
+  // Filter network rows based on selected network
+  const filteredNetworkRows = selectedNetworkRow
+    ? [selectedNetworkRow]
+    : networkRows
+
   const allAttestationsReceived =
     attestations?.filter((attestation) =>
       isHexEqual(attestation.recipient, address)
     ) || []
 
-  const networkAttestationsReceived = networkRows.flatMap(
+  const networkAttestationsReceived = filteredNetworkRows.flatMap(
     (row) =>
       attestations?.filter((attestation) =>
         row.attestationsReceived.inNetwork.includes(attestation.uid)
@@ -265,7 +287,7 @@ export const AccountProfilePage = ({
       isHexEqual(attestation.attester, address)
     ) || []
 
-  const networkAttestationsGiven = networkRows.flatMap(
+  const networkAttestationsGiven = filteredNetworkRows.flatMap(
     (row) =>
       attestations?.filter((attestation) =>
         row.attestationsGiven.inNetwork.includes(attestation.uid)
@@ -444,9 +466,12 @@ export const AccountProfilePage = ({
             {showNetworkGraph && (
               <div className="h-[66vh] lg:h-full">
                 <Suspense fallback={null}>
-                  {/* TODO(multi): show combined network graph? or filter? */}
-                  {/* Show network graph for the first network in the list */}
-                  <NetworkProvider network={networkRows[0].network}>
+                  {/* Show network graph for the selected network, or first network if none selected */}
+                  <NetworkProvider
+                    network={
+                      selectedNetworkRow?.network || networkRows[0].network
+                    }
+                  >
                     <NetworkGraph onlyAddress={address} />
                   </NetworkProvider>
                 </Suspense>
@@ -463,19 +488,35 @@ export const AccountProfilePage = ({
                   : 'ATTESTATIONS RECEIVED'}
               </h2>
 
-              <Dropdown
-                options={
-                  inAnyNetwork
-                    ? [
-                        { value: 'network', label: 'Network Only' },
-                        { value: 'all', label: 'All Attestations' },
-                      ]
-                    : [{ value: 'all', label: 'All Attestations' }]
-                }
-                selected={filterMode}
-                onSelect={(value) => setFilterMode(value)}
-                icon={<ListFilter className="!w-5 !h-5" />}
-              />
+              <div className="flex flex-row gap-2 flex-wrap">
+                {inAnyNetwork && networkRows.length > 1 && (
+                  <Dropdown
+                    options={[
+                      { value: 'all', label: 'All Networks' },
+                      ...networkRows.map((row) => ({
+                        value: row.network.id,
+                        label: row.network.name,
+                      })),
+                    ]}
+                    selected={selectedNetworkId}
+                    onSelect={(value) => setSelectedNetworkId(value)}
+                  />
+                )}
+
+                <Dropdown
+                  options={
+                    inAnyNetwork
+                      ? [
+                          { value: 'network', label: 'Network Only' },
+                          { value: 'all', label: 'All Attestations' },
+                        ]
+                      : [{ value: 'all', label: 'All Attestations' }]
+                  }
+                  selected={filterMode}
+                  onSelect={(value) => setFilterMode(value)}
+                  icon={<ListFilter className="!w-5 !h-5" />}
+                />
+              </div>
             </div>
 
             {isLoading && (
@@ -488,7 +529,7 @@ export const AccountProfilePage = ({
 
             {!isLoading && attestationsReceived.length > 0 && (
               <Table
-                columns={attestationsReceivedColumns}
+                columns={attestationsReceivedColumns(pushBreadcrumb)}
                 data={attestationsReceived}
                 cellClassName="text-sm"
                 defaultSortColumn="time"
@@ -544,7 +585,7 @@ export const AccountProfilePage = ({
 
             {!isLoading && attestationsGiven.length > 0 && (
               <Table
-                columns={attestationsGivenColumns}
+                columns={attestationsGivenColumns(pushBreadcrumb)}
                 defaultSortColumn="time"
                 cellClassName="text-sm"
                 defaultSortDirection="desc"
@@ -585,7 +626,36 @@ export const AccountProfilePage = ({
   )
 }
 
-const commonAttestationColumns: Column<AttestationData>[] = [
+const commonAttestationColumns = (
+  pushBreadcrumb: ReturnType<typeof usePushBreadcrumb>
+): Column<AttestationData>[] => [
+  {
+    key: 'network',
+    header: 'NETWORK',
+    tooltip: 'The network(s) this attestation belongs to based on its schema.',
+    sortable: false,
+    render: (row) => {
+      const networkName = SCHEMA_TO_NETWORK[row.schema.toLowerCase()]
+      if (!networkName) {
+        return <span className="text-gray-400 text-sm">—</span>
+      }
+      return (
+        <Link
+          className="group/network inline-flex items-center gap-2 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation()
+            pushBreadcrumb()
+          }}
+          href={`/network/${networkName.id}`}
+        >
+          <span className="text-sm text-muted-foreground group-hover/network:text-brand">
+            {networkName.name}
+          </span>
+          <ArrowUpRight className="w-3 h-3 shrink-0 text-muted-foreground group-hover/network:text-brand" />
+        </Link>
+      )
+    },
+  },
   {
     key: 'confidence',
     header: 'CONFIDENCE',
@@ -629,7 +699,9 @@ const commonAttestationColumns: Column<AttestationData>[] = [
   },
 ]
 
-const attestationsReceivedColumns: Column<AttestationData>[] = [
+const attestationsReceivedColumns = (
+  pushBreadcrumb: ReturnType<typeof usePushBreadcrumb>
+): Column<AttestationData>[] => [
   {
     key: 'attester',
     header: 'ATTESTER',
@@ -637,10 +709,12 @@ const attestationsReceivedColumns: Column<AttestationData>[] = [
     sortable: false,
     render: (row) => <TableAddress address={row.attester} showNavIcon />,
   },
-  ...commonAttestationColumns,
+  ...commonAttestationColumns(pushBreadcrumb),
 ]
 
-const attestationsGivenColumns: Column<AttestationData>[] = [
+const attestationsGivenColumns = (
+  pushBreadcrumb: ReturnType<typeof usePushBreadcrumb>
+): Column<AttestationData>[] => [
   {
     key: 'recipient',
     header: 'RECIPIENT',
@@ -648,5 +722,5 @@ const attestationsGivenColumns: Column<AttestationData>[] = [
     sortable: false,
     render: (row) => <TableAddress showNavIcon address={row.recipient} />,
   },
-  ...commonAttestationColumns,
+  ...commonAttestationColumns(pushBreadcrumb),
 ]

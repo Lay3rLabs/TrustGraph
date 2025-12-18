@@ -59,7 +59,7 @@ export const Dropdown = <T extends string = string>({
 
   return (
     <Popup
-      position="same"
+      position="left"
       popupClassName="!p-0"
       popupPadding={0}
       setOpenRef={setFilterOpenRef}
