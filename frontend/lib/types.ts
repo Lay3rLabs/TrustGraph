@@ -16,11 +16,14 @@ export type Network = {
   criteria: string
   contracts: {
     merkleSnapshot: Hex
+    easIndexerResolver: Hex
     merkleFundDistributor?: Hex
     merkleGovModule?: Hex
   }
   schemas: NetworkSchema[]
-  trustedSeeds: Hex[]
+  pagerank: {
+    trustedSeeds: Hex[]
+  }
   validatedThreshold: number
 }
 

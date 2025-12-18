@@ -126,6 +126,7 @@ contract DeployScript is Common {
       );
 
       string memory rootJson = string.concat('root', Strings.toString(i));
+      rootJson.serialize('deployer', Strings.toChecksumHexString(deployer));
       rootJson.serialize('contracts', finalContractsJson);
       rootJson = rootJson.serialize('schemas', finalSchemasJson);
 

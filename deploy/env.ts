@@ -8,9 +8,12 @@ import {
   EnvName,
   EnvOverrides,
   IEnv,
+  Network,
+  NetworkDeploy,
   ProgramContext,
 } from './types'
 import {
+  isNetworkComplete,
   loadDotenv,
   readJson,
   readJsonIfFileExists,
@@ -35,6 +38,7 @@ abstract class EnvBase implements IEnv {
     gateway: string
   }
   aggregatorTimerDelaySeconds: number
+  networksConfigFile: string
   deployContracts: ContractDeployment[]
 
   constructor(options: OmitFunctions<IEnv>) {
@@ -45,6 +49,7 @@ abstract class EnvBase implements IEnv {
     this.submitChain = options.submitChain
     this.ipfs = options.ipfs
     this.aggregatorTimerDelaySeconds = options.aggregatorTimerDelaySeconds
+    this.networksConfigFile = options.networksConfigFile
     this.deployContracts = options.deployContracts
   }
 
@@ -99,12 +104,119 @@ abstract class EnvBase implements IEnv {
         'wavs_indexer'
       ),
       eas: readJsonIfFileExists('.docker/eas_deploy.json'),
-      networks: fs
-        .readdirSync('config')
-        .filter((file) => file.startsWith('network_deploy_'))
-        .map((file) => readJson(path.join('config', file))),
+      networks: readJsonIfFileExists(this.networksConfigFile),
       zodiac_safes: readJsonIfFileExists('.docker/zodiac_safes_deploy.json'),
     }
+  }
+
+  /**
+   * Update networks config file with deployed contracts and schemas from
+   * network_deploy_*.json files.
+   *
+   * If env is `dev`, contracts, schemas, and trusted seeds will be updated.
+   *
+   * If env is `prod`, contracts and schemas will be set if missing. Trusted seeds will not be touched.
+   *
+   * @param env - The environment to use for updating the networks config file.
+   */
+  updateNetworksConfigWithDeployments = (env: 'dev' | 'prod'): void => {
+    // Read existing networks config or initialize empty array
+    let networks: Network[] = []
+    if (fs.existsSync(this.networksConfigFile)) {
+      networks = readJson(this.networksConfigFile)
+    }
+
+    // Find all network_deploy_*.json files
+    const deployFiles = fs
+      .readdirSync('config')
+      .filter((file) => file.match(/^network_deploy_\d+\.json$/))
+      .sort()
+
+    for (const deployFile of deployFiles) {
+      // Extract index from filename (e.g., "network_deploy_0.json" -> 0)
+      const match = deployFile.match(/network_deploy_(\d+)\.json/)
+      if (!match) {
+        continue
+      }
+      const index = parseInt(match[1], 10)
+
+      if (networks.length <= index) {
+        throw new Error(
+          `Cannot update network at index ${index} because there are only ${networks.length.toLocaleString()} networks configured.`
+        )
+      }
+
+      const deployData = readJson<NetworkDeploy>(
+        path.join('config', deployFile)
+      )
+
+      const network: Network = {
+        ...networks[index],
+        contracts: {
+          merkleSnapshot: deployData.contracts.merkle_snapshot,
+          easIndexerResolver: deployData.contracts.eas_indexer_resolver,
+          merkleFundDistributor: deployData.contracts.fund_distributor,
+        },
+        schemas: Object.values(deployData.schemas).flatMap((data) => {
+          // Ignore placeholder "_" key from forge serialization.
+          if (data === '_') {
+            return []
+          }
+
+          const fields = data.schema.split(',').map((field) => {
+            const [type, name] = field.split(' ')
+            return {
+              name,
+              type,
+            }
+          })
+
+          return {
+            ...data,
+            fields,
+          }
+        }),
+      }
+
+      const networkToUpdate = networks[index]
+
+      if (env === 'dev') {
+        // Replace contracts, schemas, and trusted seeds for development.
+        networkToUpdate.contracts = network.contracts
+        networkToUpdate.schemas = network.schemas
+        networkToUpdate.pagerank.trustedSeeds = [deployData.deployer]
+      } else if (env === 'prod') {
+        // Add or update missing contracts and schemas for production.
+        Object.entries(network.contracts).forEach(([key, value]) => {
+          if (!networkToUpdate.contracts[key as keyof Network['contracts']]) {
+            networkToUpdate.contracts[key as keyof Network['contracts']] = value
+          }
+        })
+        network.schemas.forEach((schema) => {
+          const existingSchema = networkToUpdate.schemas.findIndex(
+            (s) => s.key === schema.key
+          )
+          if (existingSchema !== -1) {
+            networkToUpdate.schemas[existingSchema] = schema
+          } else {
+            networkToUpdate.schemas.push(schema)
+          }
+        })
+      }
+
+      // Verify the network is complete after updating.
+      if (!isNetworkComplete(network)) {
+        throw new Error(
+          `Network at index ${index} is not complete after updating from ${deployFile}. Please make sure everything is configured correctly in ${this.networksConfigFile}.`
+        )
+      }
+    }
+
+    // Write updated networks config.
+    fs.writeFileSync(
+      this.networksConfigFile,
+      JSON.stringify(networks, null, 2) + '\n'
+    )
   }
 }
 
@@ -113,6 +225,20 @@ export class DevEnv extends EnvBase {
     rpcUrl = 'http://127.0.0.1:8545',
     ipfsGateway = 'http://127.0.0.1:8080/ipfs/',
   }: EnvOverrides) {
+    const networksConfigFile = 'config/networks.development.json'
+    const networksConfigTemplateFile = networksConfigFile.replace(
+      '.json',
+      '.template.json'
+    )
+    if (!fs.existsSync(networksConfigTemplateFile)) {
+      throw new Error(
+        `Networks config template file ${networksConfigTemplateFile} does not exist`
+      )
+    }
+
+    // Get the number of networks from the template file.
+    const numNetworks = readJson<Network[]>(networksConfigTemplateFile).length
+
     super({
       rpcUrl,
       registry: 'http://localhost:8090',
@@ -124,6 +250,7 @@ export class DevEnv extends EnvBase {
         gateway: ipfsGateway,
       },
       aggregatorTimerDelaySeconds: 0,
+      networksConfigFile,
       deployContracts: [
         {
           name: 'EAS',
@@ -141,8 +268,13 @@ export class DevEnv extends EnvBase {
             readJsonKey('.docker/eas_deploy.json', 'schema_registrar'),
             true,
             0,
-            3,
+            numNetworks,
           ],
+          postRun: () => {
+            // Replace the networks config file with the template.
+            fs.copyFileSync(networksConfigTemplateFile, this.networksConfigFile)
+            this.updateNetworksConfigWithDeployments('dev')
+          },
         },
         {
           name: 'Safes and Zodiac Modules',
@@ -174,7 +306,10 @@ export class DevEnv extends EnvBase {
     }
 
     const formData = new FormData()
-    formData.append('file', new Blob([fs.readFileSync(filePath)]))
+    formData.append(
+      'file',
+      new Blob([new Uint8Array(fs.readFileSync(filePath))])
+    )
 
     const response = await fetch(this.ipfs.pinApi, {
       method: 'POST',
@@ -216,6 +351,15 @@ export class ProdEnv extends EnvBase {
     rpcUrl = 'https://optimism-rpc.publicnode.com',
     ipfsGateway = 'https://gateway.pinata.cloud/ipfs/',
   }: EnvOverrides) {
+    const networksConfigFile = 'config/networks.production.json'
+    if (!fs.existsSync(networksConfigFile)) {
+      throw new Error(
+        `Networks config file ${networksConfigFile} does not exist`
+      )
+    }
+
+    const networks = readJson<Network[]>(networksConfigFile)
+
     super({
       rpcUrl,
       registry: 'https://wa.dev',
@@ -229,31 +373,47 @@ export class ProdEnv extends EnvBase {
       },
       // optimism wait ~1 block
       aggregatorTimerDelaySeconds: 3,
+      networksConfigFile,
       deployContracts: [
         {
           name: 'EAS',
           script: 'script/DeployEAS.s.sol:DeployEAS',
           sig: 'run(string)',
           args: (ctx) => [ctx.options.serviceManagerAddress],
+          // Skip if EAS is already deployed.
+          skip: () =>
+            readJsonKeyIfFileExists('.docker/eas_deploy.json', 'eas') !==
+            undefined,
         },
-        {
-          name: 'Network',
-          script: 'script/DeployNetwork.s.sol:DeployScript',
-          sig: 'run(string,string,string,bool,uint256,uint256)',
-          args: (ctx) => [
-            ctx.options.serviceManagerAddress,
-            readJsonKey('.docker/eas_deploy.json', 'eas'),
-            readJsonKey('.docker/eas_deploy.json', 'schema_registrar'),
-            false,
-            0,
-            1,
-          ],
-        },
+        ...networks.map(
+          (network, index): ContractDeployment => ({
+            name: `Network: ${network.name}`,
+            script: 'script/DeployNetwork.s.sol:DeployScript',
+            sig: 'run(string,string,string,bool,uint256,uint256)',
+            args: (ctx) => [
+              ctx.options.serviceManagerAddress,
+              readJsonKey('.docker/eas_deploy.json', 'eas'),
+              readJsonKey('.docker/eas_deploy.json', 'schema_registrar'),
+              false,
+              index,
+              1,
+            ],
+            postRun: () => this.updateNetworksConfigWithDeployments('prod'),
+            // Skip if network is already complete.
+            skip: () => isNetworkComplete(network),
+          })
+        ),
         {
           name: 'Indexer',
           script: 'script/DeployWavsIndexer.s.sol:DeployWavsIndexer',
           sig: 'run(string)',
           args: (ctx) => [ctx.options.serviceManagerAddress],
+          // Skip if indexer is already deployed.
+          skip: () =>
+            readJsonKeyIfFileExists(
+              '.docker/wavs_indexer_deploy.json',
+              'wavs_indexer'
+            ) !== undefined,
         },
       ],
     })
@@ -270,7 +430,10 @@ export class ProdEnv extends EnvBase {
     }
 
     const formData = new FormData()
-    formData.append('file', new Blob([fs.readFileSync(filePath)]))
+    formData.append(
+      'file',
+      new Blob([new Uint8Array(fs.readFileSync(filePath))])
+    )
     formData.append('network', 'public')
     formData.append('name', `service-${Date.now()}.json`)
 

@@ -6,12 +6,12 @@
       "package_version": "0.9.1",
       "trigger": {
         "event": {
-          "contract_json_path": "networks.0.contracts.merkle_snapshot",
+          "contract_json_path": "${networks[]}.contracts.merkleSnapshot",
           "event": "MerklerTrigger(uint64)"
         }
       },
       "submit": {
-        "contract_json_path": "networks.0.contracts.merkle_snapshot"
+        "contract_json_path": "${networks[]}.contracts.merkleSnapshot"
       },
       "config": {
         "file": "trust_graph"
@@ -29,7 +29,7 @@
         }
       },
       "submit": {
-        "contract_json_path": "networks.0.contracts.merkle_snapshot"
+        "contract_json_path": "${networks[]}.contracts.merkleSnapshot"
       },
       "config": {
         "file": "trust_graph"
@@ -47,7 +47,7 @@
         }
       },
       "submit": {
-        "contract_json_path": "networks.0.contracts.merkle_snapshot"
+        "contract_json_path": "${networks[]}.contracts.merkleSnapshot"
       },
       "config": {
         "file": "trust_graph"
@@ -64,7 +64,7 @@
         }
       },
       "submit": {
-        "contract_json_path": "networks.0.contracts.merkle_snapshot"
+        "contract_json_path": "${networks[]}.contracts.merkleSnapshot"
       },
       "env_variables": []
     },
@@ -74,7 +74,7 @@
       "package_version": "0.9.1",
       "trigger": {
         "event": {
-          "contract_json_path": "networks.0.contracts.eas_indexer_resolver",
+          "contract_json_path": "${networks[]}.contracts.easIndexerResolver",
           "event": "AttestationAttested(address,bytes32)"
         }
       },
@@ -91,7 +91,7 @@
       "package_version": "0.9.1",
       "trigger": {
         "event": {
-          "contract_json_path": "networks.0.contracts.eas_indexer_resolver",
+          "contract_json_path": "${networks[]}.contracts.easIndexerResolver",
           "event": "AttestationRevoked(address,bytes32)"
         }
       },

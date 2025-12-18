@@ -150,7 +150,7 @@ export const NetworkProvider = ({
           0,
           100,
           new pagerankModule.TrustConfig(
-            network.trustedSeeds,
+            network.pagerank.trustedSeeds,
             simulationConfig.trustMultiplier,
             simulationConfig.trustShare,
             simulationConfig.trustDecay
@@ -281,7 +281,7 @@ export const NetworkProvider = ({
   // Determine whether or not a given address is a trusted seed for the network
   const isTrustedNetworkSeed = useCallback(
     (address: string) => isTrustedSeed(network, address),
-    [network.trustedSeeds]
+    [network.pagerank.trustedSeeds]
   )
 
   const value = {
