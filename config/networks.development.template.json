@@ -9,7 +9,7 @@
     },
     "about": "This is a test network.",
     "callToAction": {
-      "label": "Click Me Again",
+      "label": "Click Me",
       "href": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
     },
     "criteria": "The attestations in this network are weighted endorsements.",
@@ -61,7 +61,7 @@
     },
     "about": "This is a test network.",
     "callToAction": {
-      "label": "Click Me Again",
+      "label": "Click Me",
       "href": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
     },
     "criteria": "The attestations in this network are weighted endorsements.",
@@ -113,7 +113,7 @@
     },
     "about": "This is a test network.",
     "callToAction": {
-      "label": "Click Me Again",
+      "label": "Click Me",
       "href": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
     },
     "criteria": "The attestations in this network are weighted endorsements.",
