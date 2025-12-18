@@ -398,7 +398,11 @@ export class ProdEnv extends EnvBase {
               index,
               1,
             ],
-            postRun: () => this.updateNetworksConfigWithDeployments('prod'),
+            // After the last network is deployed, update the networks config file.
+            postRun:
+              index === networks.length - 1
+                ? () => this.updateNetworksConfigWithDeployments('prod')
+                : undefined,
             // Skip if network is already complete.
             skip: () => isNetworkComplete(network),
           })
