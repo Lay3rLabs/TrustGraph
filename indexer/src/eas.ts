@@ -1,7 +1,7 @@
 import { ponder } from 'ponder:registry'
 import { easAttestation } from 'ponder:schema'
 
-import { easAbi } from '../../frontend/lib/contracts'
+import { easAbi } from '../../frontend/lib/contract-abis'
 
 ponder.on(
   'easIndexerResolver:AttestationAttested',

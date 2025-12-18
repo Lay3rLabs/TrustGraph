@@ -5,7 +5,7 @@ import {
   merkleGovModuleVote,
 } from 'ponder:schema'
 
-import { merkleGovModuleAbi } from '../../frontend/lib/contracts'
+import { merkleGovModuleAbi } from '../../frontend/lib/contract-abis'
 
 // Helper type for proposal actions
 type ProposalAction = {

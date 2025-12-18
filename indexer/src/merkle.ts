@@ -11,7 +11,7 @@ import {
 import {
   merkleFundDistributorAbi,
   merkleSnapshotAbi,
-} from '../../frontend/lib/contracts'
+} from '../../frontend/lib/contract-abis'
 import * as offchainSchema from '../offchain.schema'
 
 type MerkleTreeData = {

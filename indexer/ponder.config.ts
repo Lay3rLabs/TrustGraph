@@ -11,7 +11,7 @@ import {
   merkleGovModuleAbi,
   merkleSnapshotAbi,
   wavsIndexerAbi,
-} from '../frontend/lib/contracts'
+} from '../frontend/lib/contract-abis'
 
 const dotenvFile = path.join(__dirname, '../.env')
 const { parsed: { DEPLOY_ENV } = {} } = dotenv.config({

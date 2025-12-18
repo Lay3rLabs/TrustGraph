@@ -2,7 +2,8 @@ import { queryOptions } from '@tanstack/react-query'
 import { readContract } from '@wagmi/core'
 import { Hex } from 'viem'
 
-import { easConfig, wavsIndexerConfig } from '@/lib/contracts'
+import { easAbi, wavsIndexerAbi } from '@/lib/contract-abis'
+import { easAddress, wavsIndexerAddress } from '@/lib/contracts'
 import { SchemaManager } from '@/lib/schemas'
 import { makeWagmiConfig } from '@/lib/wagmi'
 
@@ -33,7 +34,8 @@ export const attestationQueries = {
       queryKey: attestationKeys.get(uid),
       queryFn: async () => {
         const attestation = await readContract(makeWagmiConfig(), {
-          ...easConfig,
+          address: easAddress,
+          abi: easAbi,
           functionName: 'getAttestation',
           args: [uid],
         })
@@ -62,7 +64,8 @@ export const attestationQueries = {
       queryKey: attestationKeys.uids(options),
       queryFn: async () => {
         const result = await readContract(makeWagmiConfig(), {
-          ...wavsIndexerConfig,
+          address: wavsIndexerAddress,
+          abi: wavsIndexerAbi,
           functionName: 'getEventsByType',
           args: [
             'attestation',
@@ -94,7 +97,8 @@ export const attestationQueries = {
     queryFn: async () =>
       Number(
         await readContract(makeWagmiConfig(), {
-          ...wavsIndexerConfig,
+          address: wavsIndexerAddress,
+          abi: wavsIndexerAbi,
           functionName: 'getEventCountByType',
           args: ['attestation'],
         })
@@ -108,7 +112,8 @@ export const attestationQueries = {
       queryFn: async () =>
         Number(
           await readContract(makeWagmiConfig(), {
-            ...wavsIndexerConfig,
+            address: wavsIndexerAddress,
+            abi: wavsIndexerAbi,
             functionName: 'getEventCountByTypeAndTag',
             args: ['attestation', `schema:${schemaUID}`],
           })
@@ -124,7 +129,8 @@ export const attestationQueries = {
       queryKey: attestationKeys.schemaUIDs(schemaUID, options),
       queryFn: async () => {
         const result = await readContract(makeWagmiConfig(), {
-          ...wavsIndexerConfig,
+          address: wavsIndexerAddress,
+          abi: wavsIndexerAbi,
           functionName: 'getEventsByTypeAndTag',
           args: [
             'attestation',

@@ -31,7 +31,7 @@ import {
 import { StatisticCard } from '@/components/StatisticCard'
 import { Column, Table } from '@/components/Table'
 import { useNetwork } from '@/contexts/NetworkContext'
-import { merkleFundDistributorAbi } from '@/lib/contracts'
+import { merkleFundDistributorAbi } from '@/lib/contract-abis'
 import { parseErrorMessage } from '@/lib/error'
 import { txToast } from '@/lib/tx'
 import { formatBigNumber } from '@/lib/utils'
@@ -60,22 +60,26 @@ export const DistributePage = () => {
   const [tokenAddress, setTokenAddress] = useState('')
   const [amount, setAmount] = useState('')
 
+  const merkleFundDistributorAddress = (network.contracts
+    .merkleFundDistributor || '') as Hex
+
   // Query distributions from ponder
   const { data: distributions = [], isLoading: isLoadingDistributions } =
     usePonderQuery({
       queryFn: ponderQueryFns.getFundDistributions(
-        network.contracts.merkleFundDistributor
+        merkleFundDistributorAddress
       ),
+      enabled: !!merkleFundDistributorAddress,
     })
 
   // Query user's claims from ponder
   const { data: userClaims = [], isLoading: isLoadingUserClaims } =
     usePonderQuery({
       queryFn: ponderQueryFns.getFundDistributionClaims({
-        distributor: network.contracts.merkleFundDistributor,
+        distributor: merkleFundDistributorAddress as Hex,
         account: connectedAddress,
       }),
-      enabled: !!connectedAddress,
+      enabled: !!merkleFundDistributorAddress && !!connectedAddress,
     })
 
   // Create a map of distributionIndex -> claimed amount for quick lookup
@@ -135,9 +139,8 @@ export const DistributePage = () => {
 
   // Query distributor state from ponder
   const { data: distributorState } = usePonderQuery({
-    queryFn: ponderQueryFns.getFundDistributor(
-      network.contracts.merkleFundDistributor
-    ),
+    queryFn: ponderQueryFns.getFundDistributor(merkleFundDistributorAddress),
+    enabled: !!merkleFundDistributorAddress,
   })
 
   const allowlistEnabled = distributorState?.allowlistEnabled
@@ -176,7 +179,7 @@ export const DistributePage = () => {
               abi: erc20Abi,
               functionName: 'allowance',
               args: connectedAddress
-                ? [connectedAddress, network.contracts.merkleFundDistributor]
+                ? [connectedAddress, merkleFundDistributorAddress]
                 : undefined,
             },
           ]
@@ -185,7 +188,8 @@ export const DistributePage = () => {
       enabled:
         tokenType === 'erc20' &&
         tokenAddress.length === 42 &&
-        !!connectedAddress,
+        !!connectedAddress &&
+        !!merkleFundDistributorAddress,
     },
   })
 
@@ -212,7 +216,8 @@ export const DistributePage = () => {
 
   // Approve ERC20 tokens
   const handleApprove = async () => {
-    if (!connectedAddress || !publicClient) return
+    if (!connectedAddress || !publicClient || !merkleFundDistributorAddress)
+      return
 
     setError(null)
     setIsDistributing(true)
@@ -222,7 +227,7 @@ export const DistributePage = () => {
         address: tokenAddress as Hex,
         abi: erc20Abi,
         functionName: 'approve',
-        args: [network.contracts.merkleFundDistributor, parsedAmount],
+        args: [merkleFundDistributorAddress, parsedAmount],
         account: connectedAddress,
       })
 
@@ -231,7 +236,7 @@ export const DistributePage = () => {
           address: tokenAddress as Hex,
           abi: erc20Abi,
           functionName: 'approve',
-          args: [network.contracts.merkleFundDistributor, parsedAmount],
+          args: [merkleFundDistributorAddress, parsedAmount],
           gas: (gasEstimate * 120n) / 100n,
         },
         successMessage: 'Token approval successful!',
@@ -250,7 +255,13 @@ export const DistributePage = () => {
 
   // Create a new distribution
   const handleDistribute = async () => {
-    if (!connectedAddress || !publicClient || !latestMerkleTree?.tree) return
+    if (
+      !connectedAddress ||
+      !publicClient ||
+      !merkleFundDistributorAddress ||
+      !latestMerkleTree?.tree
+    )
+      return
 
     setError(null)
     setIsDistributing(true)
@@ -263,7 +274,7 @@ export const DistributePage = () => {
       const expectedRoot = latestMerkleTree.tree.root as Hex
       const gasEstimate = await publicClient.estimateContractGas({
         abi: merkleFundDistributorAbi,
-        address: network.contracts.merkleFundDistributor,
+        address: merkleFundDistributorAddress,
         functionName: 'distribute',
         args: [token as Hex, parsedAmount, expectedRoot],
         account: connectedAddress,
@@ -273,7 +284,7 @@ export const DistributePage = () => {
       await txToast({
         tx: {
           abi: merkleFundDistributorAbi,
-          address: network.contracts.merkleFundDistributor,
+          address: merkleFundDistributorAddress,
           functionName: 'distribute',
           args: [token as Hex, parsedAmount, expectedRoot],
           gas: (gasEstimate * 120n) / 100n,
@@ -297,7 +308,8 @@ export const DistributePage = () => {
 
   // Claim funds from a distribution
   const handleClaim = async (distribution: DistributionRow) => {
-    if (!connectedAddress || !publicClient) return
+    if (!connectedAddress || !publicClient || !merkleFundDistributorAddress)
+      return
 
     setError(null)
     setIsClaiming(true)
@@ -323,7 +335,7 @@ export const DistributePage = () => {
 
       const gasEstimate = await publicClient.estimateContractGas({
         abi: merkleFundDistributorAbi,
-        address: network.contracts.merkleFundDistributor,
+        address: merkleFundDistributorAddress,
         functionName: 'claim',
         args: [
           distribution.id,
@@ -337,7 +349,7 @@ export const DistributePage = () => {
       await txToast({
         tx: {
           abi: merkleFundDistributorAbi,
-          address: network.contracts.merkleFundDistributor,
+          address: merkleFundDistributorAddress,
           functionName: 'claim',
           args: [
             distribution.id,
@@ -360,7 +372,8 @@ export const DistributePage = () => {
 
   // Claim all available distributions
   const handleClaimAll = async () => {
-    if (!connectedAddress || !publicClient) return
+    if (!connectedAddress || !publicClient || !merkleFundDistributorAddress)
+      return
 
     // Get distributions with claimable amounts at the time of click
     const toClaim = distributions.filter((d) => getClaimableAmount(d) > 0n)
@@ -392,7 +405,7 @@ export const DistributePage = () => {
 
         const gasEstimate = await publicClient.estimateContractGas({
           abi: merkleFundDistributorAbi,
-          address: network.contracts.merkleFundDistributor,
+          address: merkleFundDistributorAddress,
           functionName: 'claim',
           args: [
             distribution.id,
@@ -406,7 +419,7 @@ export const DistributePage = () => {
         txs.push({
           tx: {
             abi: merkleFundDistributorAbi,
-            address: network.contracts.merkleFundDistributor,
+            address: merkleFundDistributorAddress,
             functionName: 'claim',
             args: [
               distribution.id,
