@@ -633,7 +633,7 @@ const commonAttestationColumns = (
   {
     key: 'network',
     header: 'NETWORK',
-    tooltip: 'The network(s) this attestation belongs to based on its schema.',
+    tooltip: 'The network this attestation was made on.',
     sortable: false,
     render: (row) => {
       const networkName = SCHEMA_TO_NETWORK[row.schema.toLowerCase()]
