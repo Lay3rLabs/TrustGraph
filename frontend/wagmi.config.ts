@@ -9,6 +9,6 @@ export default defineConfig({
     .map(([name, address]) => ({
       abi: require(`./abis/${name}.json`).abi,
       name,
-      address: address as `0x${string}`,
+      ...(address ? { address: address as `0x${string}` } : {}),
     })),
 })

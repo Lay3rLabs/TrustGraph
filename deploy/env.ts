@@ -134,12 +134,13 @@ export class DevEnv extends EnvBase {
         {
           name: 'Network',
           script: 'script/DeployNetwork.s.sol:DeployScript',
-          sig: 'run(string,string,string,bool,uint256)',
+          sig: 'run(string,string,string,bool,uint256,uint256)',
           args: (ctx) => [
             ctx.options.serviceManagerAddress,
             readJsonKey('.docker/eas_deploy.json', 'eas'),
             readJsonKey('.docker/eas_deploy.json', 'schema_registrar'),
             true,
+            0,
             3,
           ],
         },
@@ -238,12 +239,13 @@ export class ProdEnv extends EnvBase {
         {
           name: 'Network',
           script: 'script/DeployNetwork.s.sol:DeployScript',
-          sig: 'run(string,string,string,,bool,uint256)',
+          sig: 'run(string,string,string,bool,uint256,uint256)',
           args: (ctx) => [
             ctx.options.serviceManagerAddress,
             readJsonKey('.docker/eas_deploy.json', 'eas'),
             readJsonKey('.docker/eas_deploy.json', 'schema_registrar'),
             false,
+            0,
             1,
           ],
         },

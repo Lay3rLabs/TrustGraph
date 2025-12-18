@@ -59,17 +59,17 @@ try {
     WavsIndexer: deployment.wavs_indexer,
 
     // EAS
-    EASAttestTrigger: deployment.eas.attest_trigger,
-    WavsAttester: deployment.eas.attester,
+    // EASAttestTrigger: deployment.eas.attest_trigger,
+    // WavsAttester: deployment.eas.attester,
     EAS: deployment.eas.eas,
-    EASIndexerResolver: deployment.networks[0].contracts.eas_indexer_resolver,
     SchemaRegistrar: deployment.eas.schema_registrar,
     SchemaRegistry: deployment.eas.schema_registry,
 
-    // Merkler
-    MerkleSnapshot: deployment.networks[0].contracts.merkle_snapshot,
-    MerkleGovModule: deployment.zodiac_safes?.safe1?.merkle_gov_module,
-    MerkleFundDistributor: deployment.networks[0].contracts.fund_distributor,
+    // Generate ABIs but set no address since each network has its own.
+    EASIndexerResolver: '',
+    MerkleSnapshot: '',
+    MerkleGovModule: '',
+    MerkleFundDistributor: '',
   }
 
   // Make sure ABIs exist for all contracts, and copy them to the frontend.

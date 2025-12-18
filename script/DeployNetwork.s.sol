@@ -38,6 +38,7 @@ contract DeployScript is Common {
    * @param easAddr The address of the EAS contract
    * @param schemaRegistrarAddr The address of the schema registrar contract
    * @param deployFundDistributor Whether to deploy the fund distributor contract
+   * @param firstIndex The index of the first network to deploy
    * @param count How many networks to deploy
    */
   function run(
@@ -45,6 +46,7 @@ contract DeployScript is Common {
     string calldata easAddr,
     string calldata schemaRegistrarAddr,
     bool deployFundDistributor,
+    uint256 firstIndex,
     uint256 count
   ) public {
     address serviceManager = vm.parseAddress(serviceManagerAddr);
@@ -53,7 +55,7 @@ contract DeployScript is Common {
 
     vm.startBroadcast(_privateKey);
 
-    for (uint256 i = 0; i < count; i++) {
+    for (uint256 i = firstIndex; i < firstIndex + count; i++) {
       string memory scriptOutputPath = string.concat(
         root,
         '/config/network_deploy_',
