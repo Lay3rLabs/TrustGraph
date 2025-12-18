@@ -100,7 +100,7 @@ vars:
   MERKLE_FUND_DISTRIBUTOR_ADDRESS:
     sh: test -f .docker/deployment_summary.json && jq -r '.merkler.fund_distributor' .docker/deployment_summary.json || echo ""
   MERKLE_SNAPSHOT_ADDR:
-    sh: test -f config/network_deploy_0.json && jq -r '.contracts.merkle_snapshot' config/network_deploy_0.json || echo ""
+    sh: test -f config/network_deploy_dev_0.json && jq -r '.contracts.merkle_snapshot' config/network_deploy_dev_0.json || echo ""
 
   # Schema UIDs (loaded from deployment summary)
   VOUCHING_SCHEMA_ID:

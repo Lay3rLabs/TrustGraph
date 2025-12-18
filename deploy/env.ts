@@ -126,15 +126,16 @@ abstract class EnvBase implements IEnv {
       networks = readJson(this.networksConfigFile)
     }
 
-    // Find all network_deploy_*.json files
+    // Find all network_deploy_ENV_*.json files
+    const deployFilesRegex = new RegExp(`^network_deploy_${env}_(\\d+)\.json$`)
     const deployFiles = fs
       .readdirSync('config')
-      .filter((file) => file.match(/^network_deploy_\d+\.json$/))
+      .filter((file) => file.match(deployFilesRegex))
       .sort()
 
     for (const deployFile of deployFiles) {
-      // Extract index from filename (e.g., "network_deploy_0.json" -> 0)
-      const match = deployFile.match(/network_deploy_(\d+)\.json/)
+      // Extract index from filename (e.g., "network_deploy_dev_0.json" -> 0)
+      const match = deployFile.match(deployFilesRegex)
       if (!match) {
         continue
       }
@@ -264,12 +265,13 @@ export class DevEnv extends EnvBase {
         {
           name: 'Network',
           script: 'script/DeployNetwork.s.sol:DeployScript',
-          sig: 'run(string,string,string,bool,uint256,uint256)',
+          sig: 'run(string,string,string,bool,string,uint256,uint256)',
           args: (ctx) => [
             ctx.options.serviceManagerAddress,
             readJsonKey('.docker/eas_deploy.json', 'eas'),
             readJsonKey('.docker/eas_deploy.json', 'schema_registrar'),
             true,
+            'dev',
             0,
             numNetworks,
           ],
@@ -287,7 +289,7 @@ export class DevEnv extends EnvBase {
             ctx.options.serviceManagerAddress,
             // Use existing merkle snapshot contract.
             readJsonKey(
-              'config/network_deploy_0.json',
+              'config/network_deploy_dev_0.json',
               'contracts.merkle_snapshot'
             ),
           ],
@@ -392,12 +394,13 @@ export class ProdEnv extends EnvBase {
           (network, index): ContractDeployment => ({
             name: `Network: ${network.name}`,
             script: 'script/DeployNetwork.s.sol:DeployScript',
-            sig: 'run(string,string,string,bool,uint256,uint256)',
+            sig: 'run(string,string,string,bool,string,uint256,uint256)',
             args: (ctx) => [
               ctx.options.serviceManagerAddress,
               readJsonKey('.docker/eas_deploy.json', 'eas'),
               readJsonKey('.docker/eas_deploy.json', 'schema_registrar'),
               false,
+              'prod',
               index,
               1,
             ],

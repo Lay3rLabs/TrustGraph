@@ -38,6 +38,7 @@ contract DeployScript is Common {
    * @param easAddr The address of the EAS contract
    * @param schemaRegistrarAddr The address of the schema registrar contract
    * @param deployFundDistributor Whether to deploy the fund distributor contract
+   * @param env The environment suffix for the deployment file name
    * @param firstIndex The index of the first network to deploy
    * @param count How many networks to deploy
    */
@@ -46,6 +47,7 @@ contract DeployScript is Common {
     string calldata easAddr,
     string calldata schemaRegistrarAddr,
     bool deployFundDistributor,
+    string calldata env,
     uint256 firstIndex,
     uint256 count
   ) public {
@@ -59,6 +61,8 @@ contract DeployScript is Common {
       string memory scriptOutputPath = string.concat(
         root,
         '/config/network_deploy_',
+        env,
+        '_',
         Strings.toString(i),
         '.json'
       );
