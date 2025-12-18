@@ -252,6 +252,7 @@ export const AccountProfilePage = ({
   // If in-network and has attestations, show the network graph.
   const showNetworkGraph =
     inAnyNetwork &&
+    selectedNetworkId !== 'all' &&
     networkRows.some(
       (row) =>
         row.attestationsReceived.inNetwork.length > 0 ||
