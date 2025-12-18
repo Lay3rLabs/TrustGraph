@@ -91,7 +91,7 @@ export const CreateAttestationModal = ({
 
   const form = useForm<AttestationFormData>({
     defaultValues: {
-      networkId: networkContext?.network.id || '',
+      networkId: networkContext?.network.id || NETWORKS[0].id || '',
       schema: 'vouching',
       recipient: defaultRecipient,
       data: {},
