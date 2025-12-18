@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, inArray, ne, or } from 'drizzle-orm'
 import { Hono } from 'hono'
+import { uniqBy } from 'lodash'
 import { db } from 'ponder:api'
 import { easAttestation, merkleSnapshot } from 'ponder:schema'
 import { Hex } from 'viem'
@@ -27,13 +28,18 @@ export type NetworkProfile = {
   score: string
   /** Whether or not this account is validated. */
   validated: boolean
-  /** Attestation UIDs given by this account (if they are in-network), or 0. */
-  attestationsGiven: string[]
+  /** Attestation UIDs given by this account that are counted for the network. */
+  attestationsGiven: {
+    /** Attestation UIDs sent by this account if it's in the network (only the latest per-recipient is counted). */
+    inNetwork: string[]
+    /** Attestation UIDs sent by this account if it's out of the network or old duplicates to in-network accounts. */
+    outOfNetwork: string[]
+  }
   /** Attestation UIDs received by this account by in-network and out-of-network accounts. */
   attestationsReceived: {
     /** Attestation UIDs received by this account from in-network accounts. */
     inNetwork: string[]
-    /** Attestation UIDs received by this account from out-of-network accounts. */
+    /** Attestation UIDs received by this account from out-of-network accounts (or old duplicates from in-network accounts). */
     outOfNetwork: string[]
   }
 }
@@ -247,6 +253,12 @@ const buildNetworkProfile = ({
   attestations: (typeof easAttestation.$inferSelect)[]
   network: (typeof NETWORKS)[number]
 }): NetworkProfile => {
+  // Set of in-network account addresses.
+  const inNetworkAccounts = new Set(
+    entries.filter((e) => e.value > 0n).map((e) => e.account.toLowerCase())
+  )
+  const isInNetwork = inNetworkAccounts.has(account.toLowerCase())
+
   const rank =
     entries.findIndex((entry) => isHexEqual(entry.account, account)) + 1 || -1
 
@@ -265,32 +277,51 @@ const buildNetworkProfile = ({
           isHexEqual(schema.uid, attestation.schema)
         )
     )
-    .map((attestation) => attestation.uid)
+    // Sort by timestamp in descending order so the newest attestations are first.
+    .sort((a, b) => Number(b.timestamp - a.timestamp))
 
-  // Set of in-network account addresses.
-  const inNetworkAccounts = new Set(
-    entries.filter((e) => e.value > 0n).map((e) => e.account.toLowerCase())
-  )
+  // Attestations sent to accounts if this account is in the network (de-duplicated by recipient, the most recent attestation is kept).
+  const inNetworkAttestationsGiven = isInNetwork
+    ? uniqBy(
+        attestationsGiven.filter((attestation) =>
+          inNetworkAccounts.has(attestation.recipient.toLowerCase())
+        ),
+        'recipient'
+      ).map((attestation) => attestation.uid)
+    : []
 
-  const attestationsReceived = attestations.filter(
-    (attestation) =>
-      // Attestation is received by the account.
-      isHexEqual(attestation.recipient, account) &&
-      // Attestation is for a schema that is part of the network.
-      network.schemas.some((schema) =>
-        isHexEqual(schema.uid, attestation.schema)
-      )
-  )
-
-  const inNetworkAttestationsReceived = attestationsReceived
-    .filter((attestation) =>
-      inNetworkAccounts.has(attestation.attester.toLowerCase())
+  // Attestations sent to accounts if this account is out of the network (or old duplicates to in-network accounts).
+  const outOfNetworkAttestationsGiven = attestationsGiven
+    .filter(
+      (attestation) => !inNetworkAttestationsGiven.includes(attestation.uid)
     )
     .map((attestation) => attestation.uid)
-  const outOfNetworkAttestationsReceived = attestationsReceived
+
+  const attestationsReceived = attestations
     .filter(
       (attestation) =>
-        !inNetworkAccounts.has(attestation.attester.toLowerCase())
+        // Attestation is received by the account.
+        isHexEqual(attestation.recipient, account) &&
+        // Attestation is for a schema that is part of the network.
+        network.schemas.some((schema) =>
+          isHexEqual(schema.uid, attestation.schema)
+        )
+    )
+    // Sort by timestamp in descending order so the newest attestations are first.
+    .sort((a, b) => Number(b.timestamp - a.timestamp))
+
+  // Attestations received from in-network accounts (de-duplicated by attester, the most recent attestation is kept).
+  const inNetworkAttestationsReceived = uniqBy(
+    attestationsReceived.filter((attestation) =>
+      inNetworkAccounts.has(attestation.attester.toLowerCase())
+    ),
+    'attester'
+  ).map((attestation) => attestation.uid)
+
+  // Attestations received from out-of-network accounts (or old duplicates from in-network accounts).
+  const outOfNetworkAttestationsReceived = attestationsReceived
+    .filter(
+      (attestation) => !inNetworkAttestationsReceived.includes(attestation.uid)
     )
     .map((attestation) => attestation.uid)
 
@@ -302,7 +333,10 @@ const buildNetworkProfile = ({
     rank,
     score,
     validated: Number(score) >= network.validatedThreshold,
-    attestationsGiven,
+    attestationsGiven: {
+      inNetwork: inNetworkAttestationsGiven,
+      outOfNetwork: outOfNetworkAttestationsGiven,
+    },
     attestationsReceived: {
       inNetwork: inNetworkAttestationsReceived,
       outOfNetwork: outOfNetworkAttestationsReceived,

@@ -167,19 +167,20 @@ export const CreateAttestationModal = ({
     totalValue > 0 && networkProfile && networkProfile.score !== '0'
       ? '**Note:**\n' +
         [
-          (networkProfile.attestationsGiven.length > 0 ? '- ' : '') +
+          (networkProfile.attestationsGiven.inNetwork.length > 0 ? '- ' : '') +
             `Your **TrustScore** determines how much influence your attestations carry — currently **${formatPercentage(
               (Number(networkProfile.score) / totalValue) * 100
             )} of total network trust**.`,
-          ...(networkProfile.attestationsGiven.length > 0
+          ...(networkProfile.attestationsGiven.inNetwork.length > 0
             ? [
                 `- You've made **${formatBigNumber(
-                  networkProfile.attestationsGiven.length,
+                  networkProfile.attestationsGiven.inNetwork.length,
                   undefined,
                   true
                 )} attestations** — adding another will reduce each attestation's weight by **${formatPercentage(
-                  (1 / networkProfile.attestationsGiven.length -
-                    1 / (networkProfile.attestationsGiven.length + 1)) *
+                  (1 / networkProfile.attestationsGiven.inNetwork.length -
+                    1 /
+                      (networkProfile.attestationsGiven.inNetwork.length + 1)) *
                     100
                 )}**.`,
               ]

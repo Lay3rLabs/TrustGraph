@@ -202,11 +202,15 @@ export const AccountProfilePage = ({
       key: 'attestationsGiven',
       header: 'SENT',
       tooltip:
-        'The number of attestations this member has given to other participants, indicating their level of engagement in building network trust.',
+        'The number of attestations this member has given to other participants that are counted for the network, indicating their level of engagement in building network trust.',
       sortable: true,
-      accessor: (row) => row.attestationsGiven.length,
+      accessor: (row) => row.attestationsGiven.inNetwork.length,
       render: (row) =>
-        formatBigNumber(row.attestationsGiven.length, undefined, true),
+        formatBigNumber(
+          row.attestationsGiven.inNetwork.length,
+          undefined,
+          true
+        ),
     },
     {
       key: 'score',
@@ -234,7 +238,7 @@ export const AccountProfilePage = ({
     networkRows.some(
       (row) =>
         row.attestationsReceived.inNetwork.length > 0 ||
-        row.attestationsGiven.length > 0
+        row.attestationsGiven.inNetwork.length > 0
     )
 
   const allAttestationsReceived =
@@ -253,13 +257,27 @@ export const AccountProfilePage = ({
     ? networkAttestationsReceived
     : allAttestationsReceived
 
-  const attestationsGiven =
+  const outOfNetworkAttestationsReceived =
+    allAttestationsReceived.length - networkAttestationsReceived.length
+
+  const allAttestationsGiven =
     attestations?.filter((attestation) =>
       isHexEqual(attestation.attester, address)
     ) || []
 
-  const outOfNetworkAttestationsReceived =
-    allAttestationsReceived.length - networkAttestationsReceived.length
+  const networkAttestationsGiven = networkRows.flatMap(
+    (row) =>
+      attestations?.filter((attestation) =>
+        row.attestationsGiven.inNetwork.includes(attestation.uid)
+      ) || []
+  )
+
+  const attestationsGiven = onlyNetworkAttestations
+    ? networkAttestationsGiven
+    : allAttestationsGiven
+
+  const outOfNetworkAttestationsGiven =
+    allAttestationsGiven.length - networkAttestationsGiven.length
 
   return (
     <div className="space-y-6">
@@ -409,7 +427,11 @@ export const AccountProfilePage = ({
                 />
                 <StatisticCard
                   title="ATTESTATIONS MADE"
-                  tooltip="Total number of attestations this account has made to others."
+                  tooltip={
+                    onlyNetworkAttestations
+                      ? 'Total number of attestations this account has given to other members that are counted for the network.'
+                      : 'Total number of attestations this account has given to others.'
+                  }
                   value={formatBigNumber(
                     attestationsGiven.length,
                     undefined,
@@ -485,7 +507,7 @@ export const AccountProfilePage = ({
                 <div className="flex flex-row gap-1 items-center">
                   <InfoTooltip
                     title={
-                      'Attestations from accounts outside of the Trust Network are currently hidden, as they do not impact this account\'s score. To view these attestations, change the filter from "Network Only" to "All Attestations".'
+                      'Attestations from accounts outside of the Trust Network and duplicates from in-network accounts are currently hidden, as they do not impact this account\'s score. To view these attestations, change the filter from "Network Only" to "All Attestations".'
                     }
                   />
                   <p className="text-xs text-muted-foreground italic">
@@ -534,6 +556,28 @@ export const AccountProfilePage = ({
                 getRowKey={(row) => row.uid}
               />
             )}
+
+            {!isLoading &&
+              onlyNetworkAttestations &&
+              outOfNetworkAttestationsGiven > 0 && (
+                <div className="flex flex-row gap-1 items-center">
+                  <InfoTooltip
+                    title={
+                      'Attestations to accounts outside of the Trust Network and duplicates to in-network accounts are currently hidden, as they are not counted in the network. To view these attestations, change the filter from "Network Only" to "All Attestations".'
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground italic">
+                    {formatBigNumber(
+                      outOfNetworkAttestationsGiven,
+                      undefined,
+                      true
+                    )}{' '}
+                    out-of-network attestation
+                    {outOfNetworkAttestationsGiven > 1 ? 's are' : ' is'} hidden
+                    from view.
+                  </p>
+                </div>
+              )}
           </div>
         </>
       )}

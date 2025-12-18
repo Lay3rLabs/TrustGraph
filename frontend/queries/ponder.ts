@@ -121,13 +121,18 @@ export type NetworkProfile = {
   score: string
   /** Whether or not this account is validated. */
   validated: boolean
-  /** Attestation UIDs given by this account (if they are in-network), or 0. */
-  attestationsGiven: string[]
+  /** Attestation UIDs given by this account that are counted for the network. */
+  attestationsGiven: {
+    /** Attestation UIDs sent by this account if it's in the network (only the latest per-recipient is counted). */
+    inNetwork: string[]
+    /** Attestation UIDs sent by this account if it's out of the network or old duplicates to in-network accounts. */
+    outOfNetwork: string[]
+  }
   /** Attestation UIDs received by this account by in-network and out-of-network accounts. */
   attestationsReceived: {
     /** Attestation UIDs received by this account from in-network accounts. */
     inNetwork: string[]
-    /** Attestation UIDs received by this account from out-of-network accounts. */
+    /** Attestation UIDs received by this account from out-of-network accounts (or old duplicates from in-network accounts). */
     outOfNetwork: string[]
   }
 }
