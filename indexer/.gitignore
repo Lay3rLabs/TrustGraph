@@ -16,6 +16,7 @@ yarn-error.log*
 # Ponder
 /generated/
 /.ponder/
+ponder-env.d.ts
 
 # active config
 networks.json

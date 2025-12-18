@@ -9,6 +9,7 @@
 
 # production
 /build
+lib/contracts.ts
 
 # debug
 npm-debug.log*
