@@ -329,7 +329,7 @@ export function NetworkGraph({
       ) : error || !accountData || !attestationsData ? (
         <div className="w-full h-full flex justify-center items-center border border-destructive rounded-md p-4">
           <p className="text-sm text-destructive">
-            Error: {error || 'No data'}
+            {error ? `Error: ${error}` : 'EMPTY NETWORK'}
           </p>
         </div>
       ) : (

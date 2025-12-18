@@ -161,6 +161,10 @@ export const ponderQueries = {
             entries: sortedEntries,
           }
         } else {
+          if (response.status === 404) {
+            return null
+          }
+
           throw new Error(
             `Failed to fetch latest merkle tree: ${response.status} ${
               response.statusText
@@ -253,7 +257,7 @@ export const ponderQueries = {
   network: (snapshot: string) =>
     queryOptions({
       queryKey: ponderKeys.network(snapshot),
-      queryFn: async (): Promise<NetworkData> => {
+      queryFn: async (): Promise<NetworkData | null> => {
         const response = await fetch(`${APIS.ponder}/network/${snapshot}`)
 
         if (response.ok) {
@@ -266,6 +270,10 @@ export const ponderQueries = {
             ),
           }
         } else {
+          if (response.status === 404) {
+            return null
+          }
+
           throw new Error(
             `Failed to fetch network: ${response.status} ${
               response.statusText

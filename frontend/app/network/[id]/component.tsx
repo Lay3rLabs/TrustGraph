@@ -8,6 +8,7 @@ import { Suspense, useState } from 'react'
 import { TableAddress } from '@/components/Address'
 import { BreadcrumbRenderer } from '@/components/BreadcrumbRenderer'
 import { Button, ButtonLink } from '@/components/Button'
+import { Card } from '@/components/Card'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
 import { Dropdown } from '@/components/Dropdown'
 import { ExportButton } from '@/components/ExportButton'
@@ -313,14 +314,14 @@ export const NetworkPage = () => {
 
         {/* No Data Message */}
         {!isLoading && (!networkData || networkData.length === 0) && !error && (
-          <div className="text-center py-8 border border-gray-300 bg-white rounded-sm shadow-sm">
+          <Card type="primary" size="lg" className="text-center py-8">
             <div className="text-sm text-gray-600">
-              NO NETWORK DATA AVAILABLE
+              NO NETWORK MEMBERS FOUND
             </div>
             <div className="text-xs mt-2 text-gray-700">
-              ◆ PARTICIPATE IN ATTESTATIONS TO APPEAR ON NETWORK ◆
+              CREATE ATTESTATIONS TO START BUILDING THE NETWORK
             </div>
-          </div>
+          </Card>
         )}
       </div>
     </div>

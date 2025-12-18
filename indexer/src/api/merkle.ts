@@ -87,7 +87,7 @@ merkleApp.get('/:snapshot/:root', async (c) => {
   try {
     root = await resolveRoot(merkleSnapshotContract, root)
   } catch (error: any) {
-    return c.json({ error: error.message }, 400)
+    return c.json({ error: error.message }, 404)
   }
 
   const treeWithEntries = await getMerkleTreeWithEntries(
@@ -115,7 +115,7 @@ merkleApp.get('/:snapshot/:root/:account', async (c) => {
   try {
     root = await resolveRoot(merkleSnapshotContract, root)
   } catch (error: any) {
-    return c.json({ error: error.message }, 400)
+    return c.json({ error: error.message }, 404)
   }
 
   const entry = await offchainDb.query.merkleEntry.findFirst({
