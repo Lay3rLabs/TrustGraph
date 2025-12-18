@@ -16,6 +16,7 @@ ponder.on(
     await context.db.insert(easAttestation).values({
       uid,
       schema: attestation.schema,
+      resolver: event.log.address,
       attester: attestation.attester,
       recipient: attestation.recipient,
       ref: attestation.refUID,

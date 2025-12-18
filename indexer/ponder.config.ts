@@ -58,7 +58,7 @@ export default createConfig({
       chain: {
         [CORE_CHAIN]: {
           address: deploymentSummary.networks.map(
-            (network) => network.contracts.eas_indexer_resolver as Hex
+            (network) => network.contracts.easIndexerResolver as Hex
           ),
         },
       },
@@ -69,7 +69,7 @@ export default createConfig({
       chain: {
         [CORE_CHAIN]: {
           address: deploymentSummary.networks.map(
-            (network) => network.contracts.merkle_snapshot as Hex
+            (network) => network.contracts.merkleSnapshot as Hex
           ),
         },
       },
@@ -77,11 +77,14 @@ export default createConfig({
     merkleGovModule: {
       abi: merkleGovModuleAbi,
       startBlock: IS_PRODUCTION ? 0 : 'latest',
-      chain: deploymentSummary.zodiac_safes?.safe1?.merkle_gov_module
+      chain: deploymentSummary.networks.some(
+        (network) => network.contracts.merkleGovModule
+      )
         ? {
             [CORE_CHAIN]: {
-              address: deploymentSummary.zodiac_safes.safe1
-                .merkle_gov_module as Hex,
+              address: deploymentSummary.networks.flatMap(
+                (network) => (network.contracts.merkleGovModule as Hex) || []
+              ),
             },
           }
         : {},
@@ -90,12 +93,13 @@ export default createConfig({
       abi: merkleFundDistributorAbi,
       startBlock: IS_PRODUCTION ? 0 : 'latest',
       chain: deploymentSummary.networks.some(
-        (network) => network.contracts.fund_distributor
+        (network) => network.contracts.merkleFundDistributor
       )
         ? {
             [CORE_CHAIN]: {
               address: deploymentSummary.networks.flatMap(
-                (network) => (network.contracts.fund_distributor as Hex) || []
+                (network) =>
+                  (network.contracts.merkleFundDistributor as Hex) || []
               ),
             },
           }

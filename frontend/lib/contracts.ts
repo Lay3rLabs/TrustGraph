@@ -589,7 +589,7 @@ export const easAbi = [
   { type: 'error', inputs: [], name: 'WrongSchema' },
 ] as const
 
-export const easAddress = '0xe08C11E1310b0598600B731986A1981E336E9D42' as const
+export const easAddress = '0xa288A6BE0AA55d882E5AADcA3eFba0c19ED99026' as const
 
 export const easConfig = { address: easAddress, abi: easAbi } as const
 
@@ -771,14 +771,6 @@ export const easIndexerResolverAbi = [
   { type: 'error', inputs: [], name: 'NotPayable' },
 ] as const
 
-export const easIndexerResolverAddress =
-  '0x32361dC2C3C61F34881a934165944bf68D0C8567' as const
-
-export const easIndexerResolverConfig = {
-  address: easIndexerResolverAddress,
-  abi: easIndexerResolverAbi,
-} as const
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // IWavsServiceManager
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -913,7 +905,7 @@ export const iWavsServiceManagerAbi = [
 ] as const
 
 export const iWavsServiceManagerAddress =
-  '0x396EA16724aD254c44945d926E945250aEAaAaF6' as const
+  '0xc6bF686A51e3d76Ba9e1EeC6abE46bE42C3fED95' as const
 
 export const iWavsServiceManagerConfig = {
   address: iWavsServiceManagerAddress,
@@ -1502,14 +1494,6 @@ export const merkleFundDistributorAbi = [
     name: 'UnexpectedMerkleRoot',
   },
 ] as const
-
-export const merkleFundDistributorAddress =
-  '0x5efEdc1Cec4618745ce9379db4eAD45E5C437fb5' as const
-
-export const merkleFundDistributorConfig = {
-  address: merkleFundDistributorAddress,
-  abi: merkleFundDistributorAbi,
-} as const
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // MerkleGovModule
@@ -2216,14 +2200,6 @@ export const merkleGovModuleAbi = [
   { type: 'error', inputs: [], name: 'VotingClosed' },
 ] as const
 
-export const merkleGovModuleAddress =
-  '0x5C12BDe1254eFB90d7082459A44E75B87a8e566E' as const
-
-export const merkleGovModuleConfig = {
-  address: merkleGovModuleAddress,
-  abi: merkleGovModuleAbi,
-} as const
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // MerkleSnapshot
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2706,14 +2682,6 @@ export const merkleSnapshotAbi = [
   { type: 'error', inputs: [], name: 'NoMerkleStates' },
 ] as const
 
-export const merkleSnapshotAddress =
-  '0x11975a729fb20fd7ED509F968A18Fb747F3018d3' as const
-
-export const merkleSnapshotConfig = {
-  address: merkleSnapshotAddress,
-  abi: merkleSnapshotAbi,
-} as const
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SchemaRegistrar
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2751,7 +2719,7 @@ export const schemaRegistrarAbi = [
 ] as const
 
 export const schemaRegistrarAddress =
-  '0x9b6bf94C46821540B2E9e8D9E66a7A857fc54F00' as const
+  '0xcFdB756b4b6494Ed7Ab02f36ef32b86c13eE2F74' as const
 
 export const schemaRegistrarConfig = {
   address: schemaRegistrarAddress,
@@ -2843,7 +2811,7 @@ export const schemaRegistryAbi = [
 ] as const
 
 export const schemaRegistryAddress =
-  '0x23b00468Cd1BCe0fBb8aEbC779c447f9055972B2' as const
+  '0x81603B98DEd3aB86d1F46F2cB936e461c142e34F' as const
 
 export const schemaRegistryConfig = {
   address: schemaRegistryAddress,
@@ -3875,7 +3843,7 @@ export const wavsIndexerAbi = [
 ] as const
 
 export const wavsIndexerAddress =
-  '0x10D34cd93170B737DCe6cD338fD25dc5bd0B4EAD' as const
+  '0x62bdC01bD873c74bb17d16d082833fD8498C0B24' as const
 
 export const wavsIndexerConfig = {
   address: wavsIndexerAddress,

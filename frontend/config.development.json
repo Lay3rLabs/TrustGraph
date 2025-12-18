@@ -4,16 +4,16 @@
     "ponder": "http://127.0.0.1:65421",
     "ipfsGateway": "http://127.0.0.1:8080/ipfs/"
   },
-  "wavsServiceId": "",
+  "wavsServiceId": "343e2d29b1d82e2f43a1cb54e1104ca76f300a7e516846de2df1fe66ec86bdda",
   "contracts": {
-    "IWavsServiceManager": "0x396ea16724ad254c44945d926e945250aeaaaaf6",
-    "WavsIndexer": "0x10D34cd93170B737DCe6cD338fD25dc5bd0B4EAD",
-    "EAS": "0xe08C11E1310b0598600B731986A1981E336E9D42",
-    "EASIndexerResolver": "0x32361dC2C3C61F34881a934165944bf68D0C8567",
-    "SchemaRegistrar": "0x9b6bf94C46821540B2E9e8D9E66a7A857fc54F00",
-    "SchemaRegistry": "0x23b00468Cd1BCe0fBb8aEbC779c447f9055972B2",
-    "MerkleSnapshot": "0x11975a729fb20fd7ED509F968A18Fb747F3018d3",
-    "MerkleGovModule": "0x5C12BDe1254eFB90d7082459A44E75B87a8e566E",
-    "MerkleFundDistributor": "0x5efEdc1Cec4618745ce9379db4eAD45E5C437fb5"
+    "IWavsServiceManager": "0xc6bf686a51e3d76ba9e1eec6abe46be42c3fed95",
+    "WavsIndexer": "0x62bdC01bD873c74bb17d16d082833fD8498C0B24",
+    "EAS": "0xa288A6BE0AA55d882E5AADcA3eFba0c19ED99026",
+    "SchemaRegistrar": "0xcFdB756b4b6494Ed7Ab02f36ef32b86c13eE2F74",
+    "SchemaRegistry": "0x81603B98DEd3aB86d1F46F2cB936e461c142e34F",
+    "EASIndexerResolver": "",
+    "MerkleSnapshot": "",
+    "MerkleGovModule": "",
+    "MerkleFundDistributor": ""
   }
 }
