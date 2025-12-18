@@ -110,6 +110,8 @@ const getColorFromValue = (value: number): string => {
 }
 
 export interface NetworkGraphProps {
+  /** Title to display. */
+  title?: string
   /** Only show attestations connected to this address. */
   onlyAddress?: Hex
   className?: string
@@ -118,6 +120,7 @@ export interface NetworkGraphProps {
 }
 
 export function NetworkGraph({
+  title,
   onlyAddress,
   className,
   initialZoom = 1.25,
@@ -352,6 +355,7 @@ export function NetworkGraph({
             graph={MultiDirectedGraph}
           >
             <SigmaControls
+              title={title}
               graph={graph}
               setShowCursor={setShowCursor}
               defaultLayout="forceatlas2"
@@ -365,11 +369,13 @@ export function NetworkGraph({
 }
 
 const SigmaControls = ({
+  title,
   graph,
   setShowCursor,
   defaultLayout,
   initialZoom,
 }: {
+  title?: string
   graph: MultiDirectedGraph<NetworkGraphNode, NetworkGraphEdge>
   setShowCursor: (hovering: boolean) => void
   defaultLayout: 'circular' | 'forceatlas2'
@@ -603,23 +609,31 @@ const SigmaControls = ({
 
   return (
     <>
-      <ControlsContainer position="top-left">
-        <ZoomControl />
-        <FullScreenControl />
-
-        {layout === 'circular' ? (
-          <div className="react-sigma-control">
-            <button title="Spread Out" onClick={setForceAtlas2Layout}>
-              <Waypoints width="1em" height="1em" />
-            </button>
-          </div>
-        ) : (
-          <div className="react-sigma-control">
-            <button title="Round Out" onClick={setCircularLayout}>
-              <CircleDashed width="1em" height="1em" />
-            </button>
+      <ControlsContainer position="top-left" className="flex flex-col">
+        {title && (
+          <div className="text-sm text-primary text-center pt-2 px-1 pb-1">
+            {title}
           </div>
         )}
+
+        <div className="flex flex-row justify-around">
+          <ZoomControl />
+          <FullScreenControl />
+
+          {layout === 'circular' ? (
+            <div className="react-sigma-control">
+              <button title="Spread Out" onClick={setForceAtlas2Layout}>
+                <Waypoints width="1em" height="1em" />
+              </button>
+            </div>
+          ) : (
+            <div className="react-sigma-control">
+              <button title="Round Out" onClick={setCircularLayout}>
+                <CircleDashed width="1em" height="1em" />
+              </button>
+            </div>
+          )}
+        </div>
       </ControlsContainer>
 
       {Array.from(graph.nodeEntries()).map(({ node, attributes }) => {

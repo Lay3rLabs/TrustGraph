@@ -146,7 +146,9 @@ export function HomePage() {
         <div className="h-[66vh] lg:h-4/5">
           <Suspense fallback={null}>
             <NetworkProvider network={firstNetwork}>
-              <NetworkGraph />
+              <NetworkGraph
+                title={NETWORKS.length > 1 ? firstNetwork.name : undefined}
+              />
             </NetworkProvider>
           </Suspense>
         </div>
