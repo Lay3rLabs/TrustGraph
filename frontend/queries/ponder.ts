@@ -163,7 +163,7 @@ export const ponderQueries = {
           )
         }
       },
-      enabled: !!APIS.ponder,
+      enabled: !!APIS.ponder && !!snapshot,
     }),
   merkleTree: (options?: { snapshot?: string; root?: string }) =>
     queryOptions({
@@ -268,7 +268,7 @@ export const ponderQueries = {
           )
         }
       },
-      enabled: !!APIS.ponder,
+      enabled: !!APIS.ponder && !!snapshot,
     }),
   accountNetworkProfiles: (address: Hex) =>
     queryOptions({
