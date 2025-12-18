@@ -589,7 +589,7 @@ export const easAbi = [
   { type: 'error', inputs: [], name: 'WrongSchema' },
 ] as const
 
-export const easAddress = '0xa288A6BE0AA55d882E5AADcA3eFba0c19ED99026' as const
+export const easAddress = '0xb97684AFC83103eFb049E0288FE5C8b41000BE26' as const
 
 export const easConfig = { address: easAddress, abi: easAbi } as const
 
@@ -905,7 +905,7 @@ export const iWavsServiceManagerAbi = [
 ] as const
 
 export const iWavsServiceManagerAddress =
-  '0xc6bF686A51e3d76Ba9e1EeC6abE46bE42C3fED95' as const
+  '0x59A6751C2ac214ec6048984dA0697ff391E8C6ed' as const
 
 export const iWavsServiceManagerConfig = {
   address: iWavsServiceManagerAddress,
@@ -2719,7 +2719,7 @@ export const schemaRegistrarAbi = [
 ] as const
 
 export const schemaRegistrarAddress =
-  '0xcFdB756b4b6494Ed7Ab02f36ef32b86c13eE2F74' as const
+  '0xd66dF7Fe88944C26c9348c5249ffb1c8af8cE9EE' as const
 
 export const schemaRegistrarConfig = {
   address: schemaRegistrarAddress,
@@ -2811,7 +2811,7 @@ export const schemaRegistryAbi = [
 ] as const
 
 export const schemaRegistryAddress =
-  '0x81603B98DEd3aB86d1F46F2cB936e461c142e34F' as const
+  '0xbD3EB10FB73CDE69e1d5620d13d8227D97715953' as const
 
 export const schemaRegistryConfig = {
   address: schemaRegistryAddress,
@@ -3843,7 +3843,7 @@ export const wavsIndexerAbi = [
 ] as const
 
 export const wavsIndexerAddress =
-  '0x62bdC01bD873c74bb17d16d082833fD8498C0B24' as const
+  '0x9E4B15d3c74c267bE0B801Bf6360fb4ABad027Df' as const
 
 export const wavsIndexerConfig = {
   address: wavsIndexerAddress,

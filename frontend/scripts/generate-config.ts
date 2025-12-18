@@ -14,23 +14,12 @@ const deploymentSummaryFile = path.join(
   __dirname,
   '../../.docker/deployment_summary.json'
 )
-const trustGraphConfigFile = path.join(
-  __dirname,
-  '../../config/trust_graph.template.json'
-)
-const networksDevelopmentConfigFile = path.join(
-  __dirname,
-  '../../config/networks.development.json'
-)
 
 console.log('🔄 Updating config with latest deployment data...')
 
 try {
   // Read configs
   const deployment = JSON.parse(fs.readFileSync(deploymentSummaryFile, 'utf8'))
-  const trustGraphConfig = JSON.parse(
-    fs.readFileSync(trustGraphConfigFile, 'utf8')
-  )
 
   console.log('📋 Found deployment data')
 
@@ -90,64 +79,6 @@ try {
   fs.writeFileSync(configOutputFile, JSON.stringify(configOutput, null, 2))
 
   console.log(`🚀 ${configOutputFile} updated!`)
-
-  // On development, update the contracts, schemas, and trusted seeds in the
-  // networks development config.
-  if (env === 'development') {
-    const networksConfig = JSON.parse(
-      fs.readFileSync(networksDevelopmentConfigFile, 'utf8')
-    )
-
-    const newNetworksConfig = deployment.networks.map((network: any) => {
-      return {
-        ...networksConfig[0],
-        contracts: {
-          merkleSnapshot: network.contracts.merkle_snapshot,
-          merkleFundDistributor: network.contracts.fund_distributor,
-          merkleGovModule: network.contracts.merkle_gov_module,
-        },
-        schemas: Object.values(
-          network.schemas as Record<
-            string,
-            | {
-                uid: string
-                name: string
-                description: string
-                schema: string
-                resolver: string
-                revocable: boolean
-              }
-            | '_'
-          >
-        ).flatMap((data) => {
-          if (data === '_') {
-            return []
-          }
-
-          const fields = data.schema.split(',').map((field) => {
-            const [type, name] = field.split(' ')
-            return {
-              name,
-              type,
-            }
-          })
-
-          return {
-            ...data,
-            fields,
-          }
-        }),
-        trustedSeeds: trustGraphConfig.pagerank_trusted_seeds.split(','),
-      }
-    })
-
-    fs.writeFileSync(
-      networksDevelopmentConfigFile,
-      JSON.stringify(newNetworksConfig, null, 2)
-    )
-
-    console.log(`🚀 ${networksDevelopmentConfigFile} updated!`)
-  }
 } catch (error: any) {
   console.error(`❌ Error updating ${configOutputFile}:`, error.message)
   if (error.code === 'ENOENT') {
