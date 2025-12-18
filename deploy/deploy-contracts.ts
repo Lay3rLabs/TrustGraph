@@ -45,6 +45,12 @@ const main = async () => {
   } = context
 
   for (const contract of env.deployContracts) {
+    const skip = await contract.skip?.(context)
+    if (skip) {
+      console.log(chalk.yellowBright(`🚫 ${contract.name} skipped`))
+      continue
+    }
+
     console.log(chalk.blueBright(`🚀 Deploying ${contract.name}...`))
 
     await execFull({
@@ -67,6 +73,11 @@ const main = async () => {
       },
       shell: true,
     })
+
+    if (contract.postRun) {
+      await contract.postRun(context)
+    }
+
     console.log(chalk.yellowBright(`✅ ${contract.name} deployed`))
   }
 

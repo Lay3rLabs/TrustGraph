@@ -1,4 +1,5 @@
 import { DotenvParseOutput } from 'dotenv'
+import { Hex } from 'viem'
 
 export type ComponentsConfigFile = {
   components: {
@@ -61,6 +62,8 @@ export type ContractDeployment = {
   script: string
   sig: string
   args: (ctx: ProgramContext) => string[]
+  skip?: (ctx: ProgramContext) => boolean | Promise<boolean>
+  postRun?: (ctx: ProgramContext) => void | Promise<void>
 }
 
 export type EnvName = 'dev' | 'prod'
@@ -76,6 +79,7 @@ export type IEnv = {
     gateway: string
   }
   aggregatorTimerDelaySeconds: number
+  networksConfigFile: string
   deployContracts: ContractDeployment[]
   uploadToIpfs: (file: string, apiKey?: string) => Promise<string>
   generateDeploymentSummary: (serviceManagerAddress: string) => object
@@ -100,4 +104,69 @@ export type ProgramContext = {
 export type ProcessConfigOptions = {
   env: IEnv
   extraValues?: Record<string, unknown>
+  arrayUnwraps?: Record<string, number> // e.g., { "networks": 0 }
+}
+
+export type ExpandedComponent = ComponentsConfigFile['components'][number] & {
+  _arrayUnwraps?: Record<string, number>
+}
+
+export type NetworkDeploy = {
+  deployer: Hex
+  contracts: {
+    merkle_snapshot: Hex
+    eas_indexer_resolver: Hex
+    fund_distributor?: Hex
+  }
+  schemas: {
+    [key: string]:
+      | {
+          uid: Hex
+          key: string
+          name: string
+          description: string
+          resolver: Hex
+          revocable: boolean
+          schema: string
+        }
+      // Used as placeholder for forge serialization.
+      | '_'
+  }
+}
+
+export type Network = {
+  id: string
+  name: string
+  link?: {
+    prefix: string
+    label: string
+    href: string
+  }
+  about: string
+  callToAction?: {
+    label: string
+    href: string
+  }
+  criteria: string
+  contracts: {
+    merkleSnapshot: Hex
+    easIndexerResolver: Hex
+    merkleFundDistributor?: Hex
+  }
+  schemas: NetworkSchema[]
+  pagerank: {
+    trustedSeeds: Hex[]
+  }
+  validatedThreshold: number
+}
+
+export type NetworkSchema = {
+  uid: Hex
+  key: string
+  name: string
+  description: string
+  resolver: Hex
+  revocable: boolean
+  schema: string
+  fields: { name: string; type: string }[]
 }

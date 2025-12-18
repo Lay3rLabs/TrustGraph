@@ -1,5 +1,15 @@
 ## Production
 
+### Deploy new network
+
+Add a new network to `config/networks.production.json` with all the correct metadata set, but leave the contracts and schemas blank as they will be filled in by the deployment script.
+
+Then deploy the contracts which will deploy and fill in the missing values:
+
+```bash
+pnpm deploy:contracts
+```
+
 ### Build service.json
 
 ```bash
@@ -19,6 +29,7 @@ pnpm deploy:upload-service
 cd infra/wavs-1
 sh start.sh
 ```
+
 ⚠️ If you get `0x3dda1739` in the aggregator, make sure to run this because there is no operator:
 
 ```bash

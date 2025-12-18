@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { Hex, formatUnits } from 'viem'
+import { formatUnits } from 'viem'
 
 export const cn = (...inputs: ClassValue[]) => {
   return twMerge(clsx(inputs))
@@ -99,6 +99,5 @@ export const mightBeEnsName = (name: string) => {
  * @param hex2 - The second hex value.
  * @returns True if the hex values are equal, false otherwise.
  */
-export const isHexEqual = (hex1: Hex, hex2: Hex) => {
-  return hex1.toLowerCase() === hex2.toLowerCase()
-}
+export const isHexEqual = (hex1: string, hex2: string) =>
+  hex1.toLowerCase() === hex2.toLowerCase()

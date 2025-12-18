@@ -3,8 +3,6 @@ import { HydrationBoundary, dehydrate } from '@tanstack/react-query'
 import { Hex } from 'viem'
 import { getEnsAddressQueryOptions, getEnsNameQueryOptions } from 'wagmi/query'
 
-import { NetworkProvider } from '@/contexts/NetworkContext'
-import { LOCALISM_FUND } from '@/lib/network'
 import { ponderClient } from '@/lib/ponder'
 import { makeQueryClient } from '@/lib/query'
 import { mightBeEnsName } from '@/lib/utils'
@@ -73,24 +71,31 @@ export default async function AccountProfilePageServer({
         queryClient.prefetchQuery(
           getPonderQueryOptions(
             ponderClient,
-            ponderQueryFns.getAttestationsGiven(address)
+            ponderQueryFns.getAttestationsGiven({ address })
           )
         ),
         queryClient.prefetchQuery(
           getPonderQueryOptions(
             ponderClient,
-            ponderQueryFns.getAttestationsReceived(address)
+            ponderQueryFns.getAttestationsReceived({ address })
           )
         ),
-      ])
-    ),
 
-    // Network
-    queryClient.prefetchQuery(
-      ponderQueries.latestMerkleTree(LOCALISM_FUND.contracts.merkleSnapshot)
-    ),
-    queryClient.prefetchQuery(
-      ponderQueries.network(LOCALISM_FUND.contracts.merkleSnapshot)
+        // Attestations
+        queryClient.prefetchQuery(
+          getPonderQueryOptions(
+            ponderClient,
+            ponderQueryFns.getAttestations({
+              account: address,
+            })
+          )
+        ),
+
+        // Networks
+        queryClient.prefetchQuery(
+          ponderQueries.accountNetworkProfiles(address)
+        ),
+      ])
     ),
   ])
 
@@ -98,9 +103,7 @@ export default async function AccountProfilePageServer({
 
   return (
     <HydrationBoundary state={dehydratedState}>
-      <NetworkProvider network={LOCALISM_FUND}>
-        <AccountProfilePage address={address} ensName={ensName} />
-      </NetworkProvider>
+      <AccountProfilePage address={address} ensName={ensName} />
     </HydrationBoundary>
   )
 }

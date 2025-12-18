@@ -29,6 +29,7 @@ export const easAttestation = onchainTable(
   (t) => ({
     uid: t.hex().primaryKey(),
     schema: t.hex().notNull(),
+    resolver: t.hex().notNull(),
     attester: t.hex().notNull(),
     recipient: t.hex().notNull(),
     ref: t.hex().notNull(),
@@ -41,6 +42,7 @@ export const easAttestation = onchainTable(
   }),
   (t) => ({
     schemaIdx: index().on(t.schema),
+    resolverIdx: index().on(t.resolver),
     attesterIdx: index().on(t.attester),
     recipientIdx: index().on(t.recipient),
     refIdx: index().on(t.ref),

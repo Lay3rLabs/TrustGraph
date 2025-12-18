@@ -1,7 +1,7 @@
-import { Context, Hono } from 'hono'
+import { Hono } from 'hono'
 
 import { offchainDb } from './db'
-import { lower } from './utils'
+import { getMerkleTreeWithEntries, lower } from './utils'
 
 declare global {
   interface BigInt {
@@ -14,52 +14,6 @@ BigInt.prototype.toJSON = function () {
 }
 
 const merkleApp = new Hono()
-
-/**
- * Get the merkle tree with its entries.
- * @param c The context.
- * @param merkleSnapshotContract The contract address of the merkle snapshot.
- * @param root The root of the merkle tree.
- * @returns The merkle tree with its entries.
- */
-export const getMerkleTreeWithEntries = async (
-  c: Context,
-  merkleSnapshotContract: string,
-  root: string
-) => {
-  const tree = await offchainDb.query.merkleMetadata.findFirst({
-    where: (t, { eq, and }) =>
-      and(
-        eq(
-          lower(t.merkleSnapshotContract),
-          merkleSnapshotContract.toLowerCase()
-        ),
-        eq(lower(t.root), root.toLowerCase())
-      ),
-  })
-  if (!tree) {
-    return c.json({ error: 'Merkle tree not found' }, 404)
-  }
-
-  const entries = await offchainDb.query.merkleEntry.findMany({
-    columns: {
-      account: true,
-      value: true,
-      proof: true,
-    },
-    where: (t, { eq, and }) =>
-      and(
-        eq(
-          lower(t.merkleSnapshotContract),
-          merkleSnapshotContract.toLowerCase()
-        ),
-        eq(lower(t.root), root.toLowerCase())
-      ),
-    orderBy: (t, { asc }) => asc(t.account),
-  })
-
-  return c.json({ tree, entries })
-}
 
 /**
  * Resolve the root of the merkle tree.
@@ -133,10 +87,18 @@ merkleApp.get('/:snapshot/:root', async (c) => {
   try {
     root = await resolveRoot(merkleSnapshotContract, root)
   } catch (error: any) {
-    return c.json({ error: error.message }, 400)
+    return c.json({ error: error.message }, 404)
   }
 
-  return getMerkleTreeWithEntries(c, merkleSnapshotContract, root)
+  const treeWithEntries = await getMerkleTreeWithEntries(
+    merkleSnapshotContract,
+    root
+  )
+  if (!treeWithEntries) {
+    return c.json({ error: 'Merkle tree not found' }, 404)
+  }
+
+  return c.json(treeWithEntries)
 })
 
 merkleApp.get('/:snapshot/:root/:account', async (c) => {
@@ -153,7 +115,7 @@ merkleApp.get('/:snapshot/:root/:account', async (c) => {
   try {
     root = await resolveRoot(merkleSnapshotContract, root)
   } catch (error: any) {
-    return c.json({ error: error.message }, 400)
+    return c.json({ error: error.message }, 404)
   }
 
   const entry = await offchainDb.query.merkleEntry.findFirst({

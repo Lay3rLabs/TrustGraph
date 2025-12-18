@@ -1,7 +1,7 @@
 import { ponder } from 'ponder:registry'
 import { easAttestation } from 'ponder:schema'
 
-import { easAbi } from '../../frontend/lib/contracts'
+import { easAbi } from '../../frontend/lib/contract-abis'
 
 ponder.on(
   'easIndexerResolver:AttestationAttested',
@@ -16,6 +16,7 @@ ponder.on(
     await context.db.insert(easAttestation).values({
       uid,
       schema: attestation.schema,
+      resolver: event.log.address,
       attester: attestation.attester,
       recipient: attestation.recipient,
       ref: attestation.refUID,

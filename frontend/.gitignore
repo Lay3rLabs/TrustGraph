@@ -9,6 +9,7 @@
 
 # production
 /build
+lib/contracts.ts
 
 # debug
 npm-debug.log*
@@ -28,4 +29,6 @@ yarn-error.log*
 next-env.d.ts
 
 # active config
+config.development.json
 config.json
+networks.json

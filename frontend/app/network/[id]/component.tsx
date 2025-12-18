@@ -8,6 +8,7 @@ import { Suspense, useState } from 'react'
 import { TableAddress } from '@/components/Address'
 import { BreadcrumbRenderer } from '@/components/BreadcrumbRenderer'
 import { Button, ButtonLink } from '@/components/Button'
+import { Card } from '@/components/Card'
 import { CreateAttestationModal } from '@/components/CreateAttestationModal'
 import { Dropdown } from '@/components/Dropdown'
 import { ExportButton } from '@/components/ExportButton'
@@ -17,7 +18,8 @@ import { StatisticCard } from '@/components/StatisticCard'
 import { Column, Table } from '@/components/Table'
 import { useNetwork } from '@/contexts/NetworkContext'
 import { usePushBreadcrumb } from '@/hooks/usePushBreadcrumb'
-import { NetworkEntry, isTrustedSeed } from '@/lib/network'
+import { isTrustedSeed, isValidatedInNetwork } from '@/lib/network'
+import { NetworkEntry } from '@/lib/types'
 import { formatBigNumber } from '@/lib/utils'
 
 // Uses web2gl, which is not supported on the server
@@ -42,7 +44,6 @@ export const NetworkPage = () => {
     averageValue,
     medianValue,
     refresh,
-    isValueValidated,
   } = useNetwork()
 
   const { name, link, about, callToAction, criteria } = network
@@ -80,7 +81,11 @@ export const NetworkPage = () => {
         'Indicates if this member has attained a significant TrustScore in the network.',
       sortable: false,
       render: (row) =>
-        isValueValidated(row.value) ? <Check className="w-4 h-4" /> : '',
+        isValidatedInNetwork(network, row.value) ? (
+          <Check className="w-4 h-4" />
+        ) : (
+          ''
+        ),
     },
     {
       key: 'received',
@@ -115,7 +120,7 @@ export const NetworkPage = () => {
 
   const filteredNetworkData =
     filterMode === 'validated'
-      ? networkData.filter((row) => isValueValidated(row.value))
+      ? networkData.filter((row) => isValidatedInNetwork(network, row.value))
       : networkData
 
   return (
@@ -286,7 +291,7 @@ export const NetworkPage = () => {
               defaultSortDirection="asc"
               rowClassName="text-sm"
               rowCellClassName={(row) =>
-                !isValueValidated(row.value) ? 'bg-accent/40' : ''
+                !isValidatedInNetwork(network, row.value) ? 'bg-accent/40' : ''
               }
               defaultSortColumn="rank"
               onRowClick={
@@ -309,14 +314,14 @@ export const NetworkPage = () => {
 
         {/* No Data Message */}
         {!isLoading && (!networkData || networkData.length === 0) && !error && (
-          <div className="text-center py-8 border border-gray-300 bg-white rounded-sm shadow-sm">
+          <Card type="primary" size="lg" className="text-center py-8">
             <div className="text-sm text-gray-600">
-              NO NETWORK DATA AVAILABLE
+              NO NETWORK MEMBERS FOUND
             </div>
             <div className="text-xs mt-2 text-gray-700">
-              ◆ PARTICIPATE IN ATTESTATIONS TO APPEAR ON NETWORK ◆
+              CREATE ATTESTATIONS TO START BUILDING THE NETWORK
             </div>
-          </div>
+          </Card>
         )}
       </div>
     </div>

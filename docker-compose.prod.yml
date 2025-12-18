@@ -30,9 +30,9 @@ services:
     volumes:
       - ponder-db-data:/var/lib/postgresql/data
     ports:
-      - "6432:5432"
+      - '6432:5432'
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d ponder -U ponder"]
+      test: ['CMD-SHELL', 'pg_isready -d ponder -U ponder']
       interval: 1s
       timeout: 3s
       retries: 5
@@ -45,18 +45,23 @@ services:
     network_mode: host
     volumes:
       - .:/app
-    command: sh -c "npm install -g pnpm && CI=true pnpm install --ignore-scripts && pnpm run db:migrate && pnpm run start --schema v0.9.4 --views-schema trust-graph"
+    command: sh -c "npm install -g pnpm && CI=true pnpm install --ignore-scripts && pnpm run db:migrate && pnpm run start --schema v0.9.5 --views-schema trust-graph"
     depends_on:
       - ponder-db
     ports:
-      - "65421:65421"
+      - '65421:65421'
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:65421/health || exit 1"]
+      test:
+        [
+          'CMD-SHELL',
+          'wget -q --spider http://localhost:65421/health || exit 1',
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 10s
     environment:
+      NODE_ENV: production
       DATABASE_URL: postgresql://ponder:ponder@localhost:6432/ponder
     restart: unless-stopped
 
@@ -72,14 +77,19 @@ services:
       ponder:
         condition: service_healthy
     ports:
-      - "65422:65422"
+      - '65422:65422'
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:65422/health || exit 1"]
+      test:
+        [
+          'CMD-SHELL',
+          'wget -q --spider http://localhost:65422/health || exit 1',
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 10s
     environment:
+      NODE_ENV: production
       DATABASE_URL: postgresql://ponder:ponder@localhost:6432/ponder
     restart: unless-stopped
 

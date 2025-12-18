@@ -1,12 +1,12 @@
 import type React from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 
-import { Network } from '@/lib/network'
-import type { SchemaKey } from '@/lib/schemas'
+import type { Network } from '@/lib/types'
 
 // Form data structure used across all schema components
 export interface AttestationFormData {
-  schema: SchemaKey
+  networkId: string
+  schema: string
   recipient: string
   data: Record<string, string>
 }
@@ -14,7 +14,7 @@ export interface AttestationFormData {
 // Schema information structure
 export interface SchemaInfo {
   uid: string
-  key: SchemaKey
+  key: string
   name: string
   description: string
   resolver: string

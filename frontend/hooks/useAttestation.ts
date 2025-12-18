@@ -13,15 +13,16 @@ import {
 import { useAccount, usePublicClient, useWatchContractEvent } from 'wagmi'
 
 import { intoAttestationData, intoAttestationsData } from '@/lib/attestation'
-import { easConfig, wavsIndexerConfig } from '@/lib/contracts'
+import { easAbi, wavsIndexerAbi } from '@/lib/contract-abis'
+import { easAddress, wavsIndexerAddress } from '@/lib/contracts'
 import { parseErrorMessage, shouldRetryTxError } from '@/lib/error'
-import { SchemaKey, SchemaManager } from '@/lib/schemas'
+import { SchemaManager } from '@/lib/schemas'
 import { txToast } from '@/lib/tx'
 import { attestationKeys } from '@/queries/attestation'
 import { ponderQueryFns } from '@/queries/ponder'
 
 interface NewAttestationData {
-  schema: SchemaKey | Hex
+  schema: string
   recipient: string
   data: Record<string, string | boolean>
 }
@@ -44,25 +45,25 @@ export function useAttestation(uid?: Hex) {
   const [hash, setHash] = useState<`0x${string}` | null>(null)
 
   // Watch for EventIndexed events with eventType "attestation"
-  const handleEventIndexed: WatchContractEventOnLogsFn<
-    typeof wavsIndexerConfig.abi
-  > = useCallback(
-    ([event]) => {
-      if (
-        event.eventName === 'EventIndexed' &&
-        event.args.eventType === ATTESTATION_HASH
-      ) {
-        console.log(
-          '🔍 EventIndexed event detected for attestation - invalidating queries'
-        )
-        queryClient.invalidateQueries({ queryKey: attestationKeys.all })
-      }
-    },
-    [queryClient]
-  )
+  const handleEventIndexed: WatchContractEventOnLogsFn<typeof wavsIndexerAbi> =
+    useCallback(
+      ([event]) => {
+        if (
+          event.eventName === 'EventIndexed' &&
+          event.args.eventType === ATTESTATION_HASH
+        ) {
+          console.log(
+            '🔍 EventIndexed event detected for attestation - invalidating queries'
+          )
+          queryClient.invalidateQueries({ queryKey: attestationKeys.all })
+        }
+      },
+      [queryClient]
+    )
 
   useWatchContractEvent({
-    ...wavsIndexerConfig,
+    address: wavsIndexerAddress,
+    abi: wavsIndexerAbi,
     eventName: 'EventIndexed',
     onLogs: handleEventIndexed,
   })
@@ -119,14 +120,16 @@ export function useAttestation(uid?: Hex) {
 
         // Estimate gas and simulate
         const gasEstimate = await publicClient!.estimateContractGas({
-          ...easConfig,
+          address: easAddress,
+          abi: easAbi,
           functionName: 'attest',
           args: [attestationRequest],
           account: connectedAddress,
         })
 
         await publicClient!.simulateContract({
-          ...easConfig,
+          address: easAddress,
+          abi: easAbi,
           functionName: 'attest',
           args: [attestationRequest],
           account: connectedAddress,
@@ -136,7 +139,8 @@ export function useAttestation(uid?: Hex) {
 
         const [receipt] = await txToast({
           tx: {
-            ...easConfig,
+            address: easAddress,
+            abi: easAbi,
             functionName: 'attest',
             args: [attestationRequest],
             gas: (gasEstimate * 120n) / 100n,
@@ -217,14 +221,16 @@ export function useAttestation(uid?: Hex) {
 
         // Estimate gas and simulate
         const gasEstimate = await publicClient!.estimateContractGas({
-          ...easConfig,
+          address: easAddress,
+          abi: easAbi,
           functionName: 'revoke',
           args: [revocationRequest],
           account: connectedAddress,
         })
 
         await publicClient!.simulateContract({
-          ...easConfig,
+          address: easAddress,
+          abi: easAbi,
           functionName: 'revoke',
           args: [revocationRequest],
           account: connectedAddress,
@@ -234,7 +240,8 @@ export function useAttestation(uid?: Hex) {
 
         const [receipt] = await txToast({
           tx: {
-            ...easConfig,
+            address: easAddress,
+            abi: easAbi,
             functionName: 'revoke',
             args: [revocationRequest],
             gas: (gasEstimate * 120n) / 100n,

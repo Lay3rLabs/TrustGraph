@@ -2,7 +2,7 @@ import { HydrationBoundary, dehydrate } from '@tanstack/react-query'
 import { notFound } from 'next/navigation'
 
 import { NetworkProvider } from '@/contexts/NetworkContext'
-import { NETWORKS } from '@/lib/network'
+import { NETWORKS } from '@/lib/config'
 import { makeQueryClient } from '@/lib/query'
 
 import { DistributePage } from './component'

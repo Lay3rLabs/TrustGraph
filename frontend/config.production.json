@@ -15,30 +15,5 @@
     "SchemaRegistrar": "0x33b9885aC3cB1891b0bC43F55D71963BD1Fee5F2",
     "SchemaRegistry": "0x4200000000000000000000000000000000000020",
     "MerkleSnapshot": "0x6d5339Fd17235803AE68e04d0b820bdd987427AC"
-  },
-  "schemas": {
-    "vouching": {
-      "uid": "0xe980be2010432b0e887d12c0d50a6ab61d6ad3a9a64448ff2829b8f117a134ac",
-      "name": "Vouching",
-      "description": "Weighted endorsement",
-      "resolver": "0xF0278E089aA3361796e9B9d30C30Ee427747225E",
-      "revocable": true,
-      "schema": "string comment,uint256 confidence",
-      "fields": [
-        {
-          "name": "comment",
-          "type": "string"
-        },
-        {
-          "name": "confidence",
-          "type": "uint256"
-        }
-      ]
-    }
-  },
-  "trustedSeeds": [
-    "0x7d03C5c37f77Fd01211334B9115CA108C84E8f3B",
-    "0x733Fe4b4D26168532c668231d725C46C315c14b1",
-    "0x59DDA36bD196Ec849838CE2163E6821f946b37Dc"
-  ]
+  }
 }

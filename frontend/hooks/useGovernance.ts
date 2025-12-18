@@ -3,10 +3,11 @@
 import { usePonderQuery } from '@ponder/react'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { useCallback, useMemo, useState } from 'react'
+import { Hex } from 'viem'
 import { useAccount, useBalance, usePublicClient } from 'wagmi'
 
 import { useNetwork } from '@/contexts/NetworkContext'
-import { merkleGovModuleAbi } from '@/lib/contracts'
+import { merkleGovModuleAbi } from '@/lib/contract-abis'
 import { parseErrorMessage } from '@/lib/error'
 import { txToast } from '@/lib/tx'
 import {
@@ -115,9 +116,13 @@ export function useGovernance() {
   const [isExecutingProposal, setIsExecutingProposal] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const merkleGovModuleAddress = (network.contracts.merkleGovModule ||
+    '') as Hex
+
   // Query module state from ponder
   const { data: moduleState, isLoading: isLoadingModule } = usePonderQuery({
-    queryFn: ponderQueryFns.getGovModule(network.contracts.merkleGovModule),
+    queryFn: ponderQueryFns.getGovModule(merkleGovModuleAddress),
+    enabled: !!merkleGovModuleAddress,
   })
 
   // Query proposals from ponder
@@ -126,20 +131,19 @@ export function useGovernance() {
     isLoading: isLoadingProposals,
     refetch: refetchProposals,
   } = usePonderQuery({
-    queryFn: ponderQueryFns.getGovModuleProposals(
-      network.contracts.merkleGovModule
-    ),
+    queryFn: ponderQueryFns.getGovModuleProposals(merkleGovModuleAddress),
+    enabled: !!merkleGovModuleAddress,
   })
 
   // Query user's votes from ponder
   const { data: userVotes = [], isLoading: isLoadingUserVotes } =
     usePonderQuery({
       queryFn: ponderQueryFns.getGovModuleVotes({
-        address: network.contracts.merkleGovModule,
+        address: merkleGovModuleAddress,
         voter: address,
         limit: 100,
       }),
-      enabled: !!address,
+      enabled: !!address && !!merkleGovModuleAddress,
     })
 
   // Create a map of proposalId -> userVote for quick lookup
@@ -332,6 +336,11 @@ export function useGovernance() {
         return null
       }
 
+      if (!merkleGovModuleAddress) {
+        setError('MerkleGovModule contract not found')
+        return null
+      }
+
       try {
         console.log('Starting proposal creation...')
         setError(null)
@@ -372,7 +381,7 @@ export function useGovernance() {
             ? await (async () => {
                 const gasEstimate = await publicClient.estimateContractGas({
                   abi: merkleGovModuleAbi,
-                  address: network.contracts.merkleGovModule,
+                  address: merkleGovModuleAddress,
                   functionName: 'propose',
                   args: [
                     title,
@@ -392,7 +401,7 @@ export function useGovernance() {
 
                 return txToast({
                   tx: {
-                    address: network.contracts.merkleGovModule,
+                    address: merkleGovModuleAddress,
                     abi: merkleGovModuleAbi,
                     functionName: 'propose',
                     args: [
@@ -416,7 +425,7 @@ export function useGovernance() {
               })()
             : await (async () => {
                 const gasEstimate = await publicClient.estimateContractGas({
-                  address: network.contracts.merkleGovModule,
+                  address: merkleGovModuleAddress,
                   abi: merkleGovModuleAbi,
                   functionName: 'proposeWithVote',
                   args: [
@@ -438,7 +447,7 @@ export function useGovernance() {
 
                 return txToast({
                   tx: {
-                    address: network.contracts.merkleGovModule,
+                    address: merkleGovModuleAddress,
                     abi: merkleGovModuleAbi,
                     functionName: 'proposeWithVote',
                     args: [
@@ -495,6 +504,11 @@ export function useGovernance() {
         return null
       }
 
+      if (!merkleGovModuleAddress) {
+        setError('MerkleGovModule contract not found')
+        return null
+      }
+
       try {
         setError(null)
         setIsCastingVote(true)
@@ -532,7 +546,7 @@ export function useGovernance() {
 
         // Estimate gas
         const gasEstimate = await publicClient.estimateContractGas({
-          address: network.contracts.merkleGovModule,
+          address: merkleGovModuleAddress,
           abi: merkleGovModuleAbi,
           functionName: 'castVote',
           args: [
@@ -549,7 +563,7 @@ export function useGovernance() {
 
         const [receipt] = await txToast({
           tx: {
-            address: network.contracts.merkleGovModule,
+            address: merkleGovModuleAddress,
             abi: merkleGovModuleAbi,
             functionName: 'castVote',
             args: [
@@ -599,6 +613,11 @@ export function useGovernance() {
         return null
       }
 
+      if (!merkleGovModuleAddress) {
+        setError('MerkleGovModule contract not found')
+        return null
+      }
+
       try {
         setError(null)
         setIsExecutingProposal(true)
@@ -613,7 +632,7 @@ export function useGovernance() {
 
         // Estimate gas
         const gasEstimate = await publicClient.estimateContractGas({
-          address: network.contracts.merkleGovModule,
+          address: merkleGovModuleAddress,
           abi: merkleGovModuleAbi,
           functionName: 'execute',
           args: [BigInt(proposalId)],
@@ -625,7 +644,7 @@ export function useGovernance() {
 
         const [receipt] = await txToast({
           tx: {
-            address: network.contracts.merkleGovModule,
+            address: merkleGovModuleAddress,
             abi: merkleGovModuleAbi,
             functionName: 'execute',
             args: [BigInt(proposalId)],
@@ -745,6 +764,6 @@ export function useGovernance() {
     getProposalStateText,
 
     // Contract addresses
-    merkleGovAddress: network.contracts.merkleGovModule,
+    merkleGovAddress: merkleGovModuleAddress,
   }
 }

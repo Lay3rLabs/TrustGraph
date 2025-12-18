@@ -52,10 +52,30 @@ export const processComponentConfigValues = (
       key,
       typeof value === 'string'
         ? value
+            // Replace array[] patterns with array.{index} based on arrayUnwraps context.
+            .replaceAll(/\${(\w+)\[\]}/g, (_, arrayKey) => {
+              const index = options.arrayUnwraps?.[arrayKey]
+              if (index === undefined) {
+                throw new Error(
+                  `Array unwrap "${arrayKey}[]" used in component "${name}" config value "${key}" but no index provided`
+                )
+              }
+              return `${arrayKey}.${index}`
+            })
             // Replace all ${get(json.path.to.key)} patterns with the value of the key from the deployment summary JSON file.
             .replaceAll(/\${get\(([^)]+)\)}/g, (_, p1) =>
               readJsonKey('.docker/deployment_summary.json', p1)
             )
+            // Replace all ${join(json.path.to.array)} patterns with comma-separated values from the deployment summary JSON file.
+            .replaceAll(/\${join\(([^)]+)\)}/g, (_, p1) => {
+              const arr = readJsonKey('.docker/deployment_summary.json', p1)
+              if (!Array.isArray(arr)) {
+                throw new Error(
+                  `join() expects an array but got ${typeof arr} for path "${p1}" in component "${name}" config value "${key}"`
+                )
+              }
+              return arr.join(',')
+            })
             // Replace all ${getEnv(field)} patterns with the value of the field from the deployment environment.
             .replaceAll(/\${getEnv\(([^)]+)\)}/g, (_, p1) => {
               if (!(p1 in options.env)) {

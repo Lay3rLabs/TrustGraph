@@ -11,7 +11,7 @@ import {
 import {
   merkleFundDistributorAbi,
   merkleSnapshotAbi,
-} from '../../frontend/lib/contracts'
+} from '../../frontend/lib/contract-abis'
 import * as offchainSchema from '../offchain.schema'
 
 type MerkleTreeData = {
@@ -40,39 +40,41 @@ const offchainDb = drizzle(process.env.DATABASE_URL, {
 })
 
 ponder.on('merkleSnapshot:setup', async ({ context }) => {
-  try {
-    const stateCount = await context.client.readContract({
-      address: context.contracts.merkleSnapshot.address,
-      abi: merkleSnapshotAbi,
-      functionName: 'getStateCount',
-      retryEmptyResponse: false,
-    })
-
-    const chainId = context.chain.id.toString()
-    const snapshotAddress = context.contracts.merkleSnapshot.address!
-
-    for (let i = 0; i < Number(stateCount); i++) {
-      const state = await context.client.readContract({
-        address: snapshotAddress,
+  for (const merkleSnapshotAddress of context.contracts.merkleSnapshot
+    .address || []) {
+    try {
+      const stateCount = await context.client.readContract({
+        address: merkleSnapshotAddress,
         abi: merkleSnapshotAbi,
-        functionName: 'getStateAtIndex',
-        args: [BigInt(i)],
+        functionName: 'getStateCount',
+        retryEmptyResponse: false,
       })
 
-      await context.db.insert(merkleSnapshot).values({
-        id: `${chainId}-${snapshotAddress}-${state.root}-${i}`,
-        address: snapshotAddress,
-        chainId,
-        blockNumber: state.blockNumber,
-        timestamp: state.timestamp,
-        root: state.root,
-        ipfsHash: state.ipfsHash,
-        ipfsHashCid: state.ipfsHashCid,
-        totalValue: state.totalValue,
-      })
+      const chainId = `${context.chain.id}`
+
+      for (let i = 0; i < Number(stateCount); i++) {
+        const state = await context.client.readContract({
+          address: merkleSnapshotAddress,
+          abi: merkleSnapshotAbi,
+          functionName: 'getStateAtIndex',
+          args: [BigInt(i)],
+        })
+
+        await context.db.insert(merkleSnapshot).values({
+          id: `${chainId}-${merkleSnapshotAddress}-${state.root}-${i}`,
+          address: merkleSnapshotAddress,
+          chainId,
+          blockNumber: state.blockNumber,
+          timestamp: state.timestamp,
+          root: state.root,
+          ipfsHash: state.ipfsHash,
+          ipfsHashCid: state.ipfsHashCid,
+          totalValue: state.totalValue,
+        })
+      }
+    } catch {
+      // Contract may not be deployed yet
     }
-  } catch {
-    return
   }
 })
 
@@ -82,7 +84,7 @@ ponder.on('merkleSnapshot:MerkleRootUpdated', async ({ event, context }) => {
   await context.db.insert(merkleSnapshot).values({
     id: event.id,
     address: event.log.address,
-    chainId: context.chain.id.toString(),
+    chainId: `${context.chain.id}`,
     blockNumber: event.block.number,
     timestamp: event.block.timestamp,
     root,
@@ -228,82 +230,84 @@ async function insertMerkleData(
 }
 
 ponder.on('merkleFundDistributor:setup', async ({ context }) => {
-  const contractAddress = context.contracts.merkleFundDistributor.address
-  if (!contractAddress) {
-    throw new Error('Contract address is not set')
+  for (const merkleFundDistributorAddress of context.contracts
+    .merkleFundDistributor.address || []) {
+    try {
+      const [
+        merkleSnapshotAddress,
+        owner,
+        pendingOwner,
+        feeRecipient,
+        feePercentage,
+        feeRange,
+        allowlistEnabled,
+        paused,
+        allowlist,
+      ] = await Promise.all([
+        context.client.readContract({
+          address: merkleFundDistributorAddress,
+          abi: merkleFundDistributorAbi,
+          functionName: 'merkleSnapshot',
+          retryEmptyResponse: false,
+        }),
+        context.client.readContract({
+          address: merkleFundDistributorAddress,
+          abi: merkleFundDistributorAbi,
+          functionName: 'owner',
+        }),
+        context.client.readContract({
+          address: merkleFundDistributorAddress,
+          abi: merkleFundDistributorAbi,
+          functionName: 'pendingOwner',
+        }),
+        context.client.readContract({
+          address: merkleFundDistributorAddress,
+          abi: merkleFundDistributorAbi,
+          functionName: 'feeRecipient',
+        }),
+        context.client.readContract({
+          address: merkleFundDistributorAddress,
+          abi: merkleFundDistributorAbi,
+          functionName: 'feePercentage',
+        }),
+        context.client.readContract({
+          address: merkleFundDistributorAddress,
+          abi: merkleFundDistributorAbi,
+          functionName: 'FEE_RANGE',
+        }),
+        context.client.readContract({
+          address: merkleFundDistributorAddress,
+          abi: merkleFundDistributorAbi,
+          functionName: 'allowlistEnabled',
+        }),
+        context.client.readContract({
+          address: merkleFundDistributorAddress,
+          abi: merkleFundDistributorAbi,
+          functionName: 'paused',
+        }),
+        context.client.readContract({
+          address: merkleFundDistributorAddress,
+          abi: merkleFundDistributorAbi,
+          functionName: 'getAllowlist',
+        }),
+      ])
+
+      await context.db.insert(merkleFundDistributor).values({
+        address: merkleFundDistributorAddress,
+        chainId: `${context.chain.id}`,
+        paused,
+        merkleSnapshot: merkleSnapshotAddress,
+        owner,
+        pendingOwner,
+        feeRecipient,
+        feePercentage: (Number(feePercentage) / Number(feeRange)).toString(),
+        allowlistEnabled,
+        allowlist: [...allowlist],
+      })
+    } catch {
+      // Contract may not be deployed yet
+    }
   }
-
-  const [
-    merkleSnapshotAddress,
-    owner,
-    pendingOwner,
-    feeRecipient,
-    feePercentage,
-    feeRange,
-    allowlistEnabled,
-    paused,
-    allowlist,
-  ] = await Promise.all([
-    context.client.readContract({
-      address: contractAddress,
-      abi: merkleFundDistributorAbi,
-      functionName: 'merkleSnapshot',
-      retryEmptyResponse: false,
-    }),
-    context.client.readContract({
-      address: contractAddress,
-      abi: merkleFundDistributorAbi,
-      functionName: 'owner',
-    }),
-    context.client.readContract({
-      address: contractAddress,
-      abi: merkleFundDistributorAbi,
-      functionName: 'pendingOwner',
-    }),
-    context.client.readContract({
-      address: contractAddress,
-      abi: merkleFundDistributorAbi,
-      functionName: 'feeRecipient',
-    }),
-    context.client.readContract({
-      address: contractAddress,
-      abi: merkleFundDistributorAbi,
-      functionName: 'feePercentage',
-    }),
-    context.client.readContract({
-      address: contractAddress,
-      abi: merkleFundDistributorAbi,
-      functionName: 'FEE_RANGE',
-    }),
-    context.client.readContract({
-      address: contractAddress,
-      abi: merkleFundDistributorAbi,
-      functionName: 'allowlistEnabled',
-    }),
-    context.client.readContract({
-      address: contractAddress,
-      abi: merkleFundDistributorAbi,
-      functionName: 'paused',
-    }),
-    context.client.readContract({
-      address: contractAddress,
-      abi: merkleFundDistributorAbi,
-      functionName: 'getAllowlist',
-    }),
-  ])
-
-  await context.db.insert(merkleFundDistributor).values({
-    address: contractAddress,
-    chainId: context.chain.id.toString(),
-    paused,
-    merkleSnapshot: merkleSnapshotAddress,
-    owner,
-    pendingOwner,
-    feeRecipient,
-    feePercentage: (Number(feePercentage) / Number(feeRange)).toString(),
-    allowlistEnabled,
-    allowlist: [...allowlist],
-  })
 })
 
 ponder.on(

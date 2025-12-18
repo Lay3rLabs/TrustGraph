@@ -1,5 +1,7 @@
 'use client'
 
+import { usePonderQuery } from '@ponder/react'
+import { useQuery } from '@tanstack/react-query'
 import clsx from 'clsx'
 import { Check, LoaderCircle, X } from 'lucide-react'
 import type React from 'react'
@@ -32,19 +34,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/Select'
-import { useNetwork } from '@/contexts/NetworkContext'
-import { useAccountNetworkProfile } from '@/hooks/useAccountProfile'
-import { useAttestation } from '@/hooks/useAttestation'
+import { useNetworkIfAvailable } from '@/contexts/NetworkContext'
+import { useAttestation, useIntoAttestationsData } from '@/hooks/useAttestation'
 import { useResolveEnsName } from '@/hooks/useEns'
 import { AttestationData } from '@/lib/attestation'
+import { NETWORKS } from '@/lib/config'
 import { parseErrorMessage } from '@/lib/error'
-import { SCHEMAS, SchemaManager } from '@/lib/schemas'
+import { SchemaManager } from '@/lib/schemas'
 import {
   formatBigNumber,
   formatPercentage,
   isHexEqual,
   mightBeEnsName,
 } from '@/lib/utils'
+import { ponderQueries, ponderQueryFns } from '@/queries/ponder'
 
 import { Card } from './Card'
 import { CopyableText } from './CopyableText'
@@ -74,7 +77,8 @@ export const CreateAttestationModal = ({
   variant = 'default',
   className,
 }: CreateAttestationModalProps) => {
-  const { network, totalValue } = useNetwork()
+  const networkContext = useNetworkIfAvailable()
+
   const [internalIsOpen, setInternalIsOpen] = useState(false)
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen
   const setIsOpen = (value: boolean) => {
@@ -87,11 +91,25 @@ export const CreateAttestationModal = ({
 
   const form = useForm<AttestationFormData>({
     defaultValues: {
+      networkId: networkContext?.network.id || NETWORKS[0].id || '',
       schema: 'vouching',
       recipient: defaultRecipient,
       data: {},
     },
   })
+
+  const selectedNetworkId = form.watch('networkId')
+  // Use current network context if available, otherwise find the network by ID.
+  const currentNetwork =
+    networkContext?.network ||
+    (selectedNetworkId
+      ? NETWORKS.find((network) => network.id === selectedNetworkId)
+      : undefined)
+
+  const selectedSchemaKey = form.watch('schema')
+  const selectedSchemaInfo = selectedSchemaKey
+    ? SchemaManager.schemaForKey(selectedSchemaKey)
+    : undefined
 
   const recipient = form.watch('recipient', '')
   const shouldResolveEnsName = mightBeEnsName(recipient)
@@ -109,8 +127,31 @@ export const CreateAttestationModal = ({
     !resolvedEnsName.address
 
   const { address: connectedAddress = '0x', isConnected } = useAccount()
-  const { networkProfile, allAttestationsGiven } =
-    useAccountNetworkProfile(connectedAddress)
+
+  const { data: networkMerkleTree } = useQuery(
+    ponderQueries.latestMerkleTree(
+      currentNetwork?.contracts.merkleSnapshot || ''
+    )
+  )
+  const totalValue = Number(networkMerkleTree?.tree?.totalValue || 0)
+
+  const { data: networkProfile } = useQuery(
+    ponderQueries.accountNetworkProfile({
+      address: connectedAddress,
+      snapshot: currentNetwork?.contracts.merkleSnapshot || '',
+    })
+  )
+
+  const { data: attestationsGiven = [] } = usePonderQuery({
+    queryFn: ponderQueryFns.getAttestationsGiven({
+      address: connectedAddress,
+      schema: selectedSchemaInfo
+        ? [selectedSchemaInfo.uid]
+        : currentNetwork?.schemas.map((schema) => schema.uid),
+    }),
+    select: useIntoAttestationsData(),
+  })
+
   const {
     createAttestation,
     revokeAttestation,
@@ -123,22 +164,23 @@ export const CreateAttestationModal = ({
   } = useAttestation()
 
   const noteText =
-    totalValue > 0 && networkProfile && networkProfile.trustScore !== '0'
+    totalValue > 0 && networkProfile && networkProfile.score !== '0'
       ? '**Note:**\n' +
         [
-          (networkProfile.attestationsGiven > 0 ? '- ' : '') +
+          (networkProfile.attestationsGiven.inNetwork.length > 0 ? '- ' : '') +
             `Your **TrustScore** determines how much influence your attestations carry — currently **${formatPercentage(
-              (Number(networkProfile.trustScore) / totalValue) * 100
+              (Number(networkProfile.score) / totalValue) * 100
             )} of total network trust**.`,
-          ...(networkProfile.attestationsGiven > 0
+          ...(networkProfile.attestationsGiven.inNetwork.length > 0
             ? [
                 `- You've made **${formatBigNumber(
-                  networkProfile.attestationsGiven,
+                  networkProfile.attestationsGiven.inNetwork.length,
                   undefined,
                   true
                 )} attestations** — adding another will reduce each attestation's weight by **${formatPercentage(
-                  (1 / networkProfile.attestationsGiven -
-                    1 / (networkProfile.attestationsGiven + 1)) *
+                  (1 / networkProfile.attestationsGiven.inNetwork.length -
+                    1 /
+                      (networkProfile.attestationsGiven.inNetwork.length + 1)) *
                     100
                 )}**.`,
               ]
@@ -206,11 +248,6 @@ export const CreateAttestationModal = ({
     }
   }
 
-  const selectedSchemaKey = form.watch('schema')
-  const selectedSchemaInfo = selectedSchemaKey
-    ? SchemaManager.schemaForKey(selectedSchemaKey)
-    : undefined
-
   const defaultTrigger = (
     <Tooltip
       title={!isConnected ? 'Connect your wallet to make attestations' : ''}
@@ -228,9 +265,9 @@ export const CreateAttestationModal = ({
 
   const attestationsGivenToRecipient =
     recipient.startsWith('0x') && selectedSchemaInfo
-      ? allAttestationsGiven.filter(
+      ? attestationsGiven.filter(
           (attestation) =>
-            isHexEqual(attestation.recipient, recipient as Hex) &&
+            isHexEqual(attestation.recipient, recipient) &&
             isHexEqual(attestation.schema, selectedSchemaInfo.uid) &&
             // At least 10 seconds old, so we don't show the one we just made.
             attestation.time < BigInt(Math.floor(Date.now() / 1000) - 10)
@@ -307,10 +344,49 @@ export const CreateAttestationModal = ({
                 </Card>
               )}
 
+              {/* If not in a network context, show network selection */}
+              {!networkContext && (
+                <FormField
+                  control={form.control}
+                  name="networkId"
+                  rules={{ required: 'Network selection is required' }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-bold">
+                        NETWORK
+                      </FormLabel>
+                      <Select
+                        onValueChange={(value) => field.onChange(value)}
+                        value={field.value as string}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="text-sm mt-1">
+                            <SelectValue placeholder="Select network..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {NETWORKS.map((network) => (
+                            <SelectItem
+                              key={network.id as string}
+                              value={network.id as string}
+                            >
+                              {network.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+              )}
+
               <div
                 className={clsx(
                   'grid grid-cols-1 gap-4',
-                  SCHEMAS.length > 1 && 'md:grid-cols-2'
+                  currentNetwork &&
+                    currentNetwork.schemas.length > 1 &&
+                    'md:grid-cols-2'
                 )}
               >
                 <div className="flex flex-col gap-3">
@@ -389,7 +465,7 @@ export const CreateAttestationModal = ({
                 </div>
 
                 {/* Only show schema selection if there are multiple schemas */}
-                {SCHEMAS.length > 1 && (
+                {currentNetwork && currentNetwork.schemas.length > 1 && (
                   <FormField
                     control={form.control}
                     name="schema"
@@ -401,7 +477,7 @@ export const CreateAttestationModal = ({
                         </FormLabel>
                         <Select
                           onValueChange={(value) => field.onChange(value)}
-                          value={field.value}
+                          value={field.value as string}
                         >
                           <FormControl>
                             <SelectTrigger className="text-sm mt-1">
@@ -409,8 +485,11 @@ export const CreateAttestationModal = ({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {SCHEMAS.map((schema) => (
-                              <SelectItem key={schema.key} value={schema.key}>
+                            {currentNetwork.schemas.map((schema) => (
+                              <SelectItem
+                                key={schema.key as string}
+                                value={schema.key as string}
+                              >
                                 {schema.name}
                               </SelectItem>
                             ))}
@@ -476,7 +555,7 @@ export const CreateAttestationModal = ({
                         error={error}
                         isSuccess={isCreated}
                         hash={hash}
-                        network={network}
+                        network={currentNetwork}
                       />
                     )
                   } else {
@@ -489,7 +568,7 @@ export const CreateAttestationModal = ({
                         isLoading={isCreating}
                         error={error}
                         isSuccess={isCreated}
-                        network={network}
+                        network={currentNetwork}
                         hash={hash}
                       />
                     )

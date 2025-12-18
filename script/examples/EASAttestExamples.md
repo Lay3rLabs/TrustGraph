@@ -114,7 +114,7 @@ The script is integrated with the project's Taskfile workflow:
 
 ```yaml
 trigger-statement-attestation:
-  desc: "Create direct EAS attestation with 0.001 ETH payment"
+  desc: 'Create direct EAS attestation with 0.001 ETH payment'
   vars:
     RPC_URL:
       sh: task get-rpc
@@ -143,7 +143,7 @@ trigger-statement-attestation:
 
 The Taskfile automatically resolves environment variables from deployment configuration:
 
-- `EAS_ADDR`: From `.docker/deployment_summary.json` → `eas.contracts.eas`
+- `EAS_ADDR`: From `.docker/deployment_summary.json` → `eas.eas`
 - `STATEMENT_SCHEMA_UID`: From `.docker/deployment_summary.json` → `eas.schemas.statement`
 - `WALLET_ADDRESS`: Derived from `FUNDED_KEY` using `cast wallet address`
 
@@ -265,15 +265,12 @@ This script integrates with the broader WAVS (WASI AVS) architecture:
 ### Common Issues
 
 1. **Transaction fails with insufficient gas:**
-
    - Increase gas limit or check network congestion
 
 2. **Payment amount incorrect:**
-
    - Verify milliether to wei conversion (1 milliether = 1e15 wei)
 
 3. **Schema not found:**
-
    - Check deployment summary for correct schema UIDs
 
 4. **Wallet not funded:**

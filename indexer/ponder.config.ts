@@ -11,7 +11,7 @@ import {
   merkleGovModuleAbi,
   merkleSnapshotAbi,
   wavsIndexerAbi,
-} from '../frontend/lib/contracts'
+} from '../frontend/lib/contract-abis'
 
 const dotenvFile = path.join(__dirname, '../.env')
 const { parsed: { DEPLOY_ENV } = {} } = dotenv.config({
@@ -57,7 +57,9 @@ export default createConfig({
       startBlock: IS_PRODUCTION ? 142786483 : 1,
       chain: {
         [CORE_CHAIN]: {
-          address: deploymentSummary.eas.contracts.indexer_resolver as Hex,
+          address: deploymentSummary.networks.map(
+            (network) => network.contracts.easIndexerResolver as Hex
+          ),
         },
       },
     },
@@ -66,18 +68,23 @@ export default createConfig({
       startBlock: IS_PRODUCTION ? 142786328 : 1,
       chain: {
         [CORE_CHAIN]: {
-          address: deploymentSummary.merkler.merkle_snapshot as Hex,
+          address: deploymentSummary.networks.map(
+            (network) => network.contracts.merkleSnapshot as Hex
+          ),
         },
       },
     },
     merkleGovModule: {
       abi: merkleGovModuleAbi,
       startBlock: IS_PRODUCTION ? 0 : 'latest',
-      chain: deploymentSummary.zodiac_safes?.safe1?.merkle_gov_module
+      chain: deploymentSummary.networks.some(
+        (network) => network.contracts.merkleGovModule
+      )
         ? {
             [CORE_CHAIN]: {
-              address: deploymentSummary.zodiac_safes.safe1
-                .merkle_gov_module as Hex,
+              address: deploymentSummary.networks.flatMap(
+                (network) => (network.contracts.merkleGovModule as Hex) || []
+              ),
             },
           }
         : {},
@@ -85,10 +92,15 @@ export default createConfig({
     merkleFundDistributor: {
       abi: merkleFundDistributorAbi,
       startBlock: IS_PRODUCTION ? 0 : 'latest',
-      chain: deploymentSummary.merkler?.fund_distributor
+      chain: deploymentSummary.networks.some(
+        (network) => network.contracts.merkleFundDistributor
+      )
         ? {
             [CORE_CHAIN]: {
-              address: deploymentSummary.merkler.fund_distributor as Hex,
+              address: deploymentSummary.networks.flatMap(
+                (network) =>
+                  (network.contracts.merkleFundDistributor as Hex) || []
+              ),
             },
           }
         : {},

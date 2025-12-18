@@ -23,6 +23,6 @@ if [ "$1" = "log" ]; then
   docker logs -f ${INSTANCE}
 else
   # otherwise give WAVS a chance to start up & health check
-  echo "Giving WAVS 3 seconds to start up & health check..."
+  echo "Giving WAVS operator 3 seconds to start up & health check..."
   sleep 3
 fi

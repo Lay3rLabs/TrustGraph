@@ -26,7 +26,14 @@ import {
 import { WAVS_DOCKER_IMAGE } from './constants'
 import { initProgram } from './env'
 import { ComponentsConfigFile } from './types'
-import { exec, execSilently, keccak256, readJson, readJsonKey } from './utils'
+import {
+  exec,
+  execSilently,
+  expandArrayUnwraps,
+  keccak256,
+  readJson,
+  readJsonKey,
+} from './utils'
 
 const program = new Command('build-service')
   .description('Build the service.json')
@@ -78,6 +85,16 @@ const main = async () => {
     aggregator_components: [aggregatorComponent],
   } = readJson<ComponentsConfigFile>(componentConfigFile)
 
+  // Read deployment summary to expand array unwraps
+  const deploymentSummary = readJson<Record<string, unknown>>(
+    '.docker/deployment_summary.json'
+  )
+
+  // Expand components that use array[] unwrap syntax
+  const expandedComponents = components.flatMap((component) =>
+    expandArrayUnwraps(component, deploymentSummary)
+  )
+
   const BASE_CMD = [
     'docker',
     'run',
@@ -101,14 +118,20 @@ const main = async () => {
 
   await execSilently(...BASE_CMD, 'init', '--name', 'en0va')
 
-  for (const component of components) {
+  for (const component of expandedComponents) {
     if (component.disabled) {
       continue
     }
 
+    const arrayUnwrapInfo = component._arrayUnwraps
+      ? ` (${Object.entries(component._arrayUnwraps)
+          .map(([k, v]) => `${k}[${v}]`)
+          .join(', ')})`
+      : ''
+
     console.log(
       chalk.greenBright(
-        `\nBuilding workflow for component: ${component.filename}`
+        `\nBuilding workflow for component: ${component.filename}${arrayUnwrapInfo}`
       )
     )
 
@@ -249,11 +272,14 @@ const main = async () => {
         workflowId,
         'config',
         ...('file' in component.config
-          ? processComponentConfigFile(component.config.file, { env })
+          ? processComponentConfigFile(component.config.file, {
+              env,
+              arrayUnwraps: component._arrayUnwraps,
+            })
           : processComponentConfigValues(
               component.config.values,
               component.filename,
-              { env }
+              { env, arrayUnwraps: component._arrayUnwraps }
             )
         ).flatMap(([key, value]) => ['--values', `${key}=${value}`])
       )
@@ -267,7 +293,10 @@ const main = async () => {
         '--id',
         workflowId,
         'env',
-        ...component.env_variables.flatMap((envVar) => ['--values', envVar])
+        ...component.env_variables.flatMap((envVar: string) => [
+          '--values',
+          envVar,
+        ])
       )
     }
 
@@ -336,6 +365,7 @@ const main = async () => {
               extraValues: {
                 [env.submitChain]: submitAddress,
               },
+              arrayUnwraps: component._arrayUnwraps,
             })
           : processComponentConfigValues(
               aggregatorComponent.config.values,
@@ -343,6 +373,7 @@ const main = async () => {
               {
                 env,
                 extraValues: { [env.submitChain]: submitAddress },
+                arrayUnwraps: component._arrayUnwraps,
               }
             )
         : [[env.submitChain, submitAddress]]

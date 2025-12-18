@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import { NETWORKS } from '@/lib/network'
+import { NETWORKS } from '@/lib/config'
 
 export default function NetworkListPage() {
   return (

@@ -589,114 +589,6 @@ export const easAbi = [
   { type: 'error', inputs: [], name: 'WrongSchema' },
 ] as const
 
-export const easAddress = '0xD8F963769B1161C6007219ad821279D73294f6F2' as const
-
-export const easConfig = { address: easAddress, abi: easAbi } as const
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// EASAttestTrigger
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-export const easAttestTriggerAbi = [
-  {
-    type: 'function',
-    inputs: [{ name: 'data', internalType: 'string', type: 'string' }],
-    name: 'addAgentTrigger',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: 'schema', internalType: 'bytes32', type: 'bytes32' },
-      { name: 'recipient', internalType: 'address', type: 'address' },
-      { name: 'data', internalType: 'string', type: 'string' },
-    ],
-    name: 'triggerRequestAttestation',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [
-      { name: 'schema', internalType: 'bytes32', type: 'bytes32' },
-      { name: 'recipient', internalType: 'address', type: 'address' },
-      { name: 'data', internalType: 'bytes', type: 'bytes' },
-    ],
-    name: 'triggerRequestRawAttestation',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'creator',
-        internalType: 'address',
-        type: 'address',
-        indexed: true,
-      },
-      {
-        name: 'schema',
-        internalType: 'bytes32',
-        type: 'bytes32',
-        indexed: true,
-      },
-      {
-        name: 'recipient',
-        internalType: 'address',
-        type: 'address',
-        indexed: true,
-      },
-      { name: 'data', internalType: 'bytes', type: 'bytes', indexed: false },
-    ],
-    name: 'AttestationRequested',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'recipient',
-        internalType: 'address',
-        type: 'address',
-        indexed: true,
-      },
-      {
-        name: 'attester',
-        internalType: 'address',
-        type: 'address',
-        indexed: true,
-      },
-      { name: 'uid', internalType: 'bytes32', type: 'bytes32', indexed: false },
-      {
-        name: 'schema_uid',
-        internalType: 'bytes32',
-        type: 'bytes32',
-        indexed: true,
-      },
-    ],
-    name: 'AttestedEvent',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      { name: 'data', internalType: 'bytes', type: 'bytes', indexed: false },
-    ],
-    name: 'NewTrigger',
-  },
-] as const
-
-export const easAttestTriggerAddress =
-  '0x65780E3B4dEaDBD6B38cFC24080C4CaB288E8b69' as const
-
-export const easAttestTriggerConfig = {
-  address: easAttestTriggerAddress,
-  abi: easAttestTriggerAbi,
-} as const
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // EASIndexerResolver
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -875,14 +767,6 @@ export const easIndexerResolverAbi = [
   { type: 'error', inputs: [], name: 'NotPayable' },
 ] as const
 
-export const easIndexerResolverAddress =
-  '0x4cC54CfCF18425cc4CeCB3c81e42E1b6684aF24a' as const
-
-export const easIndexerResolverConfig = {
-  address: easIndexerResolverAddress,
-  abi: easIndexerResolverAbi,
-} as const
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // IWavsServiceManager
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1015,14 +899,6 @@ export const iWavsServiceManagerAbi = [
   { type: 'error', inputs: [], name: 'InvalidSignatureLength' },
   { type: 'error', inputs: [], name: 'InvalidSignatureOrder' },
 ] as const
-
-export const iWavsServiceManagerAddress =
-  '0x0710952Eb234bBF1078136200B7127247De9E0eB' as const
-
-export const iWavsServiceManagerConfig = {
-  address: iWavsServiceManagerAddress,
-  abi: iWavsServiceManagerAbi,
-} as const
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // MerkleFundDistributor
@@ -1606,14 +1482,6 @@ export const merkleFundDistributorAbi = [
     name: 'UnexpectedMerkleRoot',
   },
 ] as const
-
-export const merkleFundDistributorAddress =
-  '0x7c26Bbca169A1410529Ec47E8281921C47E1b408' as const
-
-export const merkleFundDistributorConfig = {
-  address: merkleFundDistributorAddress,
-  abi: merkleFundDistributorAbi,
-} as const
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // MerkleGovModule
@@ -2320,14 +2188,6 @@ export const merkleGovModuleAbi = [
   { type: 'error', inputs: [], name: 'VotingClosed' },
 ] as const
 
-export const merkleGovModuleAddress =
-  '0x040043379bAfa1A5D7D0621e96B0b6D5868FEBCF' as const
-
-export const merkleGovModuleConfig = {
-  address: merkleGovModuleAddress,
-  abi: merkleGovModuleAbi,
-} as const
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // MerkleSnapshot
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2810,14 +2670,6 @@ export const merkleSnapshotAbi = [
   { type: 'error', inputs: [], name: 'NoMerkleStates' },
 ] as const
 
-export const merkleSnapshotAddress =
-  '0x099494B83F9dAA619b98Feda917D695EE1376eB9' as const
-
-export const merkleSnapshotConfig = {
-  address: merkleSnapshotAddress,
-  abi: merkleSnapshotAbi,
-} as const
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SchemaRegistrar
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2853,14 +2705,6 @@ export const schemaRegistrarAbi = [
   { type: 'error', inputs: [], name: 'InvalidSchema' },
   { type: 'error', inputs: [], name: 'InvalidSchemaRegistry' },
 ] as const
-
-export const schemaRegistrarAddress =
-  '0xa66a89F12F504Ea4A0E57fb317B637741728188A' as const
-
-export const schemaRegistrarConfig = {
-  address: schemaRegistrarAddress,
-  abi: schemaRegistrarAbi,
-} as const
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SchemaRegistry
@@ -2945,202 +2789,6 @@ export const schemaRegistryAbi = [
   },
   { type: 'error', inputs: [], name: 'AlreadyExists' },
 ] as const
-
-export const schemaRegistryAddress =
-  '0xdbD9a8e42AB083CFA70638295a43fa9825f0EcC0' as const
-
-export const schemaRegistryConfig = {
-  address: schemaRegistryAddress,
-  abi: schemaRegistryAbi,
-} as const
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// WavsAttester
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-export const wavsAttesterAbi = [
-  {
-    type: 'constructor',
-    inputs: [
-      { name: 'eas', internalType: 'contract IEAS', type: 'address' },
-      {
-        name: 'serviceManager',
-        internalType: 'contract IWavsServiceManager',
-        type: 'address',
-      },
-    ],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    inputs: [{ name: 'data', internalType: 'bytes', type: 'bytes' }],
-    name: 'decodeAttestData',
-    outputs: [
-      {
-        name: '',
-        internalType: 'struct AttestationRequest',
-        type: 'tuple',
-        components: [
-          { name: 'schema', internalType: 'bytes32', type: 'bytes32' },
-          {
-            name: 'data',
-            internalType: 'struct AttestationRequestData',
-            type: 'tuple',
-            components: [
-              { name: 'recipient', internalType: 'address', type: 'address' },
-              {
-                name: 'expirationTime',
-                internalType: 'uint64',
-                type: 'uint64',
-              },
-              { name: 'revocable', internalType: 'bool', type: 'bool' },
-              { name: 'refUID', internalType: 'bytes32', type: 'bytes32' },
-              { name: 'data', internalType: 'bytes', type: 'bytes' },
-              { name: 'value', internalType: 'uint256', type: 'uint256' },
-            ],
-          },
-        ],
-      },
-    ],
-    stateMutability: 'pure',
-  },
-  {
-    type: 'function',
-    inputs: [{ name: 'payload', internalType: 'bytes', type: 'bytes' }],
-    name: 'decodeAttestationPayload',
-    outputs: [
-      {
-        name: '',
-        internalType: 'struct WavsAttester.AttestationPayload',
-        type: 'tuple',
-        components: [
-          {
-            name: 'operationType',
-            internalType: 'enum WavsAttester.OperationType',
-            type: 'uint8',
-          },
-          { name: 'data', internalType: 'bytes', type: 'bytes' },
-        ],
-      },
-    ],
-    stateMutability: 'pure',
-  },
-  {
-    type: 'function',
-    inputs: [{ name: 'eventId', internalType: 'bytes20', type: 'bytes20' }],
-    name: 'envelopesSeen',
-    outputs: [{ name: 'seen', internalType: 'bool', type: 'bool' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [],
-    name: 'getServiceManager',
-    outputs: [{ name: '', internalType: 'address', type: 'address' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    inputs: [
-      {
-        name: 'envelope',
-        internalType: 'struct IWavsServiceHandler.Envelope',
-        type: 'tuple',
-        components: [
-          { name: 'eventId', internalType: 'bytes20', type: 'bytes20' },
-          { name: 'ordering', internalType: 'bytes12', type: 'bytes12' },
-          { name: 'payload', internalType: 'bytes', type: 'bytes' },
-        ],
-      },
-      {
-        name: 'signatureData',
-        internalType: 'struct IWavsServiceHandler.SignatureData',
-        type: 'tuple',
-        components: [
-          { name: 'signers', internalType: 'address[]', type: 'address[]' },
-          { name: 'signatures', internalType: 'bytes[]', type: 'bytes[]' },
-          { name: 'referenceBlock', internalType: 'uint32', type: 'uint32' },
-        ],
-      },
-    ],
-    name: 'handleSignedEnvelope',
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'schema',
-        internalType: 'bytes32',
-        type: 'bytes32',
-        indexed: false,
-      },
-      {
-        name: 'recipient',
-        internalType: 'address',
-        type: 'address',
-        indexed: false,
-      },
-      {
-        name: 'dataLength',
-        internalType: 'uint256',
-        type: 'uint256',
-        indexed: false,
-      },
-    ],
-    name: 'DebuggingAttestCalled',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      { name: 'payload', internalType: 'bytes', type: 'bytes', indexed: false },
-      {
-        name: 'payloadLength',
-        internalType: 'uint256',
-        type: 'uint256',
-        indexed: false,
-      },
-    ],
-    name: 'DebuggingEnvelopeReceived',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      {
-        name: 'operationType',
-        internalType: 'uint8',
-        type: 'uint8',
-        indexed: false,
-      },
-      {
-        name: 'dataLength',
-        internalType: 'uint256',
-        type: 'uint256',
-        indexed: false,
-      },
-    ],
-    name: 'DebuggingPayloadDecoded',
-  },
-  { type: 'error', inputs: [], name: 'DataDecodingFailed' },
-  { type: 'error', inputs: [], name: 'EnvelopeAlreadySeen' },
-  { type: 'error', inputs: [], name: 'InvalidEAS' },
-  { type: 'error', inputs: [], name: 'InvalidInput' },
-  { type: 'error', inputs: [], name: 'InvalidOperationType' },
-  { type: 'error', inputs: [], name: 'InvalidServiceManager' },
-  { type: 'error', inputs: [], name: 'PayloadDecodingFailed' },
-] as const
-
-export const wavsAttesterAddress =
-  '0x7E2D0C8d7Bd461Ce87eE04f0E685fB3791853944' as const
-
-export const wavsAttesterConfig = {
-  address: wavsAttesterAddress,
-  abi: wavsAttesterAbi,
-} as const
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // WavsIndexer
@@ -4165,11 +3813,3 @@ export const wavsIndexerAbi = [
   { type: 'error', inputs: [], name: 'NoEvents' },
   { type: 'error', inputs: [], name: 'PayloadDecodingFailed' },
 ] as const
-
-export const wavsIndexerAddress =
-  '0x50a3c74C18dcbaaD004687Ad6609336D59D22aEd' as const
-
-export const wavsIndexerConfig = {
-  address: wavsIndexerAddress,
-  abi: wavsIndexerAbi,
-} as const
