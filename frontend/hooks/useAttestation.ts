@@ -15,13 +15,13 @@ import { useAccount, usePublicClient, useWatchContractEvent } from 'wagmi'
 import { intoAttestationData, intoAttestationsData } from '@/lib/attestation'
 import { easConfig, wavsIndexerConfig } from '@/lib/contracts'
 import { parseErrorMessage, shouldRetryTxError } from '@/lib/error'
-import { SchemaKey, SchemaManager } from '@/lib/schemas'
+import { SchemaManager } from '@/lib/schemas'
 import { txToast } from '@/lib/tx'
 import { attestationKeys } from '@/queries/attestation'
 import { ponderQueryFns } from '@/queries/ponder'
 
 interface NewAttestationData {
-  schema: SchemaKey | Hex
+  schema: string
   recipient: string
   data: Record<string, string | boolean>
 }

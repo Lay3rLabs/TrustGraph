@@ -29,3 +29,4 @@ next-env.d.ts
 
 # active config
 config.json
+networks.json

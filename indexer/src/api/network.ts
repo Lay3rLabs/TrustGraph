@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, ne } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { db } from 'ponder:api'
 import { easAttestation } from 'ponder:schema'
@@ -66,6 +66,8 @@ app.get('/:snapshot', async (c) => {
         and(
           // Only include non-revoked attestations.
           eq(easAttestation.revocationTime, 0n),
+          // Ignore self-attestations.
+          ne(easAttestation.attester, easAttestation.recipient),
           // Only include attestations between in-network accounts.
           inArray(easAttestation.attester, relevantAccounts),
           inArray(easAttestation.recipient, relevantAccounts)

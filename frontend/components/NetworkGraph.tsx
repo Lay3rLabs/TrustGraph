@@ -34,11 +34,11 @@ import { Hex } from 'viem'
 
 import { useNetwork } from '@/contexts/NetworkContext'
 import { useBatchEnsQuery } from '@/hooks/useEns'
-import { NetworkGraphEdge, NetworkGraphNode } from '@/lib/network'
 import {
   NetworkGraphHoverState,
   NetworkGraphManager,
 } from '@/lib/NetworkGraphManager'
+import { NetworkGraphEdge, NetworkGraphNode } from '@/lib/types'
 import { cn, formatBigNumber, isHexEqual } from '@/lib/utils'
 
 const forceAtlas2SettingsOverrides: ForceAtlas2Settings = {

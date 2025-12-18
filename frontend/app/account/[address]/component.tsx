@@ -1,6 +1,7 @@
 'use client'
 
-import { useQueries } from '@tanstack/react-query'
+import { usePonderQuery } from '@ponder/react'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import {
   Check,
   FileText,
@@ -24,22 +25,15 @@ import { InfoTooltip } from '@/components/InfoTooltip'
 import { StatisticCard } from '@/components/StatisticCard'
 import { Column, Table } from '@/components/Table'
 import { Tooltip } from '@/components/Tooltip'
-import { useAccountNetworkProfile } from '@/hooks/useAccountProfile'
+import { useIntoAttestationsData } from '@/hooks/useAttestation'
 import { usePushBreadcrumb } from '@/hooks/usePushBreadcrumb'
 import { AttestationData } from '@/lib/attestation'
-import { NETWORKS, Network, isTrustedSeed } from '@/lib/network'
-import { cn, formatBigNumber } from '@/lib/utils'
-import { ponderQueries } from '@/queries/ponder'
-
-interface NetworkParticipant {
-  network: Network
-  rank: number
-  validated: boolean
-  score: string
-  seed: boolean
-  attestationsGiven: number
-  attestationsReceived: number
-}
+import { NETWORKS } from '@/lib/config'
+import { parseErrorMessage } from '@/lib/error'
+import { isTrustedSeed } from '@/lib/network'
+import { Network } from '@/lib/types'
+import { cn, formatBigNumber, isHexEqual } from '@/lib/utils'
+import { NetworkProfile, ponderQueries, ponderQueryFns } from '@/queries/ponder'
 
 // Uses web2gl, which is not supported on the server
 const NetworkGraph = dynamic(
@@ -48,6 +42,11 @@ const NetworkGraph = dynamic(
     ssr: false,
   }
 )
+
+type NetworkRow = NetworkProfile & {
+  network: Network
+  seed: boolean
+}
 
 export const AccountProfilePage = ({
   address,
@@ -65,27 +64,30 @@ export const AccountProfilePage = ({
   })
 
   const {
-    isLoading,
-    error,
-    networkProfile: profileData,
-    networkAttestationsGiven,
-    networkAttestationsReceived,
-    allAttestationsGiven,
-    allAttestationsReceived,
-    refresh,
-  } = useAccountNetworkProfile(address)
+    isLoading: isLoadingNetworkProfiles,
+    error: errorNetworkProfiles,
+    data: networkProfiles,
+    refetch: refreshNetworkProfiles,
+  } = useQuery(ponderQueries.accountNetworkProfiles(address))
+
+  const {
+    isLoading: isLoadingAttestations,
+    error: errorAttestations,
+    data: attestations,
+    refetch: refreshAttestations,
+  } = usePonderQuery({
+    queryFn: ponderQueryFns.getAttestations({ account: address }),
+    select: useIntoAttestationsData(),
+  })
+
+  const isLoading = isLoadingNetworkProfiles || isLoadingAttestations
+  const error = errorNetworkProfiles || errorAttestations
 
   useEffect(() => {
-    NETWORKS.forEach((network) => {
-      router.prefetch(`/network/${network.id}`)
-    })
-    allAttestationsGiven.forEach((attestation) => {
+    attestations?.forEach((attestation) => {
       router.prefetch(`/attestations/${attestation.uid}`)
     })
-    allAttestationsReceived.forEach((attestation) => {
-      router.prefetch(`/attestations/${attestation.uid}`)
-    })
-  }, [router, allAttestationsGiven, allAttestationsReceived])
+  }, [router, attestations])
 
   // Query for Localism Fund application URL via address and ENS name (if available), since the user may have used either one on the application.
   const localismFundApplicationUrl = useQueries({
@@ -97,46 +99,53 @@ export const AccountProfilePage = ({
     combine: (results) => results.find((r) => !!r.data)?.data || undefined,
   })
 
-  const { networksData, maxScore, averageScore, medianScore } = useMemo(() => {
-    const networksData = NETWORKS.map(
-      (network): NetworkParticipant => ({
-        network,
-        rank: profileData?.rank || 0,
-        validated: profileData?.validated || false,
-        score: profileData?.trustScore || '...',
-        seed: isTrustedSeed(network, address),
-        attestationsReceived: profileData?.attestationsReceived || 0,
-        attestationsGiven: profileData?.attestationsGiven || 0,
-      })
-    )
-      .filter((network) => network.score !== '0')
-      .sort((a, b) => Number(b.score) - Number(a.score))
+  const { networkRows, maxScore, averageScore, medianScore } = useMemo(() => {
+    const networkRows =
+      networkProfiles
+        ?.flatMap((networkProfile): NetworkRow | [] => {
+          // Find the network that this merkle snapshot contract belongs to.
+          const network = NETWORKS.find((network) =>
+            isHexEqual(
+              networkProfile.merkleSnapshotContract,
+              network.contracts.merkleSnapshot
+            )
+          )
 
-    const maxScore = networksData.reduce(
+          if (!network || networkProfile.score === '0') {
+            return []
+          }
+
+          return {
+            network,
+            ...networkProfile,
+            seed: isTrustedSeed(network, address),
+          }
+        })
+        .sort((a, b) => Number(b.score) - Number(a.score)) || []
+
+    const maxScore = networkRows.reduce(
       (max, network) => Math.max(max, Number(network.score)),
       0
     )
     const averageScore =
-      networksData.length > 0
-        ? networksData.reduce(
-            (sum, network) => sum + Number(network.score),
-            0
-          ) / networksData.length
+      networkRows.length > 0
+        ? networkRows.reduce((sum, network) => sum + Number(network.score), 0) /
+          networkRows.length
         : 0
     const medianScore =
-      networksData.length > 1
-        ? Number(networksData[Math.ceil(networksData.length / 2)].score)
-        : Number(networksData[0]?.score || '0')
+      networkRows.length > 1
+        ? Number(networkRows[Math.ceil(networkRows.length / 2)].score)
+        : Number(networkRows[0]?.score || '0')
 
     return {
-      networksData,
+      networkRows,
       maxScore,
       averageScore,
       medianScore,
     }
-  }, [profileData])
+  }, [networkProfiles])
 
-  const networksColumns: Column<NetworkParticipant>[] = [
+  const networksColumns: Column<NetworkRow>[] = [
     {
       key: 'name',
       header: 'NETWORK',
@@ -175,9 +184,13 @@ export const AccountProfilePage = ({
       tooltip:
         'The number of attestations this member has received from other participants in this network.',
       sortable: true,
-      accessor: (row) => row.attestationsReceived,
+      accessor: (row) => row.attestationsReceived.inNetwork.length,
       render: (row) =>
-        formatBigNumber(row.attestationsReceived, undefined, true),
+        formatBigNumber(
+          row.attestationsReceived.inNetwork.length,
+          undefined,
+          true
+        ),
     },
     {
       key: 'attestationsGiven',
@@ -185,8 +198,9 @@ export const AccountProfilePage = ({
       tooltip:
         'The number of attestations this member has given to other participants, indicating their level of engagement in building network trust.',
       sortable: true,
-      accessor: (row) => row.attestationsGiven,
-      render: (row) => formatBigNumber(row.attestationsGiven, undefined, true),
+      accessor: (row) => row.attestationsGiven.length,
+      render: (row) =>
+        formatBigNumber(row.attestationsGiven.length, undefined, true),
     },
     {
       key: 'score',
@@ -201,22 +215,42 @@ export const AccountProfilePage = ({
 
   const [filterMode, setFilterMode] = useState<'network' | 'all'>('network')
 
+  const inAnyNetwork = networkRows.length > 0
+
   // If not a network participant, always show all attestations.
-  const onlyNetworkAttestations = !profileData?.networkParticipant
+  const onlyNetworkAttestations = !inAnyNetwork
     ? false
     : filterMode === 'network'
 
   // If in-network and has attestations, show the network graph.
   const showNetworkGraph =
-    !!profileData?.networkParticipant &&
-    (!!profileData?.attestationsReceived || !!profileData?.attestationsGiven)
+    inAnyNetwork &&
+    networkRows.some(
+      (row) =>
+        row.attestationsReceived.inNetwork.length > 0 ||
+        row.attestationsGiven.length > 0
+    )
+
+  const allAttestationsReceived =
+    attestations?.filter((attestation) =>
+      isHexEqual(attestation.recipient, address)
+    ) || []
+
+  const networkAttestationsReceived = networkRows.flatMap(
+    (row) =>
+      attestations?.filter((attestation) =>
+        row.attestationsReceived.inNetwork.includes(attestation.uid)
+      ) || []
+  )
 
   const attestationsReceived = onlyNetworkAttestations
     ? networkAttestationsReceived
     : allAttestationsReceived
-  const attestationsGiven = onlyNetworkAttestations
-    ? networkAttestationsGiven
-    : allAttestationsGiven
+
+  const attestationsGiven =
+    attestations?.filter((attestation) =>
+      isHexEqual(attestation.attester, address)
+    ) || []
 
   return (
     <div className="space-y-6">
@@ -272,23 +306,31 @@ export const AccountProfilePage = ({
       {/* Error State */}
       {error && (
         <div className="border border-red-500 bg-red-50 p-4 rounded-sm">
-          <div className="error-text text-sm text-red-700">⚠️ {error}</div>
-          <Button onClick={refresh} className="mt-3 !px-4 !py-2">
+          <div className="error-text text-sm text-red-700">
+            ⚠️ {parseErrorMessage(error)}
+          </div>
+          <Button
+            onClick={() => {
+              refreshNetworkProfiles()
+              refreshAttestations()
+            }}
+            className="mt-3 !px-4 !py-2"
+          >
             <span className="text-xs">RETRY</span>
           </Button>
         </div>
       )}
 
       {/* Account Info */}
-      {!isLoading && profileData && (
+      {!isLoading && !error && (
         <>
           {/* Network Status */}
-          {networksData.length > 0 ? (
+          {networkRows.length > 0 ? (
             <Table
               className="py-6"
               cellClassName="text-sm"
               columns={networksColumns}
-              data={networksData}
+              data={networkRows}
               defaultSortColumn="rank"
               defaultSortDirection="asc"
               getRowKey={(row) => row.network.id}
@@ -322,14 +364,14 @@ export const AccountProfilePage = ({
                 <StatisticCard
                   title="NETWORKS"
                   tooltip="The number of networks this account is participating in."
-                  value={formatBigNumber(networksData.length, undefined, true)}
+                  value={formatBigNumber(networkRows.length, undefined, true)}
                 />
                 <StatisticCard
                   title="HIGHEST SCORE"
                   tooltip="The account's highest Trust Score based on reputation in all their networks."
                   value={formatBigNumber(maxScore, undefined, true)}
                 />
-                {networksData.length > 1 && (
+                {networkRows.length > 1 && (
                   <StatisticCard
                     title="AVERAGE + MEDIAN TRUST SCORE"
                     tooltip="This account's typical Trust Scores in all their networks."
@@ -359,11 +401,7 @@ export const AccountProfilePage = ({
                 />
                 <StatisticCard
                   title="ATTESTATIONS MADE"
-                  tooltip={
-                    onlyNetworkAttestations
-                      ? 'Total number of attestations this account has made to other network members.'
-                      : 'Total number of attestations this account has made to others.'
-                  }
+                  tooltip="Total number of attestations this account has made to others."
                   value={formatBigNumber(
                     attestationsGiven.length,
                     undefined,
@@ -393,7 +431,7 @@ export const AccountProfilePage = ({
 
               <Dropdown
                 options={
-                  profileData?.networkParticipant
+                  inAnyNetwork
                     ? [
                         { value: 'network', label: 'Network Only' },
                         { value: 'all', label: 'All Attestations' },
@@ -488,39 +526,8 @@ export const AccountProfilePage = ({
                 getRowKey={(row) => row.uid}
               />
             )}
-
-            {!isLoading &&
-              onlyNetworkAttestations &&
-              allAttestationsGiven.length > networkAttestationsGiven.length && (
-                <div className="flex flex-row gap-1 items-center">
-                  <InfoTooltip
-                    title={
-                      'Attestations to accounts outside of the Trust Network are currently hidden, as they do not impact this account\'s score. To view these attestations, change the filter from "Network Only" to "All Attestations".'
-                    }
-                  />
-                  <p className="text-xs text-muted-foreground italic">
-                    {formatBigNumber(
-                      allAttestationsGiven.length -
-                        networkAttestationsGiven.length,
-                      undefined,
-                      true
-                    )}{' '}
-                    out-of-network attestations are hidden from view.
-                  </p>
-                </div>
-              )}
           </div>
         </>
-      )}
-
-      {/* No Profile Data */}
-      {!isLoading && !profileData && !error && (
-        <div className="text-center py-12">
-          <div className="text-sm text-gray-600">INVALID ACCOUNT ADDRESS</div>
-          <div className="text-xs mt-2 text-gray-700">
-            ◆ PLEASE PROVIDE A VALID ETHEREUM ADDRESS ◆
-          </div>
-        </div>
       )}
     </div>
   )

@@ -57,7 +57,9 @@ export default createConfig({
       startBlock: IS_PRODUCTION ? 142786483 : 1,
       chain: {
         [CORE_CHAIN]: {
-          address: deploymentSummary.eas.contracts.indexer_resolver as Hex,
+          address: deploymentSummary.networks.map(
+            (network) => network.contracts.eas_indexer_resolver as Hex
+          ),
         },
       },
     },
@@ -66,7 +68,9 @@ export default createConfig({
       startBlock: IS_PRODUCTION ? 142786328 : 1,
       chain: {
         [CORE_CHAIN]: {
-          address: deploymentSummary.merkler.merkle_snapshot as Hex,
+          address: deploymentSummary.networks.map(
+            (network) => network.contracts.merkle_snapshot as Hex
+          ),
         },
       },
     },
@@ -85,10 +89,14 @@ export default createConfig({
     merkleFundDistributor: {
       abi: merkleFundDistributorAbi,
       startBlock: IS_PRODUCTION ? 0 : 'latest',
-      chain: deploymentSummary.merkler?.fund_distributor
+      chain: deploymentSummary.networks.some(
+        (network) => network.contracts.fund_distributor
+      )
         ? {
             [CORE_CHAIN]: {
-              address: deploymentSummary.merkler.fund_distributor as Hex,
+              address: deploymentSummary.networks.flatMap(
+                (network) => (network.contracts.fund_distributor as Hex) || []
+              ),
             },
           }
         : {},

@@ -12,6 +12,7 @@ import {
 } from './types'
 import {
   loadDotenv,
+  readJson,
   readJsonIfFileExists,
   readJsonKey,
   readJsonKeyIfFileExists,
@@ -98,7 +99,10 @@ abstract class EnvBase implements IEnv {
         'wavs_indexer'
       ),
       eas: readJsonIfFileExists('.docker/eas_deploy.json'),
-      merkler: readJsonIfFileExists('.docker/merkler_deploy.json'),
+      networks: fs
+        .readdirSync('config')
+        .filter((file) => file.startsWith('network_deploy_'))
+        .map((file) => readJson(path.join('config', file))),
       zodiac_safes: readJsonIfFileExists('.docker/zodiac_safes_deploy.json'),
     }
   }
@@ -128,10 +132,16 @@ export class DevEnv extends EnvBase {
           args: (ctx) => [ctx.options.serviceManagerAddress],
         },
         {
-          name: 'Merkler',
-          script: 'script/DeployMerkler.s.sol:DeployScript',
-          sig: 'run(string,bool)',
-          args: (ctx) => [ctx.options.serviceManagerAddress, true],
+          name: 'Network',
+          script: 'script/DeployNetwork.s.sol:DeployScript',
+          sig: 'run(string,string,string,bool,uint256)',
+          args: (ctx) => [
+            ctx.options.serviceManagerAddress,
+            readJsonKey('.docker/eas_deploy.json', 'eas'),
+            readJsonKey('.docker/eas_deploy.json', 'schema_registrar'),
+            true,
+            3,
+          ],
         },
         {
           name: 'Safes and Zodiac Modules',
@@ -140,7 +150,10 @@ export class DevEnv extends EnvBase {
           args: (ctx) => [
             ctx.options.serviceManagerAddress,
             // Use existing merkle snapshot contract.
-            readJsonKey('.docker/merkler_deploy.json', 'merkle_snapshot'),
+            readJsonKey(
+              'config/network_deploy_0.json',
+              'contracts.merkle_snapshot'
+            ),
           ],
         },
         {
@@ -223,10 +236,16 @@ export class ProdEnv extends EnvBase {
           args: (ctx) => [ctx.options.serviceManagerAddress],
         },
         {
-          name: 'Merkler',
-          script: 'script/DeployMerkler.s.sol:DeployScript',
-          sig: 'run(string,bool)',
-          args: (ctx) => [ctx.options.serviceManagerAddress, false],
+          name: 'Network',
+          script: 'script/DeployNetwork.s.sol:DeployScript',
+          sig: 'run(string,string,string,,bool,uint256)',
+          args: (ctx) => [
+            ctx.options.serviceManagerAddress,
+            readJsonKey('.docker/eas_deploy.json', 'eas'),
+            readJsonKey('.docker/eas_deploy.json', 'schema_registrar'),
+            false,
+            1,
+          ],
         },
         {
           name: 'Indexer',

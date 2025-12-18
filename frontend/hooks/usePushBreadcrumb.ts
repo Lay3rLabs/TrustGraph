@@ -4,7 +4,7 @@ import { useSetAtom } from 'jotai'
 import { usePathname } from 'next/navigation'
 import { useCallback } from 'react'
 
-import { NETWORKS } from '@/lib/network'
+import { NETWORKS } from '@/lib/config'
 import { mightBeEnsName } from '@/lib/utils'
 import { Breadcrumb, breadcrumbsAtom } from '@/state/nav'
 

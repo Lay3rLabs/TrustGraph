@@ -18,6 +18,10 @@ const trustGraphConfigFile = path.join(
   __dirname,
   '../../config/trust_graph.template.json'
 )
+const networksDevelopmentConfigFile = path.join(
+  __dirname,
+  '../../config/networks.development.json'
+)
 
 console.log('🔄 Updating config with latest deployment data...')
 
@@ -55,17 +59,17 @@ try {
     WavsIndexer: deployment.wavs_indexer,
 
     // EAS
-    EASAttestTrigger: deployment.eas.contracts.attest_trigger,
-    WavsAttester: deployment.eas.contracts.attester,
-    EAS: deployment.eas.contracts.eas,
-    EASIndexerResolver: deployment.eas.contracts.indexer_resolver,
-    SchemaRegistrar: deployment.eas.contracts.schema_registrar,
-    SchemaRegistry: deployment.eas.contracts.schema_registry,
+    EASAttestTrigger: deployment.eas.attest_trigger,
+    WavsAttester: deployment.eas.attester,
+    EAS: deployment.eas.eas,
+    EASIndexerResolver: deployment.networks[0].contracts.eas_indexer_resolver,
+    SchemaRegistrar: deployment.eas.schema_registrar,
+    SchemaRegistry: deployment.eas.schema_registry,
 
     // Merkler
-    MerkleSnapshot: deployment.merkler.merkle_snapshot,
+    MerkleSnapshot: deployment.networks[0].contracts.merkle_snapshot,
     MerkleGovModule: deployment.zodiac_safes?.safe1?.merkle_gov_module,
-    MerkleFundDistributor: deployment.merkler?.fund_distributor,
+    MerkleFundDistributor: deployment.networks[0].contracts.fund_distributor,
   }
 
   // Make sure ABIs exist for all contracts, and copy them to the frontend.
@@ -83,50 +87,67 @@ try {
       fs.copyFileSync(abiPath, path.join(__dirname, `../abis/${name}.json`))
     })
 
-  configOutput.schemas = Object.entries(
-    deployment.eas.schemas as Record<
-      string,
-      {
-        uid: string
-        schema: string
-        resolver: string
-        revocable: boolean
-      }
-    >
-  )
-    .filter(([key]) => key !== '_')
-    .reduce((acc, [snakeCasedName, { uid, ...data }]) => {
-      const camelCasedName = snakeCasedName.replaceAll(/_[a-z]/g, (match) =>
-        match.slice(1).toUpperCase()
-      )
-
-      const titleCasedName =
-        camelCasedName.charAt(0).toUpperCase() + camelCasedName.slice(1)
-
-      const fields = data.schema.split(',').map((field) => {
-        const [type, name] = field.split(' ')
-        return {
-          name,
-          type,
-        }
-      })
-
-      return {
-        ...acc,
-        [camelCasedName]: {
-          uid,
-          name: titleCasedName,
-          ...data,
-          fields,
-        },
-      }
-    }, {})
-
-  configOutput.trustedSeeds = trustGraphConfig.pagerank_trusted_seeds.split(',')
-
   fs.writeFileSync(configOutputFile, JSON.stringify(configOutput, null, 2))
 
   console.log(`🚀 ${configOutputFile} updated!`)
+
+  // On development, update the contracts, schemas, and trusted seeds in the
+  // networks development config.
+  if (env === 'development') {
+    const networksConfig = JSON.parse(
+      fs.readFileSync(networksDevelopmentConfigFile, 'utf8')
+    )
+
+    const newNetworksConfig = deployment.networks.map((network: any) => {
+      return {
+        ...networksConfig[0],
+        contracts: {
+          merkleSnapshot: network.contracts.merkle_snapshot,
+          merkleFundDistributor: network.contracts.fund_distributor,
+          merkleGovModule: network.contracts.merkle_gov_module,
+        },
+        schemas: Object.values(
+          network.schemas as Record<
+            string,
+            | {
+                uid: string
+                name: string
+                description: string
+                schema: string
+                resolver: string
+                revocable: boolean
+              }
+            | '_'
+          >
+        ).flatMap((data) => {
+          if (data === '_') {
+            return []
+          }
+
+          const fields = data.schema.split(',').map((field) => {
+            const [type, name] = field.split(' ')
+            return {
+              name,
+              type,
+            }
+          })
+
+          return {
+            ...data,
+            fields,
+          }
+        }),
+        trustedSeeds: trustGraphConfig.pagerank_trusted_seeds.split(','),
+      }
+    })
+
+    fs.writeFileSync(
+      networksDevelopmentConfigFile,
+      JSON.stringify(newNetworksConfig, null, 2)
+    )
+
+    console.log(`🚀 ${networksDevelopmentConfigFile} updated!`)
+  }
 } catch (error: any) {
   console.error(`❌ Error updating ${configOutputFile}:`, error.message)
   if (error.code === 'ENOENT') {

@@ -1,44 +1,44 @@
-version: "3"
+version: '3'
 
 tasks:
   wallet-address:
-    desc: "Get the wallet address"
+    desc: 'Get the wallet address'
     cmds:
       - 'echo "{{.WALLET_ADDRESS}}"'
     silent: true
 
   funded-key:
-    desc: "Get the funded private key"
+    desc: 'Get the funded private key'
     cmds:
       - 'echo "{{.FUNDED_KEY}}"'
     silent: true
 
   indexer-address:
-    desc: "Get the indexer address"
+    desc: 'Get the indexer address'
     cmds:
       - 'echo "{{.INDEXER_ADDR}}"'
     silent: true
 
   merkle-fund-distributor-address:
-    desc: "Get the merkle fund distributor contract address"
+    desc: 'Get the merkle fund distributor contract address'
     cmds:
       - 'echo "{{.MERKLE_FUND_DISTRIBUTOR_ADDRESS}}"'
     silent: true
 
   merkle-snapshot-address:
-    desc: "Get the merkle snapshot address"
+    desc: 'Get the merkle snapshot address'
     cmds:
       - 'echo "{{.MERKLE_SNAPSHOT_ADDR}}"'
     silent: true
 
   service-manager-address:
-    desc: "Get the WAVS Service Manager address"
+    desc: 'Get the WAVS Service Manager address'
     cmds:
       - 'echo "{{.WAVS_SERVICE_MANAGER_ADDRESS}}"'
     silent: true
 
   service-id:
-    desc: "Get the service ID"
+    desc: 'Get the service ID'
     cmds:
       - 'echo "{{.SERVICE_ID}}"'
     silent: true
@@ -49,23 +49,23 @@ vars:
     sh: git rev-parse --show-toplevel
 
   # Wallet configuration (from .env via Taskfile dotenv)
-  FUNDED_KEY: "{{.FUNDED_KEY}}"
+  FUNDED_KEY: '{{.FUNDED_KEY}}'
   WALLET_ADDRESS:
     sh: test -n "{{.FUNDED_KEY}}" && cast wallet address "{{.FUNDED_KEY}}" 2>/dev/null || echo ""
 
   # Docker images
-  WAVS_DOCKER_IMAGE: "ghcr.io/lay3rlabs/wavs:1.5.1"
-  MIDDLEWARE_DOCKER_IMAGE: "ghcr.io/lay3rlabs/wavs-middleware:0.5.0-beta.10"
+  WAVS_DOCKER_IMAGE: 'ghcr.io/lay3rlabs/wavs:1.5.1'
+  MIDDLEWARE_DOCKER_IMAGE: 'ghcr.io/lay3rlabs/wavs-middleware:0.5.0-beta.10'
 
   # Service endpoints
-  IPFS_ENDPOINT: "http://127.0.0.1:5001"
-  IPFS_GATEWAY: "http://127.0.0.1:8080/ipfs/"
-  RPC_URL: "http://127.0.0.1:8545"
-  WAVS_ENDPOINT: "http://127.0.0.1:8041"
-  AGGREGATOR_URL: "http://127.0.0.1:8040"
+  IPFS_ENDPOINT: 'http://127.0.0.1:5001'
+  IPFS_GATEWAY: 'http://127.0.0.1:8080/ipfs/'
+  RPC_URL: 'http://127.0.0.1:8545'
+  WAVS_ENDPOINT: 'http://127.0.0.1:8041'
+  AGGREGATOR_URL: 'http://127.0.0.1:8040'
 
   # Deployment summary path
-  DEPLOY_SUMMARY: ".docker/deployment_summary.json"
+  DEPLOY_SUMMARY: '.docker/deployment_summary.json'
 
   SERVICE_INDEX: '{{.SERVICE_INDEX | default "0"}}'
   SERVICE_ID:
@@ -84,15 +84,15 @@ vars:
         fi
       fi
   EAS_ATTEST_TRIGGER_ADDR:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas.contracts.attest_trigger' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.attest_trigger' .docker/deployment_summary.json || echo ""
   EAS_ADDR:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas.contracts.eas' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.eas' .docker/deployment_summary.json || echo ""
   SCHEMA_REGISTRAR_ADDR:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas.contracts.schema_registrar' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.schema_registrar' .docker/deployment_summary.json || echo ""
   INDEXER_ADDR:
     sh: test -f .docker/deployment_summary.json && jq -r '.wavs_indexer' .docker/deployment_summary.json || echo ""
   EAS_INDEXER_RESOLVER_ADDR:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas.contracts.indexer_resolver' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.indexer_resolver' .docker/deployment_summary.json || echo ""
   VOTING_POWER_ADDR:
     sh: test -f .docker/deployment_summary.json && jq -r '.governance.voting_power' .docker/deployment_summary.json || echo ""
   REWARDS_TOKEN_ADDRESS:
@@ -100,7 +100,7 @@ vars:
   MERKLE_FUND_DISTRIBUTOR_ADDRESS:
     sh: test -f .docker/deployment_summary.json && jq -r '.merkler.fund_distributor' .docker/deployment_summary.json || echo ""
   MERKLE_SNAPSHOT_ADDR:
-    sh: test -f .docker/merkler_deploy.json && jq -r '.merkle_snapshot' .docker/merkler_deploy.json || echo ""
+    sh: test -f config/network_deploy_0.json && jq -r '.contracts.merkle_snapshot' config/network_deploy_0.json || echo ""
 
   # Schema UIDs (loaded from deployment summary)
   VOUCHING_SCHEMA_ID:

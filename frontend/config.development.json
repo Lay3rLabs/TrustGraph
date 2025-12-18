@@ -1,46 +1,19 @@
 {
   "chain": "local",
   "apis": {
-    "ponder": "http://localhost:65421",
+    "ponder": "http://127.0.0.1:65421",
     "ipfsGateway": "http://127.0.0.1:8080/ipfs/"
   },
-  "wavsServiceId": "9d1a5cf6154cba5b157919fe4c93d00b7f909952d73f3f6120ef9d84cc366deb",
+  "wavsServiceId": "",
   "contracts": {
-    "IWavsServiceManager": "0xd81cb5e357ea2e7f673c799faae4f0c63a037c74",
-    "WavsIndexer": "0xE32a36edD91FAf8724F26af041f033eb86554FA3",
-    "EASAttestTrigger": "0xC37E59cF56d53738afAF1C97AFE83ED1258C69ED",
-    "WavsAttester": "0xee7108DF7393204cbC362efeD7D1F391B4E6957a",
-    "EAS": "0x2AA4BFcAA149FdCe066C13a194C5A50125A3ECC5",
-    "EASIndexerResolver": "0xb2536959D1dA383f09afE40615e4555638ab7987",
-    "SchemaRegistrar": "0x49dbdB82e35D5bBf427a85321258e1c470d55587",
-    "SchemaRegistry": "0xDb47309e0cE62eB76913110b7671f9B9EaC9D9bF",
-    "MerkleSnapshot": "0x52d5b044a3E795F9225288C2562F031Bd33Ee63D",
-    "MerkleGovModule": "0x331e764BBA6BB81b73d10dcbAF819E3DbE1F7ae7",
-    "MerkleFundDistributor": "0xda1367fE611a096670DdE7Cafe540fEcd830ea80"
-  },
-  "schemas": {
-    "vouching": {
-      "uid": "0x9e69ad3d9ba8500d0cd61d7bfe49914591daff4685b264ae5517930d18e491a3",
-      "name": "Vouching",
-      "description": "Weighted endorsement",
-      "resolver": "0xb2536959D1dA383f09afE40615e4555638ab7987",
-      "revocable": true,
-      "schema": "string comment,uint256 confidence",
-      "fields": [
-        {
-          "name": "comment",
-          "type": "string"
-        },
-        {
-          "name": "confidence",
-          "type": "uint256"
-        }
-      ]
-    }
-  },
-  "trustedSeeds": [
-    "0x7d03C5c37f77Fd01211334B9115CA108C84E8f3B",
-    "0x733Fe4b4D26168532c668231d725C46C315c14b1",
-    "0x59DDA36bD196Ec849838CE2163E6821f946b37Dc"
-  ]
+    "IWavsServiceManager": "0x396ea16724ad254c44945d926e945250aeaaaaf6",
+    "WavsIndexer": "0x10D34cd93170B737DCe6cD338fD25dc5bd0B4EAD",
+    "EAS": "0xe08C11E1310b0598600B731986A1981E336E9D42",
+    "EASIndexerResolver": "0x32361dC2C3C61F34881a934165944bf68D0C8567",
+    "SchemaRegistrar": "0x9b6bf94C46821540B2E9e8D9E66a7A857fc54F00",
+    "SchemaRegistry": "0x23b00468Cd1BCe0fBb8aEbC779c447f9055972B2",
+    "MerkleSnapshot": "0x11975a729fb20fd7ED509F968A18Fb747F3018d3",
+    "MerkleGovModule": "0x5C12BDe1254eFB90d7082459A44E75B87a8e566E",
+    "MerkleFundDistributor": "0x5efEdc1Cec4618745ce9379db4eAD45E5C437fb5"
+  }
 }

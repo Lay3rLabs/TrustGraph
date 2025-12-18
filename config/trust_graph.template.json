@@ -1,9 +1,9 @@
 {
   "events_dir": "./events",
-  "eas_address": "${get(eas.contracts.eas)}",
+  "eas_address": "${get(eas.eas)}",
   "indexer_address": "${get(wavs_indexer)}",
   "chain_name": "${getEnv(triggerChain)}",
-  "vouching_schema_uid": "${get(eas.schemas.vouching.uid)}",
+  "vouching_schema_uid": "${get(networks.0.schemas.vouching.uid)}",
   "vouching_schema_abi": "(string,uint256)",
   "vouching_schema_abi_weight_index": "1",
   "pagerank_enabled": "true",

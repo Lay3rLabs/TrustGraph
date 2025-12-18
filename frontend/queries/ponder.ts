@@ -1,4 +1,4 @@
-import { Client, count } from '@ponder/client'
+import { Client, count, inArray } from '@ponder/client'
 import { ResolvedSchema } from '@ponder/react'
 import { queryOptions } from '@tanstack/react-query'
 import { Hex } from 'viem'
@@ -36,6 +36,10 @@ export const ponderKeys = {
   }) => [...ponderKeys.all, 'attestationCount', options] as const,
   network: (snapshot: string) =>
     [...ponderKeys.all, 'network', snapshot] as const,
+  accountNetworkProfiles: (address: Hex) =>
+    [...ponderKeys.all, 'accountNetworkProfiles', address] as const,
+  accountNetworkProfile: (options: { address: Hex; snapshot: string }) =>
+    [...ponderKeys.all, 'accountNetworkProfile', options] as const,
   localismFundApplicationUrl: (address: string) =>
     [...ponderKeys.all, 'localismFundApplicationUrl', address] as const,
 }
@@ -100,6 +104,32 @@ export type NetworkData = {
     received: number
   }[]
   attestations: AttestationData[]
+}
+
+export type NetworkProfile = {
+  /** The chain ID of the merkle snapshot contract. */
+  chainId: string
+  /** The address of the merkle snapshot contract. */
+  merkleSnapshotContract: string
+  /** The root of the merkle tree. */
+  merkleRoot: string
+  /** The IPFS hash of the merkle tree. */
+  merkleIpfsHash: string
+  /** The rank of this account in the network. 0 if not found. */
+  rank: number
+  /** The trust score of this account in the network. 0 if not found. */
+  score: string
+  /** Whether or not this account is validated. */
+  validated: boolean
+  /** Attestation UIDs given by this account (if they are in-network), or 0. */
+  attestationsGiven: string[]
+  /** Attestation UIDs received by this account by in-network and out-of-network accounts. */
+  attestationsReceived: {
+    /** Attestation UIDs received by this account from in-network accounts. */
+    inNetwork: string[]
+    /** Attestation UIDs received by this account from out-of-network accounts. */
+    outOfNetwork: string[]
+  }
 }
 
 export const ponderQueries = {
@@ -240,6 +270,48 @@ export const ponderQueries = {
       },
       enabled: !!APIS.ponder,
     }),
+  accountNetworkProfiles: (address: Hex) =>
+    queryOptions({
+      queryKey: ponderKeys.accountNetworkProfiles(address),
+      queryFn: async () => {
+        const response = await fetch(
+          `${APIS.ponder}/account/${address}/networks`
+        )
+        if (response.ok) {
+          const { networks } = (await response.json()) as {
+            networks: NetworkProfile[]
+          }
+
+          return networks
+        } else {
+          throw new Error(
+            `Failed to fetch account network profiles: ${response.status} ${response.statusText} (${await response.text()})`
+          )
+        }
+      },
+      enabled: !!address && !!APIS.ponder,
+    }),
+  accountNetworkProfile: (options: { address: Hex; snapshot: string }) =>
+    queryOptions({
+      queryKey: ponderKeys.accountNetworkProfile(options),
+      queryFn: async () => {
+        const response = await fetch(
+          `${APIS.ponder}/account/${options.address}/network/${options.snapshot}`
+        )
+        if (response.ok) {
+          const { network } = (await response.json()) as {
+            network: NetworkProfile
+          }
+
+          return network
+        } else {
+          throw new Error(
+            `Failed to fetch account network profile: ${response.status} ${response.statusText} (${await response.text()})`
+          )
+        }
+      },
+      enabled: !!options.address && !!options.snapshot && !!APIS.ponder,
+    }),
   localismFundApplicationUrl: (address: string) =>
     queryOptions({
       queryKey: ponderKeys.localismFundApplicationUrl(address),
@@ -274,25 +346,34 @@ export const ponderQueryFns = {
     db.query.easAttestation.findFirst({
       where: (t, { eq }) => eq(t.uid, uid),
     }),
-  getAttestationsGiven: (address: Hex) => (db: Client<ResolvedSchema>['db']) =>
-    db.query.easAttestation.findMany({
-      where: (t, { eq, ne, and }) =>
-        and(
-          eq(t.attester, address),
-          // not self-attested
-          ne(t.attester, t.recipient),
-          // not revoked
-          eq(t.revocationTime, 0n)
-        ),
-      orderBy: (t, { desc }) => desc(t.timestamp),
-      limit: 100,
-    }),
-  getAttestationsReceived:
-    (address: Hex) => (db: Client<ResolvedSchema>['db']) =>
+  getAttestationsGiven:
+    (options: { address: Hex; schema?: Hex[] }) =>
+    (db: Client<ResolvedSchema>['db']) =>
       db.query.easAttestation.findMany({
         where: (t, { eq, ne, and }) =>
           and(
-            eq(t.recipient, address),
+            // filter by attester
+            eq(t.attester, options.address),
+            // filter by schema if provided
+            options.schema ? inArray(t.schema, options.schema) : undefined,
+            // not self-attested
+            ne(t.attester, t.recipient),
+            // not revoked
+            eq(t.revocationTime, 0n)
+          ),
+        orderBy: (t, { desc }) => desc(t.timestamp),
+        limit: 100,
+      }),
+  getAttestationsReceived:
+    (options: { address: Hex; schema?: Hex[] }) =>
+    (db: Client<ResolvedSchema>['db']) =>
+      db.query.easAttestation.findMany({
+        where: (t, { eq, ne, and }) =>
+          and(
+            // filter by recipient
+            eq(t.recipient, options.address),
+            // filter by schema if provided
+            options.schema ? inArray(t.schema, options.schema) : undefined,
             // not self-attested
             ne(t.attester, t.recipient),
             // not revoked
@@ -304,11 +385,40 @@ export const ponderQueryFns = {
   getAttestationCount: (db: Client<ResolvedSchema>['db']) =>
     db.select({ count: count(easAttestation.uid) }).from(easAttestation),
   getAttestations:
-    (options: { schema?: Hex; order?: 'asc' | 'desc'; limit?: number }) =>
+    (options: {
+      /** The account to filter attestations by. */
+      account?: Hex
+      /** The schema to filter attestations by. */
+      schema?: Hex
+      /** The timestamp order to sort attestations by. */
+      order?: 'asc' | 'desc'
+      /** The limit of attestations to return. */
+      limit?: number
+      /** Include revoked attestations (default: false). */
+      includeRevoked?: boolean
+      /** Include self-attested attestations (default: false). */
+      includeSelfAttests?: boolean
+    }) =>
     (db: Client<ResolvedSchema>['db']) =>
       db.query.easAttestation.findMany({
-        where: (t, { eq }) =>
-          options.schema ? eq(t.schema, options.schema) : undefined,
+        where: (t, { and, or, ne, eq }) =>
+          and(
+            // Filter by account
+            options.account
+              ? or(
+                  eq(t.attester, options.account),
+                  eq(t.recipient, options.account)
+                )
+              : undefined,
+            // Filter by schema
+            options.schema ? eq(t.schema, options.schema) : undefined,
+            // Filter by revoked
+            !options.includeRevoked ? eq(t.revocationTime, 0n) : undefined,
+            // Filter by self-attested
+            !options.includeSelfAttests
+              ? ne(t.attester, t.recipient)
+              : undefined
+          ),
         orderBy: (t, { asc, desc }) =>
           options.order === 'asc' ? asc(t.timestamp) : desc(t.timestamp),
         limit: options.limit ?? 100,

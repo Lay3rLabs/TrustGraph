@@ -7,11 +7,8 @@ import { useState } from 'react'
 import { Hex } from 'viem'
 
 import { AttestationCard } from '@/components/AttestationCard'
-import { CreateAttestationModal } from '@/components/CreateAttestationModal'
-import { NetworkProvider } from '@/contexts/NetworkContext'
 import { useIntoAttestationsData } from '@/hooks/useAttestation'
 import { usePushBreadcrumb } from '@/hooks/usePushBreadcrumb'
-import { LOCALISM_FUND } from '@/lib/network'
 import { ponderQueryFns } from '@/queries/ponder'
 
 export default function AttestationsPage() {
@@ -36,6 +33,8 @@ export default function AttestationsPage() {
           selectedSchema === 'all' || !selectedSchema.startsWith('0x')
             ? undefined
             : (selectedSchema as Hex),
+        includeRevoked: true,
+        includeSelfAttests: true,
         order: sortOrder === 'newest' ? 'desc' : 'asc',
         limit,
       }),
@@ -51,9 +50,6 @@ export default function AttestationsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="text-lg">ATTESTATIONS</div>
-        <NetworkProvider network={LOCALISM_FUND}>
-          <CreateAttestationModal />
-        </NetworkProvider>
       </div>
 
       {/* Filters */}

@@ -16,7 +16,8 @@ import {
 import { useBatchEnsQuery } from '@/hooks/useEns'
 import { usePageRankComputerModule } from '@/hooks/usePageRankComputer'
 import { AttestationData } from '@/lib/attestation'
-import { Network, NetworkEntry, isTrustedSeed } from '@/lib/network'
+import { isTrustedSeed } from '@/lib/network'
+import { Network, NetworkEntry } from '@/lib/types'
 import { PageRankGraphComputer } from '@/lib/wasm/pagerank/pagerank'
 import { ponderQueries } from '@/queries/ponder'
 
@@ -59,9 +60,6 @@ export type NetworkContextType = {
 
   /** Refresh the network data. */
   refresh: () => Promise<void>
-
-  /** Determine whether or not a given value is sufficient to be validated. */
-  isValueValidated: (value: string | number | bigint) => boolean
 
   /** Determine whether or not a given address is a trusted seed for the network. */
   isTrustedSeed: (address: string) => boolean
@@ -280,11 +278,6 @@ export const NetworkProvider = ({
     await Promise.all([refetchMerkle(), refetchNetwork()])
   }, [refetchMerkle, refetchNetwork])
 
-  // Determine whether or not a given value is sufficient to be validated
-  const isValueValidated = useCallback((value: string | number | bigint) => {
-    return Number(value) >= 75
-  }, [])
-
   // Determine whether or not a given address is a trusted seed for the network
   const isTrustedNetworkSeed = useCallback(
     (address: string) => isTrustedSeed(network, address),
@@ -318,7 +311,6 @@ export const NetworkProvider = ({
     refresh,
 
     // Utilities
-    isValueValidated,
     isTrustedSeed: isTrustedNetworkSeed,
 
     // Simulation

@@ -4,10 +4,12 @@
   "type": "module",
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "predev": "npm run ensure-env-local && npm run db:migrate",
     "ensure-env-local": "if ! test -f .env.local; then cp .env.example .env.local; fi",
+    "predev": "npm run ensure-env-local && npm run db:migrate && npm run networks:link",
     "dev": "ponder dev -p 65421",
+    "prestart": "npm run networks:link",
     "start": "ponder start -p 65421",
+    "networks:link": "rm -f networks.json || true && test -f ../config/networks.${NODE_ENV:-development}.json && ln -s ../config/networks.${NODE_ENV:-development}.json networks.json || echo \"Error: ../config/networks.${NODE_ENV:-development}.json does not exist\"",
     "db": "ponder db",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

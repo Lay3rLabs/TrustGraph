@@ -8,8 +8,13 @@ import { Button, ButtonLink } from '@/components/Button'
 import { Card } from '@/components/Card'
 import { Markdown } from '@/components/Markdown'
 import { NetworkProvider } from '@/contexts/NetworkContext'
-import { LOCALISM_FUND } from '@/lib/network'
+import { NETWORKS } from '@/lib/config'
 import { cn } from '@/lib/utils'
+
+const firstNetwork = NETWORKS[0]
+if (!firstNetwork) {
+  throw new Error('No networks found')
+}
 
 // Uses web2gl, which is not supported on the server
 const NetworkGraph = dynamic(
@@ -38,10 +43,10 @@ export default function HomePage() {
 
         <ButtonLink
           variant="brand"
-          href={`/network/${LOCALISM_FUND.id}`}
+          href={`/network/${firstNetwork.id}`}
           size="lg"
         >
-          View Network: Localism Fund
+          View Network: {firstNetwork.name}
         </ButtonLink>
 
         <h2 className="mt-6 -mb-3">FREQUENTLY ASKED QUESTIONS</h2>
@@ -68,7 +73,7 @@ export default function HomePage() {
       <div className="space-y-10">
         <div className="h-[66vh] lg:h-4/5">
           <Suspense fallback={null}>
-            <NetworkProvider network={LOCALISM_FUND}>
+            <NetworkProvider network={firstNetwork}>
               <NetworkGraph />
             </NetworkProvider>
           </Suspense>

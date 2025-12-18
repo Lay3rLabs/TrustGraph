@@ -17,7 +17,8 @@ import { StatisticCard } from '@/components/StatisticCard'
 import { Column, Table } from '@/components/Table'
 import { useNetwork } from '@/contexts/NetworkContext'
 import { usePushBreadcrumb } from '@/hooks/usePushBreadcrumb'
-import { NetworkEntry, isTrustedSeed } from '@/lib/network'
+import { isTrustedSeed, isValidatedInNetwork } from '@/lib/network'
+import { NetworkEntry } from '@/lib/types'
 import { formatBigNumber } from '@/lib/utils'
 
 // Uses web2gl, which is not supported on the server
@@ -42,7 +43,6 @@ export const NetworkPage = () => {
     averageValue,
     medianValue,
     refresh,
-    isValueValidated,
   } = useNetwork()
 
   const { name, link, about, callToAction, criteria } = network
@@ -80,7 +80,11 @@ export const NetworkPage = () => {
         'Indicates if this member has attained a significant TrustScore in the network.',
       sortable: false,
       render: (row) =>
-        isValueValidated(row.value) ? <Check className="w-4 h-4" /> : '',
+        isValidatedInNetwork(network, row.value) ? (
+          <Check className="w-4 h-4" />
+        ) : (
+          ''
+        ),
     },
     {
       key: 'received',
@@ -115,7 +119,7 @@ export const NetworkPage = () => {
 
   const filteredNetworkData =
     filterMode === 'validated'
-      ? networkData.filter((row) => isValueValidated(row.value))
+      ? networkData.filter((row) => isValidatedInNetwork(network, row.value))
       : networkData
 
   return (
@@ -286,7 +290,7 @@ export const NetworkPage = () => {
               defaultSortDirection="asc"
               rowClassName="text-sm"
               rowCellClassName={(row) =>
-                !isValueValidated(row.value) ? 'bg-accent/40' : ''
+                !isValidatedInNetwork(network, row.value) ? 'bg-accent/40' : ''
               }
               defaultSortColumn="rank"
               onRowClick={
