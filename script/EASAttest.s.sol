@@ -46,6 +46,7 @@ contract EASAttest is Common {
     uint256 confidence
   ) public {
     vm.startBroadcast(_privateKey);
+    address attester = vm.addr(_privateKey);
 
     IEAS eas = IEAS(vm.parseAddress(easAddr));
     bytes32 vouchingSchemaUID = vm.parseBytes32(vouchingSchema);
@@ -55,6 +56,7 @@ contract EASAttest is Common {
     console.log('Making vouching attestation:');
     console.log('  EAS Address:', easAddr);
     console.log('  Vouching Schema:', vouchingSchema);
+    console.log('  Attester:', attester);
     console.log('  Recipient:', recipient);
     console.log('  Comment:', comment);
     console.log('  Confidence:', confidence);
