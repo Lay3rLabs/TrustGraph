@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, ne, or } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, ne, or } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { db } from 'ponder:api'
 import { easAttestation, merkleSnapshot } from 'ponder:schema'
@@ -103,34 +103,40 @@ app.get('/:account/networks', async (c) => {
     // Get unique network profiles.
     const networks = (
       await Promise.all(
-        (await db.select().from(merkleSnapshot)).map(
-          async (snapshot): Promise<NetworkProfile | null> => {
-            // Find the network that this merkle snapshot contract belongs to.
-            const network = NETWORKS.find((network) =>
-              isHexEqual(network.contracts.merkleSnapshot, snapshot.address)
+        (
+          await db
+            .selectDistinctOn([merkleSnapshot.address])
+            .from(merkleSnapshot)
+            .orderBy(
+              asc(merkleSnapshot.address),
+              desc(merkleSnapshot.timestamp)
             )
-            if (!network) {
-              return null
-            }
-
-            // Get the merkle tree with its entries for the latest merkle root.
-            const merkleTreeWithEntries = await getMerkleTreeWithEntries(
-              snapshot.address,
-              snapshot.root
-            )
-            if (!merkleTreeWithEntries) {
-              return null
-            }
-
-            return buildNetworkProfile({
-              account,
-              snapshot,
-              merkleTreeWithEntries,
-              attestations,
-              network,
-            })
+        ).map(async (snapshot): Promise<NetworkProfile | null> => {
+          // Find the network that this merkle snapshot contract belongs to.
+          const network = NETWORKS.find((network) =>
+            isHexEqual(network.contracts.merkleSnapshot, snapshot.address)
+          )
+          if (!network) {
+            return null
           }
-        )
+
+          // Get the merkle tree with its entries for the latest merkle root.
+          const merkleTreeWithEntries = await getMerkleTreeWithEntries(
+            snapshot.address,
+            snapshot.root
+          )
+          if (!merkleTreeWithEntries) {
+            return null
+          }
+
+          return buildNetworkProfile({
+            account,
+            snapshot,
+            merkleTreeWithEntries,
+            attestations,
+            network,
+          })
+        })
       )
     ).filter((network) => network !== null)
 
@@ -165,9 +171,10 @@ app.get('/:account/network/:snapshot', async (c) => {
 
     const snapshot = (
       await db
-        .select()
+        .selectDistinctOn([merkleSnapshot.address])
         .from(merkleSnapshot)
         .where(eq(lower(merkleSnapshot.address), snapshotAddress.toLowerCase()))
+        .orderBy(asc(merkleSnapshot.address), desc(merkleSnapshot.timestamp))
         .limit(1)
     )[0]
     if (!snapshot) {

@@ -25,6 +25,7 @@ import { InfoTooltip } from '@/components/InfoTooltip'
 import { StatisticCard } from '@/components/StatisticCard'
 import { Column, Table } from '@/components/Table'
 import { Tooltip } from '@/components/Tooltip'
+import { NetworkProvider } from '@/contexts/NetworkContext'
 import { useIntoAttestationsData } from '@/hooks/useAttestation'
 import { usePushBreadcrumb } from '@/hooks/usePushBreadcrumb'
 import { AttestationData } from '@/lib/attestation'
@@ -79,6 +80,11 @@ export const AccountProfilePage = ({
     queryFn: ponderQueryFns.getAttestations({ account: address }),
     select: useIntoAttestationsData(),
   })
+
+  // Refresh network profiles when attestations are refreshed.
+  useEffect(() => {
+    refreshNetworkProfiles()
+  }, [attestations?.length, refreshNetworkProfiles])
 
   const isLoading = isLoadingNetworkProfiles || isLoadingAttestations
   const error = errorNetworkProfiles || errorAttestations
@@ -252,6 +258,9 @@ export const AccountProfilePage = ({
       isHexEqual(attestation.attester, address)
     ) || []
 
+  const outOfNetworkAttestationsReceived =
+    allAttestationsReceived.length - networkAttestationsReceived.length
+
   return (
     <div className="space-y-6">
       <BreadcrumbRenderer />
@@ -288,7 +297,6 @@ export const AccountProfilePage = ({
                 ? undefined
                 : address
             }
-            // variant={localismFundApplicationUrl ? 'outline' : 'default'}
           />
         </div>
       </div>
@@ -414,7 +422,11 @@ export const AccountProfilePage = ({
             {showNetworkGraph && (
               <div className="h-[66vh] lg:h-full">
                 <Suspense fallback={null}>
-                  <NetworkGraph onlyAddress={address} />
+                  {/* TODO(multi): show combined network graph? or filter? */}
+                  {/* Show network graph for the first network in the list */}
+                  <NetworkProvider network={networkRows[0].network}>
+                    <NetworkGraph onlyAddress={address} />
+                  </NetworkProvider>
                 </Suspense>
               </div>
             )}
@@ -469,8 +481,7 @@ export const AccountProfilePage = ({
 
             {!isLoading &&
               onlyNetworkAttestations &&
-              allAttestationsReceived.length >
-                networkAttestationsReceived.length && (
+              outOfNetworkAttestationsReceived > 0 && (
                 <div className="flex flex-row gap-1 items-center">
                   <InfoTooltip
                     title={
@@ -479,18 +490,15 @@ export const AccountProfilePage = ({
                   />
                   <p className="text-xs text-muted-foreground italic">
                     {formatBigNumber(
-                      allAttestationsReceived.length -
-                        networkAttestationsReceived.length,
+                      outOfNetworkAttestationsReceived,
                       undefined,
                       true
                     )}{' '}
                     out-of-network attestation
-                    {allAttestationsReceived.length -
-                      networkAttestationsReceived.length >
-                    1
-                      ? 's'
-                      : ''}{' '}
-                    are hidden from view.
+                    {outOfNetworkAttestationsReceived > 1
+                      ? 's are'
+                      : ' is'}{' '}
+                    hidden from view.
                   </p>
                 </div>
               )}

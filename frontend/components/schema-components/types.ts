@@ -5,6 +5,7 @@ import type { Network } from '@/lib/types'
 
 // Form data structure used across all schema components
 export interface AttestationFormData {
+  networkId: string
   schema: string
   recipient: string
   data: Record<string, string>

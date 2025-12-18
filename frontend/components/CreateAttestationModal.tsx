@@ -34,10 +34,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/Select'
-import { useNetwork } from '@/contexts/NetworkContext'
+import { useNetworkIfAvailable } from '@/contexts/NetworkContext'
 import { useAttestation, useIntoAttestationsData } from '@/hooks/useAttestation'
 import { useResolveEnsName } from '@/hooks/useEns'
 import { AttestationData } from '@/lib/attestation'
+import { NETWORKS } from '@/lib/config'
 import { parseErrorMessage } from '@/lib/error'
 import { SchemaManager } from '@/lib/schemas'
 import {
@@ -76,7 +77,8 @@ export const CreateAttestationModal = ({
   variant = 'default',
   className,
 }: CreateAttestationModalProps) => {
-  const { network, totalValue } = useNetwork()
+  const networkContext = useNetworkIfAvailable()
+
   const [internalIsOpen, setInternalIsOpen] = useState(false)
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen
   const setIsOpen = (value: boolean) => {
@@ -89,11 +91,20 @@ export const CreateAttestationModal = ({
 
   const form = useForm<AttestationFormData>({
     defaultValues: {
+      networkId: networkContext?.network.id || '',
       schema: 'vouching',
       recipient: defaultRecipient,
       data: {},
     },
   })
+
+  const selectedNetworkId = form.watch('networkId')
+  // Use current network context if available, otherwise find the network by ID.
+  const currentNetwork =
+    networkContext?.network ||
+    (selectedNetworkId
+      ? NETWORKS.find((network) => network.id === selectedNetworkId)
+      : undefined)
 
   const selectedSchemaKey = form.watch('schema')
   const selectedSchemaInfo = selectedSchemaKey
@@ -117,10 +128,17 @@ export const CreateAttestationModal = ({
 
   const { address: connectedAddress = '0x', isConnected } = useAccount()
 
+  const { data: networkMerkleTree } = useQuery(
+    ponderQueries.latestMerkleTree(
+      currentNetwork?.contracts.merkleSnapshot || ''
+    )
+  )
+  const totalValue = Number(networkMerkleTree?.tree?.totalValue || 0)
+
   const { data: networkProfile } = useQuery(
     ponderQueries.accountNetworkProfile({
       address: connectedAddress,
-      snapshot: network.contracts.merkleSnapshot,
+      snapshot: currentNetwork?.contracts.merkleSnapshot || '',
     })
   )
 
@@ -129,7 +147,7 @@ export const CreateAttestationModal = ({
       address: connectedAddress,
       schema: selectedSchemaInfo
         ? [selectedSchemaInfo.uid]
-        : network.schemas.map((schema) => schema.uid),
+        : currentNetwork?.schemas.map((schema) => schema.uid),
     }),
     select: useIntoAttestationsData(),
   })
@@ -325,10 +343,49 @@ export const CreateAttestationModal = ({
                 </Card>
               )}
 
+              {/* If not in a network context, show network selection */}
+              {!networkContext && (
+                <FormField
+                  control={form.control}
+                  name="networkId"
+                  rules={{ required: 'Network selection is required' }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-bold">
+                        NETWORK
+                      </FormLabel>
+                      <Select
+                        onValueChange={(value) => field.onChange(value)}
+                        value={field.value as string}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="text-sm mt-1">
+                            <SelectValue placeholder="Select network..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {NETWORKS.map((network) => (
+                            <SelectItem
+                              key={network.id as string}
+                              value={network.id as string}
+                            >
+                              {network.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+              )}
+
               <div
                 className={clsx(
                   'grid grid-cols-1 gap-4',
-                  network.schemas.length > 1 && 'md:grid-cols-2'
+                  currentNetwork &&
+                    currentNetwork.schemas.length > 1 &&
+                    'md:grid-cols-2'
                 )}
               >
                 <div className="flex flex-col gap-3">
@@ -407,7 +464,7 @@ export const CreateAttestationModal = ({
                 </div>
 
                 {/* Only show schema selection if there are multiple schemas */}
-                {network.schemas.length > 1 && (
+                {currentNetwork && currentNetwork.schemas.length > 1 && (
                   <FormField
                     control={form.control}
                     name="schema"
@@ -427,7 +484,7 @@ export const CreateAttestationModal = ({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {network.schemas.map((schema) => (
+                            {currentNetwork.schemas.map((schema) => (
                               <SelectItem
                                 key={schema.key as string}
                                 value={schema.key as string}
@@ -497,7 +554,7 @@ export const CreateAttestationModal = ({
                         error={error}
                         isSuccess={isCreated}
                         hash={hash}
-                        network={network}
+                        network={currentNetwork}
                       />
                     )
                   } else {
@@ -510,7 +567,7 @@ export const CreateAttestationModal = ({
                         isLoading={isCreating}
                         error={error}
                         isSuccess={isCreated}
-                        network={network}
+                        network={currentNetwork}
                         hash={hash}
                       />
                     )
