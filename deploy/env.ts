@@ -205,7 +205,7 @@ abstract class EnvBase implements IEnv {
       }
 
       // Verify the network is complete after updating.
-      if (!isNetworkComplete(network)) {
+      if (!isNetworkComplete(networkToUpdate)) {
         throw new Error(
           `Network at index ${index} is not complete after updating from ${deployFile}. Please make sure everything is configured correctly in ${this.networksConfigFile}.`
         )
