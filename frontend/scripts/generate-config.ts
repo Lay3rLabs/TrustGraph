@@ -55,6 +55,7 @@ try {
     SchemaRegistry: deployment.eas.schema_registry,
 
     // Generate ABIs but set no address since each network has its own.
+    GnosisSafe: '',
     EASIndexerResolver: '',
     MerkleSnapshot: '',
     MerkleGovModule: '',

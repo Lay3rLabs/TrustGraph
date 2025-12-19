@@ -231,3 +231,23 @@ export const merkleFundDistributionClaim = onchainTable(
     timestampIdx: index().on(t.timestamp),
   })
 )
+
+export const gnosisSafe = onchainTable(
+  'gnosis_safe',
+  (t) => ({
+    address: t.hex().notNull(),
+    chainId: t.text().notNull(),
+    owners: t.hex().array().notNull(),
+    threshold: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+    timestamp: t.bigint().notNull(),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.chainId, t.address] }),
+    chainIdIdx: index().on(t.chainId),
+    addressIdx: index().on(t.address),
+    thresholdIdx: index().on(t.threshold),
+    blockNumberIdx: index().on(t.blockNumber),
+    timestampIdx: index().on(t.timestamp),
+  })
+)

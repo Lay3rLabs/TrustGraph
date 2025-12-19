@@ -7,6 +7,7 @@ import { Hex } from 'viem'
 import deploymentSummary from '../.docker/deployment_summary.json'
 import {
   easIndexerResolverAbi,
+  gnosisSafeAbi,
   merkleFundDistributorAbi,
   merkleGovModuleAbi,
   merkleSnapshotAbi,
@@ -100,6 +101,21 @@ export default createConfig({
               address: deploymentSummary.networks.flatMap(
                 (network) =>
                   (network.contracts.merkleFundDistributor as Hex) || []
+              ),
+            },
+          }
+        : {},
+    },
+    gnosisSafe: {
+      abi: gnosisSafeAbi,
+      startBlock: IS_PRODUCTION ? 0 : 'latest',
+      chain: deploymentSummary.networks.some(
+        (network) => network.contracts.safe.proxy
+      )
+        ? {
+            [CORE_CHAIN]: {
+              address: deploymentSummary.networks.flatMap(
+                (network) => (network.contracts.safe.proxy as Hex) || []
               ),
             },
           }

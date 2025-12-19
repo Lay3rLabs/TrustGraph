@@ -247,6 +247,7 @@ fn download_merkle_tree(cid: &str) -> Result<MerkleTreeIpfsData, String> {
         let mut urls = Vec::new();
         for cid_variant in &cid_formats {
             // Path format (fallback)
+            urls.push(format!("http://127.0.0.1:8080/ipfs/{}", cid_variant));
             urls.push(format!("http://localhost:8080/ipfs/{}", cid_variant));
             // Subdomain format (preferred by some IPFS gateways)
             urls.push(format!("http://{}.ipfs.localhost:8080/", cid_variant));

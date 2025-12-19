@@ -1,5 +1,6 @@
 'use client'
 
+import { usePonderQuery } from '@ponder/react'
 import { useQuery } from '@tanstack/react-query'
 import {
   Dispatch,
@@ -12,6 +13,7 @@ import {
   useMemo,
   useState,
 } from 'react'
+import { Hex } from 'viem'
 
 import { useBatchEnsQuery } from '@/hooks/useEns'
 import { usePageRankComputerModule } from '@/hooks/usePageRankComputer'
@@ -19,7 +21,7 @@ import { AttestationData } from '@/lib/attestation'
 import { isTrustedSeed } from '@/lib/network'
 import { Network, NetworkEntry } from '@/lib/types'
 import { PageRankGraphComputer } from '@/lib/wasm/pagerank/pagerank'
-import { ponderQueries } from '@/queries/ponder'
+import { ponderQueries, ponderQueryFns } from '@/queries/ponder'
 
 export type NetworkSimulationConfig = {
   enabled: boolean
@@ -45,6 +47,11 @@ export type NetworkContextType = {
   totalParticipants: number
   averageValue: number
   medianValue: number
+  gnosisSafe?: {
+    address: Hex
+    owners: Hex[]
+    threshold: number
+  }
 
   // Additional metadata from ponder
   merkleRoot: string | undefined
@@ -100,6 +107,16 @@ export const NetworkProvider = ({
     ...ponderQueries.network(network.contracts.merkleSnapshot),
     refetchInterval: 10_000,
   })
+
+  // Fetch Gnosis Safe (if available)
+  const { data: gnosisSafeData, isLoading: gnosisSafeLoading } = usePonderQuery(
+    {
+      queryFn: ponderQueryFns.getGnosisSafe(
+        network.contracts.safe?.proxy as Hex
+      ),
+      enabled: !!network.contracts.safe?.proxy,
+    }
+  )
 
   // Simulation config
   const [simulationConfig, setSimulationConfig] =
@@ -268,7 +285,7 @@ export const NetworkProvider = ({
       : Number(accountData[0]?.value || 0)
 
   // Combined loading state
-  const isLoading = merkleLoading || networkLoading
+  const isLoading = merkleLoading || networkLoading || gnosisSafeLoading
 
   // Combined error state
   const error = merkleError?.message || networkError?.message || null
@@ -299,6 +316,11 @@ export const NetworkProvider = ({
     totalParticipants,
     averageValue,
     medianValue,
+    gnosisSafe: gnosisSafeData && {
+      address: gnosisSafeData.address,
+      owners: gnosisSafeData.owners,
+      threshold: Number(gnosisSafeData.threshold),
+    },
 
     // Additional metadata from ponder
     merkleRoot: merkleTreeData?.tree?.root,

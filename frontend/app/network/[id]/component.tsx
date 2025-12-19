@@ -43,6 +43,7 @@ export const NetworkPage = () => {
     totalParticipants,
     averageValue,
     medianValue,
+    gnosisSafe,
     refresh,
   } = useNetwork()
 
@@ -210,6 +211,14 @@ export const NetworkPage = () => {
               true
             )} / ${formatBigNumber(medianValue, undefined, true)}`}
           />
+          {gnosisSafe && (
+            <StatisticCard
+              title="GNOSIS SAFE"
+              tooltip="The Gnosis Safe multisig for this network."
+              value={`${gnosisSafe.threshold}-of-${gnosisSafe.owners.length}`}
+              href={`https://app.safe.global/home?safe=oeth:${gnosisSafe.address}`}
+            />
+          )}
           {/* <StatisticCard
             title="MEMBERS OVER THRESHOLD"
             tooltip="The percentage of network members who have achieved a minimum Trust Score threshold. You can use this threshold to inform governance eligibility decisions."

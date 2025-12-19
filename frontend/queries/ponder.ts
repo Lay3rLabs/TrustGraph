@@ -491,4 +491,8 @@ export const ponderQueryFns = {
         orderBy: (t, { desc }) => desc(t.timestamp),
         limit: options.limit ?? 100,
       }),
+  getGnosisSafe: (address: Hex) => (db: Client<ResolvedSchema>['db']) =>
+    db.query.gnosisSafe.findFirst({
+      where: (t, { eq }) => eq(t.address, address),
+    }),
 }
