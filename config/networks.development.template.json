@@ -49,6 +49,12 @@
       "maxWeight": 100,
       "trustedSeeds": []
     },
+    "safeZodiacSignerSync": {
+      "enabled": true,
+      "topNSigners": 5,
+      "minThreshold": 1,
+      "targetThreshold": 0.5
+    },
     "validatedThreshold": 100
   },
   {
@@ -101,6 +107,12 @@
       "maxWeight": 100,
       "trustedSeeds": []
     },
+    "safeZodiacSignerSync": {
+      "enabled": true,
+      "topNSigners": 5,
+      "minThreshold": 1,
+      "targetThreshold": 0.5
+    },
     "validatedThreshold": 100
   },
   {
@@ -152,6 +164,12 @@
       "minWeight": 0,
       "maxWeight": 100,
       "trustedSeeds": []
+    },
+    "safeZodiacSignerSync": {
+      "enabled": true,
+      "topNSigners": 5,
+      "minThreshold": 1,
+      "targetThreshold": 0.5
     },
     "validatedThreshold": 100
   }

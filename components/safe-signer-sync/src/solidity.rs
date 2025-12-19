@@ -14,8 +14,8 @@
 use alloy_sol_macro::sol;
 
 sol! {
-    // Emitted on a rewards or merkle gov contract when a merkle root has been updated
-    event MerkleRootUpdated(bytes32 indexed root, bytes32 ipfsHash, string ipfsHashCid);
+    // Emitted on a MerkleSnapshot contract when a merkle root has been updated
+    event MerkleRootUpdated(bytes32 indexed root, bytes32 ipfsHash, string ipfsHashCid, uint256 totalValue);
 
     /// @dev Operation types for signer management
     enum OperationType {
@@ -39,7 +39,7 @@ sol! {
         SignerOperation[] operations; // Array of operations to execute
     }
 
-    interface ISignerManagerModule {
+    interface ISignerSyncManagerModule {
         function getSigners() public view returns (address[] memory);
     }
 }

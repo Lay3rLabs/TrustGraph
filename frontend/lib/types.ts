@@ -18,11 +18,29 @@ export type Network = {
     merkleSnapshot: Hex
     easIndexerResolver: Hex
     merkleFundDistributor?: Hex
-    merkleGovModule?: Hex
+    safe?: {
+      factory: Hex
+      singleton: Hex
+      proxy: Hex
+      signerSyncManager: Hex
+    }
   }
   schemas: NetworkSchema[]
   pagerank: {
+    enabled: boolean
+    pointsPool: number
+    trustMultiplier: number
+    trustShare: number
+    trustDecay: number
+    minWeight: number
+    maxWeight: number
     trustedSeeds: Hex[]
+  }
+  safeZodiacSignerSync: {
+    enabled: boolean
+    topNSigners: number
+    minThreshold: number
+    targetThreshold: number
   }
   validatedThreshold: number
 }

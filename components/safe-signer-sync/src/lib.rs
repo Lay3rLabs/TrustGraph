@@ -2,7 +2,7 @@
 //!
 //! This component synchronizes Safe signers based on a merkle tree stored in IPFS.
 //! It downloads the merkle tree, identifies the top N accounts, and generates
-//! operations to sync them with the SignerManagerModule contract.
+//! operations to sync them with the SignerSyncManagerModule contract.
 //!
 
 mod solidity;
@@ -16,7 +16,9 @@ use wavs_wasi_utils::evm::new_evm_provider;
 #[rustfmt::skip]
 pub mod bindings;
 use crate::bindings::{export, Guest, TriggerAction, WasmResponse};
-use crate::solidity::{ISignerManagerModule, OperationType, SignerManagerPayload, SignerOperation};
+use crate::solidity::{
+    ISignerSyncManagerModule, OperationType, SignerManagerPayload, SignerOperation,
+};
 use alloy_provider::{Provider, RootProvider};
 use alloy_sol_types::{SolCall, SolValue};
 use serde::{Deserialize, Serialize};
@@ -76,7 +78,7 @@ impl Guest for Component {
     /// This component:
     /// 1. Downloads a merkle tree from IPFS using the provided CID
     /// 2. Identifies the top N accounts based on voting power/score
-    /// 3. Queries the current signers from the SignerManagerModule
+    /// 3. Queries the current signers from the SignerSyncManagerModule
     /// 4. Generates operations to sync the signers
     /// 5. Returns the encoded SignerManagerPayload
     fn run(action: TriggerAction) -> std::result::Result<Option<WasmResponse>, String> {
@@ -96,9 +98,18 @@ impl Guest for Component {
             .unwrap_or(10);
 
         let min_threshold = config_var("min_threshold")
-            .unwrap_or_else(|| "3".to_string())
+            .unwrap_or_else(|| "1".to_string())
             .parse::<usize>()
-            .unwrap_or(3);
+            .unwrap_or(1);
+
+        let target_threshold = config_var("target_threshold")
+            .unwrap_or_else(|| "0.5".to_string())
+            .parse::<f64>()
+            .unwrap_or(0.5);
+
+        if target_threshold < 0.01 || target_threshold > 1.0 {
+            return Err("target_threshold must be between 0.01 and 1.0".to_string());
+        }
 
         // Find top N signers from merkle tree
         let top_signers = find_top_signers(&merkle_tree, top_n)?;
@@ -108,8 +119,8 @@ impl Guest for Component {
         }
 
         // Get module address from config
-        let module_address = config_var("signer_module_address")
-            .ok_or_else(|| "signer_module_address not configured")?;
+        let module_address = config_var("signer_sync_manager")
+            .ok_or_else(|| "signer_sync_manager not configured")?;
 
         let current_signers = block_on(query_current_signers(module_address))?;
         println!("📋 Current signers: {} addresses", current_signers.len());
@@ -117,12 +128,14 @@ impl Guest for Component {
             println!("  [{}] {}", i, signer);
         }
 
+        // Calculate the new threshold based on the target threshold
+        let new_threshold = ((target_threshold * top_signers.len() as f64).ceil() as usize)
+            .max(min_threshold)
+            .min(top_signers.len());
+
         // Calculate the operations needed
-        let operations = calculate_signer_operations(
-            &current_signers,
-            &top_signers,
-            min_threshold.min(top_signers.len()),
-        )?;
+        let operations =
+            calculate_signer_operations(&current_signers, &top_signers, new_threshold)?;
 
         println!("🔧 Generated {} signer operations:", operations.len());
         for (i, op) in operations.iter().enumerate() {
@@ -193,7 +206,7 @@ fn convert_cid_formats(cid: &str) -> Vec<String> {
 /// Downloads the merkle tree from IPFS
 fn download_merkle_tree(cid: &str) -> Result<MerkleTreeIpfsData, String> {
     // Try to use Pinata first, fallback to local IPFS if API key is not available
-    let use_pinata = std::env::var("WAVS_ENV_PINATA_API_KEY").is_ok();
+    let use_pinata = std::env::var("WAVS_ENV_PINATA_API_KEY").is_ok_and(|key| !key.is_empty());
 
     if use_pinata {
         println!("🌐 Using Pinata IPFS service");
@@ -233,10 +246,10 @@ fn download_merkle_tree(cid: &str) -> Result<MerkleTreeIpfsData, String> {
         // Try multiple URL formats for local IPFS with different CID formats
         let mut urls = Vec::new();
         for cid_variant in &cid_formats {
-            // Subdomain format (preferred by some IPFS gateways)
-            urls.push(format!("http://{}.ipfs.localhost:8080/", cid_variant));
             // Path format (fallback)
             urls.push(format!("http://localhost:8080/ipfs/{}", cid_variant));
+            // Subdomain format (preferred by some IPFS gateways)
+            urls.push(format!("http://{}.ipfs.localhost:8080/", cid_variant));
             // Alternative subdomain format with 127.0.0.1
             urls.push(format!("http://{}.ipfs.127.0.0.1:8080/", cid_variant));
         }
@@ -328,7 +341,7 @@ fn find_top_signers(
     Ok(top_signers)
 }
 
-/// Queries the current signers from the SignerManagerModule contract
+/// Queries the current signers from the SignerSyncManagerModule contract
 async fn query_current_signers(module_address: String) -> Result<Vec<Address>, String> {
     let chain_name = config_var("chain_name").unwrap_or("local".to_string());
     let chain_config = get_evm_chain_config(&chain_name).unwrap();
@@ -340,7 +353,7 @@ async fn query_current_signers(module_address: String) -> Result<Vec<Address>, S
         Address::from_str(&module_address).map_err(|e| format!("Invalid module address: {}", e))?;
 
     // Create the getSigners call
-    let get_signers_call = ISignerManagerModule::getSignersCall {};
+    let get_signers_call = ISignerSyncManagerModule::getSignersCall {};
 
     // Create transaction request
     let tx = alloy_rpc_types::eth::TransactionRequest {
@@ -354,7 +367,7 @@ async fn query_current_signers(module_address: String) -> Result<Vec<Address>, S
         provider.call(tx).await.map_err(|e| format!("Failed to call getSigners: {}", e))?;
 
     // Decode the result as address[]
-    let signers = ISignerManagerModule::getSignersCall::abi_decode_returns(&result)
+    let signers = ISignerSyncManagerModule::getSignersCall::abi_decode_returns(&result)
         .map_err(|e| format!("Failed to decode getSigners result: {}", e))?;
 
     Ok(signers)

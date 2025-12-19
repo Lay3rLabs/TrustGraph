@@ -11,9 +11,11 @@ import {
   Network,
   NetworkDeploy,
   ProgramContext,
+  SafeZodiacSignerSyncDeploy,
 } from './types'
 import {
   isNetworkComplete,
+  isNetworkSafeZodiacSignerSyncComplete,
   loadDotenv,
   readJson,
   readJsonIfFileExists,
@@ -40,6 +42,7 @@ abstract class EnvBase implements IEnv {
   aggregatorTimerDelaySeconds: number
   networksConfigFile: string
   deployContracts: ContractDeployment[]
+  postDeployContracts?: () => void | Promise<void>
 
   constructor(options: OmitFunctions<IEnv>) {
     this.rpcUrl = options.rpcUrl
@@ -51,6 +54,7 @@ abstract class EnvBase implements IEnv {
     this.aggregatorTimerDelaySeconds = options.aggregatorTimerDelaySeconds
     this.networksConfigFile = options.networksConfigFile
     this.deployContracts = options.deployContracts
+    this.postDeployContracts = options.postDeployContracts
   }
 
   static get(envName: EnvName | string, overrides: EnvOverrides = {}): IEnv {
@@ -150,6 +154,13 @@ abstract class EnvBase implements IEnv {
       const deployData = readJson<NetworkDeploy>(
         path.join('config', deployFile)
       )
+      const safeZodiacSignerSyncDeployData =
+        readJsonIfFileExists<SafeZodiacSignerSyncDeploy>(
+          path.join(
+            'config',
+            `safe_zodiac_signer_sync_deploy_${env}_${index}.json`
+          )
+        )
 
       const network: Network = {
         ...networks[index],
@@ -157,6 +168,13 @@ abstract class EnvBase implements IEnv {
           merkleSnapshot: deployData.contracts.merkle_snapshot,
           easIndexerResolver: deployData.contracts.eas_indexer_resolver,
           merkleFundDistributor: deployData.contracts.fund_distributor,
+          safe: safeZodiacSignerSyncDeployData && {
+            factory: safeZodiacSignerSyncDeployData.safe_factory,
+            singleton: safeZodiacSignerSyncDeployData.safe_singleton,
+            proxy: safeZodiacSignerSyncDeployData.safe_proxy,
+            signerSyncManager:
+              safeZodiacSignerSyncDeployData.signer_sync_manager,
+          },
         },
         schemas: Object.values(deployData.schemas).flatMap((data) => {
           // Ignore placeholder "_" key from forge serialization.
@@ -190,7 +208,8 @@ abstract class EnvBase implements IEnv {
         // Add or update missing contracts and schemas for production.
         Object.entries(network.contracts).forEach(([key, value]) => {
           if (!networkToUpdate.contracts[key as keyof Network['contracts']]) {
-            networkToUpdate.contracts[key as keyof Network['contracts']] = value
+            networkToUpdate.contracts[key as keyof Network['contracts']] =
+              value as any
           }
         })
         network.schemas.forEach((schema) => {
@@ -275,23 +294,17 @@ export class DevEnv extends EnvBase {
             0,
             numNetworks,
           ],
-          postRun: () => {
-            // Replace the networks config file with the template.
-            fs.copyFileSync(networksConfigTemplateFile, this.networksConfigFile)
-            this.updateNetworksConfigWithDeployments('dev')
-          },
         },
         {
-          name: 'Safes and Zodiac Modules',
-          script: 'script/DeployZodiacSafes.s.sol:DeployZodiacSafes',
-          sig: 'run(string,string)',
+          name: 'Safe and Zodiac Signer Sync',
+          script: 'script/DeploySafeZodiacSignerSync.s.sol:DeployScript',
+          sig: 'run(string,uint256,string,uint256,uint256)',
           args: (ctx) => [
             ctx.options.serviceManagerAddress,
-            // Use existing merkle snapshot contract.
-            readJsonKey(
-              'config/network_deploy_dev_0.json',
-              'contracts.merkle_snapshot'
-            ),
+            BigInt(2e18).toString(),
+            'dev',
+            0,
+            numNetworks,
           ],
         },
         {
@@ -301,6 +314,12 @@ export class DevEnv extends EnvBase {
           args: (ctx) => [ctx.options.serviceManagerAddress],
         },
       ],
+      // After all contracts are deployed, update the networks config file.
+      postDeployContracts: () => {
+        // Replace the networks config file with the template.
+        fs.copyFileSync(networksConfigTemplateFile, this.networksConfigFile)
+        this.updateNetworksConfigWithDeployments('dev')
+      },
     })
   }
 
@@ -390,8 +409,8 @@ export class ProdEnv extends EnvBase {
             readJsonKeyIfFileExists('.docker/eas_deploy.json', 'eas') !==
             undefined,
         },
-        ...networks.map(
-          (network, index): ContractDeployment => ({
+        ...networks.flatMap((network, index): ContractDeployment[] => [
+          {
             name: `Network: ${network.name}`,
             script: 'script/DeployNetwork.s.sol:DeployScript',
             sig: 'run(string,string,string,bool,string,uint256,uint256)',
@@ -404,15 +423,24 @@ export class ProdEnv extends EnvBase {
               index,
               1,
             ],
-            // After the last network is deployed, update the networks config file.
-            postRun:
-              index === networks.length - 1
-                ? () => this.updateNetworksConfigWithDeployments('prod')
-                : undefined,
             // Skip if network is already complete.
             skip: () => isNetworkComplete(network),
-          })
-        ),
+          },
+          {
+            name: `Safe and Zodiac Signer Sync: ${network.name}`,
+            script: 'script/DeploySafeZodiacSignerSync.s.sol:DeployScript',
+            sig: 'run(string,uint256,string,uint256,uint256)',
+            args: (ctx) => [
+              ctx.options.serviceManagerAddress,
+              '0', // No funding amount for production.
+              'prod',
+              index,
+              1,
+            ],
+            // Skip if safe and zodiac signer sync is already complete.
+            skip: () => isNetworkSafeZodiacSignerSyncComplete(network),
+          },
+        ]),
         {
           name: 'Indexer',
           script: 'script/DeployWavsIndexer.s.sol:DeployWavsIndexer',
@@ -426,6 +454,10 @@ export class ProdEnv extends EnvBase {
             ) !== undefined,
         },
       ],
+      // After all contracts are deployed, update the networks config file.
+      postDeployContracts: () => {
+        this.updateNetworksConfigWithDeployments('prod')
+      },
     })
   }
 

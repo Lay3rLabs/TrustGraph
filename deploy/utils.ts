@@ -287,3 +287,22 @@ export const isNetworkComplete = (network: Network): boolean => {
     )
   )
 }
+
+/**
+ * Whether or not a network's safe and zodiac signer sync is completely configured (either it's disabled, or all the contracts are deployed).
+ */
+export const isNetworkSafeZodiacSignerSyncComplete = (
+  network: Network
+): boolean => {
+  return (
+    !network.safeZodiacSignerSync.enabled ||
+    (!!network.contracts.safe?.factory &&
+      isAddress(network.contracts.safe?.factory) &&
+      !!network.contracts.safe?.singleton &&
+      isAddress(network.contracts.safe?.singleton) &&
+      !!network.contracts.safe?.proxy &&
+      isAddress(network.contracts.safe?.proxy) &&
+      !!network.contracts.safe?.signerSyncManager &&
+      isAddress(network.contracts.safe?.signerSyncManager))
+  )
+}

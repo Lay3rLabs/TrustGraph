@@ -81,6 +81,7 @@ export type IEnv = {
   aggregatorTimerDelaySeconds: number
   networksConfigFile: string
   deployContracts: ContractDeployment[]
+  postDeployContracts?: () => void | Promise<void>
   uploadToIpfs: (file: string, apiKey?: string) => Promise<string>
   generateDeploymentSummary: (serviceManagerAddress: string) => object
 }
@@ -134,6 +135,13 @@ export type NetworkDeploy = {
   }
 }
 
+export type SafeZodiacSignerSyncDeploy = {
+  safe_factory: Hex
+  safe_singleton: Hex
+  safe_proxy: Hex
+  signer_sync_manager: Hex
+}
+
 export type Network = {
   id: string
   name: string
@@ -152,10 +160,29 @@ export type Network = {
     merkleSnapshot: Hex
     easIndexerResolver: Hex
     merkleFundDistributor?: Hex
+    safe?: {
+      factory: Hex
+      singleton: Hex
+      proxy: Hex
+      signerSyncManager: Hex
+    }
   }
   schemas: NetworkSchema[]
   pagerank: {
+    enabled: boolean
+    pointsPool: number
+    trustMultiplier: number
+    trustShare: number
+    trustDecay: number
+    minWeight: number
+    maxWeight: number
     trustedSeeds: Hex[]
+  }
+  safeZodiacSignerSync: {
+    enabled: boolean
+    topNSigners: number
+    minThreshold: number
+    targetThreshold: number
   }
   validatedThreshold: number
 }

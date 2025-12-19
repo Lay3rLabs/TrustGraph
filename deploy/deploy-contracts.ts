@@ -74,12 +74,12 @@ const main = async () => {
       shell: true,
     })
 
-    if (contract.postRun) {
-      await contract.postRun(context)
-    }
+    await contract.postRun?.(context)
 
     console.log(chalk.yellowBright(`✅ ${contract.name} deployed`))
   }
+
+  await env.postDeployContracts?.()
 
   fs.writeFileSync(
     DEPLOYMENT_SUMMARY_FILE,

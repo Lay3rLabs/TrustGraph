@@ -1,3 +1,3 @@
 # Signer Sync
 
-Syncs signers with the `SigningManagerModule` Zodiac module.
+Syncs signers with the `SignerSyncManagerModule` Zodiac module.
