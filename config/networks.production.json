@@ -37,8 +37,8 @@
     "pagerank": {
       "enabled": true,
       "pointsPool": 10000,
-      "trustMultiplier": 3.0,
-      "trustShare": 1.0,
+      "trustMultiplier": 3,
+      "trustShare": 1,
       "trustDecay": 0.8,
       "minWeight": 0,
       "maxWeight": 100,
@@ -72,13 +72,13 @@
     "criteria": "RegenHub funds projects and people who are active participants in our regenerative ecosystem. To be eligible, teams must:\n\n1. **Show up in person**: Physically work from or visit RegenHub at least once per quarter to build real trust, context, and collaboration.\n2. **Add clear value**: Contribute meaningfully to the community through building, mentoring, organizing, knowledge sharing, or shipping real work.\n3. **Align with regenerative outcomes**: Advance climate resilience, social equity, economic democracy, or other regenerative public goods.\n4. **Build in the open**: Share learnings, progress, and failures with the community to strengthen collective intelligence.\n5. **Demonstrate commitment, not extraction**: Treat RegenHub as a long term home and partner, not a grant stop or marketing channel.\n6. **Accept shared accountability**: Be open to community feedback, light governance, and reciprocity as part of cooperative capital.",
     "schemas": [
       {
-        "uid": "",
+        "description": "Weighted endorsement",
         "key": "vouching",
         "name": "Vouch",
-        "description": "Weighted endorsement",
-        "resolver": "",
+        "resolver": "0x7455d40B75eb1A881c329D543BC016f758DF2BA1",
         "revocable": true,
         "schema": "string comment,uint256 confidence",
+        "uid": "0x4ed9c60665887d36cc92ac01bb92b9e034415aa37b3475f8293cf604ae1819c6",
         "fields": [
           {
             "name": "comment",
@@ -94,8 +94,8 @@
     "pagerank": {
       "enabled": true,
       "pointsPool": 10000,
-      "trustMultiplier": 3.0,
-      "trustShare": 1.0,
+      "trustMultiplier": 3,
+      "trustShare": 1,
       "trustDecay": 0.8,
       "minWeight": 0,
       "maxWeight": 100,
@@ -111,8 +111,8 @@
       "targetThreshold": 0.5
     },
     "contracts": {
-      "merkleSnapshot": "",
-      "easIndexerResolver": ""
+      "merkleSnapshot": "0xb9d751c1Fc36f18e79c904a29Fd8DfB4FD7a2e9E",
+      "easIndexerResolver": "0x7455d40B75eb1A881c329D543BC016f758DF2BA1"
     },
     "validatedThreshold": 75
   }
