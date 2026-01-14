@@ -59,5 +59,61 @@
       "easIndexerResolver": "0xF0278E089aA3361796e9B9d30C30Ee427747225E"
     },
     "validatedThreshold": 75
+  },
+  {
+    "id": "regenhub",
+    "name": "RegenHub",
+    "link": {
+      "prefix": "Learn more:",
+      "label": "regenhub.xyz",
+      "href": "https://regenhub.xyz"
+    },
+    "about": "RegenHub is a regenerative innovation hub in Boulder, Colorado, bringing together builders, creators, and changemakers working toward a more resilient and democratic economy. We offer community infrastructure, shared ownership, and collective intelligence to support projects at the intersection of climate, social equity, and technology. Through co-working, events, and cooperative governance, RegenHub helps people turn values into livelihoods and ideas into lasting impact.",
+    "criteria": "RegenHub funds projects and people who are active participants in our regenerative ecosystem. To be eligible, teams must:\n\n1. **Show up in person**: Physically work from or visit RegenHub at least once per quarter to build real trust, context, and collaboration.\n2. **Add clear value**: Contribute meaningfully to the community through building, mentoring, organizing, knowledge sharing, or shipping real work.\n3. **Align with regenerative outcomes**: Advance climate resilience, social equity, economic democracy, or other regenerative public goods.\n4. **Build in the open**: Share learnings, progress, and failures with the community to strengthen collective intelligence.\n5. **Demonstrate commitment, not extraction**: Treat RegenHub as a long term home and partner, not a grant stop or marketing channel.\n6. **Accept shared accountability**: Be open to community feedback, light governance, and reciprocity as part of cooperative capital.",
+    "schemas": [
+      {
+        "uid": "",
+        "key": "vouching",
+        "name": "Vouch",
+        "description": "Weighted endorsement",
+        "resolver": "",
+        "revocable": true,
+        "schema": "string comment,uint256 confidence",
+        "fields": [
+          {
+            "name": "comment",
+            "type": "string"
+          },
+          {
+            "name": "confidence",
+            "type": "uint256"
+          }
+        ]
+      }
+    ],
+    "pagerank": {
+      "enabled": true,
+      "pointsPool": 10000,
+      "trustMultiplier": 3.0,
+      "trustShare": 1.0,
+      "trustDecay": 0.8,
+      "minWeight": 0,
+      "maxWeight": 100,
+      "trustedSeeds": [
+        "0x7d03C5c37f77Fd01211334B9115CA108C84E8f3B",
+        "0x00De4B13153673BCAE2616b67bf822500d325Fc3"
+      ]
+    },
+    "safeZodiacSignerSync": {
+      "enabled": false,
+      "topNSigners": 5,
+      "minThreshold": 1,
+      "targetThreshold": 0.5
+    },
+    "contracts": {
+      "merkleSnapshot": "",
+      "easIndexerResolver": ""
+    },
+    "validatedThreshold": 75
   }
 ]
