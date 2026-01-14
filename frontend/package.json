@@ -83,7 +83,7 @@
     "marked": "^16.2.0",
     "motion": "^12.23.14",
     "nanoid": "^5.1.5",
-    "next": "15.2.6",
+    "next": "15.2.8",
     "next-plausible": "^3.12.4",
     "next-themes": "latest",
     "openai": "^5.22.0",
