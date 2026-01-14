@@ -32,6 +32,7 @@ type OmitFunctions<T> = Pick<T, NonFunctionPropertyNames<T>>
 abstract class EnvBase implements IEnv {
   rpcUrl: string
   registry: string
+  serviceName: string
   wasiNamespace: string
   triggerChain: string
   submitChain: string
@@ -47,6 +48,7 @@ abstract class EnvBase implements IEnv {
   constructor(options: OmitFunctions<IEnv>) {
     this.rpcUrl = options.rpcUrl
     this.registry = options.registry
+    this.serviceName = options.serviceName
     this.wasiNamespace = options.wasiNamespace
     this.triggerChain = options.triggerChain
     this.submitChain = options.submitChain
@@ -265,6 +267,7 @@ export class DevEnv extends EnvBase {
     super({
       rpcUrl,
       registry: 'http://localhost:8090',
+      serviceName: 'trust-graph',
       wasiNamespace: 'example',
       triggerChain: 'evm:31337',
       submitChain: 'evm:31337',
@@ -387,7 +390,8 @@ export class ProdEnv extends EnvBase {
     super({
       rpcUrl,
       registry: 'https://wa.dev',
-      wasiNamespace: 'en0va',
+      serviceName: 'trust-graph',
+      wasiNamespace: 'wavs-trust-graph',
       // optimism
       triggerChain: 'evm:10',
       submitChain: 'evm:10',

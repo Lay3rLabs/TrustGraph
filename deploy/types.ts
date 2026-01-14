@@ -71,6 +71,7 @@ export type EnvName = 'dev' | 'prod'
 export type IEnv = {
   rpcUrl: string
   registry: string
+  serviceName: string
   wasiNamespace: string
   triggerChain: string
   submitChain: string

@@ -116,7 +116,7 @@ const main = async () => {
     `/data/${output}`,
   ]
 
-  await execSilently(...BASE_CMD, 'init', '--name', 'en0va')
+  await execSilently(...BASE_CMD, 'init', '--name', env.serviceName)
 
   for (const component of expandedComponents) {
     if (component.disabled) {
