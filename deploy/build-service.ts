@@ -135,6 +135,20 @@ const main = async () => {
       )
     )
 
+    const submitAddress = readJsonKey(
+      '.docker/deployment_summary.json',
+      component.submit.contract_json_path
+    )
+
+    if (!submitAddress) {
+      console.log(
+        chalk.yellowBright(
+          `Skipping component ${component.filename} because submit address (${component.submit.contract_json_path}) is not set`
+        )
+      )
+      continue
+    }
+
     const workflowId = JSON.parse(
       await execSilently(...BASE_CMD, 'workflow', 'add')
     )['workflow_id']
@@ -343,11 +357,6 @@ const main = async () => {
       '*',
       '--file-system',
       'true'
-    )
-
-    const submitAddress = readJsonKey(
-      '.docker/deployment_summary.json',
-      component.submit.contract_json_path
     )
 
     await execSilently(
