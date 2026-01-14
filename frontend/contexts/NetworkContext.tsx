@@ -13,7 +13,7 @@ import {
   useMemo,
   useState,
 } from 'react'
-import { Hex } from 'viem'
+import { Hex, zeroAddress } from 'viem'
 
 import { useBatchEnsQuery } from '@/hooks/useEns'
 import { usePageRankComputerModule } from '@/hooks/usePageRankComputer'
@@ -112,7 +112,7 @@ export const NetworkProvider = ({
   const { data: gnosisSafeData, isLoading: gnosisSafeLoading } = usePonderQuery(
     {
       queryFn: ponderQueryFns.getGnosisSafe(
-        network.contracts.safe?.proxy as Hex
+        network.contracts.safe?.proxy || zeroAddress
       ),
       enabled: !!network.contracts.safe?.proxy,
     }
