@@ -8,12 +8,13 @@
   "contracts": {
     "IWavsServiceManager": "0x197484faccbdb900788f50f553907bbaea20701c",
     "WavsIndexer": "0xF56904778BcCF9B89c4B2f214eB07Fb2B9872b5E",
-    "EASAttestTrigger": "0xA91F15f5632A98278daBED81C4A6Fe87f9cF4161",
-    "WavsAttester": "0xbaF18D8045521a6d91243BBB2CaaFb37a35d70F4",
     "EAS": "0x4200000000000000000000000000000000000021",
-    "EASIndexerResolver": "0xF0278E089aA3361796e9B9d30C30Ee427747225E",
-    "SchemaRegistrar": "0x33b9885aC3cB1891b0bC43F55D71963BD1Fee5F2",
+    "SchemaRegistrar": "0x33b9885ac3cb1891b0bc43f55d71963bd1fee5f2",
     "SchemaRegistry": "0x4200000000000000000000000000000000000020",
-    "MerkleSnapshot": "0x6d5339Fd17235803AE68e04d0b820bdd987427AC"
+    "GnosisSafe": "",
+    "EASIndexerResolver": "",
+    "MerkleSnapshot": "",
+    "MerkleGovModule": "",
+    "MerkleFundDistributor": ""
   }
 }
