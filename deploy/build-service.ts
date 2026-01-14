@@ -143,7 +143,7 @@ const main = async () => {
     if (!submitAddress) {
       console.log(
         chalk.yellowBright(
-          `Skipping component ${component.filename} because submit address (${component.submit.contract_json_path}) is not set`
+          `Skipping because submit address (${component.submit.contract_json_path}) is not set`
         )
       )
       continue
