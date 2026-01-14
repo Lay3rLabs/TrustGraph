@@ -289,9 +289,10 @@ export const isNetworkComplete = (network: Network): boolean => {
 }
 
 /**
- * Whether or not a network's safe and zodiac signer sync is completely configured (either it's disabled, or all the contracts are deployed).
+ * Whether or not a network's safe and zodiac signer sync is completely
+ * configured (either it's disabled, or all the contracts are deployed).
  */
-export const isNetworkSafeZodiacSignerSyncComplete = (
+export const isNetworkSafeZodiacSignerSyncDisabledOrComplete = (
   network: Network
 ): boolean => {
   return (

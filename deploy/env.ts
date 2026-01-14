@@ -15,7 +15,7 @@ import {
 } from './types'
 import {
   isNetworkComplete,
-  isNetworkSafeZodiacSignerSyncComplete,
+  isNetworkSafeZodiacSignerSyncDisabledOrComplete,
   loadDotenv,
   readJson,
   readJsonIfFileExists,
@@ -438,7 +438,8 @@ export class ProdEnv extends EnvBase {
               1,
             ],
             // Skip if safe and zodiac signer sync is already complete.
-            skip: () => isNetworkSafeZodiacSignerSyncComplete(network),
+            skip: () =>
+              isNetworkSafeZodiacSignerSyncDisabledOrComplete(network),
           },
         ]),
         {
