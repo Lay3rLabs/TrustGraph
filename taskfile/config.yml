@@ -102,15 +102,15 @@ vars:
         fi
       fi
   EAS_ATTEST_TRIGGER_ADDR:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas.attest_trigger' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.contracts.attest_trigger' .docker/deployment_summary.json || echo ""
   EAS_ADDR:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas.eas' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.contracts.eas' .docker/deployment_summary.json || echo ""
   SCHEMA_REGISTRAR_ADDR:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas.schema_registrar' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.contracts.schema_registrar' .docker/deployment_summary.json || echo ""
   INDEXER_ADDR:
     sh: test -f .docker/deployment_summary.json && jq -r '.wavs_indexer' .docker/deployment_summary.json || echo ""
   EAS_INDEXER_RESOLVER_ADDR:
-    sh: test -f .docker/deployment_summary.json && jq -r '.eas.indexer_resolver' .docker/deployment_summary.json || echo ""
+    sh: test -f .docker/deployment_summary.json && jq -r '.eas.contracts.indexer_resolver' .docker/deployment_summary.json || echo ""
   VOTING_POWER_ADDR:
     sh: test -f .docker/deployment_summary.json && jq -r '.governance.voting_power' .docker/deployment_summary.json || echo ""
   REWARDS_TOKEN_ADDRESS:
