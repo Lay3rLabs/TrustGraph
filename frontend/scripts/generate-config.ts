@@ -14,19 +14,12 @@ const deploymentSummaryFile = path.join(
   __dirname,
   '../../.docker/deployment_summary.json'
 )
-const trustGraphConfigFile = path.join(
-  __dirname,
-  '../../config/trust_graph.json'
-)
 
 console.log('🔄 Updating config with latest deployment data...')
 
 try {
   // Read configs
   const deployment = JSON.parse(fs.readFileSync(deploymentSummaryFile, 'utf8'))
-  const trustGraphConfig = JSON.parse(
-    fs.readFileSync(trustGraphConfigFile, 'utf8')
-  )
 
   console.log('📋 Found deployment data')
 
@@ -35,7 +28,7 @@ try {
   configOutput.apis = {
     ponder:
       env === 'development'
-        ? 'http://localhost:65421'
+        ? 'http://127.0.0.1:65421'
         : 'https://trust-graph.wavs.xyz/ponder',
     ipfsGateway:
       env === 'development'
@@ -55,17 +48,18 @@ try {
     WavsIndexer: deployment.wavs_indexer,
 
     // EAS
-    EASAttestTrigger: deployment.eas.contracts.attest_trigger,
-    WavsAttester: deployment.eas.contracts.attester,
-    EAS: deployment.eas.contracts.eas,
-    EASIndexerResolver: deployment.eas.contracts.indexer_resolver,
-    SchemaRegistrar: deployment.eas.contracts.schema_registrar,
-    SchemaRegistry: deployment.eas.contracts.schema_registry,
+    // EASAttestTrigger: deployment.eas.attest_trigger,
+    // WavsAttester: deployment.eas.attester,
+    EAS: deployment.eas.eas,
+    SchemaRegistrar: deployment.eas.schema_registrar,
+    SchemaRegistry: deployment.eas.schema_registry,
 
-    // Merkler
-    MerkleSnapshot: deployment.merkler.merkle_snapshot,
-    RewardDistributor: deployment.merkler.reward_distributor,
-    ERC20: deployment.merkler.reward_token,
+    // Generate ABIs but set no address since each network has its own.
+    GnosisSafe: '',
+    EASIndexerResolver: '',
+    MerkleSnapshot: '',
+    MerkleGovModule: '',
+    MerkleFundDistributor: '',
   }
 
   // Make sure ABIs exist for all contracts, and copy them to the frontend.
@@ -82,47 +76,6 @@ try {
 
       fs.copyFileSync(abiPath, path.join(__dirname, `../abis/${name}.json`))
     })
-
-  configOutput.schemas = Object.entries(
-    deployment.eas.schemas as Record<
-      string,
-      {
-        uid: string
-        schema: string
-        resolver: string
-        revocable: boolean
-      }
-    >
-  )
-    .filter(([key]) => key !== '_')
-    .reduce((acc, [snakeCasedName, { uid, ...data }]) => {
-      const camelCasedName = snakeCasedName.replaceAll(/_[a-z]/g, (match) =>
-        match.slice(1).toUpperCase()
-      )
-
-      const titleCasedName =
-        camelCasedName.charAt(0).toUpperCase() + camelCasedName.slice(1)
-
-      const fields = data.schema.split(',').map((field) => {
-        const [type, name] = field.split(' ')
-        return {
-          name,
-          type,
-        }
-      })
-
-      return {
-        ...acc,
-        [camelCasedName]: {
-          uid,
-          name: titleCasedName,
-          ...data,
-          fields,
-        },
-      }
-    }, {})
-
-  configOutput.trustedSeeds = trustGraphConfig.pagerank_trusted_seeds.split(',')
 
   fs.writeFileSync(configOutputFile, JSON.stringify(configOutput, null, 2))
 

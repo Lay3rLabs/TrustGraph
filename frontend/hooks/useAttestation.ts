@@ -3,25 +3,26 @@
 import { usePonderQuery } from '@ponder/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
-import { Hex, WatchContractEventOnLogsFn, keccak256, stringToBytes } from 'viem'
+import {
+  Hex,
+  WatchContractEventOnLogsFn,
+  isAddressEqual,
+  keccak256,
+  stringToBytes,
+} from 'viem'
 import { useAccount, usePublicClient, useWatchContractEvent } from 'wagmi'
 
 import { intoAttestationData, intoAttestationsData } from '@/lib/attestation'
-import {
-  easAbi,
-  easAddress,
-  wavsIndexerAbi,
-  wavsIndexerConfig,
-} from '@/lib/contracts'
+import { easAbi, wavsIndexerAbi } from '@/lib/contract-abis'
+import { easAddress, wavsIndexerAddress } from '@/lib/contracts'
 import { parseErrorMessage, shouldRetryTxError } from '@/lib/error'
-import { SchemaKey, SchemaManager } from '@/lib/schemas'
+import { SchemaManager } from '@/lib/schemas'
 import { txToast } from '@/lib/tx'
-import { areAddressesEqual } from '@/lib/utils'
 import { attestationKeys } from '@/queries/attestation'
 import { ponderQueryFns } from '@/queries/ponder'
 
 interface NewAttestationData {
-  schema: SchemaKey | Hex
+  schema: string
   recipient: string
   data: Record<string, string | boolean>
 }
@@ -61,7 +62,8 @@ export function useAttestation(uid?: Hex) {
     )
 
   useWatchContractEvent({
-    ...wavsIndexerConfig,
+    address: wavsIndexerAddress,
+    abi: wavsIndexerAbi,
     eventName: 'EventIndexed',
     onLogs: handleEventIndexed,
   })
@@ -126,7 +128,7 @@ export function useAttestation(uid?: Hex) {
         })
 
         await publicClient!.simulateContract({
-          address: easAddress as `0x${string}`,
+          address: easAddress,
           abi: easAbi,
           functionName: 'attest',
           args: [attestationRequest],
@@ -137,7 +139,7 @@ export function useAttestation(uid?: Hex) {
 
         const [receipt] = await txToast({
           tx: {
-            address: easAddress as `0x${string}`,
+            address: easAddress,
             abi: easAbi,
             functionName: 'attest',
             args: [attestationRequest],
@@ -227,7 +229,7 @@ export function useAttestation(uid?: Hex) {
         })
 
         await publicClient!.simulateContract({
-          address: easAddress as `0x${string}`,
+          address: easAddress,
           abi: easAbi,
           functionName: 'revoke',
           args: [revocationRequest],
@@ -238,7 +240,7 @@ export function useAttestation(uid?: Hex) {
 
         const [receipt] = await txToast({
           tx: {
-            address: easAddress as `0x${string}`,
+            address: easAddress,
             abi: easAbi,
             functionName: 'revoke',
             args: [revocationRequest],
@@ -290,7 +292,7 @@ export function useAttestation(uid?: Hex) {
   const canRevoke =
     !!connectedAddress &&
     !!query.data &&
-    areAddressesEqual(connectedAddress, query.data?.attester) &&
+    isAddressEqual(connectedAddress, query.data.attester) &&
     query.data.revocationTime === 0n
 
   return {

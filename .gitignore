@@ -7,6 +7,7 @@ node_modules/
 .pnpm-store/
 
 # WAVS
+wavs.toml
 .env
 .env.*
 !.env.example
@@ -26,8 +27,7 @@ infra/*
 **/.claude/settings.local.json
 .task
 
-
-# Claud Code
+# Claude Code
 anvil
 cast
 chisel
@@ -38,5 +38,10 @@ foundry_nightly_linux_arm64.tar.gz
 .DS_Store
 schema_output.log
 .docker/component-upload-status
-script/post-deploy.sh
+.docker/service-cid
+deploy/post-deploy.sh
 Cargo-component.lock
+
+# Deploy
+config/*_deploy_*.json
+config/networks.development.json

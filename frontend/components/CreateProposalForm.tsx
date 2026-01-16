@@ -4,42 +4,39 @@ import type React from 'react'
 import { useCallback, useState } from 'react'
 
 import { Button } from '@/components/Button'
-import { ProposalAction } from '@/hooks/useGovernance'
+import { VoteButtons } from '@/components/VoteButtons'
+import { ProposalAction, VoteType } from '@/hooks/useGovernance'
+
+import { Card } from './Card'
+import { Switch } from './Switch'
 
 interface CreateProposalFormProps {
   canCreateProposal: boolean
   userVotingPower?: string
-  proposalThreshold?: string
   onCreateProposal?: (
+    title: string,
+    description: string,
     actions: ProposalAction[],
-    description: string
+    voteType?: VoteType | null
   ) => Promise<string | null>
   isLoading?: boolean
-  formatVotingPower?: (amount: string) => string
 }
 
 export function CreateProposalForm({
   canCreateProposal,
   userVotingPower,
-  proposalThreshold,
   onCreateProposal,
   isLoading = false,
-  formatVotingPower = (amount) => amount,
 }: CreateProposalFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Form state
+  const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [actions, setActions] = useState<ProposalAction[]>([
-    {
-      target: '',
-      value: '0',
-      data: '0x',
-      operation: 0, // Default to Call operation
-      description: '',
-    },
-  ])
+  const [castVoteOnCreate, setCastVoteOnCreate] = useState(false)
+  const [voteType, setVoteType] = useState<VoteType>(VoteType.Yes)
+  const [actions, setActions] = useState<ProposalAction[]>([])
 
   const addAction = useCallback(() => {
     setActions((prev) => [
@@ -72,10 +69,6 @@ export function CreateProposalForm({
   const validateForm = (): string | null => {
     if (!description.trim()) {
       return 'Description is required'
-    }
-
-    if (actions.length === 0) {
-      return 'At least one action is required'
     }
 
     for (let i = 0; i < actions.length; i++) {
@@ -113,11 +106,19 @@ export function CreateProposalForm({
       setError(null)
 
       try {
-        const hash = await onCreateProposal(actions, description)
+        const hash = await onCreateProposal(
+          title,
+          description,
+          actions,
+          castVoteOnCreate ? voteType : null
+        )
 
         if (hash && hash !== 'undefined') {
           // Reset form
+          setTitle('')
           setDescription('')
+          setCastVoteOnCreate(false)
+          setVoteType(VoteType.Yes)
           setActions([
             {
               target: '',
@@ -141,7 +142,7 @@ export function CreateProposalForm({
   )
 
   return (
-    <div className="border border-border bg-card p-6 rounded-md space-y-4">
+    <Card size="lg" type="primary" className="space-y-4">
       <div className="space-y-2">
         <div className="text-lg font-semibold">Create Proposal</div>
         <div className="text-muted-foreground text-sm">
@@ -155,12 +156,31 @@ export function CreateProposalForm({
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        {/* Proposal Title */}
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <div className="text-sm font-medium">Proposal Title</div>
+            <div className="text-muted-foreground text-xs">
+              Provide a clear, concise title for your proposal
+            </div>
+          </div>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Enter a title for your proposal"
+            className="w-full bg-background border border-input rounded-md p-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20"
+            required
+          />
+        </div>
+
         {/* Proposal Description */}
-        <div className="space-y-2">
-          <div className="text-sm font-medium">Proposal Description</div>
-          <div className="text-muted-foreground text-xs">
-            Provide a clear, comprehensive description of your proposal
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <div className="text-sm font-medium">Proposal Description</div>
+            <div className="text-muted-foreground text-xs">
+              Provide a clear, comprehensive description of your proposal
+            </div>
           </div>
           <textarea
             value={description}
@@ -172,64 +192,27 @@ export function CreateProposalForm({
         </div>
 
         {/* Actions */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="text-sm font-medium">Proposal Actions</div>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                onClick={() => {
-                  setActions([
-                    {
-                      target: '',
-                      value: '0',
-                      data: '0x',
-                      operation: 0,
-                      description: 'Send ETH to recipient',
-                    },
-                  ])
-                  setDescription('Send ETH from treasury')
-                }}
-                variant="outline"
-                size="sm"
-              >
-                ETH Send
-              </Button>
-              <Button
-                type="button"
-                onClick={addAction}
-                variant="outline"
-                size="sm"
-              >
-                Add Action
-              </Button>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <p className="text-sm font-medium">Proposal Actions</p>
+            <div className="text-muted-foreground text-xs">
+              Define the on-chain actions to execute if this proposal passes (if
+              any)
             </div>
           </div>
 
-          <div className="text-muted-foreground text-xs">
-            Define the on-chain actions to execute if proposal passes
-          </div>
-
           {actions.map((action, index) => (
-            <div
-              key={index}
-              className="border border-border p-4 rounded-md space-y-3 bg-muted/30"
-            >
+            <Card key={index} type="detail" size="md" className="space-y-3">
               <div className="flex items-center justify-between">
-                <div className="text-muted-foreground text-xs font-medium">
-                  Action #{index + 1}
-                </div>
-                {actions.length > 1 && (
-                  <Button
-                    type="button"
-                    onClick={() => removeAction(index)}
-                    variant="outline"
-                    size="sm"
-                    className="text-destructive hover:bg-destructive/10"
-                  >
-                    Remove
-                  </Button>
-                )}
+                <p className="text-sm font-medium">Action #{index + 1}</p>
+                <Button
+                  type="button"
+                  onClick={() => removeAction(index)}
+                  variant="destructive"
+                  size="xs"
+                >
+                  Remove
+                </Button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -309,8 +292,43 @@ export function CreateProposalForm({
                   rows={2}
                 />
               </div>
-            </div>
+            </Card>
           ))}
+
+          <Button
+            className="self-start"
+            type="button"
+            onClick={addAction}
+            variant="brand"
+            size="xs"
+          >
+            Add Action
+          </Button>
+        </div>
+
+        {/* Optional initial vote */}
+        <div className="border border-border bg-muted/20 p-4 rounded-md space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-medium">CAST YOUR VOTE (OPTIONAL)</div>
+            <Switch
+              enabled={castVoteOnCreate}
+              onClick={() => setCastVoteOnCreate(!castVoteOnCreate)}
+              size="md"
+            />
+          </div>
+
+          <div className="text-xs text-muted-foreground">
+            Your voting power: {userVotingPower ?? '0'}
+          </div>
+
+          <VoteButtons
+            isLoading={isSubmitting || isLoading}
+            selected={castVoteOnCreate ? voteType : null}
+            onSelect={(vt) => {
+              setVoteType(vt)
+              setCastVoteOnCreate(true)
+            }}
+          />
         </div>
 
         {/* Submit Button */}
@@ -324,6 +342,6 @@ export function CreateProposalForm({
           </Button>
         </div>
       </form>
-    </div>
+    </Card>
   )
 }

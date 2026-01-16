@@ -1,5 +1,6 @@
 'use client'
 
+import { usePonderQuery } from '@ponder/react'
 import { useQuery } from '@tanstack/react-query'
 import {
   Dispatch,
@@ -12,13 +13,15 @@ import {
   useMemo,
   useState,
 } from 'react'
+import { Hex, zeroAddress } from 'viem'
 
 import { useBatchEnsQuery } from '@/hooks/useEns'
 import { usePageRankComputerModule } from '@/hooks/usePageRankComputer'
 import { AttestationData } from '@/lib/attestation'
-import { Network, NetworkEntry, isTrustedSeed } from '@/lib/network'
+import { isTrustedSeed } from '@/lib/network'
+import { Network, NetworkEntry } from '@/lib/types'
 import { PageRankGraphComputer } from '@/lib/wasm/pagerank/pagerank'
-import { ponderQueries } from '@/queries/ponder'
+import { ponderQueries, ponderQueryFns } from '@/queries/ponder'
 
 export type NetworkSimulationConfig = {
   enabled: boolean
@@ -44,6 +47,11 @@ export type NetworkContextType = {
   totalParticipants: number
   averageValue: number
   medianValue: number
+  gnosisSafe?: {
+    address: Hex
+    owners: Hex[]
+    threshold: number
+  }
 
   // Additional metadata from ponder
   merkleRoot: string | undefined
@@ -59,9 +67,6 @@ export type NetworkContextType = {
 
   /** Refresh the network data. */
   refresh: () => Promise<void>
-
-  /** Determine whether or not a given value is sufficient to be validated. */
-  isValueValidated: (value: string | number | bigint) => boolean
 
   /** Determine whether or not a given address is a trusted seed for the network. */
   isTrustedSeed: (address: string) => boolean
@@ -88,7 +93,7 @@ export const NetworkProvider = ({
     error: merkleError,
     refetch: refetchMerkle,
   } = useQuery({
-    ...ponderQueries.latestMerkleTree,
+    ...ponderQueries.latestMerkleTree(network.contracts.merkleSnapshot),
     refetchInterval: 10_000,
   })
 
@@ -99,9 +104,19 @@ export const NetworkProvider = ({
     error: networkError,
     refetch: refetchNetwork,
   } = useQuery({
-    ...ponderQueries.network,
+    ...ponderQueries.network(network.contracts.merkleSnapshot),
     refetchInterval: 10_000,
   })
+
+  // Fetch Gnosis Safe (if available)
+  const { data: gnosisSafeData, isLoading: gnosisSafeLoading } = usePonderQuery(
+    {
+      queryFn: ponderQueryFns.getGnosisSafe(
+        network.contracts.safe?.proxy || zeroAddress
+      ),
+      enabled: !!network.contracts.safe?.proxy,
+    }
+  )
 
   // Simulation config
   const [simulationConfig, setSimulationConfig] =
@@ -152,7 +167,7 @@ export const NetworkProvider = ({
           0,
           100,
           new pagerankModule.TrustConfig(
-            network.trustedSeeds,
+            network.pagerank.trustedSeeds,
             simulationConfig.trustMultiplier,
             simulationConfig.trustShare,
             simulationConfig.trustDecay
@@ -270,7 +285,7 @@ export const NetworkProvider = ({
       : Number(accountData[0]?.value || 0)
 
   // Combined loading state
-  const isLoading = merkleLoading || networkLoading
+  const isLoading = merkleLoading || networkLoading || gnosisSafeLoading
 
   // Combined error state
   const error = merkleError?.message || networkError?.message || null
@@ -280,15 +295,10 @@ export const NetworkProvider = ({
     await Promise.all([refetchMerkle(), refetchNetwork()])
   }, [refetchMerkle, refetchNetwork])
 
-  // Determine whether or not a given value is sufficient to be validated
-  const isValueValidated = useCallback((value: string | number | bigint) => {
-    return Number(value) >= 75
-  }, [])
-
   // Determine whether or not a given address is a trusted seed for the network
   const isTrustedNetworkSeed = useCallback(
     (address: string) => isTrustedSeed(network, address),
-    [network.trustedSeeds]
+    [network.pagerank.trustedSeeds]
   )
 
   const value = {
@@ -306,6 +316,11 @@ export const NetworkProvider = ({
     totalParticipants,
     averageValue,
     medianValue,
+    gnosisSafe: gnosisSafeData && {
+      address: gnosisSafeData.address,
+      owners: gnosisSafeData.owners,
+      threshold: Number(gnosisSafeData.threshold),
+    },
 
     // Additional metadata from ponder
     merkleRoot: merkleTreeData?.tree?.root,
@@ -318,7 +333,6 @@ export const NetworkProvider = ({
     refresh,
 
     // Utilities
-    isValueValidated,
     isTrustedSeed: isTrustedNetworkSeed,
 
     // Simulation

@@ -1,0 +1,70 @@
+import { SQL, sql } from 'drizzle-orm'
+import { AnyPgColumn } from 'drizzle-orm/pg-core'
+
+import { offchainDb } from './db'
+import * as offchainSchema from '../../offchain.schema'
+
+export const lower = (column: AnyPgColumn): SQL => sql`lower(${column})`
+
+/**
+ * Check if two hex values are equal.
+ *
+ * @param hex1 - The first hex value.
+ * @param hex2 - The second hex value.
+ * @returns True if the hex values are equal, false otherwise.
+ */
+export const isHexEqual = (hex1: string, hex2: string) =>
+  hex1.toLowerCase() === hex2.toLowerCase()
+
+export type MerkleTreeWithEntries = {
+  tree: typeof offchainSchema.merkleMetadata.$inferSelect
+  entries: Pick<
+    typeof offchainSchema.merkleEntry.$inferSelect,
+    'account' | 'value' | 'proof'
+  >[]
+}
+
+/**
+ * Get the merkle tree with its entries (sorted by value descending).
+ * @param merkleSnapshotContract The contract address of the merkle snapshot.
+ * @param root The root of the merkle tree.
+ * @returns The merkle tree with its entries (sorted by value descending) or
+ *          null if not found.
+ */
+export const getMerkleTreeWithEntries = async (
+  merkleSnapshotContract: string,
+  root: string
+): Promise<MerkleTreeWithEntries | null> => {
+  const tree = await offchainDb.query.merkleMetadata.findFirst({
+    where: (t, { eq, and }) =>
+      and(
+        eq(
+          lower(t.merkleSnapshotContract),
+          merkleSnapshotContract.toLowerCase()
+        ),
+        eq(lower(t.root), root.toLowerCase())
+      ),
+  })
+  if (!tree) {
+    return null
+  }
+
+  const entries = await offchainDb.query.merkleEntry.findMany({
+    columns: {
+      account: true,
+      value: true,
+      proof: true,
+    },
+    where: (t, { eq, and }) =>
+      and(
+        eq(
+          lower(t.merkleSnapshotContract),
+          merkleSnapshotContract.toLowerCase()
+        ),
+        eq(lower(t.root), root.toLowerCase())
+      ),
+    orderBy: (t, { desc }) => desc(t.value),
+  })
+
+  return { tree, entries }
+}

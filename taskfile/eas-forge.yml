@@ -1,8 +1,33 @@
-version: "3"
+version: '3'
 
 tasks:
+  vouch:
+    desc: 'Create a vouching attestation'
+    vars:
+      EAS_ADDR: '{{.EAS_ADDR}}'
+      NETWORK_INDEX: '{{.NETWORK_INDEX | default "0"}}'
+      RECIPIENT: '{{.RECIPIENT}}'
+      COMMENT: '{{.COMMENT | default "test vouch"}}'
+      CONFIDENCE: '{{.CONFIDENCE | default "100"}}'
+      VOUCHING_SCHEMA_UID:
+        sh: test -f config/network_deploy_dev_{{.NETWORK_INDEX}}.json && jq -r '.schemas.vouching.uid' config/network_deploy_dev_{{.NETWORK_INDEX}}.json || echo ""
+      RPC_URL:
+        sh: task get-rpc
+    preconditions:
+      - test -n "{{.VOUCHING_SCHEMA_UID}}"
+    cmds:
+      - |
+        forge script script/EASAttest.s.sol:EASAttest \
+          --sig "vouch(string,string,string,string,uint256)" \
+          "{{.EAS_ADDR}}" \
+          "{{.VOUCHING_SCHEMA_UID}}" \
+          "{{.RECIPIENT}}" \
+          "{{.COMMENT}}" \
+          "{{.CONFIDENCE}}" \
+          --rpc-url {{.RPC_URL}} --broadcast
+
   trigger-attestation:
-    desc: "Trigger attestation creation via WAVS"
+    desc: 'Trigger attestation creation via WAVS'
     vars:
       RPC_URL:
         sh: task get-rpc
@@ -19,7 +44,7 @@ tasks:
           --rpc-url {{.RPC_URL}} --broadcast
 
   trigger-statement-attestation:
-    desc: "Create direct EAS attestation with 0.001 ETH payment"
+    desc: 'Create direct EAS attestation with 0.001 ETH payment'
     vars:
       RPC_URL:
         sh: task get-rpc
@@ -37,7 +62,7 @@ tasks:
           --rpc-url {{.RPC_URL}} --broadcast
 
   agent-trigger:
-    desc: "Trigger agent event with string data"
+    desc: 'Trigger agent event with string data'
     vars:
       RPC_URL:
         sh: task get-rpc
@@ -52,7 +77,7 @@ tasks:
           --rpc-url {{.RPC_URL}} --broadcast
 
   query-attestations:
-    desc: "Query attestations for schema and recipient"
+    desc: 'Query attestations for schema and recipient'
     vars:
       RPC_URL:
         sh: task get-rpc
@@ -68,7 +93,7 @@ tasks:
           --rpc-url {{.RPC_URL}}
 
   query-proposal-attestations:
-    desc: "Query attestations for the proposal schema and recipient"
+    desc: 'Query attestations for the proposal schema and recipient'
     vars:
       RPC_URL:
         sh: task get-rpc
@@ -84,7 +109,7 @@ tasks:
           --rpc-url {{.RPC_URL}}
 
   query-voting-power:
-    desc: "Check voting power for recipient"
+    desc: 'Check voting power for recipient'
     vars:
       RPC_URL:
         sh: task get-rpc
@@ -97,11 +122,11 @@ tasks:
           --rpc-url {{.RPC_URL}}
 
   update-rewards:
-    desc: "Trigger merkle tree / rewards distribution update"
+    desc: 'Trigger merkle tree / rewards distribution update'
     vars:
       RPC_URL:
         sh: task get-rpc
-      MERKLE_SNAPSHOT_ADDR: "{{.MERKLE_SNAPSHOT_ADDR}}"
+      MERKLE_SNAPSHOT_ADDR: '{{.MERKLE_SNAPSHOT_ADDR}}'
     preconditions:
       - test -f .docker/deployment_summary.json
       - test -n "{{.MERKLE_SNAPSHOT_ADDR}}"
@@ -115,52 +140,52 @@ tasks:
           --broadcast
 
   query-rewards:
-    desc: "Query rewards contract state"
+    desc: 'Query rewards contract state'
     vars:
       RPC_URL:
         sh: task get-rpc
-      REWARD_DISTRIBUTOR_ADDRESS: "{{.REWARD_DISTRIBUTOR_ADDRESS}}"
+      MERKLE_FUND_DISTRIBUTOR_ADDRESS: '{{.MERKLE_FUND_DISTRIBUTOR_ADDRESS}}'
     preconditions:
       - test -f .docker/deployment_summary.json
-      - test -n "{{.REWARD_DISTRIBUTOR_ADDRESS}}"
+      - test -n "{{.MERKLE_FUND_DISTRIBUTOR_ADDRESS}}"
     cmds:
       - |
-        echo "Using reward distributor: {{.REWARD_DISTRIBUTOR_ADDRESS}}"
+        echo "Using reward distributor: {{.MERKLE_FUND_DISTRIBUTOR_ADDRESS}}"
         forge script script/Merkler.s.sol:Merkler \
           --sig "queryContractState(string)" \
-          "{{.REWARD_DISTRIBUTOR_ADDRESS}}" \
+          "{{.MERKLE_FUND_DISTRIBUTOR_ADDRESS}}" \
           --rpc-url {{.RPC_URL}}
 
   claim-rewards:
-    desc: "Claim rewards from contract"
+    desc: 'Claim rewards from contract'
     vars:
       RPC_URL:
         sh: task get-rpc
-      REWARD_DISTRIBUTOR_ADDRESS: "{{.REWARD_DISTRIBUTOR_ADDRESS}}"
-      REWARDS_TOKEN_ADDRESS: "{{.REWARDS_TOKEN_ADDRESS}}"
+      MERKLE_FUND_DISTRIBUTOR_ADDRESS: '{{.MERKLE_FUND_DISTRIBUTOR_ADDRESS}}'
+      REWARDS_TOKEN_ADDRESS: '{{.REWARDS_TOKEN_ADDRESS}}'
     env:
-      IPFS_GATEWAY_URL: "http://127.0.0.1:8080/ipfs/"
+      IPFS_GATEWAY_URL: 'http://127.0.0.1:8080/ipfs/'
     preconditions:
       - test -f .docker/deployment_summary.json
-      - test -n "{{.REWARD_DISTRIBUTOR_ADDRESS}}"
+      - test -n "{{.MERKLE_FUND_DISTRIBUTOR_ADDRESS}}"
       - test -n "{{.REWARDS_TOKEN_ADDRESS}}"
     cmds:
       - |
-        echo "Using reward distributor: {{.REWARD_DISTRIBUTOR_ADDRESS}}"
+        echo "Using reward distributor: {{.MERKLE_FUND_DISTRIBUTOR_ADDRESS}}"
         echo "Using rewards token: {{.REWARDS_TOKEN_ADDRESS}}"
         forge script script/Merkler.s.sol:Merkler \
           --sig "claimRewards(string,string)" \
-          "{{.REWARD_DISTRIBUTOR_ADDRESS}}" \
+          "{{.MERKLE_FUND_DISTRIBUTOR_ADDRESS}}" \
           "{{.REWARDS_TOKEN_ADDRESS}}" \
           --rpc-url {{.RPC_URL}} \
           --broadcast --ffi
 
   query-rewards-balance:
-    desc: "Query rewards token balance for an address"
+    desc: 'Query rewards token balance for an address'
     vars:
       RPC_URL:
         sh: task get-rpc
-      REWARDS_TOKEN_ADDRESS: "{{.REWARDS_TOKEN_ADDRESS}}"
+      REWARDS_TOKEN_ADDRESS: '{{.REWARDS_TOKEN_ADDRESS}}'
     preconditions:
       - test -f .docker/deployment_summary.json
       - test -n "{{.REWARDS_TOKEN_ADDRESS}}"

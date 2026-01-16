@@ -1,0 +1,176 @@
+[
+  {
+    "id": "test-network-1",
+    "name": "Test Network 1",
+    "link": {
+      "prefix": "Learn more:",
+      "label": "Click Me",
+      "href": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    },
+    "about": "This is a test network.",
+    "callToAction": {
+      "label": "Click Me",
+      "href": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    },
+    "criteria": "The attestations in this network are weighted endorsements.",
+    "contracts": {
+      "merkleSnapshot": "",
+      "easIndexerResolver": "",
+      "merkleFundDistributor": ""
+    },
+    "schemas": [
+      {
+        "description": "Weighted endorsement",
+        "key": "vouching",
+        "name": "Vouch",
+        "resolver": "",
+        "revocable": true,
+        "schema": "string comment,uint256 confidence",
+        "uid": "",
+        "fields": [
+          {
+            "name": "comment",
+            "type": "string"
+          },
+          {
+            "name": "confidence",
+            "type": "uint256"
+          }
+        ]
+      }
+    ],
+    "pagerank": {
+      "enabled": true,
+      "pointsPool": 10000,
+      "trustMultiplier": 3.0,
+      "trustShare": 1.0,
+      "trustDecay": 0.8,
+      "minWeight": 0,
+      "maxWeight": 100,
+      "trustedSeeds": []
+    },
+    "safeZodiacSignerSync": {
+      "enabled": true,
+      "topNSigners": 5,
+      "minThreshold": 1,
+      "targetThreshold": 0.5
+    },
+    "validatedThreshold": 100
+  },
+  {
+    "id": "test-network-2",
+    "name": "Test Network 2",
+    "link": {
+      "prefix": "Learn more:",
+      "label": "Click Me",
+      "href": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    },
+    "about": "This is a test network.",
+    "callToAction": {
+      "label": "Click Me",
+      "href": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    },
+    "criteria": "The attestations in this network are weighted endorsements.",
+    "contracts": {
+      "merkleSnapshot": "",
+      "easIndexerResolver": "",
+      "merkleFundDistributor": ""
+    },
+    "schemas": [
+      {
+        "description": "Weighted endorsement",
+        "key": "vouching",
+        "name": "Vouch",
+        "resolver": "",
+        "revocable": true,
+        "schema": "string comment,uint256 confidence",
+        "uid": "",
+        "fields": [
+          {
+            "name": "comment",
+            "type": "string"
+          },
+          {
+            "name": "confidence",
+            "type": "uint256"
+          }
+        ]
+      }
+    ],
+    "pagerank": {
+      "enabled": true,
+      "pointsPool": 10000,
+      "trustMultiplier": 3.0,
+      "trustShare": 1.0,
+      "trustDecay": 0.8,
+      "minWeight": 0,
+      "maxWeight": 100,
+      "trustedSeeds": []
+    },
+    "safeZodiacSignerSync": {
+      "enabled": true,
+      "topNSigners": 5,
+      "minThreshold": 1,
+      "targetThreshold": 0.5
+    },
+    "validatedThreshold": 100
+  },
+  {
+    "id": "test-network-3",
+    "name": "Test Network 3",
+    "link": {
+      "prefix": "Learn more:",
+      "label": "Click Me",
+      "href": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    },
+    "about": "This is a test network.",
+    "callToAction": {
+      "label": "Click Me",
+      "href": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    },
+    "criteria": "The attestations in this network are weighted endorsements.",
+    "contracts": {
+      "merkleSnapshot": "",
+      "easIndexerResolver": "",
+      "merkleFundDistributor": ""
+    },
+    "schemas": [
+      {
+        "description": "Weighted endorsement",
+        "key": "vouching",
+        "name": "Vouch",
+        "resolver": "",
+        "revocable": true,
+        "schema": "string comment,uint256 confidence",
+        "uid": "",
+        "fields": [
+          {
+            "name": "comment",
+            "type": "string"
+          },
+          {
+            "name": "confidence",
+            "type": "uint256"
+          }
+        ]
+      }
+    ],
+    "pagerank": {
+      "enabled": true,
+      "pointsPool": 10000,
+      "trustMultiplier": 3.0,
+      "trustShare": 1.0,
+      "trustDecay": 0.8,
+      "minWeight": 0,
+      "maxWeight": 100,
+      "trustedSeeds": []
+    },
+    "safeZodiacSignerSync": {
+      "enabled": true,
+      "topNSigners": 5,
+      "minThreshold": 1,
+      "targetThreshold": 0.5
+    },
+    "validatedThreshold": 100
+  }
+]

@@ -24,7 +24,7 @@ export const writeEthContractAndWait = async <
     'nonpayable' | 'payable',
     functionName
   >,
-  chainId extends cfg['chains'][number]['id']
+  chainId extends cfg['chains'][number]['id'],
 >(
   parameters: WriteContractParameters<abi, functionName, args, cfg, chainId>,
   {

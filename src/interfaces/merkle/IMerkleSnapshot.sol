@@ -32,4 +32,8 @@ interface IMerkleSnapshot {
         /// @notice The total value of the merkle tree
         uint256 totalValue;
     }
+
+    /// @notice Get the latest merkle state.
+    /// @return state The latest merkle state.
+    function getLatestState() external view returns (MerkleState memory);
 }

@@ -4,7 +4,7 @@ import { useSetAtom } from 'jotai'
 import { usePathname } from 'next/navigation'
 import { useCallback } from 'react'
 
-import { NETWORKS } from '@/lib/network'
+import { NETWORKS } from '@/lib/config'
 import { mightBeEnsName } from '@/lib/utils'
 import { Breadcrumb, breadcrumbsAtom } from '@/state/nav'
 
@@ -42,6 +42,8 @@ export const usePushBreadcrumb = (defaultBreadcrumb?: Partial<Breadcrumb>) => {
         ) {
           // ENS name
           finalBreadcrumb.title = lastSegment
+        } else if (lastSegment === 'governance') {
+          finalBreadcrumb.title = 'proposals'
         } else if (
           // Trailing slash ensures this is a specific resource page, not the list page
           pathname.startsWith('/account/') ||

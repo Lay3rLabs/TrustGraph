@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { Hex, formatUnits } from 'viem'
+import { formatUnits } from 'viem'
 
 export const cn = (...inputs: ClassValue[]) => {
   return twMerge(clsx(inputs))
@@ -22,7 +22,7 @@ export const formatBigNumber = (
   decimals?: number,
   showFull?: boolean
 ): string => {
-  const maxDigits = showFull ? decimals ?? 18 : 3
+  const maxDigits = showFull ? (decimals ?? 18) : 3
   num = Number(decimals ? formatUnits(BigInt(num), decimals) : num)
 
   if (showFull) {
@@ -93,12 +93,11 @@ export const mightBeEnsName = (name: string) => {
 }
 
 /**
- * Check if two addresses are equal.
+ * Check if two hex values are equal.
  *
- * @param address1 - The first address.
- * @param address2 - The second address.
- * @returns True if the addresses are equal, false otherwise.
+ * @param hex1 - The first hex value.
+ * @param hex2 - The second hex value.
+ * @returns True if the hex values are equal, false otherwise.
  */
-export const areAddressesEqual = (address1: Hex, address2: Hex) => {
-  return address1.toLowerCase() === address2.toLowerCase()
-}
+export const isHexEqual = (hex1: string, hex2: string) =>
+  hex1.toLowerCase() === hex2.toLowerCase()

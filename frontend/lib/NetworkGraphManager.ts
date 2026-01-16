@@ -1,7 +1,7 @@
 import { EventHandlers } from '@react-sigma/core'
 import { MultiDirectedGraph } from 'graphology'
 
-import { NetworkGraphEdge, NetworkGraphNode } from '@/lib/network'
+import { NetworkGraphEdge, NetworkGraphNode } from '@/lib/types'
 
 export type NetworkGraphTargetType = 'node' | 'edge'
 

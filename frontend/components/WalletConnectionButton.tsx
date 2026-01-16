@@ -94,8 +94,8 @@ export const WalletConnectionButton = ({
                 {isConnected && address
                   ? formatAddress(address)
                   : isConnecting
-                  ? 'Connecting...'
-                  : 'Connect Account'}
+                    ? 'Connecting...'
+                    : 'Connect Account'}
               </span>
             </Button>
           ),
@@ -114,8 +114,8 @@ export const WalletConnectionButton = ({
                   {isLoadingEthBalance
                     ? '...'
                     : ethBalance
-                    ? formatBigNumber(ethBalance.value, ethBalance.decimals)
-                    : '?'}{' '}
+                      ? formatBigNumber(ethBalance.value, ethBalance.decimals)
+                      : '?'}{' '}
                   <span className="text-muted-foreground">
                     {ethBalance?.symbol}
                   </span>

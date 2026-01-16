@@ -1,0 +1,16 @@
+{
+  "eas_address": "${get(eas.contracts.eas)}",
+  "chain_name": "anvil",
+  "llm_model": "llama3.2",
+  "llm_temperature": "0.0",
+  "llm_top_p": "1.0",
+  "llm_seed": "42",
+  "llm_max_tokens": "100",
+  "llm_context_window": "250",
+  "llm_system_message": "You are a moderator evaluating proposals for a DAO on the blockchain. Reject proposals with foul language, violence, or inappropriate content only. Accept proposals trying to do good things in the world.",
+  "attestation_schema_uid": "${get(eas.schemas.proposal.uid)}",
+  "submit_schema_uid": "${get(eas.schemas.approval.uid)}",
+  "attestation_revocable": "true",
+  "attestation_expiration": "0",
+  "attestation_value": "0"
+}

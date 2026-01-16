@@ -1,10 +1,12 @@
+import { getPonderQueryOptions } from '@ponder/react'
 import { HydrationBoundary, dehydrate } from '@tanstack/react-query'
 import { notFound } from 'next/navigation'
 
 import { NetworkProvider } from '@/contexts/NetworkContext'
-import { NETWORKS } from '@/lib/network'
+import { NETWORKS } from '@/lib/config'
+import { ponderClient } from '@/lib/ponder'
 import { makeQueryClient } from '@/lib/query'
-import { ponderQueries } from '@/queries/ponder'
+import { ponderQueries, ponderQueryFns } from '@/queries/ponder'
 
 import { NetworkPage } from './component'
 
@@ -32,8 +34,20 @@ export default async function NetworkPageServer({
 
   await Promise.all([
     // Network
-    queryClient.prefetchQuery(ponderQueries.latestMerkleTree),
-    queryClient.prefetchQuery(ponderQueries.network),
+    queryClient.prefetchQuery(
+      ponderQueries.latestMerkleTree(network.contracts.merkleSnapshot)
+    ),
+    queryClient.prefetchQuery(
+      ponderQueries.network(network.contracts.merkleSnapshot)
+    ),
+    // Gnosis Safe
+    network.contracts.safe?.proxy &&
+      queryClient.prefetchQuery(
+        getPonderQueryOptions(
+          ponderClient,
+          ponderQueryFns.getGnosisSafe(network.contracts.safe.proxy)
+        )
+      ),
   ])
 
   const dehydratedState = dehydrate(queryClient)

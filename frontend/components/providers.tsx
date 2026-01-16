@@ -22,7 +22,11 @@ const wagmiConfig = makeWagmiConfig()
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <PlausibleProvider domain="en0va.xyz" taggedEvents trackOutboundLinks>
+    <PlausibleProvider
+      domain="trustgraph.network"
+      taggedEvents
+      trackOutboundLinks
+    >
       <WagmiProvider config={wagmiConfig}>
         <PonderProvider client={ponderClient}>
           <QueryClientProvider client={queryClient}>

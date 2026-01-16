@@ -2,18 +2,21 @@
 // This file manages the registration of custom schema components
 // and provides exports for use throughout the application
 
-import { SCHEMA_CONFIG } from '@/lib/config'
+import { NETWORKS } from '@/lib/config'
 
 // Import components and registry for registration
 import { CreateVouchingSchema } from './CreateVouchingSchema'
 import { schemaComponentRegistry } from './SchemaComponentRegistry'
 
-// Register custom schema components
-// Vouching Schema UID loaded from config
-schemaComponentRegistry.register(
-  SCHEMA_CONFIG.vouching.uid,
-  CreateVouchingSchema
-)
+// Register custom schema components for each network
+NETWORKS.forEach((network) => {
+  network.schemas.forEach((schema) => {
+    // Vouching Schema UID loaded from config
+    if (schema.key === 'vouching') {
+      schemaComponentRegistry.register(schema.uid, CreateVouchingSchema)
+    }
+  })
+})
 
 // Future custom schema registrations can be added here:
 // schemaComponentRegistry.register('0x...', CustomReputationSchema)

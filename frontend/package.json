@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "prebuild": "npm run indexer:config && npm run config:link && npm run wagmi:generate",
+    "prebuild": "npm run indexer:config && npm run config:link && npm run networks:link && npm run wagmi:generate",
     "build": "next build",
-    "predev": "npm run ensure-env-local && npm run indexer:config && npm run config:generate && npm run config:link && npm run wagmi:generate",
+    "predev": "npm run ensure-env-local && npm run indexer:config && npm run config:generate && npm run config:link && npm run networks:link && npm run wagmi:generate",
     "ensure-env-local": "if ! test -f .env.local; then cp .env.example .env.local; fi",
     "dev": "next dev",
     "lint": "eslint .",
@@ -15,6 +15,7 @@
     "indexer:config": "cp ../indexer/*.schema.ts .",
     "config:generate": "tsx scripts/generate-config.ts",
     "config:link": "rm -f config.json || true && test -f config.${NODE_ENV:-development}.json && ln -s config.${NODE_ENV:-development}.json config.json || echo \"Error: config.${NODE_ENV:-development}.json does not exist\"",
+    "networks:link": "rm -f networks.json || true && test -f ../config/networks.${NODE_ENV:-development}.json && ln -s ../config/networks.${NODE_ENV:-development}.json networks.json || echo \"Error: ../config/networks.${NODE_ENV:-development}.json does not exist\"",
     "claude-code": "docker compose -f .claude/docker-compose.claude.yml run --rm --remove-orphans -it claude-code-sandbox bash -c 'claude; exec'",
     "claude-code:unrestricted": "docker compose -f .claude/docker-compose.claude.yml run --rm --remove-orphans -it claude-code-sandbox bash -c 'claude --dangerously-skip-permissions; exec'",
     "wagmi:generate": "wagmi generate"
@@ -82,7 +83,7 @@
     "marked": "^16.2.0",
     "motion": "^12.23.14",
     "nanoid": "^5.1.5",
-    "next": "15.2.6",
+    "next": "15.2.8",
     "next-plausible": "^3.12.4",
     "next-themes": "latest",
     "openai": "^5.22.0",

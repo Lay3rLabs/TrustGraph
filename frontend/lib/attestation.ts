@@ -57,9 +57,9 @@ export function intoAttestationData(
     ponderData.revocationTime > 0
       ? AttestationStatus.REVOKED
       : ponderData.expirationTime > 0 &&
-        ponderData.expirationTime < Math.floor(Date.now() / 1000)
-      ? AttestationStatus.EXPIRED
-      : AttestationStatus.VERIFIED
+          ponderData.expirationTime < Math.floor(Date.now() / 1000)
+        ? AttestationStatus.EXPIRED
+        : AttestationStatus.VERIFIED
 
   // Decode the attestation data using SchemaManager
   let decodedData
@@ -75,8 +75,8 @@ export function intoAttestationData(
     ponderData.timestamp <= 0n || isNaN(Number(ponderData.timestamp))
       ? '<invalid timestamp>'
       : isNaN(date.getTime())
-      ? '<invalid date>'
-      : date.toISOString().replace('T', ' ').split('.')[0]
+        ? '<invalid date>'
+        : date.toISOString().replace('T', ' ').split('.')[0]
 
   return {
     uid: ponderData.uid,

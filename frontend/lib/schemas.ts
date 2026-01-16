@@ -4,33 +4,7 @@
 import { SchemaEncoder } from '@ethereum-attestation-service/eas-sdk'
 import { Hex, stringToHex, toHex } from 'viem'
 
-import { SCHEMA_CONFIG } from './config'
-
-export type SchemaKey = keyof typeof SCHEMA_CONFIG
-
-const SCHEMA_NAME_OVERRIDES = {
-  vouching: 'Vouch',
-}
-
-export const SCHEMAS = Object.entries(SCHEMA_CONFIG).map(
-  ([key, schema]) =>
-    ({
-      key,
-      ...schema,
-      name:
-        SCHEMA_NAME_OVERRIDES[key as keyof typeof SCHEMA_NAME_OVERRIDES] ||
-        schema.name,
-    } as {
-      uid: Hex
-      key: SchemaKey
-      name: string
-      description: string
-      resolver: string
-      revocable: boolean
-      schema: string
-      fields: { name: string; type: string }[]
-    })
-)
+import { NETWORKS } from './config'
 
 // Schema definitions with metadata for UI
 export type SchemaFieldType =
@@ -39,6 +13,8 @@ export type SchemaFieldType =
   | 'bytes32'
   | 'uint256'
   | 'address'
+
+const SCHEMAS = NETWORKS.flatMap((network) => network.schemas)
 
 export class SchemaManager {
   static maybeSchemaForUid(uid: string) {
@@ -53,11 +29,11 @@ export class SchemaManager {
     return schema
   }
 
-  static maybeSchemaForKey(key: SchemaKey | string) {
+  static maybeSchemaForKey(key: string) {
     return SCHEMAS.find((s) => s.key === key)
   }
 
-  static schemaForKey(key: SchemaKey | string) {
+  static schemaForKey(key: string) {
     const schema = this.maybeSchemaForKey(key)
     if (!schema) {
       throw new Error(`Unknown schema for key: ${key}`)
@@ -126,10 +102,10 @@ export class SchemaManager {
           typeof value === 'bigint'
             ? BigInt(value).toString()
             : value instanceof Uint8Array
-            ? toHex(value)
-            : typeof value !== 'string'
-            ? `${value}`
-            : value,
+              ? toHex(value)
+              : typeof value !== 'string'
+                ? `${value}`
+                : value,
       }),
       {} as Record<string, string | boolean>
     )
