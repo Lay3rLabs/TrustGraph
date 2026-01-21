@@ -29,18 +29,6 @@ export class SchemaManager {
     return schema
   }
 
-  static maybeSchemaForKey(key: string) {
-    return SCHEMAS.find((s) => s.key === key)
-  }
-
-  static schemaForKey(key: string) {
-    const schema = this.maybeSchemaForKey(key)
-    if (!schema) {
-      throw new Error(`Unknown schema for key: ${key}`)
-    }
-    return schema
-  }
-
   static encode(uid: string, data: Record<string, string | boolean>): Hex {
     const schema = this.schemaForUid(uid)
 

@@ -8,7 +8,7 @@ import type React from 'react'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
-import { Hex } from 'viem'
+import { Hex, zeroAddress } from 'viem'
 import { useAccount } from 'wagmi'
 
 import { Button, ButtonProps } from '@/components/Button'
@@ -89,10 +89,14 @@ export const CreateAttestationModal = ({
     }
   }
 
+  const defaultSchemaUid =
+    networkContext?.network.schemas[0].uid ||
+    NETWORKS[0].schemas[0].uid ||
+    zeroAddress
   const form = useForm<AttestationFormData>({
     defaultValues: {
       networkId: networkContext?.network.id || NETWORKS[0].id || '',
-      schema: 'vouching',
+      schema: defaultSchemaUid,
       recipient: defaultRecipient,
       data: {},
     },
@@ -106,9 +110,9 @@ export const CreateAttestationModal = ({
       ? NETWORKS.find((network) => network.id === selectedNetworkId)
       : undefined)
 
-  const selectedSchemaKey = form.watch('schema')
-  const selectedSchemaInfo = selectedSchemaKey
-    ? SchemaManager.schemaForKey(selectedSchemaKey)
+  const selectedSchemaUid = form.watch('schema')
+  const selectedSchemaInfo = selectedSchemaUid
+    ? SchemaManager.schemaForUid(selectedSchemaUid)
     : undefined
 
   const recipient = form.watch('recipient', '')
@@ -225,7 +229,7 @@ export const CreateAttestationModal = ({
       clearTransactionState()
       // Reset form to default values
       form.reset({
-        schema: 'vouching',
+        schema: defaultSchemaUid,
         recipient: defaultRecipient,
         data: {
           comment: '',
@@ -477,7 +481,7 @@ export const CreateAttestationModal = ({
                         </FormLabel>
                         <Select
                           onValueChange={(value) => field.onChange(value)}
-                          value={field.value as string}
+                          value={field.value}
                         >
                           <FormControl>
                             <SelectTrigger className="text-sm mt-1">
@@ -486,10 +490,7 @@ export const CreateAttestationModal = ({
                           </FormControl>
                           <SelectContent>
                             {currentNetwork.schemas.map((schema) => (
-                              <SelectItem
-                                key={schema.key as string}
-                                value={schema.key as string}
-                              >
+                              <SelectItem key={schema.uid} value={schema.uid}>
                                 {schema.name}
                               </SelectItem>
                             ))}

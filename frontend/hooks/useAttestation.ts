@@ -22,7 +22,7 @@ import { attestationKeys } from '@/queries/attestation'
 import { ponderQueryFns } from '@/queries/ponder'
 
 interface NewAttestationData {
-  schema: string
+  schema: Hex
   recipient: string
   data: Record<string, string | boolean>
 }
@@ -73,10 +73,6 @@ export function useAttestation(uid?: Hex) {
       throw new Error('Please connect your wallet')
     }
 
-    const schemaUid = attestationData.schema.startsWith('0x')
-      ? (attestationData.schema as Hex)
-      : SchemaManager.schemaForKey(attestationData.schema).uid
-
     setIsCreating(true)
     setIsCreated(false)
     setError(null)
@@ -84,7 +80,10 @@ export function useAttestation(uid?: Hex) {
 
     try {
       // Validate input formats
-      if (!schemaUid.startsWith('0x') || schemaUid.length !== 66) {
+      if (
+        !attestationData.schema.startsWith('0x') ||
+        attestationData.schema.length !== 66
+      ) {
         throw new Error(`Invalid schema format: ${attestationData.schema}`)
       }
       if (
@@ -96,7 +95,10 @@ export function useAttestation(uid?: Hex) {
         )
       }
 
-      const encodedData = SchemaManager.encode(schemaUid, attestationData.data)
+      const encodedData = SchemaManager.encode(
+        attestationData.schema,
+        attestationData.data
+      )
 
       // Helper function to execute transaction with fresh nonce
       const executeTransaction = async (retryCount = 0): Promise<void> => {
@@ -106,7 +108,7 @@ export function useAttestation(uid?: Hex) {
         })
 
         const attestationRequest = {
-          schema: schemaUid,
+          schema: attestationData.schema,
           data: {
             recipient: attestationData.recipient as `0x${string}`,
             expirationTime: 0n,
