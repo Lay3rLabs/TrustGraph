@@ -468,39 +468,45 @@ export const CreateAttestationModal = ({
                   )}
                 </div>
 
-                {/* Only show schema selection if there are multiple schemas */}
-                {currentNetwork && currentNetwork.schemas.length > 1 && (
-                  <FormField
-                    control={form.control}
-                    name="schema"
-                    rules={{ required: 'Schema selection is required' }}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-bold">
-                          SCHEMA
-                        </FormLabel>
-                        <Select
-                          onValueChange={(value) => field.onChange(value)}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="text-sm mt-1">
-                              <SelectValue placeholder="Select schema..." />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {currentNetwork.schemas.map((schema) => (
-                              <SelectItem key={schema.uid} value={schema.uid}>
-                                {schema.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-                )}
+                {/* Only show schema selection if there are multiple schemas or the selected schema is invalid */}
+                {currentNetwork &&
+                  (currentNetwork.schemas.length > 1 ||
+                    !selectedSchemaUid ||
+                    selectedSchemaUid === zeroAddress ||
+                    !currentNetwork.schemas.some(
+                      (schema) => schema.uid === selectedSchemaUid
+                    )) && (
+                    <FormField
+                      control={form.control}
+                      name="schema"
+                      rules={{ required: 'Schema selection is required' }}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-bold">
+                            SCHEMA
+                          </FormLabel>
+                          <Select
+                            onValueChange={(value) => field.onChange(value)}
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="text-sm mt-1">
+                                <SelectValue placeholder="Select schema..." />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {currentNetwork.schemas.map((schema) => (
+                                <SelectItem key={schema.uid} value={schema.uid}>
+                                  {schema.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage className="text-xs" />
+                        </FormItem>
+                      )}
+                    />
+                  )}
               </div>
 
               {validResolvedEnsAddress && (
