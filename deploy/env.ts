@@ -218,10 +218,7 @@ abstract class EnvBase implements IEnv {
           const existingSchemaIndex = networkToUpdate.schemas.findIndex(
             (s) => s.key === schema.key
           )
-          if (
-            existingSchemaIndex !== -1 &&
-            !networkToUpdate.schemas[existingSchemaIndex].uid
-          ) {
+          if (existingSchemaIndex > -1) {
             networkToUpdate.schemas[existingSchemaIndex] = schema
           } else {
             networkToUpdate.schemas.push(schema)

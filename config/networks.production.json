@@ -115,5 +115,63 @@
       "easIndexerResolver": "0x4C3B59E04dF84DEaab172Ec0E0d03CB275D2ad10"
     },
     "validatedThreshold": 75
+  },
+  {
+    "id": "safe-demo",
+    "name": "Safe Demo",
+    "about": "This network demos the Safe signer sync Zodiac module.",
+    "criteria": "Whatever your heart desires.",
+    "schemas": [
+      {
+        "description": "Weighted endorsement",
+        "key": "vouching",
+        "name": "Vouch",
+        "resolver": "0xc25F231dCeB1140dFd0819E3277Cdf2383c82Cbd",
+        "revocable": true,
+        "schema": "string comment,uint256 confidence",
+        "uid": "0xf4ece930880a76a02717df07bd6610d7020335cf9982667b431d4a7886e1d84f",
+        "fields": [
+          {
+            "name": "comment",
+            "type": "string"
+          },
+          {
+            "name": "confidence",
+            "type": "uint256"
+          }
+        ]
+      }
+    ],
+    "pagerank": {
+      "enabled": true,
+      "pointsPool": 10000,
+      "trustMultiplier": 3,
+      "trustShare": 1,
+      "trustDecay": 0.8,
+      "minWeight": 0,
+      "maxWeight": 100,
+      "trustedSeeds": [
+        "0x733Fe4b4D26168532c668231d725C46C315c14b1",
+        "0x7d03C5c37f77Fd01211334B9115CA108C84E8f3B",
+        "0x016fBC13Eac82a67CBea77EB282CC347A758c361"
+      ]
+    },
+    "safeZodiacSignerSync": {
+      "enabled": true,
+      "topNSigners": 3,
+      "minThreshold": 1,
+      "targetThreshold": 0.5
+    },
+    "contracts": {
+      "merkleSnapshot": "0x903CBdc0659d009a11D8B143966b92081D2c1C32",
+      "easIndexerResolver": "0xc25F231dCeB1140dFd0819E3277Cdf2383c82Cbd",
+      "safe": {
+        "factory": "0x9efcd5D5306AD12A3E69854603Ba881b4E93d909",
+        "singleton": "0xADbb1D1f0379859cA0513821f713E52a496e44c1",
+        "proxy": "0x2bf7C1e5F49923F151E2Be06002B700c5F506dF7",
+        "signerSyncManager": "0xF33f328Cae02152Ae661169FA09DBDf63CeE2EBC"
+      }
+    },
+    "validatedThreshold": 75
   }
 ]
