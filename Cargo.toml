@@ -4,7 +4,7 @@ resolver = "2"
 
 [workspace.package]
 edition = "2021"
-version = "0.9.1"
+version = "0.9.2"
 license = "MIT"
 authors = ["Lay3r Labs Team"]
 repository = "https://github.com/Lay3rLabs/wavs"
@@ -23,7 +23,7 @@ wavs-llm = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "cd1c4271deb
 wavs-eas = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "cd1c4271deb7686a7d995b5b41bc226d8185df6e", package = "wavs-eas" }
 wavs-indexer-api = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "cd1c4271deb7686a7d995b5b41bc226d8185df6e", package = "wavs-indexer-api" }
 wavs-merkle-sources = { git = "https://github.com/Lay3rLabs/wavs-tools",  rev = "cd1c4271deb7686a7d995b5b41bc226d8185df6e", package = "wavs-merkle-sources" }
-wavs-ipfs = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "cd1c4271deb7686a7d995b5b41bc226d8185df6e", package = "wavs-ipfs"}
+wavs-ipfs = { git = "https://github.com/Lay3rLabs/wavs-tools", rev = "f82061cda8e9c3570468304e3eabeb220b6c50c1", package = "wavs-ipfs"}
 
 # Local packages
 wavs-merkler = { path = "packages/wavs-merkler" }

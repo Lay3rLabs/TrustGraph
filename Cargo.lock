@@ -3302,7 +3302,7 @@ dependencies = [
 
 [[package]]
 name = "merkler-pruner"
-version = "0.9.1"
+version = "0.9.2"
 dependencies = [
  "alloy-network",
  "alloy-primitives",
@@ -3634,7 +3634,7 @@ dependencies = [
 
 [[package]]
 name = "pagerank"
-version = "0.9.1"
+version = "0.9.2"
 dependencies = [
  "alloy-primitives",
  "js-sys",
@@ -5472,7 +5472,7 @@ dependencies = [
 
 [[package]]
 name = "trust-graph"
-version = "0.9.1"
+version = "0.9.2"
 dependencies = [
  "alloy-dyn-abi",
  "alloy-network",
@@ -5500,7 +5500,7 @@ dependencies = [
 
 [[package]]
 name = "trust-graph-aggregator"
-version = "0.9.1"
+version = "0.9.2"
 dependencies = [
  "alloy-network",
  "alloy-primitives",
@@ -5838,7 +5838,7 @@ dependencies = [
 
 [[package]]
 name = "wavs-eas-attest"
-version = "0.9.1"
+version = "0.9.2"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-macro",
@@ -5854,7 +5854,7 @@ dependencies = [
 
 [[package]]
 name = "wavs-indexer"
-version = "0.9.1"
+version = "0.9.2"
 dependencies = [
  "alloy-contract",
  "alloy-network",
@@ -5903,13 +5903,14 @@ dependencies = [
 [[package]]
 name = "wavs-ipfs"
 version = "0.6.0-alpha.1"
-source = "git+https://github.com/Lay3rLabs/wavs-tools?rev=cd1c4271deb7686a7d995b5b41bc226d8185df6e#cd1c4271deb7686a7d995b5b41bc226d8185df6e"
+source = "git+https://github.com/Lay3rLabs/wavs-tools?rev=f82061cda8e9c3570468304e3eabeb220b6c50c1#f82061cda8e9c3570468304e3eabeb220b6c50c1"
 dependencies = [
  "anyhow",
  "bs58 0.5.1",
  "cid",
  "multibase",
  "multihash 0.18.1",
+ "rand 0.8.5",
  "serde",
  "serde_json",
  "wstd",
@@ -5944,7 +5945,7 @@ dependencies = [
 
 [[package]]
 name = "wavs-safe-signer-sync"
-version = "0.9.1"
+version = "0.9.2"
 dependencies = [
  "alloy-network",
  "alloy-primitives",

@@ -1,8 +1,25 @@
-use crate::{bindings::TriggerAction, solidity};
+use crate::{
+    bindings::{
+        wavs::{operator::input::TriggerData, types::events::TriggerDataEvmContractEvent},
+        TriggerAction,
+    },
+    solidity,
+};
 use alloy_provider::Provider;
 use alloy_sol_types::SolValue;
 use anyhow::Result;
-use wavs_wasi_utils::evm::alloy_primitives::U256;
+use wavs_wasi_utils::{decode_event_log_data, evm::alloy_primitives::U256};
+
+/// Decodes an EventIndexed trigger event, if it is an EventIndexed trigger event.
+/// Returns None if it is not an EventIndexed trigger event.
+pub fn decode_event_indexed_trigger(action: &TriggerAction) -> Option<solidity::EventIndexed> {
+    match &action.data {
+        TriggerData::EvmContractEvent(TriggerDataEvmContractEvent { log, .. }) => {
+            decode_event_log_data!(log.data.clone()).ok()
+        }
+        _ => None,
+    }
+}
 
 pub async fn encode_trigger_output(
     action: &TriggerAction,

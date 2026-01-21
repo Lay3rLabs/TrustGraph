@@ -2,9 +2,13 @@
 pub mod bindings;
 mod config;
 mod eas_pagerank;
+pub mod solidity;
 mod trigger;
 
-use crate::bindings::{export, Guest, TriggerAction};
+use crate::{
+    bindings::{export, Guest, TriggerAction},
+    trigger::decode_event_indexed_trigger,
+};
 
 use bindings::WasmResponse;
 use config::{MerklerConfig, PageRankSourceConfig};
@@ -21,7 +25,9 @@ export!(Component with_types_in bindings);
 
 impl Guest for Component {
     fn run(action: TriggerAction) -> std::result::Result<Option<WasmResponse>, String> {
-        println!("🚀 Starting merkler component execution");
+        println!("🚀 Starting trust-graph component execution");
+
+        let event_indexed_event = decode_event_indexed_trigger(&action);
 
         // Load all configuration
         let config = MerklerConfig::load()?;
@@ -29,6 +35,10 @@ impl Guest for Component {
 
         // Add PageRank-based EAS points if configured
         if let Some(pagerank_config) = PageRankSourceConfig::load()? {
+            // Expected schema tag for indexed event.
+            let expected_schema_tag =
+                format!("schema:{}", pagerank_config.schema_uid).to_lowercase();
+
             let has_trust = pagerank_config.has_trust_enabled();
             match EasPageRankSource::new(pagerank_config) {
                 Ok(pagerank_source) => {
@@ -45,8 +55,29 @@ impl Guest for Component {
                 }
                 Err(e) => {
                     println!("⚠️  Failed to create PageRank source: {}", e);
+                    return Err(e.to_string());
                 }
             }
+
+            // If trigger is due to indexed event, verify the schema UID is for the current trust graph. If not, ignore.
+            if let Some(event_indexed_event) = event_indexed_event {
+                if event_indexed_event.eventType.to_string() != "attestation" {
+                    println!("⚠️  Indexed event trigger is not of type attestation, ignoring");
+                    return Ok(None);
+                }
+
+                let found_schema_tag = event_indexed_event
+                    .tags
+                    .iter()
+                    .any(|tag| tag.to_lowercase() == expected_schema_tag);
+                if !found_schema_tag {
+                    println!("⚠️  Indexed event trigger schema does not match current trust graph schema, ignoring");
+                    return Ok(None);
+                }
+            }
+        } else {
+            println!("⚠️  PageRank not configured, exiting");
+            return Err("PageRank not configured".to_string());
         }
 
         block_on(async move {
@@ -133,12 +164,4 @@ impl Guest for Component {
             Ok(Some(WasmResponse { payload, ordering: None }))
         })
     }
-}
-
-pub mod solidity {
-    use alloy_sol_macro::sol;
-    pub use ITypes::*;
-    sol!("../../src/interfaces/ITypes.sol");
-    pub use IMerkler::*;
-    sol!("../../src/interfaces/merkle/IMerkler.sol");
 }
