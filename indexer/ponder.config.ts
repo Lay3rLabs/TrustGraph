@@ -115,7 +115,7 @@ export default createConfig({
         ? {
             [CORE_CHAIN]: {
               address: deploymentSummary.networks.flatMap(
-                (network) => (network.contracts.safe.proxy as Hex) || []
+                (network) => (network.contracts.safe?.proxy as Hex) || []
               ),
             },
           }
