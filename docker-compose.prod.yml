@@ -45,7 +45,7 @@ services:
     network_mode: host
     volumes:
       - .:/app
-    command: sh -c "npm install -g pnpm && CI=true pnpm install --ignore-scripts && pnpm run db:migrate && pnpm run start --schema v0.9.8 --views-schema trust-graph"
+    command: sh -c "npm install -g pnpm && CI=true pnpm install --ignore-scripts && pnpm run db:migrate && pnpm run start --schema v0.9.9 --views-schema trust-graph"
     depends_on:
       - ponder-db
     ports:

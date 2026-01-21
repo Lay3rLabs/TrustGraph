@@ -108,7 +108,7 @@ export default createConfig({
     },
     gnosisSafe: {
       abi: gnosisSafeAbi,
-      startBlock: IS_PRODUCTION ? 0 : 'latest',
+      startBlock: IS_PRODUCTION ? 146706138 : 'latest',
       chain: deploymentSummary.networks.some(
         (network) => network.contracts.safe?.proxy
       )
