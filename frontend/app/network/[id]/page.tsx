@@ -34,20 +34,26 @@ export default async function NetworkPageServer({
 
   await Promise.all([
     // Network
-    queryClient.prefetchQuery(
-      ponderQueries.latestMerkleTree(network.contracts.merkleSnapshot)
-    ),
-    queryClient.prefetchQuery(
-      ponderQueries.network(network.contracts.merkleSnapshot)
-    ),
+    queryClient.prefetchQuery({
+      ...ponderQueries.latestMerkleTree(network.contracts.merkleSnapshot),
+      // Refetch right away on page load.
+      staleTime: 1,
+    }),
+    queryClient.prefetchQuery({
+      ...ponderQueries.network(network.contracts.merkleSnapshot),
+      // Refetch right away on page load.
+      staleTime: 1,
+    }),
     // Gnosis Safe
     network.contracts.safe?.proxy &&
-      queryClient.prefetchQuery(
-        getPonderQueryOptions(
+      queryClient.prefetchQuery({
+        ...getPonderQueryOptions(
           ponderClient,
           ponderQueryFns.getGnosisSafe(network.contracts.safe.proxy)
-        )
-      ),
+        ),
+        // Refetch right away on page load.
+        staleTime: 1,
+      }),
   ])
 
   const dehydratedState = dehydrate(queryClient)
