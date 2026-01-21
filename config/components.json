@@ -3,7 +3,7 @@
     {
       "filename": "trust_graph.wasm",
       "package_name": "trust-graph",
-      "package_version": "0.9.2",
+      "package_version": "0.9.3",
       "trigger": {
         "event": {
           "contract_json_path": "${networks[]}.contracts.merkleSnapshot",
@@ -21,7 +21,7 @@
     {
       "filename": "trust_graph.wasm",
       "package_name": "trust-graph",
-      "package_version": "0.9.2",
+      "package_version": "0.9.3",
       "trigger": {
         "event": {
           "contract_json_path": "wavs_indexer",
@@ -39,7 +39,7 @@
     {
       "filename": "trust_graph.wasm",
       "package_name": "trust-graph",
-      "package_version": "0.9.2",
+      "package_version": "0.9.3",
       "trigger": {
         "event": {
           "contract_json_path": "wavs_indexer",

@@ -61,11 +61,6 @@ impl Guest for Component {
 
             // If trigger is due to indexed event, verify the schema UID is for the current trust graph. If not, ignore.
             if let Some(event_indexed_event) = event_indexed_event {
-                if event_indexed_event.eventType.to_string() != "attestation" {
-                    println!("⚠️  Indexed event trigger is not of type attestation, ignoring");
-                    return Ok(None);
-                }
-
                 let found_schema_tag = event_indexed_event
                     .tags
                     .iter()
