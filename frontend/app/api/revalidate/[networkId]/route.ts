@@ -1,6 +1,8 @@
 import { revalidatePath } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 
+import { NETWORKS } from '@/lib/config'
+
 export async function GET(
   _: NextRequest,
   { params }: { params: Promise<{ networkId: string }> }
@@ -15,7 +17,11 @@ export async function GET(
       )
     }
 
-    revalidatePath(`/network/${networkId}`, 'layout')
+    if (!NETWORKS.find((network) => network.id === networkId)) {
+      return NextResponse.json({ error: 'Network not found' }, { status: 404 })
+    }
+
+    revalidatePath(`/network/${networkId}`)
 
     return NextResponse.json({ message: 'Revalidated' })
   } catch (err) {
