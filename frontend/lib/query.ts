@@ -5,16 +5,15 @@ export const makeQueryClient = () =>
   new QueryClient({
     defaultOptions: {
       queries: {
-        // Stale time for blockchain data - keep fresh for 30 seconds
+        // Consider data stale after 30 seconds (data may change each block).
         staleTime: 30 * 1000,
-        // Cache blockchain data for 5 minutes
+        // Cache data for 5 minutes
         gcTime: 5 * 60 * 1000,
-        // Retry on failure (network issues common in blockchain apps)
+        // Retry on failure
         retry: 3,
         retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-        // Refetch right away on page load.
+        // Refetch on page load and window focus to keep data fresh.
         refetchOnMount: true,
-        // Refetch on window focus for real-time blockchain data
         refetchOnWindowFocus: true,
         // Serialize BigInts in parameters
         queryKeyHashFn: hashFn,
