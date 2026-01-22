@@ -37,12 +37,12 @@ export default async function NetworkPageServer({
     queryClient.prefetchQuery({
       ...ponderQueries.latestMerkleTree(network.contracts.merkleSnapshot),
       // Refetch right away on page load.
-      staleTime: 1,
+      staleTime: 0,
     }),
     queryClient.prefetchQuery({
       ...ponderQueries.network(network.contracts.merkleSnapshot),
       // Refetch right away on page load.
-      staleTime: 1,
+      staleTime: 0,
     }),
     // Gnosis Safe
     network.contracts.safe?.proxy &&
@@ -52,7 +52,7 @@ export default async function NetworkPageServer({
           ponderQueryFns.getGnosisSafe(network.contracts.safe.proxy)
         ),
         // Refetch right away on page load.
-        staleTime: 1,
+        staleTime: 0,
       }),
   ])
 

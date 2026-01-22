@@ -12,6 +12,8 @@ export const makeQueryClient = () =>
         // Retry on failure (network issues common in blockchain apps)
         retry: 3,
         retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+        // Refetch right away on page load.
+        refetchOnMount: true,
         // Refetch on window focus for real-time blockchain data
         refetchOnWindowFocus: true,
         // Serialize BigInts in parameters
