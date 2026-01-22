@@ -30,9 +30,9 @@ export async function GET(
       }
 
       revalidatePath(`/network/${networkId}`)
-
-      return NextResponse.json({ message: 'Revalidated' })
     }
+
+    return NextResponse.json({ message: 'Revalidated' })
   } catch (err) {
     console.error('Error revalidating', err)
     // If there was an error, Next.js will continue to show the last
