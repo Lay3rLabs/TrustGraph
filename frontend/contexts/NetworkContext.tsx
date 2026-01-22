@@ -114,6 +114,7 @@ export const NetworkProvider = ({
       queryFn: ponderQueryFns.getGnosisSafe(
         network.contracts.safe?.proxy || zeroAddress
       ),
+      live: false,
       refetchInterval: 30_000,
       enabled: !!network.contracts.safe?.proxy,
     }
