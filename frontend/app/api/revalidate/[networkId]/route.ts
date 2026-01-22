@@ -17,13 +17,22 @@ export async function GET(
       )
     }
 
-    if (!NETWORKS.find((network) => network.id === networkId)) {
-      return NextResponse.json({ error: 'Network not found' }, { status: 404 })
+    revalidatePath('/')
+
+    if (networkId.toLowerCase() === 'all') {
+      revalidatePath('/network/[id]', 'page')
+    } else {
+      if (!NETWORKS.find((network) => network.id === networkId)) {
+        return NextResponse.json(
+          { error: 'Network not found' },
+          { status: 404 }
+        )
+      }
+
+      revalidatePath(`/network/${networkId}`)
+
+      return NextResponse.json({ message: 'Revalidated' })
     }
-
-    revalidatePath(`/network/${networkId}`)
-
-    return NextResponse.json({ message: 'Revalidated' })
   } catch (err) {
     console.error('Error revalidating', err)
     // If there was an error, Next.js will continue to show the last
