@@ -57,17 +57,18 @@ export const txToast = async (...txs: TransactionToast[]) => {
           onTransactionSent: (hash) => {
             onTransactionSent?.(hash, index)
             toast.loading(
-              `Transaction sent! Waiting for ${confirmations} more confirmations...`,
+              `Transaction sent! Waiting for ${confirmations} more confirmation${confirmations === 1 ? '' : 's'}...`,
               {
                 id: toastId,
               }
             )
           },
           onConfirmation: (confirmed) => {
+            const remainingConfirmations = confirmations - confirmed
             toast.loading(
               `Transaction sent! Waiting for ${
-                confirmations - confirmed
-              } more confirmations...`,
+                remainingConfirmations
+              } more confirmation${remainingConfirmations === 1 ? '' : 's'}...`,
               {
                 id: toastId,
               }
