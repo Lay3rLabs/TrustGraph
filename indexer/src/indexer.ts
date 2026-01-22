@@ -2,6 +2,7 @@ import { ponder } from 'ponder:registry'
 import { wavsIndexerEvent } from 'ponder:schema'
 import { Hex } from 'viem'
 
+import { revalidateNetwork } from './utils'
 import { wavsIndexerAbi } from '../../frontend/lib/contract-abis'
 
 ponder.on('wavsIndexer:EventIndexed', async ({ event, context }) => {
@@ -46,10 +47,14 @@ ponder.on('wavsIndexer:EventIndexed', async ({ event, context }) => {
       ...values,
     })
     .onConflictDoUpdate(values)
+
+  await revalidateNetwork()
 })
 
 ponder.on('wavsIndexer:EventDeleted', async ({ event, context }) => {
   await context.db
     .update(wavsIndexerEvent, { id: event.args.eventId })
     .set({ deleted: true })
+
+  await revalidateNetwork()
 })

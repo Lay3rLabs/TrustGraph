@@ -1,6 +1,7 @@
 import { ponder } from 'ponder:registry'
 import { easAttestation } from 'ponder:schema'
 
+import { revalidateNetwork } from './utils'
 import { easAbi } from '../../frontend/lib/contract-abis'
 
 ponder.on(
@@ -27,6 +28,8 @@ ponder.on(
       blockNumber: event.block.number,
       timestamp: event.block.timestamp,
     })
+
+    await revalidateNetwork()
   }
 )
 
@@ -43,5 +46,7 @@ ponder.on(
     await context.db
       .update(easAttestation, { uid })
       .set({ revocationTime: attestation.revocationTime })
+
+    await revalidateNetwork()
   }
 )

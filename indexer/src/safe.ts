@@ -1,6 +1,7 @@
 import { ponder } from 'ponder:registry'
 import { gnosisSafe } from 'ponder:schema'
 
+import { revalidateNetwork } from './utils'
 import { gnosisSafeAbi } from '../../frontend/lib/contract-abis'
 
 // Setup: Initialize the safe state from the contract
@@ -66,6 +67,8 @@ ponder.on('gnosisSafe:AddedOwner', async ({ event, context }) => {
       blockNumber: event.block.number,
       timestamp: event.block.timestamp,
     })
+
+  await revalidateNetwork()
 })
 
 // RemovedOwner: Remove an owner from the safe
@@ -99,6 +102,8 @@ ponder.on('gnosisSafe:RemovedOwner', async ({ event, context }) => {
       blockNumber: event.block.number,
       timestamp: event.block.timestamp,
     })
+
+  await revalidateNetwork()
 })
 
 // ChangedThreshold: Update the threshold
@@ -126,4 +131,6 @@ ponder.on('gnosisSafe:ChangedThreshold', async ({ event, context }) => {
       blockNumber: event.block.number,
       timestamp: event.block.timestamp,
     })
+
+  await revalidateNetwork()
 })

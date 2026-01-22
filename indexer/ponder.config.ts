@@ -24,7 +24,7 @@ if (!DEPLOY_ENV) {
   throw new Error(`Failed to load DEPLOY_ENV from ${dotenvFile}`)
 }
 
-const IS_PRODUCTION = DEPLOY_ENV.toUpperCase().trim() === 'PROD'
+export const IS_PRODUCTION = DEPLOY_ENV.toUpperCase().trim() === 'PROD'
 const CORE_CHAIN = IS_PRODUCTION ? 'optimism' : 'local'
 
 export default createConfig({

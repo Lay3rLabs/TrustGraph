@@ -13,6 +13,7 @@ import {
   merkleSnapshotAbi,
 } from '../../frontend/lib/contract-abis'
 import * as offchainSchema from '../offchain.schema'
+import { revalidateNetwork } from './utils'
 
 type MerkleTreeData = {
   id: string
@@ -141,6 +142,8 @@ ponder.on('merkleSnapshot:MerkleRootUpdated', async ({ event, context }) => {
   }
   const merkleTreeData = (await merkleRequest.json()) as MerkleTreeData
   await insertMerkleData(merkleTreeData, event, root, ipfsHash, ipfsHashCid)
+
+  await revalidateNetwork()
 })
 
 async function insertMerkleData(
