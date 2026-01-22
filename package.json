@@ -14,7 +14,9 @@
     "deploy:upload-service": "tsx deploy/upload-service.ts",
     "deploy:create-deployer": "tsx deploy/create-deployer.ts",
     "deploy:create-operator": "tsx deploy/create-operator.ts",
-    "deploy:create-aggregator": "tsx deploy/create-aggregator.ts"
+    "deploy:create-aggregator": "tsx deploy/create-aggregator.ts",
+    "docker:log": "docker compose -f docker-compose.prod.yml logs -f -n 100",
+    "docker:indexer:restart": "docker compose -f docker-compose.prod.yml up -d --force-recreate ponder ponder-server"
   },
   "dependencies": {
     "@commitlint/cli": "19.3.0",
