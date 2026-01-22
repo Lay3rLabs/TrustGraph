@@ -63,6 +63,7 @@
   {
     "id": "regenhub",
     "name": "RegenHub",
+    "hidden": true,
     "link": {
       "prefix": "Learn more:",
       "label": "regenhub.xyz",

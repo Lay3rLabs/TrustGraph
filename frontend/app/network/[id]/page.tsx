@@ -3,7 +3,7 @@ import { HydrationBoundary, dehydrate } from '@tanstack/react-query'
 import { notFound } from 'next/navigation'
 
 import { NetworkProvider } from '@/contexts/NetworkContext'
-import { NETWORKS } from '@/lib/config'
+import { VISIBLE_NETWORKS } from '@/lib/config'
 import { ponderClient } from '@/lib/ponder'
 import { makeQueryClient } from '@/lib/query'
 import { ponderQueries, ponderQueryFns } from '@/queries/ponder'
@@ -13,7 +13,7 @@ import { NetworkPage } from './component'
 export const revalidate = 3_600 // 1 hour
 
 export async function generateStaticParams() {
-  return NETWORKS.map((network) => ({
+  return VISIBLE_NETWORKS.map((network) => ({
     id: network.id,
   }))
 }
@@ -25,7 +25,7 @@ export default async function NetworkPageServer({
 }) {
   const { id } = await params
 
-  const network = NETWORKS.find((network) => network.id === id)
+  const network = VISIBLE_NETWORKS.find((network) => network.id === id)
   if (!network) {
     notFound()
   }

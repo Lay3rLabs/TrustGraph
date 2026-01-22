@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import { NETWORKS } from '@/lib/config'
+import { VISIBLE_NETWORKS } from '@/lib/config'
 
 export default function NetworkListPage() {
   return (
@@ -10,7 +10,7 @@ export default function NetworkListPage() {
 
       {/* Network Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {NETWORKS.map((network) => (
+        {VISIBLE_NETWORKS.map((network) => (
           <Link
             key={network.id}
             href={`/network/${network.id}`}

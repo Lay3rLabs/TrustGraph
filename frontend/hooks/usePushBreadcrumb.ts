@@ -4,7 +4,7 @@ import { useSetAtom } from 'jotai'
 import { usePathname } from 'next/navigation'
 import { useCallback } from 'react'
 
-import { NETWORKS } from '@/lib/config'
+import { VISIBLE_NETWORKS } from '@/lib/config'
 import { mightBeEnsName } from '@/lib/utils'
 import { Breadcrumb, breadcrumbsAtom } from '@/state/nav'
 
@@ -29,10 +29,10 @@ export const usePushBreadcrumb = (defaultBreadcrumb?: Partial<Breadcrumb>) => {
         if (
           lastSegment &&
           pathname.startsWith('/network/') &&
-          NETWORKS.some((n) => n.id === lastSegment)
+          VISIBLE_NETWORKS.some((n) => n.id === lastSegment)
         ) {
           // Network name
-          finalBreadcrumb.title = NETWORKS.find(
+          finalBreadcrumb.title = VISIBLE_NETWORKS.find(
             (n) => n.id === lastSegment
           )!.name
         } else if (

@@ -1,6 +1,6 @@
 import { HydrationBoundary, dehydrate } from '@tanstack/react-query'
 
-import { NETWORKS } from '@/lib/config'
+import { VISIBLE_NETWORKS } from '@/lib/config'
 import { makeQueryClient } from '@/lib/query'
 import { ponderQueries } from '@/queries/ponder'
 
@@ -13,7 +13,7 @@ export default async function HomePageServer() {
 
   // Prefetch network data for all networks in parallel
   await Promise.all(
-    NETWORKS.map((network) =>
+    VISIBLE_NETWORKS.map((network) =>
       queryClient.prefetchQuery(
         ponderQueries.network(network.contracts.merkleSnapshot)
       )

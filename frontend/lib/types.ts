@@ -3,6 +3,7 @@ import { Hex } from 'viem'
 export type Network = {
   id: string
   name: string
+  hidden?: boolean
   link?: {
     prefix: string
     label: string

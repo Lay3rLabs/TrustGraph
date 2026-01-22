@@ -4,7 +4,7 @@
 import { SchemaEncoder } from '@ethereum-attestation-service/eas-sdk'
 import { Hex, stringToHex, toHex } from 'viem'
 
-import { NETWORKS } from './config'
+import { VISIBLE_NETWORKS } from './config'
 
 // Schema definitions with metadata for UI
 export type SchemaFieldType =
@@ -14,7 +14,7 @@ export type SchemaFieldType =
   | 'uint256'
   | 'address'
 
-const SCHEMAS = NETWORKS.flatMap((network) => network.schemas)
+const SCHEMAS = VISIBLE_NETWORKS.flatMap((network) => network.schemas)
 
 export class SchemaManager {
   static maybeSchemaForUid(uid: string) {

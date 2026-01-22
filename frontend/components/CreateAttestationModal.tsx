@@ -38,7 +38,7 @@ import { useNetworkIfAvailable } from '@/contexts/NetworkContext'
 import { useAttestation, useIntoAttestationsData } from '@/hooks/useAttestation'
 import { useResolveEnsName } from '@/hooks/useEns'
 import { AttestationData } from '@/lib/attestation'
-import { NETWORKS } from '@/lib/config'
+import { VISIBLE_NETWORKS } from '@/lib/config'
 import { parseErrorMessage } from '@/lib/error'
 import { SchemaManager } from '@/lib/schemas'
 import {
@@ -91,11 +91,11 @@ export const CreateAttestationModal = ({
 
   const defaultSchemaUid =
     networkContext?.network.schemas[0].uid ||
-    NETWORKS[0].schemas[0].uid ||
+    VISIBLE_NETWORKS[0].schemas[0].uid ||
     zeroAddress
   const form = useForm<AttestationFormData>({
     defaultValues: {
-      networkId: networkContext?.network.id || NETWORKS[0].id || '',
+      networkId: networkContext?.network.id || VISIBLE_NETWORKS[0].id || '',
       schema: defaultSchemaUid,
       recipient: defaultRecipient,
       data: {},
@@ -107,7 +107,7 @@ export const CreateAttestationModal = ({
   const currentNetwork =
     networkContext?.network ||
     (selectedNetworkId
-      ? NETWORKS.find((network) => network.id === selectedNetworkId)
+      ? VISIBLE_NETWORKS.find((network) => network.id === selectedNetworkId)
       : undefined)
 
   const selectedSchemaUid = form.watch('schema')
@@ -371,7 +371,7 @@ export const CreateAttestationModal = ({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {NETWORKS.map((network) => (
+                          {VISIBLE_NETWORKS.map((network) => (
                             <SelectItem
                               key={network.id as string}
                               value={network.id as string}

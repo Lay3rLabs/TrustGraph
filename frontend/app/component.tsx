@@ -11,12 +11,12 @@ import { Card } from '@/components/Card'
 import { Markdown } from '@/components/Markdown'
 import { Column, Table } from '@/components/Table'
 import { NetworkProvider } from '@/contexts/NetworkContext'
-import { NETWORKS } from '@/lib/config'
+import { VISIBLE_NETWORKS } from '@/lib/config'
 import { Network } from '@/lib/types'
 import { cn, formatBigNumber } from '@/lib/utils'
 import { ponderQueries } from '@/queries/ponder'
 
-const firstNetwork = NETWORKS[0]
+const firstNetwork = VISIBLE_NETWORKS[0]
 if (!firstNetwork) {
   throw new Error('No networks found')
 }
@@ -41,13 +41,13 @@ export function HomePage() {
 
   // Fetch network data for all networks in parallel
   const networkQueries = useQueries({
-    queries: NETWORKS.map((network) =>
+    queries: VISIBLE_NETWORKS.map((network) =>
       ponderQueries.network(network.contracts.merkleSnapshot)
     ),
   })
 
   // Combine network config with fetched data
-  const networkRows: NetworkRow[] = NETWORKS.map((network, index) => {
+  const networkRows: NetworkRow[] = VISIBLE_NETWORKS.map((network, index) => {
     const query = networkQueries[index]
     return {
       network,
@@ -108,7 +108,7 @@ export function HomePage() {
           View Pilot Network: {firstNetwork.name}
         </ButtonLink>
 
-        {NETWORKS.length > 1 && (
+        {VISIBLE_NETWORKS.length > 1 && (
           <div className="w-full space-y-3 mt-6">
             <h2>ALL NETWORKS</h2>
             <Table
@@ -147,7 +147,9 @@ export function HomePage() {
           <Suspense fallback={null}>
             <NetworkProvider network={firstNetwork}>
               <NetworkGraph
-                title={NETWORKS.length > 1 ? firstNetwork.name : undefined}
+                title={
+                  VISIBLE_NETWORKS.length > 1 ? firstNetwork.name : undefined
+                }
               />
             </NetworkProvider>
           </Suspense>

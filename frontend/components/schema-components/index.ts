@@ -2,14 +2,14 @@
 // This file manages the registration of custom schema components
 // and provides exports for use throughout the application
 
-import { NETWORKS } from '@/lib/config'
+import { VISIBLE_NETWORKS } from '@/lib/config'
 
 // Import components and registry for registration
 import { CreateVouchingSchema } from './CreateVouchingSchema'
 import { schemaComponentRegistry } from './SchemaComponentRegistry'
 
 // Register custom schema components for each network
-NETWORKS.forEach((network) => {
+VISIBLE_NETWORKS.forEach((network) => {
   network.schemas.forEach((schema) => {
     // Vouching Schema UID loaded from config
     if (schema.key === 'vouching') {

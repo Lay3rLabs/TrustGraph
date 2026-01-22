@@ -3,6 +3,7 @@ import networks from '../networks.json'
 import { Network } from './types'
 
 export const NETWORKS = networks as Network[]
+export const VISIBLE_NETWORKS = NETWORKS.filter((network) => !network.hidden)
 
 export const CHAIN = CONFIG.chain
 export const APIS = CONFIG.apis

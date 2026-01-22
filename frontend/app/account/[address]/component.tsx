@@ -31,7 +31,7 @@ import { NetworkProvider } from '@/contexts/NetworkContext'
 import { useIntoAttestationsData } from '@/hooks/useAttestation'
 import { usePushBreadcrumb } from '@/hooks/usePushBreadcrumb'
 import { AttestationData } from '@/lib/attestation'
-import { NETWORKS } from '@/lib/config'
+import { VISIBLE_NETWORKS } from '@/lib/config'
 import { parseErrorMessage } from '@/lib/error'
 import { isTrustedSeed } from '@/lib/network'
 import { Network } from '@/lib/types'
@@ -40,7 +40,7 @@ import { NetworkProfile, ponderQueries, ponderQueryFns } from '@/queries/ponder'
 
 // Pre-compute schema UID to network name mapping
 const SCHEMA_TO_NETWORK: Record<string, Network> = {}
-for (const network of NETWORKS) {
+for (const network of VISIBLE_NETWORKS) {
   for (const schema of network.schemas) {
     SCHEMA_TO_NETWORK[schema.uid.toLowerCase()] = network
   }
@@ -120,7 +120,7 @@ export const AccountProfilePage = ({
       networkProfiles
         ?.flatMap((networkProfile): NetworkRow | [] => {
           // Find the network that this merkle snapshot contract belongs to.
-          const network = NETWORKS.find((network) =>
+          const network = VISIBLE_NETWORKS.find((network) =>
             isHexEqual(
               networkProfile.merkleSnapshotContract,
               network.contracts.merkleSnapshot

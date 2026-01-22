@@ -1,7 +1,7 @@
 import { revalidatePath } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 
-import { NETWORKS } from '@/lib/config'
+import { VISIBLE_NETWORKS } from '@/lib/config'
 
 export async function GET(
   _: NextRequest,
@@ -22,7 +22,7 @@ export async function GET(
     if (networkId.toLowerCase() === 'all') {
       revalidatePath('/network/[id]', 'page')
     } else {
-      if (!NETWORKS.find((network) => network.id === networkId)) {
+      if (!VISIBLE_NETWORKS.find((network) => network.id === networkId)) {
         return NextResponse.json(
           { error: 'Network not found' },
           { status: 404 }
