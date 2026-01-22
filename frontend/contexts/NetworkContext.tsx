@@ -114,6 +114,7 @@ export const NetworkProvider = ({
       queryFn: ponderQueryFns.getGnosisSafe(
         network.contracts.safe?.proxy || zeroAddress
       ),
+      // Bug when live is enabled where query doesn't refetch stale server data AND doesn't refetch when DB is updated as live is supposed to.
       live: false,
       refetchInterval: 30_000,
       enabled: !!network.contracts.safe?.proxy,
