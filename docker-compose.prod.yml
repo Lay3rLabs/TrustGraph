@@ -73,9 +73,9 @@ services:
     volumes:
       - .:/app
     command: sh -c "npm install -g pnpm && CI=true pnpm install --ignore-scripts && pnpm run serve --schema trust-graph"
-    depends_on:
-      ponder:
-        condition: service_healthy
+    # depends_on:
+    #   ponder:
+    #     condition: service_healthy
     ports:
       - '65422:65422'
     healthcheck:
