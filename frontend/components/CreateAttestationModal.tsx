@@ -129,6 +129,8 @@ export const CreateAttestationModal = ({
     shouldResolveEnsName &&
     !resolvedEnsName.isLoading &&
     !resolvedEnsName.address
+  const resolvedRecipient =
+    (validResolvedEnsAddress && resolvedEnsName.address) || recipient
 
   const { address: connectedAddress = '0x', isConnected } = useAccount()
 
@@ -268,10 +270,10 @@ export const CreateAttestationModal = ({
   )
 
   const attestationsGivenToRecipient =
-    recipient.startsWith('0x') && selectedSchemaInfo
+    resolvedRecipient.startsWith('0x') && selectedSchemaInfo
       ? attestationsGiven.filter(
           (attestation) =>
-            isHexEqual(attestation.recipient, recipient) &&
+            isHexEqual(attestation.recipient, resolvedRecipient) &&
             isHexEqual(attestation.schema, selectedSchemaInfo.uid) &&
             // At least 10 seconds old, so we don't show the one we just made.
             attestation.time < BigInt(Math.floor(Date.now() / 1000) - 10)
