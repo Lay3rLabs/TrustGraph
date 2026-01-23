@@ -362,7 +362,16 @@ export const CreateAttestationModal = ({
                         NETWORK
                       </FormLabel>
                       <Select
-                        onValueChange={(value) => field.onChange(value)}
+                        onValueChange={(value) => {
+                          field.onChange(value)
+                          // Default schema to first schema in network
+                          const network = VISIBLE_NETWORKS.find(
+                            (network) => network.id === value
+                          )
+                          if (network) {
+                            form.setValue('schema', network.schemas[0].uid)
+                          }
+                        }}
                         value={field.value as string}
                       >
                         <FormControl>
