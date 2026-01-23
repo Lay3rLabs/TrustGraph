@@ -336,7 +336,7 @@ export const AccountProfilePage = ({
             defaultRecipient={
               connectedAddress?.toLowerCase() === address.toLowerCase()
                 ? undefined
-                : address
+                : ensName || address
             }
           />
         </div>
