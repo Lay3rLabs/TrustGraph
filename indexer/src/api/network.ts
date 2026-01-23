@@ -2,15 +2,27 @@ import { and, asc, desc, eq, inArray, ne } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { db } from 'ponder:api'
 import { easAttestation } from 'ponder:schema'
+import { Hex } from 'viem'
 
 import { offchainDb } from './db'
-import { lower } from './utils'
+import { isHexEqual, lower } from './utils'
+import NETWORKS from '../../networks.json'
 
 const app = new Hono()
 
 // Get the accounts and attestations that are part of the network defined by the Merkle Snapshot contract.
 app.get('/:snapshot', async (c) => {
   const merkleSnapshotContract = c.req.param('snapshot')
+  const network = NETWORKS.find((network) =>
+    isHexEqual(network.contracts.merkleSnapshot, merkleSnapshotContract)
+  )
+  if (!network) {
+    return c.json(
+      { error: 'Network not found for MerkleSnapshot contract' },
+      404
+    )
+  }
+
   try {
     const latestMerkleTree = await offchainDb.query.merkleMetadata.findFirst({
       where: (t, { eq }) =>
@@ -70,7 +82,12 @@ app.get('/:snapshot', async (c) => {
           ne(easAttestation.attester, easAttestation.recipient),
           // Only include attestations between in-network accounts.
           inArray(easAttestation.attester, relevantAccounts),
-          inArray(easAttestation.recipient, relevantAccounts)
+          inArray(easAttestation.recipient, relevantAccounts),
+          // Only include attestations for network schemas.
+          inArray(
+            easAttestation.schema,
+            network.schemas.map((schema) => schema.uid as Hex)
+          )
         )
       )
       .orderBy(
